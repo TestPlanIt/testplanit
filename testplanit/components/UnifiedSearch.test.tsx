@@ -1,6 +1,13 @@
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen, waitFor } from "~/test/test-utils";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "~/test/test-utils";
 import { SearchableEntityType } from "~/types/search";
 import { UnifiedSearch } from "./UnifiedSearch";
 
@@ -14,8 +21,10 @@ const virtualListMock = vi.hoisted(() => ({
   lastOptions: null as Record<string, unknown> | null,
 }));
 
+const recordKeyMock = vi.hoisted(() => ({ hits: [] as any[] }));
+
 vi.mock("~/hooks/useRecordKeyHits", () => ({
-  useRecordKeyHits: () => [],
+  useRecordKeyHits: () => recordKeyMock.hits,
 }));
 
 vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
@@ -285,6 +294,18 @@ vi.mock("@/components/search/UserDisplay", () => ({
   ),
 }));
 
+vi.mock("@/components/RecordId", () => ({
+  RecordId: ({ type, id }: { type: string; id: number }) => (
+    <span data-testid="record-id">{`${type}:${id}`}</span>
+  ),
+}));
+
+vi.mock("@/components/CopyChip", () => ({
+  CopyChip: ({ value }: { value: string }) => (
+    <span data-testid="record-id">{value}</span>
+  ),
+}));
+
 vi.mock("@/components/search/TestCaseSearchResult", () => ({
   TestCaseSearchResult: ({ testCase }: { testCase: any }) => (
     <span data-testid="test-case-result">{testCase.name}</span>
@@ -417,6 +438,134 @@ describe("UnifiedSearch Component", () => {
         })
       );
     });
+  });
+
+  it("leaves a record out of the list when it is already a direct-lookup card", async () => {
+    recordKeyMock.hits = [
+      {
+        id: 1,
+        entityType: SearchableEntityType.REPOSITORY_CASE,
+        score: 0,
+        source: { name: "Test Case 1", projectId: 1 },
+      },
+    ];
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        total: 2,
+        hits: [
+          {
+            id: 1,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 1.0,
+            source: { id: 1, name: "Test Case 1", projectId: 1 },
+          },
+          {
+            id: 2,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 1.0,
+            source: { id: 2, name: "Test Case 2", projectId: 1 },
+          },
+        ],
+        took: 100,
+      }),
+    });
+
+    try {
+      render(<UnifiedSearch getResultHref={(hit) => `/cases/${hit.id}`} />);
+      fireEvent.change(screen.getByPlaceholderText(/search/i), {
+        target: { value: "1 OR 2" },
+      });
+
+      await screen.findByTestId(
+        `search-result-link-${SearchableEntityType.REPOSITORY_CASE}-2`
+      );
+      // Case 1 appears once, as the direct-lookup card, not again in the list
+      expect(
+        screen.getAllByTestId(
+          `search-result-link-${SearchableEntityType.REPOSITORY_CASE}-1`
+        )
+      ).toHaveLength(1);
+      // The summary counts only what the list shows
+      expect(screen.getByText(/showing/i).textContent).toMatch(
+        /showing 1 common\.of 1/
+      );
+    } finally {
+      recordKeyMock.hits = [];
+    }
+  });
+
+  it("folds the direct-lookup cards away behind their header", async () => {
+    recordKeyMock.hits = [
+      {
+        id: 1,
+        entityType: SearchableEntityType.REPOSITORY_CASE,
+        score: 0,
+        source: { name: "Test Case 1", projectId: 1 },
+      },
+      {
+        id: 2,
+        entityType: SearchableEntityType.TEST_RUN,
+        score: 0,
+        source: { name: "Run 2", projectId: 1 },
+      },
+    ];
+    try {
+      render(<UnifiedSearch getResultHref={(hit) => `/x/${hit.id}`} />);
+      fireEvent.change(screen.getByPlaceholderText(/search/i), {
+        target: { value: "1 OR 2" },
+      });
+
+      const list = await screen.findByTestId("record-matches-list");
+      expect(within(list).getAllByTestId(/^search-result-link-/)).toHaveLength(
+        2
+      );
+      // Capped height with its own scroll, so a long list never pushes the
+      // results out of view
+      expect(list.className).toMatch(/max-h-/);
+      expect(list.className).toMatch(/overflow-y-auto/);
+
+      fireEvent.click(screen.getByTestId("record-matches-toggle"));
+      expect(screen.queryByTestId("record-matches-list")).toBeNull();
+
+      fireEvent.click(screen.getByTestId("record-matches-toggle"));
+      expect(screen.getByTestId("record-matches-list")).toBeInTheDocument();
+    } finally {
+      recordKeyMock.hits = [];
+    }
+  });
+
+  it("shows a copyable id on every result card", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        total: 2,
+        hits: [
+          {
+            id: 1,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 1.0,
+            source: { id: 1, name: "Test Case 1", projectId: 1 },
+          },
+          {
+            id: 7,
+            entityType: SearchableEntityType.PROJECT,
+            score: 1.0,
+            source: { id: 7, name: "Project Seven" },
+          },
+        ],
+        took: 100,
+      }),
+    });
+
+    render(<UnifiedSearch />);
+
+    fireEvent.change(screen.getByPlaceholderText(/search/i), {
+      target: { value: "test" },
+    });
+
+    const ids = await screen.findAllByTestId("record-id");
+    expect(ids.map((el) => el.textContent)).toEqual(["TEST_CASE:1", "7"]);
   });
 
   it("should display search results", async () => {

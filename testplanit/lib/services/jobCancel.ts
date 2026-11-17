@@ -11,7 +11,7 @@ export const JOB_CANCEL_TTL_SECONDS = 3600;
 /**
  * The subset of a Redis client the cancel flags need. Both the raw ioredis
  * connection the workers hold and the client BullMQ hands out from
- * `queue.client` fit: the expiry is passed positionally (`"EX", seconds`),
+ * `queue.getBackend().client` fit: the expiry is passed positionally (`"EX", seconds`),
  * which ioredis expects and BullMQ's client passes through.
  */
 export interface CancelFlagStore {

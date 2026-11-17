@@ -150,14 +150,14 @@ describe("registerSessionResultsList", () => {
     expect(where.statusId).toBe(5);
   });
 
-  // ── R4 invariant — Pitfall 4 — SESS-03 schema-vs-requirements gap ────────
+  // ── SessionResults has no testCaseId column ────────
 
-  it("R4 invariant / Pitfall 4: testCaseId NOT in the input schema; if passed via tool input it must NOT appear in where (SessionResults has no testCaseId column)", async () => {
+  it("testCaseId NOT in the input schema; if passed via tool input it must NOT appear in where (SessionResults has no testCaseId column)", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     // Zod's raw-shape inputSchema strips unknown fields. The tool must succeed
     // and NEVER forward testCaseId into the where literal — there is no such
-    // column on SessionResults (R4 / Pitfall 4 / SESS-03 schema gap).
+    // column on SessionResults.
     const result = await client.callTool({
       name: "testplanit_session_results_list",
       arguments: { sessionId: 7, testCaseId: 99 } as Record<string, unknown>,
@@ -214,7 +214,7 @@ describe("registerSessionResultsList", () => {
 
   // ── Determinism + soft-delete ─────────────────────────────────────────────
 
-  it("BL-04 deterministic orderBy: [{createdAt:'desc'},{id:'desc'}]", async () => {
+  it("deterministic orderBy: [{createdAt:'desc'},{id:'desc'}]", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({
@@ -238,7 +238,7 @@ describe("registerSessionResultsList", () => {
 
   // ── DoS / safety ─────────────────────────────────────────────────────────
 
-  it("DoS protection (T-07-06): limit > 100 rejected by zod (zenstack not called)", async () => {
+  it("DoS protection: limit > 100 rejected by zod (zenstack not called)", async () => {
     const { client } = await setupClient();
     const result = await client.callTool({
       name: "testplanit_session_results_list",
@@ -269,7 +269,7 @@ describe("registerSessionResultsList", () => {
 
   // ── Tool registration ────────────────────────────────────────────────────
 
-  it("tool registration: testplanit_session_results_list exists with description starting with 'List session results' AND mentions testCase-filter limitation (R4 / Pitfall 4)", async () => {
+  it("tool registration: testplanit_session_results_list exists with description starting with 'List session results' AND mentions testCase-filter limitation", async () => {
     const server = new McpServer({ name: "test", version: "0.0.0" });
     registerSessionResultsList(server, deps);
     const [ct, st] = InMemoryTransport.createLinkedPair();
@@ -282,7 +282,7 @@ describe("registerSessionResultsList", () => {
     );
     expect(tool).toBeDefined();
     expect(tool?.description).toMatch(/^List session results/);
-    // R4 / Pitfall 4 — the description must document why testCase filtering
+    // the description must document why testCase filtering
     // is unsupported (SessionResults has no testCaseId).
     expect(tool?.description).toMatch(/testCase/);
   });

@@ -23,6 +23,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "~/lib/navigation";
+import { apiFetch } from "~/lib/basePath";
 
 interface SharedDatasetEditorProps {
   projectId: number;
@@ -287,7 +288,7 @@ export function SharedDatasetEditor({
       const branchedFromVersionId =
         selectedVersion === "current" ? undefined : selectedVersion.id;
 
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/projects/${projectId}/datasets/${dataSetId}/save`,
         {
           method: "POST",

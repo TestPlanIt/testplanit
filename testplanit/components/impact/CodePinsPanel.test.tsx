@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
   useTranslations: (namespace?: string) => (key: string) =>
@@ -796,5 +796,51 @@ describe("CodePinsPanel", () => {
       expect(dialog).toHaveAttribute("data-config-id", "6");
       expect(dialog).toHaveAttribute("data-repository-id", "4");
     });
+  });
+});
+
+describe("CodePinsPanel — collapsing", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.localStorage.setItem("case-panel-collapsed:code-pins", "true");
+    setProject();
+    setPins([makePin()]);
+    global.fetch = vi.fn(async () => jsonResponse(200, pinsResponse)) as any;
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("skips the pins request and hides the body while collapsed", () => {
+    renderWithClient(<CodePinsPanel caseId={99} projectId={7} />);
+
+    expect(screen.getByTestId("case-code-pins")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("case-code-pins-collapse-toggle")
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("fetches the pins once expanded", async () => {
+    renderWithClient(<CodePinsPanel caseId={99} projectId={7} />);
+
+    fireEvent.click(screen.getByTestId("case-code-pins-collapse-toggle"));
+
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/code-pins"),
+        undefined
+      )
+    );
+  });
+
+  it("still fetches read-only, which hides the panel when there are no pins", async () => {
+    renderWithClient(<CodePinsPanel caseId={99} projectId={7} readOnly />);
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    expect(
+      await screen.findByTestId("case-code-pins-collapse-toggle")
+    ).toHaveAttribute("aria-expanded", "false");
   });
 });

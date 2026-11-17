@@ -52,7 +52,7 @@ export const ImageUploader = ({
         className="w-12 h-12 mb-4 text-black dark:text-white opacity-20"
       />
       <div className="flex flex-col items-center justify-center gap-2">
-        <div className="text-sm font-medium text-center text-neutral-400 dark:text-neutral-500">
+        <div className="text-sm font-medium text-center text-neutral-600 dark:text-neutral-400">
           {draggedInside ? "Drop image here" : "Drag and drop or"}
         </div>
         <div>

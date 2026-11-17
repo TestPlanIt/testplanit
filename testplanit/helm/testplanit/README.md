@@ -192,7 +192,8 @@ commonly changed keys:
 |-----|-------------|
 | `image.repository`, `image.tag` | Your server image (required). Workers default to `<tag>-workers`. |
 | `image.pullSecrets` | Pull secrets for a private registry / ECR. |
-| `appUrl` | Public HTTPS URL (sets `NEXTAUTH_URL`). Required. |
+| `appUrl` | Public HTTPS URL, prefix included (sets `APP_URL` and `NEXTAUTH_URL`). Required. |
+| `basePath` | Path prefix the app is served under (e.g. `/testplanit`). Needs an image built with `--build-arg BASE_PATH`; `appUrl` must end with it. Default: root. |
 | `ingress.host`, `ingress.tls.*` | Hostname and TLS for the Ingress. |
 | `server.replicaCount`, `server.resources` | Web tier scale/size. |
 | `workers.resources` | Worker tier size (keep `replicaCount` at 1). |

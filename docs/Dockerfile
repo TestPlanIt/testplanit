@@ -23,8 +23,8 @@ COPY patches ./patches/
 COPY ./docs/ ./docs/
 
 # Install dependencies ONLY for the docs workspace using filter
-# Ensure pnpm is available
-RUN npm install -g pnpm@10
+# Corepack provisions the pnpm version pinned by the root package.json
+RUN corepack enable
 # Run install from the root (/app) filtering for the 'docs' workspace
 # Replace 'docs' with your actual workspace name if different (check root package.json or pnpm-workspace.yaml)
 RUN pnpm install --filter docs --frozen-lockfile --prod=false

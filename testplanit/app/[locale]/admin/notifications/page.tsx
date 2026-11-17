@@ -27,6 +27,7 @@ import { emptyEditorContent } from "~/app/constants";
 import { useRouter } from "~/lib/navigation";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { useColumns, NotificationHistoryItem } from "./columns";
+import { apiFetch } from "~/lib/basePath";
 
 // System-notification history is fetched from a server action a page at a time
 // and accumulated into one list; the virtualized table renders only the visible
@@ -118,7 +119,7 @@ function NotificationSettingsContent() {
   useEffect(() => {
     const checkEmailServerConfig = async () => {
       try {
-        const response = await fetch("/api/admin/sso/magic-link-status");
+        const response = await apiFetch("/api/admin/sso/magic-link-status");
         if (response.ok) {
           const data = await response.json();
           setIsEmailServerConfigured(data.configured);

@@ -7,11 +7,17 @@
  * INDEXED_MODELS, and sideEffectsPlugin's GUC_MODELS / BEFORE_IMAGE_MODELS —
  * so writing one bumps no version, logs no change, reindexes nothing and fires
  * no webhook or notification. Adding CaseDraft to any of those registries would
- * silently break that guarantee.
+ * silently break that guarantee. The one registry it is in is
+ * SOFT_DELETE_REGISTRY, so the deletedAt/deletedById stamp applies.
  *
- * Two scopes exist, distinguished by `draftKey`:
- *   - `case:<id>`   an edit in progress on an existing case
- *   - `folder:<id>` a new case being authored into that folder
+ * Three kinds of draft exist, distinguished by `draftKey`:
+ *   - `case:<id>`   an auto-saved edit in progress on an existing case
+ *   - `folder:<id>` an auto-saved new case being authored into that folder
+ *   - `saved:<uuid>` a staged case: a draft the author saved on purpose
+ *     (`isSaved`), named, and retired rather than deleted — creating the case
+ *     tombstones it with `caseId` set (the case's `stagedAt` comes from its
+ *     `createdAt`); deleting it from the list tombstones it with `caseId`
+ *     null, and the retention job purges those
  *
  * Drafts live in two places at once. localStorage is written synchronously on
  * every change so a crash loses at most the last keystroke; the server row is
@@ -246,4 +252,43 @@ export function newerCaseDraft(
   if (!a) return b;
   if (!b) return a;
   return Date.parse(a.savedAt) >= Date.parse(b.savedAt) ? a : b;
+}
+
+/** The draftKey of a saved (named) draft; several may target one folder. */
+export function savedCaseDraftKey(id: string): string {
+  return `saved:${id}`;
+}
+
+/** A project the user has staged cases in, with how many. */
+export interface StagedCaseProjectCount {
+  projectId: number;
+  projectName: string;
+  projectIconUrl: string | null;
+  count: number;
+}
+
+/**
+ * Group staged-case rows by project, most staged first, so the My Staged
+ * Cases sheet can point at the other projects a user staged cases in.
+ */
+export function countStagedCasesByProject(
+  rows: {
+    projectId: number;
+    project: { name: string; iconUrl?: string | null };
+  }[]
+): StagedCaseProjectCount[] {
+  const counts = new Map<number, StagedCaseProjectCount>();
+  for (const row of rows) {
+    const entry = counts.get(row.projectId) ?? {
+      projectId: row.projectId,
+      projectName: row.project.name,
+      projectIconUrl: row.project.iconUrl ?? null,
+      count: 0,
+    };
+    entry.count += 1;
+    counts.set(row.projectId, entry);
+  }
+  return [...counts.values()].sort(
+    (a, b) => b.count - a.count || a.projectName.localeCompare(b.projectName)
+  );
 }

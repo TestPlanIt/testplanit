@@ -21,6 +21,7 @@ import {
 } from "~/lib/issues/issueFacetConditions";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
+import { apiFetch } from "~/lib/basePath";
 
 const PAGE_SIZE = 50;
 
@@ -235,12 +236,12 @@ function Issues() {
       setIsLoadingCounts(true);
       try {
         const [countsResponse, projectsResponse] = await Promise.all([
-          fetch("/api/issues/counts", {
+          apiFetch("/api/issues/counts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ issueIds: newIds }),
           }),
-          fetch("/api/issues/projects", {
+          apiFetch("/api/issues/projects", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ issueIds: newIds }),

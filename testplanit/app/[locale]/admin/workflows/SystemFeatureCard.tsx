@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { Label } from "~/components/ui/label";
 import { ProjectReviewToggleList } from "./ProjectReviewToggleList";
+import { ReviewRevertPolicyRow } from "./ReviewRevertPolicyRow";
 
 const REMINDER_THRESHOLD_KEY = "review_reminder_threshold_days";
 const REMINDER_THRESHOLD_DEFAULT = 1;
@@ -213,6 +214,7 @@ export function SystemFeatureCard({
           </span>
         </Button>
       </div>
+      <ReviewRevertPolicyRow disabled={disabled} />
       <ProjectReviewToggleList />
     </>
   );

@@ -1,0 +1,267 @@
+import { expect, test } from "../../fixtures";
+import { RepositoryPage } from "../../page-objects/repository/repository.page";
+import {
+  clickOverflowAction,
+  revealOverflowAction,
+} from "../../utils/action-overflow";
+
+/**
+ * Saved drafts (issue #650): a case written in Add Case, saved privately,
+ * listed under My Drafts, and created from the list in a batch.
+ *
+ * The draft check and the draft → case mapping are unit-tested in
+ * `draftCaseCreation.test.ts`. What lives here is the path those cannot
+ * reach: the form's Save Draft, the list reading the draft back through the
+ * database, the bulk-create request from the list, the case table picking
+ * the new case up, the draft disappearing once created, and the created case
+ * showing when it was staged.
+ */
+
+async function setupProjectAndFolder(
+  api: import("../../fixtures/api.fixture").ApiHelper
+): Promise<{ projectId: number; folderId: number }> {
+  const projectId = await api.createProject(
+    `E2E Drafts ${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+  );
+  const folderId = await api.createFolder(projectId, `Folder ${Date.now()}`);
+  return { projectId, folderId };
+}
+
+test.describe("Saved case drafts", () => {
+  test("saves two drafts from Add Case and creates them together from My Drafts @smoke", async ({
+    api,
+    page,
+  }) => {
+    const repositoryPage = new RepositoryPage(page);
+    const { projectId, folderId } = await setupProjectAndFolder(api);
+    const stamp = Date.now();
+    const names = [`Draft one ${stamp}`, `Draft two ${stamp}`];
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.selectFolder(folderId);
+
+    for (const name of names) {
+      await test.step(`Write "${name}" and save it as a draft`, async () => {
+        await repositoryPage.openAddCaseModal();
+        const dialog = page.getByTestId("add-case-dialog");
+        await dialog.getByTestId("case-name-input").fill(name);
+        // A named case stages at once, under its own name, with no prompt.
+        await page.getByTestId("case-save-draft-button").click();
+        await expect(page.getByTestId("add-case-dialog")).toHaveCount(0, {
+          timeout: 10_000,
+        });
+        await expect(page.getByTestId("save-draft-dialog")).toHaveCount(0);
+      });
+    }
+
+    await test.step("My Drafts lists both drafts and can create them", async () => {
+      const action = await revealOverflowAction(
+        page,
+        "staged-cases-button",
+        "repository-actions-menu"
+      );
+      await expect(action).toContainText("2", { timeout: 10_000 });
+      await action.click();
+      const sheet = page.getByTestId("staged-cases-sheet");
+      await expect(sheet).toBeVisible();
+      await expect(
+        sheet.locator('[data-testid^="staged-cases-item-"]')
+      ).toHaveCount(2);
+      await expect(sheet.getByTestId("staged-cases-select-all")).toBeEnabled({
+        timeout: 15_000,
+      });
+      await page.getByTestId("staged-cases-select-all").click();
+      await expect(
+        sheet.getByTestId("staged-cases-create-selected")
+      ).toHaveText("Create 2 selected");
+      await page.getByTestId("staged-cases-create-selected").click();
+      await expect(page.getByTestId("staged-cases-empty")).toBeVisible({
+        timeout: 20_000,
+      });
+    });
+
+    await test.step("The cases exist and the drafts are gone", async () => {
+      await page.keyboard.press("Escape");
+      for (const name of names) {
+        await repositoryPage.verifyTestCaseExists(name);
+      }
+      const action = await revealOverflowAction(
+        page,
+        "staged-cases-button",
+        "repository-actions-menu"
+      );
+      await expect(action).not.toContainText("(");
+      await page.keyboard.press("Escape");
+    });
+
+    await test.step("The created case records when it was staged", async () => {
+      await repositoryPage
+        .getTestCaseByName(names[0])
+        .locator('a[href*="/projects/repository/"]')
+        .first()
+        .click();
+      // The row opens the case in the details panel, which shows the same
+      // creation block as the full page. The label collapses to an icon when
+      // the panel is narrow, so assert on the date rather than the text.
+      const stagedAt = page.getByTestId("creation-info-staged-at");
+      await expect(stagedAt).toBeVisible({ timeout: 15_000 });
+      await expect(stagedAt).toContainText(/\d{2}:\d{2}/);
+    });
+  });
+
+  test("deleting a staged case removes it from the list for good", async ({
+    api,
+    page,
+  }) => {
+    const repositoryPage = new RepositoryPage(page);
+    const { projectId, folderId } = await setupProjectAndFolder(api);
+    const name = `Discarded ${Date.now()}`;
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.selectFolder(folderId);
+    await repositoryPage.openAddCaseModal();
+    await page
+      .getByTestId("add-case-dialog")
+      .getByTestId("case-name-input")
+      .fill(name);
+    await page.getByTestId("case-save-draft-button").click();
+    await expect(page.getByTestId("add-case-dialog")).toHaveCount(0, {
+      timeout: 10_000,
+    });
+
+    await test.step("Delete it from the list", async () => {
+      await clickOverflowAction(
+        page,
+        "staged-cases-button",
+        "repository-actions-menu"
+      );
+      const sheet = page.getByTestId("staged-cases-sheet");
+      const item = sheet
+        .locator('[data-testid^="staged-cases-item-"]')
+        .filter({ hasText: name });
+      await expect(item).toBeVisible();
+      await item.locator('[data-testid^="staged-cases-menu-"]').click();
+      await page
+        .locator('[data-testid^="staged-cases-delete-"]')
+        .first()
+        .click();
+      await page.getByTestId("staged-cases-delete-submit").click();
+      await expect(page.getByTestId("staged-cases-empty")).toBeVisible({
+        timeout: 10_000,
+      });
+      await page.keyboard.press("Escape");
+    });
+
+    await test.step("It stays gone after a reload and was never created", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
+      const action = await revealOverflowAction(
+        page,
+        "staged-cases-button",
+        "repository-actions-menu"
+      );
+      await expect(action).not.toContainText("(");
+      await page.keyboard.press("Escape");
+      await expect(repositoryPage.getTestCaseByName(name)).toHaveCount(0);
+    });
+  });
+
+  test("staging a case with no name asks for one and uses it as the case name", async ({
+    api,
+    page,
+  }) => {
+    const repositoryPage = new RepositoryPage(page);
+    const { projectId, folderId } = await setupProjectAndFolder(api);
+    const name = `Named while staging ${Date.now()}`;
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.selectFolder(folderId);
+
+    await test.step("Stage Case with an empty name prompts for one", async () => {
+      await repositoryPage.openAddCaseModal();
+      await page.getByTestId("case-save-draft-button").click();
+      const nameInput = page.getByTestId("save-draft-name");
+      await expect(nameInput).toBeVisible();
+      await expect(nameInput).toHaveValue("");
+      await nameInput.fill(name);
+      await page.getByTestId("save-draft-submit").click();
+      await expect(page.getByTestId("add-case-dialog")).toHaveCount(0, {
+        timeout: 10_000,
+      });
+    });
+
+    await test.step("The staged case carries that name and creates under it", async () => {
+      await clickOverflowAction(
+        page,
+        "staged-cases-button",
+        "repository-actions-menu"
+      );
+      const sheet = page.getByTestId("staged-cases-sheet");
+      const item = sheet
+        .locator('[data-testid^="staged-cases-item-"]')
+        .filter({ hasText: name });
+      await expect(item).toBeVisible();
+      await expect(
+        item.locator('[data-testid^="staged-cases-select-"]')
+      ).toBeEnabled({ timeout: 15_000 });
+      await item.locator('[data-testid^="staged-cases-select-"]').click();
+      await page.getByTestId("staged-cases-create-selected").click();
+      await expect(page.getByTestId("staged-cases-empty")).toBeVisible({
+        timeout: 20_000,
+      });
+      await page.keyboard.press("Escape");
+      await repositoryPage.verifyTestCaseExists(name);
+    });
+  });
+  test("the sheet points at other projects where the user has staged cases", async ({
+    api,
+    page,
+  }) => {
+    const repositoryPage = new RepositoryPage(page);
+    const here = await setupProjectAndFolder(api);
+    const elsewhere = await setupProjectAndFolder(api);
+    const name = `Staged elsewhere ${Date.now()}`;
+
+    await test.step("Stage a case in the other project", async () => {
+      await repositoryPage.goto(elsewhere.projectId);
+      await repositoryPage.selectFolder(elsewhere.folderId);
+      await repositoryPage.openAddCaseModal();
+      await page
+        .getByTestId("add-case-dialog")
+        .getByTestId("case-name-input")
+        .fill(name);
+      await page.getByTestId("case-save-draft-button").click();
+      await expect(page.getByTestId("add-case-dialog")).toHaveCount(0, {
+        timeout: 10_000,
+      });
+    });
+
+    await test.step("This project's sheet names it, and the link lands with the sheet open", async () => {
+      await repositoryPage.goto(here.projectId);
+      await repositoryPage.selectFolder(here.folderId);
+      await clickOverflowAction(
+        page,
+        "staged-cases-button",
+        "repository-actions-menu"
+      );
+      const link = page.getByTestId(
+        `staged-cases-elsewhere-${elsewhere.projectId}`
+      );
+      await expect(link).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("staged-cases-elsewhere")).toContainText(
+        "1"
+      );
+      await link.click();
+      await expect(page).toHaveURL(
+        new RegExp(`/projects/repository/${elsewhere.projectId}\\?.*staged=1`)
+      );
+      const sheet = page.getByTestId("staged-cases-sheet");
+      await expect(sheet).toBeVisible({ timeout: 15_000 });
+      await expect(
+        sheet
+          .locator('[data-testid^="staged-cases-item-"]')
+          .filter({ hasText: name })
+      ).toBeVisible();
+    });
+  });
+});

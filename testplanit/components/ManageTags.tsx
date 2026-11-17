@@ -25,6 +25,8 @@ export interface ManageTagsProps {
   setSelectedTags: (tags: number[]) => void;
   className?: ClassValue;
   canCreateTags?: boolean;
+  /** Limits the options to these tags. Omit to offer every tag. */
+  selectableTagIds?: number[];
 }
 
 export function ManageTags({
@@ -32,6 +34,7 @@ export function ManageTags({
   setSelectedTags,
   className = "",
   canCreateTags = false,
+  selectableTagIds,
 }: ManageTagsProps) {
   const [allTagOptions, setAllTagOptions] = useState<readonly TagOption[]>([]);
   const tCommon = useTranslations("common");
@@ -139,6 +142,9 @@ export function ManageTags({
   const valueForSelect = allTagOptions.filter((option) =>
     (selectedTags || []).includes(option.value)
   );
+  const selectableOptions = selectableTagIds
+    ? allTagOptions.filter((option) => selectableTagIds.includes(option.value))
+    : allTagOptions;
 
   const noOptionsMessage = ({ inputValue }: { inputValue: string }) => {
     if (inputValue) {
@@ -156,7 +162,7 @@ export function ManageTags({
           // no <label> of its own — without it the control is unnamed
           // (WCAG 4.1.2). A placeholder is not an accessible name.
           aria-label={tCommon("fields.tags")}
-          options={allTagOptions}
+          options={selectableOptions}
           value={valueForSelect}
           onChange={handleTagChange}
           onCreateOption={handleCreateTag}
@@ -182,7 +188,7 @@ export function ManageTags({
         <Select
           isMulti
           aria-label={tCommon("fields.tags")}
-          options={allTagOptions}
+          options={selectableOptions}
           value={valueForSelect}
           onChange={handleTagChange}
           noOptionsMessage={noOptionsMessage}

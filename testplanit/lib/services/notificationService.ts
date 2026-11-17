@@ -2,6 +2,7 @@ import { ApplicationArea, NotificationType } from "~/zenstack/models";
 import { getCurrentTenantId } from "../multiTenantDb";
 import { JOB_CREATE_NOTIFICATION } from "../queueNames";
 import { getNotificationQueue } from "../queues";
+import { formatHoursAsRelativeDuration } from "~/utils/duration";
 
 interface CreateNotificationParams {
   userId: string;
@@ -214,6 +215,167 @@ export class NotificationService {
             projectId: params.projectId,
             projectName: params.projectName,
             caseCount: params.caseCount,
+          },
+        })
+      )
+    );
+  }
+
+  /**
+   * Tell a run case's assignee that the case is no longer blocked: the last of
+   * its `DEPENDS_ON` prerequisites in the run has passed. This is the handoff
+   * in dependency gating (see lib/services/dependencyGate.ts).
+   *
+   * Like RUN_READY_TO_COMPLETE, the stored `title`/`message` are an English
+   * fallback; the bell and the email worker render localized copy from `data`.
+   */
+  static async createRunCaseUnblockedNotification(params: {
+    userId: string;
+    testRunId: number;
+    testRunName: string;
+    projectId: number;
+    projectName: string;
+    testRunCaseId: number;
+    testCaseId: number;
+    testCaseName: string;
+    prerequisiteCaseName: string;
+    unblockedById: string;
+    tenantId?: string;
+  }) {
+    const title = "Test case ready to execute";
+    const message = `"${params.testCaseName}" in test run "${params.testRunName}" (project "${params.projectName}") is no longer blocked: "${params.prerequisiteCaseName}" passed.`;
+
+    return this.createNotification({
+      userId: params.userId,
+      type: NotificationType.RUN_CASE_UNBLOCKED,
+      title,
+      message,
+      relatedEntityId: params.testRunCaseId.toString(),
+      relatedEntityType: "TestRunCase",
+      tenantId: params.tenantId,
+      data: {
+        testRunId: params.testRunId,
+        testRunName: params.testRunName,
+        projectId: params.projectId,
+        projectName: params.projectName,
+        testRunCaseId: params.testRunCaseId,
+        testCaseId: params.testCaseId,
+        testCaseName: params.testCaseName,
+        prerequisiteCaseName: params.prerequisiteCaseName,
+        unblockedById: params.unblockedById,
+      },
+    });
+  }
+
+  /** Test cases a webhook action drafted with AI are ready for review. */
+  static async createCasesDraftedNotification(params: {
+    userId: string;
+    projectId: number;
+    projectName: string;
+    folderId: number;
+    folderName: string;
+    issueId: number;
+    issueKey: string;
+    issueTitle: string;
+    caseCount: number;
+    tenantId?: string;
+  }) {
+    const title = "AI-drafted test cases ready for review";
+    const message = `${params.caseCount} test case${params.caseCount === 1 ? "" : "s"} drafted for ${params.issueKey} "${params.issueTitle}" in project "${params.projectName}" — review them in "${params.folderName}".`;
+
+    return this.createNotification({
+      userId: params.userId,
+      type: NotificationType.CASES_DRAFTED,
+      title,
+      message,
+      relatedEntityId: params.folderId.toString(),
+      relatedEntityType: "RepositoryFolder",
+      tenantId: params.tenantId,
+      data: {
+        projectId: params.projectId,
+        projectName: params.projectName,
+        folderId: params.folderId,
+        folderName: params.folderName,
+        issueId: params.issueId,
+        issueKey: params.issueKey,
+        issueTitle: params.issueTitle,
+        caseCount: params.caseCount,
+      },
+    });
+  }
+
+  /**
+   * Alert fired (#651): one notification per subscriber. The
+   * stored `title`/`message` are the English fallback; the bell and the
+   * email worker render localized copy from `data`, which carries every
+   * number and id the renderers need (ids for links, names for display).
+   */
+  static async createAlertTriggeredNotification(params: {
+    targetUserIds: string[];
+    eventId: number;
+    ruleId: number;
+    ruleName: string;
+    metric: string;
+    /** Null for a system alert, whose subject lives outside any project. */
+    projectId: number | null;
+    projectName: string;
+    subjectType:
+      | "CASE"
+      | "RUN"
+      | "MILESTONE"
+      | "SESSION"
+      | "PROJECT"
+      | "WEBHOOK"
+      | "LLM_INTEGRATION"
+      | "CODE_REPOSITORY"
+      | "INTEGRATION"
+      | "QUEUE"
+      | "SYSTEM";
+    subjectId: number;
+    /** String key of a subject without an integer id (webhooks, queues, system). */
+    subjectRef?: string | null;
+    subjectName: string;
+    observedValue: number;
+    baselineValue: number | null;
+    thresholdValue: number;
+    /** The run the triggering result belongs to, for CASE subjects. */
+    testRunId?: number | null;
+    details?: Record<string, unknown>;
+    tenantId?: string;
+  }) {
+    if (params.targetUserIds.length === 0) return;
+
+    const title = `Alert fired: ${params.ruleName}`;
+    const where =
+      params.projectId == null ? "" : ` in project "${params.projectName}"`;
+    const message = `"${params.ruleName}" fired for ${params.subjectType.toLowerCase().replace("_", " ")} "${params.subjectName}"${where} (observed ${formatNumber(params.observedValue)}, threshold ${formatNumber(params.thresholdValue)}).`;
+
+    await Promise.all(
+      params.targetUserIds.map((userId) =>
+        this.createNotification({
+          userId,
+          type: NotificationType.ALERT_TRIGGERED,
+          title,
+          message,
+          relatedEntityId: params.eventId.toString(),
+          relatedEntityType: "AlertEvent",
+          tenantId: params.tenantId,
+          data: {
+            eventId: params.eventId,
+            ruleId: params.ruleId,
+            ruleName: params.ruleName,
+            metric: params.metric,
+            projectId: params.projectId,
+            projectName: params.projectName,
+            subjectType: params.subjectType,
+            subjectId: params.subjectId,
+            subjectRef: params.subjectRef ?? null,
+            subjectName: params.subjectName,
+            observedValue: params.observedValue,
+            baselineValue: params.baselineValue,
+            thresholdValue: params.thresholdValue,
+            testRunId: params.testRunId ?? null,
+            details: params.details ?? null,
           },
         })
       )
@@ -664,6 +826,80 @@ export class NotificationService {
   }
 
   /**
+   * Dispatch a REVIEW_DECISION_REVERTED notification to the original
+   * requester after the decider undoes their own decision. The requester was
+   * already told the outcome, so they need telling that it is open again and
+   * who reopened it.
+   *
+   * Only the requester is notified: the decision returns to the same
+   * assignee it was already parked with, so the reviewer side learns nothing
+   * new from a notification about their own action.
+   *
+   * Persisted `title` / `message` are English fallback only; bell + email
+   * worker re-render localized copy at display time per the
+   * `feedback_localize_new_notifications` contract.
+   */
+  static async createReviewDecisionRevertedNotification(params: {
+    requesterUserId: string;
+    reverterUserId: string;
+    reverterName: string;
+    deciderUserId: string | null;
+    deciderName: string;
+    revertedDecision: "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
+    projectId: number;
+    projectName: string;
+    entityType: "CASE" | "RUN" | "SESSION";
+    entityId: number;
+    entityName: string;
+    fromStateName: string;
+    toStateName: string;
+    reviewRequestId: string;
+  }) {
+    // The reverter is the decider; when they are also the requester (admin
+    // self-decide edge case) there is nobody left to tell.
+    if (params.requesterUserId === params.reverterUserId) return;
+
+    const entityLabel =
+      params.entityType === "CASE"
+        ? "test case"
+        : params.entityType === "RUN"
+          ? "test run"
+          : "session";
+
+    // An admin may revert a decision somebody else recorded, so "their"
+    // only holds when the reverter is the original decider.
+    const revertedOwn = params.deciderUserId === params.reverterUserId;
+    const whose = revertedOwn ? "their" : `${params.deciderName}'s`;
+
+    const title = "Review decision reverted";
+    const message = `${params.reverterName} reverted ${whose} decision on ${entityLabel} "${params.entityName}" in project "${params.projectName}" — it is awaiting review again`;
+
+    await this.createNotification({
+      userId: params.requesterUserId,
+      type: NotificationType.REVIEW_DECISION_REVERTED,
+      title,
+      message,
+      relatedEntityId: params.reviewRequestId,
+      relatedEntityType: "ReviewRequest",
+      data: {
+        reviewRequestId: params.reviewRequestId,
+        reverterUserId: params.reverterUserId,
+        reverterName: params.reverterName,
+        deciderUserId: params.deciderUserId,
+        deciderName: params.deciderName,
+        revertedDecision: params.revertedDecision,
+        projectId: params.projectId,
+        projectName: params.projectName,
+        entityType: params.entityType,
+        entityId: params.entityId,
+        entityName: params.entityName,
+        fromStateName: params.fromStateName,
+        toStateName: params.toStateName,
+      },
+    });
+  }
+
+  /**
    * Dispatch a REVIEW_REMINDER notification to each target reviewer after a
    * pending review request has been waiting longer than the configured
    * threshold. Recipients are pre-resolved by the caller (the review-reminder
@@ -701,7 +937,7 @@ export class NotificationService {
           : "session";
 
     const title = "Review still pending";
-    const message = `Reminder: ${params.requesterName}'s review request on ${entityLabel} "${params.entityName}" in project "${params.projectName}" is still waiting on you (${params.hoursPending}h pending).`;
+    const message = `Reminder: ${params.requesterName}'s review request on ${entityLabel} "${params.entityName}" in project "${params.projectName}" is still waiting on you (pending for ${formatHoursAsRelativeDuration(params.hoursPending)}).`;
 
     await Promise.all(
       params.targetUserIds.map((userId) =>
@@ -766,4 +1002,8 @@ export class NotificationService {
       },
     });
   }
+}
+
+function formatNumber(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }

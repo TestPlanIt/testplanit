@@ -93,9 +93,9 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_cases_list` | List and filter test cases in a project (by folder — optionally with all its descendants — tag, name, state, custom field, linked issue, automation flag, automated-result evidence, and more). Rows can inline the full folder path for leaf-to-area mapping. |
 | `testplanit_cases_count` | Count test cases server-side under the same filters as `cases_list`, optionally grouped by folder, top-level folder, tag, state, source, or creator — coverage rollups in one call instead of paginating. |
 | `testplanit_cases_get` | Get a single test case with its fields and steps. |
-| `testplanit_cases_create` | Create a test case, stored the way the web UI stores it: Markdown in steps and Text Long fields is formatted, custom field values are checked against the template, template defaults fill fields left out, and required fields must have a value. Optionally pass `templateId` (defaults to the template marked Default, else the project's first enabled template) and `issues` keys to link. Records the version 1 snapshot, so the case has history from the start. |
+| `testplanit_cases_create` | Create a test case, stored the way the web UI stores it: Markdown in steps and Text Long fields is formatted, custom field values are checked against the template, template defaults fill fields left out, and required fields must have a value. Optionally pass `templateId` (defaults to the project's default template, then the template marked Default, else the project's first enabled template) and `issues` keys to link. Records the version 1 snapshot, so the case has history from the start. |
 | `testplanit_cases_create_many` | Create many test cases in one call — far faster than per-case creates, with the same checks as a single create. Each case takes the same fields plus optional per-case `folderId`/`stateName`; returns a per-case success/failure result so partial failures are visible. |
-| `testplanit_cases_update` | Update a test case. Custom fields are validated against the case's template. Bumps the case version and records a snapshot, the same as saving in the web UI. Shared steps aren't supported: `steps` sets plain steps only, and replacing the steps removes any shared step groups from the case. Add or edit shared steps in the web UI. |
+| `testplanit_cases_update` | Update a test case. Custom fields are validated against the case's template; `null` clears a field (a required field refuses). Bumps the case version and records a snapshot, the same as saving in the web UI. Shared steps aren't supported: `steps` sets plain steps only, and replacing the steps removes any shared step groups from the case. Add or edit shared steps in the web UI. |
 | `testplanit_cases_delete` | Delete a test case. |
 | `testplanit_cases_generate_script` | Generate a QuickScript (AI automation test script) from one or more test cases. Resolves the project's export template and, when a code repository is connected, follows the repo's existing framework/fixtures/page objects. Requires QuickScript to be enabled for the project. Returns the generated file(s) plus the resolved framework/language/fileExtension. |
 
@@ -103,7 +103,7 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 
 | Tool | Description |
 | --- | --- |
-| `testplanit_templates_list` | List a project's enabled templates, each with the case fields it defines (display name, system name, type, required) — use it to pick a `templateId` for case creation and to learn which custom fields a template accepts. |
+| `testplanit_templates_list` | List a project's enabled templates, each with the case fields it defines (display name, system name, type, required), plus `isDefault` for the system default and `isProjectDefault` for the project's own default — use it to pick a `templateId` for case creation and to learn which custom fields a template accepts. |
 
 ### Folders
 
@@ -131,7 +131,7 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_test_run_case_iterations_list` | List the iterations (one per data row) of a data-driven case in a run, with sensitive values redacted. |
 | `testplanit_runs_create` | Create a test run, with its cases in the same create; data-driven cases get their iterations, as in the web UI. |
 | `testplanit_runs_update` | Update a test run: rename it, change its state, milestone, configuration, or tags, or complete it. A completed run can't be reopened. |
-| `testplanit_runs_cases_add` | Add test cases to a run (restores previously removed cases, untested) and generates iterations for data-driven ones. |
+| `testplanit_runs_cases_add` | Add test cases to a run (restores previously removed cases, untested; leaves out Not Started cases where the project keeps them out of runs, and says which) and generates iterations for data-driven ones. |
 | `testplanit_runs_cases_update` | Edit a case's row within a run — assign/unassign a tester or change its position. |
 | `testplanit_runs_cases_remove` | Remove test cases from a run (soft-delete, including their recorded results). |
 | `testplanit_test_run_results_list` | List execution results — manual and automated (JUnit-family) rows, discriminated by `source`. |
@@ -171,22 +171,22 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_milestones_list` | List milestones in a project. |
 | `testplanit_milestones_get` | Get a single milestone with progress. |
 | `testplanit_milestones_create` | Create a milestone. |
-| `testplanit_milestones_update` | Update a milestone. |
+| `testplanit_milestones_update` | Update a milestone. Dates are calendar days; completing it works the way the app does — the due date becomes the completion date, child milestones complete with it, and active runs and sessions complete only when asked. Synced milestones keep their tracker-owned fields. |
 | `testplanit_milestone_types_list` | List the available milestone types. |
 
 ### Reviews
 
 | Tool | Description |
 | --- | --- |
-| `testplanit_reviews_list` | List the review requests assigned to *you* — the same queue as the Review inbox in the app, covering both direct assignment and assignment to a role you hold. `view: "pending"` (default) is the work awaiting your decision; `view: "decided"` is your own decision history. Rows resolve the polymorphic subject to a name, carry the workflow transition being requested, and include the requester's submit-time note. |
+| `testplanit_reviews_list` | List the review requests assigned to *you* — what the Review inbox shows as waiting on you, covering direct assignment and assignment to the role you hold in each project, limited to what that role may approve. `view: "pending"` (default) is the work awaiting your decision; `view: "decided"` is your own decision history. Rows resolve the polymorphic subject to a name, carry the workflow transition being requested, and include the requester's submit-time note. |
 | `testplanit_reviews_decide` | Approve, request changes on, or reject a review request assigned to you. Decisions are append-only and notify the requester, and **approving applies the requested workflow transition** — agents should confirm with you before calling. A comment is required for `CHANGES_REQUESTED` and `REJECTED`. Blocked for read-only (`mode:read`) tokens, and refused unless you are the assignee with approve permission for the entity's area. **Requires a TestPlanIt instance that accepts API-token review decisions** (shipped alongside `@testplanit/mcp-server` 1.0.0-beta.2); against an older instance the tool says so and `testplanit_reviews_list` still works. |
 
 ### Code repositories
 
 | Tool | Description |
 | --- | --- |
-| `testplanit_code_repositories_list` | List code repositories linked to a project. |
-| `testplanit_repository_case_links_list` | List links between test cases and repository code. |
+| `testplanit_code_repositories_list` | List the code repositories bound to a project, one row per binding with its `purpose`: `QUICKSCRIPT` (the repository holding the project's automated tests) or `IMPACT` (the application code impact analysis reads). Settings are reduced to the provider's public keys and a derived web url; credentials are never returned. |
+| `testplanit_repository_case_links_list` | List the links between test cases: the same test in two sources, a dependency, or the case a copy was duplicated from. |
 
 ## Diagnostics
 

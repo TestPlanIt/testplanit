@@ -1,5 +1,8 @@
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { Badge } from "@/components/ui/badge";
+import { trackerLabelStyle } from "~/lib/integrations/trackerLabelStyle";
+import { isDarkTheme } from "~/utils/theme";
+import { useTheme } from "next-themes";
 import {
   Popover,
   PopoverAnchor,
@@ -13,15 +16,19 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIssueColors } from "@/hooks/useIssueColors";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import DOMPurify from "dompurify";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { ExternalLink, Loader2, Milestone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useIssueUpdateStream } from "~/hooks/useIssueUpdateStream";
+import type { ExternalIssueDetails } from "~/lib/integrations/issueDetails";
 import { Link } from "~/lib/navigation";
+import { schema } from "~/zenstack/schema";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
 import { safeExternalUrl } from "~/utils/externalUrl";
+import { apiFetch } from "~/lib/basePath";
 
 interface IssueDisplayProps {
   id: number;
@@ -42,41 +49,13 @@ interface IssueDisplayProps {
   issueTypeIconUrl?: string | null;
 }
 
-interface JiraIssueDetails {
-  key: string;
-  summary: string;
-  description: string;
-  status: {
-    name: string;
-    color?: string;
-  };
-  priority?: {
-    name: string;
-    iconUrl?: string;
-  };
-  assignee?: {
-    displayName: string;
-    avatarUrl?: string;
-  } | null;
-  reporter?: {
-    displayName: string;
-    avatarUrl?: string;
-  };
-  issueType: {
-    name: string;
-    iconUrl?: string;
-  };
-  created: string;
-  updated: string;
-}
-
 // Module-level stores that survive component remounts caused by parent query
 // invalidations. When the SSE sync fires → queryClient.invalidateQueries →
 // parent re-renders → IssuesDisplay unmounts+remounts, these maps let each
 // instance restore its prior open/data state so the popover stays visible.
 // Entries are cleared when the popover closes, so they only hold in-flight data.
 const issuePopoverOpen = new Map<number, boolean>();
-const issueJiraCache = new Map<number, JiraIssueDetails>();
+const issueDetailsCache = new Map<number, ExternalIssueDetails>();
 // Last hover-sync attempt per issue id. Module-level (not a ref) because a
 // parent refetch can remount this component while the cursor never left the
 // badge — a per-mount ref forgets the attempt and the re-fired mouseover
@@ -122,10 +101,12 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   issueTypeIconUrl,
 }) => {
   const t = useTranslations();
+  const { resolvedTheme } = useTheme();
+  const darkTheme = isDarkTheme(resolvedTheme);
   const { getPriorityStyle } = useIssueColors();
   const [isOpen, setIsOpen] = useState(() => issuePopoverOpen.get(id) ?? false);
-  const [jiraDetails, setJiraDetails] = useState<JiraIssueDetails | null>(
-    () => issueJiraCache.get(id) ?? null
+  const [details, setDetails] = useState<ExternalIssueDetails | null>(
+    () => issueDetailsCache.get(id) ?? null
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -138,20 +119,39 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   useIssueUpdateStream(projectIds);
 
   // Update module-level open state and clear cached data when closing so the
-  // next open always re-fetches fresh Jira details.
+  // next open always re-fetches fresh tracker details.
   const updateIsOpen = useCallback(
     (open: boolean) => {
       if (open) {
         issuePopoverOpen.set(id, true);
       } else {
         issuePopoverOpen.delete(id);
-        issueJiraCache.delete(id);
-        setJiraDetails(null);
+        issueDetailsCache.delete(id);
+        setDetails(null);
       }
       setIsOpen(open);
     },
     [id]
   );
+
+  // Callers on hot paths (the run page's suite query reloads on every live
+  // wake-up) leave `description` unselected to keep their payload small.
+  // `undefined` means "not loaded" — fetch it once the popover opens. A
+  // loaded-but-empty description arrives as null and skips the fetch, and the
+  // Jira branch skips it too: its popover fetches full details on open.
+  const { data: lazyIssueDetails } = useClientQueries(
+    schema
+  ).issue.useFindUnique(
+    { where: { id }, select: { description: true } },
+    {
+      enabled:
+        isOpen &&
+        description === undefined &&
+        !!id &&
+        !(integrationProvider?.toUpperCase() === "JIRA" && integrationId),
+    }
+  );
+  const effectiveDescription = description ?? lazyIssueDetails?.description;
 
   // Trigger a background sync for this issue. The freshness gate lives
   // server-side now (?trigger=hover → 5-min skip window in SyncService);
@@ -177,7 +177,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
 
     // Fire and forget — the server returns `cached: true` cheaply when the
     // issue is already fresh, so calling unconditionally is correct.
-    fetch(`/api/issues/${id}/sync?trigger=hover`, {
+    apiFetch(`/api/issues/${id}/sync?trigger=hover`, {
       method: "POST",
     }).catch((_err) => {
       // Silently fail — this is a background optimization.
@@ -193,20 +193,18 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
     };
   }, []);
 
-  // Fetch Jira issue details when popover opens
+  // Fetch the tracker's issue details when the popover opens. Only the
+  // trackers whose keys the details route resolves are asked.
+  const hasTrackerDetails =
+    ["JIRA", "GITHUB"].includes(integrationProvider?.toUpperCase() ?? "") &&
+    !!integrationId;
   useEffect(() => {
-    if (
-      isOpen &&
-      externalUrl &&
-      integrationProvider === "JIRA" &&
-      integrationId &&
-      !jiraDetails
-    ) {
+    if (isOpen && externalUrl && hasTrackerDetails && !details) {
       setIsLoading(true);
       setError(null);
 
-      fetch(
-        `/api/integrations/jira/issue-details?issueKey=${encodeURIComponent(name)}&integrationId=${integrationId}`
+      apiFetch(
+        `/api/integrations/issue-details?issueKey=${encodeURIComponent(name)}&integrationId=${integrationId}`
       )
         .then(async (res) => {
           if (!res.ok) {
@@ -215,7 +213,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               if (res.status === 401 && error.requiresAuth) {
                 throw new Error(
                   error.error ||
-                    "Please authenticate with Jira to view issue details"
+                    "Please authenticate with the issue tracker to view issue details"
                 );
               }
               throw new Error(error.error || "Failed to fetch issue details");
@@ -229,8 +227,8 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
           return res.json();
         })
         .then((data) => {
-          issueJiraCache.set(id, data);
-          setJiraDetails(data);
+          issueDetailsCache.set(id, data);
+          setDetails(data);
           setIsLoading(false);
         })
         .catch((err) => {
@@ -241,10 +239,10 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   }, [
     isOpen,
     externalUrl,
-    integrationProvider,
+    hasTrackerDetails,
     integrationId,
     name,
-    jiraDetails,
+    details,
     id,
   ]);
 
@@ -363,14 +361,14 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                 {error}
               </div>
             )}
-            {jiraDetails && !isLoading && !error && (
+            {details && !isLoading && !error && (
               <div className="p-4 space-y-3">
                 {/* Header */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-1">
                     <IssueTypeIcon
-                      issueTypeName={jiraDetails.issueType?.name}
-                      iconUrl={jiraDetails.issueType?.iconUrl}
+                      issueTypeName={details.issueType?.name}
+                      iconUrl={details.issueType?.iconUrl}
                       className="h-4 w-4"
                     />
                     {safeHref ? (
@@ -380,27 +378,27 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                         rel="noopener noreferrer"
                         className="font-semibold hover:text-primary hover:underline"
                       >
-                        {jiraDetails.key}
+                        {details.key}
                       </Link>
                     ) : (
-                      <span className="font-semibold">{jiraDetails.key}</span>
+                      <span className="font-semibold">{details.key}</span>
                     )}
                   </div>
                   <IssueStatusDisplay
-                    status={jiraDetails.status.name}
+                    status={details.status.name}
                     className="text-xs"
                   />
                 </div>
 
                 {/* Summary */}
-                <h4 className="font-medium">{jiraDetails.summary}</h4>
+                <h4 className="font-medium">{details.summary}</h4>
 
                 {/* Description */}
-                {jiraDetails.description && (
+                {details.description && (
                   <div
                     className="text-sm text-muted-foreground line-clamp-3 [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
                     dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(jiraDetails.description, {
+                      __html: DOMPurify.sanitize(details.description, {
                         ALLOWED_TAGS: [
                           "p",
                           "br",
@@ -420,42 +418,43 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
 
                 {/* Priority and Assignee */}
                 <div className="flex justify-between items-center gap-4 text-sm">
-                  {jiraDetails.priority && (
+                  {details.priority && (
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-xs">
                         {t("common.fields.priority")}:
                       </span>
                       <Badge
+                        data-status-surface
                         variant="outline"
                         className="text-xs gap-1"
-                        style={getPriorityStyle(jiraDetails.priority.name)}
+                        style={getPriorityStyle(details.priority.name)}
                       >
-                        {jiraDetails.priority.iconUrl && (
+                        {details.priority.iconUrl && (
                           /* eslint-disable-next-line @next/next/no-img-element */
                           <img
-                            src={jiraDetails.priority.iconUrl}
-                            alt={jiraDetails.priority.name}
+                            src={details.priority.iconUrl}
+                            alt={details.priority.name}
                             className="h-3 w-3"
                           />
                         )}
-                        {jiraDetails.priority.name}
+                        {details.priority.name}
                       </Badge>
                     </div>
                   )}
-                  {jiraDetails.assignee && (
+                  {details.assignee && (
                     <div className="flex items-center gap-1">
-                      {jiraDetails.assignee.avatarUrl && (
+                      {details.assignee.avatarUrl && (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
-                          src={jiraDetails.assignee.avatarUrl}
-                          alt={jiraDetails.assignee.displayName}
+                          src={details.assignee.avatarUrl}
+                          alt={details.assignee.displayName}
                           className="h-5 w-5 rounded-full"
                         />
                       )}
                       <span className="text-muted-foreground">
                         {t("common.ui.issues.assignee")}:
                       </span>
-                      <span>{jiraDetails.assignee.displayName}</span>
+                      <span>{details.assignee.displayName}</span>
                     </div>
                   )}
                 </div>
@@ -464,7 +463,9 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                 <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
                   <span>
                     {t("common.ui.issues.updated")}
-                    {new Date(jiraDetails.updated).toLocaleDateString()}
+                    {details.updated
+                      ? new Date(details.updated).toLocaleDateString()
+                      : ""}
                   </span>
                   {safeHref && (
                     <Link
@@ -506,9 +507,11 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                 ? "Redmine"
                 : integrationProvider === "MANTISBT"
                   ? "MantisBT"
-                  : integrationProvider === "SIMPLE_URL"
-                    ? "External"
-                    : integrationProvider;
+                  : integrationProvider === "CLICKUP"
+                    ? "ClickUp"
+                    : integrationProvider === "SIMPLE_URL"
+                      ? "External"
+                      : integrationProvider;
 
     return (
       <div
@@ -580,11 +583,11 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               )}
 
               {/* Description */}
-              {description && (
+              {effectiveDescription && (
                 <div
                   className="text-sm text-muted-foreground line-clamp-3 [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
                   dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(description, {
+                    __html: DOMPurify.sanitize(effectiveDescription, {
                       ALLOWED_TAGS: [
                         "p",
                         "br",
@@ -610,6 +613,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                       {t("common.fields.priority")}:
                     </span>
                     <Badge
+                      data-status-surface
                       variant="outline"
                       className="text-xs"
                       style={getPriorityStyle(priority)}
@@ -618,6 +622,60 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                     </Badge>
                   </div>
                 )}
+
+              {/* What only the tracker knows, once it has answered */}
+              {details && details.assignees.length > 0 && (
+                <div className="flex items-center gap-1 text-sm">
+                  {details.assignees[0].avatarUrl && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={details.assignees[0].avatarUrl}
+                      alt={details.assignees[0].displayName}
+                      className="h-5 w-5 rounded-full"
+                    />
+                  )}
+                  <span className="text-muted-foreground">
+                    {t("common.ui.issues.assignee")}:
+                  </span>
+                  <span>
+                    {details.assignees
+                      .map((assignee) => assignee.displayName)
+                      .join(", ")}
+                  </span>
+                </div>
+              )}
+              {details && details.labels.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1 text-sm">
+                  <span className="text-muted-foreground text-xs">
+                    {t(
+                      "projects.settings.integrations.integration.requirementsConfig.labelsLabel"
+                    )}
+                    :
+                  </span>
+                  {details.labels.map((label) => (
+                    <Badge
+                      key={label}
+                      variant="outline"
+                      className="text-xs"
+                      style={trackerLabelStyle(
+                        details.labelColors?.[label],
+                        darkTheme
+                      )}
+                    >
+                      {label}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {details?.milestone && (
+                <div className="flex items-center gap-1 text-sm">
+                  <Milestone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground text-xs">
+                    {t("common.fields.milestone")}:
+                  </span>
+                  <span>{details.milestone.name}</span>
+                </div>
+              )}
 
               {/* Footer */}
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">

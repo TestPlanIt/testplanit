@@ -7,8 +7,13 @@ import { useDebounce } from "@/components/Debounce";
 import { UnifiedDragPreview } from "@/components/dnd/UnifiedDragPreview";
 import { DragStateBridge } from "@/components/dnd/DragStateBridge";
 import { DropZoneOverlay } from "@/components/dnd/DropZoneOverlay";
+import {
+  CopyIntoFolderDropTarget,
+  type CopyDropHandler,
+  type CopyDropItems,
+} from "@/components/dnd/CopyIntoFolderDropTarget";
 import { PageFileDropOverlay } from "@/components/PageFileDropOverlay";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import {
   ActionOverflow,
   useContainerCompact,
@@ -66,6 +71,7 @@ import {
   ChevronsUpDown,
   CircleCheckBig,
   CirclePlus,
+  NotebookPen,
   Download,
   FolderDown,
   FolderPlus,
@@ -109,14 +115,19 @@ import { ProjectIcon } from "~/components/ProjectIcon";
 import { usePageFileDrop } from "~/hooks/usePageFileDrop";
 import { usePendingReviewCaseIds } from "~/hooks/usePendingReviewCaseIds";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useUrlParamWriter } from "~/hooks/useUrlParamWriter";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
-import { usePathname, useRouter } from "~/lib/navigation";
 import { useFolderStats } from "~/lib/useFolderStats";
 import { AddCase } from "./AddCase";
+import { StagedCasesSheet } from "./StagedCasesSheet";
+import {
+  useSavedCaseDrafts,
+  type SavedCaseDraft,
+} from "~/hooks/useSavedCaseDrafts";
 import { AddFolder } from "./AddFolder";
 import Cases, { type CaseNav } from "./Cases";
 import type { RunCaseSelection } from "~/lib/execution/selection";
@@ -126,6 +137,7 @@ import { GenerateTestCasesWizard } from "./GenerateTestCasesWizard";
 import { ImportCasesWizard } from "./ImportCasesWizard";
 import type { FolderNode } from "./TreeView";
 import TreeView from "./TreeView";
+import { apiFetch } from "~/lib/basePath";
 
 // Conditional wrapper to avoid nested DndProviders.
 // When skipDndProvider is true, we skip both the DndProvider and UnifiedDragPreview
@@ -452,8 +464,6 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const numericProjectId = parseInt(projectId, 10);
   const isValidProjectId = !isNaN(numericProjectId);
 
-  const router = useRouter();
-  const pathName = usePathname();
   const { data: session, status: sessionStatus } = useSession();
 
   // Use the validated numericProjectId here
@@ -473,6 +483,29 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   );
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const [addCaseOpen, setAddCaseOpen] = useState(false);
+  /** A staged case being reopened in the Add Case form. */
+  const [addCaseDraft, setAddCaseDraft] = useState<SavedCaseDraft | null>(null);
+  const [stagedCasesOpen, setStagedCasesOpen] = useState(false);
+  // `?staged=1` (the link from another project's sheet) opens the sheet on
+  // arrival, once per project: the page rewrites its own URL parameters
+  // often while that one is still in the address bar, and a close must stay
+  // closed. Client-side navigation between projects reuses this component,
+  // so a state initializer would not see the new URL.
+  const stagedParam = searchParams.get("staged");
+  const stagedOpenedForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (stagedParam !== "1") return;
+    if (stagedOpenedForRef.current === projectIdParam) return;
+    stagedOpenedForRef.current = projectIdParam;
+    setStagedCasesOpen(true);
+  }, [stagedParam, projectIdParam]);
+  // The count for the "My Staged Cases" action's label; the sheet shares the
+  // same query, so this costs no extra request.
+  const { drafts: stagedCases } = useSavedCaseDrafts(
+    Number(projectIdParam),
+    session?.user?.id
+  );
+  const [addCaseFolderId, setAddCaseFolderId] = useState<number | null>(null);
   const [generateWizardOpen, setGenerateWizardOpen] = useState(false);
 
   // Collapse the list-pane header actions (Import / Generate / Add Case) into
@@ -574,47 +607,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   }, [effectiveFullWidth]);
 
   // --- Single owner for this component's URL writes ------------------------
-  // App Router navigations are async, so two `router.replace` calls composed
-  // from separate `window.location.search` reads each see the pre-write URL
-  // and the second silently drops the first's param. Every writer here goes
-  // through this helper, which composes from the freshest search string it
-  // knows: the value it last wrote, until the router commits it and
-  // window.location catches up. `useSearchParams` is deliberately not the
-  // source — TreeView writes `node` through raw history.replaceState and the
-  // snapshot lags (ColumnSelection documents the same). The codec's
+  // Shared with every other writer in the page through the process-wide
+  // overlay in `~/utils/urlParamWrite`; that module documents why. The codec's
   // readability pass runs on the way out so readable `f` tokens written by
   // useRepositoryFilters are not re-encoded on an unrelated write.
-  const pendingUrlWriteRef = useRef<{ from: string; to: string } | null>(null);
-  const replaceUrlParams = useCallback(
-    (mutate: (params: URLSearchParams) => void) => {
-      const currentSearch = window.location.search;
-      const pending = pendingUrlWriteRef.current;
-      const baseSearch =
-        pending && pending.from === currentSearch ? pending.to : currentSearch;
-      const query = new URLSearchParams(baseSearch);
-      const before = query.toString();
-      mutate(query);
-      const after = query.toString();
-      if (after === before) return;
-      pendingUrlWriteRef.current = {
-        from: currentSearch,
-        to: after ? `?${after}` : "",
-      };
-      const qs = applyReadabilityPass(after);
-      router.replace(qs ? `${pathName}?${qs}` : pathName, { scroll: false });
-    },
-    [pathName, router]
-  );
-
-  // Once the router commits (window.location moves off the value the overlay
-  // was composed against) the overlay is spent. Dropping it keeps a later
-  // back-navigation that happens to land on the same URL from replaying it.
-  useEffect(() => {
-    const pending = pendingUrlWriteRef.current;
-    if (pending && window.location.search !== pending.from) {
-      pendingUrlWriteRef.current = null;
-    }
-  }, [searchParams]);
+  const replaceUrlParams = useUrlParamWriter(applyReadabilityPass);
 
   const closeDetails = useCallback(() => {
     replaceUrlParams((p) => p.delete("case"));
@@ -803,6 +800,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // away before the flag is known.
   const impactEnabled = project?.impactEnabled;
   const codePinsActive = impactEnabled === true;
+  const riskScoreActive = project?.riskScoringEnabled === true;
   const filterRegistry = useMemo(
     () =>
       buildFilterDimensions({
@@ -810,12 +808,14 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         includeRunDimensions,
         includeInReview: reviewWorkflowActive,
         includeCodePins: codePinsActive,
+        includeRiskScore: riskScoreActive,
       }),
     [
       mirroredDynamicFields.fields,
       includeRunDimensions,
       reviewWorkflowActive,
       codePinsActive,
+      riskScoreActive,
     ]
   );
 
@@ -859,7 +859,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       activeSearchKey,
     ],
     queryFn: async () => {
-      const response = await fetch("/api/repository-cases/view-options", {
+      const response = await apiFetch("/api/repository-cases/view-options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1537,6 +1537,24 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     setFolderHierarchy(hierarchy);
   }, []);
 
+  // The tree owns the copy job (spinner on the target node, completion toasts,
+  // refetches), so a copy dropped on the case list runs through its handler.
+  const copyDropHandlerRef = useRef<CopyDropHandler | null>(null);
+  const handleCopyDropHandlerReady = useCallback((handler: CopyDropHandler) => {
+    copyDropHandlerRef.current = handler;
+  }, []);
+  const handleCopyIntoSelectedFolder = useCallback(
+    (items: CopyDropItems) => {
+      if (selectedFolderId == null || !selectedFolderName) return;
+      void copyDropHandlerRef.current?.(
+        items,
+        selectedFolderId,
+        selectedFolderName
+      );
+    },
+    [selectedFolderId, selectedFolderName]
+  );
+
   const handleRefetchFolders = useCallback(
     (refetch: () => Promise<unknown>) => {
       refetchFoldersRef.current = refetch;
@@ -1617,7 +1635,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       setEsSearchLoading(true);
       try {
         // First page
-        const response = await fetch("/api/search", {
+        const response = await apiFetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(searchBody(1)),
@@ -1641,7 +1659,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
           );
           const pageResults = await Promise.all(
             remainingPages.map((page) =>
-              fetch("/api/search", {
+              apiFetch("/api/search", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(searchBody(page)),
@@ -2309,6 +2327,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             onCopyMoveFolder={
                               showCopyMove ? handleCopyMoveFolder : undefined
                             }
+                            onCopyDropHandlerReady={handleCopyDropHandlerReady}
                           />
                         ) : null}
                       </DropZoneOverlay>
@@ -2461,6 +2480,17 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                       testId: "generate-cases-button",
                                     },
                                     {
+                                      key: "stagedCases",
+                                      icon: NotebookPen,
+                                      label:
+                                        stagedCases.length > 0
+                                          ? `${t("repository.savedDrafts.title")} (${stagedCases.length})`
+                                          : t("repository.savedDrafts.title"),
+                                      onClick: () => setStagedCasesOpen(true),
+                                      hidden: !canAddEdit,
+                                      testId: "staged-cases-button",
+                                    },
+                                    {
                                       key: "addCase",
                                       icon: CirclePlus,
                                       label: t("repository.cases.addCase"),
@@ -2471,11 +2501,56 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                     },
                                   ]}
                                 />
+                                {canAddEdit && (
+                                  <StagedCasesSheet
+                                    projectId={Number(projectIdParam)}
+                                    open={stagedCasesOpen}
+                                    onOpenChange={setStagedCasesOpen}
+                                    onCasesCreated={() =>
+                                      void refetchFolderStats()
+                                    }
+                                    onOpenDraft={(draft) => {
+                                      // The Add Case form needs a folder. A
+                                      // draft whose folder is gone opens in
+                                      // the selected folder instead.
+                                      let folderForDraft = draft.folderId;
+                                      if (!folderForDraft) {
+                                        if (!selectedFolderId) {
+                                          toast.error(
+                                            t(
+                                              "repository.savedDrafts.selectFolderFirst"
+                                            )
+                                          );
+                                          return;
+                                        }
+                                        folderForDraft = selectedFolderId;
+                                        toast.info(
+                                          t(
+                                            "repository.savedDrafts.folderFallback",
+                                            {
+                                              folder: selectedFolderName ?? "",
+                                            }
+                                          )
+                                        );
+                                      }
+                                      setAddCaseDraft(draft);
+                                      setAddCaseFolderId(folderForDraft);
+                                      setAddCaseOpen(true);
+                                    }}
+                                  />
+                                )}
                                 {addCaseOpen && (
                                   <AddCase
-                                    folderId={selectedFolderId ?? 0}
+                                    folderId={
+                                      addCaseFolderId ?? selectedFolderId ?? 0
+                                    }
                                     open={addCaseOpen}
-                                    onClose={() => setAddCaseOpen(false)}
+                                    onClose={() => {
+                                      setAddCaseOpen(false);
+                                      setAddCaseDraft(null);
+                                      setAddCaseFolderId(null);
+                                    }}
+                                    savedDraft={addCaseDraft}
                                   />
                                 )}
                               </div>
@@ -2528,10 +2603,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                     if (!isEmpty) {
                                       return (
                                         <div className="ms-4 bg-muted rounded-lg">
-                                          <TipTapEditor
+                                          <ReadOnlyRichText
                                             content={docsContent}
-                                            readOnly={true}
-                                            projectId={projectIdParam}
                                             className="prose prose-sm max-w-none dark:prose-invert"
                                           />
                                         </div>
@@ -2582,50 +2655,55 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           kind="reorder"
                           testId="reorder-drop-zone"
                         >
-                          {/* Search intersects, it no longer bypasses (spec
+                          <CopyIntoFolderDropTarget
+                            onCopy={handleCopyIntoSelectedFolder}
+                            testId="copy-into-folder-drop-target"
+                          >
+                            {/* Search intersects, it no longer bypasses (spec
                               §9): folder scope, grouping axis and predicates
                               all stay real; the resolved id set rides
                               alongside as searchResultIds. */}
-                          <Cases
-                            folderId={selectedFolderId}
-                            viewType={selectedItem}
-                            predicates={predicates}
-                            filterRegistry={filterRegistry}
-                            predicatesKey={canonicalKey}
-                            onClearFilters={clearPredicates}
-                            inReviewCaseIds={inReviewCaseIds}
-                            codePinsEnabled={codePinsActive}
-                            isSelectionMode={isSelectionMode}
-                            selectedTestCases={selectedTestCases}
-                            selectedRunIds={selectedRunIds}
-                            onSelectionChange={onSelectionChange}
-                            onConfirm={onConfirm}
-                            hideHeader={hideHeader}
-                            isRunMode={isRunMode}
-                            onRunSelectionChange={onRunSelectionChange}
-                            onTestCaseClick={onTestCaseClick}
-                            isCompleted={isCompleted}
-                            compositionLocked={compositionLocked}
-                            canAddEdit={canAddEdit}
-                            canAddEditRun={canAddEditRun}
-                            canDelete={canDelete}
-                            selectedFolderCaseCount={selectedFolderCaseCount}
-                            overridePagination={overridePagination}
-                            searchResultIds={activeSearchResultIds}
-                            searchKey={activeSearchKey}
-                            searchText={activeSearchText}
-                            searchPending={searchPending}
-                            searchFailed={searchFailed}
-                            copyMoveFolderId={copyMoveFolderId}
-                            copyMoveFolderName={copyMoveFolderName}
-                            onCopyMoveFolderDialogClose={
-                              handleCopyMoveFolderDialogClose
-                            }
-                            descendantFolderIds={descendantFolderIds}
-                            showDescendants={showDescendants}
-                            folderPathMap={folderPathMap}
-                            onCaseNavChange={setCaseNav}
-                          />
+                            <Cases
+                              folderId={selectedFolderId}
+                              viewType={selectedItem}
+                              predicates={predicates}
+                              filterRegistry={filterRegistry}
+                              predicatesKey={canonicalKey}
+                              onClearFilters={clearPredicates}
+                              inReviewCaseIds={inReviewCaseIds}
+                              codePinsEnabled={codePinsActive}
+                              isSelectionMode={isSelectionMode}
+                              selectedTestCases={selectedTestCases}
+                              selectedRunIds={selectedRunIds}
+                              onSelectionChange={onSelectionChange}
+                              onConfirm={onConfirm}
+                              hideHeader={hideHeader}
+                              isRunMode={isRunMode}
+                              onRunSelectionChange={onRunSelectionChange}
+                              onTestCaseClick={onTestCaseClick}
+                              isCompleted={isCompleted}
+                              compositionLocked={compositionLocked}
+                              canAddEdit={canAddEdit}
+                              canAddEditRun={canAddEditRun}
+                              canDelete={canDelete}
+                              selectedFolderCaseCount={selectedFolderCaseCount}
+                              overridePagination={overridePagination}
+                              searchResultIds={activeSearchResultIds}
+                              searchKey={activeSearchKey}
+                              searchText={activeSearchText}
+                              searchPending={searchPending}
+                              searchFailed={searchFailed}
+                              copyMoveFolderId={copyMoveFolderId}
+                              copyMoveFolderName={copyMoveFolderName}
+                              onCopyMoveFolderDialogClose={
+                                handleCopyMoveFolderDialogClose
+                              }
+                              descendantFolderIds={descendantFolderIds}
+                              showDescendants={showDescendants}
+                              folderPathMap={folderPathMap}
+                              onCaseNavChange={setCaseNav}
+                            />
+                          </CopyIntoFolderDropTarget>
                         </DropZoneOverlay>
                       </ResizablePanel>
                       {selectedCaseId && (

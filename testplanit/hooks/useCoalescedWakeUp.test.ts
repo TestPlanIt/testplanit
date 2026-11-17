@@ -132,4 +132,95 @@ describe("useCoalescedWakeUp", () => {
     });
     expect(onFlush).not.toHaveBeenCalled();
   });
+
+  it("holds the next round while a flush is in flight, then catches up", async () => {
+    // A flush that returns a promise (a round of refetches) must finish
+    // before another round starts — otherwise a refetch slower than the
+    // window gets aborted and restarted on every wake-up, and the aborted
+    // work piles up server-side.
+    let resolveRound!: () => void;
+    const onFlush = vi.fn(
+      (_runIds: ReadonlySet<number | null>) =>
+        new Promise<void>((resolve) => {
+          resolveRound = resolve;
+        })
+    );
+    const { result } = renderHook(() => useCoalescedWakeUp(onFlush));
+
+    act(() => {
+      result.current(wakeUp(1));
+      vi.advanceTimersByTime(WAKE_UP_COALESCE_MS);
+    });
+    expect(onFlush).toHaveBeenCalledTimes(1);
+
+    // Wake-ups landing mid-round accumulate; no amount of elapsed time
+    // starts another round while the first is still in flight.
+    act(() => {
+      result.current(wakeUp(2));
+      vi.advanceTimersByTime(WAKE_UP_COALESCE_MS * 10);
+      result.current(wakeUp(3));
+      vi.advanceTimersByTime(WAKE_UP_COALESCE_MS * 10);
+    });
+    expect(onFlush).toHaveBeenCalledTimes(1);
+
+    // Settling the round schedules one catch-up window for what accumulated
+    // — even with no further wake-ups, so a trailing result isn't missed.
+    await act(async () => {
+      resolveRound();
+    });
+    expect(onFlush).toHaveBeenCalledTimes(1);
+    act(() => {
+      vi.advanceTimersByTime(WAKE_UP_COALESCE_MS);
+    });
+    expect(onFlush).toHaveBeenCalledTimes(2);
+    expect(onFlush.mock.calls[1][0]).toEqual(new Set([2, 3]));
+  });
+
+  it("keeps flushing after a round rejects", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const onFlush = vi.fn(() => Promise.reject(new Error("network")));
+      const { result } = renderHook(() => useCoalescedWakeUp(onFlush));
+
+      await act(async () => {
+        result.current(wakeUp(1));
+        vi.advanceTimersByTime(WAKE_UP_COALESCE_MS);
+      });
+      expect(onFlush).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        result.current(wakeUp(2));
+        vi.advanceTimersByTime(WAKE_UP_COALESCE_MS);
+      });
+      expect(onFlush).toHaveBeenCalledTimes(2);
+      expect(warn).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("doesn't schedule a catch-up round after unmount", async () => {
+    let resolveRound!: () => void;
+    const onFlush = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveRound = resolve;
+        })
+    );
+    const { result, unmount } = renderHook(() => useCoalescedWakeUp(onFlush));
+
+    act(() => {
+      result.current(wakeUp(1));
+      vi.advanceTimersByTime(WAKE_UP_COALESCE_MS);
+      result.current(wakeUp(2)); // accumulates during the in-flight round
+    });
+    unmount();
+    await act(async () => {
+      resolveRound();
+    });
+    act(() => {
+      vi.advanceTimersByTime(WAKE_UP_COALESCE_MS * 2);
+    });
+    expect(onFlush).toHaveBeenCalledTimes(1);
+  });
 });

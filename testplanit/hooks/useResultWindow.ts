@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { SessionSummaryData } from "~/app/api/sessions/[sessionId]/summary/route";
 import type { TestRunSummaryData } from "~/lib/services/testRunSummary-shared";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * A run's or session's execution window, derived from its results.
@@ -59,7 +60,7 @@ export function useTestRunResultWindow({
   const { data } = useQuery<TestRunSummaryData>({
     queryKey: ["testRunSummary", testRunId],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/test-runs/${testRunId}/summary?includeCaseDetails=true`
       );
       if (!response.ok) {
@@ -97,7 +98,7 @@ export function useSessionResultWindow({
   const { data } = useQuery<SessionSummaryData>({
     queryKey: ["sessionSummary", sessionId],
     queryFn: async () => {
-      const response = await fetch(`/api/sessions/${sessionId}/summary`);
+      const response = await apiFetch(`/api/sessions/${sessionId}/summary`);
       if (!response.ok) {
         throw new Error("Failed to fetch session summary");
       }

@@ -1,5 +1,6 @@
 import { baseDb } from "@/lib/db";
 import { resolveRequestDateRange } from "~/lib/reports/dateRangePresets";
+import { getReportSnapshotMaxRows } from "~/lib/reports/reportSnapshotCap";
 import { sql, type RawBuilder } from "kysely";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
@@ -91,9 +92,17 @@ export async function handleExecutionLogPOST(
 
     const projectIdNum = projectId ? Number(projectId) : null;
     const pageNum = Math.max(1, Number(page));
+    // "All" (share-link replay, API clients) serves the log from the top
+    // up to the frozen-report row cap — the same bound a frozen copy of
+    // the report keeps — never the unbounded set: every row carries its
+    // step sub-rows, and the largest installs hold hundreds of thousands.
+    // `total` still reports the complete count. The ReportBuilder pages
+    // in windows of up to 200 and the CSV export walks every page.
     const pageSizeNum =
-      pageSize === "All" ? 1000 : Math.min(Math.max(Number(pageSize), 1), 200);
-    const skip = (pageNum - 1) * pageSizeNum;
+      pageSize === "All"
+        ? getReportSnapshotMaxRows()
+        : Math.min(Math.max(Number(pageSize), 1), 200);
+    const skip = pageSize === "All" ? 0 : (pageNum - 1) * pageSizeNum;
 
     // ---- shared filters -------------------------------------------------
     // The log lists executions from BOTH sources: manual results
@@ -129,9 +138,7 @@ export async function handleExecutionLogPOST(
       project: sql`project_name`,
     };
     const orderExpr = sortColumnSql[sortColumn] ?? sql`executed_at`;
-    // "All" serves the complete set (product ruling) — no page window.
-    const pageWindow =
-      pageSize === "All" ? sql`` : sql`LIMIT ${pageSizeNum} OFFSET ${skip}`;
+    const pageWindow = sql`LIMIT ${pageSizeNum} OFFSET ${skip}`;
 
     const rawRows = (
       await sql<CombinedExecutionRow>`

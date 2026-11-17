@@ -1,5 +1,8 @@
 "use client";
 import * as d3 from "d3";
+// d3 ≥7.9.2 marks itself side-effect-free, so the bundler drops the
+// d3-transition module that installs selection.transition(); import it directly.
+import "d3-transition";
 import { useLocale } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
@@ -23,11 +26,14 @@ interface ReportMultiLineChartProps {
   data: MultiLineSeries[];
   /** Format Y-axis ticks as durations (values are seconds). */
   durationTicks?: boolean;
+  /** Tooltip label for a point's date (e.g. the period it covers). */
+  formatDate?: (date: Date) => string;
 }
 
 export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
   data,
   durationTicks = false,
+  formatDate,
 }) => {
   const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -191,7 +197,9 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
           const year = d.date.getUTCFullYear();
           const month = d.date.getUTCMonth() + 1;
           const day = d.date.getUTCDate();
-          const formattedDate = `${month}/${day}/${year}`;
+          const formattedDate = formatDate
+            ? formatDate(d.date)
+            : `${month}/${day}/${year}`;
           tooltipRef.current.innerHTML = `<strong>${
             d.seriesName
           }</strong><br/>${formattedDate}<br/>Value: ${d.formattedValue}`;
@@ -222,7 +230,7 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
       .style("opacity", 1);
 
     // Legend will be rendered in a separate HTML container below
-  }, [data, width, height, locale, durationTicks]);
+  }, [data, width, height, locale, durationTicks, formatDate]);
 
   return (
     <div

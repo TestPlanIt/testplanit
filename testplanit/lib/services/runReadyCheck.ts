@@ -28,12 +28,16 @@ import { MANUAL_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 export const JOB_CHECK_RUN_READY = "check-run-ready";
 
 /**
- * Evaluation is deferred by this much so the worker reads committed state —
- * the plugin hook that enqueues it runs inside the writer's transaction.
- * Doubles as a debounce: a bulk submission touching hundreds of cases
- * collapses onto one job and evaluates once.
+ * How long a run's cases must go untouched before readiness is evaluated.
+ *
+ * The person who records the last result is prompted to complete the run on
+ * the spot, and the check skips completed runs — so this window is what keeps
+ * everyone else from being told about a run that is closed moments later. It
+ * also means the worker reads committed state (the plugin hook that enqueues
+ * runs inside the writer's transaction), and that a bulk submission touching
+ * hundreds of cases evaluates once.
  */
-const READY_CHECK_DELAY_MS = 5000;
+export const READY_CHECK_DELAY_MS = 5 * 60 * 1000;
 
 export interface RunReadyCheckJobData {
   runId: number;
@@ -42,7 +46,9 @@ export interface RunReadyCheckJobData {
 
 /**
  * Deduplication id for a run's pending check. While a job carrying this id is
- * queued, further enqueues for the same run are dropped; the id expires with
+ * still delayed, a further enqueue for the same run replaces it and restarts
+ * the delay, so the check runs once the run has been quiet for the whole
+ * window rather than a fixed time after its first write. The id expires with
  * the delay, so a check that fails never blocks the next one. The job id is
  * left to BullMQ on purpose: a fixed job id would also collide with a failed
  * job kept for inspection, and BullMQ never re-adds an id it already holds.
@@ -74,6 +80,8 @@ export async function enqueueRunReadyCheck(
         deduplication: {
           id: runReadyDedupId(runId, tenantId),
           ttl: READY_CHECK_DELAY_MS,
+          extend: true,
+          replace: true,
         },
         delay: READY_CHECK_DELAY_MS,
         removeOnComplete: true,

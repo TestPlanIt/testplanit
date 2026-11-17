@@ -282,17 +282,30 @@ export function TestCasesSection({
     configurationsFromUrl,
   ]);
 
-  // Compute the selected run IDs for multi-config runs
+  // Compute the selected run IDs for multi-config runs. Depends on the run's
+  // id fields rather than `testRunData`: that object changes identity on every
+  // live wake-up, and a new array here rebuilds the case table's columns
+  // (remounting every cell of every row).
+  const testRunId = testRunData?.id;
+  const configurationGroupId = testRunData?.configurationGroupId;
   const selectedRunIds = useMemo(() => {
-    if (
-      !testRunData?.configurationGroupId ||
-      selectedConfigurations.length === 0
-    ) {
+    if (!configurationGroupId || selectedConfigurations.length === 0) {
       // Not a multi-config run or no configurations selected, use current run only
-      return testRunData ? [testRunData.id] : [];
+      return testRunId ? [testRunId] : [];
     }
     return selectedConfigurations.map((run) => run.id);
-  }, [testRunData, selectedConfigurations]);
+  }, [testRunId, configurationGroupId, selectedConfigurations]);
+
+  // The run's case ids, keyed on their contents for the same reason: a result
+  // recorded by anyone changes a case's status and so `testRunData.testCases`,
+  // but only adding or removing a case should reach the case table.
+  const runCaseIdsKey = (testRunData?.testCases ?? [])
+    .map((tc) => tc.repositoryCaseId)
+    .join(",");
+  const runCaseIds = useMemo(
+    () => (runCaseIdsKey ? runCaseIdsKey.split(",").map(Number) : []),
+    [runCaseIdsKey]
+  );
 
   // Compute the combined test cases count from all selected configurations (for display)
   const combinedTestCasesCount = useMemo(() => {
@@ -614,9 +627,7 @@ export function TestCasesSection({
           <ProjectRepository
             isSelectionMode={isEditMode && canAddEdit && !compositionLocked}
             selectedTestCases={
-              isEditMode && !compositionLocked
-                ? selectedTestCases
-                : testRunData.testCases.map((tc) => tc.repositoryCaseId)
+              isEditMode && !compositionLocked ? selectedTestCases : runCaseIds
             }
             selectedRunIds={
               isMultiConfigRun && (!isEditMode || compositionLocked)

@@ -24,6 +24,7 @@ import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import type { RepositoryCaseSource } from "~/zenstack/models";
 import type { StepFormField } from "@/[locale]/projects/repository/[projectId]/StepsForm";
 import StepsForm from "@/[locale]/projects/repository/[projectId]/StepsForm";
+import { apiFetch } from "~/lib/basePath";
 
 interface MatchMember {
   id: number;
@@ -177,7 +178,7 @@ export function StepDuplicateConversionDialog({
           : null,
       }));
 
-      const res = await fetch("/api/step-scan/convert", {
+      const res = await apiFetch("/api/step-scan/convert", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

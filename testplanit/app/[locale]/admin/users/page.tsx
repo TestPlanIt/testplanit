@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { AddUser } from "./AddUser";
 import { DeleteUser } from "./DeleteUser";
 import { EditUser } from "./EditUser";
+import { apiFetch } from "~/lib/basePath";
 
 export default function UserListPage() {
   return <UserList />;
@@ -75,7 +76,7 @@ function UserList() {
       try {
         // Use dedicated update API endpoint instead of ZenStack
         // (ZenStack 2.21+ has issues with nested update operations)
-        const response = await fetch(`/api/users/${id}`, {
+        const response = await apiFetch(`/api/users/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ [key]: value }),
@@ -99,7 +100,7 @@ function UserList() {
     if (!forcingUser) return;
     setIsForceLoading(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/admin/users/${forcingUser.id}/force-change-password`,
         { method: "POST" }
       );
@@ -122,7 +123,7 @@ function UserList() {
     if (!revokingUser) return;
     setIsRevokeLoading(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/admin/users/${revokingUser.id}/revoke-password`,
         { method: "POST" }
       );

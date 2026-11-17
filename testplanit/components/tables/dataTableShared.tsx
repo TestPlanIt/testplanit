@@ -176,7 +176,11 @@ export const getCommonPinningStyles = <TData extends RowData>(
         ? "-4px 0 8px -4px rgba(0,0,0,0.3)"
         : undefined,
     left: isPinned === "start" ? `${column.getStart("start")}px` : undefined,
-    right: isPinned === "end" ? `${column.getStart("end")}px` : undefined,
+    // `right` is the distance to the RIGHT edge, so it must count the pinned
+    // columns AFTER this one — getStart() counts the ones before, which is
+    // only equal (0) when a single column is pinned right. With two or more it
+    // reverses their order and overlaps them.
+    right: isPinned === "end" ? `${column.getAfter("end")}px` : undefined,
     position: isPinned ? "sticky" : "relative",
     width: column.getSize(),
     maxWidth: column.columnDef.maxSize,
@@ -204,7 +208,9 @@ export function getFlexPinningStyles<TData extends RowData>(
   return {
     position: "sticky",
     left: isPinned === "start" ? column.getStart("start") : undefined,
-    right: isPinned === "end" ? column.getStart("end") : undefined,
+    // See getCommonPinningStyles — the right offset counts the pinned columns
+    // after this one, not before.
+    right: isPinned === "end" ? column.getAfter("end") : undefined,
     zIndex: 2,
     boxShadow: isLastLeftPinned
       ? "4px 0 8px -4px rgba(0,0,0,0.3)"
@@ -244,6 +250,14 @@ export function useSortingAdapter<TData extends RowData>(
 
   return { sorting, handleSortingChange };
 }
+
+/**
+ * Columns that hold a row CONTROL rather than row content. `RowExpanderPrefix`
+ * leads the first cell outside this set, so a table that selects rows keeps
+ * the chevron out of the checkbox well -- that column is sized for the box
+ * alone (40-48px), and a chevron beside it is clipped.
+ */
+export const CONTROL_COLUMN_IDS = new Set(["select", "drag", "reorder"]);
 
 /**
  * The expand/collapse chevron for a row with sub-rows, rendered INLINE at the
@@ -298,6 +312,7 @@ export function RowExpanderPrefix<TData extends RowData>({
                 style={{ cursor: "pointer" }}
                 className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
                 aria-label={tooltipText}
+                aria-expanded={isExpanded}
                 data-testid="row-expander"
               >
                 {/* The rotation lives on this span as an inline transform,

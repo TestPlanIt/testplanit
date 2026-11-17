@@ -46,6 +46,7 @@ vi.mock("bullmq", async (importOriginal) => {
   return {
     ...original,
     Worker: class MockWorker {
+      getBackend = () => ({ client: this.client });
       client = Promise.resolve(mockRedisClient);
       on = vi.fn();
       close = vi.fn();

@@ -41,8 +41,13 @@ const entryPoints = [
   "workers/webhookOutboxWorker.ts",
   "workers/webhookRetentionWorker.ts",
   "workers/dataChangeLogRetentionWorker.ts",
+  "workers/auditLogRetentionWorker.ts",
   "workers/datasetLeaseSweepWorker.ts",
   "workers/executionDispatchWorker.ts",
+  "workers/alertWorker.ts",
+  "workers/webhookActionsWorker.ts",
+  "workers/failureTriageWorker.ts",
+  "workers/riskScoreWorker.ts",
   "scheduler.ts",
 ];
 
@@ -102,6 +107,10 @@ async function build() {
       outExtension: { ".js": ".js" },
       tsconfig: path.join(rootDir, "tsconfig.workers.json"),
       packages: "external", // Don't bundle node_modules, treat them as external
+      // The CJS entry of @tiptap/html is its browser build, whose
+      // generateJSON throws without a `window`. Point the workers at the
+      // server build (happy-dom backed) so rich-text conversion works there.
+      alias: { "@tiptap/html": "@tiptap/html/server" },
       logLevel: "info",
       metafile: true,
     });

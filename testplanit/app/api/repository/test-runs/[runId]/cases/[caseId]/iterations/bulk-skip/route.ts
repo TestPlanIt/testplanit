@@ -15,6 +15,8 @@ import {
   type RollupStatus,
 } from "~/lib/services/iterationRollup";
 import { captureAuditEvent } from "~/lib/services/auditLog";
+import { assertDependencyGateOpen } from "~/lib/services/dependencyGate";
+import { isDependencyGateError } from "~/lib/utils/errors";
 import {
   redactValues,
   type ParameterSchemaEntry,
@@ -144,8 +146,13 @@ export const POST = withAuditContext(
         },
         select: {
           id: true,
+          repositoryCaseId: true,
           testRun: {
-            select: { projectId: true, isCompleted: true },
+            select: {
+              projectId: true,
+              isCompleted: true,
+              project: { select: { enforceCaseDependencies: true } },
+            },
           },
           repositoryCase: { select: { currentVersion: true } },
         },
@@ -211,6 +218,15 @@ export const POST = withAuditContext(
       const auditPayloads: AuditPayload[] = [];
 
       const skippedCount = await auditedTransaction(async (tx) => {
+        // Dependency gate (opt-in per project), in the same position as in
+        // submit-result: a blocked case gets no result rows, iteration or not.
+        if (runCase.testRun.project.enforceCaseDependencies) {
+          await assertDependencyGateOpen(tx, {
+            testRunId: runId,
+            repositoryCaseId: runCase.repositoryCaseId,
+          });
+        }
+
         // Load and validate ownership of every requested iteration.
         const iterations = await tx.testRunCaseIteration.findMany({
           where: {
@@ -351,6 +367,17 @@ export const POST = withAuditContext(
 
       return NextResponse.json({ ok: true, skippedCount });
     } catch (err) {
+      if (isDependencyGateError(err)) {
+        return NextResponse.json(
+          {
+            error:
+              "This test case is blocked until its prerequisites in this run have passed",
+            code: err.code,
+            blockedBy: err.blockedBy,
+          },
+          { status: 409 }
+        );
+      }
       console.error("[iteration bulk-skip POST]", err);
       return NextResponse.json({ error: "Internal error" }, { status: 500 });
     }

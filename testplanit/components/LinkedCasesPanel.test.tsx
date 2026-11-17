@@ -1,11 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * The panel must not decide for itself which execution is "latest".
  *
- * It used to walk the raw `testRuns` / `junitResults` relations in JSX and
+ * It used to walk the raw `testRunCases` / `junitResults` relations in JSX and
  * pick a winner — a third definition of "latest" that already disagreed with
  * the server's on skipped automated results. Everything below pins the
  * replacement: the server answers, this panel renders that answer.
@@ -98,7 +98,7 @@ describe("LinkedCasesPanel — latest result", () => {
     const [args] = mockLinkFindMany.mock.calls[0];
     const serialized = JSON.stringify(args);
     expect(serialized).not.toContain("junitResults");
-    expect(serialized).not.toContain("testRuns");
+    expect(serialized).not.toContain("testRunCases");
   });
 
   it("renders the status the server returned", () => {
@@ -174,5 +174,95 @@ describe("LinkedCasesPanel — latest result", () => {
       a.getAttribute("href")
     );
     expect(hrefs.some((h) => h?.includes("/projects/runs/"))).toBe(false);
+  });
+});
+
+describe("LinkedCasesPanel — dependency direction", () => {
+  beforeEach(() => {
+    mockLinkFindMany.mockReset();
+    mockUseLatestTestResults.mockReset();
+    mockUseLatestTestResults.mockReturnValue({});
+  });
+
+  it("labels an outgoing DEPENDS_ON link as depends on", () => {
+    // This case (100) is caseA: it depends on 200.
+    mockLinkFindMany.mockReturnValue({ data: [LINK], refetch: vi.fn() });
+
+    renderPanel();
+
+    expect(screen.getByTestId("linked-case-type-1")).toHaveTextContent(
+      "linkedCases.dependsOn"
+    );
+  });
+
+  it("labels an incoming DEPENDS_ON link as blocks", () => {
+    // Another case (300) depends on this one: this case blocks it.
+    mockLinkFindMany.mockReturnValue({
+      data: [
+        {
+          ...LINK,
+          id: 2,
+          caseAId: 300,
+          caseBId: 100,
+          caseA: { id: 300, name: "Dependant", source: "MANUAL" },
+          caseB: { id: 100, name: "This case", source: "MANUAL" },
+        },
+      ],
+      refetch: vi.fn(),
+    });
+
+    renderPanel();
+
+    expect(screen.getByTestId("linked-case-type-2")).toHaveTextContent(
+      "linkedCases.blocks"
+    );
+    expect(screen.getByText("Dependant")).toBeInTheDocument();
+  });
+
+  it("keeps the type label for symmetric link types", () => {
+    mockLinkFindMany.mockReturnValue({
+      data: [{ ...LINK, id: 3, type: "SAME_TEST_DIFFERENT_SOURCE" }],
+      refetch: vi.fn(),
+    });
+
+    renderPanel();
+
+    expect(screen.getByTestId("linked-case-type-3")).toHaveTextContent(
+      "linkedCases.SAME_TEST_DIFFERENT_SOURCE"
+    );
+  });
+});
+
+describe("LinkedCasesPanel — collapsing", () => {
+  beforeEach(() => {
+    mockLinkFindMany.mockReset();
+    mockUseLatestTestResults.mockReset();
+    mockLinkFindMany.mockReturnValue({ data: undefined, refetch: vi.fn() });
+    mockUseLatestTestResults.mockReturnValue({});
+    window.localStorage.setItem("case-panel-collapsed:linked-cases", "true");
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("disables the links query and hides the body while collapsed", () => {
+    renderPanel();
+
+    const options = mockLinkFindMany.mock.calls.at(-1)?.[1];
+    expect(options).toEqual({ enabled: false });
+    expect(screen.queryByText(/noLinkedCases/)).not.toBeInTheDocument();
+  });
+
+  it("enables the query and shows the body once expanded", () => {
+    renderPanel();
+
+    fireEvent.click(screen.getByTestId("linked-cases-collapse-toggle"));
+
+    const options = mockLinkFindMany.mock.calls.at(-1)?.[1];
+    expect(options).toEqual({ enabled: true });
+    expect(
+      window.localStorage.getItem("case-panel-collapsed:linked-cases")
+    ).toBe("false");
   });
 });

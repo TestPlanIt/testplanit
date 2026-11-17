@@ -111,7 +111,7 @@ function stripLineComments(source: string): string {
     .join("\n");
 }
 
-// The four (and only four) reviewed production mounts of
+// The five (and only five) reviewed production mounts of
 // <SearchIssuesDialog>, confirmed by `git grep -l "<SearchIssuesDialog"`
 // against this file's own gate below.
 const EXPECTED_CONSUMERS = [
@@ -119,6 +119,7 @@ const EXPECTED_CONSUMERS = [
   "components/issues/DeferredIssueManager.tsx",
   "components/issues/ManageExternalIssues.tsx",
   "components/issues/MilestoneIssueManager.tsx",
+  "components/triage/SignatureIssueLinker.tsx",
 ].sort();
 
 // onIssueSelected wraps its body in `if (issue.isExternal) { ... }` with no
@@ -131,13 +132,16 @@ const DEAD_END_CONSUMERS = [
 
 // onIssueSelected handles both an internal AND an external pick --
 // unaffected by the WR-01 fix, must carry no allowInternalPicks override.
+// SignatureIssueLinker (failure triage): an internal pick links by its
+// internalId, an external pick is upserted into Issue first and then linked.
 const HANDLES_BOTH_CONSUMERS = [
   "components/issues/DeferredIssueManager.tsx",
   "components/issues/MilestoneIssueManager.tsx",
+  "components/triage/SignatureIssueLinker.tsx",
 ];
 
 describe("WR-01: SearchIssuesDialog consumer surface is a reviewed, closed set", () => {
-  it("mounts <SearchIssuesDialog exactly at the four reviewed consumer files", () => {
+  it("mounts <SearchIssuesDialog exactly at the five reviewed consumer files", () => {
     const hits = gitGrep(String.raw`<SearchIssuesDialog`);
     const files = Array.from(
       new Set(hits.map((hit) => hit.file).filter((file) => !isTestPath(file)))
@@ -166,7 +170,7 @@ describe("WR-01: SearchIssuesDialog consumer surface is a reviewed, closed set",
     }
   });
 
-  it("the two consumers that handle internal picks carry no allowInternalPicks override", () => {
+  it("the consumers that handle internal picks carry no allowInternalPicks override", () => {
     for (const file of HANDLES_BOTH_CONSUMERS) {
       const content = stripLineComments(readFileSync(file, "utf8"));
       expect(content.includes("allowInternalPicks")).toBe(false);

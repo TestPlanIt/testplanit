@@ -7,6 +7,7 @@ import { CALENDAR_DATE_TIMEZONE } from "~/utils/calendarDate";
 import { toHumanReadable } from "~/utils/duration";
 import { hasCalendarDates } from "~/utils/milestoneUtils";
 import { hexToRgb, PdfRenderer, type StatusToken } from "./pdfHelpers";
+import { apiFetch } from "~/lib/basePath";
 
 interface UseExportMilestonePdfProps {
   milestoneId: number | null | undefined;
@@ -38,7 +39,7 @@ export function useExportMilestonePdf({
     setIsExporting(true);
 
     try {
-      const res = await fetch(`/api/milestones/${milestoneId}/export`);
+      const res = await apiFetch(`/api/milestones/${milestoneId}/export`);
       if (!res.ok) {
         throw new Error(`Export request failed with status ${res.status}`);
       }

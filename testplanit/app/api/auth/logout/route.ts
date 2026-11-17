@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAppBaseUrl } from "~/lib/auth-security";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { createSAMLClient } from "~/server/saml-provider";
+import { absoluteAppUrl } from "~/lib/appUrl";
+import { COOKIE_PATH } from "~/lib/basePath";
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+export const POST = withAuditContext(async (_request: NextRequest) => {
   try {
     // Get the current session to understand how the user signed in
     const session = await getServerAuthSession();
@@ -44,7 +45,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax" as const,
-      path: "/",
+      path: COOKIE_PATH,
       maxAge: 0, // Expire immediately
     };
 
@@ -106,10 +107,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
               issuer: samlProvider.samlConfig.issuer,
             },
-            new URL(
-              "/api/auth/saml/logout-callback",
-              getAppBaseUrl(request)
-            ).toString(),
+            absoluteAppUrl("/api/auth/saml/logout-callback"),
             {}
           );
 
@@ -194,11 +192,9 @@ export const GET = withAuditContext(async (request: NextRequest) => {
     }
 
     // Redirect to signin page after successful logout
-    return NextResponse.redirect(new URL("/signin", getAppBaseUrl(request)));
+    return NextResponse.redirect(absoluteAppUrl("/signin"));
   } catch (error) {
     console.error("SAML logout callback error:", error);
-    return NextResponse.redirect(
-      new URL("/signin?error=logout-failed", getAppBaseUrl(request))
-    );
+    return NextResponse.redirect(absoluteAppUrl("/signin?error=logout-failed"));
   }
 });

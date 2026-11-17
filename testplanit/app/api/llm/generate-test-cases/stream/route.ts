@@ -31,6 +31,7 @@ import {
   type IssueData,
   type TemplateData,
 } from "../shared";
+import { makeRelatedCaseFinder } from "../related-cases";
 import {
   classifyLlmStreamError,
   type LlmStreamErrorCode,
@@ -300,7 +301,7 @@ export async function POST(req: NextRequest) {
               job.data?.userId === session.user.id &&
               job.data?.projectId === projectId
             ) {
-              const connection = await queue!.client;
+              const connection = await queue!.getBackend().client;
               const base64 = await connection.get(
                 screenshotKey(urlJobId, pageIndex)
               );
@@ -422,7 +423,18 @@ export async function POST(req: NextRequest) {
             ? await fetchExistingCasesContext(
                 baseDb,
                 projectId,
-                { folderId: context.folderContext, issueRef },
+                {
+                  folderId: context.folderContext,
+                  issueRef,
+                  related: {
+                    find: makeRelatedCaseFinder(baseDb),
+                    title: issue.title,
+                    description: issue.description,
+                    notes: context.userNotes,
+                    templateId: template.id,
+                    tenantId: getCurrentTenantId(),
+                  },
+                },
                 caseContextBudget
               )
             : [];

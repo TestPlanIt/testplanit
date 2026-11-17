@@ -266,7 +266,8 @@ test.describe("Saved and frozen reports", () => {
       const anonymous = await context.browser()!.newContext({
         storageState: { cookies: [], origins: [] },
       });
-      const origin = new URL(shareUrl).origin;
+      // Everything before /share/ — origin plus any path prefix the install has.
+      const origin = shareUrl.slice(0, shareUrl.indexOf("/share/"));
       try {
         const noToken = await anonymous.request.get(
           `${origin}/api/share/${shareKey}/report`

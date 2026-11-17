@@ -340,10 +340,14 @@ export const ItemRow: React.FC<ItemRowProps> = ({
             metaTrailing?.some(Boolean)) && (
             <div className="flex items-center gap-3 min-w-0">
               {/* Chips take only what they need; the progress bar absorbs the
-                rest of the line rather than leaving a void beside it. */}
-              <div className="flex items-center gap-3 min-w-0 shrink overflow-hidden">
-                {renderSlots(chips)}
-              </div>
+                rest of the line rather than leaving a void beside it. With no
+                chips the box is left out, or the line's gap would still
+                indent the bar by one step. */}
+              {chips?.some(Boolean) && (
+                <div className="flex items-center gap-3 min-w-0 shrink overflow-hidden">
+                  {renderSlots(chips)}
+                </div>
+              )}
               {progress && <div className="flex-1 min-w-36">{progress}</div>}
               {metaTrailing?.some(Boolean) && (
                 <div className="flex items-center gap-3 shrink-0">

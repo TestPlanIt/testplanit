@@ -36,6 +36,9 @@ vi.mock("~/lib/navigation", () => ({
 }));
 
 vi.mock("@/components/ui/tooltip", () => ({
+  TooltipProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
@@ -329,12 +332,32 @@ describe("AffectedTestsStep", () => {
     expect(onSetSelection).toHaveBeenLastCalledWith([2]);
   });
 
-  it("expands a row's reasons in place", () => {
+  it("opens a row's reasons in a detail row of its own", () => {
     renderStep();
 
-    fireEvent.click(screen.getByTestId("impact-recommendation-toggle-1"));
+    const row = screen.getByTestId("impact-recommendation-1");
+    fireEvent.click(within(row).getByTestId("row-expander"));
 
     expect(screen.getByTestId("impact-rationale-1")).toBeInTheDocument();
     expect(screen.getByTestId("impact-reason-1-PIN")).toBeInTheDocument();
+    // Detail belongs to the row below, so the row itself stays one line tall.
+    expect(within(row).queryByTestId("impact-rationale-1")).toBeNull();
+    expect(
+      screen.getByTestId("impact-recommendation-1-detail")
+    ).toContainElement(screen.getByTestId("impact-rationale-1"));
+  });
+
+  it("leads the case cell with the expander, not the checkbox well", () => {
+    renderStep();
+
+    const cells = screen
+      .getByTestId("impact-recommendation-1")
+      .querySelectorAll("td");
+    expect(cells[0].getAttribute("data-column-id")).toBe("select");
+    expect(cells[0].querySelector('[data-testid="row-expander"]')).toBeNull();
+    expect(cells[1].getAttribute("data-column-id")).toBe("case");
+    expect(
+      cells[1].querySelector('[data-testid="row-expander"]')
+    ).not.toBeNull();
   });
 });

@@ -94,6 +94,7 @@ export const giteaAdapter: WebhookAdapter = {
     return {
       externalKey: `${repo}#${num}`,
       externalSystem: "GITEA" satisfies AdapterType,
+      externalId: String(num),
     };
   },
 

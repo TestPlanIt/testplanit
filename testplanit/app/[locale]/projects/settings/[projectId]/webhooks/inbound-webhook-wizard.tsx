@@ -32,11 +32,6 @@ import {
   createOrRotateInboundWebhook,
 } from "~/app/actions/webhook-config";
 import { Link } from "~/lib/navigation";
-import {
-  CODE_EVENT_BRANCH_PUSH,
-  CODE_EVENT_PULL_REQUEST,
-  CODE_EVENT_PUSH,
-} from "~/lib/webhooks/codeChangeEvents";
 import type { AdapterType } from "~/zenstack/models";
 import { cn } from "~/utils";
 import {
@@ -131,6 +126,7 @@ function WizardBody({
   const [baseBranch, setBaseBranch] = useState("");
   const [adoUsername, setAdoUsername] = useState("");
   const [adoPassword, setAdoPassword] = useState("");
+  const [clickupSecret, setClickupSecret] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [revealed, setRevealed] = useState<Revealed | null>(null);
 
@@ -153,7 +149,12 @@ function WizardBody({
         username: adoUsername,
         password: adoPassword,
       } as const)
-    : undefined;
+    : adapterType === "CLICKUP" && source === "issues"
+      ? ({
+          kind: "CLICKUP",
+          ...(clickupSecret.trim() ? { secret: clickupSecret.trim() } : {}),
+        } as const)
+      : undefined;
 
   async function create() {
     if (!canCreate || !source) return;
@@ -170,10 +171,10 @@ function WizardBody({
               projectId,
               codeRepositoryConfigId: repository!.id,
               secretInput,
-              subscribedEvents: [
-                ...(pullRequestsOn ? [CODE_EVENT_PULL_REQUEST] : []),
-                ...(pushesOn ? [CODE_EVENT_PUSH] : []),
-                ...(branchPushesOn ? [CODE_EVENT_BRANCH_PUSH] : []),
+              triggers: [
+                ...(pullRequestsOn ? (["CODE_PULL_REQUEST"] as const) : []),
+                ...(pushesOn ? (["CODE_PUSH"] as const) : []),
+                ...(branchPushesOn ? (["CODE_BRANCH_PUSH"] as const) : []),
               ],
               baseBranch: baseBranch.trim() || null,
             });
@@ -345,6 +346,34 @@ function WizardBody({
     );
   }
 
+  function renderClickUpSecret() {
+    return (
+      <div className="space-y-3" data-testid="webhook-wizard-clickup">
+        <p className="text-xs text-muted-foreground">
+          {t("inboundClickupRegisterHint")}
+        </p>
+        <div className="space-y-1">
+          <Label htmlFor="webhook-inbound-clickup-secret-input">
+            {t("inboundClickupSecret")}
+          </Label>
+          <Input
+            id="webhook-inbound-clickup-secret-input"
+            data-testid="webhook-inbound-clickup-secret-input"
+            type="password"
+            value={clickupSecret}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setClickupSecret(e.target.value)
+            }
+            autoComplete="off"
+          />
+          <p className="text-xs text-muted-foreground">
+            {t("inboundClickupSecretHelp")}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   function renderIssueDetails(adapter: IssueInboundAdapterType) {
     const hint = ISSUE_SCOPE_HINT[adapter];
     return (
@@ -369,6 +398,7 @@ function WizardBody({
           </p>
         )}
         {needsCredentials && renderCredentials()}
+        {adapter === "CLICKUP" && renderClickUpSecret()}
       </div>
     );
   }

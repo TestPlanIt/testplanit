@@ -52,6 +52,10 @@ describe("NotificationContent", () => {
     const mockT = vi.fn((key: string, params?: any) => {
       const translations: Record<string, string> = {
         testCaseAssignmentTitle: "New Test Case Assignment",
+        runCaseUnblockedTitle: "Test Case Ready to Execute",
+        runCaseUnblockedPrerequisitePassed:
+          "{prerequisiteName} passed, so this case assigned to you is no longer blocked:",
+        inTestRun: "in test run",
         multipleTestCaseAssignmentTitle: "Multiple Test Cases Assigned",
         sessionAssignmentTitle: "New Session Assignment",
         systemAnnouncementTitle: "System Announcement",
@@ -76,20 +80,16 @@ describe("NotificationContent", () => {
         moveCompleteMessage: "{count} cases moved successfully",
         copyMoveErrorsAppend: ", {errorCount} failed",
         viewTargetRepository: "View target repository",
-        llmBudgetExceededTitle: "LLM Budget Exceeded",
-        llmBudgetThresholdTitle: "LLM Budget {threshold}% Used",
-        llmBudgetExceededMessage:
-          "{providerName} has exceeded its monthly budget: {spend} spent of {budget} budget.",
-        llmBudgetThresholdMessage:
-          "{providerName} has used {threshold}% of its monthly budget: {spend} of {budget}.",
-        budgetDisclaimer:
-          "Budget limits are informational only and do not prevent usage.",
         userRegisteredTitle: "New User Registration",
         userRegisteredMessageSso:
           "{userName} ({userEmail}) has registered via SSO",
         userRegisteredMessageForm:
           "{userName} ({userEmail}) has registered via the registration form",
         viewUserList: "View user list",
+        casesDraftedTitle: "AI-Drafted Test Cases Ready",
+        casesDraftedMessage:
+          "{count} test cases were drafted for {issueKey} — review for accuracy.",
+        casesDraftedReviewLink: "Review in {folderName}",
         aiStepsDerivedTitle: "AI-Derived Test Steps Ready",
         aiStepsDerivedMessage:
           "{count} test cases were given AI-derived steps — review for accuracy.",
@@ -277,6 +277,42 @@ describe("NotificationContent", () => {
     });
   });
 
+  describe("AI-Drafted Cases", () => {
+    it("renders the folder review link, the count and the issue", () => {
+      const notification = {
+        id: "dc-1",
+        type: "CASES_DRAFTED",
+        title: "stored title",
+        message: "stored message",
+        data: {
+          projectId: 456,
+          folderId: 55,
+          folderName: "Drafted from issues",
+          issueKey: "DEMO-42",
+          issueTitle: "Checkout totals",
+          caseCount: 2,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(
+        screen.getByText("AI-Drafted Test Cases Ready")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/2 test cases were drafted for DEMO-42/)
+      ).toBeInTheDocument();
+      expect(screen.getByRole("link")).toHaveAttribute(
+        "href",
+        "/projects/repository/456/?node=55"
+      );
+      expect(
+        screen.getByText("Review in Drafted from issues")
+      ).toBeInTheDocument();
+      expect(screen.getByText("Checkout totals")).toBeInTheDocument();
+    });
+  });
+
   describe("AI-Derived Steps", () => {
     it("should render the run review link and the count message", () => {
       const notification = {
@@ -318,6 +354,62 @@ describe("NotificationContent", () => {
 
       expect(screen.getByText("stored fallback message")).toBeInTheDocument();
       // No run link when projectId/testRunId are missing
+      expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Run Case Unblocked", () => {
+    it("names the prerequisite and links to the case in its run", () => {
+      const notification = {
+        id: "unblocked-1",
+        type: "RUN_CASE_UNBLOCKED",
+        title: "Test case ready to execute",
+        message: "stored fallback message",
+        data: {
+          projectId: 3,
+          projectName: "Telco",
+          testRunId: 50,
+          testRunName: "Order to billing",
+          testRunCaseId: 20,
+          testCaseId: 2,
+          testCaseName: "Verify provisioning",
+          prerequisiteCaseName: "Create order",
+          unblockedById: "crm",
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(
+        screen.getByTestId("notification-run-case-unblocked")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Test Case Ready to Execute")
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Create order passed/)).toBeInTheDocument();
+      expect(screen.getByText("Verify provisioning")).toBeInTheDocument();
+      expect(screen.getByText("Order to billing")).toBeInTheDocument();
+      expect(screen.getByText("Telco")).toBeInTheDocument();
+      expect(screen.getByRole("link")).toHaveAttribute(
+        "href",
+        "/projects/runs/3/50?selectedCase=2"
+      );
+    });
+
+    it("falls back to the stored title and message when data is incomplete", () => {
+      render(
+        <NotificationContent
+          notification={{
+            id: "unblocked-2",
+            type: "RUN_CASE_UNBLOCKED",
+            title: "Test case ready to execute",
+            message: "stored fallback message",
+            data: {},
+          }}
+        />
+      );
+
+      expect(screen.getByText("stored fallback message")).toBeInTheDocument();
       expect(screen.queryByRole("link")).not.toBeInTheDocument();
     });
   });
@@ -665,79 +757,6 @@ describe("NotificationContent", () => {
         screen.getByText("New User Registration (legacy)")
       ).toBeInTheDocument();
       expect(screen.getByText("User registered")).toBeInTheDocument();
-    });
-  });
-
-  describe("LLM Budget Alert", () => {
-    it("should render localized 'threshold crossed' message with currency formatting", () => {
-      const notification = {
-        id: "19",
-        type: "LLM_BUDGET_ALERT",
-        title: "LLM Budget 90% Used",
-        message:
-          "OpenAI has used 90% of its monthly budget: $90.00 of $100.00.",
-        data: {
-          providerName: "OpenAI",
-          currentSpend: 90,
-          budgetLimit: 100,
-          threshold: 90,
-        },
-      };
-
-      render(<NotificationContent notification={notification} />);
-
-      // Title goes through the "below 100%" branch.
-      expect(screen.getByText("LLM Budget 90% Used")).toBeInTheDocument();
-      // Body interpolates spend/budget formatted via Intl.NumberFormat.
-      // The exact currency string is locale-dependent; assert on the
-      // provider name + threshold + the formatted dollar amounts so
-      // the test stays stable across Node Intl variants.
-      expect(
-        screen.getByText(/OpenAI has used 90% of its monthly budget/)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/budget limits are informational/i)
-      ).toBeInTheDocument();
-    });
-
-    it("should render localized 'exceeded' message when threshold >= 100", () => {
-      const notification = {
-        id: "19b",
-        type: "LLM_BUDGET_ALERT",
-        title: "LLM Budget Exceeded",
-        message:
-          "OpenAI has exceeded its monthly budget: $110.00 spent of $100.00 budget.",
-        data: {
-          providerName: "OpenAI",
-          currentSpend: 110,
-          budgetLimit: 100,
-          threshold: 100,
-        },
-      };
-
-      render(<NotificationContent notification={notification} />);
-
-      expect(screen.getByText("LLM Budget Exceeded")).toBeInTheDocument();
-      expect(
-        screen.getByText(/OpenAI has exceeded its monthly budget/)
-      ).toBeInTheDocument();
-    });
-
-    it("should fall back when providerName / threshold absent (legacy data shape)", () => {
-      const notification = {
-        id: "19c",
-        type: "LLM_BUDGET_ALERT",
-        title: "Budget Alert",
-        message: "You have reached 90% of your LLM budget",
-        data: {}, // legacy row
-      };
-
-      render(<NotificationContent notification={notification} />);
-
-      expect(screen.getByText("Budget Alert")).toBeInTheDocument();
-      expect(
-        screen.getByText("You have reached 90% of your LLM budget")
-      ).toBeInTheDocument();
     });
   });
 

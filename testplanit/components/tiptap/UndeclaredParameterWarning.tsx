@@ -46,7 +46,7 @@ export function UndeclaredParameterWarning({
 
   return (
     <div
-      className="flex items-center gap-2 text-xs text-warning-foreground bg-warning/10 border border-warning/20 rounded-md px-3 py-2"
+      className="flex items-center gap-2 text-xs text-warning-text bg-warning/10 border border-warning/20 rounded-md px-3 py-2"
       data-testid="tiptap-undeclared-parameter-warning"
       role="alert"
     >

@@ -34,6 +34,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { isIssueScanInFlight, readIssueScanReport } from "./issueScanReport";
 import { isStalePinCheckInFlight, readStalePinReport } from "./stalePinReport";
+import { apiFetch } from "~/lib/basePath";
 
 export interface ImpactBulkConnection {
   id: number;
@@ -58,7 +59,7 @@ async function post(
   url: string,
   body: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const res = await fetch(url, {
+  const res = await apiFetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

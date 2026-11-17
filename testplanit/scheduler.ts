@@ -1,3 +1,7 @@
+import {
+  ensureExecutionPollScheduler,
+  EXECUTION_POLL_PATTERN,
+} from "./lib/execution/pollScheduler";
 import { getAllTenantIds, isMultiTenantMode } from "./lib/multiTenantDb";
 import {
   FORECAST_QUEUE_NAME,
@@ -6,18 +10,25 @@ import {
   getRepoCacheQueue,
   getWebhookDispatchQueue,
   getExecutionDispatchQueue,
+  getAlertQueue,
+  getRiskScoreQueue,
   EXECUTION_DISPATCH_QUEUE_NAME,
+  ALERT_QUEUE_NAME,
+  RISK_SCORE_QUEUE_NAME,
   NOTIFICATION_QUEUE_NAME,
   REPO_CACHE_QUEUE_NAME,
   WEBHOOK_DISPATCH_QUEUE_NAME,
 } from "./lib/queues";
 import {
   JOB_AUTO_COMPLETE_MILESTONES,
+  JOB_EVALUATE_SCHEDULED_ALERTS,
+  JOB_EVALUATE_HOURLY_ALERTS,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
   JOB_POLL_ACTIVE_EXECUTIONS,
   JOB_PURGE_STALE_CASE_DRAFTS,
   JOB_REFRESH_EXPIRED_CACHES,
   JOB_REVIEW_REMINDERS,
+  JOB_RISK_UPDATE_ALL,
   JOB_SEND_DAILY_DIGEST,
   JOB_SWEEP_ABANDONED_RUNS,
   JOB_SWEEP_REPORT_BUILDER_STATES,
@@ -30,10 +41,10 @@ const CRON_SCHEDULE_DAILY_3AM = "0 3 * * *";
 const CRON_SCHEDULE_DAILY_6AM = "0 6 * * *"; // For milestone auto-completion and notifications
 const CRON_SCHEDULE_DAILY_8AM = "0 8 * * *"; // For daily digest emails
 const CRON_SCHEDULE_DAILY_4AM = "0 4 * * *"; // For code repository cache refresh
+const CRON_SCHEDULE_DAILY_330AM = "30 3 * * *"; // Nightly risk-score sweep, offset from the 3AM forecast sweep
 const CRON_SCHEDULE_DAILY_2AM = "0 2 * * *"; // Plan 02-06 / D-04 — auto-retire expired WebhookConfigSecret rows
 const CRON_SCHEDULE_HOURLY = "0 * * * *"; // Top of every hour — review-reminder scan
 const CRON_SCHEDULE_EVERY_15_MIN = "*/15 * * * *"; // Abandoned automated-run sweep
-const CRON_SCHEDULE_EVERY_MINUTE = "* * * * *"; // In-flight execution status poll (per-row backoff inside)
 const JOB_RETIRE_EXPIRED_SECRETS = "retire-expired-secrets";
 
 /**
@@ -364,29 +375,90 @@ async function scheduleJobs() {
     }
 
     // In-flight automated executions: ask each CI provider for job status
-    // and time out the ones that never report. Runs every minute; the worker
-    // applies an exponential per-row backoff so provider calls stay sparse.
+    // and time out the ones that never report. Registered here so executions
+    // that were in flight across a restart keep being watched; the first poll
+    // that finds none removes its own scheduler, and requesting an execution
+    // registers it again.
     const executionDispatchQueue = getExecutionDispatchQueue();
     if (executionDispatchQueue) {
       for (const tenantId of tenantIds) {
-        const jobId = tenantId
-          ? `${JOB_POLL_ACTIVE_EXECUTIONS}-${tenantId}`
-          : JOB_POLL_ACTIVE_EXECUTIONS;
-        await executionDispatchQueue.upsertJobScheduler(
-          jobId,
-          { pattern: CRON_SCHEDULE_EVERY_MINUTE },
-          {
-            name: JOB_POLL_ACTIVE_EXECUTIONS,
-            data: { tenantId },
-          }
-        );
+        await ensureExecutionPollScheduler(executionDispatchQueue, tenantId);
         console.log(
-          `Upserted job scheduler "${JOB_POLL_ACTIVE_EXECUTIONS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_EVERY_MINUTE}" on queue "${EXECUTION_DISPATCH_QUEUE_NAME}".`
+          `Upserted job scheduler "${JOB_POLL_ACTIVE_EXECUTIONS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${EXECUTION_POLL_PATTERN}" on queue "${EXECUTION_DISPATCH_QUEUE_NAME}".`
         );
       }
     } else {
       console.warn(
         `[scheduler] executionDispatchQueue unavailable — execution status poll NOT registered`
+      );
+    }
+
+    // Alerts (#651): milestone metrics are aggregate and cheap
+    // to miss by an hour, so they run once a day alongside the milestone
+    // due reminders. Result and run metrics are event-driven and never here.
+    const alertQueue = getAlertQueue();
+    if (alertQueue) {
+      for (const tenantId of tenantIds) {
+        const jobId = tenantId
+          ? `${JOB_EVALUATE_SCHEDULED_ALERTS}-${tenantId}`
+          : JOB_EVALUATE_SCHEDULED_ALERTS;
+        await alertQueue.upsertJobScheduler(
+          jobId,
+          { pattern: CRON_SCHEDULE_DAILY_6AM },
+          {
+            name: JOB_EVALUATE_SCHEDULED_ALERTS,
+            data: { tenantId },
+          }
+        );
+        console.log(
+          `Upserted job scheduler "${JOB_EVALUATE_SCHEDULED_ALERTS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_6AM}" on queue "${ALERT_QUEUE_NAME}".`
+        );
+        // Stalled runs and webhook failure rates move within the day, so
+        // their metrics get an hourly pass.
+        const hourlyJobId = tenantId
+          ? `${JOB_EVALUATE_HOURLY_ALERTS}-${tenantId}`
+          : JOB_EVALUATE_HOURLY_ALERTS;
+        await alertQueue.upsertJobScheduler(
+          hourlyJobId,
+          { pattern: CRON_SCHEDULE_HOURLY },
+          {
+            name: JOB_EVALUATE_HOURLY_ALERTS,
+            data: { tenantId },
+          }
+        );
+        console.log(
+          `Upserted job scheduler "${JOB_EVALUATE_HOURLY_ALERTS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_HOURLY}" on queue "${ALERT_QUEUE_NAME}".`
+        );
+      }
+    } else {
+      console.warn(
+        `[scheduler] alertQueue unavailable — scheduled alert evaluation NOT registered`
+      );
+    }
+
+    // Nightly per-tenant risk-score sweep; the worker fans out over the
+    // tenant's projects itself.
+    const riskScoreQueue = getRiskScoreQueue();
+    if (riskScoreQueue) {
+      for (const tenantId of tenantIds) {
+        const jobId = tenantId
+          ? `${JOB_RISK_UPDATE_ALL}-${tenantId}`
+          : JOB_RISK_UPDATE_ALL;
+        await riskScoreQueue.upsertJobScheduler(
+          jobId,
+          { pattern: CRON_SCHEDULE_DAILY_330AM },
+          {
+            name: JOB_RISK_UPDATE_ALL,
+            data: { tenantId },
+          }
+        );
+        console.log(
+          `Upserted job scheduler "${JOB_RISK_UPDATE_ALL}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_330AM}" on queue "${RISK_SCORE_QUEUE_NAME}".`
+        );
+      }
+    } else {
+      console.warn(
+        `[scheduler] riskScoreQueue unavailable — nightly risk sweep NOT registered`
       );
     }
 
@@ -430,6 +502,20 @@ async function scheduleJobs() {
                   },
                 ]
               : []),
+            ...(alertQueue
+              ? [
+                  {
+                    queue: alertQueue,
+                    jobNames: [
+                      JOB_EVALUATE_SCHEDULED_ALERTS,
+                      JOB_EVALUATE_HOURLY_ALERTS,
+                    ],
+                  },
+                ]
+              : []),
+            ...(riskScoreQueue
+              ? [{ queue: riskScoreQueue, jobNames: [JOB_RISK_UPDATE_ALL] }]
+              : []),
           ],
           new Set(tenantIds.filter((t): t is string => Boolean(t)))
         );
@@ -457,12 +543,16 @@ if (require.main === module) {
       const repoCacheQueue = getRepoCacheQueue();
       const webhookDispatchQueue = getWebhookDispatchQueue();
       const executionDispatchQueue = getExecutionDispatchQueue();
+      const alertQueue = getAlertQueue();
+      const riskScoreQueue = getRiskScoreQueue();
       await Promise.all([
         forecastQueue?.close(),
         notificationQueue?.close(),
         repoCacheQueue?.close(),
         webhookDispatchQueue?.close(),
         executionDispatchQueue?.close(),
+        alertQueue?.close(),
+        riskScoreQueue?.close(),
       ]);
       console.log("All queues closed.");
       process.exit(0);

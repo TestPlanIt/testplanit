@@ -2,6 +2,7 @@
 
 import { withActionAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
+import { decideNotificationDelivery } from "~/lib/notifications/delivery";
 import { getUpgradeNotificationsBetweenVersions } from "~/lib/upgrade-notifications";
 import packageJson from "~/package.json";
 import { getServerAuthSession } from "~/server/auth";
@@ -97,6 +98,31 @@ export const checkUpgradeNotifications = withActionAuditContext(
         };
       }
 
+      // The row is written directly rather than through the notification
+      // worker, so the same delivery check the worker applies runs here:
+      // a user on mode None, or who muted What's New, gets no row.
+      const [userPreferences, globalSettings] = await Promise.all([
+        baseDb.userPreferences.findUnique({
+          where: { userId: session.user.id },
+          select: { notificationMode: true, mutedNotificationTypes: true },
+        }),
+        baseDb.appConfig.findUnique({
+          where: { key: "notificationSettings" },
+          select: { value: true },
+        }),
+      ]);
+      const decision = decideNotificationDelivery({
+        preferences: userPreferences,
+        globalSettingsValue: globalSettings?.value,
+        type: "WHATS_NEW",
+      });
+      if (!decision.deliver) {
+        return {
+          success: true,
+          notificationCreated: false,
+        };
+      }
+
       // Create a batched notification combining all pending notifications
       const title =
         pendingNotifications.length === 1
@@ -145,7 +171,7 @@ export const checkUpgradeNotifications = withActionAuditContext(
       await baseDb.notification.create({
         data: {
           userId: session.user.id,
-          type: "SYSTEM_ANNOUNCEMENT",
+          type: "WHATS_NEW",
           title,
           message: message.substring(0, 500),
           isRead: false,

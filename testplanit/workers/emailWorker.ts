@@ -18,10 +18,16 @@ import {
   getServerTranslation,
   getServerTranslations,
 } from "../lib/server-translations";
+import {
+  alertMetricMessage,
+  alertSubjectPath,
+} from "../lib/alerts/notificationParams";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import { isTipTapContent, tiptapToHtml } from "../utils/tiptapToHtml";
+import { formatHoursAsRelativeDuration } from "../utils/duration";
+import { getAppUrl } from "~/lib/appUrl";
 
 interface SendNotificationEmailJobData extends MultiTenantJobData {
   notificationId: string;
@@ -88,10 +94,7 @@ const processor = async (job: Job) => {
         const tenantConfig = notificationData.tenantId
           ? getTenantConfig(notificationData.tenantId)
           : undefined;
-        const baseUrl =
-          tenantConfig?.baseUrl ||
-          process.env.NEXTAUTH_URL ||
-          "http://localhost:3000";
+        const baseUrl = tenantConfig?.baseUrl || getAppUrl();
         const userLocale = notification.user.userPreferences?.locale || "en_US";
         const urlLocale = formatLocaleForUrl(userLocale);
 
@@ -113,17 +116,10 @@ const processor = async (job: Job) => {
           if (data.projectId && data.milestoneId) {
             notificationUrl = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
           }
-        } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
-          if (data.projectId && data.jobId && !data.error) {
-            notificationUrl = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
-          }
         } else if (notification.type === "USER_REGISTERED") {
           // Surface the admin user list so the recipient can find the
           // newly-registered user without an extra search step.
           notificationUrl = `${baseUrl}/${urlLocale}/admin/users`;
-        } else if (notification.type === "LLM_BUDGET_ALERT") {
-          // Same destination as the bell-icon link (`data.link`) — admin LLM page.
-          notificationUrl = `${baseUrl}/${urlLocale}${data.link ?? "/admin/llm"}`;
         } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
           // OAuth re-auth kickoff is an API route — deliberately no locale prefix.
           if (data.provider && data.integrationId) {
@@ -133,13 +129,21 @@ const processor = async (job: Job) => {
           if (data.projectId && data.testRunId) {
             notificationUrl = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}`;
           }
+        } else if (notification.type === "RUN_CASE_UNBLOCKED") {
+          if (data.projectId && data.testRunId && data.testCaseId) {
+            notificationUrl = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}?selectedCase=${data.testCaseId}`;
+          }
+        } else if (notification.type === "ALERT_TRIGGERED") {
+          const path = alertSubjectPath(data);
+          if (path) notificationUrl = `${baseUrl}/${urlLocale}${path}`;
         } else if (
           notification.type === "REVIEW_REQUESTED" ||
           notification.type === "REVIEW_APPROVED" ||
           notification.type === "REVIEW_CHANGES_REQUESTED" ||
           notification.type === "REVIEW_REJECTED" ||
           notification.type === "REVIEW_CANCELLED" ||
-          notification.type === "REVIEW_REMINDER"
+          notification.type === "REVIEW_REMINDER" ||
+          notification.type === "REVIEW_DECISION_REVERTED"
         ) {
           if (
             typeof data.bulkCount === "number" &&
@@ -205,7 +209,10 @@ const processor = async (job: Job) => {
               notificationUrl = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
             }
           }
-        } else if (notification.type === "SYSTEM_ANNOUNCEMENT") {
+        } else if (
+          notification.type === "SYSTEM_ANNOUNCEMENT" ||
+          notification.type === "WHATS_NEW"
+        ) {
           // For system announcements, check if we have rich content or raw HTML
           if (data.htmlContent) {
             // Use raw HTML content (e.g., from upgrade notifications)
@@ -242,28 +249,6 @@ const processor = async (job: Job) => {
               dueDate: formattedDueDate,
             }
           );
-        } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
-          if (data.error) {
-            translatedTitle = await getServerTranslation(
-              userLocale,
-              "components.notifications.content.generateFromUrlFailedTitle"
-            );
-            translatedMessage = notification.message;
-          } else {
-            translatedTitle = await getServerTranslation(
-              userLocale,
-              "components.notifications.content.generateFromUrlCompleteTitle"
-            );
-            translatedMessage = await getServerTranslation(
-              userLocale,
-              "components.notifications.content.generateFromUrlCompleteMessage",
-              {
-                pages: data.pagesProcessed ?? 0,
-                url: data.url ?? "",
-                projectName: data.projectName ?? "",
-              }
-            );
-          }
         } else if (notification.type === "USER_REGISTERED") {
           translatedTitle = await getServerTranslation(
             userLocale,
@@ -299,61 +284,14 @@ const processor = async (job: Job) => {
               shareTitle: data.shareTitle ?? "",
             }
           );
-        } else if (notification.type === "LLM_BUDGET_ALERT") {
-          // LLM providers bill in USD; currency code is hardcoded
-          // intentionally — see the matching note in NotificationContent.tsx.
-          // Use the recipient's locale for grouping/decimal separators
-          // (`Intl.NumberFormat` accepts BCP-47, so swap the
-          // `en_US` underscore form to `en-US`).
-          const intlLocale = userLocale.replace("_", "-");
-          const formatAmount = (n: unknown): string => {
-            if (typeof n !== "number") return String(n ?? "");
-            return new Intl.NumberFormat(intlLocale, {
-              style: "currency",
-              currency: "USD",
-            }).format(n);
-          };
-          const threshold = data.threshold;
-          const isExceeded = typeof threshold === "number" && threshold >= 100;
-          const spend = formatAmount(data.currentSpend);
-          const budget = formatAmount(data.budgetLimit);
-          translatedTitle = isExceeded
-            ? await getServerTranslation(
-                userLocale,
-                "components.notifications.content.llmBudgetExceededTitle"
-              )
-            : await getServerTranslation(
-                userLocale,
-                "components.notifications.content.llmBudgetThresholdTitle",
-                { threshold }
-              );
-          translatedMessage = isExceeded
-            ? await getServerTranslation(
-                userLocale,
-                "components.notifications.content.llmBudgetExceededMessage",
-                {
-                  providerName: data.providerName ?? "",
-                  spend,
-                  budget,
-                }
-              )
-            : await getServerTranslation(
-                userLocale,
-                "components.notifications.content.llmBudgetThresholdMessage",
-                {
-                  providerName: data.providerName ?? "",
-                  threshold,
-                  spend,
-                  budget,
-                }
-              );
         } else if (
           notification.type === "REVIEW_REQUESTED" ||
           notification.type === "REVIEW_APPROVED" ||
           notification.type === "REVIEW_CHANGES_REQUESTED" ||
           notification.type === "REVIEW_REJECTED" ||
           notification.type === "REVIEW_CANCELLED" ||
-          notification.type === "REVIEW_REMINDER"
+          notification.type === "REVIEW_REMINDER" ||
+          notification.type === "REVIEW_DECISION_REVERTED"
         ) {
           const titleKeyByType = {
             REVIEW_REQUESTED: "reviewRequestedTitle",
@@ -362,6 +300,7 @@ const processor = async (job: Job) => {
             REVIEW_REJECTED: "reviewRejectedTitle",
             REVIEW_CANCELLED: "reviewCancelledTitle",
             REVIEW_REMINDER: "reviewReminderTitle",
+            REVIEW_DECISION_REVERTED: "reviewDecisionRevertedTitle",
           } as const;
           const emailMessageKeyByType = {
             REVIEW_REQUESTED: "reviewRequestedEmailMessage",
@@ -370,7 +309,15 @@ const processor = async (job: Job) => {
             REVIEW_REJECTED: "reviewRejectedEmailMessage",
             REVIEW_CANCELLED: "reviewCancelledEmailMessage",
             REVIEW_REMINDER: "reviewReminderEmailMessage",
+            REVIEW_DECISION_REVERTED: "reviewDecisionRevertedEmailMessage",
           } as const;
+          // An admin can revert a decision somebody else recorded; the default
+          // copy says "their decision", which is only right when the reverter
+          // decided it.
+          const revertedAnotherDecision =
+            notification.type === "REVIEW_DECISION_REVERTED" &&
+            typeof data.deciderUserId === "string" &&
+            data.deciderUserId !== data.reverterUserId;
           // A bulk review request covers many entities and potentially
           // several different gates, so the single-entity copy ("your review
           // of test case X") and the transition line are both wrong for it.
@@ -406,7 +353,9 @@ const processor = async (job: Job) => {
             userLocale,
             reviewBulkCount !== null
               ? "components.notifications.content.reviewBulkRequestedEmailMessage"
-              : `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
+              : revertedAnotherDecision
+                ? "components.notifications.content.reviewDecisionRevertedEmailMessageOther"
+                : `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
             {
               actorName:
                 (notification.type === "REVIEW_REQUESTED"
@@ -415,11 +364,18 @@ const processor = async (job: Job) => {
                     ? data.requesterName
                     : notification.type === "REVIEW_CANCELLED"
                       ? data.cancelerName
-                      : data.deciderName) ?? "",
+                      : notification.type === "REVIEW_DECISION_REVERTED"
+                        ? data.reverterName
+                        : data.deciderName) ?? "",
+              deciderName: data.deciderName ?? "",
               entityLabel,
               entityName: data.entityName ?? "",
               projectName: data.projectName ?? "",
               hoursPending: data.hoursPending ?? 0,
+              pendingFor: formatHoursAsRelativeDuration(
+                data.hoursPending ?? 0,
+                userLocale
+              ),
               count: reviewBulkCount ?? 0,
             }
           );
@@ -477,6 +433,50 @@ const processor = async (job: Job) => {
               projectName: data.projectName ?? "",
             }
           );
+        } else if (notification.type === "ALERT_TRIGGERED") {
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.alertTriggeredTitle"
+          );
+          const metricMessage = alertMetricMessage(data, urlLocale);
+          const detail = await getServerTranslation(
+            userLocale,
+            `components.notifications.content.${metricMessage.key}`,
+            metricMessage.params
+          );
+          const subjectLabel = await getServerTranslation(
+            userLocale,
+            `components.notifications.content.alertSubject.${data.subjectType ?? "CASE"}`
+          );
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            // A system alert (AI budget) names no project.
+            data.projectId
+              ? "components.notifications.content.alertTriggeredEmailMessage"
+              : "components.notifications.content.alertTriggeredEmailMessageSystem",
+            {
+              ruleName: data.ruleName ?? "",
+              subjectLabel,
+              subjectName: data.subjectName ?? "",
+              projectName: data.projectName ?? "",
+              detail,
+            }
+          );
+        } else if (notification.type === "RUN_CASE_UNBLOCKED") {
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.runCaseUnblockedTitle"
+          );
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.runCaseUnblockedEmailMessage",
+            {
+              testCaseName: data.testCaseName ?? "",
+              testRunName: data.testRunName ?? "",
+              projectName: data.projectName ?? "",
+              prerequisiteName: data.prerequisiteCaseName ?? "",
+            }
+          );
         }
 
         // Get email template translations
@@ -508,6 +508,11 @@ const processor = async (job: Job) => {
           additionalInfo = await getServerTranslation(
             userLocale,
             "components.notifications.content.runReadyToCompleteReason"
+          );
+        } else if (notification.type === "RUN_CASE_UNBLOCKED") {
+          additionalInfo = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.runCaseUnblockedReason"
           );
         }
 
@@ -571,10 +576,7 @@ const processor = async (job: Job) => {
         const digestTenantConfig = digestData.tenantId
           ? getTenantConfig(digestData.tenantId)
           : undefined;
-        const digestBaseUrl =
-          digestTenantConfig?.baseUrl ||
-          process.env.NEXTAUTH_URL ||
-          "http://localhost:3000";
+        const digestBaseUrl = digestTenantConfig?.baseUrl || getAppUrl();
         const notificationsWithUrls = await Promise.all(
           fullNotifications.map(async (notification: any) => {
             const baseUrl = digestBaseUrl;
@@ -584,8 +586,9 @@ const processor = async (job: Job) => {
             let url: string | undefined;
 
             if (
-              notification.type === "WORK_ASSIGNED" &&
-              !data.isBulkAssignment
+              (notification.type === "WORK_ASSIGNED" &&
+                !data.isBulkAssignment) ||
+              notification.type === "RUN_CASE_UNBLOCKED"
             ) {
               if (data.projectId && data.testRunId && data.testCaseId) {
                 url = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}?selectedCase=${data.testCaseId}`;
@@ -618,10 +621,6 @@ const processor = async (job: Job) => {
               if (data.projectId && data.milestoneId) {
                 url = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
               }
-            } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
-              if (data.projectId && data.jobId && !data.error) {
-                url = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
-              }
             } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
               // OAuth re-auth kickoff is an API route — no locale prefix.
               if (data.provider && data.integrationId) {
@@ -631,6 +630,9 @@ const processor = async (job: Job) => {
               if (data.projectId && data.testRunId) {
                 url = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}`;
               }
+            } else if (notification.type === "ALERT_TRIGGERED") {
+              const alertPath = alertSubjectPath(data);
+              if (alertPath) url = `${baseUrl}/${urlLocale}${alertPath}`;
             } else if (
               notification.type === "REVIEW_REQUESTED" ||
               notification.type === "REVIEW_APPROVED" ||
@@ -715,34 +717,14 @@ const processor = async (job: Job) => {
                   dueDate: formattedDueDate,
                 }
               );
-            } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
-              if (data.error) {
-                translatedTitle = await getServerTranslation(
-                  userLocale,
-                  "components.notifications.content.generateFromUrlFailedTitle"
-                );
-              } else {
-                translatedTitle = await getServerTranslation(
-                  userLocale,
-                  "components.notifications.content.generateFromUrlCompleteTitle"
-                );
-                translatedMessage = await getServerTranslation(
-                  userLocale,
-                  "components.notifications.content.generateFromUrlCompleteMessage",
-                  {
-                    pages: data.pagesProcessed ?? 0,
-                    url: data.url ?? "",
-                    projectName: data.projectName ?? "",
-                  }
-                );
-              }
             } else if (
               notification.type === "REVIEW_REQUESTED" ||
               notification.type === "REVIEW_APPROVED" ||
               notification.type === "REVIEW_CHANGES_REQUESTED" ||
               notification.type === "REVIEW_REJECTED" ||
               notification.type === "REVIEW_CANCELLED" ||
-              notification.type === "REVIEW_REMINDER"
+              notification.type === "REVIEW_REMINDER" ||
+              notification.type === "REVIEW_DECISION_REVERTED"
             ) {
               const titleKeyByType = {
                 REVIEW_REQUESTED: "reviewRequestedTitle",
@@ -751,6 +733,7 @@ const processor = async (job: Job) => {
                 REVIEW_REJECTED: "reviewRejectedTitle",
                 REVIEW_CANCELLED: "reviewCancelledTitle",
                 REVIEW_REMINDER: "reviewReminderTitle",
+                REVIEW_DECISION_REVERTED: "reviewDecisionRevertedTitle",
               } as const;
               const emailMessageKeyByType = {
                 REVIEW_REQUESTED: "reviewRequestedEmailMessage",
@@ -759,7 +742,14 @@ const processor = async (job: Job) => {
                 REVIEW_REJECTED: "reviewRejectedEmailMessage",
                 REVIEW_CANCELLED: "reviewCancelledEmailMessage",
                 REVIEW_REMINDER: "reviewReminderEmailMessage",
+                REVIEW_DECISION_REVERTED: "reviewDecisionRevertedEmailMessage",
               } as const;
+              // See the immediate-send branch: "their decision" only holds
+              // when the reverter is the original decider.
+              const revertedAnotherDecision =
+                notification.type === "REVIEW_DECISION_REVERTED" &&
+                typeof data.deciderUserId === "string" &&
+                data.deciderUserId !== data.reverterUserId;
               // Bulk-request copy — see the immediate-send branch above.
               const reviewBulkCount =
                 notification.type === "REVIEW_REQUESTED" &&
@@ -791,7 +781,9 @@ const processor = async (job: Job) => {
                 userLocale,
                 reviewBulkCount !== null
                   ? "components.notifications.content.reviewBulkRequestedEmailMessage"
-                  : `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
+                  : revertedAnotherDecision
+                    ? "components.notifications.content.reviewDecisionRevertedEmailMessageOther"
+                    : `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
                 {
                   actorName:
                     (notification.type === "REVIEW_REQUESTED"
@@ -800,11 +792,18 @@ const processor = async (job: Job) => {
                         ? data.requesterName
                         : notification.type === "REVIEW_CANCELLED"
                           ? data.cancelerName
-                          : data.deciderName) ?? "",
+                          : notification.type === "REVIEW_DECISION_REVERTED"
+                            ? data.reverterName
+                            : data.deciderName) ?? "",
+                  deciderName: data.deciderName ?? "",
                   entityLabel,
                   entityName: data.entityName ?? "",
                   projectName: data.projectName ?? "",
                   hoursPending: data.hoursPending ?? 0,
+                  pendingFor: formatHoursAsRelativeDuration(
+                    data.hoursPending ?? 0,
+                    userLocale
+                  ),
                   count: reviewBulkCount ?? 0,
                 }
               );
@@ -830,6 +829,34 @@ const processor = async (job: Job) => {
                   caseCount: Number(data.caseCount ?? 0),
                   testRunName: data.testRunName ?? "",
                   projectName: data.projectName ?? "",
+                }
+              );
+            } else if (notification.type === "ALERT_TRIGGERED") {
+              translatedTitle = await getServerTranslation(
+                userLocale,
+                "components.notifications.content.alertTriggeredTitle"
+              );
+              const metricMessage = alertMetricMessage(data, urlLocale);
+              const detail = await getServerTranslation(
+                userLocale,
+                `components.notifications.content.${metricMessage.key}`,
+                metricMessage.params
+              );
+              const subjectLabel = await getServerTranslation(
+                userLocale,
+                `components.notifications.content.alertSubject.${data.subjectType ?? "CASE"}`
+              );
+              translatedMessage = await getServerTranslation(
+                userLocale,
+                data.projectId
+                  ? "components.notifications.content.alertTriggeredEmailMessage"
+                  : "components.notifications.content.alertTriggeredEmailMessageSystem",
+                {
+                  ruleName: data.ruleName ?? "",
+                  subjectLabel,
+                  subjectName: data.subjectName ?? "",
+                  projectName: data.projectName ?? "",
+                  detail,
                 }
               );
             }

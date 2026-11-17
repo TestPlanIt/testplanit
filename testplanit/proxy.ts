@@ -1,10 +1,22 @@
 import { getToken } from "next-auth/jwt";
 import createMiddleware from "next-intl/middleware";
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { checkApiRateLimit, type RateLimitResult } from "~/lib/api-rate-limit";
 import { isLinkPreviewBot, matchPreviewRoute } from "~/lib/linkPreview";
 import { normalizeRecordKeyPath } from "~/lib/recordKeyRoutes";
+import { sanitizeCallbackUrl } from "~/lib/auth-security";
+import { withBasePath } from "~/lib/basePath";
+import {
+  buildContentSecurityPolicy,
+  CSP_HEADER,
+  CSP_NONCE_HEADER,
+  CSP_REPORT_PATH,
+  cspHeaderName,
+  generateCspNonce,
+  getCspMode,
+} from "~/lib/contentSecurityPolicy";
+import { isPublicPath } from "~/lib/auth/publicRoutes";
+import { isSessionEnded } from "~/lib/auth/sessionInvalidation";
 import { getCachedSessionUser } from "~/lib/session-cache";
 import { defaultLocale, locales } from "./i18n/navigation";
 
@@ -90,8 +102,13 @@ function isOAuthIntegrationRoute(pathname: string): boolean {
   return /^\/api\/integrations\/oauth\/[^/]+\/(auth|callback)$/.test(pathname);
 }
 
-export default async function middlewareWithPreferences(request: NextRequest) {
-  const url = new URL(request.url);
+async function middlewareWithPreferences(request: NextRequest) {
+  // request.nextUrl has Next's basePath already removed, so every path check
+  // below sees the same paths at the root and under a prefix. Redirects are
+  // built from clone(), which puts the prefix back when the URL is formatted.
+  // Parsing request.url instead would keep the prefix in pathname and drop it
+  // from every redirect.
+  const url = request.nextUrl;
   const pathname = url.pathname;
 
   // Cosmetic project-prefixed record keys: if a detail-route URL carries a
@@ -106,7 +123,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     const pathAfterLocale = pathname.slice(localePrefix.length);
     const normalized = normalizeRecordKeyPath(pathAfterLocale);
     if (normalized) {
-      const redirectUrl = new URL(request.url);
+      const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = `${localePrefix}${normalized}`;
       return NextResponse.redirect(redirectUrl);
     }
@@ -155,7 +172,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     }
 
     // Redirect to localized share URL
-    const redirectUrl = new URL(request.url);
+    const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = `/${targetLocale}${pathname}`;
     return NextResponse.redirect(redirectUrl);
   }
@@ -164,13 +181,16 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   const isApiRoute = pathname.startsWith("/api/");
   const isAuthRoute = pathname.startsWith("/api/auth/");
 
-  // Auth, health, version, and share routes should pass through without any middleware processing
+  // Auth, health, version, share and CSP-report routes should pass through
+  // without any middleware processing. Browsers post CSP violation reports
+  // without the headers the external-API check looks for.
   const isShareRoute = pathname.startsWith("/api/share/");
   if (
     isAuthRoute ||
     isShareRoute ||
     pathname === "/api/health" ||
-    pathname === "/api/version"
+    pathname === "/api/version" ||
+    pathname === CSP_REPORT_PATH
   ) {
     return NextResponse.next();
   }
@@ -312,7 +332,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     if (!pathWithoutLocale.startsWith("/trial-expired")) {
       const pathSegments = pathname.split("/").filter(Boolean);
       const locale = pathSegments[0] || defaultLocale;
-      const redirectUrl = new URL(request.url);
+      const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = `/${locale}/trial-expired`;
       if (isSuspended) {
         redirectUrl.search = "";
@@ -321,18 +341,6 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
   }
-
-  // Define public routes that don't require authentication
-  const publicRoutes = [
-    "/signin",
-    "/signup",
-    "/verify-email",
-    "/trial-expired",
-    "/auth/two-factor-setup",
-    "/auth/two-factor-verify",
-    "/share",
-    "/passwordless",
-  ];
 
   // Extract the route path without locale (e.g., /en-US/signin -> /signin)
   const pathWithoutLocale = pathname.replace(/^\/[^/]+/, "");
@@ -347,7 +355,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     const pathSegments = pathname.split("/").filter(Boolean);
     const locale = pathSegments[0] || defaultLocale;
     const correctRoute = pathSegments[1]; // Get the first route segment
-    const redirectUrl = new URL(request.url);
+    const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = `/${locale}/${correctRoute}`;
     // Preserve error parameter from NextAuth (e.g., expired magic link)
     const errorParam = url.searchParams.get("error");
@@ -358,11 +366,53 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  // A signed-in visitor has no business on the sign-in page: send them into
+  // the app (or to the sanitized callbackUrl), as GitHub, Atlassian and Linear
+  // do. Left alone, the page's corrupt-cookie recovery wipes the live session
+  // underneath a header that still shows the user as signed in. A session the
+  // server no longer honours is sent back here with the reason attached and
+  // then rendered, so the page's cookie wipe runs for a now-anonymous visitor.
+  // Other `error` params are NextAuth's own error redirects and show the page.
+  //
+  // Nothing here deletes the cookie: the cookie on THIS request may be older
+  // than the one the browser now holds (the change-password response re-issues
+  // it), and a request that raced it must not wipe the newer one. That is also
+  // why a valid session arriving with `error=SessionEnded` goes home.
+  if (pathWithoutLocale === "/signin") {
+    const error = url.searchParams.get("error");
+    const token =
+      error === null || error === "SessionEnded"
+        ? await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+        : null;
+    if (token) {
+      const first = pathname.split("/").filter(Boolean)[0];
+      const locale = locales.includes(first as any) ? first : defaultLocale;
+      const cached = token.sub ? await getCachedSessionUser(token.sub) : null;
+      const ended = cached !== null && isSessionEnded(token, cached);
+      if (ended && error !== "SessionEnded") {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.search = "";
+        redirectUrl.searchParams.set("error", "SessionEnded");
+        redirectUrl.hash = "";
+        return NextResponse.redirect(redirectUrl);
+      }
+      if (!ended) {
+        const target = sanitizeCallbackUrl(url.searchParams.get("callbackUrl"));
+        return NextResponse.redirect(
+          new URL(
+            withBasePath(
+              target === "/" ? `/${locale}/` : target,
+              request.nextUrl.basePath
+            ),
+            request.url
+          )
+        );
+      }
+    }
+  }
+
   // Check if this is a public route
-  const isPublicRoute = publicRoutes.some(
-    (route) =>
-      pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`)
-  );
+  const isPublicRoute = isPublicPath(pathWithoutLocale);
 
   // Get the JWT token from the request for all protected routes
   let token = null;
@@ -396,13 +446,15 @@ export default async function middlewareWithPreferences(request: NextRequest) {
         previewHeaders.set("x-link-preview-path", pathname);
         if (id !== null) previewHeaders.set("x-link-preview-id", String(id));
 
-        return NextResponse.rewrite(new URL("/api/link-preview", request.url), {
+        const previewUrl = request.nextUrl.clone();
+        previewUrl.pathname = "/api/link-preview";
+        return NextResponse.rewrite(previewUrl, {
           request: { headers: previewHeaders },
         });
       }
 
       // Redirect to signin page
-      const redirectUrl = new URL(request.url);
+      const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = `/${locale}/signin`;
       // Preserve error parameter from NextAuth (e.g., expired magic link)
       const errorParam = url.searchParams.get("error");
@@ -413,11 +465,40 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
+    // A session cookie stays cryptographically valid after the server has
+    // stopped honouring it (password changed in another browser, account
+    // deactivated): the session callback then returns an empty session, page
+    // queries fail, and the browser falls through to a 404 instead of being
+    // asked to sign in. Catch it here against the short-TTL user cache — the
+    // password routes and the user PATCH route invalidate it, so for those
+    // this is immediate — and send the browser to sign-in with a reason. The
+    // session callback's uncached read remains the authoritative guard.
+    //
+    // The cookie is deliberately NOT cleared here. A request already in flight
+    // with the old cookie can reach this point after the change-password
+    // response re-issued a newer one; clearing would wipe that newer cookie
+    // and sign out the very browser that made the change. The sign-in branch
+    // above sends a browser that still holds a valid cookie straight home, and
+    // the page itself clears the cookies of one that does not.
+    if (token.sub) {
+      const cached = await getCachedSessionUser(token.sub);
+      if (cached && isSessionEnded(token, cached)) {
+        const first = pathname.split("/").filter(Boolean)[0];
+        const locale = locales.includes(first as any) ? first : defaultLocale;
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = `/${locale}/signin`;
+        redirectUrl.search = "";
+        redirectUrl.searchParams.set("error", "SessionEnded");
+        redirectUrl.hash = "";
+        return NextResponse.redirect(redirectUrl);
+      }
+    }
+
     // Check if 2FA verification is required for SSO users
     if (token.twoFactorRequired && !token.twoFactorVerified) {
       const pathSegments = pathname.split("/").filter(Boolean);
       const locale = pathSegments[0] || defaultLocale;
-      const redirectUrl = new URL(request.url);
+      const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = `/${locale}/auth/two-factor-verify`;
       return NextResponse.redirect(redirectUrl);
     }
@@ -426,7 +507,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     if (token.twoFactorSetupRequired) {
       const pathSegments = pathname.split("/").filter(Boolean);
       const locale = pathSegments[0] || defaultLocale;
-      const redirectUrl = new URL(request.url);
+      const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = `/${locale}/auth/two-factor-setup`;
       redirectUrl.searchParams.set("sso", "true");
       return NextResponse.redirect(redirectUrl);
@@ -456,7 +537,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       ) {
         const pathSegments = pathname.split("/").filter(Boolean);
         const locale = pathSegments[0] || defaultLocale;
-        const redirectUrl = new URL(request.url);
+        const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = `/${locale}/auth/force-change-password`;
         return NextResponse.redirect(redirectUrl);
       }
@@ -474,7 +555,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       // Redirect non-admin users to home page
       const pathSegments = pathname.split("/").filter(Boolean);
       const locale = pathSegments[0] || defaultLocale;
-      const redirectUrl = new URL(request.url);
+      const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = `/${locale}/`;
       redirectUrl.search = ""; // Clear any query params
       redirectUrl.hash = ""; // Clear any hash
@@ -492,7 +573,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       // Check if current path already starts with a locale
       const startsWithLocale = locales.includes(currentLocale as any);
 
-      const localeRedirectUrl = new URL(request.url);
+      const localeRedirectUrl = request.nextUrl.clone();
       if (startsWithLocale) {
         // Replace existing locale
         localeRedirectUrl.pathname = `/${cookieLocale}${pathname.replace(/^\/[^/]*/, "")}`;
@@ -507,9 +588,45 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   return middleware(request);
 }
 
+/**
+ * Every page response carries a Content-Security-Policy whose script-src
+ * trusts a nonce minted here. Next reads the nonce from the request's
+ * Content-Security-Policy header to stamp its own inline scripts, the root
+ * layout reads it from x-nonce for the one inline script of ours, and the
+ * finished policy goes on the response. API routes return JSON and get none.
+ */
+export default async function proxy(request: NextRequest) {
+  const mode = getCspMode();
+  if (mode === "off" || request.nextUrl.pathname.startsWith("/api/")) {
+    return middlewareWithPreferences(request);
+  }
+
+  const nonce = generateCspNonce();
+  const policy = buildContentSecurityPolicy({ nonce });
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(CSP_NONCE_HEADER, nonce);
+  requestHeaders.set(CSP_HEADER, policy);
+
+  // The locale middleware forwards the request headers it is given to the
+  // route, so the nonce travels with a request that already carries it.
+  const response = await middlewareWithPreferences(
+    new NextRequest(request, {
+      headers: requestHeaders,
+      nextConfig: { basePath: request.nextUrl.basePath },
+    })
+  );
+  response.headers.set(cspHeaderName(mode), policy);
+  return response;
+}
+
 export const config = {
   // Match internationalized pathnames and API routes (for external API access control)
   matcher: [
+    // The bare root. The catch-all below is built as `${basePath}/(...)`
+    // under a path prefix, which never matches a request for the prefix
+    // itself, so that URL would 404 instead of being sent to the localized
+    // home page. At the root install this entry is redundant.
+    "/",
     // Match all API routes (for external API access control)
     "/api/:path*",
     // Match all internationalized pathnames (excluding static files and the

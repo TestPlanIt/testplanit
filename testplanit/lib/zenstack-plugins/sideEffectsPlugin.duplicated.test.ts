@@ -34,7 +34,7 @@ import {
   emitTestRunDuplicated,
 } from "~/lib/webhooks/event-emitters/testRunEvents";
 
-const afterEntityMutation = (sideEffectsPlugin as any).onEntityMutation
+const afterEntityMutation = (sideEffectsPlugin as any).onEntityMutation.$all
   .afterEntityMutation;
 
 function runCreate(model: string, row: Record<string, unknown>) {

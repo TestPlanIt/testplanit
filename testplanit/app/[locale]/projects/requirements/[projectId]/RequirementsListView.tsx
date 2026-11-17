@@ -70,6 +70,7 @@ import {
   type RequirementRow,
   type RequirementSourceValue,
 } from "./requirementsListRows";
+import { apiFetch } from "~/lib/basePath";
 
 // D-04 (28-14): filters and text search are server-side at every project
 // size now -- 300ms mirrors this codebase's own established search-debounce
@@ -992,7 +993,7 @@ const RequirementsListView = forwardRef<
       if (!canAddEdit || isFiltering || !hasLoadedRequirements) return;
       if (draggedId === parentId) return;
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/projects/${projectId}/requirements/${draggedId}/reparent`,
           {
             method: "POST",

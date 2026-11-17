@@ -28,7 +28,7 @@ The header features a gradient background and contains:
 - **Email Address**: The user's registered email (editable inline when viewing own profile)
 - **Action Buttons** (own profile only):
   - **Edit Profile**: Enables inline editing mode for user information and preferences
-  - **Change Password**: Opens a modal to update your password
+  - **Change Password**: Opens a modal to update your password. Changing it signs out every other device and browser where you are logged in; the browser you changed it from stays signed in.
 
 ## Information Sections
 
@@ -104,12 +104,15 @@ When viewing your own profile, you can view and edit these preferences:
 
 #### Notification Settings
 
+Notification settings are managed on the [Notifications & Alerts](./alerts.md) page (**Notifications & Alerts** in the user menu); the Preferences section links there.
+
 - **Notification Mode**: Control how you receive notifications:
   - Use Global Settings
   - None (no notifications)
   - In-App Only
   - In-App + Email (Immediate)
   - In-App + Email (Daily Digest)
+- **What to notify me about**: Every notification type has a switch that is on by default; switch off the ones you do not want. Two types are always on, administrator-only types appear only for administrators, and **Reset to defaults** turns everything back on. See [Notifications](notifications-inbox.md#notification-preferences) for the list of types.
 
 ### API Tokens
 

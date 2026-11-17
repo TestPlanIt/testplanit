@@ -49,7 +49,7 @@ function makeQueue(job: unknown = null) {
   const client = { set: vi.fn().mockResolvedValue("OK") };
   return {
     getJob: vi.fn().mockResolvedValue(job),
-    client: Promise.resolve(client),
+    getBackend: () => ({ client: Promise.resolve(client) }),
     _client: client,
   };
 }

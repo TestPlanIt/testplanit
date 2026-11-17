@@ -6,6 +6,15 @@ import { SummaryCardGrid } from "./SummaryCardGrid";
 const columnsOf = (testId: string) =>
   screen.getByTestId(testId).parentElement?.style.gridTemplateColumns;
 
+// The DOM engine decides how a calc() expression serializes (jsdom 31
+// flattens calc() inside max() like browsers do), so compare against the
+// engine's own serialization of the expected value rather than a literal.
+const serialized = (gridTemplateColumns: string) => {
+  const probe = document.createElement("div");
+  probe.style.gridTemplateColumns = gridTemplateColumns;
+  return probe.style.gridTemplateColumns;
+};
+
 describe("SummaryCardGrid", () => {
   it("caps the columns at the number of cards rendered", () => {
     render(
@@ -16,7 +25,9 @@ describe("SummaryCardGrid", () => {
       </SummaryCardGrid>
     );
     expect(columnsOf("card-1")).toBe(
-      "repeat(auto-fill, minmax(max(340px, calc((100% - 32px) / 3 - 1px)), 1fr))"
+      serialized(
+        "repeat(auto-fill, minmax(max(340px, calc((100% - 32px) / 3 - 1px)), 1fr))"
+      )
     );
   });
 
@@ -30,7 +41,9 @@ describe("SummaryCardGrid", () => {
       </SummaryCardGrid>
     );
     expect(columnsOf("card-1")).toBe(
-      "repeat(auto-fill, minmax(max(340px, calc((100% - 16px) / 2 - 1px)), 1fr))"
+      serialized(
+        "repeat(auto-fill, minmax(max(340px, calc((100% - 16px) / 2 - 1px)), 1fr))"
+      )
     );
     expect(screen.queryByTestId("card-4")).not.toBeInTheDocument();
   });
@@ -42,7 +55,9 @@ describe("SummaryCardGrid", () => {
       </SummaryCardGrid>
     );
     expect(columnsOf("card-1")).toBe(
-      "repeat(auto-fill, minmax(max(340px, calc((100% - 0px) / 1 - 1px)), 1fr))"
+      serialized(
+        "repeat(auto-fill, minmax(max(340px, calc((100% - 0px) / 1 - 1px)), 1fr))"
+      )
     );
   });
 });

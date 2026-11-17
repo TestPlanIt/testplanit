@@ -94,6 +94,7 @@ test.describe("Admin Share Management", () => {
   test("Admin can create share from cross-project report @smoke", async ({
     api,
     page,
+    baseURL,
   }) => {
     const timestamp = Date.now();
 
@@ -147,7 +148,7 @@ test.describe("Admin Share Management", () => {
     });
 
     await test.step("Verify share is accessible in an incognito session", async () => {
-      const shareUrl = `http://localhost:3002/share/${shareKey!}`;
+      const shareUrl = `${baseURL}/share/${shareKey!}`;
       const incognitoContext = await page
         .context()
         .browser()!

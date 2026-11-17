@@ -31,7 +31,7 @@ vi.mock("~/lib/services/caseAutomatedVersioning", () => ({
 import { snapshotAutomatedFlip } from "~/lib/services/caseAutomatedVersioning";
 import { sideEffectsPlugin } from "./sideEffectsPlugin";
 
-const afterEntityMutation = (sideEffectsPlugin as any).onEntityMutation
+const afterEntityMutation = (sideEffectsPlugin as any).onEntityMutation.$all
   .afterEntityMutation;
 
 /** A plugin-free client the hook derives from the mutation's client. */

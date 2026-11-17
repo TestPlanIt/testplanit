@@ -255,6 +255,147 @@ test.describe("Steps Display", () => {
     });
   });
 
+  test("Step layout toggle puts expected results beside their steps and persists", async ({
+    api,
+    page,
+  }) => {
+    const projectId = getTestProjectId();
+    const templateId = getTestTemplateId();
+    const uniqueId = Date.now();
+    const userId = await api.getCurrentUserId();
+
+    const folderId = await api.createFolder(
+      projectId,
+      `Step Layout Folder ${uniqueId}`
+    );
+    const testCaseId = await api.createTestCase(
+      projectId,
+      folderId,
+      `Step Layout Case ${uniqueId}`,
+      templateId
+    );
+    await api.addStepsToTestCase(testCaseId, [
+      {
+        step: {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Layout step one" }],
+            },
+          ],
+        },
+        expectedResult: {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Layout expected one" }],
+            },
+          ],
+        },
+        order: 0,
+      },
+      {
+        step: {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Layout step two" }],
+            },
+          ],
+        },
+        expectedResult: {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Layout expected two" }],
+            },
+          ],
+        },
+        order: 1,
+      },
+    ]);
+
+    try {
+      // Two readable columns need a wide steps container; the toggle hides
+      // below that width because the layout stacks there regardless.
+      await page.setViewportSize({ width: 1920, height: 1080 });
+
+      await test.step("Steps start stacked", async () => {
+        await page.goto(
+          `/en-US/projects/repository/${projectId}/${testCaseId}`,
+          { waitUntil: "networkidle" }
+        );
+        await expandLeftPanelIfCollapsed(page);
+        await expect(page.locator("text=Layout step one")).toBeVisible({
+          timeout: 15000,
+        });
+        await expect(page.getByTestId("steps-display")).toHaveAttribute(
+          "data-step-layout",
+          "STACKED"
+        );
+
+        const step = await page.getByTestId("step-badge-0").boundingBox();
+        const expected = await page
+          .getByTestId("expected-result-0")
+          .boundingBox();
+        expect(expected!.y).toBeGreaterThan(step!.y + step!.height);
+      });
+
+      await test.step("The toggle moves the expected result beside its step", async () => {
+        const toggle = page.getByTestId("step-layout-toggle");
+        await expect(toggle).toBeVisible();
+        await expect(toggle).toHaveAttribute("aria-pressed", "false");
+        await toggle.click();
+
+        await expect(page.getByTestId("steps-display")).toHaveAttribute(
+          "data-step-layout",
+          "SIDE_BY_SIDE"
+        );
+        await expect(toggle).toHaveAttribute("aria-pressed", "true");
+
+        const stepBlock = page
+          .getByTestId("expected-result-0")
+          .locator("xpath=preceding-sibling::div[1]");
+        const step = await stepBlock.boundingBox();
+        const expected = await page
+          .getByTestId("expected-result-0")
+          .boundingBox();
+        expect(Math.abs(expected!.y - step!.y)).toBeLessThan(2);
+        expect(expected!.x).toBeGreaterThan(step!.x + step!.width - 2);
+      });
+
+      await test.step("The choice survives a reload and reaches the editor", async () => {
+        await page.reload({ waitUntil: "networkidle" });
+        await expandLeftPanelIfCollapsed(page);
+        await expect(page.locator("text=Layout step one")).toBeVisible({
+          timeout: 15000,
+        });
+        await expect(page.getByTestId("steps-display")).toHaveAttribute(
+          "data-step-layout",
+          "SIDE_BY_SIDE"
+        );
+
+        await page.locator('button:has-text("Edit")').first().click();
+        await expect(page.getByTestId("steps-form")).toHaveAttribute(
+          "data-step-layout",
+          "SIDE_BY_SIDE",
+          { timeout: 15000 }
+        );
+        await expect(page.getByTestId("step-layout-toggle")).toHaveAttribute(
+          "aria-pressed",
+          "true"
+        );
+      });
+    } finally {
+      // The preference belongs to the shared E2E user, so put it back.
+      await api.updateUserPreferences({ userId, stepLayout: "STACKED" });
+    }
+  });
+
   test("Steps Edit Mode with Add/Remove", async ({ api, page }) => {
     const projectId = getTestProjectId();
     const templateId = getTestTemplateId();

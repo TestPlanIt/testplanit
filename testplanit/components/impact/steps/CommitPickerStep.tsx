@@ -26,6 +26,7 @@ import {
 } from "../CommitPicker";
 import type { ImpactRepoConfig } from "../ImpactDialog";
 import { PullRequestPicker, type RepoPullRequest } from "../PullRequestPicker";
+import { apiFetch } from "~/lib/basePath";
 
 interface RepoBranch {
   name: string;
@@ -209,7 +210,7 @@ export function CommitPickerStep({
   useEffect(() => {
     let ignore = false;
     const search = new URLSearchParams({ configId: String(config.id) });
-    fetch(`/api/code-repositories/${config.repositoryId}/branches?${search}`)
+    apiFetch(`/api/code-repositories/${config.repositoryId}/branches?${search}`)
       .then(async (response) => {
         if (!response.ok) throw new Error("Failed to list branches");
         return (await response.json()) as BranchesResponse;
@@ -243,7 +244,7 @@ export function CommitPickerStep({
       take: "10",
       configId: String(config.id),
     });
-    fetch(`/api/projects/${projectId}/impact/analyses?${search}`)
+    apiFetch(`/api/projects/${projectId}/impact/analyses?${search}`)
       .then(async (response) => {
         if (!response.ok) return { analyses: [] as PreviousAnalysis[] };
         return (await response.json()) as { analyses: PreviousAnalysis[] };
@@ -270,7 +271,7 @@ export function CommitPickerStep({
           configId: String(config.id),
           q: needle,
         });
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/code-repositories/${config.repositoryId}/branches?${search}`
         );
         if (!response.ok) throw new Error("Failed to search branches");

@@ -18,9 +18,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { IntegrationAuthType, IntegrationProvider } from "~/zenstack/models";
-import { AlertTriangle, Check, Copy, Info, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  Asterisk,
+  Check,
+  Copy,
+  Info,
+  RefreshCw,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { BASE_PATH } from "~/lib/basePath";
 
 interface IntegrationConfigFormProps {
   provider: IntegrationProvider;
@@ -168,6 +176,8 @@ const authTypeFields: Record<string, FieldConfig[]> = {
     [PAT_FIELD],
   [`${IntegrationProvider.GITEA}_${IntegrationAuthType.OAUTH2}`]:
     OAUTH_CLIENT_FIELDS,
+  [`${IntegrationProvider.CLICKUP}_${IntegrationAuthType.OAUTH2}`]:
+    OAUTH_CLIENT_FIELDS,
 };
 
 const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
@@ -313,6 +323,28 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
       required: true,
     },
   ],
+  [IntegrationProvider.CLICKUP]: [
+    {
+      // ClickUp Team (workspace) ID — needed to walk the Space/Folder/List
+      // hierarchy for the project (List) picker.
+      name: "teamId",
+      label: "config.clickupTeamId",
+      placeholder: "config.clickupTeamIdPlaceholder",
+      help: "config.clickupTeamIdHelp",
+      isCredential: false,
+      required: true,
+    },
+    {
+      // Default List tasks are created in. Optional: a specific List can be
+      // chosen per-issue via the project picker instead.
+      name: "listId",
+      label: "config.clickupListId",
+      placeholder: "config.clickupListIdPlaceholder",
+      help: "config.clickupListIdHelp",
+      isCredential: false,
+      required: false,
+    },
+  ],
 };
 
 function generateApiKey(): string {
@@ -347,7 +379,7 @@ export function IntegrationConfigForm({
   // own domain) to avoid an SSR/CSR hydration mismatch.
   const [origin, setOrigin] = useState("");
   useEffect(() => {
-    setOrigin(window.location.origin);
+    setOrigin(`${window.location.origin}${BASE_PATH}`);
   }, []);
   const callbackUrl = origin
     ? `${origin}/api/integrations/oauth/${provider.toLowerCase()}/callback`
@@ -403,10 +435,10 @@ export function IntegrationConfigForm({
       {showApiKeyWarning && (
         <Alert className="border-warning/50 bg-warning/10">
           <AlertTriangle className="h-4 w-4 text-warning" />
-          <AlertTitle className="text-warning-foreground">
+          <AlertTitle className="text-warning-text">
             {t("config.apiKeyWarningTitle")}
           </AlertTitle>
-          <AlertDescription className="text-warning-foreground">
+          <AlertDescription className="text-foreground">
             <div className="mt-2 space-y-2">
               <p>{t("config.apiKeyWarningDescription")}</p>
               <ul className="list-disc list-inside space-y-1 text-sm">
@@ -436,7 +468,9 @@ export function IntegrationConfigForm({
             <FormLabel className="flex items-center">
               {getFieldLabel(field.label)}
               {field.required && (
-                <span className="text-destructive ms-1">{"*"}</span>
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               )}
               {field.help && (
                 <HelpPopover

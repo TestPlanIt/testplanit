@@ -198,6 +198,13 @@ services:
   postgres:
     container_name: testplanit-postgres
     image: postgres:18-alpine # Use a specific Postgres version
+    # Docker gives a container 64MB of /dev/shm, which is where Postgres puts
+    # the shared memory segments its parallel query workers need. Report
+    # queries over large result tables pick parallel plans and exhaust it,
+    # failing with "could not resize shared memory segment ... No space left
+    # on device" — which surfaces as a 500 from the reports API, not as a
+    # database error anyone would think to look for.
+    shm_size: 256mb
     environment:
       POSTGRES_USER: user # Must match the user in DATABASE_URL
       POSTGRES_PASSWORD: password # Must match the password in DATABASE_URL

@@ -38,6 +38,7 @@ import { isIntegrationAuthCompleteMessage } from "~/lib/integrations/oauthPopup"
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { CreateIssueJiraForm } from "./create-issue-jira-form";
+import { apiFetch } from "~/lib/basePath";
 
 interface ExternalIssue {
   id: string;
@@ -308,7 +309,7 @@ export function RequirementReferenceSearchDialog({
           searchParams.set("projectId", externalProjectId);
         }
 
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/integrations/${activeIntegration.integrationId}/search?${searchParams.toString()}`
         );
 
@@ -358,7 +359,7 @@ export function RequirementReferenceSearchDialog({
             projectId: ip.externalProjectId,
           });
 
-          const response = await fetch(
+          const response = await apiFetch(
             `/api/integrations/${activeIntegration.integrationId}/search?${searchParams.toString()}`
           );
 

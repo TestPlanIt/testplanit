@@ -3,6 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
   AlertDialog,
@@ -49,6 +50,7 @@ import { Separator } from "@/components/ui/separator";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { Attachments, SessionResults, User } from "~/zenstack/models";
 import {
+  Asterisk,
   ChevronRight,
   Clock,
   Copy,
@@ -70,7 +72,10 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { getBackgroundStyle } from "~/utils/colorUtils";
-import { statusSurfaceVars } from "~/utils/contrastingTextColor";
+import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { editorMinHeightStyle } from "~/utils/editorHeight";
@@ -84,6 +89,7 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "./UploadAttachments";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
+import { BASE_PATH } from "~/lib/basePath";
 
 // Define the ExtendedSessionResults interface to match the query structure
 interface ExtendedSessionResults extends SessionResults {
@@ -1052,7 +1058,7 @@ export function SessionResultsList({
     (resultId: number) => {
       if (typeof window !== "undefined") {
         // Get the origin
-        const origin = window.location.origin;
+        const origin = `${window.location.origin}${BASE_PATH}`;
 
         // Construct URL with explicit locale path
         const path = `/${currentLocale}/projects/sessions/${projectId}/${sessionId}#result-${resultId}`;
@@ -1126,7 +1132,11 @@ export function SessionResultsList({
           <FormItem>
             <FormLabel className="flex items-center gap-1">
               {displayName}
-              {isRequired && <span className="text-destructive">{"*"}</span>}
+              {isRequired && (
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              )}
             </FormLabel>
             <FormControl>
               <Input
@@ -1146,7 +1156,11 @@ export function SessionResultsList({
           <FormItem>
             <FormLabel className="flex items-center gap-1">
               {displayName}
-              {isRequired && <span className="text-destructive">{"*"}</span>}
+              {isRequired && (
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              )}
             </FormLabel>
             <FormControl>
               <Input
@@ -1168,7 +1182,11 @@ export function SessionResultsList({
           <FormItem>
             <FormLabel className="flex items-center gap-1">
               {displayName}
-              {isRequired && <span className="text-destructive">{"*"}</span>}
+              {isRequired && (
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              )}
             </FormLabel>
             <FormControl>
               <Select
@@ -1195,12 +1213,7 @@ export function SessionResultsList({
         );
       case "RichText":
       case "Text Long": {
-        const fieldId = field.resultField.id.toString();
-        const displayName = field.resultField.displayName;
-        const _hint = field.resultField.hint;
-        const isRequired = field.resultField.isRequired;
-        // Get initialHeight
-        const initialHeight = field.resultField.initialHeight;
+        const initialHeight = field.initialHeight;
         const editorClassName = "border rounded-md w-full";
 
         return (
@@ -1213,7 +1226,9 @@ export function SessionResultsList({
                 <FormLabel className="flex items-center gap-1">
                   {displayName}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                 </FormLabel>
                 <FormControl>
@@ -1238,7 +1253,11 @@ export function SessionResultsList({
           <FormItem>
             <FormLabel className="flex items-center gap-1">
               {`${displayName} (${fieldType})`}
-              {isRequired && <span className="text-destructive">{"*"}</span>}
+              {isRequired && (
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              )}
             </FormLabel>
             <FormControl>
               <Input
@@ -1285,10 +1304,8 @@ export function SessionResultsList({
 
         return (
           <div className="border rounded-md">
-            <TipTapEditor
+            <ReadOnlyRichText
               content={content}
-              readOnly={true}
-              projectId={"0"} // This is read-only, so projectId doesn't matter
               className="min-h-[50px] max-h-[200px] overflow-y-auto"
             />
           </div>
@@ -1406,12 +1423,14 @@ export function SessionResultsList({
           >
             <CardHeader className="p-0">
               <div
-                className="flex justify-between items-center p-2 rounded-t-md text-background"
+                className="flex justify-between items-center p-2 rounded-t-md"
                 data-status-surface
                 style={{
                   ...statusSurfaceVars(getColorValue(result.status.color)),
                   backgroundColor: getColorValue(result.status.color),
-                  color: "#fff",
+                  color: contrastingTextColor(
+                    getColorValue(result.status.color)
+                  ),
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -1419,7 +1438,7 @@ export function SessionResultsList({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 p-1 text-background hover:text-primary hover:bg-background/10"
+                    className="h-7 w-7 p-1 hover:bg-background/10"
                     onClick={() => handleCopyLink(result.id)}
                     title={tCommon("actions.copyLink")}
                   >
@@ -1437,7 +1456,7 @@ export function SessionResultsList({
                     <UserNameCell userId={result.createdBy.id} />
                   </span>
                   {result.elapsed && (
-                    <div className="text-sm text-muted flex items-center gap-1">
+                    <div className="text-sm flex items-center gap-1">
                       <Clock className="w-4 h-4" />
                       {toHumanReadable(result.elapsed, {
                         isSeconds: true,
@@ -1446,7 +1465,7 @@ export function SessionResultsList({
                     </div>
                   )}
                   {result.attachments && result.attachments.length > 0 && (
-                    <div className="text-sm text-muted flex items-center gap-1">
+                    <div className="text-sm flex items-center gap-1">
                       <FileText className="w-4 h-4" />
                       {result.attachments.length}
                     </div>
@@ -1470,7 +1489,7 @@ export function SessionResultsList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-background hover:text-primary hover:bg-background/10"
+                        className="h-8 w-8 hover:bg-background/10"
                         onClick={() => handleEditClick(result)}
                         title={tCommon("actions.edit")}
                         disabled={
@@ -1488,7 +1507,7 @@ export function SessionResultsList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-background hover:text-destructive hover:bg-background/10"
+                        className="h-8 w-8 hover:bg-background/10"
                         onClick={() => handleDeleteClick(result.id)}
                         title={tCommon("actions.delete")}
                       >
@@ -1506,11 +1525,9 @@ export function SessionResultsList({
               >
                 {getResultData(result) &&
                 !isEmptyContent(getResultData(result)) ? (
-                  <TipTapEditor
+                  <ReadOnlyRichText
                     key={`display-${result.id}-${refreshResults}`}
                     content={getResultData(result)}
-                    readOnly
-                    projectId={projectId.toString()}
                     className="p-4 rounded-md"
                   />
                 ) : (
@@ -1663,6 +1680,9 @@ export function SessionResultsList({
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  // This dialog is portalled, but React still bubbles its
+                  // submit to a <form> the list is rendered inside.
+                  e.stopPropagation();
                   const formData = form.getValues() as FieldFormValues;
 
                   // Log each field for debugging

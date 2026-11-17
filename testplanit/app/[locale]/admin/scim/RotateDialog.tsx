@@ -147,7 +147,7 @@ export function RotateDialog({
               {tReveal("a11yAnnounce")}
             </div>
 
-            <Alert className="border-warning bg-warning/10 text-warning-foreground">
+            <Alert className="border-warning bg-warning/10 text-warning-text">
               <ShieldAlert className="h-4 w-4" aria-hidden="true" />
               <AlertDescription>{tReveal("warning")}</AlertDescription>
             </Alert>

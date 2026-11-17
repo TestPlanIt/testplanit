@@ -5,6 +5,7 @@ import {
   LATEST_RESULTS_COUNT,
   type TestResultExecution,
 } from "~/lib/types/latestTestResults";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * Recent executions for the cases currently on screen, keyed by case id.
@@ -25,7 +26,7 @@ export function useLatestTestResults(
   const { data } = useQuery({
     queryKey: ["latestTestResults", key, limit],
     queryFn: async () => {
-      const response = await fetch("/api/repository-cases/latest-results", {
+      const response = await apiFetch("/api/repository-cases/latest-results", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ caseIds: key, limit }),

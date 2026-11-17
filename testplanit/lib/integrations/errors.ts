@@ -56,6 +56,7 @@ const providerLabel = (provider: string): string => {
     REDMINE: "Redmine",
     MANTISBT: "MantisBT",
     BITBUCKET: "Bitbucket",
+    CLICKUP: "ClickUp",
   };
   return known[provider.toUpperCase()] ?? provider;
 };

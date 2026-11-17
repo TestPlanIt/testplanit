@@ -21,6 +21,19 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
+// Mock the step layout preference so the layout under test is explicit.
+const { stepLayoutState } = vi.hoisted(() => ({
+  stepLayoutState: { layout: "STACKED" as "STACKED" | "SIDE_BY_SIDE" },
+}));
+vi.mock("~/hooks/useStepLayout", () => ({
+  useStepLayout: () => ({
+    layout: stepLayoutState.layout,
+    isSideBySide: stepLayoutState.layout === "SIDE_BY_SIDE",
+    toggleLayout: vi.fn(),
+    setLayout: vi.fn(),
+  }),
+}));
+
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useParams: vi.fn(() => ({ projectId: "1" })),
@@ -189,9 +202,119 @@ describe("StepsForm", () => {
 
   beforeEach(() => {
     mockFields = [];
+    stepLayoutState.layout = "STACKED";
     mockAppend.mockClear();
     mockRemove.mockClear();
     mockReplace.mockClear();
+  });
+
+  describe("step layout", () => {
+    const twoSteps = [
+      { id: "step-1", step: null, expectedResult: null, isShared: false },
+      { id: "step-2", step: null, expectedResult: null, isShared: false },
+    ];
+
+    it("stacks the step editor over the expected result editor by default", () => {
+      mockFields = twoSteps;
+
+      render(<StepsForm {...defaultProps} />);
+
+      expect(screen.getByTestId("steps-form")).toHaveAttribute(
+        "data-step-layout",
+        "STACKED"
+      );
+      const [stepEditor] = screen
+        .getByTestId("step-editor-0")
+        .querySelectorAll('[data-testid="tiptap-editor"]');
+      const pair = stepEditor.closest(".flex-col.w-full")!;
+      expect(pair).not.toHaveClass("@2xl:grid-cols-2");
+    });
+
+    it("puts the two editors in columns when the user chose side by side", () => {
+      stepLayoutState.layout = "SIDE_BY_SIDE";
+      mockFields = twoSteps;
+
+      render(<StepsForm {...defaultProps} />);
+
+      expect(screen.getByTestId("steps-form")).toHaveAttribute(
+        "data-step-layout",
+        "SIDE_BY_SIDE"
+      );
+      const [stepEditor, expectedEditor] = screen
+        .getByTestId("step-editor-0")
+        .querySelectorAll('[data-testid="tiptap-editor"]');
+      const pair = stepEditor.closest(".grid")!;
+      expect(pair).toHaveClass("grid-cols-1", "@2xl:grid-cols-2");
+      expect(pair).toContainElement(expectedEditor as HTMLElement);
+      expect(screen.getByTestId("step-layout-toggle")).toHaveAttribute(
+        "aria-pressed",
+        "true"
+      );
+    });
+
+    it("moves the expected result label into the step header when side by side", () => {
+      stepLayoutState.layout = "SIDE_BY_SIDE";
+      mockFields = twoSteps;
+
+      render(<StepsForm {...defaultProps} />);
+
+      const card = screen
+        .getByTestId("step-editor-0")
+        .querySelector(".bg-muted")!;
+      const labels = [...card.querySelectorAll("label")].filter((label) =>
+        label.textContent?.includes("common.fields.expectedResult")
+      );
+      expect(labels).toHaveLength(2);
+      const [headerLabel, boxLabel] = labels;
+      // Wide containers show the header copy over the right column; the copy
+      // inside the box only shows while the layout falls back to stacked.
+      expect(headerLabel).toHaveClass("hidden", "@2xl:flex");
+      expect(headerLabel.parentElement).toContainElement(
+        screen.getByTestId("delete-step-0")
+      );
+      expect(boxLabel).toHaveClass("@2xl:hidden");
+      expect(boxLabel.closest(".ring-2")).toContainElement(
+        card.querySelectorAll('[data-testid="tiptap-editor"]')[1] as HTMLElement
+      );
+    });
+
+    it("keeps the expected result label inside its box when stacked", () => {
+      mockFields = twoSteps;
+
+      render(<StepsForm {...defaultProps} />);
+
+      const card = screen
+        .getByTestId("step-editor-0")
+        .querySelector(".bg-muted")!;
+      const labels = [...card.querySelectorAll("label")].filter((label) =>
+        label.textContent?.includes("common.fields.expectedResult")
+      );
+      expect(labels).toHaveLength(1);
+      expect(labels[0]).not.toHaveClass("@2xl:hidden");
+      expect(labels[0].closest(".ring-2")).not.toBeNull();
+    });
+
+    it("offers the toggle only once there is a step to lay out", () => {
+      mockFields = [];
+      const { rerender } = render(<StepsForm {...defaultProps} />);
+      expect(screen.queryByTestId("step-layout-toggle")).toBeNull();
+
+      mockFields = twoSteps;
+      rerender(<StepsForm {...defaultProps} />);
+      expect(screen.getByTestId("step-layout-toggle")).toBeInTheDocument();
+    });
+
+    it("lets step cards grow to the available width", () => {
+      mockFields = twoSteps;
+
+      render(<StepsForm {...defaultProps} />);
+
+      const card = screen
+        .getByTestId("step-editor-0")
+        .querySelector(".bg-muted")!;
+      expect(card).toHaveClass("w-full");
+      expect(card.className).not.toContain("min-w-[650px]");
+    });
   });
 
   it("renders empty state when no steps exist with add step button", () => {

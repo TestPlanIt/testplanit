@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchCaseIdsByLatestStatus } from "~/app/actions/caseIdsByLatestStatus";
 import { serializeWhereForTransport } from "~/lib/repository/whereTransport";
+import { CASE_IDS_BY_LATEST_STATUS_QUERY_ROOT } from "./useRepositoryCasesQuery";
 
 /**
  * Page of case ids ordered by the status of each case's most recent result.
@@ -20,7 +21,13 @@ export function useCaseIdsByLatestStatus(args: {
   const { where, direction, skip, take, enabled } = args;
 
   const { data, isFetching } = useQuery({
-    queryKey: ["caseIdsByLatestStatus", where, direction, skip, take],
+    queryKey: [
+      CASE_IDS_BY_LATEST_STATUS_QUERY_ROOT,
+      where,
+      direction,
+      skip,
+      take,
+    ],
     queryFn: async () => {
       const result = await fetchCaseIdsByLatestStatus({
         // React Flight cannot encode the where's Json-null sentinels; they

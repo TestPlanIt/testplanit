@@ -10,8 +10,14 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 import { useMemo } from "react";
-import { formatRequirementCellText } from "~/utils/issueDisplayText";
+import {
+  summarizeRequirementTraceability,
+  type HierarchyGroup,
+  type RequirementTraceabilitySummary,
+} from "~/utils/requirementReportSummaries";
 import { RequirementCoverageSummaryTiles } from "./RequirementCoverageSummaryTiles";
+
+export type { HierarchyGroup } from "~/utils/requirementReportSummaries";
 
 /**
  * The Requirement Traceability report's visualization panel: a donut of
@@ -52,8 +58,6 @@ export const REQUIREMENT_COVERAGE_STATE_ORDER = [
   "FAILED",
 ] as const;
 
-const TOP_HIERARCHY_LIMIT = 10;
-
 interface OverviewRow {
   requirementId: number;
   coverageStatus?: string;
@@ -61,16 +65,6 @@ interface OverviewRow {
   requirementKey?: string;
   requirementTitle?: string | null;
   requirementRootId?: number;
-}
-
-export interface HierarchyGroup {
-  label: string;
-  counts: Record<string, number>;
-  total: number;
-  /** The root requirement's own id, when the root itself appeared as a
-   * row (a group discovered only through descendants has none) — makes
-   * the bar's label a link to the requirement. */
-  requirementId?: number;
 }
 
 export function stateLabel(t: (key: string) => string, status: string): string {
@@ -86,78 +80,37 @@ export function stateLabel(t: (key: string) => string, status: string): string {
   }
 }
 
-export function RequirementCoverageOverview({ rows }: { rows: OverviewRow[] }) {
+export function RequirementCoverageOverview({
+  rows,
+  summary: serverSummary,
+}: {
+  rows: OverviewRow[];
+  /** The server's numbers over the whole set; when present, `rows` may
+   * be one page and the panel draws from this instead. */
+  summary?: RequirementTraceabilitySummary | null;
+}) {
   const t = useTranslations("requirements.coverage");
   const tReports = useTranslations("reports.ui.requirementCoverage");
 
-  const { donutData, groups, foldedCount } = useMemo(() => {
-    // Dedupe to one entry per requirement; its root is the first segment
-    // of the ancestors-only parent path, or the requirement itself when
-    // it IS top-level.
-    const byRequirement = new Map<
-      number,
-      { status: string; root: string; rootId?: number }
-    >();
-    for (const row of rows) {
-      if (byRequirement.has(row.requirementId)) continue;
-      const isRoot = !row.requirementParentPath;
-      const root = isRoot
-        ? formatRequirementCellText(row)
-        : row.requirementParentPath!.split(" > ")[0];
-      byRequirement.set(row.requirementId, {
-        status: row.coverageStatus ?? "UNCOVERED",
-        root,
-        // The server-supplied root id links the bar label even when the
-        // root has no row of its own; a root row's own id is the
-        // fallback for older payloads.
-        rootId:
-          row.requirementRootId ?? (isRoot ? row.requirementId : undefined),
-      });
-    }
-
-    const stateCounts: Record<string, number> = {};
-    const groupsByRoot = new Map<string, HierarchyGroup>();
-    for (const { status, root, rootId } of byRequirement.values()) {
-      stateCounts[status] = (stateCounts[status] ?? 0) + 1;
-      let group = groupsByRoot.get(root);
-      if (!group) {
-        group = { label: root, counts: {}, total: 0 };
-        groupsByRoot.set(root, group);
-      }
-      if (group.requirementId == null && rootId != null) {
-        group.requirementId = rootId;
-      }
-      group.counts[status] = (group.counts[status] ?? 0) + 1;
-      group.total += 1;
-    }
-
-    const donutData = REQUIREMENT_COVERAGE_STATE_ORDER.filter(
-      (status) => (stateCounts[status] ?? 0) > 0
-    ).map((status) => ({
-      id: status,
-      name: stateLabel(t, status),
-      value: stateCounts[status],
-      color: REQUIREMENT_COVERAGE_CHART_COLORS[status],
-    }));
-
-    const ranked = [...groupsByRoot.values()].sort(
-      (a, b) => b.total - a.total || a.label.localeCompare(b.label)
-    );
-    const top = ranked.slice(0, TOP_HIERARCHY_LIMIT);
-    const folded = ranked.slice(TOP_HIERARCHY_LIMIT);
-    if (folded.length > 0) {
-      const other: HierarchyGroup = { label: "", counts: {}, total: 0 };
-      for (const group of folded) {
-        for (const [status, count] of Object.entries(group.counts)) {
-          other.counts[status] = (other.counts[status] ?? 0) + count;
-        }
-        other.total += group.total;
-      }
-      top.push(other);
-    }
-
-    return { donutData, groups: top, foldedCount: folded.length };
-  }, [rows, t]);
+  // The arithmetic lives in utils/requirementReportSummaries (shared with
+  // the handler); this only attaches labels and colors.
+  const summary = useMemo(
+    () => serverSummary ?? summarizeRequirementTraceability(rows),
+    [serverSummary, rows]
+  );
+  const { groups, foldedCount } = summary;
+  const donutData = useMemo(
+    () =>
+      REQUIREMENT_COVERAGE_STATE_ORDER.filter(
+        (status) => (summary.stateCounts[status] ?? 0) > 0
+      ).map((status) => ({
+        id: status,
+        name: stateLabel(t, status),
+        value: summary.stateCounts[status],
+        color: REQUIREMENT_COVERAGE_CHART_COLORS[status],
+      })),
+    [summary, t]
+  );
 
   if (donutData.length === 0) {
     return null;
@@ -186,6 +139,7 @@ export function RequirementCoverageOverview({ rows }: { rows: OverviewRow[] }) {
         <div className="w-[190px] shrink-0 space-y-1">
           <RequirementCoverageSummaryTiles
             rows={rows}
+            summary={summary.tiles}
             className="grid-cols-1"
             compact
           />

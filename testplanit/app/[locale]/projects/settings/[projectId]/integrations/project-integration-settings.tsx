@@ -53,6 +53,7 @@ import { ImportIssuesDialog } from "./import-issues-dialog";
 import { MilestoneSyncSettings } from "./milestone-sync-settings";
 import { readRequirementTypeConfig } from "~/lib/integrations/requirementTypeConfig";
 import { RequirementsConfigSettings } from "./requirements-config-settings";
+import { apiFetch, withBasePath } from "~/lib/basePath";
 
 interface ProjectIntegrationSettingsProps {
   projectIntegration: ProjectIntegration;
@@ -235,7 +236,7 @@ export function ProjectIntegrationSettings({
     setIsLoadingProjects(true);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/integrations/${integration.id}/projects`
       );
 
@@ -265,7 +266,7 @@ export function ProjectIntegrationSettings({
 
   const checkAuthAndLoadProjects = useCallback(async () => {
     // Check if user has auth for this integration
-    const authResponse = await fetch(
+    const authResponse = await apiFetch(
       `/api/integrations/${integration.id}/auth/check`
     );
 
@@ -327,7 +328,9 @@ export function ProjectIntegrationSettings({
       returnUrl: window.location.pathname,
     });
 
-    window.location.href = `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?${params}`;
+    window.location.href = withBasePath(
+      `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?${params}`
+    );
   };
 
   const handleSetDefault = async (id: string) => {
@@ -378,7 +381,7 @@ export function ProjectIntegrationSettings({
     if (!stopMappingId) return;
     setIsStopping(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/integrations/${integration.id}/requirements-import/cancel`,
         {
           method: "POST",
@@ -479,7 +482,7 @@ export function ProjectIntegrationSettings({
     for (const ip of integrationProjects ?? []) {
       fetchers.set(ip.id, async (query, page, pageSize) => {
         try {
-          const response = await fetch(
+          const response = await apiFetch(
             `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(ip.externalProjectKey)}`
           );
           if (response.ok) {

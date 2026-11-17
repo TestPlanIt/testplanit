@@ -677,6 +677,13 @@ export const routes: A11yRoute[] = [
     sanity: APP_SHELL,
   },
   {
+    name: "admin-root-causes",
+    group: "Admin",
+    path: () => "/admin/root-causes",
+    authRequired: true,
+    sanity: APP_SHELL,
+  },
+  {
     name: "admin-queues",
     group: "Admin",
     path: () => "/admin/queues",

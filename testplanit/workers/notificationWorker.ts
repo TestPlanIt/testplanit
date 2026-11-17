@@ -11,6 +11,7 @@ import {
   tenantBroadcastChannel,
   userChannel,
 } from "../lib/notifications/channels";
+import { decideNotificationDelivery } from "../lib/notifications/delivery";
 import {
   JOB_CREATE_NOTIFICATION,
   JOB_PROCESS_USER_NOTIFICATIONS,
@@ -73,23 +74,23 @@ const processor = async (job: Job) => {
           where: { key: "notificationSettings" },
         });
 
-        // Determine notification mode
-        let notificationMode =
-          userPreferences?.notificationMode || "USE_GLOBAL";
-        if (notificationMode === "USE_GLOBAL") {
-          const settingsValue = globalSettings?.value as {
-            defaultMode?: string;
-          } | null;
-          notificationMode = (settingsValue?.defaultMode || "IN_APP") as any;
-        }
-
-        // Skip notification creation if user has notifications set to NONE
-        if (notificationMode === "NONE") {
+        // One delivery decision covers the mode (how the user is reached)
+        // and the per-type opt-out (what they want to hear about). Skipping
+        // the row here also skips the immediate email and the daily digest.
+        const decision = decideNotificationDelivery({
+          preferences: userPreferences,
+          globalSettingsValue: globalSettings?.value,
+          type: createData.type,
+        });
+        if (!decision.deliver) {
           console.log(
-            `Skipping notification for user ${createData.userId} - notifications disabled`
+            decision.reason === "muted"
+              ? `Skipping notification for user ${createData.userId} - ${createData.type} muted in preferences`
+              : `Skipping notification for user ${createData.userId} - notifications disabled`
           );
           return;
         }
+        const notificationMode = decision.mode;
 
         // Create the in-app notification (for all modes except NONE)
         const notification = await db.notification.create({

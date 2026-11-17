@@ -35,6 +35,8 @@ async function callTool(args: Record<string, unknown>) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // The project default lookup, unless a test queues its own.
+  zenstackMock.mockResolvedValue(null);
 });
 
 describe("testplanit_templates_list", () => {
@@ -82,6 +84,7 @@ describe("testplanit_templates_list", () => {
           id: 1,
           templateName: "Default",
           isDefault: true,
+          isProjectDefault: false,
           fields: [
             {
               displayName: "Priority",
@@ -101,6 +104,7 @@ describe("testplanit_templates_list", () => {
           id: 2,
           templateName: "Exploratory",
           isDefault: false,
+          isProjectDefault: false,
           fields: [],
         },
       ],
@@ -112,7 +116,7 @@ describe("testplanit_templates_list", () => {
 
     await callTool({ projectId: 42 });
 
-    expect(zenstackMock).toHaveBeenCalledTimes(1);
+    expect(zenstackMock).toHaveBeenCalledTimes(2);
     const [model, op, body] = zenstackMock.mock.calls[0];
     expect(model).toBe("templates");
     expect(op).toBe("findMany");
@@ -121,6 +125,55 @@ describe("testplanit_templates_list", () => {
       isEnabled: true,
       projects: { some: { projectId: 42 } },
     });
+  });
+
+  it("flags the project's own default template", async () => {
+    zenstackMock.mockResolvedValueOnce([
+      { id: 1, templateName: "Default", isDefault: true, caseFields: [] },
+      { id: 2, templateName: "Smoke", isDefault: false, caseFields: [] },
+    ]);
+    zenstackMock.mockResolvedValueOnce({ defaultTemplateId: 2 });
+
+    const result = await callTool({ projectId: 7 });
+
+    expect(zenstackMock.mock.calls[1].slice(0, 3)).toEqual([
+      "projects",
+      "findUnique",
+      { where: { id: 7 }, select: { defaultTemplateId: true } },
+    ]);
+    const templates = (
+      result.structuredContent as {
+        templates: { id: number; isProjectDefault: boolean }[];
+      }
+    ).templates;
+    expect(templates.map((t) => [t.id, t.isProjectDefault])).toEqual([
+      [1, false],
+      [2, true],
+    ]);
+  });
+
+  it("lists templates when the server rejects the project default lookup", async () => {
+    zenstackMock.mockResolvedValueOnce([
+      { id: 1, templateName: "Default", isDefault: true, caseFields: [] },
+    ]);
+    zenstackMock.mockRejectedValueOnce(
+      new TestPlanItHttpError("HTTP 400", { statusCode: 400 }),
+    );
+
+    const result = await callTool({ projectId: 7 });
+
+    expect(result.isError).toBeFalsy();
+    expect(
+      (result.structuredContent as { templates: unknown[] }).templates,
+    ).toEqual([
+      {
+        id: 1,
+        templateName: "Default",
+        isDefault: true,
+        isProjectDefault: false,
+        fields: [],
+      },
+    ]);
   });
 
   it("returns an empty templates array when the project has none", async () => {

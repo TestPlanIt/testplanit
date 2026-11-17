@@ -35,6 +35,7 @@ describe("WEBHOOK_EVENT_CATALOG", () => {
       "issue",
       "review",
       "dataset",
+      "threshold",
       "system",
     ]);
     for (const entry of WEBHOOK_EVENT_CATALOG) {

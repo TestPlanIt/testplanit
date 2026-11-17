@@ -1,4 +1,7 @@
 import * as d3 from "d3";
+// d3 ≥7.9.2 marks itself side-effect-free, so the bundler drops the
+// d3-transition module that installs selection.transition(); import it directly.
+import "d3-transition";
 import { useLocale } from "next-intl";
 import React, { useCallback, useEffect, useRef } from "react";
 
@@ -253,7 +256,7 @@ export const BubbleChart: React.FC<BubbleChartProps> = ({
         .style("justify-content", "center")
         .style("width", "100%")
         .style("height", "100%")
-        .style("font-family", "'Noto Sans', sans-serif")
+        .style("font-family", "var(--font-sans)")
         .style("color", foregroundColor)
         .style("text-align", "center")
         .style("overflow", "hidden")

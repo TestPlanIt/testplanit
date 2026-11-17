@@ -17,6 +17,8 @@ The report joins external issues with the test cases linked to them and reports 
 
 Per-issue rollups (linked cases, passed / failed / untested counts, pass rate) are surfaced alongside so the table can be grouped or summarized in the UI.
 
+The table loads more issues as you scroll, and an issue's linked cases always arrive together. Sorting by a column reorders the whole result set. The summary tiles and chart always describe every matching issue, not just the rows loaded so far, and **Export CSV** exports every row.
+
 ## View Modes
 
 - **Summary (by Issue)** — one row per issue, with metrics rolled up across all linked test cases

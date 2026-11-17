@@ -3,6 +3,8 @@
  * These types define the structure for drilling into report metrics to see underlying records
  */
 
+import type { DateGrouping } from "~/lib/reports/dateGrouping";
+
 /**
  * Dimension value that can be used for filtering drill-down queries
  */
@@ -55,6 +57,11 @@ export interface DrillDownContext {
    * folder must drill into its whole subtree to match the displayed count.
    */
   folderIncludeDescendants?: boolean;
+  /**
+   * The calendar period the date dimension was grouped by, so a clicked
+   * date row drills into its whole week/month/quarter/year. Absent = daily.
+   */
+  dateGrouping?: DateGrouping;
 }
 
 /**

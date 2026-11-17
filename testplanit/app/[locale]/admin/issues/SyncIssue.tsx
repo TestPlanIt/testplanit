@@ -13,6 +13,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssue } from "./columns";
+import { apiFetch } from "~/lib/basePath";
 
 interface SyncIssueProps {
   issue: ExtendedIssue;
@@ -38,7 +39,7 @@ export function SyncIssue({ issue }: SyncIssueProps) {
     setIsSyncing(true);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/issues/${issue.id}/sync?trigger=manual`,
         { method: "POST" }
       );

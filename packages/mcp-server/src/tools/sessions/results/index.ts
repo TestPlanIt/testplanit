@@ -9,10 +9,10 @@ import {
 } from "./get.js";
 
 /**
- * Aggregate dependencies for the SESS-03 / SESS-04 session-result read tools.
+ * Aggregate dependencies for the session-result read tools.
  * Both tools share the same EnvConfig; this intersection lets the parent
  * `registerSessions` pass a single deps object (mirrors the runs/results
- * pattern from plan 07-03).
+ * pattern).
  */
 export type SessionResultsDeps = SessionResultsListDeps & SessionResultsGetDeps;
 

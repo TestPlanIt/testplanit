@@ -68,6 +68,19 @@ pnpm elasticsearch:reindex:fresh
 pnpm elasticsearch:reindex:cases
 ```
 
+### Translations (Crowdin)
+
+Upload `messages/en-US.json` and corrected translations to Crowdin, AI-translate new strings, and download every locale:
+
+```bash
+pnpm crowdin:sync
+
+# Show which Crowdin copy this checkout syncs with
+pnpm crowdin:target
+```
+
+`main` and branches off it sync to the Crowdin project root; `release/vX.Y` and branches off it sync to the Crowdin branch `vX.Y`, which Crowdin creates on the line's first sync. Set `CROWDIN_BRANCH` to override (empty for the root). The individual steps are `crowdin:upload:translations`, `crowdin:upload:sources`, `crowdin:auto-translate` and `crowdin:download`.
+
 ## Development
 
 All scripts are written in TypeScript and use `tsx` for execution. They automatically load environment variables from `.env` via the `dotenv` package.

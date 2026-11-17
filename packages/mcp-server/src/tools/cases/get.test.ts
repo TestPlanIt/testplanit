@@ -293,9 +293,9 @@ describe("registerCasesGet", () => {
     expect(names).toContain("testplanit_cases_get");
   });
 
-  // ── Phase 8 (D8-02) inline codeRepository on cases_get ──────────────────
+  // ── inline codeRepository on cases_get ──────────────────
 
-  it("Phase-8: codeRepository populated when project has a config (GITHUB)", async () => {
+  it("codeRepository populated when project has a config (GITHUB)", async () => {
     const caseWithRepo = makeRawCase({
       folder: { id: 5, name: "Root", parentId: null },
       project: {
@@ -337,7 +337,7 @@ describe("registerCasesGet", () => {
     });
   });
 
-  it("Phase-8: codeRepository null when project has no codeRepositoryConfigs", async () => {
+  it("codeRepository null when project has no codeRepositoryConfigs", async () => {
     const caseWithoutRepo = makeRawCase({
       folder: { id: 5, name: "Root", parentId: null },
       project: { id: 7, name: "TestProject", codeRepositoryConfigs: [] },
@@ -355,7 +355,7 @@ describe("registerCasesGet", () => {
     expect(structured.codeRepository).toBeNull();
   });
 
-  it("Phase-8: codeRepository never includes credentials / personalAccessToken (defense in depth)", async () => {
+  it("codeRepository never includes credentials / personalAccessToken (defense in depth)", async () => {
     const caseWithRepo = makeRawCase({
       folder: { id: 5, name: "Root", parentId: null },
       project: {
@@ -398,7 +398,7 @@ describe("registerCasesGet", () => {
     expect(serialized).not.toMatch(/secret_xyz/);
   });
 
-  it("Phase-8: CASE_DETAIL_INCLUDE selects project.codeRepositoryConfigs.repository chain (no credentials)", async () => {
+  it("CASE_DETAIL_INCLUDE selects project.codeRepositoryConfigs.repository chain (no credentials)", async () => {
     mockZenstack.mockResolvedValueOnce(
       makeRawCase({
         folder: { id: 5, name: "Root", parentId: null },
@@ -446,7 +446,7 @@ describe("registerCasesGet", () => {
     expect(repoSelect).not.toHaveProperty("credentials");
   });
 
-  it("Phase-8: regression — existing case-detail fields still populated when codeRepository present", async () => {
+  it("regression — existing case-detail fields still populated when codeRepository present", async () => {
     const caseWithEverything = makeRawCase({
       folder: { id: 5, name: "Root", parentId: null },
       project: {

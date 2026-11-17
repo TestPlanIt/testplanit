@@ -59,6 +59,11 @@ export const softDeletedItemTypes: TrashItemTypeDisplay[] = [
     iconName: "milestone",
   },
   {
+    name: "FailureClassification",
+    translationKey: "admin.menu.rootCauses",
+    iconName: "microscope",
+  },
+  {
     name: "Configurations",
     translationKey: "common.fields.configurations",
     iconName: "combine",
@@ -262,5 +267,10 @@ export const softDeletedItemTypes: TrashItemTypeDisplay[] = [
     name: "StepSequenceMatchCase",
     translationKey: "admin.trash.itemTypes.stepSequenceMatchCases",
     iconName: "list-tree",
+  },
+  {
+    name: "AlertRule",
+    translationKey: "admin.trash.itemTypes.alertRules",
+    iconName: "bell-ring",
   },
 ];

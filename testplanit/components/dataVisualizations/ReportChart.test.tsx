@@ -88,11 +88,23 @@ vi.mock("./FlakyTestsBubbleChart", () => ({
 }));
 
 vi.mock("./IssueTestCoverageChart", () => ({
-  IssueTestCoverageChart: () => <div data-testid="IssueTestCoverageChart" />,
+  IssueTestCoverageChart: ({
+    summary,
+  }: {
+    summary?: { totalIssues: number } | null;
+  }) => (
+    <div data-testid="IssueTestCoverageChart">
+      {summary ? `summary-issues:${summary.totalIssues}` : "no-summary"}
+    </div>
+  ),
 }));
 
 vi.mock("./TestCaseHealthChart", () => ({
-  TestCaseHealthChart: () => <div data-testid="TestCaseHealthChart" />,
+  TestCaseHealthChart: ({ summary }: { summary?: { total: number } }) => (
+    <div data-testid="TestCaseHealthChart">
+      {summary ? `summary-total:${summary.total}` : "no-summary"}
+    </div>
+  ),
 }));
 
 vi.mock("./RecentResultsDonut", () => ({
@@ -233,6 +245,32 @@ describe("ReportChart", () => {
       />
     );
     expect(screen.getByTestId("TestCaseHealthChart")).toBeInTheDocument();
+    expect(screen.getByText("no-summary")).toBeInTheDocument();
+  });
+
+  it("hands the server summary to the health chart so a page of rows draws the full picture", () => {
+    render(
+      <ReportChart
+        results={[{ testCaseId: 1, healthStatus: "healthy", healthScore: 80 }]}
+        chartSummary={{
+          total: 76770,
+          counts: {
+            healthy: 1,
+            never_executed: 0,
+            always_passing: 0,
+            always_failing: 0,
+          },
+          staleCount: 0,
+          needsAttention: 0,
+          healthy: 1,
+          avgHealthScore: 80,
+        }}
+        dimensions={[]}
+        metrics={[]}
+        reportType="cross-project-test-case-health"
+      />
+    );
+    expect(screen.getByText("summary-total:76770")).toBeInTheDocument();
   });
 
   it("renders IssueTestCoverageChart when reportType is 'issue-test-coverage'", () => {
@@ -245,6 +283,20 @@ describe("ReportChart", () => {
       />
     );
     expect(screen.getByTestId("IssueTestCoverageChart")).toBeInTheDocument();
+    expect(screen.getByText("no-summary")).toBeInTheDocument();
+  });
+
+  it("hands the server summary to the issue coverage chart", () => {
+    render(
+      <ReportChart
+        results={[{ issueId: 1, title: "Issue A" }]}
+        chartSummary={{ totalIssues: 4659, bubbles: [] }}
+        dimensions={[]}
+        metrics={[]}
+        reportType="cross-project-issue-test-coverage"
+      />
+    );
+    expect(screen.getByText("summary-issues:4659")).toBeInTheDocument();
   });
 
   it("renders nothing when results is empty array and no special reportType", () => {

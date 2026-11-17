@@ -17,6 +17,15 @@ The forecasting system provides:
 - **Background processing** for regular forecast updates
 - **Real-time display** of forecasts throughout the application
 
+## Forecast vs. Estimate
+
+TestPlanIt shows two different durations for work that has not been executed yet, and they often appear side by side:
+
+- **Estimate** is entered by hand on each test case or session. Totals such as **Estimated Time Remaining** on run and milestone summary bars add up the estimates of the cases that have no result yet.
+- **Forecast** is measured. It is the average of each case's past execution times, summed over the cases in a run or milestone that have no result yet. A case that has never been executed has no forecast.
+
+Hover either figure for a tooltip that names its source.
+
 ## How Forecasting Works
 
 ### Data Collection

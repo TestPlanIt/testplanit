@@ -9,6 +9,10 @@ import {
   SCIM_SYSTEM_USER_ID,
   SYSTEM_PROJECT_ID,
 } from "../lib/scim/constants";
+import {
+  SYSTEM_AUTOMATION_USER_EMAIL,
+  SYSTEM_AUTOMATION_USER_ID,
+} from "../lib/automationUser";
 import { seedDemoProject } from "./seedDemoProject";
 import { seedFieldIcons } from "./seedFieldIcons";
 import { seedDefaultPromptConfig } from "./seedPromptConfig";
@@ -40,6 +44,7 @@ const userPermissions: {
   [ApplicationArea.TestRunResults]: { canAddEdit: true, canDelete: true }, // Add/edit/delete results
   [ApplicationArea.TestRunResultRestrictedFields]: { canAddEdit: true }, // Add restricted results
   [ApplicationArea.AutomatedExecution]: { canAddEdit: true }, // Trigger automated executions
+  [ApplicationArea.FailurePatterns]: { canAddEdit: true }, // Triage failure patterns
   [ApplicationArea.Sessions]: {
     canAddEdit: true,
     canDelete: true,
@@ -49,6 +54,7 @@ const userPermissions: {
   [ApplicationArea.ClosedSessions]: { canDelete: false }, // View only closed
   [ApplicationArea.SessionResults]: { canAddEdit: true, canDelete: true }, // Add/edit/delete results
   [ApplicationArea.Tags]: { canAddEdit: true }, // Allow adding tags
+  [ApplicationArea.Alerts]: { canAddEdit: true }, // Create and manage your own alerts
 };
 
 // Helper function to get default user permission for an area
@@ -474,6 +480,7 @@ async function seedCoreData() {
   // --- Workflows & Milestone Types ---
   await seedWorkflows();
   await seedMilestoneTypes();
+  await seedFailureClassifications(colorMap);
 
   // --- Default Template ---
   await seedDefaultTemplate();
@@ -546,6 +553,33 @@ async function seedCoreData() {
     );
   }
   console.log("Ensured synthetic SCIM Provisioner user exists.");
+
+  // --- Synthetic System user ---
+  // Webhook actions create runs, cases and issues as this inactive user. Same
+  // sentinel-email approach as the SCIM Provisioner above.
+  const existingSystemUser = await db.user.findUnique({
+    where: { id: SYSTEM_AUTOMATION_USER_ID },
+    select: { id: true },
+  });
+  if (!existingSystemUser) {
+    await db.user.create({
+      data: {
+        id: SYSTEM_AUTOMATION_USER_ID,
+        email: `${SYSTEM_AUTOMATION_USER_ID}@example.com`,
+        name: "System",
+        access: "USER",
+        authMethod: "INTERNAL",
+        isActive: false,
+        isDeleted: false,
+        isApi: false,
+        roleId: userRole.id,
+      },
+    });
+    await sql`UPDATE "User" SET email = ${SYSTEM_AUTOMATION_USER_EMAIL} WHERE id = ${SYSTEM_AUTOMATION_USER_ID}`.execute(
+      db.$qb
+    );
+  }
+  console.log("Ensured synthetic System user exists.");
 
   // --- Sentinel __system__ Projects row ---
   // Tenant-wide SCIM webhook events (no natural project scope) FK to this row
@@ -1595,6 +1629,73 @@ async function seedMilestoneTypes() {
   );
 
   await Promise.all(milestoneTypePromises);
+}
+
+// --- Failure classifications (failure triage catalogue) ---
+// The catalogue migration inserts these rows on existing installs; this keeps
+// fresh installs and renamed/recoloured rows consistent without overriding an
+// admin's edits (a seeded row is matched by key, and only a missing color is
+// filled in).
+async function seedFailureClassifications(colorMap: {
+  [family: string]: { id: number }[];
+}) {
+  const defaults = [
+    {
+      key: "PRODUCT_BUG",
+      name: "Product bug",
+      description:
+        "The application under test misbehaves: a wrong value, a server error, a broken flow. The same assertion fails consistently across runs.",
+      color: colorMap["Red"]?.[3],
+      order: 1,
+    },
+    {
+      key: "TEST_BUG",
+      name: "Test bug",
+      description:
+        "The test or its page objects are wrong or stale: a selector that no longer exists, hard-coded data, an assertion that can never pass, a missing wait that always fails.",
+      color: colorMap["Orange"]?.[3],
+      order: 2,
+    },
+    {
+      key: "ENVIRONMENT",
+      name: "Environment",
+      description:
+        "Infrastructure or configuration rather than code: connection refused, DNS, timeouts to every service, missing credentials, disk, browser or driver start-up, CI runner problems.",
+      color: colorMap["Blue"]?.[3],
+      order: 3,
+    },
+    {
+      key: "FLAKY",
+      name: "Flaky",
+      description:
+        "Intermittent: the same cases pass and fail without a code change (race conditions, timing-dependent waits, shared state). A pass/fail history that flips often is strong evidence.",
+      color: colorMap["Yellow"]?.[3],
+      order: 4,
+    },
+  ];
+  for (const entry of defaults) {
+    const existing = await db.failureClassification.findUnique({
+      where: { key: entry.key },
+      select: { id: true, colorId: true },
+    });
+    if (!existing) {
+      await db.failureClassification.create({
+        data: {
+          key: entry.key,
+          name: entry.name,
+          description: entry.description,
+          colorId: entry.color?.id ?? null,
+          order: entry.order,
+        },
+      });
+    } else if (existing.colorId === null && entry.color) {
+      await db.failureClassification.update({
+        where: { id: existing.id },
+        data: { colorId: entry.color.id },
+      });
+    }
+  }
+  console.log("Seeded failure classifications.");
 }
 
 // --- Seed Default Template ---

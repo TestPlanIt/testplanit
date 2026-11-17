@@ -6,6 +6,7 @@ import {
   iterationProgressBus,
   type ProgressJob,
 } from "~/lib/services/iterationProgressBus";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * Subscribes to the in-memory iteration-progress bus AND drives the polling
@@ -47,7 +48,7 @@ export function useIterationGenerationProgress(): ProgressJob[] {
       if (job.state !== "queued" && job.state !== "active") continue;
       const handle = setInterval(async () => {
         try {
-          const r = await fetch(
+          const r = await apiFetch(
             `/api/test-runs/iterations/status/${job.jobId}`,
             { cache: "no-store" }
           );

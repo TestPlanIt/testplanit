@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import { getLocale } from "next-intl/server";
+import { headers } from "next/headers";
 import Script from "next/script";
 import { getLocaleDirection } from "~/i18n/direction";
 import "~/styles/globals.css";
+import { getAppUrl } from "~/lib/appUrl";
+import { withBasePath } from "~/lib/basePath";
+import { CSP_NONCE_HEADER } from "~/lib/contentSecurityPolicy";
 
 export const metadata: Metadata = {
   title: {
@@ -12,12 +16,15 @@ export const metadata: Metadata = {
   },
   description:
     "Streamline your software testing with TestPlanIt's powerful test case management, execution tracking, and comprehensive reporting tools.",
+  // Next does not prefix icon paths or absolute-URL metadata with basePath.
   icons: {
-    icon: "/tpi_logo.svg",
-    apple: "/tpi_logo_square.png",
+    icon: { url: withBasePath("/tpi_app_icon.svg"), type: "image/svg+xml" },
+    apple: withBasePath("/tpi_logo_square.png"),
   },
   metadataBase: new URL(
-    process.env.NEXTAUTH_URL || "https://app.testplanit.com"
+    process.env.APP_URL || process.env.NEXTAUTH_URL
+      ? `${getAppUrl()}/`
+      : "https://app.testplanit.com"
   ),
   openGraph: {
     title: "TestPlanIt - Modern Test Management Platform",
@@ -60,6 +67,9 @@ export default async function RootLayout({
 
   const locale = await getLocale();
   const dir = getLocaleDirection(locale);
+  // Set by the proxy for this request; the Content-Security-Policy only lets
+  // inline scripts carrying it run.
+  const nonce = (await headers()).get(CSP_NONCE_HEADER) ?? undefined;
 
   return (
     <html
@@ -72,6 +82,7 @@ export default async function RootLayout({
         <meta name="storage-mode" content={storageMode} />
         <Script
           id="storage-mode"
+          nonce={nonce}
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `window.__STORAGE_MODE__ = "${storageMode}";`,

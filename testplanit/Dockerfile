@@ -39,6 +39,17 @@ RUN pnpm install --frozen-lockfile --filter testplanit --ignore-scripts
 COPY testplanit/ ./testplanit/
 COPY packages/api ./packages/api/
 
+# Image provenance. .dockerignore excludes .git, so no stage can run
+# `git rev-parse`; the release workflows pass the commit and the release tag as
+# build args instead (see docker-bake.hcl) and scripts/generate-version.js falls
+# back to them. Declared after the source COPY so they never invalidate the
+# dependency install layers above, and exported as ENV because the `build`
+# stage's `npm run build` regenerates version.json and must see them too.
+ARG GIT_COMMIT
+ARG VERSION
+ENV GIT_COMMIT=${GIT_COMMIT}
+ENV VERSION=${VERSION}
+
 WORKDIR /app/testplanit
 # Version info: use the pre-generated file if present, else derive it.
 RUN if [ -f ".docker-version.json" ]; then \
@@ -94,7 +105,9 @@ COPY testplanit/ ./testplanit/
 # @testplanit/api workspace dependency, so `pnpm deploy` bundles it into the
 # self-contained production node_modules.
 COPY packages/api ./packages/api/
-RUN pnpm --filter=testplanit deploy --prod --legacy --ignore-scripts /app/deploy
+# Some workspace patches target the docs site, which testplanit's production
+# dependencies never include; pnpm 12 fails a deploy on unused patches.
+RUN pnpm_config_allow_unused_patches=true pnpm --filter=testplanit deploy --prod --legacy --ignore-scripts /app/deploy
 # Rebuild native modules in the deployed tree.
 RUN cd /app/deploy && npm rebuild bcrypt sharp 2>/dev/null || true
 RUN apk del .gyp
@@ -136,6 +149,11 @@ ARG BASE_DOMAIN
 # SaaS build leaves it unset and bakes BASE_DOMAIN instead. See next.config.ts.
 ARG SELF_HOSTED
 ENV SELF_HOSTED=${SELF_HOSTED}
+# Serve the app under a path prefix (e.g. /testplanit). Next inlines it into
+# the client bundle, so a prefixed install is its own build; empty = root. See
+# next.config.ts and lib/basePath.ts.
+ARG BASE_PATH
+ENV BASE_PATH=${BASE_PATH}
 # Sizes serverActions.bodySizeLimit in next.config.ts. Next freezes experimental
 # config into the standalone output, so this sets the image's DEFAULT ceiling;
 # docker-entrypoint.sh re-syncs the frozen value from the runtime UPLOAD_MAX_MB
@@ -179,6 +197,12 @@ WORKDIR /app
 # .env drives both the body limit and the per-file limit.
 ARG UPLOAD_MAX_MB
 ENV UPLOAD_MAX_MB=${UPLOAD_MAX_MB}
+# Mirrors the build-time prefix for server code that reads it at runtime
+# (lib/basePath.ts), and for `next start`, which re-reads next.config.ts.
+# Empty at the root.
+ARG BASE_PATH
+ENV BASE_PATH=${BASE_PATH}
+ENV NEXT_PUBLIC_BASE_PATH=${BASE_PATH}
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN apk add --no-cache curl
@@ -240,8 +264,24 @@ ENV PORT=3000
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "server.js"]
 
+# Provenance labels, so a pulled image can be traced back to its commit without
+# being run — the same values the app reports in version.json and /api/health.
+# .source also links the published package to the repo on GHCR. Declared last so
+# a new commit only rebuilds this metadata layer.
+ARG GIT_COMMIT
+ARG VERSION
+LABEL org.opencontainers.image.source="https://github.com/TestPlanIt/testplanit" \
+      org.opencontainers.image.revision="${GIT_COMMIT}" \
+      org.opencontainers.image.version="${VERSION}"
+
 # ---- Workers ----
 FROM node:24-alpine AS workers
+# Mirrors the build-time prefix for server code that reads it at runtime
+# (lib/basePath.ts), and for `next start`, which re-reads next.config.ts.
+# Empty at the root.
+ARG BASE_PATH
+ENV BASE_PATH=${BASE_PATH}
+ENV NEXT_PUBLIC_BASE_PATH=${BASE_PATH}
 ENV NODE_ENV=production
 WORKDIR /app/testplanit
 # git: the repo-cache worker reads Bitbucket repositories with a shallow fetch.
@@ -294,3 +334,11 @@ RUN echo '#!/bin/sh' > /app/start-workers.sh && \
     chmod +x /app/start-workers.sh
 
 CMD ["/app/start-workers.sh"]
+
+# Provenance labels, as on the production stage above: this image serves no
+# /api/health, so they are the only way to tell which commit it came from.
+ARG GIT_COMMIT
+ARG VERSION
+LABEL org.opencontainers.image.source="https://github.com/TestPlanIt/testplanit" \
+      org.opencontainers.image.revision="${GIT_COMMIT}" \
+      org.opencontainers.image.version="${VERSION}"

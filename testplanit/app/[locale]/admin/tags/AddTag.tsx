@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { apiFetch } from "~/lib/basePath";
 
 // Create a simpler schema that works with form inference
 const AddTagSchema = z.object({
@@ -76,7 +77,7 @@ export function AddTag({ open, onClose }: AddTagProps) {
     // check skipped, and the create call hit P2002 with no soft-deleted
     // restore offered.
     try {
-      const response = await fetch("/api/admin/tags/create", {
+      const response = await apiFetch("/api/admin/tags/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: data.name }),

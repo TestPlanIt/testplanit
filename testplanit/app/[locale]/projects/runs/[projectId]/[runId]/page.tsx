@@ -30,6 +30,7 @@ import {
   useTestRunExecutions,
   type TestRunExecutionRow,
 } from "~/hooks/useTestRunExecutions";
+import { useRunDependencyState } from "~/hooks/useRunDependencyState";
 import { RecordId } from "@/components/RecordId";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
@@ -145,6 +146,7 @@ import TestRunCasesSummary from "~/components/TestRunCasesSummary";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useTestRunCaseDetail } from "~/hooks/useTestRunCaseDetail";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
+import { RunFailureClusters } from "@/components/triage/RunFailureClusters";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
 import { IconName } from "~/types/globals";
@@ -160,6 +162,10 @@ import DuplicateTestRunDialog, {
   AddTestRunModalInitProps,
 } from "../DuplicateTestRunDialog";
 import CompleteTestRunDialog from "./CompleteTestRunDialog";
+import {
+  TEST_RUN_ALL_CASES_COMPLETED_EVENT,
+  type TestRunAllCasesCompletedDetail,
+} from "~/lib/test-run-result-submit";
 import { DistributeAssignmentsModal } from "./DistributeAssignmentsModal";
 import { DeleteTestRunModal } from "./DeleteTestRun";
 import JunitChartsPanel from "./JunitChartsPanel";
@@ -171,6 +177,7 @@ import {
 } from "./TestCasesSection";
 import { type LinkAttachmentInput } from "@/components/UploadAttachments";
 import TestRunFormControls from "./TestRunFormControls";
+import { apiFetch } from "~/lib/basePath";
 
 // Form Values interface
 interface FormValues {
@@ -274,7 +281,8 @@ type TestRunWithRelations = {
   compositionLockedBy: { id: string; name: string } | null;
   forecastManual: number | null;
   forecastAutomated: number | null;
-  project: { id: number; name: string };
+  // `include: { project: true }` hydrates every scalar; the ones read here.
+  project: { id: number; name: string; enforceCaseDependencies: boolean };
   configuration: { id: number; name: string } | null;
   configurationGroupId: string | null;
   milestone: MilestoneWithType | null;
@@ -307,6 +315,13 @@ type _MilestoneOption = {
   parentId: number | null;
 };
 
+// Wake-up coalescing window while automated results stream in. A reporter
+// delivers results seconds apart and each flush reloads the run's whole
+// suite tree, so the default (sub-second) window buys nothing here — it
+// would start a round per result. The coalescer additionally holds rounds
+// while one is in flight; this window just spaces them out between rounds.
+const AUTOMATED_WAKE_UP_COALESCE_MS = 3000;
+
 export default function TestRunPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -325,6 +340,10 @@ export default function TestRunPage() {
   >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  // True when the complete dialog was opened by the all-cases-completed
+  // prompt below rather than by the Complete action.
+  const [completePromptedByResults, setCompletePromptedByResults] =
+    useState(false);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [selectedTestCaseIds, setSelectedTestCaseIds] = useState<number[]>([]);
   const [selectedIssues, setSelectedIssues] = useState<number[]>([]);
@@ -565,6 +584,14 @@ export default function TestRunPage() {
     refetch: () => void;
   };
 
+  // Dependency gating (opt-in per project): the side sheet shows a blocked
+  // notice and disables result entry for a case whose prerequisites in this
+  // run have not passed. Same resolver as the server gate and the list.
+  const runDependencyState = useRunDependencyState(
+    !isNaN(Number(runId)) ? Number(runId) : null,
+    testRunData?.project?.enforceCaseDependencies === true
+  );
+
   // Execution-start composition lock (BOR-1): freezes which cases are in the
   // run (add/remove/reorder) while execution & assignment continue. Locking is
   // open to any run editor; unlocking is gated to the run creator / a Project
@@ -579,7 +606,7 @@ export default function TestRunPage() {
     if (isTogglingCompositionLock) return;
     setIsTogglingCompositionLock(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/test-runs/${Number(runId)}/composition-lock`,
         {
           method: "PATCH",
@@ -614,33 +641,59 @@ export default function TestRunPage() {
   // disabled once the run is completed so we don't hold an EventSource
   // open indefinitely on a historical run page.
   // Wake-ups are coalesced: a reporter streaming results publishes one per
-  // result row, and this page pays three refetches — the run itself, the
-  // summary, and the JUnit suites — for every one of them.
+  // result row, and this page pays a full round of refetches — the run
+  // itself, the summary, the JUnit suites — for every flush. The flush
+  // returns the round's promise so the coalescer holds the next round until
+  // this one lands, and `cancelRefetch: false` keeps an invalidation from
+  // aborting a fetch already in flight (the abort reaches the browser, not
+  // the server — Postgres still does the full work for a response nobody
+  // reads). Automated runs get a wider window on top: their suite tree is
+  // the expensive query, and reporter results arrive seconds apart anyway.
   const queryClient = useQueryClient();
   const onWakeUpFlush = useCallback(() => {
-    refetchTestRun();
-    void queryClient.invalidateQueries({
-      queryKey: ["testRunSummary", Number(runId)],
-    });
-    // Automation runs render their results from JUnit suites; refresh those
-    // so reporter-streamed results appear live (the run refetch alone doesn't
-    // cover the separate suite/result query).
-    void queryClient.invalidateQueries({
-      queryKey: ["zenstack", "JUnitTestSuite"],
-    });
-    // The charts panel reads its own lean result query (JunitChartsPanel).
-    void queryClient.invalidateQueries({
-      queryKey: ["zenstack", "JUnitTestResult"],
-    });
-    // Dispatch status (chip) and the automated-case count for the button.
-    void queryClient.invalidateQueries({
-      queryKey: testRunExecutionsQueryKey(Number(runId)),
-    });
-    void queryClient.invalidateQueries({
-      queryKey: ["zenstack", "TestRunCases"],
-    });
+    const refetchOptions = { cancelRefetch: false };
+    return Promise.all([
+      refetchTestRun(),
+      queryClient.invalidateQueries(
+        { queryKey: ["testRunSummary", Number(runId)] },
+        refetchOptions
+      ),
+      // Automation runs render their results from JUnit suites; refresh those
+      // so reporter-streamed results appear live (the run refetch alone
+      // doesn't cover the separate suite/result query).
+      queryClient.invalidateQueries(
+        { queryKey: ["zenstack", "JUnitTestSuite"] },
+        refetchOptions
+      ),
+      // The charts panel reads its own lean result query (JunitChartsPanel).
+      queryClient.invalidateQueries(
+        { queryKey: ["zenstack", "JUnitTestResult"] },
+        refetchOptions
+      ),
+      // Dispatch status (chip) and the automated-case count for the button.
+      queryClient.invalidateQueries(
+        { queryKey: testRunExecutionsQueryKey(Number(runId)) },
+        refetchOptions
+      ),
+      queryClient.invalidateQueries(
+        { queryKey: ["zenstack", "TestRunCases"] },
+        refetchOptions
+      ),
+    ]);
   }, [refetchTestRun, queryClient, runId]);
-  const onLiveWakeUp = useCoalescedWakeUp(onWakeUpFlush);
+
+  // Pure automated runs render the results view instead of the manual
+  // layout. Hybrid runs (a manual run that has also received automated
+  // results) keep the manual layout and add the automated results beneath it,
+  // so `isJUnitRun` stays false for them on purpose.
+  const isJUnitRun = isAutomatedTestRunType(testRunData?.testRunType);
+  const isHybridRun = isHybridTestRunType(testRunData?.testRunType);
+  const showAutomatedResults = isJUnitRun || isHybridRun;
+
+  const onLiveWakeUp = useCoalescedWakeUp(
+    onWakeUpFlush,
+    showAutomatedResults ? AUTOMATED_WAKE_UP_COALESCE_MS : undefined
+  );
   useTestRunLiveStream({
     runId: !isNaN(Number(runId)) ? Number(runId) : null,
     enabled: !testRunData?.isCompleted,
@@ -653,14 +706,6 @@ export default function TestRunPage() {
       testRunId: Number(runId),
       projectId: Number(projectId),
     });
-
-  // Pure automated runs render the results view instead of the manual
-  // layout. Hybrid runs (a manual run that has also received automated
-  // results) keep the manual layout and add the automated results beneath it,
-  // so `isJUnitRun` stays false for them on purpose.
-  const isJUnitRun = isAutomatedTestRunType(testRunData?.testRunType);
-  const isHybridRun = isHybridTestRunType(testRunData?.testRunType);
-  const showAutomatedResults = isJUnitRun || isHybridRun;
 
   // Automated execution: dispatch history for the chip/button, and how many
   // of the run's cases a dispatch would cover.
@@ -699,22 +744,106 @@ export default function TestRunPage() {
     [runSelection, automatedRunCases]
   );
   const [executeDialogOpen, setExecuteDialogOpen] = useState(false);
+
+  // A manually recorded result just gave every case in this run a result:
+  // offer to complete the run, but only to someone allowed to close runs.
+  // The submit helper raises the event once per <100% → 100% transition, so
+  // no local dedupe is needed beyond ignoring other runs' events.
+  const isRunCompleted = !!testRunData?.isCompleted;
+  useEffect(() => {
+    if (!canCloseRun || isRunCompleted) return;
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<TestRunAllCasesCompletedDetail>)
+        .detail;
+      if (detail?.testRunId !== Number(runId)) return;
+      setCompletePromptedByResults(true);
+      setIsCompleteDialogOpen(true);
+    };
+    window.addEventListener(TEST_RUN_ALL_CASES_COMPLETED_EVENT, handler);
+    return () =>
+      window.removeEventListener(TEST_RUN_ALL_CASES_COMPLETED_EVENT, handler);
+  }, [canCloseRun, isRunCompleted, runId]);
   const [retryOf, setRetryOf] = useState<TestRunExecutionRow | null>(null);
+  // Explicit selects everywhere below: this tree reloads on every live
+  // wake-up and is O(results), so no unbounded text column may ride along.
+  // `systemOut`/`systemErr`/`content`/`message` (stdout dumps, stack traces)
+  // dominated the payload under `include` — the table only ever shows them
+  // inside popovers, which now fetch the text per result on open. The
+  // id-only queries after this one tell the table which rows get a trigger.
   const { data: jUnitSuites, isLoading: isJUnitLoading } = useClientQueries(
     schema
   ).jUnitTestSuite.useFindMany(
     showAutomatedResults
       ? {
           where: { testRunId: Number(runId) },
-          include: {
+          select: {
+            id: true,
+            name: true,
+            tests: true,
+            failures: true,
+            errors: true,
+            skipped: true,
             properties: true,
             results: {
-              include: {
+              select: {
+                id: true,
+                repositoryCaseId: true,
+                type: true,
+                executedAt: true,
+                time: true,
+                assertions: true,
+                worker: true,
+                createdAt: true,
+                failureSignatureId: true,
                 status: {
                   select: { name: true, color: { select: { value: true } } },
                 },
                 attachments: {
                   where: { isDeleted: false },
+                },
+                failureSignature: {
+                  select: {
+                    id: true,
+                    title: true,
+                    classification: {
+                      select: {
+                        id: true,
+                        name: true,
+                        isDeleted: true,
+                        color: { select: { value: true } },
+                      },
+                    },
+                    classificationSource: true,
+                    aiConfidence: true,
+                    status: true,
+                    issues: {
+                      select: {
+                        issue: {
+                          // No `description`/`data` here: they are large
+                          // synced-tracker blobs repeated for every result
+                          // sharing a signature, and this query reloads on
+                          // every live wake-up. IssuesDisplay fetches the
+                          // description on demand when its popover opens.
+                          select: {
+                            id: true,
+                            name: true,
+                            externalId: true,
+                            externalUrl: true,
+                            externalKey: true,
+                            title: true,
+                            externalStatus: true,
+                            priority: true,
+                            lastSyncedAt: true,
+                            issueTypeName: true,
+                            issueTypeIconUrl: true,
+                            integration: {
+                              select: { id: true, provider: true, name: true },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
                 },
                 repositoryCase: {
                   select: {
@@ -724,6 +853,7 @@ export default function TestRunPage() {
                     automated: true,
                     isDeleted: true,
                     hasParameters: true,
+                    quarantine: { select: { id: true } },
                     linksFrom: {
                       select: {
                         caseBId: true,
@@ -747,6 +877,43 @@ export default function TestRunPage() {
         }
       : undefined,
     { enabled: showAutomatedResults }
+  );
+
+  // Which results actually have stdout/stderr, as id-only lookups: the table
+  // renders a popover trigger for exactly these rows without ever shipping
+  // the text itself. Both are JUnitTestResult queries, so the wake-up flush's
+  // existing invalidation refreshes them alongside the suite tree.
+  const { data: resultIdsWithSystemOut } = useClientQueries(
+    schema
+  ).jUnitTestResult.useFindMany(
+    {
+      where: {
+        testSuite: { testRunId: Number(runId) },
+        AND: [{ systemOut: { not: null } }, { systemOut: { not: "" } }],
+      },
+      select: { id: true },
+    },
+    { enabled: showAutomatedResults }
+  );
+  const { data: resultIdsWithSystemErr } = useClientQueries(
+    schema
+  ).jUnitTestResult.useFindMany(
+    {
+      where: {
+        testSuite: { testRunId: Number(runId) },
+        AND: [{ systemErr: { not: null } }, { systemErr: { not: "" } }],
+      },
+      select: { id: true },
+    },
+    { enabled: showAutomatedResults }
+  );
+  const systemOutResultIds = useMemo(
+    () => new Set((resultIdsWithSystemOut ?? []).map((r) => r.id)),
+    [resultIdsWithSystemOut]
+  );
+  const systemErrResultIds = useMemo(
+    () => new Set((resultIdsWithSystemErr ?? []).map((r) => r.id)),
+    [resultIdsWithSystemErr]
   );
 
   const _canEdit =
@@ -1068,9 +1235,10 @@ export default function TestRunPage() {
         ...(groupChanged
           ? configurationGroupUpdateData(data.configurationGroupId)
           : {}),
+        // A lone `set`: ZenStack applies `connect` before `set`, so
+        // `set: []` beside a `connect` clears the relation.
         attachments: {
-          set: [],
-          connect:
+          set:
             data.attachments?.map((attachment) => ({
               id: attachment.id,
             })) || [],
@@ -1180,7 +1348,7 @@ export default function TestRunPage() {
 
         // Data-driven cases added here need their iterations, as on a new
         // run. The route skips cases that already have them.
-        await fetch(`/api/test-runs/${runId}/generate-iterations`, {
+        await apiFetch(`/api/test-runs/${runId}/generate-iterations`, {
           method: "POST",
         }).catch((fanOutErr) => {
           console.error("[generate-iterations]", fanOutErr);
@@ -1498,12 +1666,24 @@ export default function TestRunPage() {
   // Retries tiles (right panel) preset them, so the state lives here.
   const [junitFacets, setJunitFacets] =
     useState<JunitFacetFilters>(EMPTY_JUNIT_FACETS);
+  const toggleSignatureFacet = useCallback((signatureId: number) => {
+    setJunitFacets((prev) => ({
+      ...prev,
+      signatureIds: prev.signatureIds.includes(signatureId)
+        ? prev.signatureIds.filter((id) => id !== signatureId)
+        : [...prev.signatureIds, signatureId],
+    }));
+  }, []);
   const handleFlakyTileClick = useCallback(
     () => setJunitFacets((prev) => ({ ...prev, flakyOnly: true })),
     []
   );
   const handleRetriesTileClick = useCallback(
     () => setJunitFacets((prev) => ({ ...prev, retriedOnly: true })),
+    []
+  );
+  const handleQuarantinedTileClick = useCallback(
+    () => setJunitFacets((prev) => ({ ...prev, quarantinedOnly: true })),
     []
   );
   const junitTestCases = useMemo(() => {
@@ -1533,18 +1713,21 @@ export default function TestRunPage() {
             : result.type === "SKIPPED"
               ? "rgb(161, 161, 170)"
               : "rgb(34, 197, 94)"),
-        message: result.message,
         time: result.time,
         assertions: result.assertions,
         worker: result.worker,
-        systemOutput: result.systemOut,
-        systemError: result.systemErr,
+        // Presence flags only — the popover cells fetch the text on open.
+        hasSystemOut: systemOutResultIds.has(result.id),
+        hasSystemErr: systemErrResultIds.has(result.id),
         createdAt: result.createdAt || testRunData?.createdAt,
         createdById: testRunData?.createdBy?.id,
         linksFrom: result.repositoryCase?.linksFrom || [],
         linksTo: result.repositoryCase?.linksTo || [],
         isDeleted: result.repositoryCase?.isDeleted || false,
         attachments: result.attachments || [],
+        failureSignatureId: result.failureSignatureId ?? null,
+        failureSignature: result.failureSignature ?? null,
+        quarantined: !!result.repositoryCase?.quarantine,
       }))
     );
     // Mark every attempt row of a fail-then-pass case so the table can badge
@@ -1561,7 +1744,13 @@ export default function TestRunPage() {
           }
         : testCase
     );
-  }, [jUnitSuites, testRunData?.createdBy?.id, testRunData?.createdAt]);
+  }, [
+    jUnitSuites,
+    systemOutResultIds,
+    systemErrResultIds,
+    testRunData?.createdBy?.id,
+    testRunData?.createdAt,
+  ]);
   const [junitTestCasesState, setJunitTestCasesState] = useState<any[]>([]);
   useEffect(() => {
     setJunitTestCasesState(junitTestCases);
@@ -1633,7 +1822,7 @@ export default function TestRunPage() {
       ...effectiveRunIdsForResults,
     ],
     queryFn: async () => {
-      const response = await fetch("/api/repository-cases/view-options", {
+      const response = await apiFetch("/api/repository-cases/view-options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1735,7 +1924,7 @@ export default function TestRunPage() {
               <FormLabel>{t("common.fields.description")}</FormLabel>
               <FormControl>
                 {contentLoaded ? (
-                  <div className="min-h-[50px] max-h-[125px] overflow-y-auto border rounded-md">
+                  <div className="min-h-[50px]">
                     <TipTapEditor
                       key={`editing-note-${isEditMode}`}
                       content={noteContent}
@@ -1774,7 +1963,7 @@ export default function TestRunPage() {
               <FormLabel>{t("common.fields.documentation")}</FormLabel>
               <FormControl>
                 {contentLoaded ? (
-                  <div className="min-h-[50px] max-h-[250px] overflow-y-auto border rounded-md">
+                  <div className="min-h-[50px]">
                     <TipTapEditor
                       key={`editing-docs-${isEditMode}`}
                       content={docsContent}
@@ -2081,16 +2270,6 @@ export default function TestRunPage() {
                                 },
                               ]}
                             />
-                            {isCompleteDialogOpen && (
-                              <CompleteTestRunDialog
-                                open={isCompleteDialogOpen}
-                                onClose={() => setIsCompleteDialogOpen(false)}
-                                testRunId={Number(runId)}
-                                projectId={Number(projectId)}
-                                stateId={testRunData?.stateId || 0}
-                                stateName={testRunData?.state?.name || ""}
-                              />
-                            )}
                           </div>
                           {/* Row 2: composition lock/unlock */}
                           <div className="flex items-center gap-1">
@@ -2329,6 +2508,12 @@ export default function TestRunPage() {
                     {isJUnitRun ? (
                       <>
                         {narrativeFields}
+                        <RunFailureClusters
+                          projectId={Number(projectId)}
+                          rows={junitTestCases}
+                          selectedSignatureIds={junitFacets.signatureIds}
+                          onToggleSignature={toggleSignatureFacet}
+                        />
                         <PaginationProvider>
                           <JunitResultsPanel
                             t={t}
@@ -2407,6 +2592,12 @@ export default function TestRunPage() {
                             </div>
                             {/* The manual case table above owns `page` and
                                 `pageSize`; this table pages independently. */}
+                            <RunFailureClusters
+                              projectId={Number(projectId)}
+                              rows={junitTestCases}
+                              selectedSignatureIds={junitFacets.signatureIds}
+                              onToggleSignature={toggleSignatureFacet}
+                            />
                             <PaginationProvider
                               pageParam="resultsPage"
                               pageSizeParam="resultsPageSize"
@@ -2483,6 +2674,7 @@ export default function TestRunPage() {
                       forecastSeconds={testRunData?.forecastManual}
                       onFlakyTileClick={handleFlakyTileClick}
                       onRetriesTileClick={handleRetriesTileClick}
+                      onQuarantinedTileClick={handleQuarantinedTileClick}
                     />
                   ) : (
                     <>
@@ -2561,6 +2753,7 @@ export default function TestRunPage() {
                           forecastSeconds={undefined}
                           onFlakyTileClick={handleFlakyTileClick}
                           onRetriesTileClick={handleRetriesTileClick}
+                          onQuarantinedTileClick={handleQuarantinedTileClick}
                         />
                       )}
                     </>
@@ -2724,6 +2917,7 @@ export default function TestRunPage() {
                   repositoryCaseId: tc.repositoryCaseId,
                 })),
                 isCompleted: testRunData.isCompleted,
+                dependencyState: runDependencyState.get(selectedTestCaseId),
                 onEditCase: canAddEditCases
                   ? () => setIsEditingCase(true)
                   : undefined,
@@ -2791,6 +2985,22 @@ export default function TestRunPage() {
           testRunId={Number(runId)}
           testRunName={testRunData.name || ""}
           onPrepareCloneDataAndProceed={handlePrepareCloneDataAndProceed}
+        />
+      )}
+      {/* Rendered outside the view/edit-mode header branches so the
+          all-cases-completed prompt can open it from either mode. */}
+      {isCompleteDialogOpen && canCloseRun && !testRunData?.isCompleted && (
+        <CompleteTestRunDialog
+          open={isCompleteDialogOpen}
+          onClose={() => {
+            setIsCompleteDialogOpen(false);
+            setCompletePromptedByResults(false);
+          }}
+          testRunId={Number(runId)}
+          projectId={Number(projectId)}
+          stateId={testRunData?.stateId || 0}
+          stateName={testRunData?.state?.name || ""}
+          promptedByAllCasesCompleted={completePromptedByResults}
         />
       )}
       {canAddEditRun &&

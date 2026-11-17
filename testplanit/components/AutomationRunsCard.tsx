@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { apiFetch } from "~/lib/basePath";
 
 export type AutomationRunListItem = NonNullable<
   ComponentProps<typeof TestRunNameDisplay>["testRun"]
@@ -91,7 +92,7 @@ export function AutomationRunsCard({
   const { data: batchSummaries } = useQuery<BatchTestRunSummaryResponse>({
     queryKey: ["batchTestRunSummaries", runIds],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/test-runs/summaries?testRunIds=${runIds.join(",")}`
       );
       if (!response.ok) {

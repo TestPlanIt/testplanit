@@ -1510,9 +1510,11 @@ var TestPlanItClient = class {
     const data = {
       testRun: { connect: { id: options.testRunId } },
       testRunCase: { connect: { id: options.testRunCaseId } },
-      status: { connect: { id: options.statusId } },
-      attempt: options.attempt ?? 1
+      status: { connect: { id: options.statusId } }
     };
+    if (options.attempt !== void 0) {
+      data.attempt = options.attempt;
+    }
     if (options.elapsed !== void 0) {
       data.elapsed = options.elapsed;
     }

@@ -37,14 +37,72 @@ describe("stringToColorCode Utility", () => {
 
   // Example tests for text color contrast based on generated background
   it("should return text-white for input generating a dark background (e.g., 'Dark Background')", () => {
-    // Input 'Dark Background' generates colorCode: '#4c2031' which is dark.
+    // 'Dark Background' hashes to #182ceb, relative luminance 0.08 — white is
+    // 8.08:1 there, black only 2.60:1.
     const { textColor } = stringToColorCode("Dark Background");
     expect(textColor).toBe("text-white");
   });
 
   it("should return text-black for input generating a light background (e.g., 'Test')", () => {
-    // Input 'Test' generates hash 2603496 -> #27b9e8 (light blue/cyan), luminance ~157.
+    // 'Test' hashes to #b2b827, relative luminance 0.44 — black is 9.78:1
+    // there, white only 2.15:1.
     const { textColor } = stringToColorCode("Test");
     expect(textColor).toBe("text-black");
+  });
+
+  /**
+   * The assertion that makes the original bug impossible to reintroduce.
+   *
+   * The pick used to sum raw channels with red and blue transposed, which put
+   * 14.2% of the generator's whole output space below 4.5:1 (worst #ff9900 at
+   * 2.14:1). Asserting the ratio rather than a specific colour means any future
+   * change to either the hash or the pick has to stay readable.
+   */
+  describe("contrast of the chosen text colour", () => {
+    const relativeLuminance = (hex: string) => {
+      const channels = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+      const [r, g, b] = channels.map((c) => {
+        const v = c / 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const ratioAgainst = (hex: string, textColor: string) => {
+      const bg = relativeLuminance(hex);
+      const fg = textColor === "text-white" ? 1 : 0;
+      return (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
+    };
+
+    // Spread across the hash space rather than a handful of names, so the
+    // sample actually exercises both sides of the black/white flip.
+    const names = Array.from({ length: 400 }, (_, i) => `user ${i} name`);
+
+    it("always clears WCAG AA for body text", () => {
+      const failures = names
+        .map((n) => {
+          const { colorCode, textColor } = stringToColorCode(n);
+          return {
+            n,
+            colorCode,
+            textColor,
+            ratio: ratioAgainst(colorCode, textColor),
+          };
+        })
+        .filter((r) => r.ratio < 4.5);
+
+      expect(failures).toEqual([]);
+    });
+
+    it("picks the better of black and white, not merely a plausible one", () => {
+      for (const n of names.slice(0, 50)) {
+        const { colorCode, textColor } = stringToColorCode(n);
+        const chosen = ratioAgainst(colorCode, textColor);
+        const other = ratioAgainst(
+          colorCode,
+          textColor === "text-white" ? "text-black" : "text-white"
+        );
+        expect(chosen).toBeGreaterThanOrEqual(other);
+      }
+    });
   });
 });

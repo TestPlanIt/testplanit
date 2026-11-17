@@ -14,8 +14,9 @@ import { randomUuid } from "~/utils/randomUuid";
  * `useOperationId` is the browser tier's only place that can group every
  * request belonging to one logical save (e.g. a case save = RepositoryCases +
  * CaseFieldValues + Steps writes). `beginOperation()` mints ONE UUID per save
- * and writes it into the shared module-level ref (lib/zenstackFetcher.ts). The global ZenStack fetcher installed in
- * app/providers.tsx reads that ref and attaches it as the `X-Operation-Id`
+ * and writes it into the shared module-level ref (lib/zenstackFetcher.ts). The
+ * global ZenStack fetcher installed in app/providers.tsx reads that ref and
+ * attaches it as the `X-Operation-Id`
  * header on EVERY generated mutation/query, so callers do NOT pass any
  * per-mutation fetch override (that seam does not exist — see
  * 14-OPEN-QUESTIONS-RESOLVED.md §3). `endOperation()` clears it after the save.

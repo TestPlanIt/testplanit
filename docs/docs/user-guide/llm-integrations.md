@@ -213,7 +213,7 @@ If your provider invoices on a different cycle, set the **Billing Period Start D
 The setting affects three behaviors:
 
 - **Spend aggregation** — the cost shown on the admin LLM page totals usage from the period start through today
-- **Budget alerts** — 80% / 90% / 100% threshold notifications reset on each new period
+- **Budget alerts** — [AI budget used](./alerts.md#system-alerts) alerts fire once per period and reset on each new one
 - **Reset Spend** — the manual reset action on the Edit dialog clears usage from the current period start onward (older periods remain in the audit trail)
 
 For a historical breakdown of spend by feature, model, user, or project — beyond the current billing period — use the [LLM Usage report](./llm-usage-report.md) under **Administration → Reports**.
@@ -274,7 +274,7 @@ After creating an LLM integration:
 
 ## Per-Feature LLM Overrides
 
-Project admins can override which LLM integration is used for specific AI features, independently of the project-wide default. This is configured per project on the **AI Models** settings page and applies to the following features: Test Case Generation, Markdown Parsing, Smart Test Case Selection, Editor Writing Assistant, LLM Connection Test, QuickScript, Auto-tagging, and Automation Candidates.
+Project admins can override which LLM integration is used for specific AI features, independently of the project-wide default. This is configured per project on the **AI Models** settings page, whose table lists every AI feature TestPlanIt has.
 
 ### How to Configure
 

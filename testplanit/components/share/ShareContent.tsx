@@ -10,6 +10,7 @@ import { buildSharedReportSearchParamsWithState } from "~/components/reports/rep
 import { PasswordGate } from "./PasswordGate";
 import { SharedReportLoading } from "./SharedReportLoading";
 import { SharedReportViewer } from "./SharedReportViewer";
+import { apiFetch, withBasePath } from "~/lib/basePath";
 
 interface ShareContentProps {
   shareKey: string;
@@ -59,7 +60,7 @@ export function ShareContent({
 
     // Call the share API to check if user has access
     try {
-      const response = await fetch(`/api/share/${shareKey}`, {
+      const response = await apiFetch(`/api/share/${shareKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
@@ -94,7 +95,7 @@ export function ShareContent({
               ? {
                   label: tAuthBypass("viewInApp"),
                   onClick: () => {
-                    window.location.href = reportUrl;
+                    window.location.href = withBasePath(reportUrl);
                   },
                 }
               : undefined,
@@ -136,7 +137,7 @@ export function ShareContent({
         }
       }
 
-      const response = await fetch(`/api/share/${shareKey}`, {
+      const response = await apiFetch(`/api/share/${shareKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, recordView: false }),
@@ -147,7 +148,9 @@ export function ShareContent({
 
         // Handle authentication required
         if (errorData.requiresAuth) {
-          window.location.href = `/en-US/signin?callbackUrl=/share/${shareKey}`;
+          window.location.href = withBasePath(
+            `/en-US/signin?callbackUrl=${withBasePath(`/share/${shareKey}`)}`
+          );
           return;
         }
 
@@ -186,7 +189,7 @@ export function ShareContent({
             ? {
                 label: tAuthBypass("viewInApp"),
                 onClick: () => {
-                  window.location.href = reportUrl;
+                  window.location.href = withBasePath(reportUrl);
                 },
               }
             : undefined,
@@ -231,7 +234,7 @@ export function ShareContent({
         }
       }
 
-      const response = await fetch(`/api/share/${shareKey}`, {
+      const response = await apiFetch(`/api/share/${shareKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
@@ -242,7 +245,9 @@ export function ShareContent({
 
         // Handle authentication required
         if (errorData.requiresAuth) {
-          window.location.href = `/en-US/signin?callbackUrl=/share/${shareKey}`;
+          window.location.href = withBasePath(
+            `/en-US/signin?callbackUrl=${withBasePath(`/share/${shareKey}`)}`
+          );
           return;
         }
 
@@ -302,22 +307,22 @@ export function ShareContent({
           // Mark as counted BEFORE making the request to prevent race conditions
           markViewedInSession();
 
-          fetch(`/api/share/${shareKey}`, {
+          apiFetch(`/api/share/${shareKey}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({}),
           })
             .then(() => {
-              window.location.href = reportsUrl;
+              window.location.href = withBasePath(reportsUrl);
             })
             .catch((error) => {
               console.error("Error counting view:", error);
               // Redirect anyway even if view counting fails
-              window.location.href = reportsUrl;
+              window.location.href = withBasePath(reportsUrl);
             });
         } else {
           // Already counted, just redirect
-          window.location.href = reportsUrl;
+          window.location.href = withBasePath(reportsUrl);
         }
       };
       void redirect();

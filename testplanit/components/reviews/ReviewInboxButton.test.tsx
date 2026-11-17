@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ReviewInboxButton } from "./ReviewInboxButton";
+import { __resetNotificationStreamForTests } from "~/hooks/notificationStreamManager";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mocks
@@ -20,13 +21,21 @@ vi.mock("next-auth/react", () => ({
 const mockEventSource: {
   onmessage: ((event: MessageEvent) => void) | null;
   onerror: ((event: Event) => void) | null;
+  addEventListener: () => void;
   close: () => void;
-} = { onmessage: null, onerror: null, close: vi.fn() };
+} = {
+  onmessage: null,
+  onerror: null,
+  addEventListener: vi.fn(),
+  close: vi.fn(),
+};
 const mockCreateDeferredEventSource = vi.fn(
   (..._args: unknown[]) => mockEventSource
 );
-// The component guards on `typeof EventSource === "undefined"` so it degrades
-// gracefully outside the browser; jsdom doesn't provide it.
+// The stream manager guards on `typeof EventSource === "undefined"` so it
+// degrades gracefully outside the browser; jsdom doesn't provide it. The
+// component subscribes through notificationStreamManager, which opens the
+// (mocked) deferred EventSource below.
 vi.stubGlobal("EventSource", class {});
 vi.mock("~/hooks/deferredEventSource", () => ({
   createDeferredEventSource: (...args: unknown[]) =>
@@ -35,6 +44,12 @@ vi.mock("~/hooks/deferredEventSource", () => ({
 
 // feature flag (system-level — no projectId)
 const mockUseReviewFeatureEnabled = vi.fn();
+const mockUseReviewAssigneeScope = vi.fn();
+vi.mock("~/hooks/useReviewAssigneeScope", () => ({
+  useReviewAssigneeScope: (userId: string | null | undefined) =>
+    mockUseReviewAssigneeScope(userId),
+}));
+
 vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
   useReviewFeatureEnabled: (...args: unknown[]) =>
     mockUseReviewFeatureEnabled(...args),
@@ -129,6 +144,21 @@ function setupDefaults({
       : undefined,
   });
 
+  // The per-project assignee scope the hook resolves server-side: the viewer
+  // directly, plus one branch per role they hold.
+  mockUseReviewAssigneeScope.mockReturnValue({
+    assigneeOr: [
+      { assigneeUserId: "user-1" },
+      ...roleIds.map((roleId) => ({
+        projectId: 1,
+        assigneeRoleId: roleId,
+        entityType: { in: ["CASE", "RUN", "SESSION"] },
+      })),
+    ],
+    isAssignee: () => false,
+    isLoading: false,
+  });
+
   mockUseCountReviewRequest.mockReturnValue({ data: count });
 
   mockUseCountProjects.mockReturnValue({
@@ -150,6 +180,8 @@ describe("ReviewInboxButton", () => {
     mockUseCountProjects.mockReset();
     mockInvalidateQueries.mockReset();
     mockCreateDeferredEventSource.mockClear();
+    mockEventSource.onmessage = null;
+    __resetNotificationStreamForTests();
   });
 
   it("(a) renders null when feature flag is disabled", () => {
@@ -243,7 +275,7 @@ describe("ReviewInboxButton", () => {
     expect(button.getAttribute("aria-label")).toBe("reviews.inbox.iconAria");
   });
 
-  it("(i) passes role IDs (global + SPECIFIC_ROLE project permissions) to useCountReviewRequest", () => {
+  it("(i) passes the viewer's per-project role branches to useCountReviewRequest", () => {
     setupDefaults({ count: 0, roleIds: [7, 12, 18] });
     render(<ReviewInboxButton />);
 
@@ -254,9 +286,9 @@ describe("ReviewInboxButton", () => {
     expect(firstCallArgs.where?.OR).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ assigneeUserId: "user-1" }),
-        expect.objectContaining({
-          assigneeRoleId: { in: expect.arrayContaining([7, 12, 18]) },
-        }),
+        expect.objectContaining({ projectId: 1, assigneeRoleId: 7 }),
+        expect.objectContaining({ projectId: 1, assigneeRoleId: 12 }),
+        expect.objectContaining({ projectId: 1, assigneeRoleId: 18 }),
       ])
     );
   });
@@ -283,7 +315,9 @@ describe("ReviewInboxButton", () => {
     // ZenStack model prefix carries the refresh to the other review surfaces
     // (home dashboard queue, entity status banner) off this one connection.
     expect(mockInvalidateQueries).not.toHaveBeenCalled();
-    mockEventSource.onmessage?.(new MessageEvent("message"));
+    mockEventSource.onmessage?.(
+      new MessageEvent("message", { data: '{"event":"sync"}' })
+    );
     expect(mockInvalidateQueries).toHaveBeenCalledTimes(1);
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: ["zenstack", "ReviewRequest"],

@@ -248,6 +248,20 @@ export const CODE_PINS_DIMENSION_DEF: FilterDimension = {
   operators: BOOLEAN_OPERATORS,
 };
 
+/**
+ * Risk-scoring repo dimension: the maintained `RepositoryCases.riskScore`
+ * scalar. Exists only where the project has risk scoring enabled, so a
+ * shared link with a `riskScore` predicate degrades to "no such filter"
+ * elsewhere. `any`/`none` read as scored / not yet scored.
+ */
+export const RISK_SCORE_DIMENSION = "riskScore";
+export const RISK_SCORE_DIMENSION_DEF: FilterDimension = {
+  key: RISK_SCORE_DIMENSION,
+  scope: "repo",
+  valueType: "number",
+  operators: NUMBER_OPERATORS,
+};
+
 export const RUN_DIMENSIONS: readonly FilterDimension[] = [
   {
     key: "status",
@@ -333,6 +347,8 @@ export interface BuildFilterDimensionsOptions {
   includeInReview?: boolean;
   /** Include the `codePins` dimension: only where Impact Analysis is enabled. */
   includeCodePins?: boolean;
+  /** Include the `riskScore` dimension: only where risk scoring is enabled. */
+  includeRiskScore?: boolean;
 }
 
 export function buildFilterDimensions(
@@ -343,6 +359,7 @@ export function buildFilterDimensions(
     includeRunDimensions = false,
     includeInReview = false,
     includeCodePins = false,
+    includeRiskScore = false,
   } = options;
   const registry = new Map<string, FilterDimension>();
 
@@ -354,6 +371,9 @@ export function buildFilterDimensions(
   }
   if (includeCodePins) {
     registry.set(CODE_PINS_DIMENSION_DEF.key, CODE_PINS_DIMENSION_DEF);
+  }
+  if (includeRiskScore) {
+    registry.set(RISK_SCORE_DIMENSION_DEF.key, RISK_SCORE_DIMENSION_DEF);
   }
   if (includeRunDimensions) {
     for (const dimension of RUN_DIMENSIONS) {

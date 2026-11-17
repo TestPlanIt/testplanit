@@ -107,9 +107,9 @@ describe("registerSessionResultsGet", () => {
     expect(data.issues).toEqual([]);
   });
 
-  // ── createdBy IS the executor (D7-13) ────────────────────────────────────
+  // ── createdBy IS the executor ────────────────────────────────────
 
-  it("D7-13: createdBy IS the executor — output has NO separate executedBy field", async () => {
+  it("createdBy IS the executor — output has NO separate executedBy field", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawDetail());
     const { client } = await setupClient();
     const result = await client.callTool({
@@ -122,9 +122,9 @@ describe("registerSessionResultsGet", () => {
     expect(data).not.toHaveProperty("executedBy");
   });
 
-  // ── NO step-level results (D7-13) ────────────────────────────────────────
+  // ── NO step-level results ────────────────────────────────────────
 
-  it("D7-13: NO step-level results — output has NO stepResults key (sessions are exploratory and not stepwise)", async () => {
+  it("NO step-level results — output has NO stepResults key (sessions are exploratory and not stepwise)", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawDetail());
     const { client } = await setupClient();
     const result = await client.callTool({
@@ -255,7 +255,7 @@ describe("registerSessionResultsGet", () => {
     expect(issues[0].externalSystem).toBe("JIRA");
   });
 
-  // ── Not-found path (T-07-02 IDOR) ────────────────────────────────────────
+  // ── Not-found path ────────────────────────────────────────
 
   it("session result not found: zenstack returns null -> isError with 'Session result' and resultId in message", async () => {
     mockZenstack.mockResolvedValueOnce(null);
@@ -311,7 +311,7 @@ describe("registerSessionResultsGet", () => {
 
   // ── Tool registration ────────────────────────────────────────────────────
 
-  it("tool registration: testplanit_session_results_get exists with description starting with 'Fetch a single session result' AND mentions 'no step-level' (D7-13)", async () => {
+  it("tool registration: testplanit_session_results_get exists with description starting with 'Fetch a single session result' AND mentions 'no step-level'", async () => {
     const server = new McpServer({ name: "test", version: "0.0.0" });
     registerSessionResultsGet(server, deps);
     const [ct, st] = InMemoryTransport.createLinkedPair();
@@ -324,7 +324,7 @@ describe("registerSessionResultsGet", () => {
     );
     expect(tool).toBeDefined();
     expect(tool?.description).toMatch(/^Fetch a single session result/);
-    // D7-13: description must document no-step-level-results.
+    // description must document no-step-level-results.
     expect(tool?.description).toMatch(/no step-level/);
   });
 });

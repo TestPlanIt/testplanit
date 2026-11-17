@@ -15,6 +15,7 @@ import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
 import { baseDb } from "@/lib/db";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import {
   buildSystemPrompt,
   buildUserPrompt,
@@ -27,6 +28,7 @@ import {
   type ParseWarning,
   type TemplateData,
 } from "./shared";
+import { makeRelatedCaseFinder } from "./related-cases";
 
 export interface GenerateTestCasesParams {
   projectId: number;
@@ -40,6 +42,11 @@ export interface GenerateTestCasesParams {
   issueRef?: IssueCaseLinkRef;
   /** Used for LLM usage attribution (LlmRequest.userId). */
   userId: string;
+  /**
+   * Tenant whose search index holds the project's cases. Workers pass the
+   * job's tenant; web routes default to this instance's.
+   */
+  tenantId?: string;
 }
 
 export interface GenerateTestCasesMetadata {
@@ -78,6 +85,7 @@ export async function generateTestCasesForProject(
     includeParameters,
     issueRef,
     userId,
+    tenantId = getCurrentTenantId(),
   } = params;
 
   const manager = LlmManager.getInstance(baseDb);
@@ -161,7 +169,18 @@ export async function generateTestCasesForProject(
       ? await fetchExistingCasesContext(
           baseDb,
           projectId,
-          { folderId: context.folderContext, issueRef },
+          {
+            folderId: context.folderContext,
+            issueRef,
+            related: {
+              find: makeRelatedCaseFinder(baseDb),
+              title: issue.title,
+              description: issue.description,
+              notes: context.userNotes,
+              templateId: template.id,
+              tenantId,
+            },
+          },
           contextTokenBudget
         )
       : [];

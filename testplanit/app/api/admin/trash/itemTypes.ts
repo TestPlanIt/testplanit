@@ -30,6 +30,12 @@ const searchFieldCandidates = [
   "label",
 ];
 
+// Models that carry the soft-delete pair but are private to their author, so
+// they are never listed, restored or purged by an administrator. A CaseDraft
+// tombstone is the record that a case was staged (or a staged case discarded);
+// restoring one would re-stage a case that already exists.
+const authorPrivateModels = new Set(["CaseDraft"]);
+
 // Every model that carries the soft-delete pair is a Trash item type. Deriving
 // the list from the schema means a new soft-deletable model shows up in the API
 // automatically; the UI list is checked against this in a unit test.
@@ -37,6 +43,7 @@ export const trashItemTypes: TrashItemType[] = Object.values(
   schema.models as unknown as Record<string, ModelDef>
 )
   .filter((model) => model.fields.isDeleted && model.fields.deletedAt)
+  .filter((model) => !authorPrivateModels.has(model.name))
   .map((model): TrashItemType => {
     const idField = model.fields.id;
     const searchField =

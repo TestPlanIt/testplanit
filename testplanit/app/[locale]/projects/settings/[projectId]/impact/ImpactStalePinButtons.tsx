@@ -25,6 +25,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { isStalePinCheckInFlight, readStalePinReport } from "./stalePinReport";
+import { apiFetch } from "~/lib/basePath";
 
 export interface ImpactStalePinConnection {
   id: number;
@@ -71,7 +72,7 @@ export function ImpactStalePinButtons({
     setCheckRequested(true);
     setError(null);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/code-repositories/${config.repositoryId}/stale-pins/check`,
         {
           method: "POST",
@@ -97,7 +98,7 @@ export function ImpactStalePinButtons({
     setRemoving(true);
     setError(null);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/code-repositories/${config.repositoryId}/stale-pins/remove`,
         {
           method: "POST",

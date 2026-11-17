@@ -49,7 +49,7 @@ export function registerIssuesGet(
             ],
           };
         }
-        // D8-06 / D7-12 widened: detect overflow per array via the take:101
+        // detect overflow per array via the take:101
         // cap on each sub-include. Trim each array to the inline cap (100)
         // BEFORE mapping so the surfaced arrays never exceed the documented
         // bound. Each array gets its own truncated.<key> flag.

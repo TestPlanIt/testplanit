@@ -37,12 +37,13 @@ services:
       - xpack.security.enabled=false
       - xpack.security.enrollment.enabled=false
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - '9200:9200'
+      - '9300:9300'
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      test:
+        ['CMD-SHELL', 'curl -f http://localhost:9200/_cluster/health || exit 1']
       interval: 30s
       timeout: 10s
       retries: 5
@@ -51,9 +52,9 @@ volumes:
   elasticsearch_data:
 ```
 
-#### Production Setup
+#### Scaling Beyond the Bundled Node
 
-For production environments:
+TestPlanIt's own `docker-compose.prod.yml` runs a **single** Elasticsearch node with a 512MB heap and no container memory limit, which is what a normal install needs. The example below is not that configuration — it is a starting point if you have outgrown a single node and want a secured multi-node cluster, and it assumes you add the `elasticsearch2` and `elasticsearch3` services it refers to:
 
 ```yaml
 elasticsearch:
@@ -402,18 +403,15 @@ Response:
 
 ### Hardware Recommendations
 
-**Development Environment:**
+These are for the Elasticsearch service itself, not the whole TestPlanIt stack — see [Docker Setup](./docker-setup.md) for the per-service breakdown of a full install.
 
-- 2 CPU cores
-- 4GB RAM
-- 20GB storage
+The bundled compose files run a single node with a **512MB heap** (`ES_JAVA_OPTS=-Xms512m -Xmx512m`), which is sized for TestPlanIt's index — cases, runs, sessions, issues and milestones — rather than for general-purpose Elasticsearch workloads. Budget **2GB** of memory for the service at minimum and **3GB** for comfort, matching the Docker Setup table; the headroom above the heap covers Lucene's off-heap structures, the JVM itself, and reindex spikes.
 
-**Production Environment:**
+Raise the heap only if you have evidence you need it — a large index with slow queries, or heap pressure in the node stats. Elasticsearch's own guidance is to keep the heap at or below 50% of the memory available to the node and never above ~31GB, so a 512MB heap pairs with roughly 1GB or more for the container.
 
-- 4+ CPU cores
-- 8GB+ RAM (50% for Elasticsearch heap)
-- SSD storage
-- Separate data and master nodes for scale
+**Storage:** 20GB is ample for a typical install; SSD-backed storage is worth it in production because reindexing and aggregation are I/O-sensitive.
+
+**Scaling out:** separate data and master nodes only become relevant well beyond a single-node install, and TestPlanIt does not require or manage a multi-node topology.
 
 ## Monitoring and Maintenance
 

@@ -34,6 +34,7 @@ import {
   VisibilityState,
 } from "@/components/tables/tableFeatures";
 import {
+  Beaker,
   Bot,
   ChevronDown,
   ChevronLeft,
@@ -123,6 +124,13 @@ import {
   useRequirementTraceabilityColumns,
 } from "~/hooks/useRequirementCoverageReportColumns";
 import { useCodePinCoverageColumns } from "~/hooks/useCodePinCoverageColumns";
+import { useResultsTrendColumns } from "~/hooks/useResultsTrendColumns";
+import {
+  TREND_RUN_SOURCES,
+  type ResultsTrendMeta,
+  type TrendAttemptMode,
+  type TrendRunSource,
+} from "~/utils/resultsTrendShared";
 import {
   IMPACT_OUTCOME_LABEL_KEY,
   IMPACT_TRIGGER_LABEL_KEY,
@@ -156,6 +164,10 @@ import {
 } from "~/utils/reportUtils";
 import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
 import {
+  isServerPagedReport,
+  serverPageSize,
+} from "~/utils/serverPagedReports";
+import {
   mergeSeenOptions,
   mergeSeenProjectOptions,
   withLatestCounts,
@@ -167,6 +179,7 @@ import {
   applyLegacyReportUrlParams,
   buildCleanReportUrlParams,
   buildReportBuilderStateConfig,
+  hasNavigatedAwayFromRun,
   hasReportSelectionInUrl,
   isUrlInSyncWithReportType,
   parseLegacyReportUrlParams,
@@ -181,6 +194,7 @@ import {
   initialDateRangeFromUrl,
   parsePerTypeReportParams,
 } from "./reportShareParams";
+import { apiFetch, withBasePath } from "~/lib/basePath";
 
 interface ReportBuilderProps {
   mode: "project" | "cross-project";
@@ -297,6 +311,7 @@ function isPreBuiltReport(reportType: string): boolean {
   const baseType = getBaseReportType(reportType);
   return [
     "automation-trends",
+    "results-trend",
     "flaky-tests",
     "test-case-health",
     "issue-test-coverage",
@@ -304,6 +319,55 @@ function isPreBuiltReport(reportType: string): boolean {
     ...REQUIREMENT_REPORT_TYPE_IDS,
     ...IMPACT_REPORT_TYPE_IDS,
   ].includes(baseType as (typeof REQUIREMENT_REPORT_TYPE_IDS)[number]);
+}
+
+const TREND_URL_PARAM_KEYS = [
+  "runSource",
+  "showPassRate",
+  "showFailRate",
+  "showCounts",
+  "countSkipped",
+  "includeAborted",
+  "attemptMode",
+  "projectIds",
+] as const;
+
+/** The trend report's URL params; `null` clears them (another report ran). */
+function applyTrendUrlParams(
+  params: URLSearchParams,
+  trend: {
+    runSource?: string;
+    showPassRate?: boolean;
+    showFailRate?: boolean;
+    showCounts?: boolean;
+    countSkipped?: boolean;
+    includeAborted?: boolean;
+    attemptMode?: string;
+    projectIds?: number[];
+  } | null
+) {
+  for (const key of TREND_URL_PARAM_KEYS) params.delete(key);
+  if (!trend) return;
+  if (trend.runSource) params.set("runSource", trend.runSource);
+  if (trend.showPassRate !== undefined) {
+    params.set("showPassRate", String(trend.showPassRate));
+  }
+  if (trend.showFailRate !== undefined) {
+    params.set("showFailRate", String(trend.showFailRate));
+  }
+  if (trend.showCounts !== undefined) {
+    params.set("showCounts", String(trend.showCounts));
+  }
+  if (trend.countSkipped !== undefined) {
+    params.set("countSkipped", String(trend.countSkipped));
+  }
+  if (trend.includeAborted !== undefined) {
+    params.set("includeAborted", String(trend.includeAborted));
+  }
+  if (trend.attemptMode) params.set("attemptMode", trend.attemptMode);
+  if (trend.projectIds?.length) {
+    params.set("projectIds", trend.projectIds.join(","));
+  }
 }
 
 /**
@@ -366,10 +430,6 @@ const dateRangeSchema = z.object({
 });
 
 type DateRangeFormData = z.infer<typeof dateRangeSchema>;
-
-// Rows fetched per execution-log scroll page. Kept within the server's
-// per-request clamp (1–200) so `loaded < total` math stays accurate.
-const EXECUTION_LOG_PAGE_SIZE = 100;
 
 // Inner component
 function ReportBuilderContent({
@@ -527,6 +587,9 @@ function ReportBuilderContent({
   const [metrics, setMetrics] = useState<any[]>([]);
   const [results, setResults] = useState<any[] | null>(null);
   const [allResults, setAllResults] = useState<any[] | null>(null); // Full dataset for charts
+  // A server-paged report's chart numbers over its whole filtered set
+  // (test-case-health `summary`); the rows in `results` are one page.
+  const [chartSummary, setChartSummary] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [compatWarning, setCompatWarning] = useState<string | null>(null);
@@ -660,6 +723,13 @@ function ReportBuilderContent({
   const [dimensionValueFilters, setDimensionValueFilters] = useState<
     Record<string, any[]>
   >({});
+  // How each dimension's value filter applies: keep only the picked values
+  // (include, the default) or everything BUT them (exclude). Exclude keeps a
+  // saved report correct as new values appear — "every project except the
+  // sandboxes" doesn't silently drop projects created later.
+  const [dimensionFilterModes, setDimensionFilterModes] = useState<
+    Record<string, "include" | "exclude">
+  >({});
   const [lastUsedDateRange, setLastUsedDateRange] = useState<
     DateRange | undefined
   >(initialDateRange.range);
@@ -759,6 +829,38 @@ function ReportBuilderContent({
   );
   const isImpactHistory = matchesReportType(reportType, "impact-analysis");
   const isCodePinCoverage = matchesReportType(reportType, "code-pin-coverage");
+  const isResultsTrend = matchesReportType(reportType, "results-trend");
+  // Results trend: the run source and counting rules, and the period axis /
+  // ranked projects / settings the last run came back with.
+  // The Result types filter: one type picked narrows the report to it;
+  // none or both picked counts every run.
+  const trendRunSource: TrendRunSource = useMemo(() => {
+    const picked = (selectedFilterValues.resultType ?? []).filter(
+      (value): value is TrendRunSource =>
+        (TREND_RUN_SOURCES as readonly unknown[]).includes(value)
+    );
+    return picked.length === 1 ? picked[0] : "both";
+  }, [selectedFilterValues.resultType]);
+  const [trendShowPassRate, setTrendShowPassRate] = useState(
+    initialPerTypeParams.trendShowPassRate
+  );
+  const [trendShowFailRate, setTrendShowFailRate] = useState(
+    initialPerTypeParams.trendShowFailRate
+  );
+  const [trendShowCounts, setTrendShowCounts] = useState(
+    initialPerTypeParams.trendShowCounts
+  );
+  const [trendCountSkipped, setTrendCountSkipped] = useState(
+    initialPerTypeParams.trendCountSkipped
+  );
+  const [trendIncludeAborted, setTrendIncludeAborted] = useState(
+    initialPerTypeParams.trendIncludeAborted
+  );
+  const [trendAttemptMode, setTrendAttemptMode] = useState<TrendAttemptMode>(
+    initialPerTypeParams.trendAttemptMode
+  );
+  const [resultsTrendMeta, setResultsTrendMeta] =
+    useState<ResultsTrendMeta | null>(null);
   const hasFolderFilter =
     mode === "project" &&
     (matchesReportType(reportType, "flaky-tests") ||
@@ -796,6 +898,17 @@ function ReportBuilderContent({
         Boolean(projectId) &&
         !isNaN(Number(projectId)),
     }
+  );
+
+  // The trend report's Projects filter offers every project, not only the
+  // ones with automated runs in the window.
+  const { data: trendProjects } = useClientQueries(schema).projects.useFindMany(
+    {
+      where: { isDeleted: false },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    },
+    { enabled: isResultsTrend && mode === "cross-project" }
   );
 
   // Resolve display labels for scope options restored from the URL as
@@ -878,6 +991,12 @@ function ReportBuilderContent({
   const isInitialMount = useRef(true);
   // Track the last report type that was run
   const lastRunReportType = useRef<string | null>(null);
+  // The report type the lastUsed selections were made FOR. The clearing
+  // effect's state resets land one render after a type switch, so the
+  // auto-run guard checks this ref instead of trusting the still-stale
+  // selections — otherwise one doomed run fires at the new type's endpoint
+  // and flashes "Unsupported dimension".
+  const lastUsedSelectionsType = useRef<string | null>(null);
   // Track the last tab change to prevent duplicate calls
   const lastTabChangeRef = useRef<{ tab: string; timestamp: number } | null>(
     null
@@ -889,6 +1008,11 @@ function ReportBuilderContent({
   // reportType counterpart to pendingTabRef — guards the reportType-sync effect
   // against the same stale-URL window so an optimistic report switch isn't reverted.
   const pendingReportTypeRef = useRef<string | null>(null);
+  // The report type on screen now, readable from a run that started earlier.
+  const liveReportTypeRef = useRef(reportType);
+  useEffect(() => {
+    liveReportTypeRef.current = reportType;
+  }, [reportType]);
 
   // Track if we're on the client side (for SSR compatibility)
   const [isClient, setIsClient] = useState(false);
@@ -1212,6 +1336,36 @@ function ReportBuilderContent({
       ];
     }
 
+    if (isResultsTrend) {
+      const resultTypeItem = {
+        id: "resultType",
+        name: tReports("resultsTrend.runSource"),
+        icon: Beaker,
+        options: [
+          {
+            id: "automated",
+            name: tReports("resultsTrend.runSources.automated"),
+          },
+          { id: "manual", name: tReports("resultsTrend.runSources.manual") },
+        ],
+      };
+      if (mode !== "cross-project" || !trendProjects?.length) {
+        return [resultTypeItem];
+      }
+      return [
+        {
+          id: "projects",
+          name: tCommon("fields.projects"),
+          icon: FolderOpen,
+          options: trendProjects.map((project) => ({
+            id: project.id,
+            name: project.name,
+          })),
+        },
+        resultTypeItem,
+      ];
+    }
+
     if (!filterOptions) return [];
 
     const items: any[] = [];
@@ -1342,6 +1496,8 @@ function ReportBuilderContent({
     mode,
     isImpactHistory,
     isCodePinCoverage,
+    isResultsTrend,
+    trendProjects,
     impactConnections,
     hasFolderFilter,
     reportFolders,
@@ -1524,12 +1680,17 @@ function ReportBuilderContent({
         startDate: dateRange?.from?.toISOString(),
         endDate: dateRange?.to?.toISOString(),
         folderIncludeDescendants,
+        // A clicked date row drills into the whole period it covers.
+        ...(lastUsedDimensions.some((d) => d.value === "date")
+          ? { dateGrouping: lastUsedDateGrouping }
+          : {}),
       };
 
       drillDown.handleMetricClick(context);
     },
     [
       lastUsedDimensions,
+      lastUsedDateGrouping,
       reportType,
       mode,
       projectId,
@@ -1550,7 +1711,8 @@ function ReportBuilderContent({
     lastUsedDimensions,
     lastUsedMetrics,
     supportsDrillDown ? handleMetricClick : undefined,
-    projectId
+    projectId,
+    lastUsedDateGrouping
   );
 
   // Use automation trends columns for automation-trends report
@@ -1584,6 +1746,11 @@ function ReportBuilderContent({
   const codePinCoverageColumns = useCodePinCoverageColumns(
     projectId,
     lastUsedDimensions.map((d) => d.value),
+    mode === "cross-project"
+  );
+
+  const resultsTrendColumns = useResultsTrendColumns(
+    resultsTrendMeta?.settings.dateGrouping ?? lastUsedDateGrouping,
     mode === "cross-project"
   );
 
@@ -1682,20 +1849,22 @@ function ReportBuilderContent({
           ? impactAnalysisColumns
           : matchesReportType(reportType, "code-pin-coverage")
             ? codePinCoverageColumns
-            : matchesReportType(reportType, "issue-test-coverage")
-              ? issueTestCoverageSummaryColumns
-              : matchesReportType(reportType, "execution-log")
-                ? executionLogColumns
-                : matchesReportType(reportType, "requirement-coverage-gaps")
-                  ? requirementCoverageGapColumns
-                  : matchesReportType(reportType, "requirement-traceability")
-                    ? requirementTraceabilityColumns
-                    : matchesReportType(
-                          reportType,
-                          "requirement-coverage-changes"
-                        )
-                      ? requirementCoverageChangeColumns
-                      : standardColumns;
+            : matchesReportType(reportType, "results-trend")
+              ? resultsTrendColumns
+              : matchesReportType(reportType, "issue-test-coverage")
+                ? issueTestCoverageSummaryColumns
+                : matchesReportType(reportType, "execution-log")
+                  ? executionLogColumns
+                  : matchesReportType(reportType, "requirement-coverage-gaps")
+                    ? requirementCoverageGapColumns
+                    : matchesReportType(reportType, "requirement-traceability")
+                      ? requirementTraceabilityColumns
+                      : matchesReportType(
+                            reportType,
+                            "requirement-coverage-changes"
+                          )
+                        ? requirementCoverageChangeColumns
+                        : standardColumns;
 
   // Single source of truth for row grouping. issue-test-coverage is ALWAYS
   // grouped by issue (issues with expandable test cases) — its last two columns
@@ -1779,6 +1948,23 @@ function ReportBuilderContent({
   }, [reportType]);
 
   React.useEffect(() => {
+    if (matchesReportType(reportType, "results-trend")) {
+      setColumnVisibility({
+        project: true,
+        weekStart: true,
+        runs: true,
+        results: true,
+        passed: true,
+        failed: true,
+        skipped: true,
+        other: true,
+        passRate: true,
+        failRate: true,
+      });
+    }
+  }, [reportType]);
+
+  React.useEffect(() => {
     if (matchesReportType(reportType, "impact-analysis")) {
       setColumnVisibility({
         project: true,
@@ -1827,7 +2013,10 @@ function ReportBuilderContent({
     if (!currentReportEndpoint) return fetchers;
     dimensions.forEach((dimension: any) => {
       fetchers[dimension.value] = async (query, page, pageSize) => {
-        const url = new URL(currentReportEndpoint, window.location.origin);
+        const url = new URL(
+          withBasePath(currentReportEndpoint),
+          window.location.origin
+        );
         if (mode === "project" && projectId) {
           url.searchParams.set("projectId", projectId.toString());
         }
@@ -1835,7 +2024,7 @@ function ReportBuilderContent({
         if (query) url.searchParams.set("search", query);
         url.searchParams.set("page", String(page));
         url.searchParams.set("pageSize", String(pageSize));
-        const response = await fetch(url.toString());
+        const response = await apiFetch(url.toString());
         if (!response.ok) return { results: [], total: 0 };
         return (await response.json()) as { results: any[]; total: number };
       };
@@ -1994,12 +2183,15 @@ function ReportBuilderContent({
       });
       return;
     }
-    const url = new URL(currentReportEndpoint, window.location.origin);
+    const url = new URL(
+      withBasePath(currentReportEndpoint),
+      window.location.origin
+    );
     if (mode === "project" && projectId) {
       url.searchParams.set("projectId", String(projectId));
     }
     let cancelled = false;
-    fetch(url.toString())
+    apiFetch(url.toString())
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (cancelled || !data) return;
@@ -2036,12 +2228,15 @@ function ReportBuilderContent({
       return;
     }
     if (mode === "project" && !projectId) return;
-    const url = new URL(currentReportEndpoint, window.location.origin);
+    const url = new URL(
+      withBasePath(currentReportEndpoint),
+      window.location.origin
+    );
     if (mode === "project" && projectId) {
       url.searchParams.set("projectId", String(projectId));
     }
     let cancelled = false;
-    fetch(url.toString())
+    apiFetch(url.toString())
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (cancelled || !data) return;
@@ -2085,7 +2280,7 @@ function ReportBuilderContent({
       mode === "project"
     ) {
       // Fetch priority values from the backend
-      fetch(`/api/case-fields/priority/values?projectId=${projectId}`)
+      apiFetch(`/api/case-fields/priority/values?projectId=${projectId}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.values) {
@@ -2117,8 +2312,10 @@ function ReportBuilderContent({
     // Clear stale results so old-typed rows don't render with new-typed columns
     setResults(null);
     setAllResults(null);
+    setChartSummary(null);
     // Dimension value filters are report-specific
     setDimensionValueFilters({});
+    setDimensionFilterModes({});
 
     // Determine which tab this report belongs to
     const isPreBuilt = preBuiltReports.some((r) => r.id === safeReportType);
@@ -2171,6 +2368,7 @@ function ReportBuilderContent({
     setTotalCount(0);
     setResults(null);
     setAllResults(null);
+    setChartSummary(null);
     setError(null);
     setCompatWarning(null);
 
@@ -2203,10 +2401,12 @@ function ReportBuilderContent({
     setMetrics([]);
     setResults(null);
     setAllResults(null);
+    setChartSummary(null);
     setError(null);
     setCompatWarning(null);
     setLastUsedDimensions([]);
     setLastUsedMetrics([]);
+    lastUsedSelectionsType.current = null;
     setLastUsedDateRange(undefined);
     setLastUsedConsecutiveRuns(10);
     setReportGeneratedAt(null);
@@ -2226,12 +2426,15 @@ function ReportBuilderContent({
       );
 
       try {
-        const url = new URL(currentReport.endpoint, window.location.origin);
+        const url = new URL(
+          withBasePath(currentReport.endpoint),
+          window.location.origin
+        );
         if (mode === "project" && projectId) {
           url.searchParams.set("projectId", projectId.toString());
         }
 
-        const response = await fetch(url.toString(), {
+        const response = await apiFetch(url.toString(), {
           method: "GET",
         });
 
@@ -2284,7 +2487,7 @@ function ReportBuilderContent({
         let urlConfig: ReportBuilderStateConfig | null = null;
         if (stateId) {
           try {
-            const stateResponse = await fetch(
+            const stateResponse = await apiFetch(
               `/api/reports/state?id=${encodeURIComponent(stateId)}`
             );
             if (stateResponse.ok) {
@@ -2370,6 +2573,12 @@ function ReportBuilderContent({
                 ? prev
                 : restored
             );
+            const restoredModes = urlConfig.dimensionFilterModes ?? {};
+            setDimensionFilterModes((prev) =>
+              JSON.stringify(prev) === JSON.stringify(restoredModes)
+                ? prev
+                : restoredModes
+            );
           }
         }
 
@@ -2447,7 +2656,9 @@ function ReportBuilderContent({
             .filter(Boolean);
 
           if (selectedDims.length > 0 && selectedMets.length > 0) {
-            // Set flag to auto-run after state updates
+            // Set flag to auto-run after state updates. The ids were mapped
+            // through THIS report's options, so the selections belong to it.
+            lastUsedSelectionsType.current = reportType;
             setDimensions(selectedDims);
             setMetrics(selectedMets);
             setLastUsedDimensions(selectedDims);
@@ -2513,10 +2724,14 @@ function ReportBuilderContent({
       {
         append = false,
         page = 1,
+        offset,
         fresh = false,
       }: {
         append?: boolean;
         page?: number;
+        /** Rows already loaded; a server-paged report serves the rows
+         *  after these (a page may run past its size to finish a group). */
+        offset?: number;
         /** A new run (explicit or auto-run), not a sort or page re-fetch. */
         fresh?: boolean;
       } = {}
@@ -2527,6 +2742,10 @@ function ReportBuilderContent({
           // Silently return - this is expected when first loading the report builder
           return;
         }
+
+        // Whatever lastUsed selections this run stores below belong to the
+        // report type it ran against — the auto-run guard reads this.
+        lastUsedSelectionsType.current = reportType;
 
         // Iteration matrix is self-fetching (MatrixReportPreset uses
         // useMatrixAggregation directly to inherit cell-cap typing). Skip
@@ -2541,16 +2760,19 @@ function ReportBuilderContent({
           return;
         }
 
-        // Only execution-log is truly server-paginated (real DB skip/take); it
-        // fetches a window per scroll. Every other report returns its full set,
-        // so we ask for everything in one request and virtualize it client-side.
+        // Server-paged reports (execution-log, test-case-health) fetch a
+        // window per scroll and get their chart from a summary. Every other
+        // report returns its full set, so we ask for everything in one
+        // request and virtualize it client-side.
         const isExecLog = matchesReportType(reportType, "execution-log");
+        const pagedSize = serverPageSize(reportType);
         const dateRange = form.getValues("dateRange");
         const body: any = {
           dimensions: selectedDimensions.map((d) => d.value),
           metrics: selectedMetrics.map((m) => m.value),
-          page: isExecLog ? page : 1,
-          pageSize: isExecLog ? EXECUTION_LOG_PAGE_SIZE : "All",
+          page: pagedSize ? page : 1,
+          pageSize: pagedSize ?? "All",
+          ...(pagedSize && offset != null ? { offset } : {}),
         };
 
         if (mode === "project" && projectId) {
@@ -2569,13 +2791,20 @@ function ReportBuilderContent({
           string,
           Array<string | number>
         > = {};
+        const activeDimensionFilterModes: Record<string, "exclude"> = {};
         Object.entries(dimensionValueFilters).forEach(([dimId, values]) => {
           if (!values || values.length === 0) return;
           if (!selectedDimensions.some((d) => d.value === dimId)) return;
           activeDimensionFilters[dimId] = values.map((v: any) => v.id);
+          if (dimensionFilterModes[dimId] === "exclude") {
+            activeDimensionFilterModes[dimId] = "exclude";
+          }
         });
         if (Object.keys(activeDimensionFilters).length > 0) {
           body.dimensionFilters = activeDimensionFilters;
+          if (Object.keys(activeDimensionFilterModes).length > 0) {
+            body.dimensionFilterModes = activeDimensionFilterModes;
+          }
         }
 
         // The chart's total line, when the selection can plot one.
@@ -2584,6 +2813,15 @@ function ReportBuilderContent({
           totalLineApplies(selectedDimensions, selectedMetrics)
         ) {
           body.includeTotals = true;
+        }
+
+        // The date dimension's calendar period: the server buckets rows by
+        // it and the table, chart, CSV and share label them the same way.
+        if (
+          !isPreBuiltReport(reportType) &&
+          selectedDimensions.some((d) => d.value === "date")
+        ) {
+          body.dateGrouping = dateGrouping;
         }
 
         // For automation trends, add selected filter values and date grouping
@@ -2722,6 +2960,26 @@ function ReportBuilderContent({
             const dimValues = selectedDimensions.map((d) => d.value);
             if (!dimValues.includes("project")) dimValues.unshift("project");
             body.dimensions = dimValues;
+          }
+        }
+
+        if (isResultsTrend) {
+          body.dateGrouping = dateGrouping;
+          body.runSource = trendRunSource;
+          body.showPassRate = trendShowPassRate;
+          body.showFailRate = trendShowFailRate;
+          body.showCounts = trendShowCounts;
+          body.countSkipped = trendCountSkipped;
+          body.includeAborted = trendIncludeAborted;
+          body.attemptMode = trendAttemptMode;
+          // Weeks are cut on the viewer's calendar; stored with the run so
+          // a share replays the same weeks for every viewer.
+          body.timezone = dateRangeTimezone;
+          if (
+            isCrossProjectReport(reportType) &&
+            selectedFilterValues.projects?.length
+          ) {
+            body.projectIds = selectedFilterValues.projects.map(Number);
           }
         }
 
@@ -2915,6 +3173,7 @@ function ReportBuilderContent({
               metrics: selectedMetrics,
               dateRange: dateRange?.from ? (dateRange as DateRange) : undefined,
               dimensionValueFilters,
+              dimensionFilterModes,
             })
           : null;
         const stateIdPromise: Promise<string | null> = stateConfig
@@ -2933,6 +3192,10 @@ function ReportBuilderContent({
           body: JSON.stringify(body),
         });
 
+        // The user switched to another report while this one was running;
+        // its rows and errors no longer belong on screen.
+        if (liveReportTypeRef.current !== reportType) return;
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to run report");
@@ -2942,26 +3205,42 @@ function ReportBuilderContent({
 
         // Handle client-side pagination for pre-built reports
         if (currentReport?.isPreBuilt) {
-          // Execution log uses true server-side pagination — accumulate pages
-          // as the user scrolls instead of replacing the visible page.
-          if (isExecLog) {
+          // Server-paged reports accumulate pages as the user scrolls
+          // instead of replacing the visible page.
+          if (pagedSize) {
             const tableData = data.data || data.results || [];
+            // Rows are keyed by id (execution-log) or testCaseId (health).
+            const rowKey = (r: any) => r.id ?? r.testCaseId;
             setResults((prev) => {
               if (!append || !prev) return tableData;
-              // De-dupe by row id in case a page boundary overlaps.
-              const seen = new Set(prev.map((r: any) => r.id));
-              const fresh = tableData.filter((r: any) => !seen.has(r.id));
+              // De-dupe by row key in case a page boundary overlaps.
+              const seen = new Set(prev.map(rowKey));
+              const fresh = tableData.filter((r: any) => !seen.has(rowKey(r)));
               return fresh.length ? [...prev, ...fresh] : prev;
             });
             setTotalCount(data.total ?? tableData.length);
-            // Only on a fresh run (never on append): store the status breakdown
-            // for the chart so scrolling doesn't disturb it.
+            // Never on append: the chart's numbers come with the first page
+            // (execution-log's status breakdown rides in `allResults`, the
+            // health summary in `chartSummary`) so scrolling doesn't disturb
+            // them. A sort refetch (page 1, not appending) refreshes them too.
+            if (!append) {
+              setAllResults(isExecLog ? data.statusBreakdown || [] : null);
+              setChartSummary(data.summary ?? null);
+            }
             if (updateUrl && !append) {
-              setAllResults(data.statusBreakdown || []);
               setLastUsedDimensions(selectedDimensions);
             }
             setReportGeneratedAt(new Date());
-            setLastRequestBody(body);
+            {
+              const {
+                page: _page,
+                pageSize: _pageSize,
+                sortColumn: _sortColumn,
+                sortDirection: _sortDirection,
+                ...shareableBody
+              } = body;
+              setLastRequestBody(shareableBody);
+            }
             return;
           }
 
@@ -2970,6 +3249,15 @@ function ReportBuilderContent({
           // Store projects for automation trends report
           if (data.projects) {
             setAutomationTrendsProjects(data.projects);
+          }
+
+          // The trend chart lays out from the run's period axis and settings.
+          if (data.periods && data.settings) {
+            setResultsTrendMeta({
+              periods: data.periods,
+              projects: data.projects ?? [],
+              settings: data.settings,
+            });
           }
 
           // Set total count to all data length
@@ -3023,8 +3311,9 @@ function ReportBuilderContent({
             setAutomationTrendsProjects(data.projects);
           }
 
-          // Chart shows the full dataset; only refresh it on a new run.
-          if (updateUrl) {
+          // Chart shows the full dataset; refresh it on a new run (explicit
+          // or an auto re-run with new data), never on a sort re-fetch.
+          if (updateUrl || fresh) {
             setAllResults(fullData);
           }
 
@@ -3047,9 +3336,11 @@ function ReportBuilderContent({
 
         // Record when the report was generated: on every new run, including
         // auto-runs from the URL (a saved report or share link), but not on a
-        // sort or page re-fetch.
+        // sort or page re-fetch. The date grouping the rows were bucketed by
+        // follows the same rule so their labels match the data.
         if (updateUrl || fresh) {
           setReportGeneratedAt(new Date());
+          setLastUsedDateGrouping(dateGrouping);
         }
 
         // Only update these when running a new report (not just sorting/paginating)
@@ -3059,10 +3350,6 @@ function ReportBuilderContent({
           setLastUsedDateRange(
             dateRange?.from ? (dateRange as DateRange) : undefined
           );
-          // Update last used date grouping for automation trends
-          if (matchesReportType(reportType, "automation-trends")) {
-            setLastUsedDateGrouping(dateGrouping);
-          }
           // Update last used consecutive runs for flaky tests
           if (matchesReportType(reportType, "flaky-tests")) {
             setLastUsedConsecutiveRuns(consecutiveRuns);
@@ -3116,16 +3403,25 @@ function ReportBuilderContent({
             } else {
               newParams.delete("includeTotals");
             }
+            if (body.dateGrouping) {
+              newParams.set("dateGrouping", body.dateGrouping);
+            } else {
+              newParams.delete("dateGrouping");
+            }
+            applyTrendUrlParams(newParams, isResultsTrend ? body : null);
 
             // If the user moved to another tab or report while this run was
             // in flight, the live URL already belongs to that navigation;
             // writing this run's params over it would bounce them back.
             const liveParams = new URLSearchParams(window.location.search);
-            const liveTab = liveParams.get("tab");
-            const liveReportType = liveParams.get("reportType");
-            const navigatedAway =
-              (liveTab !== null && liveTab !== newParams.get("tab")) ||
-              (liveReportType !== null && liveReportType !== safeReportType);
+            const navigatedAway = hasNavigatedAwayFromRun({
+              runTab: newParams.get("tab"),
+              runReportType: safeReportType,
+              liveTab: liveParams.get("tab"),
+              liveReportType: liveParams.get("reportType"),
+              pendingTab: pendingTabRef.current,
+              pendingReportType: pendingReportTypeRef.current,
+            });
             if (!navigatedAway) {
               router.replace(`${pathname}?${newParams.toString()}`);
             }
@@ -3155,6 +3451,7 @@ function ReportBuilderContent({
       hasFolderFilter,
       filterFolderIncludeSubfolders,
       dimensionValueFilters,
+      dimensionFilterModes,
       consecutiveRuns,
       flipThreshold,
       staleDaysThreshold,
@@ -3169,6 +3466,14 @@ function ReportBuilderContent({
       includeUnchanged,
       dateRangePreset,
       dateRangeTimezone,
+      isResultsTrend,
+      trendRunSource,
+      trendShowPassRate,
+      trendShowFailRate,
+      trendShowCounts,
+      trendCountSkipped,
+      trendIncludeAborted,
+      trendAttemptMode,
     ]
   );
 
@@ -3192,11 +3497,12 @@ function ReportBuilderContent({
     [fetchReportData]
   );
 
-  // Infinite scroll only applies to execution-log (the one truly server-paged
-  // report). Every other report has its full set loaded, so hasMore stays false.
+  // Infinite scroll only applies to the server-paged reports. Every other
+  // report has its full set loaded, so hasMore stays false.
   const isExecutionLog = matchesReportType(reportType, "execution-log");
+  const isServerPaged = isServerPagedReport(reportType);
   const loadedCount = results?.length ?? 0;
-  const hasMore = isExecutionLog && loadedCount < totalCount;
+  const hasMore = isServerPaged && loadedCount < totalCount;
 
   // The first report run is in flight or guaranteed to fire (URL selections
   // awaiting resolution, or a pre-built report's mount auto-run) and none has
@@ -3215,17 +3521,21 @@ function ReportBuilderContent({
       hasReportSelectionInUrl(searchParams));
 
   const handleLoadMore = useCallback(() => {
-    if (!isExecutionLog || loadingMore) return;
+    const pagedSize = serverPageSize(reportType);
+    if (!pagedSize || loadingMore) return;
     const loaded = results?.length ?? 0;
     if (loaded >= totalCount) return;
-    const nextPage = Math.floor(loaded / EXECUTION_LOG_PAGE_SIZE) + 1;
+    // Page by rows loaded, not by page number: a page may have run past
+    // its size to finish a row group, so `loaded` is the only true cursor.
+    const nextPage = Math.floor(loaded / pagedSize) + 1;
     setLoadingMore(true);
     void fetchReportData(lastUsedDimensions, lastUsedMetrics, false, {
       append: true,
       page: nextPage,
+      offset: loaded,
     }).finally(() => setLoadingMore(false));
   }, [
-    isExecutionLog,
+    reportType,
     loadingMore,
     results,
     totalCount,
@@ -3234,26 +3544,46 @@ function ReportBuilderContent({
     lastUsedMetrics,
   ]);
 
-  // CSV export. Full-set reports serialize the in-memory `allResults`;
-  // execution-log (truly server-paged) fetches every page first so the export
-  // is complete.
+  // CSV export. Full-set reports serialize the in-memory `allResults`.
+  // The server-paged reports hold one page, so the export asks the server
+  // for the complete set: execution-log page by page (its "All" is
+  // unbounded and carries step sub-rows), test-case-health in one
+  // `pageSize: "All"` request, the same body the full-set reports used.
   const { isExporting: isExportingCsv, exportCsv } = useReportCsvExport();
   const handleExportCsv = useCallback(() => {
     const getRows = async (): Promise<any[]> => {
-      if (!isExecutionLog) return allResults ?? results ?? [];
+      if (!isServerPaged) return allResults ?? results ?? [];
+      const endpoint = currentReport?.endpoint;
+      if (!endpoint) return [];
+      const exportBody = {
+        ...(lastRequestBody || {}),
+        ...(sortConfig
+          ? {
+              sortColumn: sortConfig.column,
+              sortDirection: sortConfig.direction,
+            }
+          : {}),
+      };
+      if (!isExecutionLog) {
+        const response = await apiFetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...exportBody, page: 1, pageSize: "All" }),
+        });
+        if (!response.ok) throw new Error("Failed to fetch report for export");
+        const data = await response.json();
+        return data.data || data.results || [];
+      }
+      const pagedSize = serverPageSize(reportType) ?? 100;
       const all: any[] = [];
       const seen = new Set<number | string>();
       let page = 1;
       // Loop the report endpoint until every row is fetched (no truncation).
-      while (currentReport?.endpoint) {
-        const response = await fetch(currentReport.endpoint, {
+      for (;;) {
+        const response = await apiFetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...(lastRequestBody || {}),
-            page,
-            pageSize: EXECUTION_LOG_PAGE_SIZE,
-          }),
+          body: JSON.stringify({ ...exportBody, page, pageSize: pagedSize }),
         });
         if (!response.ok) throw new Error("Failed to fetch report for export");
         const data = await response.json();
@@ -3265,8 +3595,7 @@ function ReportBuilderContent({
           }
         }
         const total = data.total ?? all.length;
-        if (batch.length < EXECUTION_LOG_PAGE_SIZE || all.length >= total)
-          break;
+        if (batch.length < pagedSize || all.length >= total) break;
         page += 1;
       }
       return all;
@@ -3280,11 +3609,14 @@ function ReportBuilderContent({
       metrics: lastUsedMetrics,
       projects: automationTrendsProjects,
       consecutiveRuns: lastUsedConsecutiveRuns,
+      dateGrouping: lastUsedDateGrouping,
       projectId: mode === "project" ? projectId : undefined,
     });
   }, [
     exportCsv,
     isExecutionLog,
+    isServerPaged,
+    sortConfig,
     allResults,
     results,
     currentReport,
@@ -3295,6 +3627,7 @@ function ReportBuilderContent({
     lastUsedMetrics,
     automationTrendsProjects,
     lastUsedConsecutiveRuns,
+    lastUsedDateGrouping,
     projectId,
   ]);
 
@@ -3322,6 +3655,11 @@ function ReportBuilderContent({
           ? !hasRunForCurrentType && !loading && !error
           : lastUsedDimensions.length > 0 &&
             lastUsedMetrics.length > 0 &&
+            // The selections must have been made FOR this report type. On a
+            // type switch the clearing effect's state resets land a render
+            // late, so without this the previous report's selections fire
+            // one doomed run at the new endpoint ("Unsupported dimension").
+            lastUsedSelectionsType.current === reportType &&
             !hasRunForCurrentType &&
             !loading &&
             !error;
@@ -3342,24 +3680,23 @@ function ReportBuilderContent({
     changesMissingBaseline,
   ]);
 
-  // Pre-built (non-execution-log) reports hold their full set client-side and
-  // re-sort it in place — no server round-trip, no paging.
+  // Full-set pre-built reports hold every row client-side and re-sort it in
+  // place — no server round-trip, no paging.
   useEffect(() => {
     if (!currentReport?.isPreBuilt) return;
-    if (matchesReportType(reportType, "execution-log")) return;
+    if (isServerPagedReport(reportType)) return;
     if (!allResults || allResults.length === 0) return;
 
     setResults(sortPreBuiltReportRows(reportType, allResults, sortConfig));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortConfig, reportType, allResults]);
 
-  // Server-sorted reports (custom + execution-log) refetch the full sorted set
-  // when sort changes. Execution-log restarts its accumulation from page 1
-  // (append:false replaces the rows) since the whole list reorders.
+  // Server-sorted reports (custom + server-paged) refetch the sorted set
+  // when sort changes. A server-paged report restarts its accumulation from
+  // page 1 (append:false replaces the rows) since the whole list reorders.
   useEffect(() => {
     if (
-      (!currentReport?.isPreBuilt ||
-        matchesReportType(reportType, "execution-log")) &&
+      (!currentReport?.isPreBuilt || isServerPagedReport(reportType)) &&
       results
     ) {
       void fetchReportData(lastUsedDimensions, lastUsedMetrics, false, {
@@ -3383,6 +3720,84 @@ function ReportBuilderContent({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFilterValues, dateGrouping]);
+
+  // Re-run the trend report when its grouping, run source, counting rules
+  // or project filter change, once it has run, and keep the URL in step so
+  // a refresh restores the choice.
+  useEffect(() => {
+    if (!isResultsTrend || !results) return;
+    void runReport(lastUsedDimensions, lastUsedMetrics);
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set("dateGrouping", dateGrouping);
+    applyTrendUrlParams(newParams, {
+      runSource: trendRunSource,
+      showPassRate: trendShowPassRate,
+      showFailRate: trendShowFailRate,
+      showCounts: trendShowCounts,
+      countSkipped: trendCountSkipped,
+      includeAborted: trendIncludeAborted,
+      attemptMode: trendAttemptMode,
+      projectIds:
+        mode === "cross-project"
+          ? (selectedFilterValues.projects ?? []).map(Number)
+          : [],
+    });
+    if (newParams.toString() !== searchParams.toString()) {
+      router.replace(`${pathname}?${newParams.toString()}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    dateGrouping,
+    trendRunSource,
+    trendCountSkipped,
+    trendIncludeAborted,
+    trendAttemptMode,
+    selectedFilterValues.projects,
+  ]);
+
+  // The rate lines are chart options: no re-run, the charts re-render from
+  // the run's settings. Keep the stored run body and the URL in step so a
+  // refresh, save or share keeps the choice.
+  useEffect(() => {
+    if (!isResultsTrend || !results) return;
+    const shown = {
+      showPassRate: trendShowPassRate,
+      showFailRate: trendShowFailRate,
+      showCounts: trendShowCounts,
+    };
+    setResultsTrendMeta((prev) =>
+      prev ? { ...prev, settings: { ...prev.settings, ...shown } } : prev
+    );
+    setLastRequestBody((prev: any) => (prev ? { ...prev, ...shown } : prev));
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set("showPassRate", String(trendShowPassRate));
+    newParams.set("showFailRate", String(trendShowFailRate));
+    newParams.set("showCounts", String(trendShowCounts));
+    if (newParams.toString() !== searchParams.toString()) {
+      router.replace(`${pathname}?${newParams.toString()}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trendShowPassRate, trendShowFailRate, trendShowCounts]);
+
+  // Re-run a custom report when its date grouping changes, once it has run
+  // with the date dimension (mirrors the automation-trends behavior above),
+  // and keep the URL in step so a refresh restores the choice.
+  useEffect(() => {
+    if (
+      !isPreBuiltReport(reportType) &&
+      lastUsedDimensions.some((d) => d.value === "date") &&
+      lastUsedMetrics.length > 0 &&
+      results
+    ) {
+      void runReport(lastUsedDimensions, lastUsedMetrics);
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.set("dateGrouping", dateGrouping);
+      if (newParams.toString() !== searchParams.toString()) {
+        router.replace(`${pathname}?${newParams.toString()}`);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateGrouping]);
 
   // Re-run custom reports when dimension value filters change, once a report
   // has been run (mirrors the automation-trends filter behavior above).
@@ -3434,6 +3849,15 @@ function ReportBuilderContent({
   // both the multi-select and the draggable list's remove button).
   useEffect(() => {
     setDimensionValueFilters((prev) => {
+      const staleKeys = Object.keys(prev).filter(
+        (dimId) => !dimensions.some((d: any) => d.value === dimId)
+      );
+      if (staleKeys.length === 0) return prev;
+      const next = { ...prev };
+      staleKeys.forEach((key) => delete next[key]);
+      return next;
+    });
+    setDimensionFilterModes((prev) => {
       const staleKeys = Object.keys(prev).filter(
         (dimId) => !dimensions.some((d: any) => d.value === dimId)
       );
@@ -3711,15 +4135,14 @@ function ReportBuilderContent({
                           </div>
                         )}
 
-                      {/* Date Grouping Selection for Automation Trends */}
-                      {(reportType === "automation-trends" ||
-                        (isCrossProjectReport(reportType) &&
-                          matchesReportType(
-                            reportType,
-                            "automation-trends"
-                          ))) && (
+                      {/* Date Grouping Selection for the two trend reports */}
+                      {(matchesReportType(reportType, "automation-trends") ||
+                        isResultsTrend) && (
                         <div className="grid gap-2">
-                          <label className="text-sm font-medium">
+                          <label
+                            htmlFor="report-date-grouping"
+                            className="text-sm font-medium"
+                          >
                             {tReports("dateGrouping.label")}
                           </label>
                           <Select
@@ -3728,7 +4151,10 @@ function ReportBuilderContent({
                               setDateGrouping(value)
                             }
                           >
-                            <SelectTrigger>
+                            <SelectTrigger
+                              id="report-date-grouping"
+                              data-testid="report-date-grouping"
+                            >
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -4074,6 +4500,119 @@ function ReportBuilderContent({
                         </div>
                       )}
 
+                      {/* Results Trend parameters */}
+                      {isResultsTrend && (
+                        <div
+                          className="grid gap-4"
+                          data-testid="results-trend-settings"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="results-trend-show-pass-rate"
+                              checked={trendShowPassRate}
+                              onCheckedChange={setTrendShowPassRate}
+                              data-testid="results-trend-show-pass-rate"
+                            />
+                            <label
+                              htmlFor="results-trend-show-pass-rate"
+                              className="text-sm font-medium"
+                            >
+                              {tReports("resultsTrend.showPassRate")}
+                            </label>
+                            <HelpPopover
+                              helpKey={`## ${tReports("resultsTrend.showPassRate")}\n${tReports("resultsTrend.showPassRateHelp")}`}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="results-trend-show-fail-rate"
+                              checked={trendShowFailRate}
+                              onCheckedChange={setTrendShowFailRate}
+                              data-testid="results-trend-show-fail-rate"
+                            />
+                            <label
+                              htmlFor="results-trend-show-fail-rate"
+                              className="text-sm font-medium"
+                            >
+                              {tReports("resultsTrend.showFailRate")}
+                            </label>
+                            <HelpPopover
+                              helpKey={`## ${tReports("resultsTrend.showFailRate")}\n${tReports("resultsTrend.showFailRateHelp")}`}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="results-trend-show-counts"
+                              checked={trendShowCounts}
+                              onCheckedChange={setTrendShowCounts}
+                              data-testid="results-trend-show-counts"
+                            />
+                            <label
+                              htmlFor="results-trend-show-counts"
+                              className="text-sm font-medium"
+                            >
+                              {tReports("resultsTrend.showCounts")}
+                            </label>
+                            <HelpPopover
+                              helpKey={`## ${tReports("resultsTrend.showCounts")}\n${tReports("resultsTrend.showCountsHelp")}`}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="results-trend-count-skipped"
+                              checked={trendCountSkipped}
+                              onCheckedChange={setTrendCountSkipped}
+                              data-testid="results-trend-count-skipped"
+                            />
+                            <label
+                              htmlFor="results-trend-count-skipped"
+                              className="text-sm font-medium"
+                            >
+                              {tReports("resultsTrend.countSkipped")}
+                            </label>
+                            <HelpPopover
+                              helpKey={`## ${tReports("resultsTrend.countSkipped")}\n${tReports("resultsTrend.countSkippedHelp")}`}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="results-trend-include-aborted"
+                              checked={trendIncludeAborted}
+                              onCheckedChange={setTrendIncludeAborted}
+                              data-testid="results-trend-include-aborted"
+                            />
+                            <label
+                              htmlFor="results-trend-include-aborted"
+                              className="text-sm font-medium"
+                            >
+                              {tReports("resultsTrend.includeAborted")}
+                            </label>
+                            <HelpPopover
+                              helpKey={`## ${tReports("resultsTrend.includeAborted")}\n${tReports("resultsTrend.includeAbortedHelp")}`}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="results-trend-latest-attempt"
+                              checked={trendAttemptMode === "latest"}
+                              onCheckedChange={(checked) =>
+                                setTrendAttemptMode(checked ? "latest" : "all")
+                              }
+                              data-testid="results-trend-latest-attempt"
+                            />
+                            <label
+                              htmlFor="results-trend-latest-attempt"
+                              className="text-sm font-medium"
+                            >
+                              {tReports("resultsTrend.latestAttemptOnly")}
+                            </label>
+                            <HelpPopover
+                              helpKey={`## ${tReports("resultsTrend.latestAttemptOnly")}\n${tReports("resultsTrend.latestAttemptOnlyHelp")}`}
+                            />
+                          </div>
+                        </div>
+                      )}
+
                       {/* Impact Analysis History / Code Pin Coverage parameters */}
                       {(isImpactHistory || isCodePinCoverage) && (
                         <div className="grid gap-4">
@@ -4264,6 +4803,7 @@ function ReportBuilderContent({
                         matchesReportType(reportType, "test-case-health") ||
                         isImpactHistory ||
                         isCodePinCoverage ||
+                        isResultsTrend ||
                         isFilterableRequirementReport(reportType)) &&
                         filterItems.length > 0 && (
                           <div className="grid gap-2">
@@ -4468,6 +5008,49 @@ function ReportBuilderContent({
                         />
                       </div>
 
+                      {/* Date grouping — the calendar period each date row
+                          covers, once the date dimension is selected. */}
+                      {dimensions.some((d) => d.value === "date") && (
+                        <div className="grid gap-2">
+                          <label
+                            htmlFor="date-grouping-select"
+                            className="text-sm font-medium"
+                          >
+                            {tReports("dateGrouping.label")}
+                          </label>
+                          <Select
+                            value={dateGrouping}
+                            onValueChange={(value: any) =>
+                              setDateGrouping(value)
+                            }
+                          >
+                            <SelectTrigger
+                              id="date-grouping-select"
+                              data-testid="date-grouping-select"
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="daily">
+                                {tReports("dateGrouping.daily")}
+                              </SelectItem>
+                              <SelectItem value="weekly">
+                                {tReports("dateGrouping.weekly")}
+                              </SelectItem>
+                              <SelectItem value="monthly">
+                                {tReports("dateGrouping.monthly")}
+                              </SelectItem>
+                              <SelectItem value="quarterly">
+                                {tReports("dateGrouping.quarterly")}
+                              </SelectItem>
+                              <SelectItem value="annually">
+                                {tReports("dateGrouping.annually")}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
                       {/* Folder subtree roll-up — only relevant when grouping
                           by folder. */}
                       {dimensions.some((d) => d.value === "folder") && (
@@ -4534,35 +5117,83 @@ function ReportBuilderContent({
                                   <label className="text-xs text-muted-foreground">
                                     {dimension.label}
                                   </label>
-                                  <MultiAsyncCombobox
-                                    value={
-                                      dimensionValueFilters[dimension.value] ??
-                                      []
-                                    }
-                                    onValueChange={(values) =>
-                                      setDimensionValueFilters((prev) => ({
-                                        ...prev,
-                                        [dimension.value]: values,
-                                      }))
-                                    }
-                                    fetchOptions={
-                                      dimensionFilterFetchers[dimension.value]
-                                    }
-                                    renderOption={(option: any) => (
-                                      <span className="truncate">
-                                        {option.name}
-                                      </span>
-                                    )}
-                                    getOptionValue={(option: any) => option.id}
-                                    getOptionLabel={(option: any) =>
-                                      String(option.name ?? option.id)
-                                    }
-                                    placeholder={tReports(
-                                      "dimensionFilters.allValues"
-                                    )}
-                                    pageSize={25}
-                                    className="min-h-9"
-                                  />
+                                  <div className="flex items-start gap-2">
+                                    {/* Include keeps only the picked values;
+                                        exclude keeps everything BUT them, so
+                                        the report stays correct as new
+                                        values appear. */}
+                                    <Select
+                                      value={
+                                        dimensionFilterModes[dimension.value] ??
+                                        "include"
+                                      }
+                                      onValueChange={(mode) =>
+                                        setDimensionFilterModes((prev) => ({
+                                          ...prev,
+                                          [dimension.value]: mode as
+                                            "include" | "exclude",
+                                        }))
+                                      }
+                                    >
+                                      <SelectTrigger
+                                        className="h-9 w-28 shrink-0"
+                                        data-testid={`dimension-filter-mode-${dimension.value}`}
+                                        aria-label={tReports(
+                                          "dimensionFilters.modeLabel"
+                                        )}
+                                      >
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="include">
+                                          {tReports("dimensionFilters.include")}
+                                        </SelectItem>
+                                        <SelectItem value="exclude">
+                                          {tReports("dimensionFilters.exclude")}
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <div className="min-w-0 flex-1">
+                                      <MultiAsyncCombobox
+                                        value={
+                                          dimensionValueFilters[
+                                            dimension.value
+                                          ] ?? []
+                                        }
+                                        onValueChange={(values) =>
+                                          setDimensionValueFilters((prev) => ({
+                                            ...prev,
+                                            [dimension.value]: values,
+                                          }))
+                                        }
+                                        fetchOptions={
+                                          dimensionFilterFetchers[
+                                            dimension.value
+                                          ]
+                                        }
+                                        renderOption={(option: any) => (
+                                          <span className="truncate">
+                                            {option.name}
+                                          </span>
+                                        )}
+                                        getOptionValue={(option: any) =>
+                                          option.id
+                                        }
+                                        getOptionLabel={(option: any) =>
+                                          String(option.name ?? option.id)
+                                        }
+                                        placeholder={tReports(
+                                          dimensionFilterModes[
+                                            dimension.value
+                                          ] === "exclude"
+                                            ? "dimensionFilters.noValues"
+                                            : "dimensionFilters.allValues"
+                                        )}
+                                        pageSize={25}
+                                        className="min-h-9"
+                                      />
+                                    </div>
+                                  </div>
                                 </div>
                               ))}
                           </div>
@@ -4739,6 +5370,7 @@ function ReportBuilderContent({
                 : undefined
             }
             chartData={allResults ?? undefined}
+            chartSummary={chartSummary}
             showChartTotals={includeTotals}
             reportType={reportType}
             dimensions={lastUsedDimensions}
@@ -4752,6 +5384,7 @@ function ReportBuilderContent({
             minExecutionsForRate={minExecutionsForRate}
             lookbackDays={lookbackDays}
             dateGrouping={lastUsedDateGrouping}
+            resultsTrend={resultsTrendMeta ?? undefined}
             totalFlakyTests={
               matchesReportType(reportType, "flaky-tests") && allResults
                 ? allResults.length

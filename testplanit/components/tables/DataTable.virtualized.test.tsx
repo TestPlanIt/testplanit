@@ -555,6 +555,19 @@ describe("DataTable (virtualized mode)", () => {
   });
 });
 
+describe("DataTable (virtualized mode) — header height", () => {
+  it("fixes every header cell's height so its content cannot change it", () => {
+    // Header content sits in a truncating block, so an inline-block child
+    // whose baseline moves — a checkbox gaining its tick — grew the line box
+    // and the whole header by 2px. Measured 36px -> 38px before this.
+    renderTable();
+
+    for (const cell of screen.getAllByRole("columnheader")) {
+      expect(cell.className).toMatch(/\bh-9\b/);
+    }
+  });
+});
+
 describe("DataTable (virtualized mode) — getRowProps row extension point", () => {
   beforeEach(() => {
     vi.clearAllMocks();

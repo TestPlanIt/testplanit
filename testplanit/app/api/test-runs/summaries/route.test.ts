@@ -47,6 +47,7 @@ describe("Test Run Summaries (Batch) API Route", () => {
       testRunType: "REGULAR",
       forecastManual: null,
       projectId: 10,
+      isCompleted: false,
       state: { workflowType: "IN_PROGRESS" },
       issues: [],
     },
@@ -55,6 +56,7 @@ describe("Test Run Summaries (Batch) API Route", () => {
       testRunType: "REGULAR",
       forecastManual: null,
       projectId: 10,
+      isCompleted: true,
       state: { workflowType: "DONE" },
       issues: [],
     },
@@ -185,6 +187,52 @@ describe("Test Run Summaries (Batch) API Route", () => {
       expect(data).toHaveProperty("summaries");
       // summaries should have entries for both test run IDs
       expect(Object.keys(data.summaries).length).toBeGreaterThan(0);
+    });
+
+    // A run-case with no status has never been executed: Pending while its
+    // run is open, Untested once the run is completed and locked.
+    it("labels never-executed cases Pending on open runs and Untested on completed runs", async () => {
+      const unexecuted = (testRunId: number) => ({
+        testRunId,
+        statusId: null,
+        statusName: null,
+        colorValue: "#9ca3af",
+        quarantined: false,
+        count: BigInt(4),
+        isCompleted: null,
+      });
+      const unexecutedCase = (testRunId: number) => ({
+        testRunId,
+        id: testRunId * 100,
+        repositoryCaseId: 7,
+        configurationName: null,
+        caseName: "Login works",
+        statusId: null,
+        statusName: null,
+        colorValue: "#9ca3af",
+        estimate: null,
+        isPending: true,
+        statusOrder: null,
+        quarantined: false,
+      });
+      (baseDb.$queryRaw as any)
+        .mockResolvedValueOnce([]) // comments counts
+        .mockResolvedValueOnce([unexecuted(1), unexecuted(2)]) // status counts
+        .mockResolvedValueOnce([]) // elapsed
+        .mockResolvedValueOnce([]) // estimates
+        .mockResolvedValueOnce([unexecutedCase(1), unexecutedCase(2)]) // case details
+        .mockResolvedValueOnce([]); // result windows
+
+      const response = await GET(createRequest({ testRunIds: "1,2" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.summaries[1].isCompleted).toBe(false);
+      expect(data.summaries[1].statusCounts[0].statusName).toBe("Pending");
+      expect(data.summaries[1].caseDetails[0].statusName).toBe("Pending");
+      expect(data.summaries[2].isCompleted).toBe(true);
+      expect(data.summaries[2].statusCounts[0].statusName).toBe("Untested");
+      expect(data.summaries[2].caseDetails[0].statusName).toBe("Untested");
     });
 
     it("returns each run's execution window, null where there are no results", async () => {

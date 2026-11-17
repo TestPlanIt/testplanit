@@ -33,6 +33,7 @@ const sidebars: SidebarsConfig = {
         'deployment', // Add deployment.md after Installation
         'external-database-deployment', // Add external-database-deployment.md
         'kubernetes-deployment', // Kubernetes / Helm chart deployment
+        'subpath-deployment', // Serving the app under a path prefix (basePath)
         'migrating-from-minio', // Moving bundled file storage from MinIO to RustFS
         'horizontal-read-scaling', // Read-replica horizontal read scaling
         'building-from-source', // Build from source / try a beta pre-release
@@ -87,6 +88,7 @@ const sidebars: SidebarsConfig = {
                 },
                 'user-guide/statuses', // Corresponds to statuses.md
                 'user-guide/milestone-types', // Corresponds to milestone-types.md
+                'user-guide/root-causes', // Failure Patterns root cause catalogue
                 'user-guide/configurations', // Corresponds to configurations.md
                 'user-guide/tags', // Corresponds to tags.md
                 'user-guide/admin-issues', // Global cross-project issues administration
@@ -183,6 +185,7 @@ const sidebars: SidebarsConfig = {
                     'user-guide/llm-test-generation', // AI test case generation
                     'user-guide/llm-magic-select', // AI-powered test case selection
                     'user-guide/impact', // Test impact analysis: Analyze impact, Affected Tests, Code Pins
+                    'user-guide/failure-patterns', // Automated failures grouped into patterns with AI-suggested root causes, issues and quarantine
                     'user-guide/llm-quickscript', // AI-powered QuickScript generation
                     'user-guide/llm-writing-assistant', // In-editor AI writing assistant
                     'user-guide/llm-markdown-import', // AI-assisted markdown import
@@ -218,6 +221,7 @@ const sidebars: SidebarsConfig = {
         'user-guide/issues-list', // Renamed from global-issues
         'user-guide/users-list', // Corresponds to users-list.md
         'user-guide/user-profile', // Corresponds to user-profile.md
+        'user-guide/alerts', // Metric alerts the user follows, managed from the profile
         'user-guide/user-menu', // Corresponds to user-menu.md
         'user-guide/notifications-inbox', // User-facing notification center + preferences
         'user-guide/reviews-inbox', // Reviewer inbox for Review & Approval
@@ -266,6 +270,7 @@ const sidebars: SidebarsConfig = {
                   },
                   items: [
                     'user-guide/projects/repository-add-case', // Corresponds to repository-add-case.md
+                    'user-guide/projects/staged-test-cases', // Private staged cases + batch create
                     'user-guide/projects/repository-case-details', // Add Test Case Details page
                     'user-guide/projects/repository-case-versions', // Add Test Case Versions page
                     'user-guide/projects/case-draft-autosave', // Auto-save and draft recovery
@@ -333,16 +338,17 @@ const sidebars: SidebarsConfig = {
                     id: 'user-guide/projects/reports/index',
                   },
                   items: [
-                    'user-guide/projects/reports/automation-candidates',
                     'user-guide/projects/reports/automation-trends',
+                    'user-guide/projects/reports/automation-candidates',
+                    'user-guide/projects/reports/code-pin-coverage',
                     'user-guide/projects/reports/execution-log',
                     'user-guide/projects/reports/flaky-tests',
+                    'user-guide/projects/reports/impact-analysis-history',
                     'user-guide/projects/reports/issue-test-coverage',
                     'user-guide/projects/reports/iteration-matrix',
-                    'user-guide/projects/reports/test-case-health',
-                    'user-guide/projects/reports/impact-analysis-history',
-                    'user-guide/projects/reports/code-pin-coverage',
                     'user-guide/projects/reports/report-builder',
+                    'user-guide/projects/reports/test-case-health',
+                    'user-guide/projects/reports/results-trend',
                   ],
                 },
                 // Requirements category (linked label + traceability child)
@@ -371,6 +377,8 @@ const sidebars: SidebarsConfig = {
                 'user-guide/projects/settings/ai-models', // Project AI model default + per-feature overrides
                 'user-guide/projects/settings/quickscript', // Project QuickScript context + export templates
                 'user-guide/projects/settings/impact', // Project Impact Analysis: application repository, cache, repository markers
+                'user-guide/projects/settings/triage', // Project Failure Patterns: grouping, AI root causes, quarantine release, analyze existing results
+                'user-guide/projects/settings/risk', // Project Risk Scoring: enable, component weights, recalculate all scores
                 'user-guide/projects/settings/automation', // Project execution targets: GitHub Actions, GitLab CI, generic webhook
                 'user-guide/projects/settings/parameters', // Test Case Parameters settings (CI mapping + shared datasets)
                 'user-guide/projects/settings/advanced', // Per-project feature toggles
@@ -380,6 +388,7 @@ const sidebars: SidebarsConfig = {
           ],
         },
         'user-guide/advanced-search', // Advanced search documentation
+        'user-guide/risk-scores', // Per-case risk scores: signals, weights, repository column and filter
         'user-guide/forecasting', // Add forecasting.md as last item
       ],
       // Remove the generated-index link for the main User Guide category

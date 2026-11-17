@@ -128,6 +128,27 @@ describe("llmUsageReportUtils", () => {
       );
     });
 
+    it("buckets createdAt group keys by the requested date grouping", async () => {
+      const db = mockDb([
+        usageRow({ createdAt: "2026-08-01T00:30:00Z" }),
+        usageRow({ createdAt: "2026-08-20T23:59:00Z" }),
+        usageRow({ createdAt: "2026-09-02T05:00:00Z" }),
+      ]);
+      const rows = await registry.llmCallCount.aggregate(
+        db,
+        undefined,
+        ["createdAt"],
+        { dateGrouping: "monthly" }
+      );
+      expect(rows).toEqual(
+        expect.arrayContaining([
+          { createdAt: "2026-08-01T00:00:00.000Z", llmCallCount: 2 },
+          { createdAt: "2026-09-01T00:00:00.000Z", llmCallCount: 1 },
+        ])
+      );
+      expect(rows).toHaveLength(2);
+    });
+
     it("keeps null project rows as their own group instead of dropping them", async () => {
       const db = mockDb([
         usageRow({ projectId: null }),

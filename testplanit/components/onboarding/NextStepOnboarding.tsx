@@ -233,7 +233,7 @@ const createTourSteps = (
           icon: null,
           title: t("help.tour.projectTour.projectSections.title"),
           content: t("help.tour.projectTour.projectSections.content"),
-          selector: "#project-section",
+          selector: "[data-testid='project-menu-section-project']",
           side: "right",
           showControls: true,
           showSkip: true,

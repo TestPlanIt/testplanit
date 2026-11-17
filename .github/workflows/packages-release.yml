@@ -25,9 +25,9 @@ on:
   push:
     branches:
       - main
-      # release/v1.1 publishes pre-releases under the `beta` dist-tag; see the
+      # release/v1.2 publishes pre-releases under the `beta` dist-tag; see the
       # "Publish beta pre-releases" step and packages-publish-prerelease.mjs.
-      - release/v1.1
+      - release/v1.2
     paths:
       - 'packages/**'
       - '.changeset/**'

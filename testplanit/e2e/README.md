@@ -7,15 +7,16 @@ This directory contains Playwright end-to-end tests for TestPlanIt.
 ### 1. Start the E2E Services
 
 The E2E tests run against **separate services** from your development stack:
-PostgreSQL, Valkey, Elasticsearch and S3-compatible file storage (RustFS). Start them with
-Docker:
+PostgreSQL, Valkey, Elasticsearch, S3-compatible file storage (RustFS) and a
+catch-all mail server (Mailpit). Start them with Docker:
 
 ```bash
 docker compose -f docker-compose.e2e.yml up -d
 ```
 
-The ports (Postgres 5433, Valkey 6377, Elasticsearch 9221, storage 9100) don't
-clash with `docker-compose.dev.yml`, so both stacks can run at once.
+The ports (Postgres 5433, Valkey 6377, Elasticsearch 9221, storage 9100 and
+mail 1025) don't clash with `docker-compose.dev.yml`, so both stacks can run
+at once.
 
 ### 2. Configure Environment
 
@@ -79,6 +80,27 @@ pnpm test:e2e:debug
 ```bash
 pnpm test:e2e:report
 ```
+
+### Smoke-test an install served under a path prefix
+
+Builds made with `BASE_PATH` serve the whole app under that prefix. The
+regular suite navigates with root-relative paths, which Playwright resolves
+against the origin, so only the dedicated smoke suite runs in this mode. It
+signs in, loads pages, signs out, and fails on any same-origin request that
+leaves the prefix.
+
+```bash
+BASE_PATH=/testplanit pnpm build
+BASE_PATH=/testplanit E2E_PROD=on E2E_BASE_PATH=/testplanit \
+E2E_BASE_URL=http://localhost:3002/testplanit \
+APP_URL=http://localhost:3002/testplanit \
+NEXTAUTH_URL=http://localhost:3002/testplanit/api/auth \
+pnpm test:e2e e2e/tests/subpath/subpath-smoke.spec.ts
+```
+
+`BASE_PATH` is needed at run time as well: `next start` re-reads next.config.ts
+(the Docker image serves the frozen build config instead). Rebuild without
+`BASE_PATH` before running the regular suite again.
 
 ## Project Structure
 

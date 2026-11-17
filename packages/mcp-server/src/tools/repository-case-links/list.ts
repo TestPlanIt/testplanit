@@ -3,6 +3,7 @@ import type {
   RepositoryCaseLinkWhereInput,
 } from "@db/input";
 import * as z from "zod/v4";
+import { LINK_TYPES } from "./shared.js";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
@@ -50,14 +51,12 @@ export function registerRepositoryCaseLinksList(
     "testplanit_repository_case_links_list",
     {
       description:
-        "List RepositoryCaseLink rows for traversing the manual-↔-imported case linkage graph. Provide exactly one of caseId (bidirectional — matches both caseA.id and caseB.id), caseAId (one-way originating side), or caseBId (one-way destination side). Optional linkType narrows to SAME_TEST_DIFFERENT_SOURCE or DEPENDS_ON. In caseId mode each row carries an inline `otherCase` (the side opposite the queried id); in caseAId/caseBId mode each row carries both caseA and caseB. Project scope is enforced via the underlying access policy on caseA.project — the link row itself is not project-scoped.",
+        "List RepositoryCaseLink rows for traversing the manual-↔-imported case linkage graph. Provide exactly one of caseId (bidirectional — matches both caseA.id and caseB.id), caseAId (one-way originating side), or caseBId (one-way destination side). Optional linkType narrows to one kind: SAME_TEST_DIFFERENT_SOURCE (the same test in two sources, e.g. manual and imported), DEPENDS_ON (caseA depends on caseB), or DUPLICATED_FROM (provenance: caseB was duplicated from caseA by a copy). In caseId mode each row carries an inline `otherCase` (the side opposite the queried id); in caseAId/caseBId mode each row carries both caseA and caseB. Project scope is enforced via the underlying access policy on caseA.project — the link row itself is not project-scoped.",
       inputSchema: {
         caseId: z.number().int().positive().optional(),
         caseAId: z.number().int().positive().optional(),
         caseBId: z.number().int().positive().optional(),
-        linkType: z
-          .enum(["SAME_TEST_DIFFERENT_SOURCE", "DEPENDS_ON"])
-          .optional(),
+        linkType: z.enum(LINK_TYPES).optional(),
         cursor: z.number().int().positive().optional(),
         limit: z.number().int().positive().max(MAX_LIMIT).optional(),
       },

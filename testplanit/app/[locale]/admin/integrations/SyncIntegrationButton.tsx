@@ -11,6 +11,7 @@ import { RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 interface SyncIntegrationButtonProps {
   integration: Integration;
@@ -38,7 +39,7 @@ export function SyncIntegrationButton({
     try {
       const toastId = toast.loading(t("syncInProgress"));
 
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/admin/integrations/${integration.id}/sync`,
         {
           method: "POST",

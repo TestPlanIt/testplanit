@@ -15,6 +15,10 @@
  * - issue-test-coverage `issueId` / `testCaseId` render the issue/case
  *   NAME; the raw property is the internal numeric id, so the generic
  *   rule ordered rows by database id while looking alphabetical-ish.
+ * - automation-trends `period` renders the `periodStart`/`periodEnd`
+ *   window; there is no `period` property, so the generic rule compared
+ *   `undefined` to `undefined` and the header flipped without the rows
+ *   moving. It sorts by the period's start instant.
  * - test-case-health `healthStatus` is a closed enum this app owns;
  *   raw-string order interleaves best and worst
  *   (always_failing < always_passing < healthy < never_executed), so it
@@ -61,6 +65,9 @@ function sortValue(reportType: string, row: any, column: string): unknown {
   if (base === "issue-test-coverage") {
     if (column === "issueId") return row.issueName ?? "";
     if (column === "testCaseId") return row.testCaseName ?? "";
+  }
+  if (base === "automation-trends" && column === "period") {
+    return row.periodStart ? Date.parse(row.periodStart) : null;
   }
   if (base === "test-case-health" && column === "healthStatus") {
     return HEALTH_STATUS_RANK[row.healthStatus] ?? 99;

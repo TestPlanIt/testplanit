@@ -9,6 +9,8 @@ import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   invalidateRepositoryCasesQueries,
+  CASE_IDS_BY_FIELD_OPTION_QUERY_ROOT,
+  CASE_IDS_BY_LATEST_STATUS_QUERY_ROOT,
   notifyRepositoryCasesChanged,
   repositoryCasesQueryKey,
   REPOSITORY_CASES_QUERY_ROOT,
@@ -608,5 +610,26 @@ describe("useRepositoryCasesInvalidation", () => {
     // request all refresh together — a stale id set is as wrong as a stale row.
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(6));
     expect(result.current.list.totalCount).toBe(2);
+  });
+
+  it("invalidates the id pages an id-resolved sort feeds into the list", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    // A Latest Results or Dropdown-field sort resolves the page's case ids
+    // first and the list filters to exactly those ids. Left alone, a copy or
+    // add would move the count while the rows stayed pinned to the old page.
+    const latestKey = [CASE_IDS_BY_LATEST_STATUS_QUERY_ROOT, {}, "asc", 0, 25];
+    const fieldKey = [CASE_IDS_BY_FIELD_OPTION_QUERY_ROOT, {}, 7, "asc", 0, 25];
+    const unrelatedKey = ["folderStats", 42];
+    queryClient.setQueryData(latestKey, [1, 2]);
+    queryClient.setQueryData(fieldKey, [3, 4]);
+    queryClient.setQueryData(unrelatedKey, { total: 1 });
+
+    await invalidateRepositoryCasesQueries(queryClient);
+
+    expect(queryClient.getQueryState(latestKey)?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(fieldKey)?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(unrelatedKey)?.isInvalidated).toBe(false);
   });
 });

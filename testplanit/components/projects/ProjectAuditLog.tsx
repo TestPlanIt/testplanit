@@ -25,9 +25,11 @@ import {
 import type { AuditLogUserOption } from "~/lib/services/auditLog/searchAuditLogUsers";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { AUDIT_ACTIONS, formatAuditAction } from "~/lib/audit/auditActions";
+import { buildAuditLogCsv } from "~/lib/audit/auditLogCsv";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 import { logDataExport } from "~/lib/services/auditClient";
+import { apiFetch } from "~/lib/basePath";
 
 // Rows fetched per scroll page — matches the admin audit-log surface: audit
 // rows are cheap (heavy Json columns excluded) and operationId grouping can
@@ -232,7 +234,7 @@ export function ProjectAuditLog({
         page: String(page),
         pageSize: String(pageSize),
       });
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/projects/${projectId}/audit-log-users?${params}`
       );
       if (!response.ok) {
@@ -351,23 +353,10 @@ export function ProjectAuditLog({
         ];
       });
 
-      const escapeCsvValue = (value: string) => {
-        if (
-          value.includes(",") ||
-          value.includes('"') ||
-          value.includes("\n")
-        ) {
-          return `"${value.replace(/"/g, '""')}"`;
-        }
-        return value;
-      };
-
-      const csvContent = [
-        headers.map(escapeCsvValue).join(","),
-        ...csvRows.map((row) =>
-          row.map((cell) => escapeCsvValue(String(cell))).join(",")
-        ),
-      ].join("\n");
+      const csvContent = buildAuditLogCsv(
+        headers,
+        csvRows.map((row) => row.map(String))
+      );
 
       const blob = new Blob(["﻿" + csvContent], {
         type: "text/csv;charset=utf-8;",

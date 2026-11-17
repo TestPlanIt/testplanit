@@ -8,9 +8,6 @@ vi.mock("next/image", () => ({
   default: ({ alt, ...props }: any) => <img alt={alt} {...props} />,
 }));
 
-// Mock the logo SVG
-vi.mock("~/public/tpi_logo.svg", () => ({ default: "test-logo.svg" }));
-
 // Mock ~/lib/navigation
 const mockRouterPush = vi.fn();
 vi.mock("~/lib/navigation", () => ({

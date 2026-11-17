@@ -102,7 +102,7 @@ This targets users with INTERNAL or BOTH auth methods who are active and not alr
 
 ### Revoke Password
 
-From the **Admin → User Management** page, click the three-dot menu on any internal user and select **Revoke Password**. This removes the user's password entirely, requiring them to use an alternative login method (SSO or Magic Link).
+From the **Admin → User Management** page, click the three-dot menu on any internal user and select **Revoke Password**. This removes the user's password entirely, requiring them to use an alternative login method (SSO or Magic Link). It also signs the user out of every active browser session.
 
 **Prerequisites:** At least one passwordless login method must be configured before passwords can be revoked:
 

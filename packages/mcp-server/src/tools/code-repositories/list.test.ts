@@ -23,6 +23,7 @@ const deps = { env: mockEnv };
 interface RawRepoConfigRow {
   id: number;
   projectId: number;
+  purpose: string;
   branch: string | null;
   pathPatterns: unknown;
   cacheEnabled: boolean;
@@ -49,6 +50,7 @@ function makeRawRow(
   return {
     id,
     projectId: 7,
+    purpose: "QUICKSCRIPT",
     branch: "main",
     pathPatterns: ["**/*.spec.ts"],
     cacheEnabled: true,
@@ -127,10 +129,140 @@ describe("registerCodeRepositoriesList", () => {
     const items = data.items as Array<Record<string, unknown>>;
     expect(items.length).toBe(1);
     const repo = items[0].repository as Record<string, unknown>;
+    expect(items[0].purpose).toBe("QUICKSCRIPT");
     expect(repo.url).toBe("https://github.com/acme/tools");
     expect(repo.settings).toEqual({ owner: "acme", repo: "tools" });
     // sensitive key MUST NOT survive
     expect((repo.settings as Record<string, unknown>).personalAccessToken).toBeUndefined();
+  });
+
+  it("filters by purpose when asked and lists every binding otherwise", async () => {
+    mockZenstack.mockResolvedValue([]);
+
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_code_repositories_list",
+      arguments: { projectId: 7 },
+    });
+    await client.callTool({
+      name: "testplanit_code_repositories_list",
+      arguments: { projectId: 7, purpose: "IMPACT" },
+    });
+
+    const unfiltered = getCallBody(0)?.where as Record<string, unknown>;
+    expect(unfiltered.purpose).toBeUndefined();
+    const filtered = getCallBody(1)?.where as Record<string, unknown>;
+    expect(filtered.purpose).toBe("IMPACT");
+    expect(filtered.projectId).toBe(7);
+  });
+
+  it("derives the GitHub Enterprise web url from the stored API root", async () => {
+    mockZenstack.mockResolvedValueOnce([
+      makeRawRow(1, {
+        repository: {
+          id: 201,
+          name: "tools",
+          provider: "GITHUB",
+          status: "ACTIVE",
+          lastTestedAt: null,
+          settings: {
+            owner: "acme",
+            repo: "tools",
+            baseUrl: "https://ghes.example.com/api/v3/",
+          },
+        },
+      }),
+    ]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_code_repositories_list",
+      arguments: { projectId: 7 },
+    });
+
+    const items = structured(result).items as Array<Record<string, unknown>>;
+    const repo = items[0].repository as Record<string, unknown>;
+    expect(repo.settings).toEqual({
+      owner: "acme",
+      repo: "tools",
+      baseUrl: "https://ghes.example.com/api/v3/",
+    });
+    expect(repo.url).toBe("https://ghes.example.com/acme/tools");
+  });
+
+  it("keeps the GitLab projectPath and derives its web url", async () => {
+    mockZenstack.mockResolvedValueOnce([
+      makeRawRow(1, {
+        repository: {
+          id: 201,
+          name: "tools",
+          provider: "GITLAB",
+          status: "ACTIVE",
+          lastTestedAt: null,
+          settings: {
+            baseUrl: "https://gitlab.example.com/",
+            projectPath: "group/sub/tools",
+            owner: "stale-key-from-another-provider",
+          },
+        },
+      }),
+      makeRawRow(2, {
+        repository: {
+          id: 202,
+          name: "cloud",
+          provider: "GITLAB",
+          status: "ACTIVE",
+          lastTestedAt: null,
+          settings: { projectPath: "acme/cloud" },
+        },
+      }),
+    ]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_code_repositories_list",
+      arguments: { projectId: 7 },
+    });
+
+    const items = structured(result).items as Array<Record<string, unknown>>;
+    const selfHosted = items[0].repository as Record<string, unknown>;
+    expect(selfHosted.settings).toEqual({
+      baseUrl: "https://gitlab.example.com/",
+      projectPath: "group/sub/tools",
+    });
+    expect(selfHosted.url).toBe("https://gitlab.example.com/group/sub/tools");
+    const cloud = items[1].repository as Record<string, unknown>;
+    expect(cloud.url).toBe("https://gitlab.com/acme/cloud");
+  });
+
+  it("keeps the Bitbucket workspace and slug and derives its web url", async () => {
+    mockZenstack.mockResolvedValueOnce([
+      makeRawRow(1, {
+        repository: {
+          id: 201,
+          name: "tools",
+          provider: "BITBUCKET",
+          status: "ACTIVE",
+          lastTestedAt: null,
+          settings: {
+            workspace: "acme",
+            repoSlug: "tools",
+            appPassword: "must-not-leak",
+          },
+        },
+      }),
+    ]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_code_repositories_list",
+      arguments: { projectId: 7 },
+    });
+
+    const items = structured(result).items as Array<Record<string, unknown>>;
+    const repo = items[0].repository as Record<string, unknown>;
+    expect(repo.settings).toEqual({ workspace: "acme", repoSlug: "tools" });
+    expect(repo.url).toBe("https://bitbucket.org/acme/tools");
   });
 
   it("never returns credentials field", async () => {
@@ -199,7 +331,7 @@ describe("registerCodeRepositoriesList", () => {
     );
   });
 
-  it("coerces BigInt cacheTotalSize to Number (Pitfall 6)", async () => {
+  it("coerces BigInt cacheTotalSize to Number", async () => {
     mockZenstack.mockResolvedValueOnce([
       makeRawRow(1, { cacheTotalSize: 12345n }),
     ]);
@@ -252,7 +384,7 @@ describe("registerCodeRepositoriesList", () => {
     expect(mockZenstack).not.toHaveBeenCalled();
   });
 
-  it("NEVER calls delete or deleteMany (T-08-SOFT-DELETE invariant)", async () => {
+  it("NEVER calls delete or deleteMany", async () => {
     mockZenstack.mockResolvedValueOnce([makeRawRow(1)]);
 
     const { client } = await setupClient();
@@ -280,7 +412,7 @@ describe("registerCodeRepositoriesList", () => {
     );
   });
 
-  it("redacts tpi_*** tokens at the error boundary (T-08-TOKEN-REDACT)", async () => {
+  it("redacts tpi_*** tokens at the error boundary", async () => {
     mockZenstack.mockRejectedValueOnce(
       new TestPlanItHttpError(
         "upstream failure tpi_secret_xyz123 leaked",

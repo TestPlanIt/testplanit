@@ -15,6 +15,23 @@ import type { A11yFixtures } from "./routes";
  * outlive the setup step so the scan can navigate to it.
  */
 
+const FORCE_THEME = process.env.A11Y_THEME;
+
+/**
+ * A11Y_THEME values are CSS class names; UserPreferences.theme is the enum.
+ * "System" is deliberately absent: it is a valid preference but not a theme
+ * the scan can force, since it resolves to whatever the OS reports.
+ */
+const THEME_ENUM: Record<string, string> = {
+  light: "Light",
+  dark: "Dark",
+  green: "Green",
+  orange: "Orange",
+  purple: "Purple",
+  accessible: "Accessible",
+  accessibledark: "AccessibleDark",
+};
+
 const FIXTURES_FILE = path.join(__dirname, ".a11y-fixtures.json");
 const RESULTS_DIR = path.join(__dirname, "results");
 
@@ -24,6 +41,41 @@ setup("seed a11y fixture data", async ({ request, baseURL }) => {
   const api = new ApiHelper(request, base);
 
   const userId = await api.getCurrentUserId();
+
+  // Point the signed-in user's saved preference at the forced theme.
+  //
+  // Header.tsx calls setTheme(session.user.preferences.theme) on every session
+  // change and UserPreferences.theme defaults to Purple, so the admin resolves
+  // to purple whatever the client does — a theme cannot be forced from the
+  // browser, because next-themes is overwritten a moment after hydration.
+  // Components that pick a colour in JavaScript read that resolved value
+  // (getStatusStyle returns the light shade of every status colour for a light
+  // theme), so swapping only the class on <html> had the scan measuring
+  // light-theme fills on a dark surface — and hiding the real pairing.
+  //
+  // This goes through PATCH /api/users/:id, the same route the theme picker in
+  // UserDropdownMenu uses, because that route invalidates the Valkey session
+  // cache. Writing the row through the model RPC instead leaves the session
+  // callback serving its cached projection for the 60s TTL, which is longer
+  // than a scan takes — the preference changed and every page still rendered
+  // the old theme.
+  if (FORCE_THEME) {
+    const theme = THEME_ENUM[FORCE_THEME.toLowerCase()];
+    if (!theme) {
+      throw new Error(
+        `A11Y_THEME="${FORCE_THEME}" is not one of ${Object.keys(THEME_ENUM).join(", ")}`
+      );
+    }
+    const themeResp = await request.patch(`${base}/api/users/${userId}`, {
+      data: { userPreferences: { theme } },
+    });
+    if (!themeResp.ok()) {
+      throw new Error(
+        `Failed to force theme ${theme}: ${themeResp.status()} ${await themeResp.text()}`
+      );
+    }
+  }
+
   const stamp = Date.now();
 
   // Project + folders

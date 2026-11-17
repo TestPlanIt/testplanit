@@ -47,6 +47,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { apiFetch } from "~/lib/basePath";
 
 interface ApiTokenSettingsProps {
   userId: string;
@@ -108,7 +109,7 @@ export function ApiTokenSettings({
       if (readOnly) scopes.push("mode:read");
       if (agentToken) scopes.push("client:mcp");
 
-      const response = await fetch("/api/api-tokens", {
+      const response = await apiFetch("/api/api-tokens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -286,7 +287,7 @@ export function ApiTokenSettings({
                       variant="ghost"
                       size="icon"
                       onClick={() => openDeleteDialog(token.id)}
-                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      className="h-8 w-8 text-destructive hover:text-destructive-text"
                     >
                       <Trash className="h-4 w-4" />
                     </Button>

@@ -5,6 +5,7 @@ import { baseDb } from "~/lib/db";
 import { integrationManager } from "~/lib/integrations/IntegrationManager";
 import { milestoneSyncService } from "~/lib/integrations/services/MilestoneSyncService";
 import { captureAuditEvent } from "~/lib/services/auditLog";
+import { MILESTONE_SYNC_PROVIDERS } from "~/lib/integrations/milestoneSyncProviders";
 import { getAdapter } from "~/lib/webhooks/adapters";
 
 import {
@@ -36,6 +37,8 @@ const STATE_TRANSITION_EVENTS = new Set([
   "jira:version_unreleased",
   "sprint_started",
   "sprint_closed",
+  "milestone_closed",
+  "milestone_opened",
 ]);
 
 /**
@@ -213,7 +216,13 @@ function classifyMilestoneEvent(
   ref: MilestoneEventRef
 ): "refresh" | "convert" {
   if (ref.kind === "RELEASE") {
-    if (eventType === "jira:version_deleted" || ref.merge) return "convert";
+    if (
+      eventType === "jira:version_deleted" ||
+      eventType === "milestone_deleted" ||
+      ref.merge
+    ) {
+      return "convert";
+    }
     return "refresh";
   }
   // ITERATION (sprint)
@@ -222,7 +231,11 @@ function classifyMilestoneEvent(
 }
 
 function isCreatedEvent(eventType: string): boolean {
-  return eventType === "jira:version_created" || eventType === "sprint_created";
+  return (
+    eventType === "jira:version_created" ||
+    eventType === "sprint_created" ||
+    eventType === "milestone_created"
+  );
 }
 
 const REASON_MAX_LEN = 500;
@@ -327,7 +340,10 @@ async function resolveMilestoneEventTargets(
         isActive: true,
         projectIntegration: {
           isActive: true,
-          integration: { provider: "JIRA", isDeleted: false },
+          integration: {
+            provider: { in: MILESTONE_SYNC_PROVIDERS as any },
+            isDeleted: false,
+          },
         },
       },
       select: {

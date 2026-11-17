@@ -1,4 +1,5 @@
 import type { UserPreferences } from "~/zenstack/models";
+import { withBasePath } from "~/lib/basePath";
 import type { DbClient } from "~/lib/zenstack";
 import { compare } from "bcrypt";
 
@@ -31,9 +32,11 @@ import { auditAuthEvent } from "~/lib/services/auditLog";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { isForceSsoEnabled } from "~/lib/utils/force-sso";
 import { needsEmailVerification } from "~/lib/auth/emailVerification";
+import { passwordChangedSinceIssue } from "~/lib/auth/sessionInvalidation";
 import { resolveSsoConfig } from "~/lib/auth/ssoConfig";
 import { db } from "~/server/db";
 import { createCustomDbAdapter } from "./auth-adapter";
+import { authCookies, secureAuthCookiesEnabled } from "~/lib/auth/cookieScope";
 
 /**
  * Helper function to generate Apple client secret from database config
@@ -321,9 +324,12 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
     session: {
       strategy: "jwt",
     },
+    // Scoped to the path prefix on a shared host; undefined at the root.
+    cookies: authCookies(secureAuthCookiesEnabled()),
     pages: {
-      signIn: "/signin",
-      error: "/signin",
+      // next-auth redirects to these literally, so they carry the prefix.
+      signIn: withBasePath("/signin"),
+      error: withBasePath("/signin"),
     },
     callbacks: {
       async session({ session, token }) {
@@ -374,15 +380,14 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           // meaningful for credential-based users (SECURITY-04). Evaluated
           // FIRST so its invalidation short-circuits before anything below.
           if (user?.authMethod === "INTERNAL" || user?.authMethod === "BOTH") {
-            const dbPasswordChangedAt = freshUser?.passwordChangedAt ?? null;
-            const tokenPasswordChangedAt = token.passwordChangedAt
-              ? new Date(token.passwordChangedAt)
-              : null;
-
+            // A token with no timestamp was issued before the user's first-ever
+            // change (nothing stamps passwordChangedAt at account creation), so
+            // it counts as older than any DB value — see passwordChangedSinceIssue.
             if (
-              dbPasswordChangedAt &&
-              tokenPasswordChangedAt &&
-              dbPasswordChangedAt > tokenPasswordChangedAt
+              passwordChangedSinceIssue(
+                freshUser?.passwordChangedAt,
+                token.passwordChangedAt
+              )
             ) {
               // Password was changed after this JWT was issued — invalidate session.
               // Return empty session to force re-authentication.
@@ -567,11 +572,14 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           return token;
         }
 
-        // Handle session update to clear mustChangePassword after force-change flow
+        // Handle session update to clear mustChangePassword after force-change
+        // flow. Deliberately falls through to the DB refresh below: the
+        // force-change route also stamped passwordChangedAt, and the session
+        // that just changed its password must carry the new timestamp or the
+        // SECURITY-03 guard signs it out on its next request.
         if (trigger === "update" && session?.mustChangePasswordCleared) {
           token.mustChangePassword = false;
           token.mustChangePasswordReason = undefined;
-          return token;
         }
 
         // Fetch and store user access level and isApi flag in JWT for middleware access control
@@ -736,9 +744,10 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  cookies: authCookies(secureAuthCookiesEnabled()),
   pages: {
-    signIn: "/signin",
-    error: "/signin",
+    signIn: withBasePath("/signin"),
+    error: withBasePath("/signin"),
   },
   callbacks: {
     async session({ session, token }) {
@@ -790,15 +799,14 @@ export const authOptions: NextAuthOptions = {
         // meaningful for credential-based users (SECURITY-04). Evaluated FIRST
         // so its invalidation short-circuits before anything below.
         if (user?.authMethod === "INTERNAL" || user?.authMethod === "BOTH") {
-          const dbPasswordChangedAt = freshUser?.passwordChangedAt ?? null;
-          const tokenPasswordChangedAt = token.passwordChangedAt
-            ? new Date(token.passwordChangedAt)
-            : null;
-
+          // A token with no timestamp was issued before the user's first-ever
+          // change (nothing stamps passwordChangedAt at account creation), so
+          // it counts as older than any DB value — see passwordChangedSinceIssue.
           if (
-            dbPasswordChangedAt &&
-            tokenPasswordChangedAt &&
-            dbPasswordChangedAt > tokenPasswordChangedAt
+            passwordChangedSinceIssue(
+              freshUser?.passwordChangedAt,
+              token.passwordChangedAt
+            )
           ) {
             // Password was changed after this JWT was issued — invalidate session.
             // Return empty session to force re-authentication.
@@ -962,11 +970,14 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      // Handle session update to clear mustChangePassword after force-change flow
+      // Handle session update to clear mustChangePassword after force-change
+      // flow. Deliberately falls through to the DB refresh below: the
+      // force-change route also stamped passwordChangedAt, and the session
+      // that just changed its password must carry the new timestamp or the
+      // SECURITY-03 guard signs it out on its next request.
       if (trigger === "update" && session?.mustChangePasswordCleared) {
         token.mustChangePassword = false;
         token.mustChangePasswordReason = undefined;
-        return token;
       }
 
       // Fetch and store user access level and isApi flag in JWT for middleware access control

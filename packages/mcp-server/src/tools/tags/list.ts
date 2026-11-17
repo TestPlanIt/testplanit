@@ -28,7 +28,7 @@ interface RawTagRow {
 }
 
 /**
- * List tags with per-tag usage counts (CASE-11).
+ * List tags with per-tag usage counts.
  *
  * Tags are GLOBAL in the TestPlanIt schema (not project-scoped). When the
  * agent supplies `projectId`, the per-tag counts are scoped to that

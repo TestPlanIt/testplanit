@@ -29,6 +29,7 @@ allowBuilds:
   'keytar': true
   'msgpackr-extract': true
   'msw': true
+  pnpm: true
   'prisma': true
   'sharp': true
   'tree-sitter': true
@@ -44,7 +45,7 @@ overrides:
   # single, current copy now that the direct dependency is gone.
   'axios': '^1.19.0'
   'csstype': '^3.2.0'
-  'postcss': '^8.5.30'
+  'postcss': '^8.5.10'
   '@csstools/css-syntax-patches-for-csstree': '^1.0.20'
   'form-data': '^4.0.6'
   'validator': '^13.15.22'
@@ -71,29 +72,30 @@ overrides:
   'hono': '>=4.12.18'
   'deepmerge-ts': '^8.0.1'
   '@hono/node-server': '^1.19.15'
-  'vite': '^8.3.3'
+  'vite': '^8.1.0'
   'basic-ftp': '>=5.3.1'
-  'fast-uri': '^4.2.3'
+  'fast-uri': '^4.2.2'
   'fast-xml-builder': '>=1.1.7'
   'ip-address': '>=10.1.1'
   'icu-minify': '>=4.9.2'
   '@babel/plugin-transform-modules-systemjs': '>=7.29.4'
-  'nodemailer': '^10.1.4'
+  'nodemailer': '>=9.0.1'
   'cheerio': '>=1.0.0'
-  'ioredis': '5.11.1'
+  'ioredis': '^6.0.0'
   'lodash': '>=4.18.0'
   'lodash-es': '>=4.18.0'
-  'undici': '^7.30.1'
+  'undici@6': '^7.28.0'
+  'undici@7': '^7.28.0'
   'diff': '>=8.0.3'
   'fast-xml-parser': '>=5.5.7'
   'uuid': '>=14.0.0'
   'esbuild': '>=0.25.0'
   'webpack': '>=5.104.1'
   'webpackbar': '>=7.0.0'
-  'markdown-it': '^14.3.3'
+  'markdown-it': '^14.2.0'
   'linkify-it': '^5.0.2'
   'sharp': '^0.35.0'
-  'launch-editor': '^2.14.2'
+  'launch-editor': '^2.14.1'
   'ajv': '>=8.18.0'
   'eslint>ajv': '^6.14.0'
   '@eslint/eslintrc>ajv': '^6.14.0'
@@ -111,24 +113,37 @@ overrides:
   'tar-fs@2': '>=2.1.4'
   'glob@10': '>=10.5.0'
   'bn.js': '5.2.3'
-  'serialize-javascript': '^7.1.3'
+  'serialize-javascript': '^7.1.2'
   'shell-quote': '>=1.8.4'
   'flatted': '>=3.4.0'
   'picomatch@4': '>=4.0.4'
   'smol-toml': '^1.9.0'
+  'tinypool': '^2.1.2'
+  'compression': '^1.8.2'
+  'katex': '>=0.18.2 <0.18.11'
+  'colord': '^2.9.4'
+  'postcss-selector-parser': '^7.1.6'
   'yaml@1': '>=1.10.3'
   'yaml@2': '>=2.8.3'
   'defu': '>=6.1.5'
   'joi': '^17.13.4'
-  'tinypool': '^2.1.2'
-  'compression': '^1.8.2'
-  'prosemirror-view': '^1.42.3'
-  'katex': '>=0.18.2 <0.18.11'
-  'colord': '^2.9.4'
-  'postcss-selector-parser': '^7.1.6'
-  'body-parser@1': '^1.20.9'
-  'body-parser@2': '^2.4.0'
+  # @atlaskit/editor-prosemirror (forge-app) pins older prosemirror packages,
+  # which left two copies of prosemirror-view/model and broke the editor's types.
+  'prosemirror-model': '^1.25.12'
+  'prosemirror-view': '^1.42.6'
+  'prosemirror-transform': '^1.12.2'
 
 patchedDependencies:
   '@acid-info/docusaurus-og@1.0.3-beta.2': patches/@acid-info__docusaurus-og@1.0.3-beta.2.patch
+  '@zenstackhq/tanstack-query@3.10.1': patches/@zenstackhq__tanstack-query@3.10.1.patch
   gray-matter@4.0.3: patches/gray-matter@4.0.3.patch
+
+permissions:
+  '@tanstack/react-table':
+    skills: true
+
+# Where pnpm links the agent skills that approved dependencies ship. .claude is
+# gitignored, so the linked skills stay local to each clone.
+skills:
+  dirs:
+    - .claude/skills

@@ -1,5 +1,6 @@
 "use client";
 
+import { isDateGrouping, type DateGrouping } from "~/lib/reports/dateGrouping";
 import { AutomationCandidatesReportPreset } from "@/components/automationCandidates/AutomationCandidatesReportPreset";
 import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -29,6 +30,7 @@ import { Download } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
+import { useResultsTrendColumns } from "~/hooks/useResultsTrendColumns";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { useExecutionLogColumns } from "~/hooks/useExecutionLogColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
@@ -43,9 +45,16 @@ import { useCodePinCoverageColumns } from "~/hooks/useCodePinCoverageColumns";
 import { useImpactAnalysisColumns } from "~/hooks/useImpactAnalysisColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import { sortRequirementReportRows } from "~/utils/requirementReportSort";
+import type {
+  RequirementDebtSummary,
+  RequirementTraceabilitySummary,
+} from "~/utils/requirementReportSummaries";
+import { isServerPagedReport } from "~/utils/serverPagedReports";
+import type { RequirementCoverageChangesSummary } from "@/components/reports/RequirementCoverageChangesOverview";
 import { RequirementCoverageChangesOverview } from "@/components/reports/RequirementCoverageChangesOverview";
 import { RequirementCoverageOverview } from "@/components/reports/RequirementCoverageOverview";
 import { RequirementDebtOverview } from "@/components/reports/RequirementDebtOverview";
+import type { ResultsTrendMeta } from "~/utils/resultsTrendShared";
 
 // Helper functions for report type matching
 // These helpers allow us to write code that works with both project-level and cross-project variants
@@ -74,6 +83,9 @@ interface ReportRendererProps {
   // Data
   results: any[];
   chartData?: any[];
+  // A server-paged report's chart numbers over its whole filtered set
+  // (test-case-health `summary`), when `results` is only a page.
+  chartSummary?: unknown;
   // Multi-line chart: also plot the sum of every series at each date.
   showChartTotals?: boolean;
 
@@ -118,6 +130,11 @@ interface ReportRendererProps {
   // Snapshot reports are inherently view-only when shared — there's no
   // "regenerate this for a public viewer" interaction.
   automationCandidatesSnapshot?: any;
+
+  // Results trend: the run's period axis, ranked projects and
+  // settings, which the chart lays out from (the rows alone cannot say
+  // which weeks exist or how they were cut).
+  resultsTrend?: ResultsTrendMeta;
 
   // Results count + infinite scroll. `loadedCount` is how many rows are
   // currently in `results` (the "X" in "Showing X of Y"); `totalCount` is the
@@ -175,6 +192,7 @@ interface ReportRendererProps {
 export function ReportRenderer({
   results,
   chartData,
+  chartSummary,
   showChartTotals = false,
   reportType,
   dimensions = [],
@@ -187,10 +205,11 @@ export function ReportRenderer({
   staleDaysThreshold: _staleDaysThreshold,
   minExecutionsForRate: _minExecutionsForRate,
   lookbackDays: _lookbackDays,
-  dateGrouping = "weekly",
+  dateGrouping,
   totalFlakyTests,
   matrixAxes,
   automationCandidatesSnapshot,
+  resultsTrend,
   loadedCount,
   totalCount,
   hasMore = false,
@@ -234,18 +253,24 @@ export function ReportRenderer({
   const metricIds = useMemo(() => metrics.map((m) => m.value), [metrics]);
 
   // Generate columns using all the specialized hooks (only if not pre-generated)
+  // Automation trends has always opened weekly; the custom reports group
+  // by day unless the run said otherwise.
+  const customDateGrouping: DateGrouping = isDateGrouping(dateGrouping)
+    ? dateGrouping
+    : "daily";
   const standardColumns = useReportColumns(
     dimensionIds,
     metricIds,
     dimensions,
     metrics,
     undefined, // No drill-down for shared reports
-    projectId
+    projectId,
+    customDateGrouping
   );
 
   const automationTrendsColumns = useAutomationTrendsColumns(
     projects,
-    dateGrouping
+    dateGrouping ?? "weekly"
   );
 
   const flakyTestsColumns = useFlakyTestsColumns(
@@ -270,6 +295,11 @@ export function ReportRenderer({
   const codePinCoverageColumns = useCodePinCoverageColumns(
     projectId,
     dimensionIds,
+    mode === "cross-project"
+  );
+
+  const resultsTrendColumns = useResultsTrendColumns(
+    resultsTrend?.settings.dateGrouping ?? "weekly",
     mode === "cross-project"
   );
 
@@ -313,20 +343,22 @@ export function ReportRenderer({
           ? impactAnalysisColumns
           : matchesReportType(reportType, "code-pin-coverage")
             ? codePinCoverageColumns
-            : matchesReportType(reportType, "issue-test-coverage")
-              ? issueTestCoverageColumns
-              : matchesReportType(reportType, "execution-log")
-                ? executionLogColumns
-                : matchesReportType(reportType, "requirement-coverage-gaps")
-                  ? requirementCoverageGapColumns
-                  : matchesReportType(reportType, "requirement-traceability")
-                    ? requirementTraceabilityColumns
-                    : matchesReportType(
-                          reportType,
-                          "requirement-coverage-changes"
-                        )
-                      ? requirementCoverageChangeColumns
-                      : standardColumns;
+            : matchesReportType(reportType, "results-trend")
+              ? resultsTrendColumns
+              : matchesReportType(reportType, "issue-test-coverage")
+                ? issueTestCoverageColumns
+                : matchesReportType(reportType, "execution-log")
+                  ? executionLogColumns
+                  : matchesReportType(reportType, "requirement-coverage-gaps")
+                    ? requirementCoverageGapColumns
+                    : matchesReportType(reportType, "requirement-traceability")
+                      ? requirementTraceabilityColumns
+                      : matchesReportType(
+                            reportType,
+                            "requirement-coverage-changes"
+                          )
+                        ? requirementCoverageChangeColumns
+                        : standardColumns;
 
   const columns = preGeneratedColumns || generatedColumns;
 
@@ -336,6 +368,7 @@ export function ReportRenderer({
   const isTestCaseHealth = matchesReportType(reportType, "test-case-health");
   const isImpactAnalysis = matchesReportType(reportType, "impact-analysis");
   const isCodePinCoverage = matchesReportType(reportType, "code-pin-coverage");
+  const isResultsTrend = matchesReportType(reportType, "results-trend");
   const isIssueTestCoverage = matchesReportType(
     reportType,
     "issue-test-coverage"
@@ -373,14 +406,48 @@ export function ReportRenderer({
     ) {
       return results;
     }
+    // A server-paged run already arrives in the requested order (the
+    // handler applies the same comparator to the whole set); re-sorting a
+    // page here would only reorder the window.
+    if (isServerPagedReport(reportType)) {
+      return results;
+    }
     return sortRequirementReportRows(results ?? [], sortConfig);
   }, [
     isRequirementCoverageGaps,
     isRequirementTraceability,
     isRequirementCoverageChanges,
+    reportType,
     results,
     sortConfig,
   ]);
+
+  // The results trend's table rolls each period up: cross-project, the
+  // combined row leads and expands to the project rows of that period;
+  // single-project, the combined row only repeats the project's own, so the
+  // project rows stand alone. The rows arrive sorted, and filtering keeps
+  // that order within each level. The CSV keeps the flat rows.
+  const trendTableRows = useMemo(() => {
+    if (!isResultsTrend) return null;
+    const rows = (results ?? []) as any[];
+    if (mode !== "cross-project") {
+      return rows.filter((row) => row.project !== null);
+    }
+    const projectRowsByPeriod = new Map<string, any[]>();
+    for (const row of rows) {
+      if (row.project === null) continue;
+      const bucket = projectRowsByPeriod.get(row.periodStart) ?? [];
+      bucket.push(row);
+      projectRowsByPeriod.set(row.periodStart, bucket);
+    }
+    return rows
+      .filter((row) => row.project === null)
+      .map((row) => ({
+        ...row,
+        subRows: projectRowsByPeriod.get(row.periodStart) ?? [],
+      }));
+  }, [isResultsTrend, mode, results]);
+  const trendNested = trendTableRows !== null && mode === "cross-project";
 
   // Maximum number of data points to render in charts
   const MAX_CHART_DATA_POINTS = 50;
@@ -408,6 +475,7 @@ export function ReportRenderer({
         !isTestCaseHealth &&
         !isImpactAnalysis &&
         !isCodePinCoverage &&
+        !isResultsTrend &&
         !isIssueTestCoverage &&
         !isExecutionLog &&
         (dimensionIds.length === 0 || metricIds.length === 0))
@@ -457,6 +525,7 @@ export function ReportRenderer({
       isTestCaseHealth ||
       isImpactAnalysis ||
       isCodePinCoverage ||
+      isResultsTrend ||
       isIssueTestCoverage ||
       isExecutionLog
         ? dataForChart
@@ -466,6 +535,7 @@ export function ReportRenderer({
       chart: (
         <ReportChart
           results={chartResults}
+          chartSummary={chartSummary}
           showTotals={showChartTotals}
           dimensions={dimensions}
           metrics={metrics}
@@ -474,12 +544,15 @@ export function ReportRenderer({
           consecutiveRuns={consecutiveRuns}
           totalFlakyTests={totalFlakyTests}
           projectId={projectId}
+          dateGrouping={customDateGrouping}
+          resultsTrend={resultsTrend}
         />
       ),
       isTruncated:
         isTestCaseHealth ||
         isImpactAnalysis ||
         isCodePinCoverage ||
+        isResultsTrend ||
         isIssueTestCoverage
           ? false
           : isTruncated,
@@ -487,6 +560,8 @@ export function ReportRenderer({
     };
   }, [
     chartData,
+    chartSummary,
+    customDateGrouping,
     showChartTotals,
     results,
     reportType,
@@ -501,8 +576,12 @@ export function ReportRenderer({
     isAutomationTrends,
     isFlakyTests,
     isTestCaseHealth,
+    isImpactAnalysis,
+    isCodePinCoverage,
+    isResultsTrend,
     isIssueTestCoverage,
     isExecutionLog,
+    resultsTrend,
   ]);
 
   // Iteration Matrix preset bypasses the chart/table pipeline entirely.
@@ -589,6 +668,7 @@ export function ReportRenderer({
                           isTestCaseHealth ||
                           isImpactAnalysis ||
                           isCodePinCoverage ||
+                          isResultsTrend ||
                           isIssueTestCoverage ||
                           isExecutionLog
                         ? tReports("noDataAvailable")
@@ -657,11 +737,25 @@ export function ReportRenderer({
                   breakdown, all computed from the same rows the table
                   shows so the panel can never disagree with it. */}
               {isRequirementTraceability && (results?.length ?? 0) > 0 ? (
-                <RequirementCoverageOverview rows={results} />
+                <RequirementCoverageOverview
+                  rows={results}
+                  summary={
+                    chartSummary as RequirementTraceabilitySummary | undefined
+                  }
+                />
               ) : isRequirementCoverageGaps && (results?.length ?? 0) > 0 ? (
-                <RequirementDebtOverview rows={results} />
+                <RequirementDebtOverview
+                  rows={results}
+                  summary={chartSummary as RequirementDebtSummary | undefined}
+                />
               ) : isRequirementCoverageChanges && (results?.length ?? 0) > 0 ? (
-                <RequirementCoverageChangesOverview rows={results} />
+                <RequirementCoverageChangesOverview
+                  rows={results}
+                  summary={
+                    chartSummary as
+                      RequirementCoverageChangesSummary | undefined
+                  }
+                />
               ) : (
                 memoizedChart.chart
               )}
@@ -692,8 +786,16 @@ export function ReportRenderer({
                     data-testid="report-results-summary"
                   >
                     {tCommon("pagination.showing")}{" "}
-                    {loadedCount.toLocaleString(locale)} {tCommon("of")}{" "}
-                    {totalCount.toLocaleString(locale)} {tCommon("results")}
+                    {(trendTableRows
+                      ? trendTableRows.length
+                      : loadedCount
+                    ).toLocaleString(locale)}{" "}
+                    {tCommon("of")}{" "}
+                    {(trendTableRows
+                      ? trendTableRows.length
+                      : totalCount
+                    ).toLocaleString(locale)}{" "}
+                    {tCommon("results")}
                   </div>
                 )}
                 {onExportCsv && totalCount > 0 && (
@@ -716,7 +818,7 @@ export function ReportRenderer({
               virtualized
               pinLastColumn={false}
               columns={columns as ColumnDef<any>[]}
-              data={requirementSortedResults}
+              data={trendTableRows ?? requirementSortedResults}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={onColumnVisibilityChange}
               columnSizingStorageKey={`report:${getBaseReportType(reportType)}`}
@@ -730,12 +832,16 @@ export function ReportRenderer({
               getSubRows={
                 isExecutionLog
                   ? (row: any) => row.steps as any[] | undefined
-                  : undefined
+                  : trendNested
+                    ? (row: any) => row.subRows as any[] | undefined
+                    : undefined
               }
               subRowsLabel={
                 isExecutionLog
                   ? tCommon("fields.steps").toLowerCase()
-                  : undefined
+                  : trendNested
+                    ? tCommon("fields.projects").toLowerCase()
+                    : undefined
               }
               hasMore={hasMore}
               isLoading={isLoading}

@@ -5,6 +5,8 @@ import { getMilestoneCaseCompletion } from "~/lib/services/effectiveCaseStatus";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 import { buildDateFilter } from "~/utils/reportUtils";
+import { sortReportRows } from "~/utils/reportRowSort";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
 // Note: Project health uses custom milestone and issue-based logic
 // This doesn't fit the existing shared patterns but could be a candidate
@@ -504,7 +506,7 @@ function cartesianProduct(arrays: any[][]): any[][] {
   );
 }
 
-export async function GET(req: NextRequest) {
+async function reportGet(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const projectId = url.searchParams.get("projectId");
@@ -544,12 +546,14 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   try {
     let body: {
       projectId?: unknown;
       dimensions?: unknown;
       metrics?: unknown;
+      sortColumn?: string | null;
+      sortDirection?: string | null;
     };
     try {
       body = await req.json();
@@ -766,8 +770,18 @@ export async function POST(req: NextRequest) {
       return hasNonZeroCountMetric;
     });
 
-    // Sort results by Activity Date if date dimension is used
-    if (dimensions.includes("date")) {
+    // A header sort wins; otherwise a date series stays chronological.
+    if (body.sortColumn && body.sortDirection) {
+      sortReportRows(filteredResults, {
+        dimensions,
+        metricConfigs: metrics.map((m: string) => ({
+          id: m,
+          label: METRIC_REGISTRY[m].label,
+        })),
+        sortColumn: body.sortColumn,
+        sortDirection: body.sortDirection,
+      });
+    } else if (dimensions.includes("date")) {
       filteredResults.sort((a: any, b: any) => {
         const dateA = a.date?.createdAt;
         const dateB = b.date?.createdAt;
@@ -786,3 +800,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: e.message }, { status: 500 });
   }
 }
+
+export const GET = withReplicaRoute(reportGet);
+export const POST = withReplicaRoute(reportPost);

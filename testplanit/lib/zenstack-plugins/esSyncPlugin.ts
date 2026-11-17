@@ -128,9 +128,21 @@ const INDEXED_MODELS: Record<string, keyof typeof syncOne> = {
  * required even though `sideEffectsPlugin` loads its own. Gated on `delete` to
  * keep it off the create/update hot path.
  */
+/**
+ * Join rows that decide which projects an issue is visible in. The issue
+ * document indexes every one of those projects, so a link appearing or
+ * disappearing re-indexes the issue it points at.
+ */
+const ISSUE_LINK_MODELS = new Set([
+  "IssueProjectMembership",
+  "RepositoryCaseIssue",
+  "MilestoneIssue",
+]);
+
 const DELETE_BEFORE_IMAGE_MODELS = new Set([
   ...Object.keys(INDEXED_MODELS),
   "RepositoryCaseTag",
+  ...ISSUE_LINK_MODELS,
 ]);
 
 function logEsError(kind: string, id: unknown) {
@@ -145,67 +157,91 @@ export const esSyncPlugin = definePlugin(schema, {
   id: "testplanit-es-sync",
 
   onEntityMutation: {
-    // The whole point of this plugin — see the header.
-    runAfterMutationWithinTransaction: false,
+    $all: {
+      // The whole point of this plugin — see the header.
+      runAfterMutationWithinTransaction: false,
 
-    beforeEntityMutation: async ({
-      model,
-      action,
-      loadBeforeMutationEntities,
-    }) => {
-      if (action === "delete" && DELETE_BEFORE_IMAGE_MODELS.has(model)) {
-        await loadBeforeMutationEntities();
-      }
-    },
-
-    afterEntityMutation: async ({
-      model,
-      action,
-      loadAfterMutationEntities,
-      beforeMutationEntities,
-    }) => {
-      const isIndexed = model in INDEXED_MODELS;
-      if (!isIndexed && model !== "RepositoryCaseTag") return;
-
-      const before = (beforeMutationEntities ?? []) as any[];
-      // A delete has no after-image; skip the load rather than pay for a query
-      // that can only come back empty.
-      const after =
-        action === "delete"
-          ? []
-          : (((await loadAfterMutationEntities()) ?? []) as any[]);
-
-      // Tags live in the case's document but are written as standalone link
-      // rows (the case details view and the CSV import both write
-      // RepositoryCaseTag directly, never touching the case), so the case has
-      // to be reindexed off the link table's own mutations.
-      if (model === "RepositoryCaseTag") {
-        const caseIds = new Set<number>();
-        for (const row of [...after, ...before]) {
-          if (row?.caseId != null) caseIds.add(row.caseId);
+      beforeEntityMutation: async ({
+        model,
+        action,
+        loadBeforeMutationEntities,
+      }) => {
+        if (action === "delete" && DELETE_BEFORE_IMAGE_MODELS.has(model)) {
+          await loadBeforeMutationEntities();
         }
-        for (const caseId of caseIds) {
-          syncOne
-            .repositoryCase(caseId)
-            .catch(logEsError("repository case", caseId));
+      },
+
+      afterEntityMutation: async ({
+        model,
+        action,
+        loadAfterMutationEntities,
+        beforeMutationEntities,
+      }) => {
+        const isIndexed = model in INDEXED_MODELS;
+        if (
+          !isIndexed &&
+          model !== "RepositoryCaseTag" &&
+          !ISSUE_LINK_MODELS.has(model)
+        )
+          return;
+
+        const before = (beforeMutationEntities ?? []) as any[];
+        // A delete has no after-image; skip the load rather than pay for a query
+        // that can only come back empty.
+        const after =
+          action === "delete"
+            ? []
+            : (((await loadAfterMutationEntities()) ?? []) as any[]);
+
+        // Tags live in the case's document but are written as standalone link
+        // rows (the case details view and the CSV import both write
+        // RepositoryCaseTag directly, never touching the case), so the case has
+        // to be reindexed off the link table's own mutations.
+        if (model === "RepositoryCaseTag") {
+          const caseIds = new Set<number>();
+          for (const row of [...after, ...before]) {
+            if (row?.caseId != null) caseIds.add(row.caseId);
+          }
+          for (const caseId of caseIds) {
+            syncOne
+              .repositoryCase(caseId)
+              .catch(logEsError("repository case", caseId));
+          }
+          return;
         }
-        return;
-      }
 
-      const kind = INDEXED_MODELS[model];
-
-      // Hard delete: drop the document. Soft deletes arrive as updates and stay
-      // indexed on purpose.
-      if (action === "delete") {
-        for (const row of before) {
-          if (row?.id) removeOne[kind](row.id).catch(logEsError(kind, row.id));
+        if (ISSUE_LINK_MODELS.has(model)) {
+          const issueIds = new Set<number>();
+          for (const row of [...after, ...before]) {
+            if (row?.issueId != null) issueIds.add(row.issueId);
+          }
+          if (issueIds.size === 0) return;
+          const { syncIssueToElasticsearch } =
+            await import("~/services/issueSearch");
+          for (const issueId of issueIds) {
+            syncIssueToElasticsearch(issueId).catch(
+              logEsError("issue", issueId)
+            );
+          }
+          return;
         }
-        return;
-      }
 
-      for (const row of after) {
-        if (row?.id) syncOne[kind](row.id).catch(logEsError(kind, row.id));
-      }
+        const kind = INDEXED_MODELS[model];
+
+        // Hard delete: drop the document. Soft deletes arrive as updates and stay
+        // indexed on purpose.
+        if (action === "delete") {
+          for (const row of before) {
+            if (row?.id)
+              removeOne[kind](row.id).catch(logEsError(kind, row.id));
+          }
+          return;
+        }
+
+        for (const row of after) {
+          if (row?.id) syncOne[kind](row.id).catch(logEsError(kind, row.id));
+        }
+      },
     },
   },
 });

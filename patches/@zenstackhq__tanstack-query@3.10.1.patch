@@ -1,0 +1,33 @@
+diff --git a/dist/react.js b/dist/react.js
+index e1895a9f8606f24c09744dc226b6ce9fe03eee1f..1d45f18be8756923651dd42efb2abb33c57f5bc2 100644
+--- a/dist/react.js
++++ b/dist/react.js
+@@ -30,6 +30,7 @@ function useHooksContext() {
+     const { endpoint, ...rest } = useContext(QuerySettingsContext);
+     return { endpoint: endpoint ?? DEFAULT_QUERY_ENDPOINT, ...rest };
+ }
++const __clientQueriesCache = new WeakMap();
+ /**
+  * Gets data query hooks for all models in the schema.
+  *
+@@ -50,6 +51,11 @@ function useHooksContext() {
+  * @param options Options for all queries originated from this hook.
+  */
+ export function useClientQueries(schema, options) {
++    if (!options) {
++        const __cached = __clientQueriesCache.get(schema);
++        if (__cached)
++            return __cached;
++    }
+     const result = Object.keys(schema.models).reduce((acc, model) => {
+         acc[lowerCaseFirst(model)] = useModelQueries(schema, model, options);
+         return acc;
+@@ -95,6 +101,8 @@ export function useClientQueries(schema, options) {
+     result.$transaction = {
+         useSequential: (hookOptions) => useInternalTransactionMutation(schema, { ...options, ...hookOptions }),
+     };
++    if (!options)
++        __clientQueriesCache.set(schema, result);
+     return result;
+ }
+ /**

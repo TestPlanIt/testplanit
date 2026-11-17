@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ProjectAccessRosterEntry } from "~/lib/services/projectAccessRoster";
+import { apiFetch } from "~/lib/basePath";
 
 export type { ProjectAccessRosterEntry };
 
@@ -17,7 +18,7 @@ export function useProjectAccessRoster(
   return useQuery<ProjectAccessRosterEntry[], Error>({
     queryKey: ["projectAccessRoster", projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/access`);
+      const response = await apiFetch(`/api/projects/${projectId}/access`);
       if (!response.ok) {
         const body = await response.json().catch(() => null);
         throw new Error(body?.error ?? "Failed to load project access");

@@ -23,10 +23,11 @@ import {
 import { ExternalLink, Unlink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "~/lib/navigation";
-import { siJira } from "simple-icons";
+import { siGithub, siJira } from "simple-icons";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { safeExternalUrl } from "~/utils/externalUrl";
+import { apiFetch } from "~/lib/basePath";
 
 export interface MilestoneSourceBadgeMilestone {
   id: number;
@@ -48,7 +49,28 @@ export interface MilestoneSourceBadgeMilestone {
 export interface MilestoneIntegrationProject {
   externalProjectKey: string;
   externalProjectName: string;
-  projectIntegration?: { integrationId: number | null } | null;
+  projectIntegration?: {
+    integrationId: number | null;
+    integration?: { provider?: string | null } | null;
+  } | null;
+}
+
+/**
+ * The tracker a synced milestone came from, read off the mapping for its
+ * integration. Callers that fetch mappings without the provider, and
+ * milestones whose integration has no mapping, read as Jira — the only
+ * provider before GitHub milestones were added.
+ */
+export function resolveMilestoneProvider(
+  milestone:
+    Pick<MilestoneSourceBadgeMilestone, "integrationId"> | null | undefined,
+  integrationProjects?: MilestoneIntegrationProject[] | null
+): string {
+  if (milestone?.integrationId == null) return "JIRA";
+  const mapping = integrationProjects?.find(
+    (ip) => ip.projectIntegration?.integrationId === milestone.integrationId
+  );
+  return mapping?.projectIntegration?.integration?.provider ?? "JIRA";
 }
 
 interface MilestoneSourceBadgeProps {
@@ -127,16 +149,48 @@ export function resolveMilestoneProjectSpace(
   return { name, short };
 }
 
+/** The tracker's mark: GitHub's for GitHub milestones, Jira's otherwise. */
+export function TrackerGlyph({
+  provider,
+  className = "h-3 w-3",
+}: {
+  provider: string;
+  className?: string;
+}) {
+  if (provider === "GITHUB") {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        className={`${className} text-foreground`}
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path d={siGithub.path} />
+      </svg>
+    );
+  }
+  return <JiraGlyph className={className} />;
+}
+
+/** The provider segment of the badge label. */
+export function useMilestoneProviderLabel(provider: string): string {
+  const t = useTranslations("milestones");
+  return provider === "GITHUB"
+    ? t("sync.providerGitHub")
+    : t("sync.providerJira");
+}
+
 /**
  * Exported so the requirements provenance badge renders the same Jira mark
  * rather than keeping a second copy of the path data.
  */
-export function JiraGlyph() {
+export function JiraGlyph({ className = "h-3 w-3" }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-3 w-3 text-[#2684FF]"
+      className={`${className} text-[#2684FF]`}
       fill="currentColor"
+      aria-hidden="true"
     >
       <path d={siJira.path} />
     </svg>
@@ -155,10 +209,11 @@ function RemovedOrMergedBadge({
   milestone,
   className,
   interactive = true,
-}: MilestoneSourceBadgeProps) {
+  providerKey,
+}: MilestoneSourceBadgeProps & { providerKey: string }) {
   const t = useTranslations("milestones");
   const router = useRouter();
-  const provider = t("sync.providerJira");
+  const provider = useMilestoneProviderLabel(providerKey);
   const isMerged = milestone.externalState === "merged";
 
   // Only look up the merge target when we actually need it — this query is
@@ -213,7 +268,7 @@ function RemovedOrMergedBadge({
       }
     >
       <span className="flex shrink-0 items-center">
-        <JiraGlyph />
+        <TrackerGlyph provider={providerKey} />
       </span>
       <span>{label}</span>
     </Badge>
@@ -233,6 +288,7 @@ function SourceBadgeWithUnlinkMenu({
   canOpenInTracker,
   onOpenInTracker,
   renderBadge,
+  providerKey,
 }: {
   milestone: MilestoneSourceBadgeMilestone;
   projectId?: number;
@@ -241,6 +297,7 @@ function SourceBadgeWithUnlinkMenu({
   /** Renders the badge itself; `asMenuTrigger` is true for the copy handed to
    *  the dropdown trigger, which must not carry its own click handler. */
   renderBadge: (asMenuTrigger: boolean) => ReactElement;
+  providerKey: string;
 }) {
   const t = useTranslations("milestones");
   const tCommon = useTranslations("common");
@@ -249,12 +306,12 @@ function SourceBadgeWithUnlinkMenu({
   const [isUnlinking, setIsUnlinking] = useState(false);
   const { isProjectAdmin } = useProjectPermissions(projectId ?? 0);
 
-  const provider = t("sync.providerJira");
+  const provider = useMilestoneProviderLabel(providerKey);
 
   const handleUnlink = async () => {
     setIsUnlinking(true);
     try {
-      const res = await fetch(`/api/milestones/${milestone.id}/unlink`, {
+      const res = await apiFetch(`/api/milestones/${milestone.id}/unlink`, {
         method: "POST",
       });
       if (!res.ok) {
@@ -291,7 +348,7 @@ function SourceBadgeWithUnlinkMenu({
             {tCommon("ui.issues.openInJira")}
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="gap-1 text-destructive focus:text-destructive"
+            className="gap-1 text-destructive focus:text-destructive-text"
             onClick={() => setConfirmOpen(true)}
             data-testid="milestone-source-menu-unlink"
           >
@@ -380,6 +437,7 @@ export function MilestoneSourceBadge({
     milestone,
     integrationProjects
   );
+  const providerKey = resolveMilestoneProvider(milestone, integrationProjects);
   // Primitive copies for the layout effect's dependency array — the resolver
   // returns a fresh object each render, so depending on the object identity
   // would re-run (and re-measure) on every render.
@@ -398,7 +456,7 @@ export function MilestoneSourceBadge({
   const isLocal =
     milestone.integrationId == null && milestone.detachedAt == null;
 
-  const provider = t("sync.providerJira");
+  const provider = useMilestoneProviderLabel(providerKey);
   const kind =
     milestone.externalKind === "RELEASE"
       ? t("import.kindRelease")
@@ -498,6 +556,7 @@ export function MilestoneSourceBadge({
         milestone={milestone}
         className={className}
         interactive={interactive}
+        providerKey={providerKey}
       />
     );
   }
@@ -505,7 +564,7 @@ export function MilestoneSourceBadge({
   const badgeSegments = (
     <>
       <span className="flex shrink-0 items-center">
-        <JiraGlyph />
+        <TrackerGlyph provider={providerKey} />
       </span>
       {level >= 1 && <span>{provider}</span>}
       {level >= 2 && <span>{`· ${kind}`}</span>}
@@ -561,7 +620,7 @@ export function MilestoneSourceBadge({
       >
         <Badge variant="outline" className="text-xs gap-1 whitespace-nowrap">
           <span data-seg="icon" className="flex items-center">
-            <JiraGlyph />
+            <TrackerGlyph provider={providerKey} />
           </span>
           <span data-seg="provider">{provider}</span>
           <span data-seg="kind">{`· ${kind}`}</span>
@@ -582,6 +641,7 @@ export function MilestoneSourceBadge({
           canOpenInTracker={Boolean(trackerUrl)}
           onOpenInTracker={openInTracker}
           renderBadge={renderBadge}
+          providerKey={providerKey}
         />
       ) : (
         renderBadge(false)

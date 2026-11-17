@@ -4,6 +4,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
+import { Text } from "@/components/ui/typography";
 import {
   PageCardHeader,
   ProjectHeaderInfo,
@@ -19,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -37,6 +37,10 @@ import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
+import {
+  REVERT_DECISION_DURATION_KEY,
+  REVERT_DECISION_WINDOW_SECONDS_DEFAULT,
+} from "~/lib/services/reviewRevertWindow";
 import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
 import { ABANDONED_RUN_MIN_IDLE_MINUTES } from "~/lib/services/abandonedRuns";
 import {
@@ -47,6 +51,8 @@ import {
   suggestProjectKey,
 } from "~/lib/recordKey";
 import { useDebounce } from "@/components/Debounce";
+import { DefaultTemplateCard } from "./DefaultTemplateCard";
+import { SettingLabel, SettingsSection, SwitchSetting } from "./SettingRow";
 
 export default function AdvancedPage() {
   const params = useParams();
@@ -71,12 +77,15 @@ export default function AdvancedPage() {
         reviewWorkflowEnabled: true,
         requireResultFlipJustification: true,
         editResultsDurationSeconds: true,
+        revertDecisionDurationSeconds: true,
         requireIssueOnFailure: true,
         excludeNotStartedFromRuns: true,
         requirementsEnabled: true,
         autoLockCompositionOnInProgress: true,
+        enforceCaseDependencies: true,
         abandonedRunIdleMinutes: true,
         abandonedRunStateId: true,
+        defaultTemplateId: true,
         projectIntegrations: {
           where: { isActive: true, integration: { status: "ACTIVE" } },
           select: { id: true },
@@ -110,6 +119,28 @@ export default function AdvancedPage() {
     systemEditWindowSeconds && systemEditWindowSeconds > 0
       ? Math.floor(systemEditWindowSeconds / 60)
       : null;
+
+  // System revert-window policy (ceiling). Same three-state shape as the
+  // edit window: 0 = reverting off everywhere, N = max seconds, absent = no
+  // policy (the built-in default applies).
+  const { data: revertWindowConfig } = useClientQueries(
+    schema
+  ).appConfig.useFindUnique(
+    { where: { key: REVERT_DECISION_DURATION_KEY } },
+    { enabled: status === "authenticated" }
+  );
+  const systemRevertWindowSeconds =
+    typeof revertWindowConfig?.value === "number"
+      ? (revertWindowConfig.value as number)
+      : null;
+  const systemRevertLocked = systemRevertWindowSeconds === 0;
+  const systemRevertMaxMinutes =
+    systemRevertWindowSeconds && systemRevertWindowSeconds > 0
+      ? Math.floor(systemRevertWindowSeconds / 60)
+      : null;
+  const defaultRevertMinutes = Math.round(
+    REVERT_DECISION_WINDOW_SECONDS_DEFAULT / 60
+  );
 
   // System abandoned automated-run policy (the default projects inherit).
   // value: N > 0 = idle minutes before the sweeper closes a run, absent/0 =
@@ -202,6 +233,7 @@ export default function AdvancedPage() {
   const excludeNotStartedFromRuns = project?.excludeNotStartedFromRuns ?? false;
   const autoLockCompositionOnInProgress =
     project?.autoLockCompositionOnInProgress ?? false;
+  const enforceCaseDependencies = project?.enforceCaseDependencies ?? false;
   // Requiring a linked issue is only meaningful when the project has an active
   // issue integration to link from; without one the toggle is forced off.
   const hasIssueIntegration = (project?.projectIntegrations?.length ?? 0) > 0;
@@ -302,6 +334,22 @@ export default function AdvancedPage() {
     }
   };
 
+  const handleToggleCaseDependencies = async (enabled: boolean) => {
+    try {
+      await updateProject.mutateAsync({
+        where: { id: projectId },
+        data: { enforceCaseDependencies: enabled },
+      });
+      toast.success(
+        enabled
+          ? t("caseDependencies.enabledToast")
+          : t("caseDependencies.disabledToast")
+      );
+    } catch {
+      toast.error(t("caseDependencies.saveError"));
+    }
+  };
+
   // Edit-window override controls. The persisted value is seconds (null =
   // inherit system, 0 = disable for this project, N = custom window).
   const [editWindowMode, setEditWindowMode] = useState<
@@ -325,6 +373,61 @@ export default function AdvancedPage() {
       setCustomMinutes(String(Math.max(1, Math.round(seconds / 60))));
     }
   }, [project?.editResultsDurationSeconds]);
+
+  // Revert-window override. Persisted value is seconds (null = inherit the
+  // system policy, 0 = disable for this project, N = custom window).
+  const [revertWindowMode, setRevertWindowMode] = useState<
+    "inherit" | "disable" | "custom"
+  >("inherit");
+  const [revertCustomMinutes, setRevertCustomMinutes] = useState("");
+  const [savingRevertWindow, setSavingRevertWindow] = useState(false);
+
+  useEffect(() => {
+    const seconds = project?.revertDecisionDurationSeconds;
+    if (seconds === undefined) return;
+    if (seconds === null) {
+      setRevertWindowMode("inherit");
+      setRevertCustomMinutes("");
+    } else if (seconds === 0) {
+      setRevertWindowMode("disable");
+      setRevertCustomMinutes("");
+    } else {
+      setRevertWindowMode("custom");
+      setRevertCustomMinutes(String(Math.max(1, Math.round(seconds / 60))));
+    }
+  }, [project?.revertDecisionDurationSeconds]);
+
+  const handleSaveRevertWindow = async () => {
+    let nextSeconds: number | null;
+    if (revertWindowMode === "inherit") {
+      nextSeconds = null;
+    } else if (revertWindowMode === "disable") {
+      nextSeconds = 0;
+    } else {
+      const minutes = Number(revertCustomMinutes);
+      if (!Number.isFinite(minutes) || minutes <= 0) {
+        toast.error(t("revertWindow.invalidMinutes"));
+        return;
+      }
+      const capped =
+        systemRevertMaxMinutes !== null
+          ? Math.min(minutes, systemRevertMaxMinutes)
+          : minutes;
+      nextSeconds = Math.round(capped * 60);
+    }
+    setSavingRevertWindow(true);
+    try {
+      await updateProject.mutateAsync({
+        where: { id: projectId },
+        data: { revertDecisionDurationSeconds: nextSeconds },
+      });
+      toast.success(t("revertWindow.savedToast"));
+    } catch {
+      toast.error(t("revertWindow.saveError"));
+    } finally {
+      setSavingRevertWindow(false);
+    }
+  };
 
   const handleSaveEditWindow = async () => {
     let nextSeconds: number | null;
@@ -532,64 +635,63 @@ export default function AdvancedPage() {
           helpKey="projectAdvanced"
           description={<ProjectHeaderInfo project={project} />}
         />
-        <CardContent className="space-y-6">
-          {/* Project record-key code. Only shown when the system-wide
-              record-key feature is enabled — the code becomes the prefix in
-              cosmetic keys like PROJECT-TC-1234. */}
-          {recordKeyFeatureEnabled && (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-3">
-                  <Label
-                    htmlFor="project-record-key-input"
-                    className="text-base font-medium"
+        <CardContent className="space-y-2">
+          <SettingsSection
+            title={t("sections.general")}
+            description={t("sections.generalDescription")}
+            storageKey="tpi.projectSettings.advanced.general.collapsed"
+            data-testid="advanced-section-general"
+          >
+            {/* Project record-key code. Only shown when the system-wide
+                record-key feature is enabled — the code becomes the prefix in
+                cosmetic keys like PROJECT-TC-1234. */}
+            {recordKeyFeatureEnabled && (
+              <div className="space-y-2">
+                <SettingLabel
+                  htmlFor="project-record-key-input"
+                  label={t("recordKey.label")}
+                  description={t("recordKey.description", {
+                    example:
+                      formatKey(
+                        RECORD_TYPES.TEST_CASE,
+                        suggestedProjectKey || "PROJECT",
+                        1234
+                      ) ?? "PROJECT-TC-1234",
+                  })}
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    id="project-record-key-input"
+                    data-testid="project-record-key-input"
+                    value={projectKeyInput}
+                    maxLength={10}
+                    placeholder={
+                      suggestedProjectKey || t("recordKey.placeholder")
+                    }
+                    onChange={(e) =>
+                      setProjectKeyInput(sanitizeKeyInput(e.target.value))
+                    }
+                    disabled={projectLoading || updateProject.isPending}
+                    aria-invalid={!projectKeyValid || projectKeyTaken}
+                    className="w-48 uppercase"
+                  />
+                  <Button
+                    type="button"
+                    data-testid="project-record-key-save"
+                    onClick={handleSaveProjectKey}
+                    disabled={!canSaveProjectKey}
+                    aria-label={tActions("save")}
+                    className="group gap-0 transition-all duration-200 hover:gap-2"
                   >
-                    {t("recordKey.label")}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    {t("recordKey.description", {
-                      example:
-                        formatKey(
-                          RECORD_TYPES.TEST_CASE,
-                          suggestedProjectKey || "PROJECT",
-                          1234
-                        ) ?? "PROJECT-TC-1234",
-                    })}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Input
-                      id="project-record-key-input"
-                      data-testid="project-record-key-input"
-                      value={projectKeyInput}
-                      maxLength={10}
-                      placeholder={
-                        suggestedProjectKey || t("recordKey.placeholder")
-                      }
-                      onChange={(e) =>
-                        setProjectKeyInput(sanitizeKeyInput(e.target.value))
-                      }
-                      disabled={projectLoading || updateProject.isPending}
-                      aria-invalid={!projectKeyValid || projectKeyTaken}
-                      className="w-48 uppercase"
-                    />
-                    <Button
-                      type="button"
-                      data-testid="project-record-key-save"
-                      onClick={handleSaveProjectKey}
-                      disabled={!canSaveProjectKey}
-                      aria-label={tActions("save")}
-                      className="group gap-0 transition-all duration-200 hover:gap-2"
-                    >
-                      {savingKey ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Save className="h-4 w-4" />
-                      )}
-                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                        {tActions("save")}
-                      </span>
-                    </Button>
-                  </div>
+                    {savingKey ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                      {tActions("save")}
+                    </span>
+                  </Button>
                   {suggestedProjectKey &&
                     normalizedProjectKey !== suggestedProjectKey && (
                       <button
@@ -603,316 +705,225 @@ export default function AdvancedPage() {
                         })}
                       </button>
                     )}
-                  {!projectKeyValid && (
-                    <p className="text-sm text-destructive">
-                      {t("recordKey.invalid")}
-                    </p>
-                  )}
-                  {projectKeyTaken && (
-                    <p
-                      className="text-sm text-destructive"
-                      data-testid="project-record-key-taken"
-                    >
-                      {t("recordKey.taken")}
-                    </p>
-                  )}
-                  {projectKeyPreview && (
-                    <p
-                      className="text-sm text-muted-foreground"
-                      data-testid="project-record-key-preview"
-                    >
-                      {t("recordKey.previewLabel")}{" "}
-                      <span className="font-mono">{projectKeyPreview}</span>
-                    </p>
-                  )}
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Review workflow toggle (Phase 2's single Advanced toggle).
-              Future Advanced toggles can append additional <Card> sections
-              below without restructuring this layout. */}
-          <Card>
-            <CardContent className="pt-6">
-              {/* Switch on the LEFT of the label — matches the Admin >
-                  Workflows SystemFeatureCard pattern so toggle placement
-                  is consistent between the system-wide and per-project
-                  controls for the same feature. */}
-              <div className="space-y-3">
-                <Label className="flex items-center gap-3">
-                  <Switch
-                    id="review-workflow-toggle"
-                    data-testid="review-workflow-toggle"
-                    checked={reviewWorkflowEnabled}
-                    onCheckedChange={handleToggleReviewWorkflow}
-                    disabled={projectLoading || updateProject.isPending}
-                  />
-                  <span className="text-base font-medium">
-                    {t("reviewWorkflow.label")}
-                  </span>
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {t("reviewWorkflow.description")}
-                </p>
-                {reviewWorkflowEnabled && systemReviewWorkflowDisabled && (
-                  <WarningAlert data-testid="review-workflow-system-disabled-warning">
-                    <TriangleAlert className="h-4 w-4" />
-                    <AlertTitle>
-                      {t("reviewWorkflow.systemDisabledTitle")}
-                    </AlertTitle>
-                    <AlertDescription>
-                      {t("reviewWorkflow.systemDisabledDescription")}
-                    </AlertDescription>
-                  </WarningAlert>
+                {!projectKeyValid && (
+                  <p className="text-sm text-destructive">
+                    {t("recordKey.invalid")}
+                  </p>
+                )}
+                {projectKeyTaken && (
+                  <p
+                    className="text-sm text-destructive"
+                    data-testid="project-record-key-taken"
+                  >
+                    {t("recordKey.taken")}
+                  </p>
+                )}
+                {projectKeyPreview && (
+                  <Text
+                    variant="caption"
+                    data-testid="project-record-key-preview"
+                  >
+                    {t("recordKey.previewLabel")}{" "}
+                    <span className="font-mono">{projectKeyPreview}</span>
+                  </Text>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            )}
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                <Label className="flex items-center gap-3">
-                  <Switch
-                    id="requirements-toggle"
-                    data-testid="requirements-toggle"
-                    checked={project?.requirementsEnabled ?? false}
-                    onCheckedChange={handleToggleRequirements}
-                    disabled={projectLoading || updateProject.isPending}
-                  />
-                  <span className="text-base font-medium">
-                    {t("requirements.label")}
-                  </span>
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {t("requirements.description")}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+            <DefaultTemplateCard
+              projectId={projectId}
+              defaultTemplateId={project?.defaultTemplateId}
+              disabled={projectLoading}
+            />
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                <Label className="flex items-center gap-3">
-                  <Switch
-                    id="result-flip-justification-toggle"
-                    data-testid="result-flip-justification-toggle"
-                    checked={requireResultFlipJustification}
-                    onCheckedChange={handleToggleResultFlipJustification}
-                    disabled={projectLoading || updateProject.isPending}
-                  />
-                  <span className="text-base font-medium">
-                    {t("flipJustification.label")}
-                  </span>
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {t("flipJustification.description")}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+            <SwitchSetting
+              id="requirements-toggle"
+              data-testid="requirements-toggle"
+              checked={project?.requirementsEnabled ?? false}
+              onCheckedChange={handleToggleRequirements}
+              disabled={projectLoading || updateProject.isPending}
+              label={t("requirements.label")}
+              description={t("requirements.description")}
+            />
+          </SettingsSection>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                <Label className="flex items-center gap-3">
-                  <Switch
-                    id="require-issue-on-failure-toggle"
-                    data-testid="require-issue-on-failure-toggle"
-                    checked={requireIssueOnFailure && hasIssueIntegration}
-                    onCheckedChange={handleToggleIssueOnFailure}
-                    disabled={
-                      projectLoading ||
-                      updateProject.isPending ||
-                      !hasIssueIntegration
-                    }
-                  />
-                  <span className="text-base font-medium">
-                    {t("issueOnFailure.label")}
-                  </span>
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {t("issueOnFailure.description")}
-                </p>
-                {!hasIssueIntegration && (
-                  <WarningAlert data-testid="issue-on-failure-no-integration-warning">
-                    <AlertTitle>
-                      {t("issueOnFailure.noIntegrationTitle")}
-                    </AlertTitle>
-                    <AlertDescription>
-                      {t("issueOnFailure.noIntegrationDescription")}
-                    </AlertDescription>
-                  </WarningAlert>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <SettingsSection
+            title={t("sections.reviews")}
+            description={t("sections.reviewsDescription")}
+            storageKey="tpi.projectSettings.advanced.reviews.collapsed"
+            data-testid="advanced-section-reviews"
+          >
+            <SwitchSetting
+              id="review-workflow-toggle"
+              data-testid="review-workflow-toggle"
+              checked={reviewWorkflowEnabled}
+              onCheckedChange={handleToggleReviewWorkflow}
+              disabled={projectLoading || updateProject.isPending}
+              label={t("reviewWorkflow.label")}
+              description={t("reviewWorkflow.description")}
+            >
+              {reviewWorkflowEnabled && systemReviewWorkflowDisabled && (
+                <WarningAlert data-testid="review-workflow-system-disabled-warning">
+                  <TriangleAlert className="h-4 w-4" />
+                  <AlertTitle>
+                    {t("reviewWorkflow.systemDisabledTitle")}
+                  </AlertTitle>
+                  <AlertDescription>
+                    {t("reviewWorkflow.systemDisabledDescription")}
+                  </AlertDescription>
+                </WarningAlert>
+              )}
+            </SwitchSetting>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                <Label className="flex items-center gap-3">
-                  <Switch
-                    id="exclude-not-started-from-runs-toggle"
-                    data-testid="exclude-not-started-from-runs-toggle"
-                    checked={excludeNotStartedFromRuns}
-                    onCheckedChange={handleToggleExcludeNotStarted}
-                    disabled={projectLoading || updateProject.isPending}
-                  />
-                  <span className="text-base font-medium">
-                    {t("excludeNotStarted.label")}
-                  </span>
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {t("excludeNotStarted.description")}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                <Label className="flex items-center gap-3">
-                  <Switch
-                    id="auto-lock-composition-toggle"
-                    data-testid="auto-lock-composition-toggle"
-                    checked={autoLockCompositionOnInProgress}
-                    onCheckedChange={handleToggleAutoLockComposition}
-                    disabled={projectLoading || updateProject.isPending}
-                  />
-                  <span className="text-base font-medium">
-                    {t("autoLockComposition.label")}
-                  </span>
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {t("autoLockComposition.description")}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                <span className="text-base font-medium">
-                  {t("editWindow.label")}
-                </span>
-                <p className="text-sm text-muted-foreground">
-                  {t("editWindow.description")}
-                </p>
-                {systemEditingLocked ? (
-                  <WarningAlert data-testid="edit-window-system-locked-warning">
-                    <TriangleAlert className="h-4 w-4" />
-                    <AlertTitle>{t("editWindow.systemLockedTitle")}</AlertTitle>
-                    <AlertDescription>
-                      {t("editWindow.systemLockedDescription")}
-                    </AlertDescription>
-                  </WarningAlert>
-                ) : (
-                  <div className="space-y-3">
+            <div className="space-y-2">
+              <SettingLabel
+                htmlFor="revert-window-mode-select"
+                label={t("revertWindow.label")}
+                description={t("revertWindow.description")}
+              />
+              {systemRevertLocked ? (
+                <WarningAlert data-testid="revert-window-system-locked-warning">
+                  <TriangleAlert className="h-4 w-4" />
+                  <AlertTitle>{t("revertWindow.systemLockedTitle")}</AlertTitle>
+                  <AlertDescription>
+                    {t("revertWindow.systemLockedDescription")}
+                  </AlertDescription>
+                </WarningAlert>
+              ) : (
+                <>
+                  <div className="flex flex-wrap items-center gap-3">
                     <Select
-                      value={editWindowMode}
+                      value={revertWindowMode}
                       onValueChange={(value) =>
-                        setEditWindowMode(
+                        setRevertWindowMode(
                           value as "inherit" | "disable" | "custom"
                         )
                       }
                       disabled={projectLoading || updateProject.isPending}
                     >
                       <SelectTrigger
-                        className="max-w-xs"
-                        data-testid="edit-window-mode-select"
+                        id="revert-window-mode-select"
+                        className="w-80 max-w-full"
+                        data-testid="revert-window-mode-select"
                       >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="inherit">
-                          {systemMaxMinutes !== null
-                            ? t("editWindow.modeInheritMinutes", {
-                                minutes: systemMaxMinutes,
-                              })
-                            : t("editWindow.modeInheritNoLimit")}
+                          {t("revertWindow.modeInheritMinutes", {
+                            minutes:
+                              systemRevertMaxMinutes ?? defaultRevertMinutes,
+                          })}
                         </SelectItem>
                         <SelectItem value="disable">
-                          {t("editWindow.modeDisable")}
+                          {t("revertWindow.modeDisable")}
                         </SelectItem>
                         <SelectItem value="custom">
-                          {t("editWindow.modeCustom")}
+                          {t("revertWindow.modeCustom")}
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                    {editWindowMode === "custom" && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Label
-                            htmlFor="edit-window-minutes"
-                            className="font-normal"
-                          >
-                            {t("editWindow.minutesBefore")}
-                          </Label>
-                          <Input
-                            id="edit-window-minutes"
-                            data-testid="edit-window-minutes-input"
-                            type="number"
-                            min={1}
-                            max={systemMaxMinutes ?? undefined}
-                            value={customMinutes}
-                            onChange={(event) =>
-                              setCustomMinutes(event.target.value)
-                            }
-                            className="w-24"
-                            aria-label={t("editWindow.minutesAriaLabel")}
-                          />
-                          <span>
-                            {t("editWindow.minutesUnit", {
-                              minutes: Number(customMinutes) || 0,
-                            })}
-                          </span>
-                        </div>
-                        {systemMaxMinutes !== null && (
-                          <p className="text-xs text-muted-foreground">
-                            {t("editWindow.systemMaxHint", {
-                              minutes: String(systemMaxMinutes),
-                            })}
-                          </p>
-                        )}
+                    {revertWindowMode === "custom" && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Label
+                          htmlFor="revert-window-minutes"
+                          className="font-normal"
+                        >
+                          {t("revertWindow.minutesBefore")}
+                        </Label>
+                        <Input
+                          id="revert-window-minutes"
+                          data-testid="revert-window-minutes-input"
+                          type="number"
+                          min={1}
+                          max={systemRevertMaxMinutes ?? undefined}
+                          value={revertCustomMinutes}
+                          onChange={(event) =>
+                            setRevertCustomMinutes(event.target.value)
+                          }
+                          className="w-24"
+                          aria-label={t("revertWindow.minutesAriaLabel")}
+                        />
+                        <span>
+                          {t("revertWindow.minutesUnit", {
+                            minutes: Number(revertCustomMinutes) || 0,
+                          })}
+                        </span>
                       </div>
                     )}
                     <Button
                       type="button"
-                      onClick={handleSaveEditWindow}
+                      onClick={handleSaveRevertWindow}
                       disabled={projectLoading || updateProject.isPending}
-                      data-testid="edit-window-save"
-                      aria-label={t("editWindow.save")}
+                      data-testid="revert-window-save"
+                      aria-label={t("revertWindow.save")}
                       className="group gap-0 transition-all duration-200 hover:gap-2"
                     >
-                      {savingEditWindow ? (
+                      {savingRevertWindow ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <Save className="h-4 w-4" />
                       )}
                       <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                        {t("editWindow.save")}
+                        {t("revertWindow.save")}
                       </span>
                     </Button>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  {revertWindowMode === "custom" &&
+                    systemRevertMaxMinutes !== null && (
+                      <Text variant="caption">
+                        {t("revertWindow.systemMaxHint", {
+                          minutes: String(systemRevertMaxMinutes),
+                        })}
+                      </Text>
+                    )}
+                </>
+              )}
+            </div>
+          </SettingsSection>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                <span className="text-base font-medium">
-                  {t("abandonedRuns.label")}
-                </span>
-                <p className="text-sm text-muted-foreground">
-                  {t("abandonedRuns.description")}
-                </p>
+          <SettingsSection
+            title={t("sections.runs")}
+            description={t("sections.runsDescription")}
+            storageKey="tpi.projectSettings.advanced.runs.collapsed"
+            data-testid="advanced-section-runs"
+          >
+            <SwitchSetting
+              id="exclude-not-started-from-runs-toggle"
+              data-testid="exclude-not-started-from-runs-toggle"
+              checked={excludeNotStartedFromRuns}
+              onCheckedChange={handleToggleExcludeNotStarted}
+              disabled={projectLoading || updateProject.isPending}
+              label={t("excludeNotStarted.label")}
+              description={t("excludeNotStarted.description")}
+            />
+            <SwitchSetting
+              id="auto-lock-composition-toggle"
+              data-testid="auto-lock-composition-toggle"
+              checked={autoLockCompositionOnInProgress}
+              onCheckedChange={handleToggleAutoLockComposition}
+              disabled={projectLoading || updateProject.isPending}
+              label={t("autoLockComposition.label")}
+              description={t("autoLockComposition.description")}
+            />
+            <SwitchSetting
+              id="case-dependencies-toggle"
+              data-testid="case-dependencies-toggle"
+              checked={enforceCaseDependencies}
+              onCheckedChange={handleToggleCaseDependencies}
+              disabled={projectLoading || updateProject.isPending}
+              label={t("caseDependencies.label")}
+              description={t("caseDependencies.description")}
+            />
+
+            <div className="space-y-2">
+              <SettingLabel
+                htmlFor="abandoned-runs-mode-select"
+                label={t("abandonedRuns.label")}
+                description={t("abandonedRuns.description")}
+              />
+              <div className="flex flex-wrap items-center gap-3">
                 <Select
                   value={abandonedMode}
                   onValueChange={(value) =>
@@ -921,7 +932,8 @@ export default function AdvancedPage() {
                   disabled={projectLoading || updateProject.isPending}
                 >
                   <SelectTrigger
-                    className="max-w-xs"
+                    id="abandoned-runs-mode-select"
+                    className="w-80 max-w-full"
                     data-testid="abandoned-runs-mode-select"
                   >
                     <SelectValue />
@@ -971,7 +983,7 @@ export default function AdvancedPage() {
                   </div>
                 )}
                 {abandonedMode !== "disable" && (
-                  <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm">
                     <Label
                       htmlFor="abandoned-runs-state-select"
                       className="font-normal"
@@ -985,7 +997,7 @@ export default function AdvancedPage() {
                     >
                       <SelectTrigger
                         id="abandoned-runs-state-select"
-                        className="max-w-xs"
+                        className="w-56"
                         data-testid="abandoned-runs-state-select"
                         aria-label={t("abandonedRuns.targetStateAria")}
                       >
@@ -1046,8 +1058,155 @@ export default function AdvancedPage() {
                   </span>
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </SettingsSection>
+
+          <SettingsSection
+            title={t("sections.results")}
+            description={t("sections.resultsDescription")}
+            storageKey="tpi.projectSettings.advanced.results.collapsed"
+            data-testid="advanced-section-results"
+          >
+            <SwitchSetting
+              id="result-flip-justification-toggle"
+              data-testid="result-flip-justification-toggle"
+              checked={requireResultFlipJustification}
+              onCheckedChange={handleToggleResultFlipJustification}
+              disabled={projectLoading || updateProject.isPending}
+              label={t("flipJustification.label")}
+              description={t("flipJustification.description")}
+            />
+            <SwitchSetting
+              id="require-issue-on-failure-toggle"
+              data-testid="require-issue-on-failure-toggle"
+              checked={requireIssueOnFailure && hasIssueIntegration}
+              onCheckedChange={handleToggleIssueOnFailure}
+              disabled={
+                projectLoading ||
+                updateProject.isPending ||
+                !hasIssueIntegration
+              }
+              label={t("issueOnFailure.label")}
+              description={t("issueOnFailure.description")}
+            >
+              {!hasIssueIntegration && (
+                <WarningAlert data-testid="issue-on-failure-no-integration-warning">
+                  <AlertTitle>
+                    {t("issueOnFailure.noIntegrationTitle")}
+                  </AlertTitle>
+                  <AlertDescription>
+                    {t("issueOnFailure.noIntegrationDescription")}
+                  </AlertDescription>
+                </WarningAlert>
+              )}
+            </SwitchSetting>
+
+            <div className="space-y-2">
+              <SettingLabel
+                htmlFor="edit-window-mode-select"
+                label={t("editWindow.label")}
+                description={t("editWindow.description")}
+              />
+              {systemEditingLocked ? (
+                <WarningAlert data-testid="edit-window-system-locked-warning">
+                  <TriangleAlert className="h-4 w-4" />
+                  <AlertTitle>{t("editWindow.systemLockedTitle")}</AlertTitle>
+                  <AlertDescription>
+                    {t("editWindow.systemLockedDescription")}
+                  </AlertDescription>
+                </WarningAlert>
+              ) : (
+                <>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Select
+                      value={editWindowMode}
+                      onValueChange={(value) =>
+                        setEditWindowMode(
+                          value as "inherit" | "disable" | "custom"
+                        )
+                      }
+                      disabled={projectLoading || updateProject.isPending}
+                    >
+                      <SelectTrigger
+                        id="edit-window-mode-select"
+                        className="w-80 max-w-full"
+                        data-testid="edit-window-mode-select"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="inherit">
+                          {systemMaxMinutes !== null
+                            ? t("editWindow.modeInheritMinutes", {
+                                minutes: systemMaxMinutes,
+                              })
+                            : t("editWindow.modeInheritNoLimit")}
+                        </SelectItem>
+                        <SelectItem value="disable">
+                          {t("editWindow.modeDisable")}
+                        </SelectItem>
+                        <SelectItem value="custom">
+                          {t("editWindow.modeCustom")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {editWindowMode === "custom" && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Label
+                          htmlFor="edit-window-minutes"
+                          className="font-normal"
+                        >
+                          {t("editWindow.minutesBefore")}
+                        </Label>
+                        <Input
+                          id="edit-window-minutes"
+                          data-testid="edit-window-minutes-input"
+                          type="number"
+                          min={1}
+                          max={systemMaxMinutes ?? undefined}
+                          value={customMinutes}
+                          onChange={(event) =>
+                            setCustomMinutes(event.target.value)
+                          }
+                          className="w-24"
+                          aria-label={t("editWindow.minutesAriaLabel")}
+                        />
+                        <span>
+                          {t("editWindow.minutesUnit", {
+                            minutes: Number(customMinutes) || 0,
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    <Button
+                      type="button"
+                      onClick={handleSaveEditWindow}
+                      disabled={projectLoading || updateProject.isPending}
+                      data-testid="edit-window-save"
+                      aria-label={t("editWindow.save")}
+                      className="group gap-0 transition-all duration-200 hover:gap-2"
+                    >
+                      {savingEditWindow ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                        {t("editWindow.save")}
+                      </span>
+                    </Button>
+                  </div>
+                  {editWindowMode === "custom" && systemMaxMinutes !== null && (
+                    <Text variant="caption">
+                      {t("editWindow.systemMaxHint", {
+                        minutes: String(systemMaxMinutes),
+                      })}
+                    </Text>
+                  )}
+                </>
+              )}
+            </div>
+          </SettingsSection>
         </CardContent>
       </Card>
     </main>

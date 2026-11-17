@@ -98,7 +98,7 @@ describe("SyncService.upsertIssueFromExternal (D-12 canonical upsert)", () => {
       makeIssueData({ id: "ext-new" })
     );
 
-    expect(result).toEqual({ id: 555, created: true });
+    expect(result).toEqual({ id: 555, created: true, isRequirement: false });
   });
 
   it("returns { id, created: false } when the row already existed and was updated in place", async () => {

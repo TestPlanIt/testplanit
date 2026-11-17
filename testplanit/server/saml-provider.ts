@@ -2,6 +2,7 @@ import { SAML } from "@node-saml/node-saml";
 import { Profile as SAML2Profile } from "@node-saml/passport-saml";
 import { OAuthConfig, OAuthUserConfig } from "next-auth/providers/oauth";
 import { normalizeSamlCertForClient } from "./saml-cert";
+import { getAppUrl } from "~/lib/appUrl";
 
 export interface SAMLProfile extends Record<string, any> {
   id: string;
@@ -168,7 +169,7 @@ export async function createSAMLClient(config: SAMLConfig) {
     scoping: config.scoping,
     wantAssertionsEncrypted: config.wantAssertionsEncrypted,
     maxAssertionAgeMs: config.maxAssertionAgeMs,
-    callbackUrl: `${process.env.NEXTAUTH_URL}/api/auth/callback/saml`,
+    callbackUrl: `${getAppUrl()}/api/auth/callback/saml`,
   };
 
   return new SAML(samlOptions);

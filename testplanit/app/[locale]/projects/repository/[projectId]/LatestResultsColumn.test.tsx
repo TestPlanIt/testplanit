@@ -22,10 +22,6 @@ vi.mock("~/app/actions/test-run", () => ({
   getMaxOrderInTestRun: vi.fn(),
 }));
 
-vi.mock("~/app/actions/test-run-notifications", () => ({
-  notifyTestCaseAssignment: vi.fn(),
-}));
-
 vi.mock("~/app/actions/searchProjectMembers", () => ({
   searchProjectMembers: vi.fn(),
 }));
@@ -128,8 +124,7 @@ vi.mock("next-auth/react", () => ({
           itemsPerPage: ItemsPerPage.P50,
           timezone: "America/New_York",
           notificationMode: NotificationMode.USE_GLOBAL,
-          emailNotifications: true,
-          inAppNotifications: true,
+          mutedNotificationTypes: [],
           hasCompletedWelcomeTour: false,
           hasCompletedInitialPreferencesSetup: false,
         },
@@ -181,6 +176,7 @@ describe("latestResults column via getColumns", () => {
     name: "Name",
     estimate: "Estimate",
     forecast: "Forecast",
+    riskScore: "Risk Score",
     state: "State",
     automated: "Automated",
     template: "Template",
@@ -279,7 +275,6 @@ describe("latestResults column via getColumns", () => {
         mockColumnTranslations,
         false,
         false,
-        undefined,
         undefined,
         undefined,
         undefined,

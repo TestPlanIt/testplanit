@@ -1,87 +1,195 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createRunFromAnalysis } from "./autoRun";
 
-function makeDb(analysis: unknown, workflow: unknown = { id: 5 }) {
-  return {
+const { mockCompose, mockExecute } = vi.hoisted(() => ({
+  mockCompose: vi.fn(),
+  mockExecute: vi.fn(),
+}));
+vi.mock("~/lib/webhooks/actions/composeRun", () => ({
+  composeRunFromCases: (...args: unknown[]) => mockCompose(...args),
+}));
+vi.mock("./autoExecute", () => ({
+  executeAutoRun: (...args: unknown[]) => mockExecute(...args),
+}));
+
+import { SYSTEM_AUTOMATION_USER_ID } from "~/lib/automationUser";
+import { createRunFromAnalysis, runAnalysisActions } from "./autoRun";
+import { buildChangesNodes } from "./buildChangesNote";
+
+type LogRow = {
+  webhookActionId: string | null;
+  analysisId: number;
+  testRunId: number | null;
+  outcome?: string;
+};
+
+/**
+ * A db whose webhookActionLog answers findFirst from the rows written to it,
+ * so runs composed earlier in the same job are seen by later rules.
+ */
+function makeDb(
+  analysis: any,
+  opts: { systemUser?: boolean; logs?: LogRow[] } = {}
+) {
+  const logs: LogRow[] = [...(opts.logs ?? [])];
+  const state = { analysis };
+  const db = {
     impactAnalysis: {
-      findUnique: vi.fn().mockResolvedValue(analysis),
-      update: vi.fn().mockResolvedValue({}),
+      findUnique: vi.fn(async (_args: any) =>
+        state.analysis ? { ...state.analysis } : null
+      ),
+      update: vi.fn(async ({ data }: any) => {
+        state.analysis = { ...state.analysis, ...data };
+        return state.analysis;
+      }),
     },
-    impactAnalysisCase: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
-    workflows: { findFirst: vi.fn().mockResolvedValue(workflow) },
-    testRuns: { create: vi.fn().mockResolvedValue({ id: 300 }) },
+    impactAnalysisCase: {
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
+    user: {
+      findUnique: vi
+        .fn()
+        .mockResolvedValue(
+          opts.systemUser === false ? null : { id: SYSTEM_AUTOMATION_USER_ID }
+        ),
+    },
+    webhookActionLog: {
+      findFirst: vi.fn(async ({ where }: any) => {
+        const row = logs.find(
+          (l) =>
+            (where.webhookActionId === undefined ||
+              (typeof where.webhookActionId === "object"
+                ? l.webhookActionId !== null
+                : l.webhookActionId === where.webhookActionId)) &&
+            (where.outcome === undefined || l.outcome === where.outcome) &&
+            l.analysisId === where.analysisId &&
+            (typeof where.testRunId === "number"
+              ? l.testRunId === where.testRunId
+              : l.testRunId !== null)
+        );
+        return row ? { id: "log", testRunId: row.testRunId } : null;
+      }),
+      create: vi.fn(async ({ data }: any) => {
+        logs.push({
+          webhookActionId: data.webhookActionId,
+          analysisId: data.analysisId,
+          testRunId: data.testRunId,
+          outcome: data.outcome,
+        });
+        return data;
+      }),
+    },
     webhookDelivery: { update: vi.fn().mockResolvedValue({}) },
   };
+  return db;
 }
+
 const autoRun = {
-  trigger: "pull_request",
+  trigger: "pull_request" as const,
   label: "PR #12: Fix checkout",
   url: "https://github.com/acme/app/pull/12",
   deliveryId: "del-1",
+  webhookConfigId: "whc-1",
 };
 const analysis = {
   id: 77,
   projectId: 3,
   testRunId: null,
   project: { createdBy: "owner-1" },
-  cases: [{ caseId: 10 }, { caseId: 11 }, { caseId: 10 }],
+  cases: [{ caseId: 10 }, { caseId: 11 }],
 };
+const rule = { actionId: "act-1", minScore: null };
+
+let nextRunId = 300;
 
 describe("createRunFromAnalysis", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    nextRunId = 300;
+    mockCompose.mockImplementation(async (_db: unknown, input: any) => ({
+      created: true,
+      testRunId: nextRunId++,
+      caseCount: input.caseIds.length,
+      caseIds: input.caseIds,
+    }));
+  });
 
-  it("composes a run of the affected cases, links it, and marks the acceptance", async () => {
+  it("hands the rule's test case filters to the composer and accepts only the cases the run took", async () => {
     const db = makeDb(analysis);
+    const caseFilter = [
+      { dimension: "automated", operator: "is", values: [1] },
+    ];
+    mockCompose.mockResolvedValueOnce({
+      created: true,
+      testRunId: 300,
+      caseCount: 1,
+      caseIds: [11],
+    });
 
-    const result = await createRunFromAnalysis(db, 77, autoRun);
+    const result = await createRunFromAnalysis(db, 77, autoRun, {
+      actionId: "act-1",
+      trigger: "CODE_PULL_REQUEST",
+      caseFilter,
+    });
 
-    expect(result).toEqual({ created: true, testRunId: 300, caseCount: 2 });
-    expect(db.impactAnalysis.findUnique).toHaveBeenCalledWith(
+    expect(result).toEqual({
+      created: true,
+      testRunId: 300,
+      caseCount: 1,
+      caseIds: [11],
+    });
+    expect(mockCompose.mock.calls[0][1]).toMatchObject({
+      caseIds: [10, 11],
+      caseFilter,
+    });
+    expect(db.impactAnalysisCase.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        select: expect.objectContaining({
-          cases: expect.objectContaining({
-            where: { suggested: true, tier: { in: ["pinned", "affected"] } },
-          }),
-        }),
+        where: { analysisId: 77, suggested: true, caseId: { in: [11] } },
+        data: expect.objectContaining({ accepted: true }),
       })
     );
-    expect(db.testRuns.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        projectId: 3,
-        name: "PR #12: Fix checkout",
-        stateId: 5,
-        createdById: "owner-1",
-        testRunType: "REGULAR",
-        testCases: {
-          create: [
-            { repositoryCase: { connect: { id: 10 } }, order: 0 },
-            { repositoryCase: { connect: { id: 11 } }, order: 1 },
-          ],
-        },
-      }),
-      select: { id: true },
+    expect(db.impactAnalysisCase.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { analysisId: 77, suggested: true, caseId: { notIn: [11] } },
+        data: expect.objectContaining({ accepted: false }),
+      })
+    );
+  });
+
+  it("passes no filters to the composer when the rule has none", async () => {
+    const db = makeDb(analysis);
+    await createRunFromAnalysis(db, 77, autoRun, {
+      actionId: "act-1",
+      caseFilter: [],
     });
-    const note = db.testRuns.create.mock.calls[0][0].data.note;
-    expect(note).toEqual({
-      type: "doc",
-      content: [
+    expect(mockCompose.mock.calls[0][1]).not.toHaveProperty("caseFilter");
+  });
+
+  it("composes a run of the affected cases as the System user, links it, and marks the acceptance", async () => {
+    const db = makeDb(analysis);
+
+    const result = await createRunFromAnalysis(db, 77, autoRun, rule, "t-1");
+
+    expect(result).toEqual({
+      created: true,
+      testRunId: 300,
+      caseCount: 2,
+      caseIds: [10, 11],
+    });
+    expect(
+      db.impactAnalysis.findUnique.mock.calls[0][0].select.cases.where
+    ).toEqual({ suggested: true, tier: { in: ["pinned", "affected"] } });
+    expect(mockCompose).toHaveBeenCalledWith(db, {
+      projectId: 3,
+      name: "PR #12: Fix checkout",
+      caseIds: [10, 11],
+      links: [
         {
-          type: "paragraph",
-          content: [
-            { type: "text", text: "PR #12: Fix checkout — " },
-            {
-              type: "text",
-              text: "https://github.com/acme/app/pull/12",
-              marks: [
-                {
-                  type: "link",
-                  attrs: { href: "https://github.com/acme/app/pull/12" },
-                },
-              ],
-            },
-          ],
+          label: "PR #12: Fix checkout",
+          url: "https://github.com/acme/app/pull/12",
         },
       ],
+      createdById: SYSTEM_AUTOMATION_USER_ID,
+      tenantId: "t-1",
     });
     expect(db.impactAnalysis.update).toHaveBeenCalledWith({
       where: { id: 77 },
@@ -92,150 +200,85 @@ describe("createRunFromAnalysis", () => {
         where: { analysisId: 77, suggested: true, caseId: { in: [10, 11] } },
         data: expect.objectContaining({
           accepted: true,
-          reviewedById: "owner-1",
+          reviewedById: SYSTEM_AUTOMATION_USER_ID,
         }),
       })
     );
-    expect(db.webhookDelivery.update).toHaveBeenLastCalledWith({
-      where: { id: "del-1" },
-      data: { subjectRef: "run:300", error: null },
-    });
-  });
-
-  it("writes one linked paragraph per event link, so a merge push names its pull request", async () => {
-    const db = makeDb(analysis);
-    await createRunFromAnalysis(db, 77, {
-      trigger: "push",
-      label: "main aaaaaaa…bbbbbbb (PR #12: Fix checkout)",
-      url: "https://github.com/acme/app/pull/12",
-      links: [
-        {
-          label: "main aaaaaaa…bbbbbbb",
-          url: "https://github.com/acme/app/compare/a...b",
+    expect(db.impactAnalysisCase.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          analysisId: 77,
+          suggested: true,
+          caseId: { notIn: [10, 11] },
         },
-        {
-          label: "PR #12: Fix checkout",
-          url: "https://github.com/acme/app/pull/12",
-        },
-      ],
-    });
-    const { name, note } = db.testRuns.create.mock.calls[0][0].data;
-    expect(name).toBe("main aaaaaaa…bbbbbbb (PR #12: Fix checkout)");
-    expect(note.content).toHaveLength(2);
-    expect(note.content[0].content[1]).toEqual({
-      type: "text",
-      text: "https://github.com/acme/app/compare/a...b",
-      marks: [
-        {
-          type: "link",
-          attrs: { href: "https://github.com/acme/app/compare/a...b" },
-        },
-      ],
-    });
-    expect(note.content[1].content[0].text).toBe("PR #12: Fix checkout — ");
-    expect(note.content[1].content[1].marks[0].attrs.href).toBe(
-      "https://github.com/acme/app/pull/12"
+        data: expect.objectContaining({ accepted: false }),
+      })
     );
   });
 
-  it("appends the build's pull requests and orphan commits to the note", async () => {
+  it("acts as the project creator when the System user is missing", async () => {
+    const db = makeDb(analysis, { systemUser: false });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await createRunFromAnalysis(db, 77, autoRun, rule);
+
+    expect(mockCompose.mock.calls[0][1].createdById).toBe("owner-1");
+    warn.mockRestore();
+  });
+
+  it("passes every event link through, so a merge push names its pull request", async () => {
+    const db = makeDb(analysis);
+    const links = [
+      { label: "main a…b", url: "https://github.com/acme/app/compare/a...b" },
+      {
+        label: "PR #12: Fix checkout",
+        url: "https://github.com/acme/app/pull/12",
+      },
+    ];
+    await createRunFromAnalysis(
+      db,
+      77,
+      { trigger: "push", label: "main a…b (PR #12)", links },
+      rule
+    );
+    expect(mockCompose.mock.calls[0][1]).toMatchObject({
+      name: "main a…b (PR #12)",
+      links,
+    });
+  });
+
+  it("appends the build's pull requests to the note when they were looked up", async () => {
+    const db = makeDb(analysis);
+    const buildChanges = {
+      pullRequests: [
+        { number: 2957, title: "Fix pip", url: "https://bb/pr/2957" },
+      ],
+      orphanCommits: [{ shortSha: "e34a9ac", subject: "Add coverage" }],
+      truncated: false,
+      uncheckedCommits: 0,
+    };
+    await createRunFromAnalysis(
+      db,
+      77,
+      { trigger: "push", label: "master a…b" },
+      rule,
+      undefined,
+      buildChanges
+    );
+    expect(mockCompose.mock.calls[0][1].noteAppendix).toEqual(
+      buildChangesNodes(buildChanges)
+    );
+    expect(mockCompose.mock.calls[0][1].noteAppendix).toHaveLength(4);
+  });
+
+  it("sends no appendix when the build lookup found nothing or did not run", async () => {
     const db = makeDb(analysis);
     await createRunFromAnalysis(
       db,
       77,
-      {
-        trigger: "push",
-        label: "master d0db345…2828d02",
-        url: "https://bitbucket.org/acme/app/branches/compare/2828d02..d0db345",
-      },
-      {
-        pullRequests: [
-          {
-            number: 2957,
-            title: "Fixes/ABT-48564 pip activity token crash",
-            url: "https://bitbucket.org/acme/app/pull-requests/2957",
-          },
-          { number: 2960, title: "Sync worker", url: null },
-        ],
-        orphanCommits: [
-          {
-            shortSha: "e34a9ac",
-            subject: "Add test coverage for Share With Public",
-            url: "https://bitbucket.org/acme/app/commits/e34a9ac",
-          },
-        ],
-        truncated: true,
-        uncheckedCommits: 3,
-      }
-    );
-    const note = db.testRuns.create.mock.calls[0][0].data.note;
-    expect(note.content).toHaveLength(6);
-    expect(note.content[0].content[0].text).toBe("master d0db345…2828d02 — ");
-    expect(note.content[1]).toEqual({
-      type: "paragraph",
-      content: [{ type: "text", text: "Pull requests in this build (2)" }],
-    });
-    expect(note.content[2]).toEqual({
-      type: "bulletList",
-      content: [
-        {
-          type: "listItem",
-          content: [
-            {
-              type: "paragraph",
-              content: [
-                {
-                  type: "text",
-                  text: "PR #2957: Fixes/ABT-48564 pip activity token crash",
-                  marks: [
-                    {
-                      type: "link",
-                      attrs: {
-                        href: "https://bitbucket.org/acme/app/pull-requests/2957",
-                      },
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          type: "listItem",
-          content: [
-            {
-              type: "paragraph",
-              content: [{ type: "text", text: "PR #2960: Sync worker" }],
-            },
-          ],
-        },
-      ],
-    });
-    expect(note.content[3].content[0].text).toBe(
-      "Commits not in a pull request (1)"
-    );
-    expect(note.content[4].content[0].content[0].content).toEqual([
-      {
-        type: "text",
-        text: "e34a9ac",
-        marks: [
-          {
-            type: "link",
-            attrs: { href: "https://bitbucket.org/acme/app/commits/e34a9ac" },
-          },
-        ],
-      },
-      { type: "text", text: " Add test coverage for Share With Public" },
-    ]);
-    expect(note.content[5].content[0].text).toBe("…and 3 more commits");
-  });
-
-  it("writes exactly the link paragraphs when the build lookup found nothing", async () => {
-    const db = makeDb(analysis);
-    await createRunFromAnalysis(
-      db,
-      77,
-      { trigger: "push", label: "main a…b" },
+      { trigger: "push", label: "master a…b" },
+      rule,
+      undefined,
       {
         pullRequests: [],
         orphanCommits: [],
@@ -243,98 +286,458 @@ describe("createRunFromAnalysis", () => {
         uncheckedCommits: 0,
       }
     );
-    expect(db.testRuns.create.mock.calls[0][0].data.note).toEqual({
-      type: "doc",
-      content: [
-        { type: "paragraph", content: [{ type: "text", text: "main a…b" }] },
-      ],
-    });
+    expect(mockCompose.mock.calls[0][1]).not.toHaveProperty("noteAppendix");
   });
 
-  it("writes the label alone when the event had no link", async () => {
+  it("adds a line naming the rule and its settings after the event's links", async () => {
     const db = makeDb(analysis);
-    await createRunFromAnalysis(db, 77, { trigger: "push", label: "main a…b" });
-    expect(db.testRuns.create.mock.calls[0][0].data.note).toEqual({
-      type: "doc",
-      content: [
-        { type: "paragraph", content: [{ type: "text", text: "main a…b" }] },
-      ],
+    await createRunFromAnalysis(db, 77, autoRun, {
+      actionId: "act-1",
+      trigger: "CODE_PULL_REQUEST",
+      minScore: 90,
     });
+    expect(mockCompose.mock.calls[0][1].links).toEqual([
+      { label: autoRun.label, url: autoRun.url },
+      {
+        label: "Pull requests → Create Test Run · Minimum impact score: 90",
+        url: null,
+      },
+    ]);
   });
 
-  it("takes every suggested case at or above the webhook's minimum score instead of the tiers", async () => {
+  it("uses the label alone when the event had no link", async () => {
+    const db = makeDb(analysis);
+    await createRunFromAnalysis(
+      db,
+      77,
+      { trigger: "push", label: "main a…b" },
+      rule
+    );
+    expect(mockCompose.mock.calls[0][1].links).toEqual([
+      { label: "main a…b", url: null },
+    ]);
+  });
+
+  it("takes every suggested case at or above the rule's minimum score instead of the tiers", async () => {
     const db = makeDb(analysis);
 
-    const result = await createRunFromAnalysis(db, 77, {
-      ...autoRun,
+    await createRunFromAnalysis(db, 77, autoRun, {
+      actionId: "act-1",
       minScore: 70,
     });
 
-    expect(result).toEqual({ created: true, testRunId: 300, caseCount: 2 });
-    expect(db.impactAnalysis.findUnique).toHaveBeenCalledWith(
-      expect.objectContaining({
-        select: expect.objectContaining({
-          cases: expect.objectContaining({
-            where: { suggested: true, score: { gte: 70 } },
-          }),
-        }),
-      })
-    );
+    expect(
+      db.impactAnalysis.findUnique.mock.calls[0][0].select.cases
+    ).toMatchObject({
+      where: { suggested: true, score: { gte: 70 } },
+      orderBy: [{ score: "desc" }, { caseId: "asc" }],
+    });
   });
 
-  it("keeps the pinned and affected tiers when the webhook leaves the minimum score empty", async () => {
+  it("treats a minimum score of 0 as a score filter", async () => {
     const db = makeDb(analysis);
-
-    await createRunFromAnalysis(db, 77, { ...autoRun, minScore: null });
-
+    await createRunFromAnalysis(db, 77, autoRun, {
+      actionId: "act-1",
+      minScore: 0,
+    });
     expect(
       db.impactAnalysis.findUnique.mock.calls[0][0].select.cases.where
-    ).toEqual({ suggested: true, tier: { in: ["pinned", "affected"] } });
+    ).toEqual({ suggested: true, score: { gte: 0 } });
   });
 
-  it("makes no run when the analysis found no affected cases, and says so on the delivery", async () => {
-    const db = makeDb({ ...analysis, cases: [] });
-
-    const result = await createRunFromAnalysis(db, 77, autoRun);
-
-    expect(result).toEqual({ created: false, reason: "no_cases" });
-    expect(db.testRuns.create).not.toHaveBeenCalled();
-    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
-      where: { id: "del-1" },
-      data: { subjectRef: "analysis:77", error: "run:no_affected_cases" },
+  it("reports a missing analysis", async () => {
+    const db = makeDb(null);
+    expect(await createRunFromAnalysis(db, 77, autoRun, rule)).toEqual({
+      created: false,
+      reason: "analysis_missing",
     });
+    expect(mockCompose).not.toHaveBeenCalled();
   });
 
-  it("does not compose a second run for an analysis already linked to one", async () => {
-    const db = makeDb({ ...analysis, testRunId: 44 });
+  it("passes a compose refusal through without linking the analysis", async () => {
+    mockCompose.mockResolvedValueOnce({ created: false, reason: "no_cases" });
+    const db = makeDb(analysis);
 
-    expect(await createRunFromAnalysis(db, 77, autoRun)).toEqual({
+    expect(await createRunFromAnalysis(db, 77, autoRun, rule)).toEqual({
+      created: false,
+      reason: "no_cases",
+    });
+    expect(db.impactAnalysis.update).not.toHaveBeenCalled();
+    expect(db.impactAnalysisCase.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("reports the run a rule already composed from this analysis instead of a second one", async () => {
+    const db = makeDb(
+      { ...analysis, testRunId: 44 },
+      { logs: [{ webhookActionId: "act-1", analysisId: 77, testRunId: 44 }] }
+    );
+
+    expect(await createRunFromAnalysis(db, 77, autoRun, rule)).toEqual({
       created: false,
       reason: "already_linked",
+      testRunId: 44,
     });
-    expect(db.testRuns.create).not.toHaveBeenCalled();
+    expect(mockCompose).not.toHaveBeenCalled();
   });
 
-  it("falls back to any enabled run workflow and gives up without one", async () => {
-    const db = makeDb(analysis, null);
-    db.workflows.findFirst
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ id: 8 });
-    expect(await createRunFromAnalysis(db, 77, autoRun)).toMatchObject({
-      created: true,
-    });
-    expect(db.testRuns.create.mock.calls[0][0].data.stateId).toBe(8);
+  it("lets a hand-composed run linked to the analysis block every rule", async () => {
+    const db = makeDb({ ...analysis, testRunId: 44 });
 
-    const none = makeDb(analysis, null);
-    expect(await createRunFromAnalysis(none, 77, autoRun)).toEqual({
+    expect(await createRunFromAnalysis(db, 77, autoRun, rule)).toEqual({
       created: false,
-      reason: "no_workflow",
+      reason: "already_linked",
+      testRunId: 44,
+    });
+    expect(mockCompose).not.toHaveBeenCalled();
+  });
+
+  it("blocks a job queued before rules existed once the analysis is linked to any run", async () => {
+    const db = makeDb(
+      { ...analysis, testRunId: 44 },
+      {
+        logs: [
+          {
+            webhookActionId: "act-9",
+            analysisId: 77,
+            testRunId: 44,
+            outcome: "run_created",
+          },
+        ],
+      }
+    );
+
+    expect(
+      await createRunFromAnalysis(db, 77, autoRun, { actionId: null })
+    ).toEqual({ created: false, reason: "already_linked", testRunId: 44 });
+  });
+
+  it("still composes for a rule when the linked run came from another rule, without relinking", async () => {
+    const db = makeDb(
+      { ...analysis, testRunId: 44 },
+      {
+        logs: [
+          {
+            webhookActionId: "act-9",
+            analysisId: 77,
+            testRunId: 44,
+            outcome: "run_created",
+          },
+        ],
+      }
+    );
+
+    expect(await createRunFromAnalysis(db, 77, autoRun, rule)).toEqual({
+      created: true,
+      testRunId: 300,
+      caseCount: 2,
+      caseIds: [10, 11],
+    });
+    expect(db.impactAnalysis.update).not.toHaveBeenCalled();
+    expect(db.impactAnalysisCase.updateMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("runAnalysisActions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    nextRunId = 300;
+    mockCompose.mockImplementation(async (_db: unknown, input: any) => ({
+      created: true,
+      testRunId: nextRunId++,
+      caseCount: input.caseIds.length,
+    }));
+    mockExecute.mockResolvedValue({ requested: true, executionId: 9 });
+  });
+
+  it("composes one run per matching rule, logs each, and points the delivery at the first", async () => {
+    const db = makeDb(analysis);
+
+    await runAnalysisActions(
+      db,
+      77,
+      3,
+      {
+        ...autoRun,
+        actions: [
+          { actionId: "act-1", minScore: null },
+          { actionId: "act-2", minScore: 50 },
+        ],
+      },
+      "t-1"
+    );
+
+    expect(mockCompose).toHaveBeenCalledTimes(2);
+    expect(db.webhookActionLog.create).toHaveBeenCalledTimes(2);
+    expect(db.webhookActionLog.create.mock.calls[0][0].data).toMatchObject({
+      webhookActionId: "act-1",
+      webhookConfigId: "whc-1",
+      deliveryId: "del-1",
+      projectId: 3,
+      analysisId: 77,
+      outcome: "run_created",
+      testRunId: 300,
+      caseCount: 2,
+    });
+    expect(db.webhookActionLog.create.mock.calls[1][0].data).toMatchObject({
+      webhookActionId: "act-2",
+      outcome: "run_created",
+      testRunId: 301,
+    });
+    // only the first run links the analysis
+    expect(db.impactAnalysis.update).toHaveBeenCalledTimes(1);
+    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del-1" },
+      data: { subjectRef: "run:300", error: null },
+    });
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
+  it("hands the build's pull requests to every rule's run", async () => {
+    const db = makeDb(analysis);
+    const buildChanges = {
+      pullRequests: [{ number: 1, title: "One", url: null }],
+      orphanCommits: [],
+      truncated: false,
+      uncheckedCommits: 0,
+    };
+    await runAnalysisActions(
+      db,
+      77,
+      3,
+      {
+        ...autoRun,
+        actions: [
+          { actionId: "act-1", minScore: null },
+          { actionId: "act-2", minScore: 50 },
+        ],
+      },
+      "t-1",
+      buildChanges
+    );
+    expect(mockCompose).toHaveBeenCalledTimes(2);
+    for (const call of mockCompose.mock.calls) {
+      expect(call[1].noteAppendix).toEqual(buildChangesNodes(buildChanges));
+    }
+  });
+
+  it("composes the single run a job queued before rules existed asked for, with no log and no execution", async () => {
+    const db = makeDb(analysis);
+
+    await runAnalysisActions(db, 77, 3, { ...autoRun, minScore: 60 });
+
+    expect(mockCompose).toHaveBeenCalledTimes(1);
+    expect(
+      db.impactAnalysis.findUnique.mock.calls[0][0].select.cases.where
+    ).toEqual({ suggested: true, score: { gte: 60 } });
+    // a log row is still written for the webhook, without a rule
+    expect(db.webhookActionLog.create.mock.calls[0][0].data).toMatchObject({
+      webhookActionId: null,
+      outcome: "run_created",
+    });
+    expect(mockExecute).not.toHaveBeenCalled();
+    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del-1" },
+      data: { subjectRef: "run:300", error: null },
     });
   });
 
-  it("truncates a long label into the run name", async () => {
+  it("writes no log rows without a webhook config", async () => {
     const db = makeDb(analysis);
-    await createRunFromAnalysis(db, 77, { ...autoRun, label: "x".repeat(400) });
-    expect(db.testRuns.create.mock.calls[0][0].data.name).toHaveLength(200);
+    await runAnalysisActions(db, 77, 3, {
+      trigger: "push",
+      label: "x",
+      actions: [{ actionId: "act-1" }],
+    });
+    expect(db.webhookActionLog.create).not.toHaveBeenCalled();
+    expect(db.webhookDelivery.update).not.toHaveBeenCalled();
+  });
+
+  it("requests execution of a rule's run when the rule says to", async () => {
+    const db = makeDb(analysis);
+    const autoExecute = { targetId: 4, ref: "main" };
+
+    await runAnalysisActions(
+      db,
+      77,
+      3,
+      { ...autoRun, actions: [{ actionId: "act-1", autoExecute }] },
+      "t-1"
+    );
+
+    expect(mockExecute).toHaveBeenCalledWith(db, {
+      autoExecute,
+      testRunId: 300,
+      projectId: 3,
+      tenantId: "t-1",
+    });
+    expect(db.webhookActionLog.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("logs a refused execution on the rule and the delivery", async () => {
+    mockExecute.mockResolvedValue({
+      requested: false,
+      code: "TARGET_DISABLED",
+    });
+    const db = makeDb(analysis);
+
+    await runAnalysisActions(db, 77, 3, {
+      ...autoRun,
+      actions: [{ actionId: "act-1", autoExecute: { targetId: 4 } }],
+    });
+
+    expect(db.webhookActionLog.create.mock.calls[1][0].data).toMatchObject({
+      webhookActionId: "act-1",
+      outcome: "execute_failed",
+      testRunId: 300,
+      detail: "TARGET_DISABLED",
+    });
+    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del-1" },
+      data: { subjectRef: "run:300", error: "execute:target_disabled" },
+    });
+  });
+
+  it("says so on the delivery when the analysis found no affected cases", async () => {
+    mockCompose.mockResolvedValue({ created: false, reason: "no_cases" });
+    const db = makeDb({ ...analysis, cases: [] });
+
+    await runAnalysisActions(db, 77, 3, {
+      ...autoRun,
+      actions: [{ actionId: "act-1" }],
+    });
+
+    expect(db.webhookActionLog.create.mock.calls[0][0].data).toMatchObject({
+      outcome: "no_cases",
+    });
+    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del-1" },
+      data: { subjectRef: "analysis:77", error: "ignored:no_affected_cases" },
+    });
+  });
+
+  it("notes a failure on the delivery over a rule that found no cases", async () => {
+    mockCompose
+      .mockResolvedValueOnce({ created: false, reason: "no_cases" })
+      .mockResolvedValueOnce({ created: false, reason: "no_workflow" });
+    const db = makeDb(analysis);
+
+    await runAnalysisActions(db, 77, 3, {
+      ...autoRun,
+      actions: [{ actionId: "act-1" }, { actionId: "act-2" }],
+    });
+
+    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del-1" },
+      data: { subjectRef: "analysis:77", error: "run:no_workflow" },
+    });
+  });
+
+  it("records other refusals by reason", async () => {
+    mockCompose.mockResolvedValue({ created: false, reason: "no_workflow" });
+    const db = makeDb(analysis);
+
+    await runAnalysisActions(db, 77, 3, {
+      ...autoRun,
+      actions: [{ actionId: "act-1" }],
+    });
+
+    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del-1" },
+      data: { subjectRef: "analysis:77", error: "run:no_workflow" },
+    });
+  });
+
+  it("logs already_composed and points the delivery at the existing run on a repeat", async () => {
+    const db = makeDb(
+      { ...analysis, testRunId: 44 },
+      { logs: [{ webhookActionId: "act-1", analysisId: 77, testRunId: 44 }] }
+    );
+
+    await runAnalysisActions(db, 77, 3, {
+      ...autoRun,
+      actions: [{ actionId: "act-1", autoExecute: { targetId: 4 } }],
+    });
+
+    expect(mockCompose).not.toHaveBeenCalled();
+    expect(mockExecute).not.toHaveBeenCalled();
+    expect(db.webhookActionLog.create.mock.calls[0][0].data).toMatchObject({
+      outcome: "already_composed",
+      testRunId: 44,
+    });
+    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del-1" },
+      data: { subjectRef: "run:44", error: null },
+    });
+  });
+
+  it("composes the second rule's run after the first rule linked the analysis in the same job", async () => {
+    const db = makeDb(analysis);
+
+    await runAnalysisActions(db, 77, 3, {
+      ...autoRun,
+      actions: [{ actionId: "act-1" }, { actionId: "act-2" }],
+    });
+
+    expect(mockCompose).toHaveBeenCalledTimes(2);
+    expect(
+      db.webhookActionLog.create.mock.calls.map((c: any) => c[0].data.outcome)
+    ).toEqual(["run_created", "run_created"]);
+  });
+
+  it("blocks every rule in a job when the analysis's run was composed by hand", async () => {
+    const db = makeDb({ ...analysis, testRunId: 44 });
+
+    await runAnalysisActions(db, 77, 3, {
+      ...autoRun,
+      actions: [{ actionId: "act-1" }, { actionId: "act-2" }],
+    });
+
+    expect(mockCompose).not.toHaveBeenCalled();
+    expect(
+      db.webhookActionLog.create.mock.calls.map((c: any) => c[0].data.outcome)
+    ).toEqual(["already_composed", "already_composed"]);
+  });
+
+  it("blocks the first rule when the analysis's run was composed by hand", async () => {
+    const db = makeDb({ ...analysis, testRunId: 44 });
+
+    await runAnalysisActions(db, 77, 3, {
+      ...autoRun,
+      actions: [{ actionId: "act-1" }],
+    });
+
+    expect(mockCompose).not.toHaveBeenCalled();
+    expect(db.webhookActionLog.create.mock.calls[0][0].data).toMatchObject({
+      outcome: "already_composed",
+      testRunId: 44,
+    });
+  });
+
+  it("logs a thrown rule as an error and carries on with the next", async () => {
+    mockCompose
+      .mockRejectedValueOnce(new Error("db down"))
+      .mockResolvedValueOnce({ created: true, testRunId: 301, caseCount: 2 });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const db = makeDb(analysis);
+
+    await runAnalysisActions(db, 77, 3, {
+      ...autoRun,
+      actions: [{ actionId: "act-1" }, { actionId: "act-2" }],
+    });
+
+    expect(db.webhookActionLog.create.mock.calls[0][0].data).toMatchObject({
+      webhookActionId: "act-1",
+      outcome: "error",
+      detail: "db down",
+    });
+    expect(db.webhookActionLog.create.mock.calls[1][0].data).toMatchObject({
+      webhookActionId: "act-2",
+      outcome: "run_created",
+    });
+    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del-1" },
+      data: { subjectRef: "run:301", error: "run:error" },
+    });
+    spy.mockRestore();
   });
 });

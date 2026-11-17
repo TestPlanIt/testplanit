@@ -47,6 +47,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "~/lib/navigation";
+import { withBasePath } from "~/lib/basePath";
 
 interface ShareLinkListProps {
   projectId?: number; // Optional for cross-project reports
@@ -146,7 +147,7 @@ export function ShareLinkList({
     async (shareKey: string, shareId: string) => {
       const protocol = window.location.protocol;
       const host = window.location.host;
-      const shareUrl = `${protocol}//${host}/share/${shareKey}`;
+      const shareUrl = `${protocol}//${host}${withBasePath(`/share/${shareKey}`)}`;
 
       try {
         await navigator.clipboard.writeText(shareUrl);
@@ -510,8 +511,14 @@ export function ShareLinkList({
           if (isExpired) {
             return <Badge variant="secondary">{t("status.expired")}</Badge>;
           }
+          // The fill is overridden, so the foreground has to be too: twMerge
+          // drops `bg-primary` but keeps `text-primary-foreground`, which left
+          // the primary ink on a success fill at 2.2:1.
           return (
-            <Badge variant="default" className="bg-success">
+            <Badge
+              variant="default"
+              className="bg-success text-success-foreground hover:bg-success/90 hover:text-success-foreground"
+            >
               {tCommon("fields.isActive")}
             </Badge>
           );

@@ -1,10 +1,14 @@
 import { NextRequest } from "next/server";
 import { handleExecutionLogPOST } from "~/utils/executionLogUtils";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
-export async function GET() {
+async function reportGet() {
   return Response.json({ dimensions: [], metrics: [] });
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   return handleExecutionLogPOST(req, false);
 }
+
+export const GET = withReplicaRoute(reportGet);
+export const POST = withReplicaRoute(reportPost);

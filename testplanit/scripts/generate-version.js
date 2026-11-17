@@ -6,6 +6,18 @@ const { execSync } = require("child_process");
 const packageJson = require("../package.json");
 const version = packageJson.version;
 
+// Docker builds have no .git directory (.dockerignore excludes it), so git
+// cannot answer there. The release workflows pass the commit and the release
+// tag as build args and the Dockerfile exposes them as GIT_COMMIT and VERSION,
+// which is the only provenance an image build can see.
+const envCommit = (process.env.GIT_COMMIT || "").trim();
+// VERSION defaults to "latest" in docker-bake.hcl, so only take a value that
+// actually names a release.
+const envVersion = (process.env.VERSION || "").trim();
+const envTag = /^v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(envVersion)
+  ? envVersion
+  : "";
+
 // Get git information
 let gitCommit = "unknown";
 let gitBranch = "unknown";
@@ -34,7 +46,16 @@ try {
     }
   }
 } catch (error) {
-  console.warn("Git information not available:", error.message);
+  if (envCommit) {
+    gitCommit = envCommit.slice(0, 7);
+    gitTag = envTag;
+    // The release workflows check out the tag they build, so a VERSION that
+    // names a release is this commit's exact tag.
+    isExactTag = Boolean(envTag);
+    console.log("Git not available; using the GIT_COMMIT/VERSION build args.");
+  } else {
+    console.warn("Git information not available:", error.message);
+  }
 }
 
 // Betas ship from the `beta` branch, where package.json still carries the last

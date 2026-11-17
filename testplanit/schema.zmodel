@@ -162,6 +162,7 @@ model User {
     isActive                                 Boolean                           @default(true) @deny('update', scimGivenName != null)
     isDeleted                                Boolean                           @default(false)
     deletedAt                                DateTime?                         @db.Timestamptz(6)
+    deletedById                              String?
     isApi                                    Boolean                           @default(false)
     createdAt                                DateTime                          @default(now()) @db.Timestamptz(6)
     createdById                              String?
@@ -200,11 +201,17 @@ model User {
     createdCaseLinks                         RepositoryCaseLink[]              @relation("UserCreatedCaseLinks")
     createdCodePins                          RepositoryCaseCodePin[]           @relation("UserCreatedCodePins")
     createdImpactAnalyses                    ImpactAnalysis[]                  @relation("ImpactAnalysisCreatedBy")
+    classifiedFailureSignatures              FailureSignature[]                @relation("FailureSignatureClassifiedBy")
+    resolvedFailureSignatures                FailureSignature[]                @relation("FailureSignatureResolvedBy")
+    caseQuarantines                          CaseQuarantine[]                  @relation("CaseQuarantineCreatedBy")
     createdExecutionTargets                  ExecutionTarget[]                 @relation("ExecutionTargetCreatedBy")
     requestedTestRunExecutions               TestRunExecution[]                @relation("TestRunExecutionRequestedBy")
     reviewedImpactAnalysisCases              ImpactAnalysisCase[]              @relation("ImpactAnalysisCaseReviewedBy")
     createdSharedStepGroups                  SharedStepGroup[]
     notifications                            Notification[]
+    alertRulesCreated                        AlertRule[]                       @relation("AlertRuleCreatedBy")
+    alertSubscriptions                       AlertSubscriber[]                 @relation("AlertSubscriberUser")
+    alertSubscriptionsAdded                  AlertSubscriber[]                 @relation("AlertSubscriberAddedBy")
     userIntegrationAuths                     UserIntegrationAuth[]
     createdEmailDomains                      AllowedEmailDomain[]
     lastActiveAt                             DateTime?
@@ -228,6 +235,7 @@ model User {
     reviewsRequested                         ReviewRequest[]                   @relation("ReviewRequestedBy")
     reviewsAssigned                          ReviewRequest[]                   @relation("ReviewAssignedToUser")
     reviewsDecided                           ReviewRequest[]                   @relation("ReviewDecidedBy")
+    reviewsReverted                          ReviewRequest[]                   @relation("ReviewRevertedBy")
 
     // Two-factor authentication
     twoFactorEnabled                         Boolean                           @default(false)
@@ -288,9 +296,9 @@ model UserPreferences {
     timeFormat                          TimeFormat         @default(HH_MM_A)
     timezone                            String             @default("Etc/UTC")
     notificationMode                    NotificationMode   @default(USE_GLOBAL)
-    emailNotifications                  Boolean            @default(true)
-    inAppNotifications                  Boolean            @default(true)
+    mutedNotificationTypes              NotificationType[] @default([])
     detailsDisplayMode                  DetailsDisplayMode @default(DOCKED)
+    stepLayout                          StepLayout         @default(STACKED)
     hasCompletedWelcomeTour             Boolean            @default(false)
     hasCompletedInitialPreferencesSetup Boolean            @default(false)
 
@@ -488,6 +496,15 @@ enum DetailsDisplayMode {
     @@allow('read', true) // Allow reads for signup
 }
 
+enum StepLayout {
+    STACKED
+    SIDE_BY_SIDE
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', true) // Allow reads for signup
+}
+
 enum Access {
     NONE
     USER
@@ -537,9 +554,14 @@ enum NotificationType {
     REVIEW_REJECTED
     REVIEW_CANCELLED
     REVIEW_REMINDER
+    REVIEW_DECISION_REVERTED
     AI_STEPS_DERIVED
     INTEGRATION_AUTH_EXPIRED
     RUN_READY_TO_COMPLETE
+    WHATS_NEW
+    RUN_CASE_UNBLOCKED
+    ALERT_TRIGGERED
+    CASES_DRAFTED
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -554,6 +576,7 @@ model Groups {
     note                  String?
     isDeleted             Boolean                     @default(false)
     deletedAt             DateTime?                   @db.Timestamptz(6)
+    deletedById           String?
     updatedAt             DateTime?                   @updatedAt
     scimDisplayName       String?
     scimExtensions        Json?
@@ -627,6 +650,7 @@ model Roles {
     isDefault                Boolean                  @default(false)
     isDeleted                Boolean                  @default(false)
     deletedAt                DateTime?                @db.Timestamptz(6)
+    deletedById              String?
     users                    User[]
     rolePermissions          RolePermission[]
     defaultForProjects       Projects[]               @relation("ProjectDefaultRole")
@@ -650,6 +674,7 @@ model Projects {
     isCompleted                      Boolean                               @default(false)
     isDeleted                        Boolean                               @default(false)
     deletedAt                        DateTime?                             @db.Timestamptz(6)
+    deletedById                      String?
     completedAt                      DateTime?                             @db.Date
     createdAt                        DateTime                              @default(now()) @db.Timestamptz(6)
     createdBy                        String                                @deny('update', true)
@@ -658,6 +683,8 @@ model Projects {
     assignedStatuses                 ProjectStatusAssignment[]
     milestoneTypes                   MilestoneTypesAssignment[]
     assignedTemplates                TemplateProjectAssignment[]
+    defaultTemplateId                Int?
+    defaultTemplate                  Templates?                            @relation("ProjectDefaultTemplate", fields: [defaultTemplateId], references: [id], onDelete: SetNull)
     assignedWorkflows                ProjectWorkflowAssignment[]
     assignedConfigurations           ProjectConfigurationAssignment[]
     milestones                       Milestones[]
@@ -678,6 +705,7 @@ model Projects {
     dataSets                         DataSet[]
     projectIntegrations              ProjectIntegration[]
     webhookConfigs                   WebhookConfig[]
+    webhookActions                   WebhookAction[]
     webhookOutboxEvents              WebhookOutboxEvent[]
     projectLlmIntegrations           ProjectLlmIntegration[]
     codeRepositoryConfigs            ProjectCodeRepositoryConfig[]
@@ -702,15 +730,36 @@ model Projects {
     defaultCaseExportTemplate        CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
     quickScriptEnabled               Boolean                               @default(false)
     impactEnabled                    Boolean                               @default(false)
+    /// Group automated failures into signatures (deterministic, no LLM cost).
+    failureTriageEnabled             Boolean                               @default(true) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    /// Ask the project's LLM to classify new signatures as they appear.
+    failureTriageAutoClassify        Boolean                               @default(true) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    /// Quarantine lifts itself once a case passes this many times in a row
+    /// after being quarantined (0 or the switch off = only released by hand).
+    quarantineAutoRelease            Boolean                               @default(true) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    quarantineAutoReleasePasses      Int                                   @default(5) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    /// Maintain a per-case risk score in the background (deterministic, no LLM cost).
+    riskScoringEnabled               Boolean                               @default(true) @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    /// Per-component risk scorer weight overrides; null = system defaults.
+    riskWeights                      Json?                                 @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    /// Priority string (issue/tracker vocabulary) -> 0-100 weight; unmapped
+    /// strings count neutral. No vocabulary is built in.
+    riskPriorityWeights              Json?                                 @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    /// Admin-chosen dropdown field feeding per-case criticality; its options
+    /// weight by their order (top = highest), never by name.
+    riskCriticalityFieldId           Int?                                  @deny('update', auth().access != 'ADMIN' && !(id in auth().adminProjectIds) && creator.id != auth().id)
+    riskCriticalityField             CaseFields?                           @relation("ProjectRiskCriticalityField", fields: [riskCriticalityFieldId], references: [id], onDelete: SetNull)
     /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
     junitIterationPropertyNames      String[]                              @default([])
     reviewWorkflowEnabled            Boolean                               @default(false)
     requireResultFlipJustification   Boolean                               @default(false)
     editResultsDurationSeconds       Int?
+    revertDecisionDurationSeconds    Int?
     requireIssueOnFailure            Boolean                               @default(false)
     excludeNotStartedFromRuns        Boolean                               @default(false)
     requirementsEnabled              Boolean                               @default(false)
     autoLockCompositionOnInProgress  Boolean                               @default(false)
+    enforceCaseDependencies          Boolean                               @default(false)
     abandonedRunIdleMinutes          Int?
     abandonedRunStateId              Int?
     abandonedRunState                Workflows?                            @relation("ProjectAbandonedRunState", fields: [abandonedRunStateId], references: [id], onDelete: SetNull)
@@ -718,6 +767,10 @@ model Projects {
     stepSequenceMatches              StepSequenceMatch[]
     reviewRequests                   ReviewRequest[]
     caseDrafts                       CaseDraft[]
+    failureSignatures                FailureSignature[]
+    caseQuarantines                  CaseQuarantine[]
+    alertRules                       AlertRule[]
+    alertEvents                      AlertEvent[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -878,6 +931,7 @@ model Milestones {
     isCompleted         Boolean                @default(false) @deny('update', integrationId != null && detachedAt == null)
     isDeleted           Boolean                @default(false)
     deletedAt           DateTime?              @db.Timestamptz(6)
+    deletedById         String?
     automaticCompletion Boolean                @default(false)
     notifyDaysBefore    Int                    @default(0)
     startedAt           DateTime?              @db.Timestamptz(6) @deny('update', integrationId != null && detachedAt == null)
@@ -922,6 +976,7 @@ model Milestones {
     @@index([isCompleted, notifyDaysBefore, completedAt])
     @@index([externalId])
     @@index([integrationId])
+    @@index([deletedById, deletedAt])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
@@ -963,15 +1018,16 @@ model Milestones {
 }
 
 model MilestoneTypes {
-    id         Int                        @id @default(autoincrement())
-    name       String                     @unique @length(1)
-    iconId     Int?
-    icon       FieldIcon?                 @relation(fields: [iconId], references: [id], onDelete: SetNull)
-    isDefault  Boolean                    @default(false)
-    isDeleted  Boolean                    @default(false)
-    deletedAt  DateTime?                  @db.Timestamptz(6)
-    projects   MilestoneTypesAssignment[]
-    milestones Milestones[]
+    id          Int                        @id @default(autoincrement())
+    name        String                     @unique @length(1)
+    iconId      Int?
+    icon        FieldIcon?                 @relation(fields: [iconId], references: [id], onDelete: SetNull)
+    isDefault   Boolean                    @default(false)
+    isDeleted   Boolean                    @default(false)
+    deletedAt   DateTime?                  @db.Timestamptz(6)
+    deletedById String?
+    projects    MilestoneTypesAssignment[]
+    milestones  Milestones[]
 
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
@@ -1069,14 +1125,15 @@ model ColorFamily {
 }
 
 model Color {
-    id            Int            @id @default(autoincrement())
-    colorFamilyId Int
-    colorFamily   ColorFamily    @relation(fields: [colorFamilyId], references: [id])
-    value         String         @length(1)
-    order         Int            @default(0)
-    fieldOptions  FieldOptions[]
-    statuses      Status[]
-    workflows     Workflows[]
+    id                     Int                     @id @default(autoincrement())
+    colorFamilyId          Int
+    colorFamily            ColorFamily             @relation(fields: [colorFamilyId], references: [id])
+    value                  String                  @length(1)
+    order                  Int                     @default(0)
+    fieldOptions           FieldOptions[]
+    statuses               Status[]
+    workflows              Workflows[]
+    failureClassifications FailureClassification[]
 
     @@unique([colorFamilyId, order], name: "colorFamilyId_order")
     @@deny('all', auth() == null)
@@ -1085,26 +1142,28 @@ model Color {
 }
 
 model CaseFields {
-    id                 Int                      @id @default(autoincrement())
-    displayName        String                   @length(1)
-    systemName         String                   @unique @length(1)
-    hint               String?
-    typeId             Int
-    type               CaseFieldTypes           @relation(name: "TypeToCaseFields", fields: [typeId], references: [id])
-    isEnabled          Boolean                  @default(true)
-    isDeleted          Boolean                  @default(false)
-    deletedAt          DateTime?                @db.Timestamptz(6)
-    isRequired         Boolean                  @default(false)
-    isRestricted       Boolean                  @default(false)
-    defaultValue       String?
-    isChecked          Boolean?
-    minValue           Float?
-    maxValue           Float?
-    initialHeight      Int?
-    templates          TemplateCaseAssignment[]
-    fieldOptions       CaseFieldAssignment[]
-    caseFieldValues    CaseFieldValues[]
-    sessionFieldValues SessionFieldValues[]
+    id                      Int                      @id @default(autoincrement())
+    displayName             String                   @length(1)
+    systemName              String                   @unique @length(1)
+    hint                    String?
+    typeId                  Int
+    type                    CaseFieldTypes           @relation(name: "TypeToCaseFields", fields: [typeId], references: [id])
+    isEnabled               Boolean                  @default(true)
+    isDeleted               Boolean                  @default(false)
+    deletedAt               DateTime?                @db.Timestamptz(6)
+    deletedById             String?
+    isRequired              Boolean                  @default(false)
+    isRestricted            Boolean                  @default(false)
+    defaultValue            String?
+    isChecked               Boolean?
+    minValue                Float?
+    maxValue                Float?
+    initialHeight           Int?
+    templates               TemplateCaseAssignment[]
+    fieldOptions            CaseFieldAssignment[]
+    caseFieldValues         CaseFieldValues[]
+    sessionFieldValues      SessionFieldValues[]
+    riskCriticalityProjects Projects[]               @relation("ProjectRiskCriticalityField")
 
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN' || auth().access == 'PROJECTADMIN')
@@ -1121,6 +1180,7 @@ model ResultFields {
     isEnabled         Boolean                    @default(true)
     isDeleted         Boolean                    @default(false)
     deletedAt         DateTime?                  @db.Timestamptz(6)
+    deletedById       String?
     isRequired        Boolean                    @default(false)
     isRestricted      Boolean                    @default(false)
     defaultValue      String?
@@ -1145,6 +1205,7 @@ model FieldOptions {
     isEnabled    Boolean                 @default(true)
     isDeleted    Boolean                 @default(false)
     deletedAt    DateTime?               @db.Timestamptz(6)
+    deletedById  String?
     iconColorId  Int?
     iconColor    Color?                  @relation(fields: [iconColorId], references: [id], onDelete: SetNull)
     isDefault    Boolean                 @default(false)
@@ -1170,18 +1231,20 @@ model CaseFieldTypes {
 }
 
 model Templates {
-    id              Int                         @id @default(autoincrement())
-    templateName    String                      @unique @length(1)
-    isEnabled       Boolean
-    isDeleted       Boolean                     @default(false)
-    deletedAt       DateTime?                   @db.Timestamptz(6)
-    isDefault       Boolean
-    caseFields      TemplateCaseAssignment[]
-    resultFields    TemplateResultAssignment[]
-    projects        TemplateProjectAssignment[]
-    repositoryCases RepositoryCases[]
-    sessions        Sessions[]
-    importMappings  ImportMapping[]
+    id                 Int                         @id @default(autoincrement())
+    templateName       String                      @unique @length(1)
+    isEnabled          Boolean
+    isDeleted          Boolean                     @default(false)
+    deletedAt          DateTime?                   @db.Timestamptz(6)
+    deletedById        String?
+    isDefault          Boolean
+    caseFields         TemplateCaseAssignment[]
+    resultFields       TemplateResultAssignment[]
+    projects           TemplateProjectAssignment[]
+    defaultForProjects Projects[]                  @relation("ProjectDefaultTemplate")
+    repositoryCases    RepositoryCases[]
+    sessions           Sessions[]
+    importMappings     ImportMapping[]
 
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
@@ -1247,6 +1310,7 @@ model CaseExportTemplate {
     isEnabled          Boolean                               @default(true)
     isDeleted          Boolean                               @default(false)
     deletedAt          DateTime?                             @db.Timestamptz(6)
+    deletedById        String?
     createdAt          DateTime                              @default(now()) @db.Timestamptz(6)
     updatedAt          DateTime                              @updatedAt
     projects           CaseExportTemplateProjectAssignment[]
@@ -1308,6 +1372,7 @@ model Status {
     color                 Color                     @relation(fields: [colorId], references: [id])
     isDeleted             Boolean                   @default(false)
     deletedAt             DateTime?                 @db.Timestamptz(6)
+    deletedById           String?
     isEnabled             Boolean
     isSuccess             Boolean
     isFailure             Boolean
@@ -1372,6 +1437,7 @@ model Workflows {
     isEnabled               Boolean                     @default(true)
     isDeleted               Boolean                     @default(false)
     deletedAt               DateTime?                   @db.Timestamptz(6)
+    deletedById             String?
     isDefault               Boolean                     @default(false)
     workflowType            WorkflowType                @default(NOT_STARTED)
     scope                   WorkflowScope
@@ -1419,11 +1485,12 @@ enum WorkflowScope {
 }
 
 model ConfigCategories {
-    id        Int              @id @default(autoincrement())
-    name      String           @length(1)
-    isDeleted Boolean          @default(false)
-    deletedAt DateTime?        @db.Timestamptz(6)
-    variants  ConfigVariants[]
+    id          Int              @id @default(autoincrement())
+    name        String           @length(1)
+    isDeleted   Boolean          @default(false)
+    deletedAt   DateTime?        @db.Timestamptz(6)
+    deletedById String?
+    variants    ConfigVariants[]
 
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
@@ -1436,6 +1503,7 @@ model ConfigVariants {
     isEnabled      Boolean                      @default(true)
     isDeleted      Boolean                      @default(false)
     deletedAt      DateTime?                    @db.Timestamptz(6)
+    deletedById    String?
     categoryId     Int
     category       ConfigCategories             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
     configurations ConfigurationConfigVariant[]
@@ -1446,15 +1514,16 @@ model ConfigVariants {
 }
 
 model Configurations {
-    id        Int                              @id @default(autoincrement())
-    name      String                           @length(1)
-    isEnabled Boolean                          @default(true)
-    isDeleted Boolean                          @default(false)
-    deletedAt DateTime?                        @db.Timestamptz(6)
-    variants  ConfigurationConfigVariant[]
-    sessions  Sessions[]
-    testRuns  TestRuns[]
-    projects  ProjectConfigurationAssignment[]
+    id          Int                              @id @default(autoincrement())
+    name        String                           @length(1)
+    isEnabled   Boolean                          @default(true)
+    isDeleted   Boolean                          @default(false)
+    deletedAt   DateTime?                        @db.Timestamptz(6)
+    deletedById String?
+    variants    ConfigurationConfigVariant[]
+    sessions    Sessions[]
+    testRuns    TestRuns[]
+    projects    ProjectConfigurationAssignment[]
 
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
@@ -1474,13 +1543,14 @@ model ConfigurationConfigVariant {
 }
 
 model Tags {
-    id        Int                 @id @default(autoincrement())
-    name      String              @unique @length(1)
-    isDeleted Boolean             @default(false)
-    deletedAt DateTime?           @db.Timestamptz(6)
-    caseTags  RepositoryCaseTag[]
-    sessions  Sessions[]
-    testRuns  TestRuns[]
+    id          Int                 @id @default(autoincrement())
+    name        String              @unique @length(1)
+    isDeleted   Boolean             @default(false)
+    deletedAt   DateTime?           @db.Timestamptz(6)
+    deletedById String?
+    caseTags    RepositoryCaseTag[]
+    sessions    Sessions[]
+    testRuns    TestRuns[]
 
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
@@ -1489,15 +1559,16 @@ model Tags {
 }
 
 model Repositories {
-    id         Int                 @id @default(autoincrement())
-    projectId  Int
-    project    Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    isActive   Boolean             @default(true)
-    isArchived Boolean             @default(false)
-    isDeleted  Boolean             @default(false)
-    deletedAt  DateTime?           @db.Timestamptz(6)
-    folders    RepositoryFolders[]
-    cases      RepositoryCases[]
+    id          Int                 @id @default(autoincrement())
+    projectId   Int
+    project     Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    isActive    Boolean             @default(true)
+    isArchived  Boolean             @default(false)
+    isDeleted   Boolean             @default(false)
+    deletedAt   DateTime?           @db.Timestamptz(6)
+    deletedById String?
+    folders     RepositoryFolders[]
+    cases       RepositoryCases[]
 
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
@@ -1570,6 +1641,7 @@ model RepositoryFolders {
     order        Int                 @default(0)
     isDeleted    Boolean             @default(false)
     deletedAt    DateTime?           @db.Timestamptz(6)
+    deletedById  String?
     cases        RepositoryCases[]
     caseDrafts   CaseDraft[]
 
@@ -1577,6 +1649,7 @@ model RepositoryFolders {
     @@index([projectId, repositoryId, isDeleted])
     @@index([parentId])
     @@index([order])
+    @@index([deletedById, deletedAt])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
@@ -1654,6 +1727,7 @@ model RepositoryCaseLink {
     type        LinkType
     isDeleted   Boolean         @default(false)
     deletedAt   DateTime?       @db.Timestamptz(6)
+    deletedById String?
     createdAt   DateTime        @default(now())
     createdById String          @deny('update', true)
     createdBy   User            @relation("UserCreatedCaseLinks", fields: [createdById], references: [id])
@@ -1910,6 +1984,7 @@ model DuplicateScanResult {
     scanJobId       String?
     isDeleted       Boolean                   @default(false)
     deletedAt       DateTime?                 @db.Timestamptz(6)
+    deletedById     String?
     createdAt       DateTime                  @default(now()) @db.Timestamptz(6)
 
     @@unique([caseAId, caseBId, scanJobId])
@@ -1976,6 +2051,7 @@ model StepSequenceMatch {
     scanJobId   String?
     isDeleted   Boolean                 @default(false)
     deletedAt   DateTime?               @db.Timestamptz(6)
+    deletedById String?
     createdAt   DateTime                @default(now()) @db.Timestamptz(6)
     members     StepSequenceMatchCase[]
 
@@ -2032,6 +2108,7 @@ model StepSequenceMatchCase {
     endStepId   Int
     isDeleted   Boolean           @default(false)
     deletedAt   DateTime?         @db.Timestamptz(6)
+    deletedById String?
 
     @@unique([matchId, caseId])
     @@index([caseId])
@@ -2098,14 +2175,25 @@ model RepositoryCases {
     estimate                Int?
     forecastManual          Int?
     forecastAutomated       Float?
+    // Maintained risk score (0-100) with its per-component breakdown; written
+    // only by the risk service through the raw client. Unlike the forecasts,
+    // the breakdown is rendered as structured data for every reader, so the
+    // columns are locked against policy-client writes.
+    riskScore               Float?                       @deny('update', true)
+    riskReasons             Json?                        @deny('update', true)
+    riskComputedAt          DateTime?                    @db.Timestamptz(6) @deny('update', true)
     order                   Int                          @default(0)
     createdAt               DateTime                     @default(now()) @db.Timestamptz(6)
+    // When the case was staged (CaseDraft.createdAt), for a case created from
+    // a staged case; null otherwise.
+    stagedAt                DateTime?                    @db.Timestamptz(6)
     creatorId               String                       @deny('update', true)
     creator                 User                         @relation(fields: [creatorId], references: [id])
     automated               Boolean                      @default(false)
     isArchived              Boolean                      @default(false)
     isDeleted               Boolean                      @default(false)
     deletedAt               DateTime?                    @db.Timestamptz(6)
+    deletedById             String?
     currentVersion          Int                          @default(1)
     hasParameters           Boolean                      @default(false)
     // Number of LIVE (isDeleted = false) rows in `steps`, maintained by the
@@ -2119,7 +2207,7 @@ model RepositoryCases {
     resultFieldValues       ResultFieldValues[]
     attachments             Attachments[]
     steps                   Steps[]
-    testRuns                TestRunCases[]
+    testRunCases            TestRunCases[]
     caseTags                RepositoryCaseTag[]
     caseIssues              RepositoryCaseIssue[]
     junitResults            JUnitTestResult[]            @relation("JUnitResultCase")
@@ -2129,6 +2217,7 @@ model RepositoryCases {
     linksFrom               RepositoryCaseLink[]         @relation("CaseALinks")
     linksTo                 RepositoryCaseLink[]         @relation("CaseBLinks")
     codePins                RepositoryCaseCodePin[]
+    quarantine              CaseQuarantine?
     impactAnalysisCases     ImpactAnalysisCase[]
     duplicateScanResultsA   DuplicateScanResult[]        @relation("DuplicateCaseA")
     duplicateScanResultsB   DuplicateScanResult[]        @relation("DuplicateCaseB")
@@ -2148,6 +2237,8 @@ model RepositoryCases {
     @@index([createdAt])
     @@index([hasParameters])
     @@index([liveStepCount])
+    @@index([riskScore])
+    @@index([deletedById, deletedAt])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
@@ -2206,27 +2297,42 @@ model RepositoryCases {
 
 // Auto-saved in-progress case edits. Shape and lifecycle: lib/services/caseDraft.ts
 model CaseDraft {
-    id          String             @id @default(uuid())
-    projectId   Int                @deny('update', true)
-    project     Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    userId      String             @deny('update', true)
-    user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id           String             @id @default(uuid())
+    projectId    Int                @deny('update', true)
+    project      Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    userId       String             @deny('update', true)
+    user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
     // "case:<id>" or "folder:<id>" — a non-null key so the unique index below bites
-    draftKey    String
-    caseId      Int?
-    case        RepositoryCases?   @relation(fields: [caseId], references: [id], onDelete: Cascade)
-    folderId    Int?
-    folder      RepositoryFolders? @relation(fields: [folderId], references: [id], onDelete: Cascade)
-    payload     Json
-    baseVersion Int?
-    createdAt   DateTime           @default(now()) @db.Timestamptz(6)
-    updatedAt   DateTime           @updatedAt @db.Timestamptz(6)
+    draftKey     String
+    caseId       Int?
+    case         RepositoryCases?   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    folderId     Int?
+    folder       RepositoryFolders? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+    payload      Json
+    baseVersion  Int?
+    // A draft the author saved on purpose (named, kept until created or
+    // deleted) as opposed to the auto-saved recovery copy the retention job
+    // purges. Saved drafts use a "saved:<uuid>" draftKey so a folder can hold
+    // any number of them.
+    isSaved      Boolean            @default(false)
+    name         String?
+    rowCount     Int                @default(1)
+    problemCount Int                @default(0)
+    // A saved draft is never hard-deleted. Creating the case retires it with
+    // caseId pointing at the case; deleting it from the list leaves caseId
+    // null. Auto-saved recovery copies are still deleted outright.
+    isDeleted    Boolean            @default(false)
+    deletedAt    DateTime?          @db.Timestamptz(6)
+    deletedById  String?
+    createdAt    DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt    DateTime           @updatedAt @db.Timestamptz(6)
 
     @@unique([userId, draftKey])
     @@index([updatedAt])
     @@index([projectId])
     @@index([caseId])
     @@index([folderId])
+    @@index([userId, isSaved])
 
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
@@ -2294,6 +2400,7 @@ model RepositoryCaseVersions {
     isArchived             Boolean                  @default(false)
     isDeleted              Boolean                  @default(false)
     deletedAt              DateTime?                @db.Timestamptz(6)
+    deletedById            String?
     version                Int
     caseFieldVersionValues CaseFieldVersionValues[]
     steps                  Json?
@@ -2489,6 +2596,7 @@ model Attachments {
     note                String?
     isDeleted           Boolean             @default(false)
     deletedAt           DateTime?           @db.Timestamptz(6)
+    deletedById         String?
     mimeType            String              @length(1)
     size                BigInt
     createdAt           DateTime            @default(now()) @db.Timestamptz(6)
@@ -2521,12 +2629,14 @@ model Attachments {
     @@index([testRunStepResultId])
     @@index([junitTestResultId])
     @@index([issueId])
+    @@index([deletedById, deletedAt])
 }
 
 model Steps {
     id                Int                  @id @default(autoincrement())
     isDeleted         Boolean              @default(false)
     deletedAt         DateTime?            @db.Timestamptz(6)
+    deletedById       String?
     step              Json?
     expectedResult    Json?
     testCaseId        Int
@@ -2610,6 +2720,7 @@ model TestCaseParameter {
     lookupDataSet     DataSet?        @relation("ParamLookupDataSet", fields: [lookupDataSetId], references: [id], onDelete: SetNull)
     isDeleted         Boolean         @default(false)
     deletedAt         DateTime?       @db.Timestamptz(6)
+    deletedById       String?
 
     @@unique([testCaseId, name])
     @@index([testCaseId])
@@ -2690,6 +2801,7 @@ model Sessions {
     isCompleted          Boolean              @default(false)
     isDeleted            Boolean              @default(false)
     deletedAt            DateTime?            @db.Timestamptz(6)
+    deletedById          String?
     completedAt          DateTime?
     createdAt            DateTime             @default(now()) @db.Timestamptz(6)
     createdById          String               @deny('update', true)
@@ -2714,6 +2826,7 @@ model Sessions {
     @@index([stateId])
     @@index([isCompleted, createdAt])
     @@index([configurationGroupId])
+    @@index([deletedById, deletedAt])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
@@ -2798,6 +2911,7 @@ model SessionResults {
     id                Int                 @id @default(autoincrement())
     isDeleted         Boolean             @default(false)
     deletedAt         DateTime?           @db.Timestamptz(6)
+    deletedById       String?
     sessionId         Int
     session           Sessions            @relation(fields: [sessionId], references: [id], onDelete: Cascade)
     resultData        Json?
@@ -3055,6 +3169,7 @@ model TestRuns {
     isCompleted               Boolean            @default(false)
     isDeleted                 Boolean            @default(false)
     deletedAt                 DateTime?          @db.Timestamptz(6)
+    deletedById               String?
     completedAt               DateTime?
     createdAt                 DateTime           @default(now()) @db.Timestamptz(6)
     createdById               String             @deny('update', true)
@@ -3100,6 +3215,7 @@ model TestRuns {
     @@index([isCompleted, createdAt])
     @@index([testRunType])
     @@index([configurationGroupId])
+    @@index([deletedById, deletedAt])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
@@ -3222,6 +3338,7 @@ model TestRunCases {
     // the parent run is locked.
     isDeleted         Boolean                     @default(false) @deny('update', testRun.compositionLockedAt != null)
     deletedAt         DateTime?                   @db.Timestamptz(6)
+    deletedById       String?
     results           TestRunResults[]
     iterations        TestRunCaseIteration[]
     dataSetSnapshot   TestRunCaseDataSetSnapshot?
@@ -3357,6 +3474,7 @@ model TestRunResults {
     stepResults        TestRunStepResults[]
     isDeleted          Boolean               @default(false)
     deletedAt          DateTime?             @db.Timestamptz(6)
+    deletedById        String?
     issues             Issue[]
 
     @@index([testRunCaseId])
@@ -3436,6 +3554,7 @@ model TestRunStepResults {
     attachments      Attachments[]
     isDeleted        Boolean         @default(false)
     deletedAt        DateTime?       @db.Timestamptz(6)
+    deletedById      String?
     issues           Issue[]
 
     @@index([sharedStepItemId])
@@ -3512,6 +3631,7 @@ model TestRunCaseIteration {
     notes             Json?
     isDeleted         Boolean                     @default(false)
     deletedAt         DateTime?                   @db.Timestamptz(6)
+    deletedById       String?
     dataSetSnapshotId Int?
     dataSetSnapshot   TestRunCaseDataSetSnapshot? @relation(fields: [dataSetSnapshotId], references: [id], onDelete: SetNull)
     results           TestRunResults[]
@@ -3613,6 +3733,7 @@ model TestRunCaseDataSetSnapshot {
     snapshotAt        DateTime               @default(now()) @db.Timestamptz(6)
     isDeleted         Boolean                @default(false)
     deletedAt         DateTime?              @db.Timestamptz(6)
+    deletedById       String?
     iterations        TestRunCaseIteration[]
 
     @@index([testRunCaseId])
@@ -3671,6 +3792,7 @@ model Issue {
     note                  Json?
     isDeleted             Boolean                     @default(false)
     deletedAt             DateTime?                   @db.Timestamptz(6)
+    deletedById           String?
     createdAt             DateTime                    @default(now()) @db.Timestamptz(6)
     createdById           String                      @deny('update', true)
     createdBy             User                        @relation("IssueCreator", fields: [createdById], references: [id])
@@ -3691,6 +3813,7 @@ model Issue {
     integrationId         Int?
     integration           Integration?                @relation(fields: [integrationId], references: [id], onDelete: SetNull)
     milestoneIssues       MilestoneIssue[]
+    failureSignatures     FailureSignatureIssue[]
     projectMemberships    IssueProjectMembership[]
     parentId              Int?                        @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
     parent                Issue?                      @relation("IssueParent", fields: [parentId], references: [id], onDelete: Cascade)
@@ -3722,6 +3845,7 @@ model Issue {
     // whole RepositoryCases/TestRuns tables and full-sorting every page
     // (~510ms -> ~70ms; verified via EXPLAIN on production data).
     @@index([isDeleted, name, id])
+    @@index([deletedById, deletedAt])
     // Issue is never hard-deleted through the policy client. `parentId` carries
     // `onDelete: Cascade`, so a single row delete takes the entire requirement
     // subtree with it, and the ADMIN `@@allow('all', ...)` above would otherwise
@@ -3776,6 +3900,7 @@ enum IntegrationProvider {
     GITEA
     REDMINE
     MANTISBT
+    CLICKUP
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -3811,6 +3936,7 @@ enum AdapterType {
     REDMINE
     MANTISBT
     BITBUCKET
+    CLICKUP
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -3894,6 +4020,7 @@ model Integration {
     lastSyncAt           DateTime?
     isDeleted            Boolean               @default(false)
     deletedAt            DateTime?             @db.Timestamptz(6)
+    deletedById          String?
     createdAt            DateTime              @default(now())
     updatedAt            DateTime              @updatedAt
     userIntegrationAuths UserIntegrationAuth[]
@@ -3924,6 +4051,7 @@ model CodeRepository {
     lastTestedAt     DateTime?
     isDeleted        Boolean                       @default(false)
     deletedAt        DateTime?                     @db.Timestamptz(6)
+    deletedById      String?
     createdAt        DateTime                      @default(now())
     updatedAt        DateTime                      @updatedAt
     projectConfigs   ProjectCodeRepositoryConfig[]
@@ -4064,6 +4192,7 @@ model ExecutionTarget {
     lastVerifyError  String?
     isDeleted        Boolean            @default(false)
     deletedAt        DateTime?          @db.Timestamptz(6)
+    deletedById      String?
     createdById      String
     createdBy        User               @relation("ExecutionTargetCreatedBy", fields: [createdById], references: [id])
     createdAt        DateTime           @default(now()) @db.Timestamptz(6)
@@ -4141,6 +4270,7 @@ model RepositoryCaseCodePin {
     staleReason      String?                     // set by that check when the pin could not be found at the branch tip
     isDeleted        Boolean                     @default(false)
     deletedAt        DateTime?                   @db.Timestamptz(6)
+    deletedById      String?
     createdAt        DateTime                    @default(now()) @db.Timestamptz(6)
     createdById      String                      @deny('update', true)
     createdBy        User                        @relation("UserCreatedCodePins", fields: [createdById], references: [id])
@@ -4235,6 +4365,7 @@ model ImpactAnalysis {
     completedAt       DateTime?                   @db.Timestamptz(6)
     isDeleted         Boolean                     @default(false)
     deletedAt         DateTime?                   @db.Timestamptz(6)
+    deletedById       String?
     createdAt         DateTime                    @default(now()) @db.Timestamptz(6)
     updatedAt         DateTime                    @updatedAt
 
@@ -4356,6 +4487,7 @@ model LlmIntegration {
     settings               Json?                 // Provider-specific settings
     isDeleted              Boolean                 @default(false)
     deletedAt              DateTime?               @db.Timestamptz(6)
+    deletedById            String?
     createdAt              DateTime                @default(now())
     updatedAt              DateTime                @updatedAt
     llmProviderConfig      LlmProviderConfig?
@@ -4364,7 +4496,6 @@ model LlmIntegration {
     llmFeatureConfigs      LlmFeatureConfig[]
     llmResponseCaches      LlmResponseCache[]
     projectLlmIntegrations ProjectLlmIntegration[]
-    llmRateLimits          LlmRateLimit[]
     promptConfigPrompts    PromptConfigPrompt[]
     llmReportSnapshots     LlmReportSnapshot[]
 
@@ -4428,6 +4559,7 @@ enum ApplicationArea {
     TestRunResults
     TestRunResultRestrictedFields
     AutomatedExecution
+    FailurePatterns
     Sessions
     SessionsRestrictedFields
     ClosedSessions
@@ -4437,6 +4569,7 @@ enum ApplicationArea {
     Issues
     Reporting
     Settings
+    Alerts
 
 
     @@deny('all', auth() == null)
@@ -4594,33 +4727,38 @@ model JUnitTestSuite {
 }
 
 model JUnitTestResult {
-    id               Int             @id @default(autoincrement())
-    type             JUnitResultType
-    message          String?
-    content          String?
-    repositoryCaseId Int
-    repositoryCase   RepositoryCases @relation("JUnitResultCase", fields: [repositoryCaseId], references: [id], onDelete: Cascade)
-    executedAt       DateTime?       @db.Timestamptz(6)
-    time             Float?
-    assertions       Int?
-    file             String?
-    line             Int?
-    worker           String?
-    systemOut        String?
-    systemErr        String?
-    testSuiteId      Int
-    testSuite        JUnitTestSuite  @relation(fields: [testSuiteId], references: [id], onDelete: Cascade)
-    createdAt        DateTime        @default(now()) @db.Timestamptz(6)
-    createdById      String          @deny('update', true)
-    createdBy        User            @relation(fields: [createdById], references: [id])
-    statusId         Int?
-    status           Status?         @relation(fields: [statusId], references: [id])
-    attachments      Attachments[]
+    id                 Int               @id @default(autoincrement())
+    type               JUnitResultType
+    message            String?
+    content            String?
+    repositoryCaseId   Int
+    repositoryCase     RepositoryCases   @relation("JUnitResultCase", fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+    executedAt         DateTime?         @db.Timestamptz(6)
+    time               Float?
+    assertions         Int?
+    file               String?
+    line               Int?
+    worker             String?
+    systemOut          String?
+    systemErr          String?
+    testSuiteId        Int
+    testSuite          JUnitTestSuite    @relation(fields: [testSuiteId], references: [id], onDelete: Cascade)
+    createdAt          DateTime          @default(now()) @db.Timestamptz(6)
+    createdById        String            @deny('update', true)
+    createdBy          User              @relation(fields: [createdById], references: [id])
+    statusId           Int?
+    status             Status?           @relation(fields: [statusId], references: [id])
+    attachments        Attachments[]
+    // Failure triage: the signature this FAILURE/ERROR result was grouped into.
+    // Assigned by the failure-triage worker only.
+    failureSignatureId Int?              @deny('update', true)
+    failureSignature   FailureSignature? @relation("FailureSignatureResults", fields: [failureSignatureId], references: [id], onDelete: SetNull)
 
     @@index([testSuiteId])
     @@index([repositoryCaseId])
     @@index([repositoryCaseId, executedAt(sort: Desc)]) // Optimize "latest result per case" queries
     @@index([createdById])
+    @@index([failureSignatureId, executedAt(sort: Desc)])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
@@ -4633,6 +4771,8 @@ model JUnitTestResult {
     @@allow('read',
         testSuite.testRun.projectId in auth().accessibleProjectIds
     )
+
+    @@deny('create', failureSignatureId != null)
 
     @@allow('create,update', auth().id == createdById)
     @@allow('all', auth().access == 'ADMIN')
@@ -4790,6 +4930,7 @@ model SharedStepGroup {
     project          Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
     isDeleted        Boolean          @default(false)
     deletedAt        DateTime?        @db.Timestamptz(6)
+    deletedById      String?
     createdAt        DateTime         @default(now()) @db.Timestamptz(6)
     updatedAt        DateTime         @updatedAt @db.Timestamptz(6)
     createdById      String           @deny('update', true)
@@ -4799,6 +4940,7 @@ model SharedStepGroup {
 
     @@index([projectId])
     @@index([createdById])
+    @@index([deletedById, deletedAt])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
@@ -4903,6 +5045,7 @@ model DataSet {
     sharedAssignments CaseSharedDataSetAssignment[] @relation("CaseSharedDataSet")
     isDeleted         Boolean                       @default(false)
     deletedAt         DateTime?                     @db.Timestamptz(6)
+    deletedById       String?
     createdAt         DateTime                      @default(now()) @db.Timestamptz(6)
     createdById       String                        @deny('update', true)
     createdBy         User                          @relation(fields: [createdById], references: [id])
@@ -4910,6 +5053,7 @@ model DataSet {
     @@index([projectId])
     @@index([ownerCaseId])
     @@index([createdById])
+    @@index([deletedById, deletedAt])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
@@ -4964,6 +5108,7 @@ model DataSetRow {
     valuesJson     Json
     isDeleted      Boolean   @default(false)
     deletedAt      DateTime? @db.Timestamptz(6)
+    deletedById    String?
 
     // Row-level lease primitive (999.12) — lets a parallel CI orchestrator
     // check out one unlocked row at a time so two jobs never provision the
@@ -5163,6 +5308,7 @@ model Notification {
     isRead            Boolean          @default(false)
     isDeleted         Boolean          @default(false)
     deletedAt         DateTime?        @db.Timestamptz(6)
+    deletedById       String?
     relatedEntityId   String?
     relatedEntityType String?
     createdAt         DateTime         @default(now()) @db.Timestamptz(6)
@@ -5251,6 +5397,12 @@ model ReviewRequest {
     // Field-level @allow override flag (third arg true) carves out the model-level append-only @@deny.
     consumedAt        DateTime?        @allow('update', status == 'APPROVED')
 
+    // Set when a decider reverts their own decision; the row returns to PENDING.
+    revertedAt        DateTime?        @db.Timestamptz(6) @deny('update', auth().access != 'ADMIN')
+    revertedByUserId  String?          @deny('update', auth().access != 'ADMIN')
+    revertedBy        User?            @relation("ReviewRevertedBy", fields: [revertedByUserId], references: [id])
+    revertCount       Int              @default(0) @deny('update', auth().access != 'ADMIN')
+
     // Hybrid design (Phase 2 follow-up): the requester's typed prose at submit
     // time AND the reviewer's optional notes at decide time both live in the
     // standard Comments thread on the entity, linked back here via
@@ -5266,6 +5418,7 @@ model ReviewRequest {
 
     isDeleted         Boolean          @default(false)
     deletedAt         DateTime?        @db.Timestamptz(6)
+    deletedById       String?
     createdAt         DateTime         @default(now()) @db.Timestamptz(6)
     updatedAt         DateTime         @updatedAt
 
@@ -5405,6 +5558,7 @@ model ShareLink {
     isRevoked    Boolean              @default(false)
     isDeleted    Boolean              @default(false)
     deletedAt    DateTime?            @db.Timestamptz(6)
+    deletedById  String?
     viewCount    Int                  @default(0)
     lastViewedAt DateTime?            @db.Timestamptz(6)
     createdAt    DateTime             @default(now()) @db.Timestamptz(6)
@@ -5479,6 +5633,7 @@ model ImportMapping {
     createdBy   User                @relation("ImportMappingCreator", fields: [createdById], references: [id], onDelete: Cascade)
     isDeleted   Boolean             @default(false)
     deletedAt   DateTime?           @db.Timestamptz(6)
+    deletedById String?
     createdAt   DateTime            @default(now()) @db.Timestamptz(6)
     updatedAt   DateTime            @updatedAt
 
@@ -5812,18 +5967,10 @@ model WebhookConfig {
     // Branch a repository webhook compares pushes against; empty = the
     // connection's branch.
     baseBranch              String?
-    // Repository webhook only: request automated execution of the run each
-    // analysis composes, on this target with this ref and these parameter
-    // inputs (empty ref = the target's default). Kept when the target is
-    // deleted or disabled later; the request is then skipped and the
-    // delivery says so.
-    autoExecuteEnabled      Boolean                      @default(false)
-    autoExecuteTargetId     Int?
-    autoExecuteRef          String?
-    autoExecuteInputs       Json                         @default("{}")
-    // Repository webhook only: the composed run takes every case scoring at
-    // least this (0-100); empty = the pinned and affected tiers.
-    autoRunMinScore         Int?
+    // Id of the webhook registered on the tracker's side when TestPlanIt
+    // created it through the tracker API (ClickUp), so it can be removed
+    // again when this config is deleted or rotated.
+    externalWebhookId       String?
     endpointHealth          EndpointHealth               @default(HEALTHY)
     url                     String?                      @omit
     name                    String?
@@ -5837,6 +5984,8 @@ model WebhookConfig {
     deliveries              WebhookDelivery[]
     eventDedups             WebhookEventDedup[]
     secrets                 WebhookConfigSecret[]
+    actions                 WebhookAction[]
+    actionLogs              WebhookActionLog[]
 
     @@index([projectId, adapterType, direction])
     @@index([projectId])
@@ -5858,9 +6007,9 @@ model WebhookConfig {
 }
 
 model WebhookDelivery {
-    id                     String            @id @default(cuid())
+    id                     String             @id @default(cuid())
     webhookConfigId        String?
-    webhookConfig          WebhookConfig?    @relation(fields: [webhookConfigId], references: [id], onDelete: SetNull)
+    webhookConfig          WebhookConfig?     @relation(fields: [webhookConfigId], references: [id], onDelete: SetNull)
     direction              WebhookDirection
     adapterType            AdapterType
     eventType              String?
@@ -5870,11 +6019,12 @@ model WebhookDelivery {
     latencyMs              Int?
     payloadDigest          String
     error                  String?
-    attempt                Int               @default(1)
+    attempt                Int                @default(1)
     replayedFromDeliveryId String?
-    replayedFrom           WebhookDelivery?  @relation("WebhookDeliveryReplay", fields: [replayedFromDeliveryId], references: [id], onDelete: SetNull)
-    replays                WebhookDelivery[] @relation("WebhookDeliveryReplay")
-    receivedAt             DateTime          @default(now()) @db.Timestamptz(6)
+    replayedFrom           WebhookDelivery?   @relation("WebhookDeliveryReplay", fields: [replayedFromDeliveryId], references: [id], onDelete: SetNull)
+    replays                WebhookDelivery[]  @relation("WebhookDeliveryReplay")
+    actionLogs             WebhookActionLog[]
+    receivedAt             DateTime           @default(now()) @db.Timestamptz(6)
 
     @@index([webhookConfigId, receivedAt])
     @@index([webhookConfigId, eventId])
@@ -5935,6 +6085,93 @@ model WebhookConfigSecret {
     )
 }
 
+enum WebhookActionTrigger {
+    ISSUE_EVENT
+    ISSUE_CREATED
+    ISSUE_STATUS_ENTERED
+    CODE_PULL_REQUEST
+    CODE_PUSH
+    CODE_BRANCH_PUSH
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum WebhookActionType {
+    IMPORT_ISSUE
+    CREATE_RUN
+    DRAFT_CASES
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+// One rule on an inbound webhook: when the trigger fires and the filter
+// matches, perform the action with its options. Evaluated in `order`.
+model WebhookAction {
+    id              String               @id @default(cuid())
+    webhookConfigId String
+    webhookConfig   WebhookConfig        @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
+    projectId       Int
+    project         Projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    order           Int                  @default(0)
+    isEnabled       Boolean              @default(true)
+    trigger         WebhookActionTrigger
+    action          WebhookActionType
+    filter          Json                 @default("{}")
+    options         Json                 @default("{}")
+    createdAt       DateTime             @default(now()) @db.Timestamptz(6)
+    updatedAt       DateTime             @updatedAt
+    logs            WebhookActionLog[]
+
+    @@index([webhookConfigId, order])
+    @@index([projectId])
+
+    @@deny('all', auth() == null)
+    @@deny('read', project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
+    @@allow('read',
+        project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN']
+    )
+    @@allow('read', auth().access == 'ADMIN')
+    @@deny('create, update, delete', true)
+}
+
+// What one webhook action did for one delivery.
+model WebhookActionLog {
+    id              String           @id @default(cuid())
+    webhookActionId String?
+    webhookAction   WebhookAction?   @relation(fields: [webhookActionId], references: [id], onDelete: SetNull)
+    webhookConfigId String
+    webhookConfig   WebhookConfig    @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
+    deliveryId      String?
+    delivery        WebhookDelivery? @relation(fields: [deliveryId], references: [id], onDelete: SetNull)
+    projectId       Int
+    issueId         Int?
+    analysisId      Int?
+    testRunId       Int?
+    folderId        Int?
+    caseCount       Int?
+    outcome         String
+    detail          String?
+    createdAt       DateTime         @default(now()) @db.Timestamptz(6)
+
+    @@index([webhookActionId, createdAt])
+    @@index([webhookConfigId, createdAt])
+    @@index([webhookActionId, analysisId])
+    @@index([deliveryId])
+
+    @@deny('all', auth() == null)
+    @@deny('create, update, delete', true)
+    @@allow('read', auth().access == 'ADMIN')
+    @@allow('read',
+        webhookConfig.project.creator.id == auth().id ||
+        webhookConfig.projectId in auth().adminProjectIds ||
+        webhookConfig.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN']
+    )
+}
+
 model WebhookOutboxEvent {
     id             String    @id @default(cuid())
     projectId      Int
@@ -5971,10 +6208,8 @@ model LlmProviderConfig {
     defaultModel          String   // e.g., "gpt-4", "claude-3-opus", "llama2"
     availableModels       Json     // Array of available models with their configs
 
-    // Rate limiting
+    // Request size
     maxTokensPerRequest   Int             @default(4096)
-    maxRequestsPerMinute  Int             @default(60)
-    maxRequestsPerDay     Int?      // Optional daily limit
 
     // Cost tracking (0 for Ollama since it's local)
     costPerInputToken     Decimal         @db.Decimal(10, 8)
@@ -5997,11 +6232,10 @@ model LlmProviderConfig {
     // Ollama-specific settings (stored in settings Json)
     settings              Json?     // Contains baseUrl, keepAlive, numGpu, etc.
 
-    // Budget alert tracking - which thresholds have fired per billing period.
-    // Key is the period-start ISO date `YYYY-MM-DD` (derived from
-    // `billingPeriodStartDay`); e.g., {"2026-03-15": [80, 90]} means 80% and
-    // 90% alerts fired for the period starting March 15 2026.
-    alertThresholdsFired  Json?
+    // Budget alerts (LLM_BUDGET_USED rules) fire once per billing period;
+    // saving the config or resetting spend stamps this so they may fire
+    // again in the same period.
+    budgetAlertResetAt    DateTime?       @db.Timestamptz(6)
 
     createdAt             DateTime        @default(now()) @db.Timestamptz(6)
     updatedAt             DateTime        @updatedAt
@@ -6019,6 +6253,7 @@ model PromptConfig {
     isActive    Boolean              @default(true)
     isDeleted   Boolean              @default(false)
     deletedAt   DateTime?            @db.Timestamptz(6)
+    deletedById String?
     createdAt   DateTime             @default(now()) @db.Timestamptz(6)
     updatedAt   DateTime             @updatedAt
 
@@ -6204,55 +6439,6 @@ model LlmResponseCache {
     @@allow('all', auth().access == 'ADMIN')
 }
 
-model LlmRateLimit {
-    id               String          @id @default(cuid())
-
-    // Relation to LLM Integration (optional - only for integration-scoped limits)
-    llmIntegrationId Int?
-    llmIntegration   LlmIntegration? @relation(fields: [llmIntegrationId], references: [id])
-
-    // Scope of rate limiting
-    scope            String   // "global", "integration", "project", "user"
-    scopeId          String?  // ID of the scoped entity
-    feature          String?  // Optional: limit specific features
-
-    // Rate limit configuration
-    windowType       String   // "sliding", "fixed"
-    windowSize       Int      // Window size in seconds
-    maxRequests      Int      // Maximum requests per window
-    maxTokens        Int?     // Maximum tokens per window
-
-    // Current state
-    currentRequests  Int             @default(0)
-    currentTokens    Int             @default(0)
-    windowStart      DateTime        @default(now()) @db.Timestamptz(6)
-
-    // Actions when limit exceeded
-    blockOnExceed    Boolean         @default(true)
-    queueOnExceed    Boolean         @default(false)
-    alertOnExceed    Boolean         @default(false)
-
-    // Priority and overrides
-    priority         Int             @default(0) // Higher priority limits apply first
-    isActive         Boolean         @default(true)
-
-    createdAt        DateTime        @default(now()) @db.Timestamptz(6)
-    updatedAt        DateTime        @updatedAt
-
-    @@unique([scope, scopeId, feature])
-    @@index([scope, isActive])
-    @@index([windowStart])
-    @@deny('all', auth() == null)
-    @@allow('read', auth().access != null)
-    @@allow('create,update,delete', auth().access == 'ADMIN')
-}
-
-/// Materialized, shared snapshot of an LLM-generated report (e.g. Automation
-/// Candidates). Reports here are persisted on generate and rendered as-is for
-/// every viewer until someone explicitly regenerates — the snapshot IS the
-/// report, not a cache. `reportType` is the discriminator so future shared
-/// LLM reports drop into the same table; `output` is validated per type in
-/// consumer code.
 model LlmReportSnapshot {
     id               Int             @id @default(autoincrement())
     projectId        Int             @deny('update', true)
@@ -6269,6 +6455,7 @@ model LlmReportSnapshot {
     completedAt      DateTime?       @db.Timestamptz(6)
     isDeleted        Boolean         @default(false)
     deletedAt        DateTime?       @db.Timestamptz(6)
+    deletedById      String?
     createdAt        DateTime        @default(now()) @db.Timestamptz(6)
     updatedAt        DateTime        @updatedAt
 
@@ -6372,6 +6559,7 @@ model RequirementTraceabilitySnapshot {
     entries             RequirementTraceabilitySnapshotEntry[]
     isDeleted           Boolean                                @default(false)
     deletedAt           DateTime?                              @db.Timestamptz(6)
+    deletedById         String?
     createdAt           DateTime                               @default(now()) @db.Timestamptz(6)
     updatedAt           DateTime                               @updatedAt
 
@@ -6739,6 +6927,7 @@ model Comment {
     isEdited         Boolean          @default(false)
     isDeleted        Boolean          @default(false)
     deletedAt        DateTime?        @db.Timestamptz(6)
+    deletedById      String?
 
     // Relations
     mentionedUsers   CommentMention[]
@@ -6869,11 +7058,14 @@ enum AuditAction {
     REVIEW_REJECTED
     REVIEW_CANCELLED
     REVIEW_REMINDED
+    REVIEW_DECISION_REVERTED
     // Automated execution dispatch
     EXECUTION_REQUESTED
     EXECUTION_DISPATCHED
     EXECUTION_COMPLETED
     EXECUTION_CANCELLED
+    AUDIT_LOG_ARCHIVED
+    AUDIT_LOG_PURGED
 }
 
 model AuditLog {
@@ -6939,19 +7131,277 @@ model AuditLog {
     )
 }
 
-// Append-only change-data-capture substrate. The generic audit_row_change()
-// trigger (db/audit_row_change.sql) writes one row here per
-// INSERT/UPDATE/DELETE on every allowlisted table; a downstream correlation
-// worker reads it via the raw prismaBase client.
-//
-// COLUMN-NAME RECONCILIATION (load-bearing): every field is @map-ed so the
-// Postgres columns this model produces match EXACTLY the snake_case/reserved
-// columns the trigger INSERTs into:
-//   "table", op, pk, changed_cols, actor, operation_id, tenant, txid, ts,
-//   processed, seq
-// If any column drifts (e.g. Prisma emits "changedCols" instead of
-// "changed_cols"), the trigger's INSERT targets a non-existent column and
-// every capture fails at runtime.
+// One gzipped NDJSON object in cold storage holding AuditLog rows moved out of Postgres.
+model AuditLogArchive {
+    id             Int      @id @default(autoincrement())
+    bucket         String   @db.Text
+    key            String   @unique @db.Text
+    periodStart    DateTime @db.Timestamptz(6)
+    firstTimestamp DateTime @db.Timestamptz(6)
+    lastTimestamp  DateTime @db.Timestamptz(6)
+    rowCount       Int
+    byteSize       Int
+    sha256         String   @db.VarChar(64)
+    createdAt      DateTime @default(now()) @db.Timestamptz(6)
+
+    @@index([periodStart])
+    @@index([lastTimestamp])
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access == 'ADMIN')
+}
+
+
+// ---------------------------------------------------------------------------
+// Alerts (#651): user-defined rules that watch a testing metric
+// and notify an audience when it crosses a line.
+// ---------------------------------------------------------------------------
+
+enum AlertMetric {
+    RESULT_DURATION_DEVIATION
+    CASE_REGRESSED
+    CASE_RECOVERED
+    CONSECUTIVE_FAILURES
+    CASE_FLAKY
+    RUN_PASS_RATE_BELOW
+    RUN_FAILURE_COUNT
+    RUN_DURATION_DEVIATION
+    RUN_NOT_PROGRESSING
+    AUTOMATED_EXECUTION_FAILED
+    RUN_UNTESTED_SHARE
+    RUN_ISSUES_OPENED
+    SESSION_OVERRUN
+    MILESTONE_BEHIND
+    MILESTONE_OVERDUE
+    REQUIREMENT_COVERAGE_BELOW
+    STALE_CASES
+    AUTOMATION_SHARE_BELOW
+    WEBHOOK_FAILURE_RATE
+    LLM_BUDGET_USED
+    LLM_ERROR_RATE
+    LLM_RATE_LIMITED
+    CODE_REPOSITORY_CACHE_FAILING
+    INTEGRATION_REAUTH_NEEDED
+    QUEUE_FAILED_JOBS
+    QUEUE_BACKLOG
+    AUDIT_BACKLOG
+    ACCOUNT_LOCKOUTS
+    NO_AUTOMATED_RESULTS
+    NEW_FAILURE_SIGNATURES
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertScopeType {
+    PROJECT
+    FOLDER
+    TAG
+    CASE
+    RUN_NAME
+    MILESTONE
+    WEBHOOK
+    LLM_INTEGRATION
+    CODE_REPOSITORY
+    INTEGRATION
+    QUEUE
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertDirection {
+    ABOVE
+    BELOW
+    EITHER
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertBaseline {
+    MEAN
+    MEDIAN
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertResultSource {
+    MANUAL
+    AUTOMATED
+    BOTH
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertEvaluateOn {
+    RUN_COMPLETION
+    AS_RESULTS_ARRIVE
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertCoverageBasis {
+    LINKED
+    PASSING
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertSubjectType {
+    CASE
+    RUN
+    MILESTONE
+    SESSION
+    PROJECT
+    WEBHOOK
+    LLM_INTEGRATION
+    CODE_REPOSITORY
+    INTEGRATION
+    QUEUE
+    SYSTEM
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+model AlertRule {
+    id              Int                @id @default(autoincrement())
+    // Null for a system alert (an administration-level subject such as an
+    // AI model budget): no project policy matches it, so only system
+    // administrators read or manage it.
+    projectId       Int?               @deny('update', true)
+    project         Projects?          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    name            String             @length(1, 200)
+    description     String?
+    metric          AlertMetric        @deny('update', true)
+    // What the rule watches. scopeId holds a folder, tag, case or milestone
+    // id depending on scopeType; scopeText holds the run-name fragment.
+    scopeType       AlertScopeType     @default(PROJECT)
+    scopeId         Int?
+    scopeText       String?
+    // The number on the right-hand side of the condition: a percentage for
+    // deviation, rate and completion metrics, a count for the others.
+    thresholdValue  Float              @default(0)
+    // Second number for metrics that need one (days remaining on
+    // MILESTONE_BEHIND).
+    secondaryValue  Int?
+    direction       AlertDirection     @default(EITHER)
+    baselineType    AlertBaseline      @default(MEDIAN)
+    // Number of previous results the baseline is built from.
+    baselineWindow  Int                @default(10)
+    // The rule stays silent until this many samples exist.
+    minSamples      Int                @default(5)
+    resultSource    AlertResultSource  @default(BOTH)
+    evaluateOn      AlertEvaluateOn    @default(RUN_COMPLETION)
+    // What counts a requirement as covered (REQUIREMENT_COVERAGE_BELOW).
+    coverageBasis   AlertCoverageBasis @default(LINKED)
+    // Once fired for a subject, the rule is silent for it until this passes.
+    cooldownMinutes Int                @default(1440)
+    emitWebhook     Boolean            @default(false)
+    isEnabled       Boolean            @default(true)
+    isDeleted       Boolean            @default(false)
+    deletedAt       DateTime?          @db.Timestamptz(6)
+    deletedById     String?
+    lastFiredAt     DateTime?          @db.Timestamptz(6) @deny('update', true)
+    createdAt       DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt       DateTime           @updatedAt
+    createdById     String             @deny('update', true)
+    createdBy       User               @relation("AlertRuleCreatedBy", fields: [createdById], references: [id])
+    subscribers     AlertSubscriber[]
+    events          AlertEvent[]
+
+    @@index([projectId, isDeleted, isEnabled])
+    @@index([projectId, metric])
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@allow('read', projectId in auth().accessibleProjectIds)
+    // Project admins manage every alert in the project.
+    @@allow('create,update,delete', projectId in auth().adminProjectIds)
+    // A role with Alerts Add/Edit creates its own alerts and manages those.
+    @@allow('create,update,delete',
+        createdById == auth().id &&
+        projectId in auth().accessibleProjectIds &&
+        (project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'Alerts' && canAddEdit]] ||
+        project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                 auth().role.rolePermissions?[area == 'Alerts' && canAddEdit]] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  ((accessType == 'SPECIFIC_ROLE' &&
+                                    role.rolePermissions?[area == 'Alerts' && canAddEdit]) ||
+                                   (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                    auth().role.rolePermissions?[area == 'Alerts' && canAddEdit]))] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'Alerts' && canAddEdit]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'Alerts' && canAddEdit]))
+    )
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// The audience of an alert. The creator is subscribed when the alert is
+// made; anyone can leave or re-join; adding other people takes project-admin
+// authority.
+model AlertSubscriber {
+    id        Int       @id @default(autoincrement())
+    ruleId    Int
+    rule      AlertRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+    userId    String
+    user      User      @relation("AlertSubscriberUser", fields: [userId], references: [id], onDelete: Cascade)
+    addedById String?
+    addedBy   User?     @relation("AlertSubscriberAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+    createdAt DateTime  @default(now()) @db.Timestamptz(6)
+
+    @@unique([ruleId, userId])
+    @@index([userId])
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@deny('update', true)
+    @@allow('read', rule.projectId in auth().accessibleProjectIds)
+    // Self-service: follow or leave any alert you can see.
+    @@allow('create,delete', userId == auth().id && rule.projectId in auth().accessibleProjectIds)
+    // Project admins manage other people's subscriptions.
+    @@allow('create,delete', rule.projectId in auth().adminProjectIds)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// One row per firing: backs the notification, the webhook payload and the
+// rule's history. Written only by the evaluation worker on the raw client.
+model AlertEvent {
+    id             Int              @id @default(autoincrement())
+    ruleId         Int
+    rule           AlertRule        @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+    // Null when the rule is a system alert.
+    projectId      Int?
+    project        Projects?        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    subjectType    AlertSubjectType
+    subjectId      Int
+    // String key for subjects without an integer id (webhook configs).
+    subjectRef     String?
+    subjectName    String
+    observedValue  Float
+    baselineValue  Float?
+    thresholdValue Float
+    details        Json?
+    notifiedCount  Int              @default(0)
+    recipientIds   String[]         @default([])
+    webhookEmitted Boolean          @default(false)
+    firedAt        DateTime         @default(now()) @db.Timestamptz(6)
+
+    @@index([ruleId, subjectType, subjectId, firedAt(sort: Desc)])
+    @@index([ruleId, firedAt(sort: Desc)])
+    @@index([projectId, firedAt(sort: Desc)])
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@allow('read', projectId in auth().accessibleProjectIds)
+    @@allow('read', auth().access == 'ADMIN')
+    @@deny('create,update,delete', true)
+}
+
 model DataChangeLog {
     // Stable row identity (BIGSERIAL PK).
     id          BigInt   @id @default(autoincrement())
@@ -7003,4 +7453,255 @@ model DataChangeLog {
     @@deny('all', true)
     @@deny('update', true)
     @@deny('delete', true)
+}
+
+// ─── Failure triage ──────────────────────────────────────────────────────────
+
+enum FailureFingerprintKind {
+    STACK
+    MESSAGE
+    NONE
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+/// Catalogue of failure classifications the AI picks from and people set by
+/// hand. Seeded with Product bug, Test bug, Environment and Flaky; `key` keeps
+/// a seeded entry recognisable after an admin renames it.
+model FailureClassification {
+    id           Int                @id @default(autoincrement())
+    name         String             @unique @length(1)
+    key          String?            @unique
+    description  String?
+    colorId      Int?
+    color        Color?             @relation(fields: [colorId], references: [id], onDelete: SetNull)
+    order        Int                @default(0)
+    isDeleted    Boolean            @default(false)
+    deletedAt    DateTime?          @db.Timestamptz(6)
+    deletedById  String?
+    createdAt    DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt    DateTime           @updatedAt
+    signatures   FailureSignature[] @relation("FailureSignatureClassification")
+    aiSignatures FailureSignature[] @relation("FailureSignatureAiClassification")
+
+    @@deny('all', auth() == null)
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum FailureClassificationSource {
+    AI
+    MANUAL
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum FailureSignatureStatus {
+    OPEN
+    RESOLVED
+    IGNORED
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+/// One cluster of automated failures that share a fingerprint (exception type,
+/// normalized message, top application frames). Written by the failure-triage
+/// worker; people change only status, classification, notes and issue links.
+model FailureSignature {
+    id                    Int                          @id @default(autoincrement())
+    projectId             Int                          @deny('update', true)
+    project               Projects                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    fingerprint           String                       @deny('update', true)
+    kind                  FailureFingerprintKind       @deny('update', true)
+    title                 String                       @deny('update', true)
+    exceptionType         String?                      @deny('update', true)
+    normalizedMessage     String?                      @deny('update', true)
+    frames                String[]                     @default([]) @deny('update', true)
+    firstSeenAt           DateTime                     @db.Timestamptz(6) @deny('update', true)
+    lastSeenAt            DateTime                     @db.Timestamptz(6) @deny('update', true)
+    occurrenceCount       Int                          @default(0) @deny('update', true)
+    caseCount             Int                          @default(0) @deny('update', true)
+    runCount              Int                          @default(0) @deny('update', true)
+    /// Set when the affected cases flip between pass and fail in their recent history.
+    flakyCandidate        Boolean                      @default(false) @deny('update', true)
+    status                FailureSignatureStatus       @default(OPEN)
+    resolvedAt            DateTime?                    @db.Timestamptz(6)
+    resolvedById          String?
+    resolvedBy            User?                        @relation("FailureSignatureResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+    /// Effective classification: a person's choice when classifiedById is set, else the AI's.
+    classificationId      Int?
+    classification        FailureClassification?       @relation("FailureSignatureClassification", fields: [classificationId], references: [id], onDelete: SetNull)
+    classificationSource  FailureClassificationSource?
+    classifiedAt          DateTime?                    @db.Timestamptz(6)
+    classifiedById        String?
+    classifiedBy          User?                        @relation("FailureSignatureClassifiedBy", fields: [classifiedById], references: [id], onDelete: SetNull)
+    aiClassificationId    Int?                         @deny('update', true)
+    aiClassification      FailureClassification?       @relation("FailureSignatureAiClassification", fields: [aiClassificationId], references: [id], onDelete: SetNull)
+    aiConfidence          Float?                       @deny('update', true)
+    aiRationale           String?                      @deny('update', true)
+    aiSuggestedIssueTitle String?                      @deny('update', true)
+    aiSuggestedNextStep   String?                      @deny('update', true)
+    aiModel               String?                      @deny('update', true)
+    aiClassifiedAt        DateTime?                    @db.Timestamptz(6) @deny('update', true)
+    notes                 Json?
+    results               JUnitTestResult[]            @relation("FailureSignatureResults")
+    issues                FailureSignatureIssue[]
+    quarantines           CaseQuarantine[]
+    createdAt             DateTime                     @default(now()) @db.Timestamptz(6)
+    updatedAt             DateTime                     @updatedAt
+
+    @@unique([projectId, fingerprint])
+    @@index([projectId, status, lastSeenAt(sort: Desc)])
+    @@index([projectId, classificationId])
+    @@index([aiClassificationId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+
+    @@allow('read', projectId in auth().accessibleProjectIds)
+
+    // Whoever sets the root cause or resolves a pattern is recorded as
+    // themselves; clearing either, or leaving it unchanged, is always fine.
+    @@deny('post-update', classifiedById != null && classifiedById != auth().id &&
+        (before().classifiedById == null || classifiedById != before().classifiedById))
+    @@deny('post-update', resolvedById != null && resolvedById != auth().id &&
+        (before().resolvedById == null || resolvedById != before().resolvedById))
+    // Only the triage worker attributes a root cause to the AI.
+    @@deny('post-update', classificationSource == 'AI' &&
+        (before().classificationSource == null || before().classificationSource != 'AI' ||
+         (classificationId == null && before().classificationId != null) ||
+         (classificationId != null && before().classificationId == null) ||
+         classificationId != before().classificationId))
+
+    // Failure Patterns add/edit (or project admin): root cause, status, notes.
+    @@allow('update',
+        projectId in auth().adminProjectIds ||
+        project.creator.id == auth().id ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
+        project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
+                                auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'GLOBAL_ROLE' &&
+                                  auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]) ||
+        (project.assignedUsers?[user.id == auth().id] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'FailurePatterns' && canAddEdit]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'FailurePatterns' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+/// Issues linked to a failure signature ("known issue").
+model FailureSignatureIssue {
+    signatureId Int
+    signature   FailureSignature @relation(fields: [signatureId], references: [id], onDelete: Cascade)
+    issueId     Int
+    issue       Issue            @relation(fields: [issueId], references: [id], onDelete: Cascade)
+    createdAt   DateTime         @default(now()) @db.Timestamptz(6)
+
+    @@id([signatureId, issueId])
+    @@index([issueId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+
+    @@allow('read', signature.projectId in auth().accessibleProjectIds)
+
+    @@allow('create,delete',
+        signature.projectId in auth().adminProjectIds ||
+        signature.project.creator.id == auth().id ||
+        signature.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
+        signature.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
+                                auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
+        signature.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        signature.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
+        signature.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'GLOBAL_ROLE' &&
+                                  auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
+        (signature.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]) ||
+        (signature.project.assignedUsers?[user.id == auth().id] &&
+         signature.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         signature.project.defaultRole.rolePermissions?[area == 'FailurePatterns' && canAddEdit]) ||
+        (signature.project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         signature.project.defaultRole.rolePermissions?[area == 'FailurePatterns' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+/// A quarantined case keeps running and recording results, but its automated
+/// failures are excluded from run pass/fail and shown as a separate count.
+/// Releasing a quarantine deletes the row; the audit log keeps the history.
+model CaseQuarantine {
+    id                Int               @id @default(autoincrement())
+    caseId            Int               @unique @deny('update', true)
+    case              RepositoryCases   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    projectId         Int               @deny('update', true)
+    project           Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    signatureId       Int?              @deny('update', true)
+    signature         FailureSignature? @relation(fields: [signatureId], references: [id], onDelete: SetNull)
+    reason            String?
+    /// Opt this case out of the project's automatic release.
+    keepUntilReleased Boolean           @default(false)
+    createdById       String            @deny('update', true)
+    createdBy         User              @relation("CaseQuarantineCreatedBy", fields: [createdById], references: [id])
+    createdAt         DateTime          @default(now()) @db.Timestamptz(6)
+
+    @@index([projectId])
+    @@index([signatureId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+
+    // The case and the pattern belong to the quarantine's own project, and the
+    // quarantine is recorded in the name of whoever creates it.
+    @@deny('create', case.projectId != projectId)
+    @@deny('create', signatureId != null && signature.projectId != projectId)
+    @@deny('create', createdById != auth().id)
+
+    @@allow('read', projectId in auth().accessibleProjectIds)
+
+    @@allow('create,update,delete',
+        projectId in auth().adminProjectIds ||
+        project.creator.id == auth().id ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
+        project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
+                                auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'GLOBAL_ROLE' &&
+                                  auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'FailurePatterns' && canAddEdit]) ||
+        (project.assignedUsers?[user.id == auth().id] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'FailurePatterns' && canAddEdit]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'FailurePatterns' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
 }

@@ -100,6 +100,7 @@ export const repositoryCaseMapping = {
     estimate: { type: "integer" as const },
     forecastManual: { type: "integer" as const },
     forecastAutomated: { type: "float" as const },
+    riskScore: { type: "float" as const },
     automated: { type: "boolean" as const },
     isArchived: { type: "boolean" as const },
     isDeleted: { type: "boolean" as const },
@@ -111,6 +112,9 @@ export const repositoryCaseMapping = {
         keyword: { type: "keyword" as const },
       },
     },
+    createdById: { type: "keyword" as const },
+    createdByName: { type: "keyword" as const },
+    createdByImage: { type: "keyword" as const },
     tags: {
       type: "nested" as const,
       properties: {
@@ -246,6 +250,7 @@ export interface RepositoryCaseDocument {
   estimate?: number | null;
   forecastManual?: number | null;
   forecastAutomated?: number | null;
+  riskScore?: number | null;
   automated: boolean;
   isArchived: boolean;
   isDeleted: boolean;
@@ -253,6 +258,9 @@ export interface RepositoryCaseDocument {
   creatorId: string;
   creatorName: string;
   creatorImage?: string | null;
+  createdById?: string;
+  createdByName?: string;
+  createdByImage?: string | null;
   tags?: Array<{ id: number; name: string }>;
   customFields?: Array<{
     fieldId: number;

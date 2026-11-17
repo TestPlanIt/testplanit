@@ -52,6 +52,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
+import { apiFetch } from "~/lib/basePath";
 
 const createFormSchema = (t: any, existingNames: string[]) =>
   z.object({
@@ -79,7 +80,6 @@ const createFormSchema = (t: any, existingNames: string[]) =>
     deploymentName: z.string().optional(),
     defaultModel: z.string().min(1, t("validation.defaultModelRequired")),
     maxTokensPerRequest: z.number().min(1).max(1048576),
-    maxRequestsPerMinute: z.number().min(1).max(10000),
     costPerInputToken: z.number().min(0),
     costPerOutputToken: z.number().min(0),
     monthlyBudget: z.number().min(0).optional(),
@@ -123,7 +123,6 @@ const FIELD_TO_SECTION: Record<string, string> = {
   deploymentName: "provider",
   defaultModel: "provider",
   maxTokensPerRequest: "provider",
-  maxRequestsPerMinute: "provider",
   costPerInputToken: "cost-and-budget",
   costPerOutputToken: "cost-and-budget",
   monthlyBudget: "cost-and-budget",
@@ -139,7 +138,6 @@ const providerDefaults: Record<string, Partial<FormData>> = {
     defaultModel: "gpt-4o-mini",
     endpoint: "https://api.openai.com/v1",
     maxTokensPerRequest: 16384,
-    maxRequestsPerMinute: 60,
     costPerInputToken: 0.15,
     costPerOutputToken: 0.6,
     defaultTemperature: 0.7,
@@ -150,7 +148,6 @@ const providerDefaults: Record<string, Partial<FormData>> = {
     defaultModel: "claude-haiku-4-5-20251001",
     endpoint: "https://api.anthropic.com/v1",
     maxTokensPerRequest: 64000,
-    maxRequestsPerMinute: 50,
     costPerInputToken: 1.0,
     costPerOutputToken: 5.0,
     defaultTemperature: 0.7,
@@ -160,7 +157,6 @@ const providerDefaults: Record<string, Partial<FormData>> = {
   AZURE_OPENAI: {
     defaultModel: "gpt-4o-mini",
     maxTokensPerRequest: 16384,
-    maxRequestsPerMinute: 60,
     costPerInputToken: 0.15,
     costPerOutputToken: 0.6,
     defaultTemperature: 0.7,
@@ -171,7 +167,6 @@ const providerDefaults: Record<string, Partial<FormData>> = {
     defaultModel: "gemini-2.0-flash",
     endpoint: "https://generativelanguage.googleapis.com/v1beta",
     maxTokensPerRequest: 8192,
-    maxRequestsPerMinute: 60,
     costPerInputToken: 0.1,
     costPerOutputToken: 0.4,
     defaultTemperature: 0.7,
@@ -182,7 +177,6 @@ const providerDefaults: Record<string, Partial<FormData>> = {
     defaultModel: "deepseek-v4-flash",
     endpoint: "https://api.deepseek.com",
     maxTokensPerRequest: 65536,
-    maxRequestsPerMinute: 60,
     costPerInputToken: 0.44,
     costPerOutputToken: 1.32,
     defaultTemperature: 0.7,
@@ -193,7 +187,6 @@ const providerDefaults: Record<string, Partial<FormData>> = {
     defaultModel: "llama3.2",
     endpoint: "", // User must provide a publicly accessible URL
     maxTokensPerRequest: 4096,
-    maxRequestsPerMinute: 100,
     costPerInputToken: 0,
     costPerOutputToken: 0,
     defaultTemperature: 0.7,
@@ -203,7 +196,6 @@ const providerDefaults: Record<string, Partial<FormData>> = {
   CUSTOM_LLM: {
     defaultModel: "custom-model",
     maxTokensPerRequest: 4096,
-    maxRequestsPerMinute: 60,
     costPerInputToken: 0,
     costPerOutputToken: 0,
     defaultTemperature: 0.7,
@@ -282,7 +274,6 @@ export function AddLlmIntegration({
       deploymentName: "",
       defaultModel: "gemini-1.5-flash",
       maxTokensPerRequest: 8192,
-      maxRequestsPerMinute: 60,
       costPerInputToken: 0.075,
       costPerOutputToken: 0.3,
       monthlyBudget: 0,
@@ -359,7 +350,7 @@ export function AddLlmIntegration({
       modelPricingRef.current = {};
 
       try {
-        const response = await fetch("/api/admin/llm/available-models", {
+        const response = await apiFetch("/api/admin/llm/available-models", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -471,7 +462,7 @@ export function AddLlmIntegration({
     const values = form.getValues();
 
     try {
-      const response = await fetch("/api/admin/llm/test-credentials", {
+      const response = await apiFetch("/api/admin/llm/test-credentials", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -542,7 +533,7 @@ export function AddLlmIntegration({
     let capabilitiesForSave = probedCapabilities;
     if (!capabilitiesForSave) {
       try {
-        const probeResp = await fetch("/api/admin/llm/test-credentials", {
+        const probeResp = await apiFetch("/api/admin/llm/test-credentials", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -614,8 +605,6 @@ export function AddLlmIntegration({
             defaultModel: values.defaultModel,
             availableModels: {},
             maxTokensPerRequest: values.maxTokensPerRequest,
-            maxRequestsPerMinute: values.maxRequestsPerMinute,
-            maxRequestsPerDay: null,
             costPerInputToken: new Decimal(values.costPerInputToken),
             costPerOutputToken: new Decimal(values.costPerOutputToken),
             monthlyBudget: new Decimal(values.monthlyBudget || 0),
@@ -992,29 +981,6 @@ export function AddLlmIntegration({
                           <FormLabel className="flex items-center">
                             {t("defaultMaxTokens")}
                             <HelpPopover helpKey="llm.defaultMaxTokens" />
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              onChange={(e) =>
-                                field.onChange(parseInt(e.target.value))
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="maxRequestsPerMinute"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center">
-                            {t("maxRequestsPerMinute")}
-                            <HelpPopover helpKey="llm.maxRequestsPerMinute" />
                           </FormLabel>
                           <FormControl>
                             <Input

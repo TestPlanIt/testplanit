@@ -18,6 +18,7 @@ enum ApplicationArea {
   TestRunResults = "TestRunResults",
   TestRunResultRestrictedFields = "TestRunResultRestrictedFields",
   AutomatedExecution = "AutomatedExecution",
+  FailurePatterns = "FailurePatterns",
   Sessions = "Sessions",
   SessionsRestrictedFields = "SessionsRestrictedFields",
   ClosedSessions = "ClosedSessions",
@@ -27,6 +28,7 @@ enum ApplicationArea {
   Issues = "Issues",
   Reporting = "Reporting",
   Settings = "Settings",
+  Alerts = "Alerts",
 }
 
 // Mock next-auth/react entirely within the factory
@@ -144,6 +146,11 @@ const mockAllAreaPermissions: AllAreaPermissions = {
     canDelete: false,
     canClose: false,
   },
+  [ApplicationArea.FailurePatterns]: {
+    canAddEdit: true,
+    canDelete: false,
+    canClose: false,
+  },
   [ApplicationArea.Sessions]: {
     canAddEdit: true,
     canDelete: false,
@@ -182,6 +189,11 @@ const mockAllAreaPermissions: AllAreaPermissions = {
   },
   [ApplicationArea.Settings]: {
     canAddEdit: true,
+    canDelete: false,
+    canClose: false,
+  },
+  [ApplicationArea.Alerts]: {
+    canAddEdit: false,
     canDelete: false,
     canClose: false,
   },

@@ -18,6 +18,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { useRouter } from "~/lib/navigation";
+import { withBasePath } from "~/lib/basePath";
 
 const GoogleIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
@@ -61,18 +62,20 @@ export default function LinkSSOPage() {
     try {
       if (provider.type === "GOOGLE") {
         await signIn("google", {
-          callbackUrl: "/account/link-sso?linked=google",
+          callbackUrl: withBasePath("/account/link-sso?linked=google"),
         });
       } else if (provider.type === "APPLE") {
         await signIn("apple", {
-          callbackUrl: "/account/link-sso?linked=apple",
+          callbackUrl: withBasePath("/account/link-sso?linked=apple"),
         });
       } else if (provider.type === "MICROSOFT") {
         await signIn("azure-ad", {
-          callbackUrl: "/account/link-sso?linked=microsoft",
+          callbackUrl: withBasePath("/account/link-sso?linked=microsoft"),
         });
       } else if (provider.type === "SAML") {
-        window.location.href = `/api/auth/saml/login/${provider.id}`;
+        window.location.href = withBasePath(
+          `/api/auth/saml/login/${provider.id}`
+        );
       }
     } catch {
       setError(t("account.linkSso.linkingFailed"));

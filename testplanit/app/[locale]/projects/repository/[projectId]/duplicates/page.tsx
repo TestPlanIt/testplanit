@@ -25,6 +25,7 @@ import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 const STORAGE_KEY_PREFIX = "duplicate-scan-job:";
 
@@ -52,7 +53,7 @@ export default function DuplicatesPage() {
     const jobId = jobIdRef.current;
     if (!jobId) return;
     try {
-      await fetch(`/api/duplicate-scan/cancel/${jobId}`, { method: "POST" });
+      await apiFetch(`/api/duplicate-scan/cancel/${jobId}`, { method: "POST" });
     } catch {
       /* ignore */
     }
@@ -72,7 +73,9 @@ export default function DuplicatesPage() {
 
       const poll = async () => {
         try {
-          const statusRes = await fetch(`/api/duplicate-scan/status/${jobId}`);
+          const statusRes = await apiFetch(
+            `/api/duplicate-scan/status/${jobId}`
+          );
           if (!statusRes.ok) {
             // Job no longer exists (obliterated/expired)
             sessionStorage.removeItem(storageKey);
@@ -140,7 +143,7 @@ export default function DuplicatesPage() {
   const handleRescan = async () => {
     setIsScanning(true);
     try {
-      const res = await fetch("/api/duplicate-scan/submit", {
+      const res = await apiFetch("/api/duplicate-scan/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: parseInt(projectId) }),

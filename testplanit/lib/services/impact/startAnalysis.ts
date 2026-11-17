@@ -2,7 +2,7 @@ import { RefNotFoundError, resolveRefToSha } from "./compareService";
 import { impactConfig } from "./config";
 import { excludeGlobsOf } from "~/lib/integrations/repoPathPatterns";
 import { excludedPathsHash } from "./excludedPaths";
-import { impactJobId } from "./jobKeys";
+import { IMPACT_COMPOSE_JOB, impactComposeJobId, impactJobId } from "./jobKeys";
 import type { LoadedRepo } from "./repoAccess";
 import type { ImpactAnalysisJobData, ImpactAutoRun } from "./types";
 
@@ -21,6 +21,14 @@ export interface StartAnalysisQueue {
     data: unknown,
     opts: { jobId: string }
   ) => Promise<unknown>;
+  getJob: (jobId: string) => Promise<
+    | {
+        getState: () => Promise<string>;
+        remove: () => Promise<unknown>;
+      }
+    | null
+    | undefined
+  >;
 }
 
 export interface StartAnalysisInput {
@@ -109,6 +117,32 @@ export async function startImpactAnalysis(
       select: { id: true, jobId: true },
     });
     if (reusable) {
+      // A webhook still wants its runs from the analysis it reused.
+      if (input.autoRun && queue) {
+        const composeData: ImpactAnalysisJobData = {
+          analysisId: reusable.id,
+          projectId: input.projectId,
+          configId,
+          baseSha,
+          headSha,
+          userId: input.createdById,
+          tenantId: input.tenantId,
+          autoRun: input.autoRun,
+        };
+        await queue
+          .add(IMPACT_COMPOSE_JOB, composeData, {
+            jobId: impactComposeJobId(
+              reusable.id,
+              input.autoRun.deliveryId ?? String(Date.now())
+            ),
+          })
+          .catch((error) =>
+            console.error(
+              `[impact] compose job for analysis ${reusable.id} failed to enqueue`,
+              error
+            )
+          );
+      }
       return {
         ok: true,
         analysisId: reusable.id,
@@ -165,6 +199,18 @@ export async function startImpactAnalysis(
     autoRun: input.autoRun,
   };
   try {
+    // A job id is derived from the analysis id, and BullMQ ignores an `add`
+    // whose id already exists — including one that finished long ago. Restore
+    // a database and the id sequence starts over, so the next analysis can
+    // collide with a retained job: the add would be dropped with no error and
+    // the row would sit PENDING for ever. Clear a finished namesake first.
+    const existing = await queue.getJob(jobId);
+    if (existing) {
+      const state = await existing.getState();
+      if (state === "completed" || state === "failed") {
+        await existing.remove();
+      }
+    }
     await queue.add("analyze", jobData, { jobId });
   } catch (error) {
     await db.impactAnalysis.update({

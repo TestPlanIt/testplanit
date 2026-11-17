@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 
 import type { PreflightResult } from "~/lib/types/iterationCardinality";
 import { cn } from "~/utils";
+import { apiFetch } from "~/lib/basePath";
 
 export interface RunPreflightChipProps {
   caseIds: number[];
@@ -76,7 +77,7 @@ export function RunPreflightChip({
       debouncedConfigCount,
     ],
     queryFn: async () => {
-      const res = await fetch("/api/test-runs/preflight-cardinality", {
+      const res = await apiFetch("/api/test-runs/preflight-cardinality", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -128,7 +129,7 @@ export function RunPreflightChip({
     case "softConfirm":
       variant = "outline";
       icon = AlertTriangle;
-      extraClass = "bg-warning/10 text-warning-foreground border-warning/30";
+      extraClass = "bg-warning/10 text-warning-text border-warning/30";
       label = t("runPreflightSoftConfirm", { n: total });
       break;
     case "hardRefuse":

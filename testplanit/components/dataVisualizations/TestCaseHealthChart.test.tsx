@@ -191,6 +191,67 @@ describe("TestCaseHealthChart", () => {
     expect(container.firstChild).not.toBeNull();
   });
 
+  it("draws the tiles from the server summary when one is given, not from the rows on screen", () => {
+    render(
+      <TestCaseHealthChart
+        data={mockHealthData}
+        summary={{
+          total: 76770,
+          counts: {
+            healthy: 45306,
+            never_executed: 29875,
+            always_passing: 1489,
+            always_failing: 100,
+          },
+          staleCount: 12000,
+          needsAttention: 41975,
+          healthy: 46795,
+          avgHealthScore: 63,
+        }}
+      />
+    );
+    // Total tests tile: the summary's total, not data.length (3).
+    expect(screen.getByText("76,770")).toBeInTheDocument();
+    expect(screen.getByText("41,975")).toBeInTheDocument();
+    expect(screen.getByText("12,000")).toBeInTheDocument();
+    expect(screen.getByText("46,795")).toBeInTheDocument();
+    expect(screen.getByText("63")).toBeInTheDocument();
+  });
+
+  it("computes the same tiles from the rows when no summary is given", () => {
+    render(<TestCaseHealthChart data={mockHealthData} />);
+    // 3 rows: needs attention is 2 (the never-executed row, and the
+    // always-failing row that is also stale, counted once), so 67%.
+    const needsAttention = screen.getByText((_, el) =>
+      Boolean(el?.matches("p") && el.textContent === "2(67%)")
+    );
+    expect(needsAttention).toBeInTheDocument();
+    // avg of 85, 0, 10 = 32
+    expect(screen.getByText("32")).toBeInTheDocument();
+  });
+
+  it("treats an empty summary as no data even when a page of rows is present", () => {
+    render(
+      <TestCaseHealthChart
+        data={mockHealthData}
+        summary={{
+          total: 0,
+          counts: {
+            healthy: 0,
+            never_executed: 0,
+            always_passing: 0,
+            always_failing: 0,
+          },
+          staleCount: 0,
+          needsAttention: 0,
+          healthy: 0,
+          avgHealthScore: 0,
+        }}
+      />
+    );
+    expect(screen.getByText("noData")).toBeInTheDocument();
+  });
+
   it("renders with a single test case health entry", () => {
     const singleData = [mockHealthData[0]];
     const { container } = render(<TestCaseHealthChart data={singleData} />);

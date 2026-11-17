@@ -3,6 +3,10 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { cn } from "~/utils";
+import {
+  summarizeRequirementCoverageTiles,
+  type RequirementCoverageTilesSummary,
+} from "~/utils/requirementReportSummaries";
 import { REQUIREMENT_COVERAGE_CHART_COLORS } from "./RequirementCoverageOverview";
 
 /**
@@ -37,10 +41,14 @@ const STATE_TILES: Array<{ status: string; labelKey: string }> = [
 
 export function RequirementCoverageSummaryTiles({
   rows,
+  summary: serverSummary,
   className,
   compact = false,
 }: {
   rows: SummaryRow[];
+  /** The server's numbers over the whole set; when present, `rows` may
+   * be one page and the tiles draw from this instead. */
+  summary?: RequirementCoverageTilesSummary | null;
   /** Grid column classes for the hosting layout; the standalone default
    * spreads six tiles across a wide row. */
   className?: string;
@@ -52,26 +60,10 @@ export function RequirementCoverageSummaryTiles({
   const tCommon = useTranslations("common.fields");
   const locale = useLocale();
 
-  const summary = useMemo(() => {
-    const statusById = new Map<number, string>();
-    for (const row of rows) {
-      if (!statusById.has(row.requirementId)) {
-        statusById.set(row.requirementId, row.coverageStatus ?? "UNCOVERED");
-      }
-    }
-    const counts: Record<string, number> = {
-      PASSED: 0,
-      FAILED: 0,
-      NOT_RUN: 0,
-      UNCOVERED: 0,
-    };
-    for (const status of statusById.values()) {
-      counts[status] = (counts[status] ?? 0) + 1;
-    }
-    const total = statusById.size;
-    const covered = total - counts.UNCOVERED;
-    return { total, covered, counts };
-  }, [rows]);
+  const summary = useMemo(
+    () => serverSummary ?? summarizeRequirementCoverageTiles(rows),
+    [serverSummary, rows]
+  );
 
   if (summary.total === 0) {
     return null;

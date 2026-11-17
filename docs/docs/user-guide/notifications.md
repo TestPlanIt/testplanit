@@ -17,14 +17,32 @@ The notification system consists of:
 
 ## Notification Types
 
-TestPlanIt currently supports the following notification types:
+Every notification TestPlanIt sends belongs to one of the types below. They are grouped the way they appear under **What to notify me about** on your [Notifications & Alerts](./alerts.md) page, where each one has a switch that is on by default (see [Choosing which notifications you receive](#choosing-which-notifications-you-receive)). Two types are **always on** and cannot be switched off; two are sent to **administrators** only.
 
-- **Work Assigned** - When a test case or exploratory testing session is assigned to you
-- **Comment Mentions** - When someone mentions you in a comment (@username)
-- **System Announcements** - Important system-wide announcements and updates
-- **Milestone Due Reminder** - When a milestone's due date is approaching or overdue
-- **Test Run Ready to Complete** - When every test case in a run has been executed, sent to the users who can complete that run; includes a **Review and complete** link to the run
-- **Integration Connection Expired** - When an OAuth integration connection you authorized can no longer refresh its token and must be reconnected; includes a **Reconnect** link that starts the consent flow
+| Group               | Notification                                       | Sent when                                                                                                        | Sent to                                                              |
+| ------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Assignments         | **Work assigned to me**                            | A test run case is assigned to you, singly or in bulk (including automatic distribution)                         | The assignee                                                         |
+| Assignments         | **Session assigned to me**                         | A session is created with you as its assignee, or reassigned to you                                              | The assignee                                                         |
+| Assignments         | **Assigned case unblocked**                        | A case assigned to you in a run becomes executable because the cases it depends on have passed                   | The assignee, unless they recorded the result themselves             |
+| Comments            | **Mentions in comments**                           | Someone @-mentions you in a comment on a case, run, session or milestone, or in a review comment                 | Each mentioned user except the author                                |
+| Reviews             | **Review requested**                               | A review is requested from you or from a role you hold, singly or in bulk                                        | The reviewer or role holders, minus the requester                    |
+| Reviews             | **Review approved**                                | A reviewer approves your request                                                                                 | The requester                                                        |
+| Reviews             | **Changes requested**                              | A reviewer asks for changes on your request                                                                      | The requester                                                        |
+| Reviews             | **Review rejected**                                | A reviewer rejects your request                                                                                  | The requester                                                        |
+| Reviews             | **Review cancelled**                               | A request you were asked to review is cancelled, or the item under review is deleted                             | The pending reviewers, minus whoever cancelled                       |
+| Reviews             | **Review reminders**                               | A review you owe is older than the reminder threshold (hourly), or the requester nudges you                      | The pending reviewers                                                |
+| Runs and milestones | **Test run ready to complete**                     | Every case in a run has a result; includes a **Review and complete** link                                        | Users who can close the run, plus admins and project admins          |
+| Runs and milestones | **Milestone due reminders**                        | A milestone is inside its reminder window or overdue (daily)                                                     | The milestone creator and everyone involved in its runs and sessions |
+| Runs and milestones | **Alerts**                                         | An [alert](./alerts.md) you follow fires because a metric crossed its line; links to the subject and its project | The rule's subscribers who can see the project                       |
+| Sharing             | **Share link viewed**                              | Someone opens a share link you created with notify-on-view enabled                                               | The link creator                                                     |
+| AI and jobs         | **AI-drafted test cases**                          | A webhook action drafted test cases for an issue and named you as a reviewer; links to the folder                | The users and groups the action names                                |
+| AI and jobs         | **AI steps derived**                               | An AI step-derivation job you started has written steps                                                          | The user who started the job                                         |
+| Integrations        | **Integration needs re-authorization** (always on) | Your OAuth connection to an integration expired or was revoked; includes a **Reconnect** link                    | The connection owner                                                 |
+| System              | **Admin announcements** (always on)                | An administrator sends a system notification from **Admin → Notifications**                                      | Every active user                                                    |
+| System              | **What's New after an upgrade**                    | Your first page load after TestPlanIt is upgraded to a version with release notes                                | The current user                                                     |
+| Administration      | **New user registrations** (admins)                | A new user signs up through the form, SSO or SAML                                                                | All administrators                                                   |
+
+A type added in a future release is on for everyone automatically; nothing needs to be changed after an upgrade.
 
 ## Notification Center UI
 
@@ -228,6 +246,7 @@ When the last outstanding piece of work in a test run receives a final result, e
 **Features**:
 
 - **The run is not completed for you.** Completing a run is irreversible, so the notification is a prompt, not an action — it carries a **Review and complete** link to the run, and the decision stays with a person.
+- **Sent five minutes after the last result, and only if the run is still open.** Completing the run within that window — for example from the dialog that opens when you record the final result — means no notification is sent.
 - Only **manual** runs are covered. Automated runs report through their CI job rather than case-by-case execution, so these counts don't describe them; see [Abandoned automation cleanup](./statuses.md#abandoned-automation-cleanup) for closing those.
 - **One notification per fill-up.** A run notifies once when it becomes fully executed. If it stops being fully executed — a result is deleted, or a new case is added — it re-arms, and notifies again the next time it fills up.
 - Evaluation runs a few seconds behind the result that triggered it, which also collapses a bulk submission of many results into a single notification rather than one per case.
@@ -237,7 +256,23 @@ When the last outstanding piece of work in a test run receives a final result, e
 If a project is configured so that its **default access** role can close test runs, every active user in the deployment becomes a recipient. Above 100 recipients the notification stops being a signal, so it is skipped for that run and a warning is written to the server logs instead. If your team expects these notifications and never receives them, check whether the project's default role grants **canClose** on Test Runs — see the [Permissions Guide](./permissions-guide.md).
 :::
 
+#### Assigned Case Unblocked Notifications
+
+In a project that [enforces test case dependencies](./projects/settings/advanced.md#enforce-test-case-dependencies-in-test-runs), a case in a run is blocked until the cases it depends on have passed in that run. When the last of them passes, the blocked case's assignee is told it is ready to execute. This is the handoff between testers in a multi-step scenario.
+
+**Recipients**: The user assigned to the case that just became executable. Unassigned cases notify nobody, and the tester whose result opened the gate is not notified about their own cases.
+
+**Features**:
+
+- The notification names the prerequisite that passed and links straight to the case in the run.
+- It fires once per opening: a prerequisite that is resubmitted as passed again does not notify again. If a prerequisite later fails and then passes once more, the case is blocked and re-opened, and the assignee is told again.
+- Editing a prerequisite's existing result to a pass opens the gate and notifies in the same way. Deleting a result never notifies, even if the case it belonged to becomes unblocked as a consequence.
+- Switch it off under **Assignments → Assigned case unblocked** in your notification preferences.
+- The project setting is required; projects that don't enforce dependencies never send it.
+
 ## User Preferences
+
+Two settings on your [Notifications & Alerts](./alerts.md) page (**Notifications & Alerts** in the user menu, or the link in your profile's Preferences section) control notifications. The **notification mode** decides _how_ you are reached; the per-type switches decide _what_ you are told about.
 
 ### Notification Modes
 
@@ -249,14 +284,28 @@ Users can configure their notification preferences with these modes:
 4. **None** (`NONE`) - No notifications (not recommended)
 5. **Use Global Settings** (`USE_GLOBAL`) - Follow system-wide default settings
 
+### Choosing which notifications you receive
+
+Below the notification mode, the **What to notify me about** section lists every notification type you can receive, grouped as in the [table above](#notification-types), each with a switch:
+
+- Every switch is **on by default**. Switch a type off to stop it on every channel: the bell, immediate email and the daily digest. Each switch saves as soon as you flip it, like the switches on the Alerts tab.
+- **Always on** types (integration re-authorization, admin announcements) are shown switched on and cannot be changed.
+- Types sent only to administrators appear only on an administrator's profile.
+- **Reset to defaults** turns every type back on.
+- If your effective mode is **None**, the switches stay editable, but nothing is delivered until you pick another mode.
+
+Muting a type affects only what _you_ receive. A review request to a role you hold is still created and still appears in your [Reviews inbox](reviews-inbox.md); you are simply not notified about it, and the requester's recipient preview counts you as silenced.
+
 ### Configuring Preferences
 
-Users can manage their notification preferences in their profile:
+Users manage their notification preferences on their Notifications & Alerts page:
 
-1. Navigate to your user profile
-2. Click on "Notification Preferences"
+1. Open **Notifications & Alerts** from the user menu (or the link in your profile's Preferences section)
+2. Open the **Notifications** tab
 3. Select your preferred notification mode
-4. Save changes
+4. Under **What to notify me about**, switch off any type you do not want
+
+Every change is saved as soon as you make it.
 
 ## Email Templates
 
@@ -422,10 +471,10 @@ If new notifications only appear after a manual page refresh, the SSE event stre
 
 ### Adding New Notification Types
 
-1. Add the type to the notification enum in schema
-2. Create handler in the appropriate service
-3. Queue notification job when event occurs
-4. Update email templates if needed
+1. Add the type to the `NotificationType` enum in `schema.zmodel` and run `pnpm generate`
+2. Add a matching entry to the catalogue in `lib/notifications/catalogue.ts` (group, audience, whether it is optional) and the `users.profile.notifications.types.<TYPE>` label and description in `messages/en-US.json`; the catalogue test fails until both exist
+3. Add a rendering branch in `components/NotificationContent.tsx` and, if the type is emailed, in `workers/emailWorker.ts`
+4. Queue the notification job when the event occurs; the worker applies the user's mode and muted-type preferences, so no per-type delivery code is needed
 
 ### Creating New Email Templates
 

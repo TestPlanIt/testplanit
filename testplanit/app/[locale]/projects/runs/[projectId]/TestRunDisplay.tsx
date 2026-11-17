@@ -51,6 +51,11 @@ import {
   UNSCHEDULED_GROUP_KEY,
 } from "./milestoneGroups";
 import TestRunItem from "./TestRunItem";
+import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
+import { apiFetch } from "~/lib/basePath";
 
 const _testRunPropSelect = {
   id: true,
@@ -307,7 +312,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
         if (testRunIds.length === 0) {
           return { summaries: {} };
         }
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/test-runs/summaries?testRunIds=${testRunIds.join(",")}`
         );
         if (!response.ok) {
@@ -449,7 +454,12 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       select: {
         externalProjectKey: true,
         externalProjectName: true,
-        projectIntegration: { select: { integrationId: true } },
+        projectIntegration: {
+          select: {
+            integrationId: true,
+            integration: { select: { provider: true } },
+          },
+        },
       },
     },
     { enabled: !isNaN(numericProjectId) && integrationIds.length > 0 }
@@ -811,7 +821,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
             <div className="truncate">{tSessions("noMilestone")}</div>
             <Badge
               variant="outline"
-              className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
+              className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-foreground"
               data-testid="milestone-group-count-unscheduled"
             >
               {tCommon("configurationGroup.candidateInGroupRun", {
@@ -857,7 +867,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
           {row.depth > 0 && (
             <DynamicIcon
               name="corner-down-right"
-              className="w-6 h-6 text-primary/50 shrink-0 bg-transparent"
+              className="w-6 h-6 text-primary shrink-0 bg-transparent"
             />
           )}
           {/* Only the chevron toggles: the header also holds the milestone
@@ -890,7 +900,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
           />
           <Badge
             variant="outline"
-            className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
+            className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-foreground"
             data-testid={`milestone-group-count-${milestone.id}`}
           >
             {tCommon("configurationGroup.candidateInGroupRun", {
@@ -901,8 +911,13 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
 
         <div className="milestone-status flex gap-2 justify-center">
           <Badge
-            style={{ backgroundColor: badge }}
-            className="text-secondary-background border-2 border-secondary-foreground text-sm"
+            data-status-surface
+            style={{
+              ...statusSurfaceVars(badge),
+              backgroundColor: badge,
+              color: contrastingTextColor(badge),
+            }}
+            className="border-2 border-secondary-foreground text-sm"
           >
             {tMilestones(`statusLabels.${status}` as any)}
           </Badge>

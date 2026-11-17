@@ -129,6 +129,20 @@ export function RepositoryFilterBar({
 
   const removeButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const addButtonRef = useRef<HTMLButtonElement | null>(null);
+  /**
+   * The open editor's in-progress value for a typed dimension (number, text,
+   * link, steps). Those are never applied per keystroke — closing the editor
+   * is what applies them, so one editing session is exactly one URL write.
+   * A ref, not state: nothing renders from it, and re-rendering the bar
+   * under an open editor is what used to drop the entry being typed.
+   */
+  const pendingEditRef = useRef<FilterPredicate | null>(null);
+
+  const takePendingEdit = useCallback(() => {
+    const pending = pendingEditRef.current;
+    pendingEditRef.current = null;
+    return pending;
+  }, []);
 
   const chips = useMemo<ChipEntry[]>(
     () =>
@@ -182,6 +196,7 @@ export function RepositoryFilterBar({
           predicate.dimension === seed.dimension &&
           predicate.operator === seed.operator
       );
+      pendingEditRef.current = null;
       if (existing) {
         setDraft(null);
         setOpenChipKey(chipKey(existing));
@@ -199,6 +214,11 @@ export function RepositoryFilterBar({
     [predicates, onAdd]
   );
 
+  /**
+   * Live commit path for a draft on a list, boolean or date dimension, where
+   * a pick is already a complete choice. Typed dimensions do not come through
+   * here at all — they are applied by `handleDraftClose`.
+   */
   const handleDraftChange = useCallback(
     (next: FilterPredicate) => {
       if (!draft) return;
@@ -211,6 +231,37 @@ export function RepositoryFilterBar({
       }
     },
     [draft, onAdd]
+  );
+
+  /**
+   * Closing a draft's editor applies whatever typed value it was holding, as
+   * a single write. An entry too incomplete to apply is simply dropped, so
+   * abandoning a half-typed filter leaves nothing behind.
+   */
+  const handleDraftClose = useCallback(
+    (dimension: FilterDimension) => {
+      const pending = takePendingEdit();
+      if (pending && isCommittable(pending, dimension)) {
+        onAdd(pending);
+      }
+      setDraft(null);
+    },
+    [onAdd, takePendingEdit]
+  );
+
+  /**
+   * Same, for an existing chip: one `onUpdate` that also carries an operator
+   * re-key. Routed around `handleChipChange` so closing cannot re-open the
+   * editor it just closed.
+   */
+  const handleChipClose = useCallback(
+    (entry: ChipEntry) => {
+      const pending = takePendingEdit();
+      if (pending && isCommittable(pending, entry.dimension)) {
+        onUpdate(entry.predicate.dimension, entry.predicate.operator, pending);
+      }
+    },
+    [onUpdate, takePendingEdit]
   );
 
   const handleChipChange = useCallback(
@@ -250,6 +301,7 @@ export function RepositoryFilterBar({
   );
 
   const handleClearAll = useCallback(() => {
+    pendingEditRef.current = null;
     setDraft(null);
     setOpenChipKey(null);
     onClearAll();
@@ -284,31 +336,53 @@ export function RepositoryFilterBar({
     const isDraft = index === null;
     return (
       <FilterChip
-        key={isDraft ? `draft-${key}` : key}
+        // The draft's key omits the operator: there is only ever one draft,
+        // and re-keying it on an operator switch would remount the editor
+        // (and drop focus) mid-edit, e.g. switching a number chip to
+        // `between` before filling in the second value.
+        key={isDraft ? `draft-${entry.dimension.key}` : key}
         dimension={entry.dimension}
         predicate={entry.predicate}
         label={getDimensionLabel(entry.dimension, t, dynamicFieldLabels)}
         icon={getDimensionIcon(entry.dimension)}
         options={getDimensionValueOptions(entry.dimension, viewOptions, t)}
         open={isDraft ? true : openChipKey === key}
+        /* The close handlers read the pending-edit ref, but only when the
+           popover actually closes — never during render. Same exemption the
+           removal handlers below rely on. */
+        /* eslint-disable react-hooks/refs */
         onOpenChange={(open) => {
           if (isDraft) {
-            if (!open) setDraft(null);
+            if (!open) handleDraftClose(entry.dimension);
             return;
           }
           if (open) {
+            pendingEditRef.current = null;
             setOpenChipKey(key);
-          } else if (openChipKey === key) {
-            setOpenChipKey(null);
+          } else {
+            handleChipClose(entry);
+            if (openChipKey === key) setOpenChipKey(null);
           }
         }}
+        /* eslint-enable react-hooks/refs */
         onChange={(next) =>
           isDraft
             ? handleDraftChange(next)
             : handleChipChange(entry.predicate, next)
         }
-        // eslint-disable-next-line react-hooks/refs
-        onRemove={() => (isDraft ? setDraft(null) : handleChipRemove(index))}
+        onPendingChange={(next) => {
+          pendingEditRef.current = next;
+        }}
+        /* eslint-disable react-hooks/refs */
+        onRemove={() => {
+          pendingEditRef.current = null;
+          if (isDraft) {
+            setDraft(null);
+          } else {
+            handleChipRemove(index);
+          }
+        }}
+        /* eslint-enable react-hooks/refs */
         countsMuted={countsMuted}
         /* eslint-disable react-hooks/refs */
         removeButtonRef={(element) => {

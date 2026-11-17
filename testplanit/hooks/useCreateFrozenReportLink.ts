@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import type { FrozenReportMeta } from "~/lib/reports/frozenReportMeta";
+import { apiFetch, withBasePath } from "~/lib/basePath";
 
 export interface FrozenTruncation {
   totalRowCount: number;
@@ -43,7 +44,7 @@ export type CreateFrozenReportLinkResult =
 
 /** The public URL of a share link; middleware adds the viewer's locale. */
 export function buildShareUrl(shareKey: string): string {
-  return `${window.location.protocol}//${window.location.host}/share/${shareKey}`;
+  return `${window.location.protocol}//${window.location.host}${withBasePath(`/share/${shareKey}`)}`;
 }
 
 /**
@@ -61,7 +62,7 @@ export function useCreateFrozenReportLink() {
     ): Promise<CreateFrozenReportLinkResult> => {
       setIsCreatingFrozen(true);
       try {
-        const response = await fetch("/api/reports/frozen-links", {
+        const response = await apiFetch("/api/reports/frozen-links", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),

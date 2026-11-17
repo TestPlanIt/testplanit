@@ -57,7 +57,10 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // ── Cases family ──────────────────────────────────────────────────────────
   {
     table: "RepositoryCases",
-    denylist: ["createdAt"],
+    // Risk columns are machine-recomputed nightly for every project; auditing
+    // them would turn each sweep into a DataChangeLog flood (riskReasons is
+    // ~1-2KB JSON per row). Same treatment as Steps.step/expectedResult.
+    denylist: ["createdAt", "riskScore", "riskReasons", "riskComputedAt"],
     nameCol: "name",
     projectCol: "projectId",
   }, // NOTE: no updatedAt column on this table (Finding C)
@@ -84,6 +87,31 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
     projectCol: "projectId",
   },
   { table: "ImpactAnalysisCase", denylist: [] },
+
+  // ── Failure triage family ─────────────────────────────────────────────────
+  {
+    // Counters and timestamps churn on every result burst; only the
+    // human-facing fields (status, classification, notes) are worth a row.
+    table: "FailureSignature",
+    denylist: [
+      "createdAt",
+      "updatedAt",
+      "firstSeenAt",
+      "lastSeenAt",
+      "occurrenceCount",
+      "caseCount",
+      "runCount",
+      "flakyCandidate",
+    ],
+    nameCol: "title",
+    projectCol: "projectId",
+  },
+  { table: "FailureSignatureIssue", pkCol: "signatureId", denylist: [] },
+  {
+    table: "CaseQuarantine",
+    denylist: ["createdAt"],
+    projectCol: "projectId",
+  },
 
   // ── Runs family ───────────────────────────────────────────────────────────
   {
@@ -202,6 +230,26 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
     projectCol: "projectId",
   },
   { table: "Attachments", denylist: ["createdAt"], nameCol: "name" }, // no updatedAt (immutable once uploaded)
+  // User-deletable content that previously had no audit row at all, so a deleted
+  // folder/dataset/share link was invisible to the audit log and to "who deleted it".
+  {
+    table: "RepositoryFolders",
+    denylist: ["createdAt"],
+    nameCol: "name",
+    projectCol: "projectId",
+  }, // no updatedAt
+  {
+    table: "DataSet",
+    denylist: ["createdAt"],
+    nameCol: "name",
+    projectCol: "projectId",
+  }, // no updatedAt
+  {
+    table: "ShareLink",
+    denylist: ["createdAt", "updatedAt"],
+    nameCol: "title",
+    projectCol: "projectId",
+  },
   {
     table: "ReviewRequest",
     denylist: ["createdAt", "updatedAt"],
@@ -223,6 +271,7 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   },
   { table: "Roles", denylist: [], nameCol: "name" }, // no timestamp columns
   { table: "MilestoneTypes", denylist: [], nameCol: "name" }, // no timestamp columns
+  { table: "FailureClassification", nameCol: "name" }, // failure triage catalogue
   { table: "ConfigCategories", denylist: [], nameCol: "name" }, // no timestamp columns
   { table: "ConfigVariants", denylist: [], nameCol: "name" }, // no timestamp columns
   { table: "Configurations", denylist: [], nameCol: "name" }, // no timestamp columns
@@ -332,6 +381,12 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
     nameCol: "name",
     projectCol: "projectId",
   },
+  // Inbound webhook rules (trigger → action). Their run log is machine-written and stays out.
+  {
+    table: "WebhookAction",
+    denylist: ["createdAt", "updatedAt"],
+    projectCol: "projectId",
+  },
 
   // ── COV-04: Group F — Composite-PK permission/assignment tables ─────────────
   // These tables have @@id([colA, colB]) — no scalar id. pkCol = first column of the composite key.
@@ -359,6 +414,7 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
 export const REGISTRY_PROHIBITED = [
   "DataChangeLog", // append-only audit substrate — recursion + tamper risk
   "AuditLog", // semantic audit log (app-layer captureAuditEvent)
+  "AuditLogArchive", // cold-storage manifest for archived AuditLog rows
   // BullMQ job tables are managed by BullMQ, not the application schema, and are likewise excluded.
 ];
 
@@ -427,12 +483,16 @@ export const SINGLE_DEFAULT_REGISTRY: SingleDefaultConfig[] = [
 ];
 
 /**
- * Soft-delete deletedAt stamping (a business rule, NOT audit capture). Every table
- * carrying an `isDeleted` boolean also carries a nullable `deletedAt` timestamp
- * (Option A — additive; `isDeleted` stays the queryable liveness flag). Each listed
- * table gets a `tpl_stamp_deleted_at_<table>` BEFORE UPDATE trigger that stamps
- * `deletedAt = now()` on the isDeleted false→true flip and clears it (→ NULL) on a
- * true→false restore, in the SAME write. The trigger is gated on an actual flip
+ * Soft-delete deletedAt / deletedById stamping (a business rule, NOT audit capture).
+ * Every table carrying an `isDeleted` boolean also carries a nullable `deletedAt`
+ * timestamp and a nullable `deletedById` actor column (Option A — additive;
+ * `isDeleted` stays the queryable liveness flag). Each listed table gets a
+ * `tpl_stamp_deleted_at_<table>` BEFORE UPDATE trigger that stamps
+ * `deletedAt = now()` and `deletedById = <audit GUC actor>` on the isDeleted
+ * false→true flip and clears both (→ NULL) on a true→false restore, in the SAME
+ * write. The actor comes from the `app.audit_context` GUC the CDC substrate
+ * already sets, so the user-facing Trash (restore your own deletes) shares one
+ * attribution source with the audit log. The trigger is gated on an actual flip
  * (WHEN NEW.isDeleted IS DISTINCT FROM OLD.isDeleted), so normal updates never enter
  * the function — no overhead on hot write paths. Doing it in the DB, not app code,
  * means every soft-delete write path (both Prisma clients, raw SQL, future code) is
@@ -448,7 +508,7 @@ export const SINGLE_DEFAULT_REGISTRY: SingleDefaultConfig[] = [
  * soft-deletable model that forgets its trigger fails the unit lane, not silently in prod.
  */
 export interface SoftDeleteConfig {
-  /** Postgres table name (exact case, no quotes — the apply script quotes it). Must have an `isDeleted` boolean + a nullable `deletedAt` column. */
+  /** Postgres table name (exact case, no quotes — the apply script quotes it). Must have an `isDeleted` boolean + nullable `deletedAt` and `deletedById` columns. */
   table: string;
 }
 
@@ -459,6 +519,7 @@ export const SOFT_DELETE_REGISTRY: SoftDeleteConfig[] = [
   { table: "Projects" },
   { table: "Milestones" },
   { table: "MilestoneTypes" },
+  { table: "FailureClassification" },
   { table: "CaseFields" },
   { table: "ResultFields" },
   { table: "FieldOptions" },
@@ -494,6 +555,7 @@ export const SOFT_DELETE_REGISTRY: SoftDeleteConfig[] = [
   { table: "Integration" },
   { table: "CodeRepository" },
   { table: "ExecutionTarget" },
+  { table: "AlertRule" },
   { table: "ImpactAnalysis" },
   { table: "LlmIntegration" },
   { table: "SharedStepGroup" },
@@ -507,4 +569,5 @@ export const SOFT_DELETE_REGISTRY: SoftDeleteConfig[] = [
   { table: "RequirementTraceabilitySnapshot" },
   { table: "Comment" },
   { table: "ImportMapping" },
+  { table: "CaseDraft" },
 ];

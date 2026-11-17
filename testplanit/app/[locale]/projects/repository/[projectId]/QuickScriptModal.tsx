@@ -50,6 +50,7 @@ import { Check, ChevronsUpDown, Loader2, Sparkles, Star } from "lucide-react";
 import { cn } from "~/utils";
 import { ExportPreviewPane } from "./ExportPreviewPane";
 import { sanitizeFilename } from "./quickScriptUtils";
+import { apiFetch } from "~/lib/basePath";
 
 /** Strip leading/trailing markdown code fences that some LLMs emit. */
 function stripFences(code: string): string {
@@ -75,7 +76,7 @@ async function streamExportCase(
   truncated?: boolean;
   contextFiles?: string[];
 }> {
-  const response = await fetch("/api/export/ai-stream", {
+  const response = await apiFetch("/api/export/ai-stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

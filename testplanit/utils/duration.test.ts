@@ -1,5 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { toBusinessHours, toHumanReadable } from "./duration";
+import {
+  formatHoursAsRelativeDuration,
+  toBusinessHours,
+  toHumanReadable,
+} from "./duration";
+
+describe("formatHoursAsRelativeDuration", () => {
+  it("rounds down to whole days once past a day", () => {
+    expect(formatHoursAsRelativeDuration(3493)).toBe("145 days");
+    expect(formatHoursAsRelativeDuration(47)).toBe("1 day");
+    expect(formatHoursAsRelativeDuration(24)).toBe("1 day");
+  });
+
+  it("shows hours below a day, dropping the minutes", () => {
+    expect(formatHoursAsRelativeDuration(14.25)).toBe("14 hours");
+    expect(formatHoursAsRelativeDuration(23)).toBe("23 hours");
+    expect(formatHoursAsRelativeDuration(1)).toBe("1 hour");
+    expect(formatHoursAsRelativeDuration(0)).toBe("0 hours");
+  });
+
+  it("localizes the unit", () => {
+    expect(formatHoursAsRelativeDuration(3493, "es-ES")).toBe("145 días");
+    expect(formatHoursAsRelativeDuration(14, "fr-FR")).toBe("14 heures");
+  });
+});
 
 describe("toHumanReadable", () => {
   // Basic milliseconds tests

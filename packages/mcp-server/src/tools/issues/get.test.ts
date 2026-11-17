@@ -294,7 +294,7 @@ describe("registerIssuesGet", () => {
   });
 
   // 8. externalSystem = integration.provider
-  it("externalSystem = integration.provider (Pitfall 7)", async () => {
+  it("externalSystem = integration.provider", async () => {
     mockZenstack.mockResolvedValueOnce(
       makeRawIssueDetail({
         integration: { id: 11, name: "GH", provider: "GITHUB" },
@@ -323,8 +323,8 @@ describe("registerIssuesGet", () => {
     expect(text).toContain("not found");
   });
 
-  // 10. Sub-include take is 101 (D7-12 overflow detection)
-  it("sub-include take is 101 on all 3 sub-includes (D7-12 overflow detection)", async () => {
+  // 10. Sub-include take is 101
+  it("sub-include take is 101 on all 3 sub-includes", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawIssueDetail());
     const { client } = await setupClient();
     await client.callTool({
@@ -339,8 +339,8 @@ describe("registerIssuesGet", () => {
     expect(include.testRuns.take).toBe(101);
   });
 
-  // 11. Sub-includes carry deterministic orderBy (Phase 7 MED-02 regression)
-  it("sub-includes carry deterministic orderBy (Phase 7 MED-02 regression)", async () => {
+  // 11. Sub-includes carry deterministic orderBy
+  it("sub-includes carry deterministic orderBy", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawIssueDetail());
     const { client } = await setupClient();
     await client.callTool({
@@ -363,7 +363,7 @@ describe("registerIssuesGet", () => {
   });
 
   // 12. Soft-delete grep guard
-  it("NEVER calls delete or deleteMany (T-08-SOFT-DELETE invariant)", async () => {
+  it("NEVER calls delete or deleteMany", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawIssueDetail());
     const { client } = await setupClient();
     await client.callTool({

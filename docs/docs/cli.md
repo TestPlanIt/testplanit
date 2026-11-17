@@ -87,6 +87,8 @@ testplanit config clear
 testplanit config path
 ```
 
+If the instance is served under a path prefix, include it in the URL, for example `https://example.com/testplanit`.
+
 ### Environment Variables
 
 Environment variables take precedence over stored configuration, making them ideal for CI/CD:

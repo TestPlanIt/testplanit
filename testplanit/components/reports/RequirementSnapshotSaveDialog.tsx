@@ -21,6 +21,7 @@ import {
   isExecutionScopeSelectionActive,
   type RequirementExecutionScopeSelection,
 } from "~/utils/requirementExecutionScope";
+import { apiFetch } from "~/lib/basePath";
 
 export interface SavedRequirementSnapshot {
   id: number;
@@ -80,7 +81,7 @@ export function RequirementSnapshotSaveDialog({
     if (!trimmedName || isSaving) return;
     setIsSaving(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/projects/${projectId}/requirements/snapshots`,
         {
           method: "POST",

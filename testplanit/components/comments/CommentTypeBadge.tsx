@@ -10,6 +10,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "~/components/ui/badge";
+import { cn } from "~/utils";
 import type { ReviewStatus } from "~/zenstack/models";
 
 export type CommentType = "GENERAL" | "REVIEW_REQUEST" | "REVIEW_DECISION";
@@ -43,6 +44,9 @@ interface ReviewDecisionBadgeProps {
    * was removed) falls back to a neutral generic "Decision" badge. */
   status?: ReviewRequestStatus | null;
   "data-testid"?: string;
+  /** Extra classes for the badge, e.g. width constraints when it shares a
+   * cell with something else and has to give up space. */
+  className?: string;
 }
 
 /** Outcome badge for a decided review — the single source of the
@@ -50,6 +54,7 @@ interface ReviewDecisionBadgeProps {
 export function ReviewDecisionBadge({
   status,
   "data-testid": testId,
+  className: classNameOverride,
 }: ReviewDecisionBadgeProps) {
   const t = useTranslations();
 
@@ -70,13 +75,13 @@ export function ReviewDecisionBadge({
         return {
           labelKey: "comments.type.reviewDecision.approved",
           icon: CheckCircle2,
-          className: `${base} bg-success text-success-foreground border-success hover:bg-success/90`,
+          className: `${base} bg-success text-success-foreground border-success hover:bg-success/90 hover:text-success-foreground`,
         };
       case "CHANGES_REQUESTED":
         return {
           labelKey: "comments.type.reviewDecision.changesRequested",
           icon: MessageCircleWarning,
-          className: `${base} bg-warning text-white border-warning hover:bg-warning/90`,
+          className: `${base} bg-warning text-warning-foreground border-warning hover:bg-warning/90 hover:text-warning-foreground`,
         };
       case "REJECTED":
         return {
@@ -106,10 +111,12 @@ export function ReviewDecisionBadge({
       data-testid={testId}
       data-status-surface
       data-review-status={status?.toLowerCase() ?? "generic"}
-      className={className}
+      className={cn(className, classNameOverride)}
     >
       {Icon && <Icon className="h-3 w-3 shrink-0" />}
-      {t(labelKey)}
+      {/* Span rather than a bare text node so the label can ellipsise when a
+          caller constrains the badge's width. */}
+      <span className="truncate">{t(labelKey)}</span>
     </Badge>
   );
 }

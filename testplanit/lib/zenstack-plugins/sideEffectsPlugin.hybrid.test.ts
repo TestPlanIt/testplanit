@@ -31,7 +31,7 @@ import {
 import { markExecutionResultsReceived } from "~/lib/execution/service";
 import { emitJUnitResultAdded } from "~/lib/webhooks/event-emitters/testRunEvents";
 
-const afterEntityMutation = (sideEffectsPlugin as any).onEntityMutation
+const afterEntityMutation = (sideEffectsPlugin as any).onEntityMutation.$all
   .afterEntityMutation;
 
 function runMutation(

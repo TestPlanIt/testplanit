@@ -14,9 +14,6 @@ vi.mock("next/image", () => ({
   default: ({ alt, ...props }: any) => <img alt={alt} {...props} />,
 }));
 
-// Mock the logo SVG
-vi.mock("~/public/tpi_logo.svg", () => ({ default: "test-logo.svg" }));
-
 // Mock ~/lib/navigation (in addition to next/navigation which is already globally mocked)
 const mockRouterPush = vi.fn();
 vi.mock("~/lib/navigation", () => ({
@@ -194,6 +191,22 @@ describe("Signin Page", () => {
       const errorContainer = document.querySelector(".text-destructive");
       expect(errorContainer).toBeInTheDocument();
     });
+  });
+
+  it("shows the session-ended notice when arriving with error=SessionEnded", async () => {
+    const navigation = await import("next/navigation");
+    const spy = vi
+      .spyOn(navigation, "useSearchParams")
+      .mockReturnValue(new URLSearchParams("error=SessionEnded") as never);
+    try {
+      render(<Signin />);
+      await waitForFormToRender();
+      expect(
+        await screen.findByText("auth.errors.sessionEnded")
+      ).toBeInTheDocument();
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it("shows 2FA dialog when sign-in returns 2FA_REQUIRED error", async () => {

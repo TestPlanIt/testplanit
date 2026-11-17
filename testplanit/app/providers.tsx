@@ -18,6 +18,7 @@ import {
   reportPossibleSkew,
 } from "~/lib/deploymentSkew";
 import { operationIdFetcher } from "~/lib/zenstackFetcher";
+import { withBasePath } from "~/lib/basePath";
 const queryClient = new QueryClient({
   queryCache: new QueryCache({ onError: reportPossibleSkew }),
   mutationCache: new MutationCache({ onError: reportPossibleSkew }),
@@ -50,9 +51,17 @@ function RepositoryCasesCacheSync() {
   return null;
 }
 
-export default function Providers({ children }: { children: ReactNode }) {
+export default function Providers({
+  children,
+  nonce,
+}: {
+  children: ReactNode;
+  /** Per-request CSP nonce from the proxy, for next-themes' inline script. */
+  nonce?: string;
+}) {
   const content = (
     <ThemeProvider
+      nonce={nonce}
       attribute="class"
       defaultTheme="system"
       enableSystem
@@ -78,13 +87,22 @@ export default function Providers({ children }: { children: ReactNode }) {
         mutation/query routes through operationIdFetcher, which stamps the
         X-Operation-Id header from the active operationId (useOperationId).
         endpoint is the generated-hook default (DEFAULT_QUERY_ENDPOINT =
-        "/api/model"), so existing requests are unchanged — we only inject fetch.
+        "/api/model") plus the install's path prefix, which the hooks do not
+        know about; at the root it is unchanged.
       */}
       <ZenStackProvider
-        value={{ endpoint: "/api/model", fetch: operationIdFetcher }}
+        value={{
+          endpoint: withBasePath("/api/model"),
+          fetch: operationIdFetcher,
+        }}
       >
         <RepositoryCasesCacheSync />
-        <SessionProvider>
+        {/*
+          next-auth's client defaults its route to /api/auth; under a path
+          prefix it must be told the full route or signIn/signOut/getSession
+          call the host root.
+        */}
+        <SessionProvider basePath={withBasePath("/api/auth")}>
           <TooltipProvider delayDuration={300}>{content}</TooltipProvider>
         </SessionProvider>
       </ZenStackProvider>

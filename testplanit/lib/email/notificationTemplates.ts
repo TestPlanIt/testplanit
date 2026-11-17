@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { renderEmailTemplate } from "./template-service";
+import { getAppUrl } from "~/lib/appUrl";
 
 interface NotificationEmailData {
   to: string;
@@ -55,7 +56,7 @@ export async function sendNotificationEmail(data: NotificationEmailData) {
       createdAt: new Date(),
     },
     notificationUrl: data.notificationUrl,
-    appUrl: data.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000",
+    appUrl: data.baseUrl || getAppUrl(),
     locale: data.locale || "en-US",
     userId: data.userId,
     currentYear: new Date().getFullYear(),
@@ -86,7 +87,7 @@ export async function sendDigestEmail(data: DigestEmailData) {
   const { html, subject } = await renderEmailTemplate("daily-digest", {
     userName: data.userName,
     notifications: data.notifications,
-    appUrl: data.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000",
+    appUrl: data.baseUrl || getAppUrl(),
     locale: data.locale || "en-US",
     userId: data.userId,
     currentYear: new Date().getFullYear(),

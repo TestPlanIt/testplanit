@@ -14,7 +14,6 @@ import { DraggableList } from "@/components/DraggableFieldOptions";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { emptyEditorContent } from "~/app/constants";
 
 import { Ellipsis } from "lucide-react";
@@ -325,6 +324,7 @@ export function AddCaseFieldModal({
         order: prevOptions.length,
         isDeleted: false,
         deletedAt: null,
+        deletedById: null,
       };
       return applyOptionOrder([...prevOptions, newOption]);
     });
@@ -416,6 +416,7 @@ export function AddCaseFieldModal({
           order: index,
           isDeleted: false,
           deletedAt: null,
+          deletedById: null,
         })
       );
 
@@ -863,7 +864,7 @@ export function AddCaseFieldModal({
               name="typeId"
               render={({ field }) => (
                 <FormItem>
-                  <Label className="whitespace-nowrap items-center flex space-x-2">
+                  <FormLabel className="whitespace-nowrap items-center flex space-x-2">
                     <div className="flex items-center">
                       <span>{tCommon("fields.fieldType")}</span>
                       <HelpPopover helpKey="caseField.fieldType" />
@@ -871,7 +872,7 @@ export function AddCaseFieldModal({
                     <div className="text-muted-foreground text-sm">
                       {tCommon("fields.hints.fieldType")}
                     </div>
-                  </Label>
+                  </FormLabel>
                   <FormControl>
                     <Select
                       onValueChange={(value) => {

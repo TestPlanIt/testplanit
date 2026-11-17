@@ -8,6 +8,7 @@
       "editAction": "Editar ({count})",
       "completeAction": "Completar ({count})",
       "deleteAction": "Eliminar ({count})",
+      "restoreAction": "Restaurar ({count})",
       "editTitle": "Edición masiva ({count})",
       "applyToCount": "Los cambios se aplican a {count, plural, one {# elemento} other {# elementos}}.",
       "tagsAdditiveHint": "Las etiquetas seleccionadas se añaden a cada elemento; las etiquetas existentes se conservan.",
@@ -126,6 +127,8 @@
       "exportingPdf": "Exportador...",
       "change": "Cambiar",
       "viewAll": "Ver todo",
+      "viewSystemOutput": "Ver registros",
+      "viewSystemError": "Ver error",
       "undo": "Deshacer",
       "undoDelete": "Deshacer eliminación",
       "automated": {
@@ -338,6 +341,7 @@
       "milestoneTypes": "Tipos de hito",
       "milestones": "Milestones",
       "createdAt": "Creado el",
+      "stagedAt": "Preparado el",
       "completedOn": "Completado el",
       "variants": "Variantes",
       "emailVerified": "Email verificado",
@@ -503,6 +507,7 @@
       "complete": {
         "title": "Completar prueba",
         "description": "¿Estás seguro de que quieres completar esta ejecución de prueba?",
+        "allCasesCompletedDescription": "Cada caso de prueba en esta ejecución ahora tiene un resultado. ¿Desea completar esta ejecución de prueba?",
         "warning": "Una vez completado, la ejecución de la prueba no podrá ser modificada.",
         "completing": "Completando...",
         "apple": {
@@ -577,6 +582,7 @@
       "addFieldTo": "Añadir un campo a {section}",
       "selectTemplates": "Seleccionar plantillas",
       "selectUsers": "Seleccionar usuarios",
+      "selectGroups": "Seleccionar grupos",
       "selectOption": "Seleccione una opción",
       "date": "Seleccione una fecha",
       "selectEncoding": "Seleccione la codificación...",
@@ -694,6 +700,8 @@
       "failedToDeleteRepository": "Error al eliminar el repositorio",
       "permissionDenied": "No tienes permiso para acceder a esta página.",
       "resultSubmitPermissionDenied": "No puedes enviar los resultados de este caso. Pídele a un administrador del proyecto que te lo asigne.",
+      "dependenciesNotPassed": "Bloqueado por dependencias",
+      "dependenciesNotPassedDescription": "Este caso de prueba no se puede ejecutar hasta que {count, plural, =0 {los casos de los que depende hayan} one {el caso del que depende haya} other {todos los # casos de los que depende hayan}} pasado en esta ejecución.",
       "justificationRequired": "Se requiere justificación",
       "justificationRequiredDescription": "Para cambiar un resultado ya completado a un resultado diferente, se requieren Detalles del resultado que expliquen el cambio.",
       "requiredFieldMissing": "Falta un valor en un campo de resultado obligatorio.",
@@ -736,7 +744,10 @@
       "adminSamlConfig": "Administrador - Configuración SAML",
       "apiDocumentation": "Documentación de la API",
       "sharedContent": "Contenido compartido",
-      "impact": "Análisis de impacto"
+      "impact": "Análisis de impacto",
+      "alerts": "Notificaciones y Alertas",
+      "triage": "Patrones de Fallos",
+      "riskScoring": "Puntuación de riesgos"
     },
     "aria": {
       "userMenu": "Menú de usuario",
@@ -824,6 +835,9 @@
       "viewTestRunDetails": "Ver detalles de la prueba",
       "sortByStatus": "Agrupar por estado",
       "sortByDate": "Ordenar por fecha",
+      "estimateFromCases": "Tiempo estimado restante: {value} (basado en las estimaciones ingresadas en los casos)",
+      "estimateEntered": "Estimación: {value} (ingresada en el caso)",
+      "forecastFromHistory": "Pronóstico: {value} (basado en los tiempos de ejecución anteriores)",
       "testRuns": "{count, plural, =0 {No hay ejecuciones de prueba} =1 {1 Prueba de ejecución} other {# Prueba de ejecuciones}}",
       "sessions": "{count, plural, =0 {Sin Sesiones} =1 {1 Sesión} other {# Sesiones}}",
       "issues": "{count, plural, =0 {Sin Problemas} =1 {1 Problema} other {# Problemas}}",
@@ -868,8 +882,7 @@
     "for": "para",
     "and": "y",
     "branding": {
-      "logoAlt": "Logo de PrestPlanit",
-      "tagline": "Prueba todo lo que existe bajo el sol"
+      "logoAlt": "Logo de PrestPlanit"
     },
     "table": {
       "columns": {
@@ -1239,6 +1252,7 @@
       "accessDenied": "Acceso denegado. Es posible que tu cuenta esté inactiva o que no tengas permiso para iniciar sesión.",
       "configuration": "Hay un problema con la configuración del servidor.",
       "verification": "Este enlace de inicio de sesión ha expirado o ya se utilizó. Los Magic Links solo se pueden usar una vez; solicite uno nuevo para iniciar sesión.",
+      "sessionEnded": "Su sesión ha expirado. Por favor, inicie sesión de nuevo.",
       "invalid2FACode": "Código de verificación no válido. Inténtalo de nuevo.",
       "twoFactorTokenRequired": "Se requiere token",
       "verificationCodeRequired": "Se requiere un código de verificación."
@@ -1575,6 +1589,9 @@
           },
           "mantisbt": {
             "description": "Conéctese a una instancia autohospedada de MantisBT para el seguimiento de incidencias."
+          },
+          "clickup": {
+            "description": "Conéctate a ClickUp para el seguimiento de tareas y la gestión de proyectos."
           }
         }
       },
@@ -1657,7 +1674,8 @@
           "scimGroupMemberAdded": "Miembros añadidos",
           "scimGroupMemberRemoved": "Miembros eliminados",
           "scimGroupDeleted": "Grupo eliminado",
-          "scimGroupMemberAddedSummary": "Miembros añadidos (resumen de sincronización masiva)"
+          "scimGroupMemberAddedSummary": "Miembros añadidos (resumen de sincronización masiva)",
+          "triggered": "Disparado"
         },
         "iterationResultHelp": "Se activa cada vez que se registra el resultado de una iteración: aprobado, reprobado, omitido o cualquier otro estado. Úselo con moderación en ejecuciones de automatización largas (un evento por iteración).",
         "events": {
@@ -1732,13 +1750,13 @@
         "inboundChooserGitea": "Gitea",
         "inboundJiraTitle": "Webhook entrante de Jira",
         "inboundGithubTitle": "Webhook entrante de GitHub",
-        "inboundGithubScopeHint": "GitHub <code>incidencias</code> eventos actualiza incidencias vinculadas de TestPlanIt. Se aceptan eventos de solicitud de extracción y comentarios de incidencias, pero aún no actualizan las incidencias.",
+        "inboundGithubScopeHint": "GitHub <code>incidencias</code> eventos actualizan incidencias vinculadas de TestPlanIt, incluyendo cerrarlas como no planificadas, y eventos <code>issue_comment</code> las actualizan. Se aceptan eventos de solicitud de extracción pero no actualizan incidencias.",
         "inboundGitlabTitle": "Webhook entrante de GitLab",
         "inboundGitlabScopeHint": "Los eventos de GitLab <code>Issue Hook</code> actualizan los problemas vinculados de TestPlanIt. Se aceptan otros tipos de eventos, pero no actualizan los problemas.",
         "inboundGiteaTitle": "Webhook entrante de Gitea",
         "inboundGiteaScopeHint": "Los problemas de Gitea <code>y los eventos</code> actualizan los problemas vinculados de TestPlanIt. Se aceptan otros tipos de eventos, pero no actualizan los problemas.",
         "inboundAdoTitle": "Webhook entrante de Azure DevOps",
-        "inboundAdoScopeHint": "Los eventos <code>workitem.updated</code> de Azure DevOps actualizan los problemas vinculados de TestPlanIt. Se aceptan otros eventos, pero no actualizan los problemas.",
+        "inboundAdoScopeHint": "Los eventos <code>workitem.created</code> y <code>workitem.updated</code> de Azure DevOps actualizan los problemas vinculados de TestPlanIt. Se aceptan otros eventos, pero no actualizan los problemas.",
         "inboundAdoUsername": "Nombre de usuario",
         "inboundAdoUsernamePlaceholder": "cuenta de servicio",
         "inboundAdoUsernameHelp": "Configurado en el lado del enlace de servicio de Azure DevOps. TestPlanIt lo verifica mediante autenticación básica HTTP.",
@@ -1752,10 +1770,10 @@
         "setupStepsGithubStep1": "En tu repositorio de GitHub, ve a Configuración → Webhooks → Agregar webhook.",
         "setupStepsGithubStep2": "Pegue la siguiente URL en el campo URL de carga útil. Establezca el tipo de contenido en application/json.",
         "setupStepsGithubStep3": "Pega el siguiente secreto en el campo \"Secreto\".",
-        "setupStepsGithubStep4": "Seleccione \"Permitirme seleccionar eventos individuales\" y marque \"Problemas\".",
+        "setupStepsGithubStep4": "Seleccione \"Permitirme seleccionar eventos individuales\" y marque \"Incidencias\" e \"Incidencias comentarios\".",
         "setupStepsGithubStep5": "Haz clic en \"Agregar webhook\". Usa \"Enviar webhook de prueba\" a continuación para verificar la canalización.",
         "setupStepsAdoStep1": "En tu proyecto de Azure DevOps, ve a Configuración del proyecto → Ganchos de servicio → Crear suscripción.",
-        "setupStepsAdoStep2": "Seleccione \"Web Hooks\" como servicio. Establezca el activador en \"Elemento de trabajo actualizado\".",
+        "setupStepsAdoStep2": "Seleccione \"Web Hooks\" como el servicio. Configure el desencadenador a \"Elemento de trabajo creado\", luego repita estos pasos para una segunda suscripción con \"Elemento de trabajo actualizado\".",
         "setupStepsAdoStep3": "Establezca los detalles del recurso en \"Enviar\" = \"Todos\" para que se incluya System.State.",
         "setupStepsAdoStep4": "Pegue la siguiente URL en el campo URL. Establezca el nombre de usuario y la contraseña de autenticación básica con los valores que ingresó anteriormente.",
         "setupStepsAdoStep5": "Guarda la suscripción. Usa la opción \"Enviar webhook de prueba\" que aparece a continuación para verificar el flujo de trabajo.",
@@ -1847,6 +1865,53 @@
         "setupStepsMantisbtStep2": "En la configuración del complemento, elija los eventos de incidencia creada e incidencia actualizada.",
         "setupStepsMantisbtStep3": "Pegue la URL anterior como destino del webhook y guarde.",
         "setupStepsMantisbtStep4": "Cree o actualice una incidencia en MantisBT; el estado de la incidencia vinculada se sincronizará aquí.",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "Webhook entrante de ClickUp",
+        "inboundClickupScopeHint": "Los eventos <code>taskCreated</code> y <code>taskStatusUpdated</code> de ClickUp actualizan los problemas vinculados de TestPlanIt. Se aceptan otros eventos de tareas, pero no actualizan los problemas.",
+        "inboundClickupRegisterHint": "ClickUp no tiene una página de configuración de webhooks: los webhooks se crean a través de su API, y ClickUp elige el secreto de firma. Deja el secreto en blanco y TestPlanIt registra este webhook en ClickUp para la Lista vinculada utilizando tu autorización de ClickUp.",
+        "inboundClickupSecret": "Secreto de webhook (opcional)",
+        "inboundClickupSecretHelp": "Solo es necesario si creaste el webhook tú mismo con la API de Crear Webhook de ClickUp: pega el secreto que ClickUp devolvió. Se almacena cifrado en reposo.",
+        "setupStepsClickupStep1": "Si dejaste el secreto en blanco, TestPlanIt ya ha registrado este webhook con ClickUp para la Lista vinculada — no hay nada que configurar en ClickUp.",
+        "setupStepsClickupStep2": "Si registraste el webhook tú mismo a través de la API de Crear Webhook de ClickUp, asegúrate de que su endpoint sea la URL a continuación y suscríbelo al evento taskStatusUpdated.",
+        "setupStepsClickupStep3": "Usa \"Enviar webhook de prueba\" a continuación para verificar la tubería. Rotar el secreto registra un webhook nuevo en ClickUp.",
+        "actions": {
+          "description": "Lo que TestPlanIt hace cuando este webhook recibe un evento. Las acciones se ejecutan en el orden indicado.",
+          "empty": "Sin acciones. Los eventos se registran, pero no sucede nada.",
+          "addTitle": "Agregar acción",
+          "editTitle": "Editar acción",
+          "dialogDescription": "Elija el evento que activa esta acción y qué hace.",
+          "trigger": {
+            "ISSUE_EVENT": "Cualquier evento de problema",
+            "ISSUE_STATUS_ENTERED": "Los cambios de estado del problema"
+          },
+          "triggerHelp": {
+            "ISSUE_EVENT": "Cualquier evento que el rastreador envía sobre un problema.",
+            "ISSUE_CREATED": "Un problema que TestPlanIt no ha visto antes.",
+            "ISSUE_STATUS_ENTERED": "Un problema se mueve a uno de los estados elegidos."
+          },
+          "outcome": {
+            "cases_drafted": "Casos de prueba elaborados",
+            "draft_queued": "Elaborando casos de prueba",
+            "has_cases": "El problema ya tiene casos de prueba",
+            "no_llm": "Sin modelo de IA activo",
+            "no_template": "Sin plantilla",
+            "no_target": "Sin repositorio o estado predeterminado",
+            "draft_failed": "La elaboración falló",
+            "already_composed": "La ejecución ya se creó para este cambio",
+            "execute_failed": "La ejecución no fue solicitada"
+          },
+          "dragToReorder": "Arrastra para reordenar",
+          "requirementsOnly": "Solo requisitos",
+          "requirementsOnlyHelp": "Solo problemas que el proyecto clasifica como requisitos.",
+          "includeChildIssues": "Incluir problemas secundarios",
+          "includeChildIssuesHelp": "También toma los casos de prueba vinculados a los problemas secundarios del problema.",
+          "caseFilter": "Filtros de casos de prueba",
+          "caseFilterHelp": "Solo los casos de prueba que coinciden con todos los filtros se incluyen en la ejecución. Déjelo vacío para incluir todos los casos de prueba que selecciona la acción.",
+          "notifyHelp": "Quién es notificado cuando los borradores están listos para revisar. Las preferencias de notificación de cada persona aún se aplican.",
+          "draftFolderNote": "Casos de prueba elaborados automáticamente por el webhook {webhook}.",
+          "draftFolderNoteCases": "Elaborado por el usuario del sistema; cada caso está vinculado al problema del que se elaboró.",
+          "viewFolder": "Ver carpeta"
+        },
         "codeRepos": {
           "empty": "No hay repositorios conectados para Impact Analysis. <link>Conecte uno</link> primero.",
           "unsupported": "Los repositorios de {provider} no pueden enviar webhooks a TestPlanIt.",
@@ -1885,7 +1950,8 @@
           "sourceRepositoryHelp": "Inicie un análisis de Impacto y redacte una ejecución de prueba cuando se abra una solicitud de extracción o se inserten cambios.",
           "noRepositoryAvailable": "Todos los repositorios conectados ya tienen un webhook o no pueden enviar webhooks.",
           "repositoryPlaceholder": "Elija un repositorio"
-        }
+        },
+        "outboundSubsAlerts": "Alertas"
       },
       "aiModels": {
         "description": "Configurar modelos IA para generar y analizar casos de prueba inteligentes",
@@ -2131,6 +2197,16 @@
       },
       "advanced": {
         "description": "Opciones de configuración específicas para cada proyecto. Las nuevas opciones aparecerán aquí a medida que se vayan implementando.",
+        "sections": {
+          "general": "General",
+          "generalDescription": "La identidad y valores predeterminados del proyecto: el código utilizado en las claves de registro, la plantilla con la que comienzan los nuevos casos de prueba y sesiones, y si el proyecto tiene un área de Requisitos.",
+          "reviews": "Revisiones",
+          "reviewsDescription": "Cómo se aplica la Revisión y Aprobación en este proyecto: si las transiciones que requieren revisión están limitadas por una solicitud aprobada, y cuánto tiempo tiene un revisor para deshacer una decisión.",
+          "runs": "Pruebas realizadas",
+          "runsDescription": "Lo que puede incluirse en una ejecución de prueba y cómo se mantienen ordenadas las ejecuciones: excluyendo casos en borrador, bloqueando la composición de una ejecución una vez que comienza la ejecución, limitando casos según sus dependencias, y cerrando ejecuciones automatizadas que dejaron de informar.",
+          "results": "Resultados",
+          "resultsDescription": "Gobernanza para resultados registrados: una justificación cuando un resultado cambia, un problema vinculado en fallas, y cuánto tiempo un resultado permanece editable en su lugar."
+        },
         "recordKey": {
           "label": "Código del proyecto",
           "description": "Un código corto usado en claves de registro cosméticas como {example}. 2–10 letras mayúsculas, sin dígitos. Déjelo en blanco para mostrar IDs numéricos simples.",
@@ -2141,6 +2217,11 @@
           "taken": "Ese código ya está siendo usado por otro proyecto. Elija uno diferente.",
           "savedToast": "Código del proyecto guardado.",
           "saveError": "No se pudo guardar el código del proyecto. Puede que ya esté siendo usado por otro proyecto."
+        },
+        "defaultTemplate": {
+          "description": "Los nuevos casos de prueba y sesiones en este proyecto comienzan con esta plantilla.",
+          "unavailableTitle": "Plantilla predeterminada no disponible",
+          "unavailableDescription": "{name} está deshabilitado, eliminado o ya no está asignado a este proyecto, por lo que los nuevos casos de prueba y sesiones utilizan la plantilla predeterminada del sistema en su lugar. Elija otra plantilla predeterminada o restaure esta."
         },
         "reviewWorkflow": {
           "label": "Habilitar el flujo de trabajo de revisión",
@@ -2189,6 +2270,13 @@
           "disabledToast": "Las Ejecuciones de Prueba ya no bloquearán automáticamente su composición",
           "saveError": "No se pudo actualizar el ajuste de bloqueo automático de composición"
         },
+        "caseDependencies": {
+          "label": "Aplicar dependencias de casos de prueba en ejecuciones de pruebas",
+          "description": "Cuando está habilitado, un caso de prueba en una ejecución se bloquea hasta que todos los casos de los que depende (un enlace \"Depende de\") hayan pasado en esa misma ejecución. Los casos bloqueados se marcan en la ejecución y se rechazan los resultados para ellos. Cuando pasa la última dependencia, se notifica al asignado del caso que está listo. Las dependencias que no están en la ejecución no bloquean.",
+          "enabledToast": "Las dependencias de casos de prueba se aplicarán en ejecuciones de pruebas",
+          "disabledToast": "Las dependencias de casos de prueba ya no se aplicarán",
+          "saveError": "No se pudo actualizar la configuración de aplicación de dependencias"
+        },
         "editWindow": {
           "label": "Ventana de edición de resultados",
           "description": "¿Cuánto tiempo después de registrar un resultado aún se puede editar directamente? Una vez que se cierra la ventana, las correcciones requieren un nuevo intento. Los administradores del sistema siempre pueden editar.",
@@ -2223,6 +2311,23 @@
           "save": "Guardar configuración de limpieza",
           "savedToast": "Limpieza de automatización abandonada actualizada para este proyecto",
           "saveError": "Error al actualizar la limpieza de automatización abandonada"
+        },
+        "revertWindow": {
+          "label": "Reversión de decisiones de revisión",
+          "description": "Cuánto tiempo tiene un revisor para deshacer su propia decisión en este proyecto. Los administradores del sistema no están limitados por este límite.",
+          "systemLockedTitle": "La reversión está deshabilitada en todo el sistema",
+          "systemLockedDescription": "Un administrador ha desactivado la reversión de decisiones de revisión para cada proyecto. Esta configuración no se puede cambiar aquí.",
+          "modeInheritMinutes": "Heredar la configuración predeterminada del sistema ({minutes, plural, one {# minuto} other {# minutos}})",
+          "modeDisable": "Deshabilitar la reversión para este proyecto",
+          "modeCustom": "Ventana personalizada",
+          "minutesBefore": "Límite",
+          "minutesUnit": "{minutes, plural, one {minuto} other {minutos}}",
+          "minutesAriaLabel": "Minutos que una decisión se puede revertir",
+          "systemMaxHint": "Máximo del sistema: {minutes} minutos",
+          "invalidMinutes": "Introduzca un número de minutos mayor que cero",
+          "save": "Guardar límite de reversión",
+          "savedToast": "Límite de reversión guardado.",
+          "saveError": "No se pudo guardar el límite de reversión. Inténtelo de nuevo en un momento."
         }
       },
       "impact": {
@@ -2527,17 +2632,17 @@
       "overdue": "El hito \"{name}\" debía cumplirse el {dueDate}"
     },
     "import": {
-      "importTitle": "Importar desde Jira",
-      "importDescription": "Seleccione las Versiones de Corrección y Sprints de Jira para sincronizar como Hitos de TestPlanIt.",
+      "importTitle": "Importar desde {provider}",
+      "importDescription": "Seleccione los hitos de {provider} para sincronizar como Hitos de TestPlanIt.",
       "showClosed": "Mostrar cerrados",
       "alreadyLinked": "Ya vinculado",
       "selectedCount": "{count, plural, one {# seleccionado} other {# seleccionados}}",
       "confirmSelection": "Importar Seleccionados",
       "confirmSelectionCount": "{count, plural, one {Importar # Hito} other {Importar # Hitos}}",
       "empty": "No se encontraron hitos",
-      "previewFailed": "No se pudieron cargar los hitos desde Jira",
+      "previewFailed": "No se pudieron cargar los hitos desde {provider}",
       "importFailed": "No se pudieron importar los hitos seleccionados",
-      "requestTimedOut": "Jira tardó demasiado en responder y se agotó el tiempo de espera de la solicitud. Esto normalmente significa que los proyectos de Jira vinculados tienen una gran cantidad de versiones o tableros. Inténtalo de nuevo y mantén desactivada la opción \"Mostrar cerrados\" para acotar la solicitud.",
+      "requestTimedOut": "{provider} tardó demasiado en responder y la solicitud venció. Esto generalmente significa que los proyectos de {provider} vinculados tienen una gran cantidad de versiones o tableros. Inténtelo de nuevo y mantenga \"Mostrar cerrados\" desactivado para limitar la solicitud.",
       "serviceUnavailable": "El servidor no está disponible temporalmente. Por favor, inténtalo de nuevo en un momento.",
       "unexpectedResponse": "Respuesta inesperada del servidor (HTTP {status}). Por favor, inténtalo de nuevo y contacta a tu administrador si esto sigue ocurriendo.",
       "importStarted": "Importación iniciada",
@@ -2545,15 +2650,16 @@
       "kindSprint": "Sprint",
       "searchPlaceholder": "Buscar versiones y sprints...",
       "emptyFiltered": "Ningún hito coincide con sus filtros.",
-      "partialWarning": "No se pudieron obtener algunos proyectos de Jira:",
-      "importing": "Importando {count, plural, one {# hito} other {# hitos}} desde Jira…",
-      "completed": "Se importaron {count, plural, one {# hito} other {# hitos}} desde Jira",
+      "partialWarning": "No se pudieron obtener algunos proyectos de {provider}:",
+      "importing": "Importando {count, plural, one {# hito} other {# hitos}} desde {provider}…",
+      "completed": "Se importaron {count, plural, one {# hito} other {# hitos}} desde {provider}",
       "stillRunning": "La importación todavía se está ejecutando en segundo plano — los hitos aparecerán cuando finalice."
     },
     "sync": {
-      "managedByJira": "Gestionado por Jira",
+      "managedByJira": "Gestionado por {provider}",
       "lastSynced": "Última sincronización {time}",
       "providerJira": "Jira",
+      "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Sincronizar ahora",
       "unlinkMenuItem": "Desvincular de {provider}",
@@ -2853,7 +2959,9 @@
         "detailsDisplayMode": {
           "docked": "Panel acoplado",
           "newWindow": "Nueva ventana"
-        }
+        },
+        "notificationsLabel": "Notificaciones",
+        "notificationsMoved": "Gestionar Notificaciones y Alertas"
       },
       "assignments": {
         "title": "Tareas",
@@ -2886,11 +2994,109 @@
           "label": "Modo de notificación",
           "useGlobal": "Usar ajustes globales"
         },
-        "options": {
-          "title": "Opciones adicionales",
-          "email": {
-            "label": "Notificaciones por email",
-            "description": "Recibir notificaciones por correo electrónico"
+        "typeSection": {
+          "title": "Qué notificarme",
+          "description": "Todos los tipos de notificaciones están activados de forma predeterminada. Desactive los que no desee. El modo de notificación anterior aún decide cómo se le contacta.",
+          "modeNoneNote": "No se entrega nada mientras su modo de notificación es Ninguno. Sus opciones aquí se aplican tan pronto como elige otro modo.",
+          "locked": "Siempre activado",
+          "resetToDefaults": "Restablecer a los valores predeterminados",
+          "adminOnly": "Enviado a administradores"
+        },
+        "groups": {
+          "assignments": "Asignaciones",
+          "comments": "Comentarios",
+          "reviews": "Revisiones",
+          "runsAndMilestones": "Ejecuciones e hitos",
+          "sharing": "Compartir",
+          "aiAndJobs": "IA y trabajos",
+          "integrations": "Integraciones",
+          "system": "Sistema",
+          "administration": "Administración"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "Trabajo asignado a mí",
+            "description": "Se le asigna un caso de ejecución de prueba, individual o en masa."
+          },
+          "SESSION_ASSIGNED": {
+            "label": "Sesión asignada a mí",
+            "description": "Se crea una sesión con usted como asignado, o se le reasigna."
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "Caso asignado desbloqueado",
+            "description": "Un caso de prueba asignado a usted en una ejecución se vuelve ejecutable porque los casos de los que depende han pasado."
+          },
+          "COMMENT_MENTION": {
+            "label": "Menciones en comentarios",
+            "description": "Alguien te menciona con @ en un comentario sobre un caso, ejecución, sesión, hito o revisión."
+          },
+          "REVIEW_REQUESTED": {
+            "label": "Revisión solicitada",
+            "description": "Se solicita una revisión de usted o de un rol que ostenta."
+          },
+          "REVIEW_APPROVED": {
+            "label": "Revisión aprobada",
+            "description": "Un revisor aprueba su solicitud."
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "Cambios solicitados",
+            "description": "Un revisor solicita cambios en su solicitud."
+          },
+          "REVIEW_REJECTED": {
+            "label": "Revisión rechazada",
+            "description": "Un revisor rechaza su solicitud."
+          },
+          "REVIEW_CANCELLED": {
+            "label": "Revisión cancelada",
+            "description": "Se cancela una solicitud que le pidieron que revise, o se elimina el elemento en revisión."
+          },
+          "REVIEW_REMINDER": {
+            "label": "Recordatorios de revisión",
+            "description": "Una revisión que debe hacer es más antigua que el umbral de recordatorio, o el solicitante le da un codazo."
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "Ejecución de prueba lista para completar",
+            "description": "Cada caso en una ejecución que puede completar tiene un resultado."
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "Recordatorios de vencimiento de hitos",
+            "description": "Un hito en el que está involucrado vence pronto o está vencido."
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "Enlace compartido visualizado",
+            "description": "Alguien abre un enlace compartido que creó con notificación al ver habilitada."
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "Pasos derivados de IA",
+            "description": "Un trabajo de derivación de pasos de IA que inició ha escrito pasos."
+          },
+          "CASES_DRAFTED": {
+            "label": "Casos de prueba elaborados por IA",
+            "description": "Una acción de webhook elaboró casos de prueba para un problema y lo nombró como revisor."
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "La integración necesita reautorización",
+            "description": "Su conexión con una integración expiró o fue revocada y debe reconectarse."
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "Anuncios administrativos",
+            "description": "Un administrador envía una notificación del sistema a todos los usuarios."
+          },
+          "WHATS_NEW": {
+            "label": "Novedades después de una actualización",
+            "description": "Un resumen de las nuevas características en su primera visita después de que TestPlanIt se actualiza."
+          },
+          "USER_REGISTERED": {
+            "label": "Nuevos registros de usuarios",
+            "description": "Un nuevo usuario se registra a través del formulario, SSO o SAML."
+          },
+          "ALERT_TRIGGERED": {
+            "label": "Alertas",
+            "description": "Una alerta a la que se suscribió se activa porque una métrica de prueba cruzó la línea que monitorea."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "Decisión de revisión revertida",
+            "description": "Un revisor deshace una decisión sobre una solicitud que usted realizó, devolviéndola a su cola."
           }
         },
         "success": {
@@ -2913,7 +3119,7 @@
           "newPasswordTooShort": "La nueva contraseña no cumple con los requisitos de seguridad."
         },
         "success": {
-          "passwordChanged": "Contraseña cambiada con éxito."
+          "passwordChanged": "Contraseña cambiada exitosamente. Se ha cerrado la sesión en otros dispositivos y navegadores."
         }
       },
       "auditLog": {
@@ -2928,6 +3134,27 @@
         "allTypes": "Todos los tipos",
         "noMatchingEntries": "Ninguna entrada coincide con los filtros seleccionados.",
         "showing": "{loaded} de {total} entradas"
+      },
+      "trash": {
+        "description": "Elementos eliminados que aún pueden restaurarse desde aquí.",
+        "empty": "Nada en tu papelera. Los elementos que elimines pueden restaurarse aquí durante {days, plural, one {# día} other {# días}}.",
+        "disabled": "La restauración automática está desactivada. Pide a un administrador que restaure los elementos eliminados desde Admin > Papelera.",
+        "timeLeftColumn": "Tiempo restante",
+        "timeLeft": "{days, plural, =0 {Menos de un día} one {# día} other {# días}}",
+        "confirmDescription": "\"{name}\" se restaurará en {project}, junto con todo lo que fue eliminado con él.",
+        "bulkConfirmDescription": "Cada uno de los {count} elementos seleccionados se restaurará en su proyecto, junto con todo lo que fue eliminado con él.",
+        "restored": "\"{name}\" restaurado.",
+        "restoreFailed": "No se pudo restaurar \"{name}\": {message}",
+        "bulkResult": "{restored, plural, one {# elemento} other {# elementos}} restaurado, {failed} falló.",
+        "failure": {
+          "parent_deleted": "su carpeta o elemento principal aún está eliminado — restaura ese primero",
+          "name_conflict": "ya existe un elemento con el mismo nombre",
+          "expired": "la ventana de restauración ha pasado",
+          "forbidden": "ya no tienes permiso en ese proyecto",
+          "disabled": "la restauración automática está desactivada",
+          "not_owner": "solo la persona que lo eliminó puede restaurarlo",
+          "not_found": "ya no está en la papelera"
+        }
       },
       "myComments": {
         "title": "Mis comentarios",
@@ -3015,7 +3242,8 @@
       "orange": "Naranja",
       "accessible": "Accesible",
       "accessibledark": "Accesible (Oscuro)"
-    }
+    },
+    "myAlerts": "Notificaciones y Alertas"
   },
   "repository": {
     "version": {
@@ -3088,7 +3316,12 @@
       "noStepsInSelectedGroup": "El grupo seleccionado no tiene pasos.",
       "sharedGroupSuffix": "(Pasos compartidos)",
       "unnamedSharedGroup": "Pasos compartidos sin nombre",
-      "noStepsInSelectedSharedGroup": "El grupo compartido seleccionado no tiene pasos."
+      "noStepsInSelectedSharedGroup": "El grupo compartido seleccionado no tiene pasos.",
+      "layout": {
+        "label": "Diseño de pasos",
+        "stacked": "Apilado",
+        "sideBySide": "Lado a lado"
+      }
     },
     "testCase": {
       "toggleAutomated": "Cambiar pruebas automatizadas",
@@ -3137,6 +3370,13 @@
       "modifierHintMac": "Mantén pulsado ⇧ para mover o ⌥ para copiar mientras arrastras para saltarte este menú.",
       "modifierHintWin": "Mantén pulsada la tecla Mayús para mover o la tecla Ctrl para copiar mientras arrastras para saltarte este menú.",
       "dropZoneReorder": "Soltar para reordenar",
+      "dropZoneReorderBlockedSort": "Elimine la clasificación para reordenar casos dentro de esta carpeta",
+      "dropZoneReorderBlockedSortMac": "Elimine la clasificación para reordenar — mantenga presionado ⌥ para copiar en esta carpeta",
+      "dropZoneReorderBlockedSortWin": "Elimine la clasificación para reordenar — mantenga presionado Ctrl para copiar en esta carpeta",
+      "dropZoneReorderBlockedSearch": "Borre la búsqueda para reordenar casos dentro de esta carpeta",
+      "dropZoneReorderBlockedSearchMac": "Borre la búsqueda para reordenar — mantenga presionado ⌥ para copiar en esta carpeta",
+      "dropZoneReorderBlockedSearchWin": "Borre la búsqueda para reordenar — mantenga presionado Ctrl para copiar en esta carpeta",
+      "dropZoneCopyHere": "Suelte para copiar en esta carpeta",
       "dropZoneFolder": "Suelte sobre una carpeta para anidar, o entre carpetas para reordenar",
       "dropZoneTreeMac": "Soltar en una carpeta — mantener ⇧ para mover, ⌥ para copiar",
       "dropZoneTreeWin": "Soltar en una carpeta — mantener Shift para mover, Ctrl para copiar",
@@ -3493,7 +3733,7 @@
     },
     "duplicates": {
       "findDuplicates": "Buscar duplicados",
-      "viewResults": "Ver {count, plural, one {# Resultado} other {# Resultados}}",
+      "viewDuplicates": "Ver duplicados",
       "retryScan": "Reintentar escaneo",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Mejorando los resultados con IA...",
@@ -3577,8 +3817,8 @@
         "description": "Elija si desea generar casos de prueba a partir de un problema o de un documento de requisitos.",
         "folderContextTip": "Los casos de prueba existentes de \"{folderName}\" y sus carpetas padre/hijo se utilizarán como contexto para evitar duplicados. Asegúrese de haber seleccionado la carpeta correcta antes de continuar.",
         "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
-        "folderContextEmptyTitle": "No hay casos de prueba existentes para usar como contexto",
-        "folderContextEmpty": "\"{folderName}\" y sus carpetas principales/secundarias no tienen casos de prueba, por lo que la IA no tiene ejemplos del estilo de su proyecto o cobertura existente. Para mejores resultados, inicie el generador desde la carpeta donde pertenecen estos casos de prueba, junto a casos relacionados.",
+        "folderContextEmptyTitle": "Aún no hay casos de prueba en esta carpeta",
+        "folderContextEmpty": "\"{folderName}\" y sus carpetas principales/secundarias no tienen casos de prueba. La IA buscará casos de prueba relacionados en otros lugares de este proyecto para aprender su estilo y evitar duplicados. Para obtener los mejores resultados, inicie el generador desde la carpeta donde pertenecen estos casos de prueba.",
         "currentFolder": "carpeta actual",
         "fromIssue": "De la emisión",
         "fromDocument": "Desde documento",
@@ -3665,6 +3905,8 @@
       "generatingLegacy": "Generación de casos de prueba con IA...",
       "expandProgress": "{done, number} de {total, number} generado",
       "import": "{count, plural, =0 {Importar casos de prueba} =1 {Importar 1 caso de prueba} other {Importar # casos de prueba}}",
+      "stage": "{count, plural, =0 {Casos de prueba de etapa} =1 {Caso de prueba de etapa 1} other {Casos de prueba de etapa #}}",
+      "stageDescription": "Los casos de prueba en etapa son privados para ti. Revísalos en Mis casos en etapa y créalos desde allí; nada se agrega al repositorio hasta que lo hagas.",
       "importing": "{count, plural, =0 {Importando casos de prueba...} =1 {Importando 1 caso de prueba...} other {Importando # casos de prueba...}}",
       "externalSystem": "Sistema externo",
       "autoGenerateTags": "Generar automáticamente etiquetas para casos de prueba",
@@ -3678,7 +3920,8 @@
       "datasetMoreRows": "...y {count, plural, one {# más filas} other {# más filas}}",
       "parameterChipSensitive": "sensible",
       "success": {
-        "imported": "{count, plural, =1 {¡Se ha importado con éxito 1 caso de prueba} other {¡# casos de prueba importados con éxito}}"
+        "imported": "{count, plural, =1 {¡Se ha importado con éxito 1 caso de prueba} other {¡# casos de prueba importados con éxito}}",
+        "staged": "{count, plural, =1 {Etapa # caso de prueba} other {Etapa # casos de prueba}}"
       },
       "importData": {
         "issueDescription": "Problema externo vinculado a la generación del caso de prueba",
@@ -3687,6 +3930,7 @@
       "errors": {
         "generateFailed": "Error al generar casos de prueba. Vuelve a intentarlo.",
         "importFailed": "Error al importar casos de prueba. Vuelve a intentarlo.",
+        "stageFailed": "Error al poner en etapa los casos de prueba. Vuelve a intentarlo.",
         "noTestCasesGenerated": "No se han generado casos de prueba. Por favor, inténtalo de nuevo con entradas diferentes.",
         "jobNoLongerAvailable": "Esta generación ya no está disponible. Inicie una nueva desde el asistente Generar casos de prueba.",
         "noAiModel": "No hay ningún modelo de IA configurado para este proyecto. Configure un modelo de IA en la configuración del proyecto.",
@@ -3695,6 +3939,7 @@
         "noTemplateSelected": "Seleccione una plantilla para los casos de prueba.",
         "noFieldsSelected": "Seleccione al menos un campo para generar contenido.",
         "noTestCasesSelectedForImport": "Seleccione al menos un caso de prueba para importar.",
+        "noTestCasesSelectedForStage": "Selecciona al menos un caso de prueba para poner en etapa.",
         "templateRequired": "Es necesario seleccionar una plantilla. Vuelve y selecciona una.",
         "repositoryNotFound": "No se encontró el repositorio del proyecto. Contacte con su administrador.",
         "workflowNotConfigured": "El flujo de trabajo del proyecto no está configurado. Verifique la configuración del proyecto.",
@@ -3776,7 +4021,9 @@
         "description": "{count, plural, =1 {Tienes 1 caso de prueba con ediciones sin guardar.} other {Tienes # casos de prueba con ediciones sin guardar.}}",
         "warning": "Si continúa sin guardar, sus cambios se perderán.",
         "saveAllAndImport": "Guardar todo e importar",
-        "discardAndImport": "Descartar ediciones e importar"
+        "discardAndImport": "Descartar ediciones e importar",
+        "saveAllAndStage": "Guardar todo y poner en etapa",
+        "discardAndStage": "Descartar ediciones y poner en etapa"
       },
       "linkedIssuesDroppedTitle": "Algunos temas relacionados no fueron incluidos.",
       "linkedIssuesDropped": "{count, plural, =1 {# El problema vinculado fue descartado} other {# Los problemas vinculados fueron descartados}} debido al presupuesto de tokens: {keys}.",
@@ -3791,6 +4038,38 @@
         "skippedSummary": "{count, plural, =1 {# imagen omitida} other {# imágenes omitidas}} (demasiado grande o no compatible): {names}",
         "includeUrlScreenshots": "Incluir capturas de pantalla de la página cuando estén disponibles"
       }
+    },
+    "savedDrafts": {
+      "title": "Mis casos preparados",
+      "description": "Casos de prueba que escribiste y preparaste en lugar de crear. Solo tú puedes verlos. Abre uno para revisarlo o crea varios a la vez.",
+      "empty": "No tienes casos de prueba preparados en este proyecto.",
+      "saveDraft": "Preparar caso",
+      "saveTitle": "Nombra el caso de prueba",
+      "renameTitle": "Renombrar caso de prueba",
+      "saveDescription": "Un caso de prueba preparado se enumera con su nombre. Solo tú puedes verlo; nada se añade al repositorio hasta que lo crees.",
+      "saved": "Caso de prueba preparado",
+      "saveFailed": "No se pudo preparar el caso de prueba",
+      "renamed": "Caso preparado renombrado",
+      "deleted": "Caso preparado eliminado",
+      "deleteFailed": "No se pudo eliminar el caso preparado",
+      "deleteTitle": "¿Eliminar este caso preparado?",
+      "deleteDescription": "\"{name}\" será eliminado. Nunca fue creado, así que nada más cambia.",
+      "folderDeleted": "Carpeta eliminada",
+      "folderFallback": "La carpeta del caso preparado fue eliminada; el caso será creado en \"{folder}\".",
+      "selectFolderFirst": "Selecciona una carpeta antes de abrir este caso preparado.",
+      "problemCount": "{count, plural, one {{count} problema} other {{count} problemas}}",
+      "updated": "Actualizado {age}",
+      "createSelected": "{count, plural, =0 {Crear seleccionados} other {Crear {count} seleccionados}}",
+      "createdToast": "{count, plural, one {{count} caso de prueba creado} other {{count} casos de prueba creados}}",
+      "failedToast": "{count, plural, one {{count} caso preparado no se pudo crear} other {{count} casos preparados no se pudieron crear}}",
+      "problemFolder": "La carpeta fue eliminada. Abre el caso preparado para elegir una carpeta.",
+      "problemTemplate": "La plantilla ya no está asignada a este proyecto. Abre el caso preparado para elegir una.",
+      "problemState": "El estado ya no existe. Abre el caso preparado para elegir uno.",
+      "problemField": "{field}: {message}",
+      "notCreated": "No creado: {message}",
+      "openToFix": "Abre el caso preparado para arreglarlo.",
+      "elsewhereTitle": "También tienes casos preparados en",
+      "elsewhereCount": "{count, plural, one {{count} caso preparado} other {{count} casos preparados}}"
     },
     "filterBar": {
       "addFilter": "Añadir filtro",
@@ -4020,7 +4299,10 @@
       "filterAllEntityTypes": "Todos los tipos de entidades",
       "filterEntityTypeCase": "Casos de prueba",
       "filterEntityTypeRun": "Pruebas realizadas",
-      "filterAllProjects": "Todos los proyectos"
+      "filterAllProjects": "Todos los proyectos",
+      "actionRevert": "Revertir decisión",
+      "revertedBadge": "Revertida",
+      "revertedBadgeTooltip": "{count, plural, one {Revertida una vez antes} other {Revertida # veces antes}}"
     },
     "requester": {
       "openButton": "Solicitar revisión",
@@ -4081,6 +4363,23 @@
       "alreadyDecidedError": "Esta revisión ya ha sido decidida.",
       "decideError": "No se pudo registrar su decisión. Inténtelo de nuevo en un momento.",
       "panelSummary": "Solicitud de revisión de {requesterName}: transición a {targetStateName}"
+    },
+    "revert": {
+      "confirm": "Revertir decisión",
+      "description": "Esta revisión vuelve a estar esperando su decisión, y se notifica al solicitante. El comentario que dejó se mantiene en el hilo.",
+      "descriptionApproved": "Esta revisión vuelve a estar esperando su decisión y el elemento vuelve a su estado anterior. Se notifica al solicitante.",
+      "error": "No se pudo revertir la decisión. Inténtelo de nuevo en un momento.",
+      "errorEntityMoved": "Este elemento ha avanzado desde la aprobación, por lo que la aprobación ya no se puede deshacer.",
+      "errorForbidden": "Solo el revisor que tomó esta decisión puede revertirla.",
+      "errorNotRevertable": "Esta decisión ya no se puede revertir.",
+      "errorSuperseded": "Ya existe una solicitud de revisión más reciente para este elemento, por lo que esta decisión ya no se puede revertir.",
+      "errorWindowExpired": "El límite de tiempo para revertir esta decisión ha pasado.",
+      "success": "Decisión revertida. La revisión está esperando su decisión nuevamente.",
+      "title": "¿Revertir su decisión?",
+      "titleOther": "¿Revertir esta decisión?",
+      "descriptionOther": "Esta revisión vuelve a estar esperando una decisión, y se notifica al solicitante. El comentario del revisor se mantiene en el hilo.",
+      "descriptionOtherApproved": "Esta revisión vuelve a estar esperando una decisión y el elemento vuelve a su estado anterior. Se notifica al solicitante.",
+      "successOther": "Decisión revertida. La revisión está esperando una decisión nuevamente."
     }
   },
   "runs": {
@@ -4102,6 +4401,13 @@
       "lockError": "No se pudo bloquear la composición de la ejecución",
       "unlockError": "No se pudo desbloquear la composición de la ejecución",
       "addBlocked": "La composición de esta ejecución está bloqueada, por lo que no se pueden agregar casos de prueba. Desbloquéela primero para cambiar el conjunto de casos."
+    },
+    "dependencies": {
+      "blocked": "Bloqueado",
+      "blockedBy": "Bloqueado hasta que {count, plural, one {este caso pase} other {estos # casos pasen}} en esta ejecución:",
+      "blockedNotice": "Este caso de prueba no se puede ejecutar hasta que {count, plural, one {el caso del que depende haya} other {todos los # casos de los que depende hayan}} pasado en esta ejecución.",
+      "notInRun": "{count, plural, one {# caso del que este depende es} other {# casos de los que este depende son}} no están en esta ejecución y no bloquearán la ejecución:",
+      "unblocked": "Todos los casos de los que este depende han pasado en esta ejecución."
     },
     "distribute": {
       "title": "Distribuir asignaciones",
@@ -4307,7 +4613,7 @@
     },
     "junitFilters": {
       "retried": "Reintentado",
-      "clear": "Limpiar filtros"
+      "clear": "Borrar todos los filtros"
     },
     "impact": {
       "title": "Impacto",
@@ -4380,9 +4686,12 @@
         "selectedOf": "Se seleccionaron {selected, number} de {total, number} casos de prueba afectados",
         "thresholdHint": "Las pruebas que puntuaron {threshold, number} o superior comienzan seleccionadas y mostradas; baje la puntuación mínima para ver el resto. Cada prueba muestra por qué fue seleccionada.",
         "shownCount": "Mostrando {shown, number} de {total, number}",
-        "minScore": "Puntuación mínima",
+        "scoreColumn": "Puntuación de impacto",
+        "minScore": "Puntuación de impacto mínima",
         "selectShown": "Seleccionar mostrados ({count, number})",
         "deselectShown": "Deseleccionar mostrados ({count, number})",
+        "hiddenSelected": "{count, plural, one {# caso de prueba seleccionado está oculto por sus filtros} other {# casos de prueba seleccionados están ocultos por sus filtros}}.",
+        "deselectHidden": "Deseleccionar ocultos",
         "noneShown": "No hay pruebas que coincidan con los filtros.",
         "reasons": "Por qué",
         "tierPinned": "Anclado",
@@ -4391,8 +4700,6 @@
         "tierPinnedTooltip": "Una entrada de código en este caso interseca el cambio. Los casos anclados siempre se clasifican primero.",
         "tierAffectedTooltip": "Las otras señales ponen este caso en o por encima del umbral afectado de {threshold, number}.",
         "tierRelatedTooltip": "Vinculado a un caso fuertemente afectado, o sus señales puntuaron por debajo de {threshold, number}.",
-        "showDetails": "Mostrar razones",
-        "hideDetails": "Ocultar razones",
         "excluded": "{count, plural, one {# caso ya en la ejecución fue omitido} other {# casos ya en la ejecución fueron omitidos}}"
       },
       "noAffected": {
@@ -4465,12 +4772,30 @@
       },
       "repositoryPlaceholder": "Seleccione un repositorio de código...",
       "chooseRepository": "Elija cuál de los repositorios conectados del proyecto contiene los cambios a analizar."
+    },
+    "risk": {
+      "prioritizeByRisk": "Priorizar por riesgo",
+      "title": "Priorizar por riesgo",
+      "description": "Los casos que más merecen una ejecución, riesgo más alto primero por defecto. Los casos ya en esta ejecución se dejan fuera.",
+      "minimumScore": "Puntuación de riesgo mínima",
+      "showing": "{shown, plural, one {# caso cargado} other {# casos cargados}} de {total, plural, one {# coincidencia} other {# coincidencias}}",
+      "loadedSelected": "{shown, plural, =2 {Ambos casos cargados están seleccionados} one {El caso cargado está seleccionado} other {Todos los # casos cargados están seleccionados}}.",
+      "selectAllMatches": "{total, plural, =2 {Seleccionar ambas coincidencias} one {Seleccionar la única coincidencia} other {Seleccionar todas las # coincidencias}}",
+      "allMatchesSelected": "{total, plural, =2 {Ambas coincidencias están seleccionadas} one {La única coincidencia está seleccionada} other {Todas las # coincidencias están seleccionadas}}.",
+      "noneMatch": "No hay casos puntuados en o por encima de esta puntuación.",
+      "caseColumn": "Caso de prueba",
+      "scoreColumn": "Puntuación de riesgo",
+      "addCases": "{count, plural, =0 {Agregar casos} one {Agregar # caso} other {Agregar # casos}}"
+    },
+    "caseSelection": {
+      "menuLabel": "Formas de seleccionar casos de prueba"
     }
   },
   "admin": {
     "menu": {
       "header": "Principal",
       "fields": "Campos",
+      "rootCauses": "Causas Raíz",
       "appConfig": "Configuración de la aplicación",
       "recordKeys": "Claves de Registro",
       "imports": "Importaciones de datos",
@@ -4851,6 +5176,8 @@
       "sections": {
         "providers": {
           "title": "Proveedores de inicio de sesión",
+          "addSaml": "Agregar Proveedor SAML",
+          "samlBadge": "SAML",
           "description": "Configurar cómo los usuarios pueden iniciar sesión en su aplicación"
         }
       },
@@ -4892,6 +5219,7 @@
         "samlSettings": {
           "title": "Configuración SAML",
           "description": "Configure la configuración de su proveedor de identidad SAML",
+          "providerNameDescription": "Se muestra en el botón de inicio de sesión, así que asigne a cada proveedor SAML un nombre que sus usuarios reconozcan.",
           "ssoUrl": "URL SSO (punto de entrada)",
           "entityId": "ID de entidad (emisor)",
           "certificate": "X.509 Certificado",
@@ -4932,6 +5260,7 @@
         "enabled": "Proveedor habilitado",
         "disabled": "Proveedor desactivado",
         "updateFailed": "Error al actualizar el proveedor",
+        "providerNameExists": "Un proveedor con este nombre ya existe",
         "configUpdated": "Configuración SAML actualizada",
         "configCreated": "Configuración SAML creada",
         "configSaveFailed": "Error al guardar la configuración SAML",
@@ -5038,7 +5367,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "Se requiere punto de entrada, emisor, certificado y URL de devolución de llamada"
+            "allRequired": "Nombre, punto de entrada, emisor, certificado y URL de devolución de llamada son obligatorios"
           }
         },
         "disableEmailVerification": {
@@ -5210,6 +5539,7 @@
       "confirmSetAsDefault": "Establecer como plantilla predeterminada",
       "confirmSetAsDefaultDescription": "¿Está seguro de que desea establecer esta plantilla como predeterminado?",
       "confirmSetAsDefaultProjects": "Esta plantilla se añadirá a todos los proyectos.",
+      "projectDefaultWarning": "{count, plural, one {Este proyecto utiliza esta plantilla como su predeterminada. Sus nuevos casos de prueba y sesiones utilizarán la plantilla predeterminada del sistema en su lugar.} other {Estos proyectos utilizan esta plantilla como su predeterminada. Sus nuevos casos de prueba y sesiones utilizarán la plantilla predeterminada del sistema en su lugar.}}",
       "add": {
         "button": "Añadir Plantilla",
         "title": "Añadir nueva plantilla",
@@ -5393,6 +5723,7 @@
       "scimProvisionerBadge": "Proveedor SCIM",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Gestionado por SCIM. Gestione desde la página de administración de SCIM.",
+      "systemUserTooltip": "Usuario integrado para el trabajo que TestPlanIt hace automáticamente, como acciones de webhook. No puede iniciar sesión ni editarse.",
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Sí",
       "scimUserLockedTitle": "El usuario es gestionado por SCIM.",
@@ -5645,7 +5976,19 @@
         "thresholdUnit": "{count, plural, one {día} other {días}}",
         "thresholdHelp": "¿Cuántos días puede permanecer pendiente una solicitud de revisión antes de que los revisores reciban una notificación recordatoria? Las nuevas solicitudes comienzan a contar desde el momento de su envío.",
         "thresholdUpdateSuccess": "Se han actualizado los ajustes de recordatorio de la revisión.",
-        "thresholdUpdateError": "No se pudieron actualizar los ajustes de recordatorios. Inténtalo de nuevo en un momento."
+        "thresholdUpdateError": "No se pudieron actualizar los ajustes de recordatorios. Inténtalo de nuevo en un momento.",
+        "revertPolicy": {
+          "label": "Reversión de decisiones de revisión",
+          "modeAria": "Modo de política de reversión",
+          "modeNone": "Los proyectos deciden ({hours}h por defecto)",
+          "modeDisabled": "Reversión deshabilitada en todas partes",
+          "modeMax": "Permitir reversión por hasta",
+          "minutesUnit": "{minutes, plural, one {minuto} other {minutos}}",
+          "minutesAriaLabel": "Número máximo de minutos que una decisión se puede revertir",
+          "invalidMinutes": "Introduzca un número de minutos mayor que cero",
+          "savedToast": "Política de reversión guardada.",
+          "saveError": "No se pudo guardar la política de reversión. Inténtelo de nuevo en un momento."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "Alternar flujo de trabajo de revisión para {name}",
@@ -5658,7 +6001,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "La función de flujo de trabajo de revisión está deshabilitada a nivel del sistema. Para volver a habilitarla, modifique la configuración avanzada del proyecto o establezca TESTPLANIT_REVIEW_FEATURE_ENABLED.",
-        "requiresReviewDefaultDisabled": "El estado predeterminado del flujo de trabajo no puede requerir revisión: las nuevas entidades llegan aquí y no tienen un estado previo que controlar."
+        "requiresReviewDefaultDisabled": "El estado predeterminado del flujo de trabajo no puede requerir revisión: las nuevas entidades llegan aquí y no tienen un estado previo que controlar.",
+        "requiresReviewLabel": "Requiere revisión"
       },
       "add": {
         "button": "Añadir flujo de trabajo",
@@ -5972,6 +6316,30 @@
         "confirmMessage": "¿Estás seguro de que quieres eliminar el tipo de hito {name}?"
       }
     },
+    "rootCauses": {
+      "description": "Las causas raíz que Patrones de Fallos asigna a los fallos agrupados. La IA elige de esta lista usando cada descripción.",
+      "filterPlaceholder": "Filtrar causas raíz...",
+      "reordered": "Causas raíz reordenadas",
+      "descriptionPlaceholder": "¿Cuándo se aplica esta causa raíz? La IA usa este texto para decidir.",
+      "columns": {
+        "signatures": "Patrones"
+      },
+      "add": {
+        "button": "Añadir Causa Raíz",
+        "title": "Añadir Causa Raíz"
+      },
+      "edit": {
+        "title": "Editar Causa Raíz"
+      },
+      "errors": {
+        "nameExists": "Ya existe una causa raíz con este nombre"
+      },
+      "delete": {
+        "confirmMessage": "¿Estás seguro de que quieres eliminar la causa raíz {name}?",
+        "inUse": "{count, plural, one {# patrón de fallo lo utiliza.} other {# patrones de fallo lo utilizan.}}",
+        "moveLabel": "{count, plural, one {Mover el patrón a} other {Mover los # patrones a}}"
+      }
+    },
     "issue_config": {
       "link_title": "Rastreador de problemas de enlace",
       "link_description": "Configure la URL base para problemas enlazados manualmente. Cuando se enlaza un problema utilizando sólo un ID externo, esta URL Base será precedida para crear el enlace completo.",
@@ -6063,7 +6431,8 @@
         "stepSequenceMatchCases": "Casos de coincidencia de secuencia de pasos",
         "testRunCases": "Casos de ejecución de prueba",
         "testRunCaseDataSetSnapshots": "Instantáneas de conjunto de datos de casos de ejecución de prueba",
-        "testRunCaseIterations": "Iteraciones de ejecución de prueba"
+        "testRunCaseIterations": "Iteraciones de ejecución de prueba",
+        "alertRules": "Alertas"
       },
       "table": {
         "title": "Eliminado {itemType}",
@@ -6075,7 +6444,11 @@
         "purgeConfirmationMessage": "¿Está seguro de que desea eliminar permanentemente esta fila de la tabla {itemType} ? Esta acción no se puede deshacer y podría eliminar los datos asociados."
       },
       "filterTypesPlaceholder": "Filtrar tipos de elementos...",
-      "summary": "{count, plural, =0 {La papelera está vacía} one {# elemento en la papelera} other {# elementos en la papelera}}"
+      "summary": "{count, plural, =0 {La papelera está vacía} one {# elemento en la papelera} other {# elementos en la papelera}}",
+      "userWindow": {
+        "label": "Ventana de restauración automática",
+        "invalid": "Introduce un número entero de días (0 la desactiva)."
+      }
     },
     "notifications": {
       "title": "Administración de notificaciones",
@@ -6218,6 +6591,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "Conéctese a una instancia autohospedada de MantisBT para el seguimiento de incidencias"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "Conéctate a ClickUp para seguimiento de tareas y gestión de proyectos"
         }
       },
       "filterPlaceholder": "Integraciones de filtros...",
@@ -6328,7 +6705,13 @@
         "mantisBTApiKeyHelp": "Cree uno en la configuración de su cuenta de MantisBT → Tokens de API",
         "mantisBTUrl": "URL de MantisBT",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "La URL base de su instancia de MantisBT"
+        "mantisBTUrlHelp": "La URL base de su instancia de MantisBT",
+        "clickupTeamId": "ID de Equipo ClickUp (Espacio de trabajo)",
+        "clickupTeamIdPlaceholder": "p. ej. 9013456789",
+        "clickupTeamIdHelp": "Se encuentra en la URL de ClickUp después de app.clickup.com/",
+        "clickupListId": "ID de Lista de ClickUp Predeterminada",
+        "clickupListIdPlaceholder": "p. ej. 901234567",
+        "clickupListIdHelp": "La Lista en la que se crean las tareas de forma predeterminada; se puede anular por incidencia"
       },
       "authType": {
         "api_key": "Clave API",
@@ -6404,7 +6787,6 @@
         "defaultModelPlaceholder": "gpt-4o, claude-3-5-sonnet-20241022, etc.",
         "defaultModelDescription": "El modelo a usar por defecto",
         "maxTokensPerRequest": "Máximas fichas por solicitud",
-        "maxRequestsPerMinute": "Máximo de solicitudes por minuto",
         "costPerInputToken": "Costo por 1 millón de tokens de entrada ($)",
         "costPerOutputToken": "Costo por 1 millón de tokens de salida ($)",
         "monthlyBudget": "Presupuesto mensual ($)",
@@ -6548,7 +6930,8 @@
         "generate_from_url_app": "Generar casos de prueba a partir de una URL (Pruebas de aplicaciones)",
         "automation_candidates": "Informe de candidatos para la automatización",
         "derive_case_steps": "Derivación de pasos por IA",
-        "impact_analysis": "Impacto: selección de pruebas afectadas"
+        "impact_analysis": "Impacto: selección de pruebas afectadas",
+        "failure_triage": "Patrones de Fallos: Causa Raíz"
       }
     },
     "elasticsearch": {
@@ -6625,6 +7008,7 @@
         "audit-logs": "Registros de auditoría",
         "budget-alerts": "Alertas presupuestarias",
         "auto-tag": "Etiquetado automático con IA",
+        "failure-triage": "Patrones de Fallos",
         "repo-cache": "Caché del repositorio",
         "copy-move": "Copiar y mover",
         "duplicate-scan": "Escaneo duplicado",
@@ -6783,7 +7167,8 @@
         "markRead": "Marcar como leído",
         "markUnread": "Marcar como no leído",
         "markAllRead": "Marcar todo como leído",
-        "deleteAll": "Eliminar todo"
+        "deleteAll": "Eliminar todo",
+        "manageAlerts": "Gestionar Notificaciones y Alertas"
       },
       "success": {
         "deleted": "Notificación eliminada",
@@ -6827,19 +7212,10 @@
         "shareLinkAccessedMessage": "{viewer} vio tu informe compartido: \"{shareTitle}\"",
         "viewedYourSharedLink": "vi tu enlace compartido",
         "viewedAt": "Visto en",
-        "budgetDisclaimer": "Los límites de presupuesto son sólo informativos y no impiden su uso.",
-        "llmBudgetExceededTitle": "Se ha superado el presupuesto del programa LLM.",
-        "llmBudgetThresholdTitle": "Presupuesto LLM {threshold}% utilizado",
-        "llmBudgetExceededMessage": "{providerName} ha excedido su presupuesto mensual: {spend} gastó de {budget} presupuesto.",
-        "llmBudgetThresholdMessage": "{providerName} ha utilizado {threshold}% de su presupuesto mensual: {spend} de {budget}.",
         "userRegisteredTitle": "Registro de nuevo usuario",
         "userRegisteredMessageSso": "{userName} ({userEmail}) se ha registrado mediante SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) se ha registrado a través del formulario de registro",
         "viewUserList": "Ver lista de usuarios",
-        "reviewGeneratedCases": "Revisar los casos de prueba generados",
-        "generateFromUrlCompleteTitle": "Las páginas se han indexado correctamente",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# página} other {# páginas}} rastreadas desde {url} en el proyecto \"{projectName}\". Haga clic para revisar y generar casos de prueba.",
-        "generateFromUrlFailedTitle": "Falló el rastreo de URL",
         "reviewRequestedTitle": "Se solicita revisión",
         "reviewApprovedTitle": "Revisión aprobada",
         "reviewChangesRequestedTitle": "Cambios solicitados",
@@ -6869,18 +7245,81 @@
         "reviewCancelledEmailMessage": "{actorName} canceló la solicitud de revisión en {entityLabel} \"{entityName}\" en el proyecto \"{projectName}\".",
         "reviewReminderTitle": "Revisión pendiente",
         "reviewReminderAction": "todavía está esperando tu reseña de",
-        "reviewReminderEmailMessage": "Recordatorio: La solicitud de revisión de {actorName}en {entityLabel} \"{entityName}\" en el proyecto \"{projectName}\" ha estado pendiente durante {hoursPending} horas.",
-        "reviewReminderHoursPending": "Pendiente durante {hoursPending, plural, one {# hora} other {# horas}}",
+        "reviewReminderEmailMessage": "Recordatorio: La solicitud de revisión de {actorName} en {entityLabel} \"{entityName}\" en el proyecto \"{projectName}\" ha estado pendiente durante {pendingFor}.",
+        "reviewReminderHoursPending": "Pendiente durante {pendingFor}",
         "aiStepsDerivedTitle": "Pasos de prueba derivados por IA listos",
         "aiStepsDerivedMessage": "{count, plural, one {# caso de prueba recibió pasos derivados por IA} other {# casos de prueba recibieron pasos derivados por IA}} — revíselos para verificar su precisión.",
         "aiStepsDerivedReviewLink": "Revisar ejecución de prueba",
+        "casesDraftedTitle": "Casos de Prueba Elaborados por IA Listos",
+        "casesDraftedMessage": "{count, plural, one {# caso de prueba fue} other {# casos de prueba fueron}} elaborado para {issueKey} — revisar la precisión.",
+        "casesDraftedReviewLink": "Revisar en {folderName}",
         "integrationAuthExpiredTitle": "Conexión de integración caducada",
         "integrationAuthExpiredMessage": "Su conexión con \"{integrationName}\" ha caducado. Vuelva a conectarse para reanudar la sincronización de incidencias.",
         "integrationAuthExpiredReconnect": "Reconectar",
         "runReadyToCompleteTitle": "Ejecución de prueba lista para completar",
         "runReadyToCompleteExecuted": "{count, plural, one {# caso se ha} =2 {Ambos casos se han} other {Todos los # casos se han}} ejecutado.",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# caso se ha} =2 {Ambos casos se han} other {Todos los # casos se han}} ejecutado en la ejecución de prueba \"{testRunName}\" (proyecto \"{projectName}\"). La ejecución está lista para marcarse como completada.",
-        "runReadyToCompleteReason": "Recibe esto porque puede completar ejecuciones de prueba en este proyecto."
+        "runReadyToCompleteReason": "Recibe esto porque puede completar ejecuciones de prueba en este proyecto.",
+        "runCaseUnblockedTitle": "Caso de Prueba Listo para Ejecutar",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} pasó, por lo que este caso asignado a ti ya no está bloqueado:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" en la prueba \"{testRunName}\" (proyecto \"{projectName}\") ya no está bloqueado: \"{prerequisiteName}\" pasó. Te está asignado y está listo para ejecutar.",
+        "runCaseUnblockedReason": "Estás recibiendo esto porque el caso de prueba te está asignado.",
+        "inTestRun": "en la prueba",
+        "alertTriggeredTitle": "Alerta activada",
+        "alertTriggeredRule": "Regla: {ruleName}",
+        "alertTriggeredEmailMessage": "La alerta \"{ruleName}\" se activó para {subjectLabel} \"{subjectName}\" en el proyecto \"{projectName}\": {detail}",
+        "alertTriggeredEmailMessageSystem": "La alerta \"{ruleName}\" se activó para {subjectLabel} \"{subjectName}\": {detail}",
+        "alertTriggeredReason": "Recibe este correo electrónico porque se suscribió a esta alerta.",
+        "alertSubject": {
+          "CASE": "caso de prueba",
+          "RUN": "ejecución de prueba",
+          "MILESTONE": "hito",
+          "SESSION": "sesión",
+          "PROJECT": "proyecto",
+          "WEBHOOK": "webhook",
+          "LLM_INTEGRATION": "Integración de modelo de IA",
+          "CODE_REPOSITORY": "conexión del repositorio",
+          "INTEGRATION": "integración",
+          "QUEUE": "cola",
+          "SYSTEM": "instalación"
+        },
+        "alertMetric": {
+          "RESULT_DURATION_DEVIATION": "El resultado tardó {elapsed}, {deviation}% alejado de la línea de base de {baseline} (más de {threshold}% permitido).",
+          "CASE_REGRESSED": "El caso falló después de pasar {passedBefore, plural, one {su último resultado} other {sus últimos # resultados}}.",
+          "CASE_RECOVERED": "El caso pasó después de fallar {failedBefore, plural, one {su último resultado} other {sus últimos # resultados}}.",
+          "RUN_DURATION_DEVIATION": "La ejecución tardó {elapsed}, {deviation}% alejado de la línea de base de {baseline} (más de {threshold}% permitido).",
+          "RUN_NOT_PROGRESSING": "La ejecución no ha tenido nuevo resultado durante {idleHours, plural, one {# hora} other {# horas}} (umbral {threshold}).",
+          "AUTOMATED_EXECUTION_FAILED": "La ejecución automatizada en {target} finalizó con {status}{error, select, other {: {error}}}",
+          "RUN_UNTESTED_SHARE": "{untestedPercent}% de los casos de la ejecución no tienen resultado con {daysRemaining, plural, one {# día} other {# días}} antes de que se deba cumplir su hito (umbral {threshold}%).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# problema está} other {# problemas están}} vinculado a los resultados de la ejecución (umbral {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# patrón de fallo apareció} other {# patrones de fallo aparecieron}} por primera vez en la ejecución (umbral {threshold}).",
+          "SESSION_OVERRUN": "La sesión tardó {elapsed} frente a una estimación de {estimate}, {overrun}% por encima (más de {threshold}% permitido).",
+          "REQUIREMENT_COVERAGE_BELOW": "{covered} de {total} requisitos ({coverage}%) {basis, select, PASSING {tienen un resultado más reciente que pasa} other {están vinculados a un caso de prueba}} (umbral {threshold}%).",
+          "STALE_CASES": "{stale, plural, one {# caso ha} other {# casos han}} no tuvieron resultado en {days, plural, one {# día} other {# días}} (umbral {threshold}).",
+          "AUTOMATION_SHARE_BELOW": "{automated} de {total} casos ({automatedPercent}%) están automatizados (umbral {threshold}%).",
+          "WEBHOOK_FAILURE_RATE": "{failed} de las últimas {sampleCount} entregas fallaron ({failureRate}%, umbral {threshold}%).",
+          "CONSECUTIVE_FAILURES": "El caso ha fallado {streak, plural, one {# vez} other {# veces}} seguidas (umbral {threshold}).",
+          "CASE_FLAKY": "El resultado se invirtió {flips, plural, one {# vez} other {# veces}} en los últimos {sampleCount} resultados (umbral {threshold}).",
+          "RUN_PASS_RATE_BELOW": "La tasa de aprobación es {passRate}% en {sampleCount} resultados (umbral {threshold}%).",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# resultado ha} other {# resultados han}} fallado (umbral {threshold}).",
+          "MILESTONE_BEHIND": "El hito está {completion}% completo con {daysRemaining, plural, one {# día} other {# días}} restantes (umbral {threshold}%).",
+          "MILESTONE_OVERDUE": "El hito está {daysOverdue, plural, one {# día} other {# días}} atrasado respecto a su fecha de vencimiento.",
+          "LLM_BUDGET_USED": "El gasto del período de facturación es {spend} de {budget} presupuesto mensual ({percent}%, umbral {threshold}%).",
+          "LLM_ERROR_RATE": "{failed} de las últimas {sampleCount} solicitudes fallaron ({failureRate}%, umbral {threshold}%).",
+          "LLM_RATE_LIMITED": "El proveedor limitó la velocidad de {blocked, plural, one {# solicitud} other {# solicitudes}} en las últimas {hours, plural, one {# hora} other {# horas}} (umbral {threshold}).",
+          "CODE_REPOSITORY_CACHE_FAILING": "La caché del repositorio ha estado fallando durante {hours, plural, one {# hora} other {# horas}} (umbral {threshold}){error, select, other {: {error}}}",
+          "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# usuario necesita} other {# usuarios necesitan}} reautorizar la integración (umbral {threshold}).",
+          "QUEUE_FAILED_JOBS": "{failed, plural, one {# trabajo ha} other {# trabajos han}} fallado en la cola (umbral {threshold}).",
+          "QUEUE_BACKLOG": "El más antiguo de {waiting, plural, one {# trabajo en espera} other {# trabajos en espera}} ha esperado {minutes, plural, one {# minuto} other {# minutos}} (umbral {threshold}).",
+          "AUDIT_BACKLOG": "El cambio de auditoría sin procesar más antiguo tiene {minutes, plural, one {# minuto} other {# minutos}} de antigüedad (umbral {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# cuenta está} other {# cuentas están}} bloqueada después de intentos de inicio de sesión fallidos (umbral {threshold}).",
+          "NO_AUTOMATED_RESULTS": "Ningún resultado automatizado ha llegado durante {hours, plural, one {# hora} other {# horas}} (umbral {threshold})."
+        },
+        "reviewDecisionRevertedAction": "revirtió su decisión sobre",
+        "reviewDecisionRevertedEmailMessage": "{actorName} revirtió su decisión sobre {entityLabel} \"{entityName}\" en el proyecto \"{projectName}\" — está esperando revisión nuevamente.",
+        "reviewDecisionRevertedTitle": "Decisión de revisión revertida",
+        "reviewDecisionRevertedActionOther": "revirtió la decisión de {deciderName} sobre",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} revirtió la decisión de {deciderName} sobre {entityLabel} \"{entityName}\" en el proyecto \"{projectName}\" — está esperando revisión nuevamente."
       }
     },
     "issues": {
@@ -7029,6 +7468,9 @@
     "issueType": "Tipo de asunto",
     "selectIssueType": "Seleccionar tipo de asunto",
     "noIssueTypes": "No hay tipos de asuntos disponibles",
+    "assignees": "Responsables",
+    "selectAssignees": "Seleccionar responsables",
+    "assigneesLimit": "Hasta {max} responsables",
     "priorityUrgent": "Urgente",
     "additionalFields": "Campos adicionales",
     "createIssueInJira": "Crear asunto en Jira",
@@ -7451,6 +7893,7 @@
       "TestRunResults": "Resultados de la prueba",
       "TestRunResultRestrictedFields": "Prueba de Resultados Restringidos Campos",
       "AutomatedExecution": "Ejecución automatizada",
+      "FailurePatterns": "Patrones de Fallos",
       "Sessions": "Sesiones",
       "SessionsRestrictedFields": "Campos restringidos de sesiones",
       "ClosedSessions": "Sesiones cerradas",
@@ -7459,7 +7902,8 @@
       "SharedSteps": "Pasos compartidos",
       "Issues": "Asuntos",
       "Reporting": "Informes",
-      "Settings": "Configuración del proyecto"
+      "Settings": "Administración de Proyectos",
+      "Alerts": "Alertas"
     },
     "WorkflowType": {
       "NOT_STARTED": "No iniciado",
@@ -7493,6 +7937,11 @@
     "alreadyLinked": "Este caso ya está vinculado.",
     "cannotLinkSelf": "No se puede vincular un caso a sí mismo.",
     "circularLink": "Enlace circular detectado.",
+    "dependsOn": "Depende del",
+    "blocks": "Bloquea",
+    "dependsOnOption": "Depende de — este caso requiere que el caso seleccionado tenga éxito primero",
+    "blocksOption": "Bloquea — el caso seleccionado requiere que este caso tenga éxito primero",
+    "dependencyHint": "Con la aplicación de dependencias activada, un caso en una ejecución de prueba no puede ejecutarse hasta que los casos de los que depende hayan pasado en esa ejecución.",
     "failedToCreate": "No se pudo crear el enlace.",
     "confirmRemoveLink": "¿Está seguro que desea eliminar este enlace?",
     "DEPENDS_ON": "Dependencia",
@@ -7512,6 +7961,9 @@
     "businessHours": "{hours, number, ::.0} horas laborables"
   },
   "help": {
+    "webhookAction": {
+      "labels": "## Etiquetas\nLas etiquetas que el problema lleva en su rastreador. La acción solo toma un problema que tenga al menos una de estas; déjalo vacío para tomar problemas con cualquiera de sus etiquetas.\n\n- Jira, GitHub, GitLab y Gitea: las etiquetas del problema\n- Azure DevOps, ClickUp y MantisBT: las etiquetas del problema\n- Redmine: la categoría del problema\n- La coincidencia ignora mayúsculas y minúsculas"
+    },
     "auditLogs": "## Registros de auditoría\nVisualizar el registro de auditoría de todo el sistema para el seguimiento de la seguridad y el cumplimiento",
     "statuses": "## Estados\nAdministre los estados que los evaluadores asignan al registrar un resultado de prueba, como Aprobado, Fallido y Bloqueado.",
     "configurations": "## Configuraciones\nLas configuraciones son una combinación de categorías y variantes utilizadas para definir un entorno de prueba. Por ejemplo, OS/Browser, Servidor de pruebas, Idioma, etc.",
@@ -7543,7 +7995,7 @@
     "projectAiModels": "## Modelos de IA\nElija el modelo de IA y la configuración de prompt que utiliza este proyecto para sus funciones asistidas por IA, como la generación de casos de prueba y el etiquetado automático.",
     "projectQuickScript": "## QuickScript\nConecte un repositorio de código para que este proyecto pueda generar casos de prueba a partir de sus archivos de prueba automatizados, eligiendo qué rama y rutas incluir.",
     "projectParameters": "## Parámetros de casos de prueba\nConfigure las pruebas basadas en datos de este proyecto: nombres de propiedades de iteración de JUnit para los resultados importados y conjuntos de datos reutilizables para casos parametrizados.",
-    "projectAdvanced": "## Avanzado\nConfiguración avanzada de este proyecto: el prefijo del ID de registro, el flujo de trabajo de revisión de resultados, la creación automática de problemas en caso de error y la ventana de edición de resultados.",
+    "projectAdvanced": "## Avanzado\nConfiguraciones por proyecto, agrupadas en General, Revisiones, Pruebas realizadas y Resultados. Abre el ? de una configuración para saber qué hace. Los interruptores se guardan tan pronto como cambian; el código del proyecto y la configuración de la ventana de tiempo se guardan con su propio botón Guardar.",
     "projectShares": "## Administrar recursos compartidos\nEnlaces compartibles a los informes de este proyecto, cada uno con su propio nivel de acceso: público, con inicio de sesión requerido o protegido con contraseña. Revocar un enlace corta su acceso.",
     "projectAccess": "## Acceso\nCada usuario que puede abrir este proyecto y el rol que decide qué puede hacer aquí. El rol de un usuario proviene de su configuración de acceso de proyecto, un grupo al que pertenece o el acceso predeterminado del proyecto, en ese orden. Los administradores del sistema y los administradores del proyecto tienen acceso completo independientemente del rol. El acceso se cambia por un administrador en Administración › Proyectos › Editar proyecto.",
     "groups": "## Grupos\nLos grupos le permiten asignar acceso a proyectos y roles a muchos usuarios a la vez. Agregue miembros directamente o asigne un grupo desde su proveedor de identidad.",
@@ -7584,6 +8036,7 @@
     "elasticsearchReindex": "## Reindexar datos\nReconstruir índices de búsqueda para mejorar el rendimiento de búsqueda.",
     "queues": "## Colas de trabajos en segundo plano\nSupervisar y gestionar colas de procesamiento de trabajos en segundo plano.",
     "trash": "## Papelera\nRestaurar o eliminar permanentemente los registros eliminados temporalmente en todo el sistema.",
+    "userTrashWindow": "## Ventana de restauración automática\nCuántos días los usuarios pueden restaurar elementos que eliminaron ellos mismos, desde la sección **Papelera** de su perfil. Establécela en **0** para desactivar la restauración automática. Los elementos que caen fuera de la ventana simplemente dejan de aparecer en la Papelera del usuario — nada se purga, y los administradores todavía pueden restaurar o purgar cualquier cosa aquí.",
     "systemWebhooks": "## Webhooks del sistema\nDestinos de webhook salientes para eventos a nivel de sistema que no están vinculados a un solo proyecto; actualmente, los eventos del ciclo de vida de usuarios y grupos de SCIM 2.0. Configure los webhooks entrantes y salientes con ámbito de proyecto desde la página de configuración del proyecto.",
     "workflows": "## Flujos de trabajo\nAdministrar los estados del flujo de trabajo para casos de prueba, ejecuciones de prueba y sesiones.",
     "workflowReviews": "## Flujo de trabajo de revisión\nAplique revisiones restringiendo las transiciones del flujo de trabajo hasta que se otorgue la aprobación. Cuando está habilitada, los proyectos pueden activarla o desactivarla individualmente a través de su configuración avanzada. Desactive esta opción para evitar las restricciones de aprobación del flujo de trabajo.",
@@ -7643,7 +8096,7 @@
       "documentation": "## Documentación\nMás detalles, referencias y materiales de soporte.\n\n- Especificaciones técnicas\n- Documentos de diseño\n- Referencias externas\n- Notas y decisiones de reuniones",
       "automaticCompletion": "## Completar automáticamente en la fecha de vencimiento\nMarca automáticamente este hito como completado cuando se alcanza su fecha de vencimiento.\n\n- El hito se completará a la hora programada en la fecha de vencimiento\n- Útil para hitos con límite de tiempo que deben cerrarse independientemente del estado de finalización\n- Se puede anular completando manualmente el hito antes de la fecha de vencimiento\n- Requiere que se establezca una fecha de vencimiento",
       "notifyDaysBefore": "## Notificar días antes de la fecha de vencimiento\nEnvíe notificaciones a los miembros del equipo asignados cuando se acerque la fecha de vencimiento del hito.\n\n- Active para habilitar las notificaciones, desactívelas para deshabilitarlas\n- Ingrese el número de días antes de la fecha de vencimiento para comenzar a enviar recordatorios\n- Las notificaciones se envían a los usuarios asignados a ejecuciones de prueba y sesiones dentro de este hito\n- Los hitos vencidos continuarán enviando recordatorios hasta que se completen",
-      "managedByJira": "## Gestionado por Jira\nEl nombre, las fechas y el estado de este hito son gestionados por Jira. Realice los cambios allí para actualizarlos aquí."
+      "managedByJira": "## Gestionado por el rastreador\nEl nombre, las fechas y el estado de este hito son gestionados por el rastreador de incidencias desde el cual se importó. Realice los cambios allí para actualizarlos aquí."
     },
     "session": {
       "name": "## Nombre de la sesión\nUn nombre claro y descriptivo que identifica el propósito de su sesión de prueba.\n\n- Debe ser único y significativo\n- Ayuda a los miembros del equipo a entender lo que se está probando\n- Utilizado en informes y seguimiento",
@@ -7695,7 +8148,7 @@
       "name": "## Nombre del rol\nUn nombre claro, conciso, descriptivo o palabras clave que se utilizan en todos los proyectos.\n\n- Ayuda a los miembros del equipo a encontrar rápidamente casos de prueba, ejecuciones de pruebas y sesiones.",
       "isDefault": "## Rol predeterminado\nIndica si este rol es el predeterminado para tu proyecto.\n\n- El rol predeterminado está preseleccionado para los nuevos usuarios\n- Se puede cambiar en cualquier momento",
       "permissions": {
-        "canAddEdit": "## Agregar/Editar\nIndica si este rol puede agregar y editar el área de la aplicación relacionada.\n\n- **Ejecución automatizada** otorga el derecho a iniciar, reintentar y cancelar ejecuciones automatizadas en un proveedor de CI. Registrar los resultados aún necesita **Resultados de ejecución de prueba** Agregar/Editar, e iniciar uno desde el repositorio también necesita **Ejecuciones de prueba** Agregar/Editar porque crea o extiende una ejecución.",
+        "canAddEdit": "## Añadir/Editar\nIndica si este rol puede añadir y editar el área de aplicación relacionada.\n\n- **Automated Execution** otorga el derecho a iniciar, reintentar y cancelar ejecuciones automatizadas en un proveedor de CI. Grabar los resultados aún requiere **Test Run Results** Añadir/Editar, e iniciar uno desde el repositorio también requiere **Test Runs** Añadir/Editar porque crea o extiende una ejecución.\n- **Patrones de Fallos** otorga el derecho a establecer o limpiar la causa raíz de un patrón de fallo o pedir a la IA una, resolver, ignorar o reabrir, editar sus notas, vincular y desvincular problemas, y poner en cuarentena o liberar sus casos de prueba. Cualquiera con acceso al proyecto puede ver sus patrones de fallo; los administradores del proyecto gestionan la configuración de Patrones de Fallos.\n- **Alerts** otorga el derecho a crear alertas en el proyecto y a editar, pausar y eliminar las que creó. Los administradores del proyecto gestionan cada alerta y las suscripciones de otros usuarios; cualquiera puede seguir o dejar una alerta.",
         "canDelete": "## Cerrar\nIndica si este rol puede cerrar el área de aplicación relacionada.",
         "canClose": "## Cerrar\nIndica si este rol puede cerrar el área de aplicación relacionada.",
         "canApprove": "## Aprobar\nIndica si este rol puede aprobar las solicitudes de revisión para el área de aplicación correspondiente. Se aplica únicamente al Repositorio de casos de prueba, Ejecuciones de prueba y Sesiones.",
@@ -7726,10 +8179,9 @@
       "maxTokensPerRequest": "## Máximo de Tokens por Solicitud\nEl **límite máximo de tokens de _salida_** que el modelo puede generar en una sola respuesta.\n\n- Limita la longitud de la **respuesta** del modelo — no cuánto contexto le envía\n- Las solicitudes que pidan más que esto son **rechazadas antes de llegar al modelo**\n- Configúrelo al máximo de salida real de su modelo — p. ej. `128000` para Claude Opus/Sonnet, `64000` para Claude Haiku, `65536` para Gemini, `16384` para GPT-4o\n- Demasiado bajo → las funciones de IA fallan o producen salidas truncadas",
       "defaultMaxTokens": "## Máximo de Tokens Predeterminado\nLa **longitud de _salida_** que solicita este modelo de IA, limitada por _Máximo de Tokens por Solicitud_.\n\n- **Generación de Casos de Prueba** (todas las fuentes, incluido el panel de incidencias de Jira), **Análisis de Casos de Prueba en Markdown**, **Asistente de Redacción del Editor** y **Selección Inteligente de Casos de Prueba** siempre usan este valor — su _Máximo de Tokens de Salida_ de Configuración de Prompts no se aplica\n- **Generación de Código de Exportación**, **Sugerencias de Etiquetas de IA**, **Derivación de Pasos de IA** y el **Informe de Candidatos a Automatización** usan su propio _Máximo de Tokens de Salida_ desde **Administración → Configuración de Prompts**\n- Los modelos que piensan antes de responder (p. ej. Claude Opus 5) gastan parte de este presupuesto en razonamiento — deje margen para la respuesta\n- **No** controla cuánto código del repositorio envía QuickScript al modelo — ese presupuesto se deriva automáticamente de la ventana de contexto del modelo\n- Manténgalo ≤ _Máximo de Tokens por Solicitud_",
       "repoContextBudget": "## Presupuesto de Contexto del Repositorio\nCuánto código de su repositorio conectado envía QuickScript al modelo al generar un script.\n\n- **Se establece automáticamente** a partir de la ventana de contexto de entrada del modelo seleccionado — no hay nada que configurar aquí\n- Los modelos con contexto más grande (Claude, Gemini, DeepSeek) obtienen más; los modelos locales pequeños obtienen una cantidad segura que no desbordará\n- Más contexto fundamenta el script en sus objetos de página y fixtures reales — no cambia cuán largo es el script generado",
-      "maxRequestsPerMinute": "## Máximo de solicitudes por minuto\nLimita la cantidad de llamadas API que se pueden realizar a este proveedor por minuto.\n\n- Se configura para que coincida con el límite de velocidad del plan de su proveedor.\n- Las solicitudes en exceso se ponen en cola, no se rechazan.\n- Consulte la documentación de su proveedor para conocer el límite de su plan.",
       "costPerInputToken": "## Costo por 1 millón de tokens de entrada (USD)\nEl costo en USD por **millón** de tokens de entrada (prompt) enviados al modelo.\n\n- Se usa para el seguimiento de costos y las alertas de presupuesto\n- Se completa automáticamente cuando tu proveedor informa el precio del modelo (LiteLLM, OpenRouter, Together AI); se aplica al seleccionar un modelo o ejecutar Probar conexión\n- De lo contrario, consúltalo en la página de precios de tu proveedor\n- Ejemplo: `0.15` = $0.15 por millón de tokens de entrada",
       "costPerOutputToken": "## Costo por 1 millón de tokens de salida (USD)\nEl costo en USD por **millón** de tokens de salida (finalización) generados por el modelo.\n\n- Generalmente es más alto que el costo del token de entrada\n- Se usa para el seguimiento de costos y las alertas de presupuesto\n- Se completa automáticamente cuando tu proveedor informa el precio del modelo (LiteLLM, OpenRouter, Together AI); se aplica al seleccionar un modelo o ejecutar Probar conexión\n- De lo contrario, consúltalo en la página de precios de tu proveedor\n- Ejemplo: `0.60` = $0.60 por millón de tokens de salida",
-      "monthlyBudget": "## Presupuesto mensual (USD)\nUn objetivo de gasto opcional para esta integración.\n\n- Establézcalo en `0` para deshabilitar el seguimiento del presupuesto\n- El presupuesto es **solo informativo**; no bloquea el uso de LLM\n- Recibirá notificaciones al 80 %, 90 % y 100 % del presupuesto\n- Los costos se calculan utilizando las tarifas por token anteriores",
+      "monthlyBudget": "## Presupuesto Mensual (USD)\nUn objetivo de gasto opcional para esta integración.\n\n- Establecer en `0` para deshabilitar el seguimiento del presupuesto\n- El presupuesto es **solo informativo** — no bloquea el uso de LLM\n- Una alerta con la métrica **Presupuesto de IA utilizado** (Sistema, en la página Notificaciones y Alertas) notifica a sus suscriptores cuando el gasto alcanza la parte que establece; guardar este formulario o restablecer el gasto permite que se dispare nuevamente en el mismo período\n- Los costos se calculan utilizando las tarifas por token anteriores",
       "billingPeriodStartDay": "## Día de inicio del período de facturación\nEl día del mes (1–31) en que comienza su período de facturación.\n\n- El valor predeterminado `1` se alinea con el mes calendario.\n- Establezca en `15` para un ciclo del 15 al 15 (por ejemplo, para que coincida con la fecha de la factura de su proveedor).\n- Los valores `29–31` se ajustan automáticamente al último día de los meses más cortos (febrero en años no bisiestos, etc.).\n- Afecta la ventana de gastos del **Presupuesto mensual** y la acción **Restablecer gastos**.",
       "defaultTemperature": "## Temperatura predeterminada\nControla la aleatoriedad de las respuestas del modelo (0–2).\n\n- **0:** Determinista: salida idéntica para la misma entrada\n- **0.3:** Enfocado: recomendado para la generación de pruebas y la salida de código\n- **1+:** Creativo: respuestas más variadas\n- Las características individuales pueden anular esto en la configuración del indicador",
       "timeout": "## Tiempo de espera de solicitud (ms)\nCuánto tiempo se debe esperar una respuesta antes de cancelar la solicitud.\n\n- El valor está en milisegundos (por ejemplo, `30000` = 30 segundos)\n- Las solicitudes de transmisión (por ejemplo, vista previa de exportación de código) ignoran este tiempo de espera\n- Aumentar para modelos lentos o grandes\n- Rango: 5000 – 600 000 ms",
@@ -7758,6 +8210,8 @@
       "redmineUrl": "## URL de Redmine\nLa URL base de su instancia de Redmine.\n\n- Formato: https://redmine.example.com\n- No incluya /issues ni otras rutas\n- Debe ser accesible desde este servidor",
       "mantisBTApiKey": "## Token de API de MantisBT\nSu token personal de la API REST.\n\n- Créelo en la configuración de su cuenta de MantisBT → Tokens de API\n- Limitado a los permisos de su usuario; use una cuenta de servicio para integraciones compartidas",
       "mantisBTUrl": "## URL de MantisBT\nLa URL base de su instancia de MantisBT.\n\n- Formato: https://mantisbt.example.com\n- No incluya /api/rest ni otras rutas\n- Debe ser accesible desde este servidor",
+      "clickupTeamId": "## ID del equipo de ClickUp (Workspace)\nEl ID numérico del equipo de ClickUp (también llamado Workspace) al que pertenecen las tareas.\n\n- Se encuentra en la URL de ClickUp: app.clickup.com/{teamId}/...\n- Obligatorio para examinar espacios/carpetas/listas al seleccionar un proyecto",
+      "clickupListId": "## ID de lista de ClickUp predeterminada\nLa lista en la que se crean nuevas tareas de forma predeterminada.\n\n- Se encuentra en la URL de ClickUp, o mediante la opción \"Copiar enlace\" de la lista\n- Opcional — se puede elegir una lista específica por problema en su lugar",
       "githubBaseUrl": "## URL Base de la API\nRuta raíz completa de la API de GitHub para GitHub Enterprise Server.\n\n- Normalmente termina en /api/v3\n- Déjelo en blanco para usar api.github.com\n- Debe ser accesible desde este servidor"
     },
     "config": {
@@ -7847,8 +8301,8 @@
       "state": "## Estado\nIndica el estado actual del flujo de trabajo de estos casos de prueba.",
       "estimate": "## Estima\nEl tiempo estimado introducido manualmente para completar cada uno de estos casos de prueba.",
       "automated": "## Automatizado\nIndica si estos casos de prueba son automatizados o no.",
-      "tags": "## Etiquetas\nAplicar etiquetas relevantes para categorizar y filtrar estos casos de prueba.",
-      "issues": "## Problemas\nEnlaza cualquier problema relacionado (bugs, tareas, etc.) a estos casos de prueba."
+      "tags": "## Etiquetas\nAplica etiquetas relevantes para categorizar y filtrar estos casos de prueba.\n\n- **Añadir** añade las etiquetas seleccionadas a todos los casos de prueba y mantiene las etiquetas que ya tienen.\n- **Eliminar** elimina las etiquetas seleccionadas de todos los casos de prueba que las tienen.\n- **Reemplazar todo** deja todos los casos de prueba con exactamente las etiquetas seleccionadas.",
+      "issues": "## Problemas\nVincula cualquier problema relacionado (bugs, tareas, etc.) a estos casos de prueba.\n\n- **Añadir** vincula los problemas seleccionados a todos los casos de prueba y mantiene los problemas ya vinculados.\n- **Eliminar** desvincula los problemas seleccionados de todos los casos de prueba que los tienen.\n- **Reemplazar todo** deja todos los casos de prueba vinculados a exactamente los problemas seleccionados."
     },
     "caseField": {
       "displayName": "## Mostrar Nombre\nEste es el nombre legible por humanos para el campo que se mostrará a los usuarios en formularios y vistas. Hágalo claro y descriptivo.",
@@ -7913,6 +8367,10 @@
       "lastActiveDate": "## Última fecha\nFecha de actividad más reciente.",
       "averageAge": "## Edad media\nEdad media de artículos en días.",
       "issueCount": "## Número de incidencias\nNúmero total de incidencias seguidas.",
+      "linkedCaseCount": "## Casos Vinculados\nNúmero de casos de prueba distintos vinculados a los problemas del grupo. Un caso vinculado a varios problemas en el mismo grupo cuenta una vez.",
+      "firstCaseCreated": "## Primer Caso Creado\nCuándo se creó el caso de prueba más antiguo en este grupo.",
+      "lastCaseCreated": "## Último Caso Creado\nCuándo se creó el caso de prueba más reciente en este grupo.",
+      "caseCreationSpan": "## Intervalo de Creación de Casos\nDías entre la creación de casos de prueba más antigua y más reciente del grupo — cuánto tiempo tardaron en escribirse los casos del grupo.",
       "milestoneCount": "## Número de hitos\nNúmero total de hitos.",
       "milestoneCompletionRate": "## Tasa de finalización de hitos\nPorcentaje de hitos completado.",
       "averageMilestoneDuration": "## Duración media del hito\nDuración media de los hitos en días.",
@@ -7929,6 +8387,9 @@
       "selectionPrecision": "## Precisión de selección (%)\nDe los casos que los análisis de impacto seleccionaron y que luego se ejecutaron, la parte que falló. Vacío cuando nada seleccionado ha ejecutado."
     },
     "reportDimensions": {
+      "issue": "## Dimensión de Incidencia\nAgrupa por las incidencias vinculadas al caso de prueba. Un caso vinculado a varios problemas cuenta en cada uno; los casos sin incidencias vinculadas se incluyen en Ninguno.",
+      "resultSource": "## Dimensión de Fuente de Resultados\nAgrupa ejecuciones por su origen: resultados introducidos en la aplicación (Manual) o resultados de pruebas automatizadas importadas como JUnit (Automatizado).",
+      "rootCause": "## Dimensión de Causa Raíz\nAgrupa resultados automatizados por la causa raíz de su patrón de fallo — la clasificación de una persona cuando se realizó una, de lo contrario la de la IA. Los resultados manuales, los resultados aprobados y los fallos no clasificados se incluyen en Ninguno.",
       "user": "## Dimensión del usuario\nResultados de los grupos por el usuario que ejecutó las pruebas o que está asignado a los elementos.",
       "status": "## Dimensión de estado\nGrupos resultados por estado de ejecución de prueba (por ejemplo, aprobado, fallido, bloqueado).",
       "project": "## Dimensión del proyecto\nResultados de los grupos por proyecto para análisis entre proyectos.",
@@ -7961,7 +8422,7 @@
       "dimensions": "## Dimensiones\nSeleccione las dimensiones que desea analizar en su informe. Las dimensiones son atributos que categorizan sus datos, como fecha, usuario, estado, etc. Puede arrastrarlos para reordenarlos.",
       "metrics": "## métricas\nSeleccione las métricas que desea medir en su informe. Las métricas son mediciones cuantitativas derivadas de sus datos, como el recuento de resultados de pruebas, la tasa de paso, el tiempo promedio transcurrido, etc. Puede arrastrar para reordenarlos.",
       "dateRange": "## Rango de fechas\nFiltre sus datos de informe por un período de tiempo específico. Elija un valor predeterminado como \"Últimos 7 días\", \"Último mes\" o \"Últimos N días\", o seleccione una fecha de inicio y fin personalizada en el calendario.\n\nUn valor predeterminado se mantiene relativo: un informe guardado o un enlace de compartición en vivo calcula las fechas nuevamente cada vez que se abre, en su zona horaria. Las fechas personalizadas permanecen fijas. Este filtro se aplica al campo de fecha relevante para cada tipo de informe (por ejemplo, fecha de ejecución para resultados de prueba, fecha de creación para casos de prueba).",
-      "dimensionFilters": "## Filtros\nRestrinja el informe a valores específicos de cada dimensión seleccionada. Deje un filtro vacío para incluir todos los valores de esa dimensión. Las dimensiones de fecha se filtran con el selector de rango de fechas en su lugar."
+      "dimensionFilters": "## Filtros\nRestinja el informe a valores específicos de cada dimensión seleccionada. Deje un filtro vacío para incluir todos los valores de esa dimensión. Cambie un filtro a Excluir para mantener todo excepto los valores elegidos — útil para informes guardados que deben seguir cubriendo nuevos valores automáticamente. Las dimensiones de fecha se filtran con el selector de rango de fechas en su lugar."
     },
     "codeRepository": {
       "name": "## Nombre del repositorio\nUn nombre para mostrar descriptivo para esta conexión de repositorio.\n\n- Se utiliza para identificarlo en la configuración del contexto del código del proyecto.\n- No necesita coincidir con el nombre del repositorio en el proveedor.",
@@ -8254,7 +8715,15 @@
     "projectSessionsFilters": "## Filtrado de sesiones\n\nActive un chip para reducir la lista. Los chips se aplican tanto a las pestañas Activas como Completadas, y se recuerdan en este dispositivo para este proyecto.\n\n- **Mis Sesiones** — solo las sesiones en las que participa: usted creó la sesión, o está asignada a usted.",
     "projectImpact": "## Impacto\nConecte el repositorio de la aplicación bajo prueba para que este proyecto pueda ejecutar análisis de impacto de prueba: elija dos confirmaciones para ver qué casos de prueba afectan los cambios e fije casos de prueba al código que cubren.",
     "pathPatterns": "## Patrones de ruta\nCada fila combina una **ruta** base con un **patrón** glob. Las filas se suman: un archivo se incluye cuando coincide con cualquier fila.\n\n- `src` + `**/*` — todo bajo `src`\n- en blanco o `.` + `**/*` — cada archivo en el repositorio\n- `src` + `**/!(*.test|*.spec).ts` — archivos `.ts` excepto pruebas\n\n### Excluir\nMarca **Excluir** en una fila para eliminar sus archivos incluso cuando otra fila los incluye. Las exclusiones se aplican al selector de archivos y caché, y para Impact a los archivos cambiados de un análisis, por lo que un archivo que cambia en casi todas las solicitudes de extracción deja de incluir casos de prueba no relacionados. Al menos una fila debe permanecer sin marcar.\n\n- en blanco + `**/CHANGELOG*` — cada registro de cambios, en cualquier profundidad\n- `app` + `build.gradle.kts` — un archivo de compilación que solo actualiza la versión",
-    "projectAutomation": "## Ejecución automatizada\nLos objetivos de ejecución le indican a TestPlanIt dónde ejecutar los casos automatizados de este proyecto: un flujo de trabajo de GitHub Actions, una canalización de GitLab CI o un webhook firmado para cualquier otro sistema. Cuando se ejecuta una ejecución, TestPlanIt inicia el trabajo con el id de ejecución y una URL de plan; el trabajo lee el plan, ejecuta las pruebas coincidentes e informa los resultados con un reportero o la CLI fijada en esa ejecución. Los objetivos se pueden deshabilitar sin ser eliminados."
+    "projectAutomation": "## Ejecución automatizada\nLos objetivos de ejecución le indican a TestPlanIt dónde ejecutar los casos automatizados de este proyecto: un flujo de trabajo de GitHub Actions, una canalización de GitLab CI o un webhook firmado para cualquier otro sistema. Cuando se ejecuta una ejecución, TestPlanIt inicia el trabajo con el id de ejecución y una URL de plan; el trabajo lee el plan, ejecuta las pruebas coincidentes e informa los resultados con un reportero o la CLI fijada en esa ejecución. Los objetivos se pueden deshabilitar sin ser eliminados.",
+    "userAlerts": "## Notificaciones y Alertas\n**Preferencias de Notificación** deciden cómo se comunica con usted (en la aplicación, correo electrónico, resumen) y qué tipos de notificación recibe en absoluto.\n\n**Alertas** vigilan una métrica de prueba y notifican a sus suscriptores cuando cruza una línea, por ejemplo, un resultado que tarda 50% más que la duración habitual del caso, un caso que falla tres veces seguidas, una ejecución cuya tasa de aprobación cae por debajo del 90%, o un hito que está atrasado con días por venir. La lista muestra cada alerta en sus proyectos; el interruptor **Notificarme** sigue o deja uno. **Agregar Alerta** crea la suya propia en cualquier proyecto donde su rol tenga **Alertas** Agregar/Editar; los administradores de proyectos gestionan cada alerta en su proyecto y las suscripciones de otras personas. Una alerta se dispara como máximo una vez por tema dentro de su enfriamiento y permanece en silencio hasta que tenga suficientes resultados.",
+    "projectTriage": "## Patrones de Fallos\nLos fallos automatizados que comparten la misma excepción, mensaje y marcos de pila superiores se agrupan en un **patrón de fallo**. Cada patrón muestra con qué frecuencia ocurrió, qué casos de prueba y ejecuciones tocó, y la opinión de la IA sobre su causa raíz (error del producto, error de prueba, ambiente o inestable por defecto). Resuelve o ignora un patrón una vez que está manejado; se reabre automáticamente si el fallo vuelve.",
+    "projectTriageSettings": "## Configuración de Patrones de Fallos\nAgrupar ejecuciones en cada resultado automatizado que llega y no cuesta nada. La sugerencia de causa raíz de IA utiliza el modelo de IA asignado a la característica **Patrones de Fallos: Causa Raíz** en la página Modelos de IA; desactívalo aquí para mantener la agrupación sin llamadas de IA. **Analizar resultados existentes** agrupa cada fallo automatizado ya registrado en este proyecto.",
+    "projectQuarantine": "## Casos de prueba en cuarentena\nUn caso de prueba en cuarentena sigue ejecutándose y grabando resultados, pero sus fallos se dejan fuera de la aprobación/reprobación de ejecución y se muestran como un recuento separado. Poner en cuarentena un caso mientras se soluciona la causa. La cuarentena se levanta automáticamente una vez que el caso ha pasado el número de veces seguidas establecido en la configuración de Patrones de Fallos, a menos que se haya marcado para ser liberado manualmente; libéralo aquí o desde el patrón en cualquier momento.",
+    "rootCauses": "## Causas Raíz\nLas causas raíz que Patrones de Fallos asigna a los fallos agrupados, por IA o manualmente. Cada una tiene una descripción que la IA lee para decidir cuándo se aplica. Renombra, recambia de color o reordena, añade las tuyas propias, o elimina las que no uses; eliminar una deja sus patrones sin causa raíz.",
+    "rootCauseDescription": "## Descripción\nLa IA lee esta descripción para decidir cuándo se aplica la causa raíz a un patrón de fallo, así que describe la evidencia que apunta hacia ella.",
+    "projectRiskSettings": "## Configuración de puntuación de riesgos\nCada caso de prueba obtiene una puntuación de riesgo de 0-100 a partir de su historial de fallos, inestabilidad, antigüedad, criticidad de requisitos vinculados y defectos vinculados — determinista, sin llamadas de IA. Las puntuaciones se actualizan después de que llegan los resultados y en un barrido nocturno. **Pesos de componentes** establecen cuánto cuenta cada señal, en relación con los demás; cero elimina un componente. **Recalcular todas las puntuaciones** vuelve a puntuar todo el proyecto ahora en lugar de esperar al barrido nocturno.",
+    "reviewRevert": "## Reversión de decisiones de revisión\nCuánto tiempo tiene un revisor para deshacer una decisión que registró, medido desde cuando decidió. Revertir devuelve la solicitud a la cola del revisor; si una aprobación ya había movido el elemento hacia adelante, el elemento vuelve a donde estaba. Los administradores del sistema no están limitados por este límite y pueden revertir una decisión de cualquier antigüedad. Los proyectos pueden acortar el límite en su configuración Avanzada, pero nunca extenderlo."
   },
   "reports": {
     "ui": {
@@ -8322,12 +8791,16 @@
           "unit": "Período",
           "days": "Últimos {count, plural, one {# día} other {# días}}",
           "weeks": "Últimas {count, plural, one {# semana} other {# semanas}}",
-          "months": "Últimos {count, plural, one {# mes} other {# meses}}"
+          "months": "Últimos {count, plural, one {# mes} other {# meses}}",
+          "calendarWeeks": "Últimas {count, plural, one {# semana de calendario} other {# semanas de calendario}}",
+          "calendarMonths": "Últimos {count, plural, one {# mes de calendario} other {# meses de calendario}}"
         },
         "rollingUnits": {
           "days": "días",
           "weeks": "semanas",
-          "months": "meses"
+          "months": "meses",
+          "calendarWeeks": "semanas de calendario (desde el inicio de la semana)",
+          "calendarMonths": "meses de calendario (desde el 1º)"
         }
       },
       "dateGrouping": {
@@ -8388,7 +8861,7 @@
           "description": "Análisis de creación, resolución y impacto de problemas"
         },
         "automationTrends": {
-          "label": "Tendencias de automatización",
+          "label": "Tendencia de casos de prueba automatizados",
           "description": "Seguimiento del progreso de la automatización semana a semana por prioridad"
         },
         "flakyTests": {
@@ -8434,6 +8907,10 @@
         "codePinCoverage": {
           "label": "Cobertura de fijación de código",
           "description": "Dónde están las fijaciones de código, por repositorio y directorio, y dónde los cambios recientes pasaron sin cubrir"
+        },
+        "resultsTrend": {
+          "label": "Tendencia de tasa de fallos de resultados de prueba",
+          "description": "Tasas de aprobación y fallo de resultados de prueba a lo largo del tiempo, y si la tasa de fallo está mejorando o empeorando"
         }
       },
       "flakyTests": {
@@ -8753,7 +9230,7 @@
           "description": "Uso de tokens, costo y fiabilidad de las funciones de LLM en todos los proyectos"
         },
         "automationTrends": {
-          "label": "Tendencias de automatización entre proyectos",
+          "label": "Tendencia de casos de prueba automatizados entre proyectos",
           "description": "Realizar un seguimiento semanal del progreso de la automatización por prioridad en todos los proyectos."
         },
         "flakyTests": {
@@ -8787,6 +9264,10 @@
         "codePinCoverage": {
           "label": "Cobertura de fijación de código entre proyectos",
           "description": "Cobertura de fijación de código en todos los proyectos con análisis de impacto habilitado"
+        },
+        "resultsTrend": {
+          "label": "Tendencia de tasa de fallos de resultados de prueba entre proyectos",
+          "description": "Tasas de aprobación y fallo de resultados de prueba a lo largo del tiempo por proyecto, y si la tasa de fallo está mejorando o empeorando"
         }
       },
       "folderDescendants": {
@@ -8800,7 +9281,11 @@
       },
       "groupedTotal": "Total de {count, plural, one {# fila} other {# filas}} en este grupo",
       "dimensionFilters": {
-        "allValues": "Todos los valores"
+        "allValues": "Todos los valores",
+        "noValues": "Nada excluido",
+        "modeLabel": "Modo de filtro",
+        "include": "Incluir",
+        "exclude": "Excluir"
       },
       "impactAnalysis": {
         "lookbackDaysHelp": "Análisis iniciados dentro de estos muchos días. Toda la hora lee cada análisis que el proyecto mantiene.",
@@ -8851,6 +9336,79 @@
         "chart": {
           "byDirectory": "Fijaciones y archivos sin cobertura por directorio"
         }
+      },
+      "resultsTrend": {
+        "period": "Período",
+        "runSource": "Tipos de resultado",
+        "runSources": {
+          "automated": "Automatizado",
+          "manual": "Manual"
+        },
+        "showPassRate": "Mostrar tasa de aprobación",
+        "showPassRateHelp": "Dibuja la tasa de aprobación en el eje derecho del gráfico, con su propia tendencia ajustada, y añádela a las cifras principales. Desactivado de forma predeterminada: el informe trata sobre la tasa de fallo.",
+        "showFailRate": "Mostrar tasa de fallo",
+        "showFailRateHelp": "Dibuja la tasa de fallo en el eje derecho del gráfico, con su tendencia ajustada, y muéstralo en las cifras principales. Activado de forma predeterminada.",
+        "showCounts": "Mostrar totales de resultados",
+        "showCountsHelp": "Dibuja los totales de aprobados, fallidos, omitidos y otros como barras apiladas en el gráfico junto a las tasas. Desactivado de forma predeterminada: el informe trata sobre las tasas.",
+        "countSkipped": "Contar resultados omitidos en tasas",
+        "countSkippedHelp": "Los resultados omitidos se dejan fuera del denominador de la tasa de aprobación y fallo a menos que esto esté activado. Los otros estados siempre permanecen.",
+        "includeAborted": "Incluir ejecuciones abortadas",
+        "includeAbortedHelp": "Las ejecuciones en el estado de ejecución abandonada del proyecto se cuentan a menos que esto esté desactivado.",
+        "latestAttemptOnly": "Solo último intento",
+        "latestAttemptOnlyHelp": "Contar un resultado por caso por ejecución, su último intento, en lugar de cada intento importado.",
+        "failRate": "Tasa de fallo",
+        "skipped": "Omitido",
+        "other": "Otro",
+        "inProgress": "en progreso",
+        "verdict": {
+          "better": "La tasa de fallo está mejorando",
+          "worse": "La tasa de fallo está empeorando",
+          "steady": "La tasa de fallo se mantiene estable",
+          "notEnough": "No hay suficientes períodos completos para determinar una tendencia aún.",
+          "notEnoughDetail": "La tendencia necesita al menos dos períodos completos con resultados.",
+          "detail": "La línea de tendencia va desde {start} hasta {end}, un cambio de {change} puntos en {count} {grouping, select, daily {días} weekly {semanas} monthly {meses} quarterly {trimestres} other {años}} completos."
+        },
+        "stats": {
+          "lastComplete": "Último período completo ({period}), comparado con el promedio de los períodos completos anteriores.",
+          "results": "Resultados ejecutados",
+          "runs": "Ejecuciones",
+          "deltaPoints": "{change} pts. en comparación con el {count, plural, one {período anterior} other {# períodos anteriores}}",
+          "deltaPercent": "{change}% en comparación con el {count, plural, one {período anterior} other {# períodos anteriores}}",
+          "noBaseline": "Nada anterior para comparar"
+        },
+        "chart": {
+          "allProjects": "Todos los proyectos seleccionados",
+          "period": "{grouping, select, weekly {Semana del {date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {Semana del {period}} other {{period}}} (en progreso)",
+          "rateTrend": "Tendencia de {rate}"
+        },
+        "heatmap": {
+          "title": "Tasa de fallo por proyecto y período",
+          "help": "Cada celda es la tasa de fallo del proyecto para el período; el sombreado alcanza intensidad total al 35%. La columna de tendencia es el cambio en la línea de tasa de fallo ajustada durante los períodos completos. * marca el período en progreso.",
+          "trend": "Tendencia"
+        },
+        "trend": {
+          "points": "{change} pts"
+        },
+        "detail": {
+          "title": "Resultados y tasas por período"
+        },
+        "method": {
+          "title": "Cómo se cuenta esto",
+          "runSource": {
+            "automated": "Solo ejecuciones automatizadas: cada tipo de ejecución excepto manual, con sus resultados importados. Una ejecución pertenece al período en que fue creada.",
+            "manual": "Solo ejecuciones manuales, con los resultados registrados en ellas. Una ejecución pertenece al período en que fue creada.",
+            "both": "Cada ejecución: ejecuciones automatizadas con sus resultados importados y ejecuciones manuales con los resultados registrados en ellas. Una ejecución pertenece al período en que fue creada."
+          },
+          "periods": "{grouping, select, daily {Días} weekly {Semanas (comenzando el lunes)} monthly {Meses} quarterly {Trimestres} other {Años}} se cortan en {timezone}. El actual está en progreso y se excluye de la tendencia y las cifras principales.",
+          "everyAttempt": "Una prueba reintenada se cuenta una vez por intento.",
+          "latestAttempt": "Solo se cuenta el último intento de cada caso en una ejecución.",
+          "skippedExcluded": "Los resultados omitidos (un estado que se completa sin un aprobado o un fallo) se dejan fuera de las tasas de aprobación y fallo; otros estados permanecen.",
+          "skippedCounted": "Los resultados omitidos se cuentan en las tasas de aprobación y fallo.",
+          "abortedIncluded": "Se incluyen las ejecuciones en estado de ejecución abandonada.",
+          "abortedExcluded": "Se excluyen las ejecuciones en estado de ejecución abandonada.",
+          "trend": "La tendencia es una línea recta ajustada a la tasa de fallo durante períodos completos con resultados. Un cambio de más de un punto en cualquier dirección lo califica como mejor o peor."
+        }
       }
     },
     "errors": {
@@ -8881,6 +9439,9 @@
       "issueType": "Tipo de problema",
       "issueTracker": "Rastreador de problemas",
       "issueStatus": "Estado del problema",
+      "issue": "Incidencia",
+      "resultSource": "Fuente de Resultados",
+      "rootCause": "Causa Raíz",
       "tag": "Etiqueta",
       "feature": "Característica",
       "model": "Modelo",
@@ -8918,6 +9479,10 @@
       "averageElapsed": "Tiempo promedio por ejecución",
       "lastActiveDate": "Última fecha activa",
       "issueCount": "Número de incidencias",
+      "linkedCaseCount": "Casos Vinculados",
+      "firstCaseCreated": "Primer Caso Creado",
+      "lastCaseCreated": "Último Caso Creado",
+      "caseCreationSpan": "Intervalo de Creación de Casos (días)",
       "averageAge": "Edad media (días)",
       "sessionCount": "Número de sesiones",
       "activeSessions": "Sesiones activas",
@@ -9395,9 +9960,12 @@
       "exists": "Existe",
       "not_exists": "No existe"
     },
+    "recordMatches": "{count, plural, one {# registro coincidió por ID} other {# registros coincidieron por ID}}",
     "help": {
       "exactPhrases": "Frases exactas",
       "exactPhrasesDesc": "Envuelva los términos entre comillas para que coincidan con frases exactas:",
+      "ids": "IDs",
+      "idsDesc": "Ingrese un ID, con o sin #, para encontrar un registro directamente. Separe varios con O, comas o espacios para encontrarlos todos:",
       "proximity": "Búsqueda de proximidad",
       "proximityDesc": "palabras dentro de N posiciones entre sí",
       "booleanOperators": "Operadores booleanos",
@@ -9970,5 +10538,660 @@
     "update": "Actualizar con la asignación actual",
     "updateConfirm": "\"{name}\" se actualizará con la asignación de columnas actual y la configuración.",
     "savePrompt": "¿Guardar esta asignación de columnas para la próxima vez?"
+  },
+  "alerts": {
+    "title": "Alertas",
+    "description": "Alertas que sigue en todos sus proyectos, y las alertas en esos proyectos que podría seguir.",
+    "addRule": "Agregar Alerta",
+    "editRule": "Editar Alerta",
+    "deleteRule": "Eliminar Alerta",
+    "deleteConfirm": "¿Eliminar la alerta \"{name}\"? Sus suscriptores dejarán de recibir notificaciones y se puede restaurar desde la papelera.",
+    "pauseTitle": "¿Pausar esta alerta para todos?",
+    "pauseConfirm": "\"{name}\" deja de activarse para {count, plural, =0 {todos} one {su único suscriptor} =2 {ambos de sus suscriptores} other {todos # de sus suscriptores}}, no solo usted, hasta que alguien la habilite de nuevo. Para detener solo sus propias notificaciones, desactive Notificarme en su lugar.",
+    "columns": {
+      "name": "Regla",
+      "condition": "Condición",
+      "scope": "Alcance",
+      "subscribers": "Suscriptores",
+      "lastFired": "Última activación",
+      "enabled": "Activado",
+      "notifyMe": "Notificarme",
+      "actions": "Acciones",
+      "project": "Proyecto"
+    },
+    "neverFired": "Nunca",
+    "systemScope": "Sistema",
+    "systemSubjects": {
+      "audit": "Registro de auditoría",
+      "lockouts": "Cuentas de usuario",
+      "automated-results": "Resultados automatizados"
+    },
+    "paused": "En pausa",
+    "filters": {
+      "label": "Filtrar alertas",
+      "on": "Activado",
+      "off": "Desactivado"
+    },
+    "history": "Historial",
+    "subscribers": "Suscriptores",
+    "subscriberCount": "{count, plural, =0 {Sin suscriptores} one {# suscriptor} other {# suscriptores}}",
+    "toasts": {
+      "created": "Regla creada.",
+      "updated": "Regla actualizada.",
+      "deleted": "Regla eliminada.",
+      "enabled": "Regla habilitada.",
+      "disabled": "Regla pausada.",
+      "subscribed": "Será notificado cuando se active esta regla.",
+      "unsubscribed": "Ya no será notificado por esta regla.",
+      "subscriberAdded": "{name} se suscribió.",
+      "subscriberRemoved": "{name} se desinscribió.",
+      "saveError": "No se pudo guardar la regla.",
+      "subscriptionError": "No se pudo actualizar la suscripción."
+    },
+    "form": {
+      "name": "Nombre",
+      "namePlaceholder": "p. ej. Desaceleraciones del flujo de pago",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Nota opcional para otros suscriptores",
+      "metric": "Métrica",
+      "metricLocked": "La métrica no se puede cambiar después de crear la alerta. Cree una nueva alerta en su lugar.",
+      "condition": "Condición",
+      "scope": "Alcance",
+      "scopeType": "Vigilar",
+      "scopeFolder": "Carpeta",
+      "scopeTag": "Etiqueta",
+      "scopeCase": "Caso de prueba",
+      "scopeMilestone": "Hito",
+      "scopeRunName": "El nombre de la ejecución contiene",
+      "scopeRunNamePlaceholder": "p. ej. Nightly",
+      "scopePickFolder": "Seleccione una carpeta",
+      "scopePickTag": "Seleccione una etiqueta",
+      "scopePickCase": "Seleccione un caso de prueba",
+      "scopePickMilestone": "Seleccione un hito",
+      "scopeWebhook": "Webhook",
+      "scopePickWebhook": "Seleccione un webhook",
+      "scopeLlmIntegration": "Integración",
+      "scopePickLlmIntegration": "Seleccione una integración",
+      "scopeCodeRepository": "Conexión del repositorio",
+      "scopePickCodeRepository": "Seleccione una conexión de repositorio",
+      "scopeIntegration": "Integración",
+      "scopePickIntegration": "Seleccione una integración",
+      "scopeQueue": "Cola",
+      "scopePickQueue": "Seleccione una cola",
+      "systemScope": "Sistema",
+      "systemScopeHelp": "Una alerta del sistema vigila algo administrado para toda la instalación, como un presupuesto del modelo de IA. Solo los administradores la ven.",
+      "coverageBasis": "Contar como cubierto",
+      "coverageBasisOptions": {
+        "LINKED": "Vinculado a al menos un caso de prueba",
+        "PASSING": "El último resultado pasó"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "Ventana de línea de base (ejecuciones)",
+        "WEBHOOK_FAILURE_RATE": "Últimas entregas",
+        "LLM_ERROR_RATE": "Últimas solicitudes"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "Ejecuciones mínimas",
+        "WEBHOOK_FAILURE_RATE": "Entregas mínimas",
+        "LLM_ERROR_RATE": "Solicitudes mínimas"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "Días antes de que venza el hito",
+        "STALE_CASES": "Días sin un resultado",
+        "LLM_RATE_LIMITED": "En las últimas (horas)"
+      },
+      "scopeCaseSearch": "Buscar por nombre o ID",
+      "direction": "Dirección",
+      "baselineType": "Línea de base",
+      "baselineWindow": "Ventana de línea de base (resultados)",
+      "minSamples": "Resultados mínimos",
+      "resultSource": "Resultados a vigilar",
+      "evaluateOn": "Evaluar",
+      "daysRemaining": "Días restantes",
+      "cooldown": "Enfriamiento (minutos)",
+      "cooldownHelp": "Después de que se active la regla para un tema, permanece en silencio para ese tema este tiempo. 0 desactiva el enfriamiento.",
+      "emitWebhook": "Enviar un evento de webhook alert.triggered",
+      "emitWebhookHelp": "Los webhooks salientes suscritos a Alertas reciben la misma carga útil, por lo que Slack u otras herramientas pueden publicarla.",
+      "enabled": "Activado",
+      "audience": "Audiencia",
+      "audienceHelp": "Quién es notificado cuando se activa la alerta. Se le añade por defecto a las alertas que crea; cualquiera puede salir o volver a unirse.",
+      "audienceHelpSystem": "Quién es notificado cuando se activa la alerta. Solo los administradores pueden estar en la audiencia de una alerta del sistema; se le añade por defecto.",
+      "searchMembers": "Buscar miembros del proyecto",
+      "you": "tú",
+      "cannotManageSubscribers": "Puede suscribirse o desuscribirse a sí mismo. Suscribir a otros miembros requiere derechos de administración del proyecto.",
+      "validation": {
+        "nameRequired": "Ingrese un nombre.",
+        "scopeRequired": "Elija qué vigila la regla.",
+        "runNameRequired": "Ingrese parte del nombre de una ejecución.",
+        "percentRange": "Ingrese un porcentaje entre {min} y {max}.",
+        "countRange": "Ingrese un número entero entre {min} y {max}.",
+        "windowRange": "Ingrese una ventana entre {min} y {max} resultados.",
+        "minSamplesRange": "Ingrese un valor entre {min} y {max}.",
+        "minSamplesWindow": "Los resultados mínimos no pueden exceder la ventana de línea de base.",
+        "cooldownRange": "Ingrese minutos entre {min} y {max}.",
+        "daysRange": "Ingrese días entre {min} y {max}.",
+        "windowBelowMinSamples": "La ventana de línea de base no puede ser más pequeña que los resultados mínimos."
+      },
+      "project": "Proyecto",
+      "projectPlaceholder": "Seleccione un proyecto",
+      "projectHelp": "Solo se enumeran los proyectos donde su rol puede crear alertas.",
+      "dialogDescription": "Vigile una métrica de prueba y notifique a la audiencia cuando cruce la línea que establece.",
+      "metricSearch": "Buscar métricas",
+      "metricNoMatch": "Ninguna métrica coincide.",
+      "checkedDaily": "Verificado diariamente",
+      "checkedHourly": "Verificado por hora",
+      "needsProject": "Seleccione un proyecto primero.",
+      "followAlert": "Notificarme",
+      "leaveAlert": "Dejar de notificarme",
+      "delivery": "Entrega",
+      "thresholdLabels": {
+        "RESULT_DURATION_DEVIATION": "Desviación (%)",
+        "CASE_REGRESSED": "Umbral",
+        "CONSECUTIVE_FAILURES": "Fallos seguidos",
+        "CASE_FLAKY": "Volteos",
+        "RUN_PASS_RATE_BELOW": "Tasa de aprobación por debajo de (%)",
+        "RUN_FAILURE_COUNT": "Resultados fallidos, más de",
+        "RUN_DURATION_DEVIATION": "Desviación (%)",
+        "RUN_NOT_PROGRESSING": "Inactivo por más de (horas)",
+        "AUTOMATED_EXECUTION_FAILED": "Umbral",
+        "RUN_UNTESTED_SHARE": "Casos sin probar sobre (%)",
+        "RUN_ISSUES_OPENED": "Problemas vinculados, más de",
+        "NEW_FAILURE_SIGNATURES": "Nuevos patrones de fallo, más de",
+        "SESSION_OVERRUN": "Sobre la estimación por más de (%)",
+        "MILESTONE_BEHIND": "Finalización por debajo de (%)",
+        "MILESTONE_OVERDUE": "Umbral",
+        "REQUIREMENT_COVERAGE_BELOW": "Cobertura por debajo de (%)",
+        "STALE_CASES": "Casos obsoletos, más de",
+        "AUTOMATION_SHARE_BELOW": "Participación automatizada por debajo de (%)",
+        "WEBHOOK_FAILURE_RATE": "Tasa de fallo superior a (%)",
+        "LLM_BUDGET_USED": "Presupuesto utilizado (%)",
+        "LLM_ERROR_RATE": "Solicitudes fallidas superiores a (%)",
+        "LLM_RATE_LIMITED": "Solicitudes limitadas por velocidad, al menos",
+        "CODE_REPOSITORY_CACHE_FAILING": "Fallos durante al menos (horas)",
+        "INTEGRATION_REAUTH_NEEDED": "Usuarios que necesitan reautorización, al menos",
+        "QUEUE_FAILED_JOBS": "Trabajos fallidos, más de",
+        "QUEUE_BACKLOG": "El trabajo en espera más antiguo más antiguo que (minutos)",
+        "AUDIT_BACKLOG": "El cambio de auditoría sin procesar más antiguo más antiguo que (minutos)",
+        "ACCOUNT_LOCKOUTS": "Cuentas bloqueadas, al menos",
+        "NO_AUTOMATED_RESULTS": "Sin resultados automatizados durante (horas)"
+      }
+    },
+    "direction": {
+      "ABOVE": "Arriba (más lento)",
+      "BELOW": "Abajo (más rápido)",
+      "EITHER": "Arriba o abajo"
+    },
+    "baseline": {
+      "MEAN": "Media",
+      "MEDIAN": "Mediana"
+    },
+    "resultSource": {
+      "MANUAL": "Resultados manuales",
+      "AUTOMATED": "Resultados automatizados",
+      "BOTH": "Manual y automatizado"
+    },
+    "evaluateOn": {
+      "RUN_COMPLETION": "Cuando se completa la ejecución",
+      "AS_RESULTS_ARRIVE": "Conforme llegan los resultados"
+    },
+    "scopeType": {
+      "PROJECT": "Proyecto completo",
+      "FOLDER": "Casos en una carpeta",
+      "TAG": "Casos con una etiqueta",
+      "CASE": "Un caso de prueba",
+      "RUN_NAME": "Ejecuciones cuyo nombre contiene",
+      "MILESTONE": "Un hito",
+      "WEBHOOK": "Un webhook"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "Todas las sesiones",
+      "TAG": "Sesiones con una etiqueta"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "Todos los webhooks salientes",
+      "WEBHOOK": "Un webhook"
+    },
+    "scopeTypeLlm": {
+      "PROJECT": "Todas las integraciones del modelo de IA",
+      "LLM_INTEGRATION": "Una integración"
+    },
+    "scopeTypeCodeRepositories": {
+      "PROJECT": "Todas las conexiones del repositorio",
+      "CODE_REPOSITORY": "Una conexión de repositorio"
+    },
+    "scopeTypeIntegrations": {
+      "PROJECT": "Todas las integraciones",
+      "INTEGRATION": "Una integración"
+    },
+    "scopeTypeQueues": {
+      "PROJECT": "Todas las colas",
+      "QUEUE": "Una cola"
+    },
+    "scopeTypeSystem": {
+      "PROJECT": "Toda la instalación"
+    },
+    "scopeTypeRuns": {
+      "PROJECT": "Todas las ejecuciones",
+      "TAG": "Ejecuciones con una etiqueta",
+      "RUN_NAME": "Ejecuciones cuyo nombre contiene"
+    },
+    "scopeTypeMilestones": {
+      "PROJECT": "Todos los hitos",
+      "MILESTONE": "Un hito"
+    },
+    "scopeDisplay": {
+      "PROJECT": "Proyecto completo",
+      "FOLDER": "Carpeta: {name}",
+      "TAG": "Etiqueta: {name}",
+      "CASE": "Caso: {name}",
+      "RUN_NAME": "Ejecuciones que contienen \"{text}\"",
+      "MILESTONE": "Hito: {name}",
+      "WEBHOOK": "Webhook: {name}",
+      "LLM_INTEGRATION": "Integración: {name}",
+      "ALL_LLM_INTEGRATIONS": "Todas las integraciones del modelo de IA",
+      "CODE_REPOSITORY": "Repositorio: {name}",
+      "ALL_CODE_REPOSITORIES": "Todas las conexiones del repositorio",
+      "INTEGRATION": "Integración: {name}",
+      "ALL_INTEGRATIONS": "Todas las integraciones",
+      "QUEUE": "Cola: {name}",
+      "ALL_QUEUES": "Todas las colas",
+      "WHOLE_INSTALLATION": "Toda la instalación",
+      "missing": "(eliminado)"
+    },
+    "subjectType": {
+      "CASE": "Caso de prueba",
+      "RUN": "Ejecución de prueba",
+      "MILESTONE": "Hito",
+      "SESSION": "Sesión",
+      "PROJECT": "Proyecto",
+      "WEBHOOK": "Webhook"
+    },
+    "metrics": {
+      "RESULT_DURATION_DEVIATION": {
+        "label": "La duración del resultado se desvía de la línea de base",
+        "description": "Un resultado tarda mucho más o menos que los resultados recientes del caso. Los resultados sin tiempo transcurrido se ignoran.",
+        "summary": "La duración de un resultado es más del {threshold}% {direction, select, ABOVE {superior} BELOW {inferior} other {superior o inferior}} del {baseline, select, MEAN {promedio} other {mediana}} de los últimos {window} resultados del caso, después de al menos {minSamples} resultados"
+      },
+      "CASE_REGRESSED": {
+        "label": "Caso regresionó",
+        "description": "Un caso que pasó sus resultados recientes ahora falla. Detecta un fallo fresco en un caso estable.",
+        "summary": "Un caso falla después de pasar sus últimos {window} resultados"
+      },
+      "CASE_RECOVERED": {
+        "label": "Caso recuperado",
+        "description": "Un caso pasa después de fallar cada uno de sus últimos resultados.",
+        "summary": "Un caso pasa después de fallar sus últimos {window, plural, one {# resultado} other {# resultados}}"
+      },
+      "CONSECUTIVE_FAILURES": {
+        "label": "Fallos consecutivos",
+        "description": "Un caso falla un número determinado de veces seguidas.",
+        "summary": "Un caso falla {threshold, plural, one {# vez} other {# veces}} seguidas"
+      },
+      "CASE_FLAKY": {
+        "label": "El caso se volvió inestable",
+        "description": "Un caso alterna entre pasar y fallar repetidamente dentro de sus resultados recientes. Utiliza las mismas entradas que el informe de Pruebas inestables.",
+        "summary": "Un caso alterna entre pasar y fallar al menos {threshold, plural, one {# vez} other {# veces}} en sus últimos {window} resultados"
+      },
+      "RUN_PASS_RATE_BELOW": {
+        "label": "La tasa de aprobación de ejecución está por debajo del umbral",
+        "description": "La tasa de aprobación de una ejecución, contada sobre resultados con un veredicto de aprobación o fallo, cae por debajo de un porcentaje.",
+        "summary": "La tasa de aprobación de una ejecución está por debajo del {threshold}% una vez que al menos {minSamples} resultados tengan un veredicto, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluado conforme llegan los resultados} other {evaluado cuando se completa la ejecución}}"
+      },
+      "RUN_FAILURE_COUNT": {
+        "label": "Recuento de fallos de ejecución",
+        "description": "Una ejecución tiene más de un número determinado de resultados fallidos.",
+        "summary": "Una ejecución tiene más de {threshold, plural, one {# resultado fallido} other {# resultados fallidos}}, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluado conforme llegan los resultados} other {evaluado cuando se completa la ejecución}}"
+      },
+      "RUN_DURATION_DEVIATION": {
+        "label": "La duración de la ejecución se desvía de la línea de base",
+        "description": "La duración total de una ejecución completada se desvía de las ejecuciones que su alcance agrupa (misma etiqueta o fragmento de nombre).",
+        "summary": "La duración de una ejecución completada es más del {threshold}% {direction, select, ABOVE {superior} BELOW {inferior} other {superior o inferior}} del {baseline, select, MEAN {promedio} other {mediana}} de las últimas {window} ejecuciones, después de al menos {minSamples} ejecuciones"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "Ejecución no avanza",
+        "description": "Una ejecución abierta no ha tenido nuevo resultado durante un número determinado de horas. Verificado por hora.",
+        "summary": "Una ejecución abierta no ha tenido nuevo resultado durante más de {threshold, plural, one {# hora} other {# horas}}"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "La ejecución automatizada falló",
+        "description": "Una ejecución automatizada de una ejecución falla, no se puede enviar o agota el tiempo de espera.",
+        "summary": "Una ejecución automatizada falla, no se puede enviar o agota el tiempo de espera"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "Participación sin probar de la ejecución",
+        "description": "Demasiados de los casos de una ejecución aún no tienen resultado con pocos días antes de que venza su hito. Verificado diariamente.",
+        "summary": "Más del {threshold}% de los casos de una ejecución no tienen resultado con {days, plural, one {# día} other {# días}} o menos antes de que venza su hito"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "Problemas abiertos desde una ejecución",
+        "description": "Más de un número determinado de problemas están vinculados a los resultados de una ejecución.",
+        "summary": "Más de {threshold, plural, one {# problema está} other {# problemas están}} vinculado a los resultados de una ejecución, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluado conforme llegan los resultados} other {evaluado cuando se completa la ejecución}}"
+      },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "Nuevos patrones de fallo en una ejecución",
+        "description": "Una ejecución introduce patrones de fallo que el proyecto no había visto antes. Necesita que Patrones de Fallos esté habilitado para el proyecto.",
+        "summary": "Más de {threshold, plural, one {# patrón de fallo aparece} other {# patrones de fallo aparecen}} por primera vez en una ejecución, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluado cuando llegan los resultados} other {evaluado cuando se completa la ejecución}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "La sesión excedió su estimación",
+        "description": "El tiempo transcurrido de una sesión completada excede su estimación por un porcentaje.",
+        "summary": "El tiempo transcurrido de una sesión completada es más del {threshold}% sobre su estimación"
+      },
+      "MILESTONE_BEHIND": {
+        "label": "Finalización del hito atrasado",
+        "description": "Los casos de ejecución del hito no se completan lo suficiente con pocos días antes de su fecha de vencimiento. Verificado diariamente.",
+        "summary": "Un hito tiene menos del {threshold}% completado con {days, plural, one {# día} other {# días}} o menos restantes"
+      },
+      "MILESTONE_OVERDUE": {
+        "label": "Hito vencido",
+        "description": "La fecha de vencimiento de un hito ha pasado y no se completa. Verificado diariamente.",
+        "summary": "Un hito supera su fecha de vencimiento sin completarse"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "La cobertura de requisitos está por debajo del umbral",
+        "description": "Menos de una parte determinada de los requisitos del proyecto cuentan como cubiertos. Verificado diariamente.",
+        "summary": "Menos del {threshold}% de requisitos {basis, select, PASSING {tienen un resultado más reciente que pasa} other {están vinculados a al menos un caso de prueba}}"
+      },
+      "STALE_CASES": {
+        "label": "Casos obsoletos",
+        "description": "Más de un número determinado de casos han pasado sin resultado durante un número de días. Verificado diariamente.",
+        "summary": "Más de {threshold, plural, one {# caso ha} other {# casos han}} no tenido resultado en {days, plural, one {# día} other {# días}}"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "La participación de automatización está por debajo del umbral",
+        "description": "Menos de una parte determinada de los casos en el alcance están automatizados. Verificado diariamente.",
+        "summary": "Menos del {threshold}% de los casos están automatizados"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "Tasa de fallo del webhook",
+        "description": "Demasiadas de las entregas recientes de un webhook saliente fallaron. Verificado por hora.",
+        "summary": "Más del {{threshold}% de las últimas {{window} entregas de un webhook saliente fallaron, después de al menos {{minSamples} entregas"
+      },
+      "LLM_BUDGET_USED": {
+        "label": "Presupuesto de IA utilizado",
+        "description": "El gasto de una integración del modelo de IA durante su período de facturación alcanza una parte de su presupuesto mensual. Se activa una vez por período para cada integración.",
+        "summary": "El gasto alcanza el {{threshold}% del presupuesto mensual de la integración"
+      },
+      "LLM_ERROR_RATE": {
+        "label": "Tasa de error de solicitud de IA",
+        "description": "Demasiadas de las solicitudes recientes de una integración del modelo de IA fallaron.",
+        "summary": "Más del {{threshold}% de las últimas {{window} solicitudes de la integración fallaron, después de al menos {{minSamples} solicitudes"
+      },
+      "LLM_RATE_LIMITED": {
+        "label": "Limitación de velocidad del proveedor de IA",
+        "description": "El proveedor limitó las solicitudes de una integración del modelo de IA repetidamente.",
+        "summary": "El proveedor limitó la velocidad de al menos {{threshold, plural, one {# solicitud} other {# solicitudes}} dentro de {{days, plural, one {# hora} other {# horas}}"
+      },
+      "CODE_REPOSITORY_CACHE_FAILING": {
+        "label": "Caché del repositorio fallando",
+        "description": "Una conexión del repositorio de código no ha actualizado su caché correctamente durante un tiempo. Verificado por hora.",
+        "summary": "La caché de conexión de un repositorio ha estado fallando durante al menos {{threshold, plural, one {# hora} other {# horas}}"
+      },
+      "INTEGRATION_REAUTH_NEEDED": {
+        "label": "Se necesita reautorización de integración",
+        "description": "Muchos usuarios han perdido su conexión con una integración y necesitan reautorizar. Verificado diariamente.",
+        "summary": "Al menos {{threshold, plural, one {# usuario necesita} other {# usuarios necesitan}} reautorizar una integración"
+      },
+      "QUEUE_FAILED_JOBS": {
+        "label": "Colas de trabajos fallidos",
+        "description": "Una cola de fondo contiene demasiados trabajos fallidos. Verificado por hora.",
+        "summary": "Más de {{threshold, plural, one {# trabajo ha} other {# trabajos han}} fallado en una cola"
+      },
+      "QUEUE_BACKLOG": {
+        "label": "Acumulación de cola",
+        "description": "El trabajo en espera más antiguo de una cola de fondo ha esperado demasiado tiempo, el signo de un trabajador detenido. Verificado por hora.",
+        "summary": "El trabajo en espera más antiguo de una cola es más antiguo que {{threshold, plural, one {# minuto} other {# minutos}}"
+      },
+      "AUDIT_BACKLOG": {
+        "label": "Acumulación del registro de auditoría",
+        "description": "Los cambios capturados no se están escribiendo en el registro de auditoría, el signo de un trabajador de auditoría detenido. Verificado por hora.",
+        "summary": "El cambio de auditoría sin procesar más antiguo es más antiguo que {{threshold, plural, one {# minuto} other {# minutos}}"
+      },
+      "ACCOUNT_LOCKOUTS": {
+        "label": "Bloqueos de cuenta",
+        "description": "Varias cuentas están bloqueadas después de intentos de inicio de sesión fallidos a la vez, un signo de relleno de credenciales. Verificado por hora.",
+        "summary": "Al menos {{threshold, plural, one {# cuenta está} other {# cuentas están}} bloqueada después de intentos de inicio de sesión fallidos"
+      },
+      "NO_AUTOMATED_RESULTS": {
+        "label": "Sin resultados automatizados",
+        "description": "Ningún resultado de prueba automatizada ha llegado de ninguna canalización durante un tiempo. Verificado diariamente.",
+        "summary": "Ningún resultado automatizado ha llegado durante {{threshold, plural, one {# hora} other {# horas}}"
+      }
+    },
+    "sourceSummary": "Resultados: {{source, select, MANUAL {manual} AUTOMATED {automatizado} other {manual y automatizado}}",
+    "historyDialog": {
+      "title": "Historial: {name}",
+      "empty": "Esta regla aún no se ha activado.",
+      "columns": {
+        "firedAt": "Se activó",
+        "subject": "Asunto",
+        "observed": "Observado",
+        "threshold": "Umbral",
+        "notified": "Notificado"
+      },
+      "webhookSent": "Webhook enviado"
+    },
+    "descriptionFor": "Alertas {name} sigue, y las otras alertas en sus proyectos.",
+    "empty": "Aún no hay alertas en sus proyectos.",
+    "emptyCanCreate": "Aún no hay alertas en sus proyectos. Agregue una para comenzar.",
+    "pageDescription": "Cómo se le notifica, de qué se le informa y las alertas que sigue.",
+    "pageDescriptionFor": "Cómo se notifica a {name} y las alertas que sigue.",
+    "pageTabs": {
+      "alerts": "Alertas",
+      "notifications": "Notificaciones"
+    },
+    "metricGroups": {
+      "CASE": "Resultados de casos de prueba",
+      "RUN": "Ejecuciones de prueba",
+      "SESSION": "Sesiones",
+      "MILESTONE": "Hitos",
+      "PROJECT": "Salud del proyecto",
+      "WEBHOOK": "Webhooks",
+      "LLM_INTEGRATION": "Modelos de IA",
+      "CODE_REPOSITORY": "Repositorios de código",
+      "INTEGRATION": "Integraciones",
+      "QUEUE": "Colas de fondo",
+      "SYSTEM": "Instalación"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Abierto",
+      "RESOLVED": "Resuelto",
+      "IGNORED": "Ignorado"
+    },
+    "unclassified": "Sin causa raíz",
+    "source": {
+      "AI": "Causa raíz sugerida por IA",
+      "labelAI": "IA",
+      "labelMANUAL": "Manual"
+    },
+    "columns": {
+      "classification": "Causa raíz",
+      "occurrences": "Ocurrencias",
+      "firstSeen": "Visto por primera vez",
+      "lastSeen": "Visto por última vez",
+      "classifiedBy": "Establecido por"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar patrones de fallo...",
+      "flakyOnly": "Candidatos inestables",
+      "sourceAll": "Establecido por cualquiera",
+      "sourceAi": "Establecido por IA",
+      "sourceManual": "Establecido manualmente",
+      "sourceNone": "No establecido"
+    },
+    "actions": {
+      "resolve": "Resolver",
+      "ignore": "Ignorar",
+      "classify": "Sugerir causa raíz con IA",
+      "setClassification": "Establecer causa raíz"
+    },
+    "detail": {
+      "exceptionType": "Tipo de excepción",
+      "normalizedMessage": "Mensaje normalizado",
+      "frames": "Marcos de pila principales",
+      "sampleTrace": "Fallo más reciente",
+      "affectedCases": "{count, plural, one {# caso de prueba afectado} other {# casos de prueba afectados}}",
+      "recentOccurrences": "{count, plural, one {# ocurrencia reciente} other {# ocurrencias recientes}}",
+      "rationale": "Justificación",
+      "suggestedIssueTitle": "Título de incidencia sugerido",
+      "nextStep": "Próximo paso sugerido",
+      "noAi": "Sin sugerencia de IA aún.",
+      "noDetails": "Este fallo no tenía mensaje ni seguimiento de pila, por lo que se agrupa por caso de prueba.",
+      "notesPlaceholder": "Notas para el equipo...",
+      "lastRun": "Última ejecución",
+      "aiSuggestion": "Sugerencia de IA",
+      "unlinkConfirmDescription": "Esto elimina el problema de este patrón de fallo. El problema en sí se conserva y puede vincularse de nuevo más adelante.",
+      "signatureLabel": "Patrón de fallo",
+      "affectedCasesLabel": "Casos de prueba afectados"
+    },
+    "flakyCandidate": "Candidato inestable",
+    "flakyCandidateHint": "Los casos de prueba afectados alternan entre pasar y fallar en su historial reciente.",
+    "knownIssue": "Incidencia conocida",
+    "notGrouped": "{count, plural, one {# fallo no agrupado aún} other {# fallos no agrupados aún}}",
+    "runPanel": {
+      "title": "Patrones de fallo",
+      "inRun": "{count, plural, one {# en esta ejecución} other {# en esta ejecución}}",
+      "hint": "Haz clic en un patrón para filtrar los resultados a continuación.",
+      "open": "Ver patrón",
+      "inRunColumn": "En esta ejecución",
+      "selectedClusters": "{count, plural, one {# patrón seleccionado} other {# patrones seleccionados}}",
+      "clearSelected": "Limpiar los patrones seleccionados"
+    },
+    "toasts": {
+      "updated": "Patrón de fallo actualizado",
+      "updateFailed": "No se pudo actualizar el patrón de fallo",
+      "classifyQueued": "Se solicitó sugerencia de causa raíz de IA",
+      "noAiModel": "No hay modelo de IA configurado para esta característica",
+      "issueLinked": "Incidencia vinculada"
+    },
+    "empty": {
+      "title": "Sin patrones de fallo aún",
+      "description": "Los patrones de fallo aparecen aquí cuando llegan resultados automatizados con fallos. Para agrupar fallos ya registrados en este proyecto, usa Analizar resultados existentes en la configuración de Patrones de Fallos."
+    },
+    "settings": {
+      "description": "Agrupa fallos automatizados en patrones y deja que la IA sugiera su causa raíz.",
+      "enableLabel": "Habilitar Patrones de Fallos",
+      "enableDescription": "Agrupa cada fallo automatizado en este proyecto por excepción, mensaje y marcos de pila a medida que llegan los resultados.",
+      "autoClassifyLabel": "Sugerir causas raíz con IA",
+      "autoClassifyDescription": "Pide al modelo de IA del proyecto que elija una causa raíz para cada nuevo patrón de fallo del catálogo de Causas Raíz. Necesita un modelo de IA asignado a la característica Patrones de Fallos: Causa Raíz.",
+      "backfillLabel": "Analizar resultados existentes",
+      "backfillDescription": "Agrupa cada fallo automatizado ya registrado en este proyecto. Se ejecuta en segundo plano.",
+      "backfillStarted": "Análisis iniciado",
+      "backfillRunning": "Analizando... {processed, plural, one {# fallo agrupado} other {# fallos agrupados}}",
+      "backfillDone": "Análisis completado",
+      "backfillFailed": "Análisis fallido",
+      "backfillQueueUnavailable": "La cola de trabajos en segundo plano no está disponible",
+      "enabledToast": "Patrones de Fallos habilitados",
+      "disabledToast": "Patrones de Fallos deshabilitados",
+      "autoClassifyOnToast": "Sugerencias de causa raíz de IA habilitadas",
+      "autoClassifyOffToast": "Sugerencias de causa raíz de IA deshabilitadas",
+      "autoReleaseLabel": "Liberar cuarentena automáticamente después de",
+      "autoReleasePassesLabel": "aprobaciones consecutivas",
+      "autoReleaseDescription": "Un caso de prueba en cuarentena se libera una vez que ha pasado este número de veces seguidas desde que fue puesto en cuarentena. Los resultados omitidos se ignoran. Una cuarentena marcada \"mantener hasta liberar manualmente\" permanece.",
+      "autoReleaseOnToast": "Liberación automática habilitada",
+      "autoReleaseOffToast": "Liberación automática deshabilitada",
+      "autoReleasePassesSaved": "{count, plural, one {La cuarentena se libera después de # aprobación consecutiva} other {La cuarentena se libera después de # aprobaciones consecutivas}}",
+      "autoReleasePassesInvalid": "Introduce un número de aprobaciones entre 1 y 100",
+      "openTriage": "Abrir Patrones de Fallos"
+    },
+    "quarantine": {
+      "label": "En cuarentena",
+      "title": "Casos de prueba en cuarentena",
+      "hint": "Los fallos de un caso de prueba en cuarentena se dejan fuera de la aprobación/reprobación de ejecución y se cuentan por separado. El caso de prueba sigue ejecutándose y grabando resultados.",
+      "metricHint": "Fallos de casos de prueba en cuarentena en esta ejecución. No cuentan para la tasa de aprobación.",
+      "action": "Poner en cuarentena",
+      "actionAll": "Poner en cuarentena los casos de prueba afectados",
+      "release": "Liberar",
+      "reasonLabel": "Razón",
+      "reasonPlaceholder": "¿Por qué está este caso de prueba en cuarentena? (opcional)",
+      "keepLabel": "Mantener en cuarentena hasta liberar manualmente",
+      "keepHint": "Omite la liberación automática del proyecto después de aprobaciones consecutivas.",
+      "dialogTitle": "{count, plural, one {Poner en cuarentena # caso de prueba} other {Poner en cuarentena # casos de prueba}}",
+      "releaseConfirmTitle": "¿Liberar de la cuarentena?",
+      "releaseConfirmDescription": "Los fallos del caso de prueba cuentan contra la aprobación/reprobación de ejecución de nuevo.",
+      "quarantinedToast": "{count, plural, one {# caso de prueba en cuarentena} other {# casos de prueba en cuarentena}}",
+      "releasedToast": "Caso de prueba liberado de la cuarentena",
+      "failedToast": "No se pudo actualizar la cuarentena",
+      "listButton": "{count, plural, =0 {Casos de prueba en cuarentena} one {# caso de prueba en cuarentena} other {# casos de prueba en cuarentena}}",
+      "columns": {
+        "signature": "Patrón de fallo",
+        "by": "En cuarentena por",
+        "since": "Desde",
+        "releasePolicy": "Liberar"
+      },
+      "releaseAuto": "{count, plural, one {Automático después de # aprobación consecutiva} other {Automático después de # aprobaciones consecutivas}}",
+      "releaseManual": "Manualmente",
+      "empty": "No hay casos de prueba en cuarentena en este proyecto."
+    }
+  },
+  "risk": {
+    "score": "Puntuación de riesgo",
+    "notScored": "No puntuado aún",
+    "breakdown": {
+      "title": "Por qué esta puntuación",
+      "pointsOfWeight": "{points} pts · peso {weight}",
+      "components": {
+        "failureHistory": "Historial de fallos",
+        "flakiness": "Inestabilidad",
+        "staleness": "Antigüedad",
+        "criticality": "Criticidad",
+        "defects": "Defectos vinculados"
+      },
+      "lastExecuted": "Último ejecutado",
+      "neverExecuted": "Nunca ejecutado",
+      "verdicts": "{failed} de {sampled, plural, one {# resultado automatizado reciente} other {# resultados automatizados recientes}} falló",
+      "flips": "{flips, plural, one {# cambio paso/fallo} other {# cambios paso/fallo}}",
+      "requirements": "{count, plural, one {# requisito vinculado} other {# requisitos vinculados}} · prioridad principal {priority}",
+      "suspect": "{count, plural, one {# requisito cambió} other {# requisitos cambiaron}} desde la última ejecución",
+      "defects": "{count, plural, one {# defecto vinculado} other {# defectos vinculados}} · prioridad principal {priority}",
+      "caseCriticality": "Criticidad del caso: {value}",
+      "noPriority": "sin especificar",
+      "quarantined": "En cuarentena"
+    },
+    "settings": {
+      "description": "Cada caso de prueba obtiene una puntuación de riesgo de 0-100 a partir de su historial de fallos, inestabilidad, antigüedad, criticidad de requisitos vinculados y defectos vinculados. Las puntuaciones se actualizan después de que llegan los resultados y en un barrido nocturno, y alimentan la columna Puntuación de riesgo del repositorio y el filtro.",
+      "enableLabel": "Mantener puntuaciones de riesgo",
+      "enableDescription": "Cuando está desactivado, las puntuaciones existentes permanecen pero dejan de actualizarse y el filtro Puntuación de riesgo desaparece.",
+      "enabledToast": "Puntuación de riesgo habilitada",
+      "disabledToast": "Puntuación de riesgo deshabilitada",
+      "weightsTitle": "Pesos de componentes",
+      "weightsDescription": "Cuánto cuenta cada señal, en relación con los demás. La puntuación se normaliza por el total, por lo que los pesos no necesitan sumar 100. Cero elimina un componente.",
+      "components": {
+        "failureHistory": "Historial de fallos",
+        "flakiness": "Inestabilidad",
+        "staleness": "Antigüedad",
+        "criticality": "Criticidad",
+        "defects": "Defectos vinculados"
+      },
+      "weightsSaved": "Pesos guardados",
+      "weightsInvalid": "Los pesos deben ser números entre 0 y {max}",
+      "weightsReset": "Pesos restablecidos a los valores predeterminados",
+      "resetDefaults": "Restablecer a los valores predeterminados",
+      "usingDefaults": "Usando valores predeterminados del sistema",
+      "criticalityFieldTitle": "Campo criticidad del caso",
+      "criticalityFieldDescription": "Un campo de caso desplegable opcional que alimenta la propia criticidad de cada caso. Las opciones cuentan por su orden: la opción superior 100, la inferior 10, espaciadas uniformemente — los nombres nunca importan.",
+      "criticalityFieldNone": "Ninguna",
+      "criticalityFieldSaved": "Campo de criticidad guardado",
+      "criticalityFieldCleared": "Campo de criticidad borrado",
+      "criticalityFieldOptions": "Pesos de opciones, por orden:",
+      "issuePrioritiesTitle": "Prioridades de problemas",
+      "issuePrioritiesDescription": "Los requisitos y defectos llevan una prioridad de su rastreador, como texto libre. Asigne los nombres que su proyecto realmente usa a un peso de 0-100. Los nombres sin asignar cuentan como neutrales (50). Nada está integrado — este es su vocabulario, no el nuestro.",
+      "issuePrioritiesEmpty": "Sin requisitos o defectos vinculados con prioridades aún.",
+      "issuePrioritiesCount": "{count, plural, one {# problema vinculado} other {# problemas vinculados}}",
+      "issuePrioritiesUnused": "no en uso",
+      "issuePrioritiesSaved": "Prioridades de problemas guardadas",
+      "issuePrioritiesInvalid": "Los pesos deben ser números entre 0 y 100",
+      "backfillLabel": "Recalcular todas las puntuaciones",
+      "backfillDescription": "Vuelva a puntuar cada caso de prueba en el proyecto ahora en lugar de esperar al barrido nocturno.",
+      "backfillStarted": "Recalculation iniciado",
+      "backfillRunning": "Recalculando… {processed, plural, one {# caso puntuado} other {# casos puntuados}}",
+      "backfillDone": "Recalculation finalizado",
+      "backfillFailed": "Recalculation falló",
+      "backfillAlreadyRunning": "Una recalculación ya estaba en ejecución — ejecute Recalcular todas las puntuaciones nuevamente una vez que finalice para que cada caso refleje los nuevos pesos",
+      "backfillQueueUnavailable": "La cola de trabajos en segundo plano no está disponible",
+      "openRepository": "Abrir repositorio"
+    }
   }
 }

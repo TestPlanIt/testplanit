@@ -50,6 +50,7 @@ import { isLinkageSuspect } from "~/lib/services/suspectLinkage";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { schema } from "~/zenstack/schema";
 import type { RepositoryCaseSource } from "~/zenstack/models";
+import { apiFetch } from "~/lib/basePath";
 
 interface LinkedRequirementCasesPanelProps {
   projectId: string;
@@ -202,7 +203,7 @@ export function LinkedRequirementCasesPanel({
       const url = `/api/model/RepositoryCases/findMany?q=${encodeURIComponent(
         JSON.stringify(params)
       )}`;
-      const res = await fetch(url);
+      const res = await apiFetch(url);
       const data = await res.json();
       const results = Array.isArray(data.data) ? data.data : [];
 

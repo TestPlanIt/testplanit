@@ -15,20 +15,24 @@ import {
   vi,
 } from "vitest";
 
-// TanStack Virtual takes its first measurement from the scroll element's
-// offsetHeight, and the shared ResizeObserver mock never fires. Without a
-// non-zero height the virtualizer mounts no rows at all in jsdom.
+// TanStack Virtual takes its first measurement of the scroll element from
+// clientHeight (offsetHeight before virtual-core 3.19.6), and the shared
+// ResizeObserver mock never fires. Without a non-zero height the virtualizer
+// mounts no rows at all in jsdom.
 const VIEWPORT_HEIGHT = 400;
 
 beforeAll(() => {
-  Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
-    configurable: true,
-    value: VIEWPORT_HEIGHT,
-  });
-  Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
-    configurable: true,
-    value: 300,
-  });
+  for (const [prop, value] of [
+    ["offsetHeight", VIEWPORT_HEIGHT],
+    ["offsetWidth", 300],
+    ["clientHeight", VIEWPORT_HEIGHT],
+    ["clientWidth", 300],
+  ] as const) {
+    Object.defineProperty(HTMLElement.prototype, prop, {
+      configurable: true,
+      value,
+    });
+  }
 });
 
 // jsdom has no IntersectionObserver, and without one the load-more sentinel

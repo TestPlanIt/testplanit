@@ -199,6 +199,9 @@ test("edit-result enforces the edit window for non-admins; admin bypasses", asyn
   });
 
   const userContext = await browser.newContext();
+  // The project's storageState seeds every new context with the admin session,
+  // and a signed-in browser is sent away from /signin.
+  await userContext.clearCookies();
   try {
     await test.step("Sign in as the non-admin user", async () => {
       const userPage = await userContext.newPage();

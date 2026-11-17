@@ -237,6 +237,116 @@ describe("persistGeneratedTestCases version 1 snapshot", () => {
     return captured;
   }
 
+  describe("a case created from a staged case", () => {
+    const STAGED_AT = new Date("2026-10-30T09:15:00Z");
+
+    function stagedTx(captured: { version?: any; created?: any }) {
+      const tx = stubTx(captured) as ReturnType<typeof stubTx> & {
+        caseDraft: {
+          findFirst: ReturnType<typeof vi.fn>;
+          update: ReturnType<typeof vi.fn>;
+        };
+      };
+      tx.repositoryCases.create = vi.fn(async (args?: any) => {
+        captured.created = args?.data;
+        return { id: 500 };
+      });
+      tx.caseDraft = {
+        findFirst: vi.fn(async () => ({ id: "draft-1", createdAt: STAGED_AT })),
+        update: vi.fn(async () => ({ id: "draft-1" })),
+      };
+      return tx;
+    }
+
+    function stagedInput(stagedDraftId: string) {
+      return {
+        projectId: 1,
+        projectName: "Project",
+        repositoryId: 1,
+        folderId: 1,
+        folderName: "Folder",
+        templateId: 1,
+        templateName: "Template",
+        stateId: 1,
+        stateName: "Draft",
+        maxOrder: 0,
+        autoGenerateTags: false,
+        source: "MANUAL",
+        testCases: [
+          { id: "case-1", name: "Staged case", fieldValues: {}, stagedDraftId },
+        ],
+        fieldMappings: [],
+      } as any;
+    }
+
+    it("records when it was staged and retires the author's staged case in the same transaction", async () => {
+      const captured: { version?: any; created?: any } = {};
+      const tx = stagedTx(captured);
+      auditedTransactionMock.mockImplementationOnce(async (fn: any) => fn(tx));
+
+      const result = await persistGeneratedTestCases(stagedInput("draft-1"), {
+        userId: "u1",
+        userName: "User",
+      });
+
+      expect(result.status).toBe("success");
+      expect(result.results[0]).toMatchObject({
+        status: "success",
+        caseId: 500,
+      });
+      expect(tx.caseDraft.findFirst).toHaveBeenCalledWith({
+        where: { id: "draft-1", userId: "u1", isSaved: true, isDeleted: false },
+        select: { id: true, createdAt: true },
+      });
+      expect(captured.created.stagedAt).toEqual(STAGED_AT);
+      expect(tx.caseDraft.update).toHaveBeenCalledTimes(1);
+      const update = tx.caseDraft.update.mock.calls[0][0];
+      expect(update.where).toEqual({ id: "draft-1" });
+      expect(update.data).toMatchObject({
+        isDeleted: true,
+        deletedById: "u1",
+        caseId: 500,
+      });
+      expect(update.data.deletedAt).toBeInstanceOf(Date);
+    });
+
+    it("fails the case, without creating it, when the staged case is not the author's live one", async () => {
+      const captured: { version?: any; created?: any } = {};
+      const tx = stagedTx(captured);
+      tx.caseDraft.findFirst = vi.fn(async () => null);
+      auditedTransactionMock.mockImplementationOnce(async (fn: any) => fn(tx));
+
+      const result = await persistGeneratedTestCases(stagedInput("gone"), {
+        userId: "u1",
+        userName: "User",
+      });
+
+      expect(result.importedCount).toBe(0);
+      expect(result.results[0]).toMatchObject({ status: "error" });
+      expect(result.results[0].error).toMatch(/no longer exists/);
+      expect(tx.repositoryCases.create).not.toHaveBeenCalled();
+      expect(tx.caseDraft.update).not.toHaveBeenCalled();
+    });
+
+    it("leaves stagedAt unset and touches no staged case for an ordinary create", async () => {
+      const captured: { version?: any; created?: any } = {};
+      const tx = stagedTx(captured);
+      auditedTransactionMock.mockImplementationOnce(async (fn: any) => fn(tx));
+      const input = stagedInput("unused");
+      delete input.testCases[0].stagedDraftId;
+
+      const result = await persistGeneratedTestCases(input, {
+        userId: "u1",
+        userName: "User",
+      });
+
+      expect(result.status).toBe("success");
+      expect(captured.created).not.toHaveProperty("stagedAt");
+      expect(tx.caseDraft.findFirst).not.toHaveBeenCalled();
+      expect(tx.caseDraft.update).not.toHaveBeenCalled();
+    });
+  });
+
   it("snapshots the target folder's real name, not the caller's placeholder", async () => {
     const captured: { version?: any } = {};
     auditedTransactionMock.mockImplementationOnce(async (fn: any) => {

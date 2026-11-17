@@ -8,6 +8,7 @@
       "editAction": "Upravit ({count})",
       "completeAction": "Dokončit ({count})",
       "deleteAction": "Odstranit ({count})",
+      "restoreAction": "Obnovit ({count})",
       "editTitle": "Hromadná úprava ({count})",
       "applyToCount": "Změny se použijí na {count, plural, one {# položku} few {# položky} many {# položek} other {# položky}}.",
       "tagsAdditiveHint": "Vybrané štítky se přidají ke každé položce; existující štítky zůstanou zachovány.",
@@ -126,6 +127,8 @@
       "exportingPdf": "Exportování...",
       "change": "Změnit",
       "viewAll": "Zobrazit vše",
+      "viewSystemOutput": "Zobrazit protokoly",
+      "viewSystemError": "Zobrazit chybu",
       "undo": "Zpět",
       "undoDelete": "Vrátit zpět smazání",
       "automated": {
@@ -338,6 +341,7 @@
       "milestoneTypes": "Typy milníků",
       "milestones": "Milníky",
       "createdAt": "Vytvořeno",
+      "stagedAt": "Připraveno v",
       "completedOn": "Dokončeno",
       "variants": "Varianty",
       "emailVerified": "Email ověřen",
@@ -503,6 +507,7 @@
       "complete": {
         "title": "Dokončit testovací běh",
         "description": "Opravdu chcete tento testovací běh dokončit?",
+        "allCasesCompletedDescription": "Každý testovací případ v tomto běhu má nyní výsledek. Chcete dokončit tento testovací běh?",
         "warning": "Po dokončení nebude možné testovací běh upravovat.",
         "completing": "Dokončování...",
         "apple": {
@@ -577,6 +582,7 @@
       "addFieldTo": "Přidat pole do {section}",
       "selectTemplates": "Vybrat šablony",
       "selectUsers": "Vybrat uživatele",
+      "selectGroups": "Vyberte skupiny",
       "selectOption": "Vyberte možnost",
       "date": "Vyberte datum",
       "selectEncoding": "Vyberte kódování...",
@@ -694,6 +700,8 @@
       "failedToDeleteRepository": "Nepodařilo se smazat úložiště",
       "permissionDenied": "Nemáte oprávnění pro přístup k této stránce.",
       "resultSubmitPermissionDenied": "Nemůžete odesílat výsledky pro tento případ. Požádejte administrátora projektu, aby vám jej přiřadil.",
+      "dependenciesNotPassed": "Blokováno závislostmi",
+      "dependenciesNotPassedDescription": "Tento případ testu nelze spustit, dokud {count, plural, =0 {případy, na kterých závisí, mají} one {případ, na kterém závisí, má} few {případy, na kterých závisí, mají} many {případy, na kterých závisí, mají} other {všech # případů, na kterých závisí, mají}} neprojdou v tomto běhu.",
       "justificationRequired": "Zdůvodnění je povinné",
       "justificationRequiredDescription": "Obrácení dokončeného výsledku na jiný výstup vyžaduje podrobnosti výsledku vysvětlující změnu.",
       "requiredFieldMissing": "Povinnému poli výsledku chybí hodnota.",
@@ -736,7 +744,10 @@
       "adminSamlConfig": "Administrace - konfigurace SAML",
       "apiDocumentation": "API dokumentace",
       "sharedContent": "Sdílený obsah",
-      "impact": "Analýza dopadu"
+      "impact": "Analýza dopadu",
+      "alerts": "Oznámení a upozornění",
+      "triage": "Selhání vzorů",
+      "riskScoring": "Hodnocení rizika"
     },
     "aria": {
       "userMenu": "Uživatelské menu",
@@ -824,6 +835,9 @@
       "viewTestRunDetails": "Zobrazit podrobnosti testovacího běhu",
       "sortByStatus": "Seskupit podle stavu",
       "sortByDate": "Seřadit podle data",
+      "estimateFromCases": "Odhadovaný zbývající čas: {value} (z odhadů zadaných v případech)",
+      "estimateEntered": "Odhad: {value} (zadán v případě)",
+      "forecastFromHistory": "Prognóza: {value} (z minulých časů spuštění)",
       "testRuns": "{count, plural, =0 {Žádné testovací běhy} =1 {1 testovací běh} few {# testovacích běhů} many {# testovacích běhů} other {# testovacích běhů}}",
       "sessions": "{count, plural, =0 {Žádné relace} =1 {1 relace} few {# relace} many {# relace} other {# relací}}",
       "issues": "{count, plural, =0 {Žádné problémy} =1 {1 problém} few {# problémy} many {# problému} other {# problémů}}",
@@ -868,8 +882,7 @@
     "for": "pro",
     "and": "a",
     "branding": {
-      "logoAlt": "Logo TestPlanIt",
-      "tagline": "Otestujte úplně vše"
+      "logoAlt": "Logo TestPlanIt"
     },
     "table": {
       "columns": {
@@ -1239,6 +1252,7 @@
       "accessDenied": "Přístup odepřen. Váš účet může být neaktivní nebo nemáte oprávnění se přihlásit.",
       "configuration": "Došlo k problému s konfigurací serveru.",
       "verification": "Tento přihlašovací odkaz vypršel nebo již byl použit. Magické odkazy lze použít pouze jednou — pro přihlášení si prosím vyžádejte nový.",
+      "sessionEnded": "Vaše relace vypršela. Prosím, přihlaste se znovu.",
       "invalid2FACode": "Neplatný ověřovací kód. Zkuste to prosím znovu.",
       "twoFactorTokenRequired": "Token je povinný",
       "verificationCodeRequired": "Ověřovací kód je povinný"
@@ -1575,6 +1589,9 @@
           },
           "mantisbt": {
             "description": "Připojte se k vlastní instanci MantisBT pro sledování problémů."
+          },
+          "clickup": {
+            "description": "Připojte se ke ClickUp pro sledování úkolů a správu projektů."
           }
         }
       },
@@ -1657,7 +1674,8 @@
           "scimGroupMemberAdded": "Členové přidáni",
           "scimGroupMemberRemoved": "Členové odebráni",
           "scimGroupDeleted": "Skupina odstraněna",
-          "scimGroupMemberAddedSummary": "Členové přidáni (souhrn hromadné synchronizace)"
+          "scimGroupMemberAddedSummary": "Členové přidáni (souhrn hromadné synchronizace)",
+          "triggered": "Spuštěno"
         },
         "iterationResultHelp": "Spustí se při každém zaznamenání výsledku iterace — úspěch, neúspěch, přeskočení nebo jiný stav. Používejte střídmě u dlouhých automatizačních běhů (jedna událost na iteraci).",
         "events": {
@@ -1732,13 +1750,13 @@
         "inboundChooserGitea": "Gitea",
         "inboundJiraTitle": "Příchozí webhook Jira",
         "inboundGithubTitle": "Příchozí webhook GitHub",
-        "inboundGithubScopeHint": "Události GitHub <code>issues</code> aktualizují propojené problémy TestPlanIt. Události pull request a komentáře k problémům jsou přijímány, ale zatím problémy neaktualizují.",
+        "inboundGithubScopeHint": "Události GitHub <code>issues</code> aktualizují propojené problémy TestPlanIt, včetně jejich uzavření jako neplánovaných, a události <code>issue_comment</code> je osvěžují. Události pull requestu jsou přijímány, ale neaktualizují problémy.",
         "inboundGitlabTitle": "Příchozí webhook GitLab",
         "inboundGitlabScopeHint": "Události GitLab <code>Issue Hook</code> aktualizují propojené problémy TestPlanIt. Ostatní typy událostí jsou přijímány, ale problémy neaktualizují.",
         "inboundGiteaTitle": "Příchozí webhook Gitea",
         "inboundGiteaScopeHint": "Události Gitea <code>issues</code> aktualizují propojené problémy TestPlanIt. Ostatní typy událostí jsou přijímány, ale problémy neaktualizují.",
         "inboundAdoTitle": "Příchozí webhook Azure DevOps",
-        "inboundAdoScopeHint": "Události Azure DevOps <code>workitem.updated</code> aktualizují propojené problémy TestPlanIt. Ostatní události jsou přijímány, ale problémy neaktualizují.",
+        "inboundAdoScopeHint": "Azure DevOps <code>workitem.created</code> a <code>workitem.updated</code> události aktualizují propojené problémy TestPlanIt. Ostatní události jsou přijímány, ale neaktualizují problémy.",
         "inboundAdoUsername": "Uživatelské jméno",
         "inboundAdoUsernamePlaceholder": "service-account",
         "inboundAdoUsernameHelp": "Nakonfigurováno na straně Azure DevOps Service Hook. TestPlanIt jej ověřuje pomocí HTTP Basic Auth.",
@@ -1752,10 +1770,10 @@
         "setupStepsGithubStep1": "Ve svém GitHub úložišti přejděte do Settings → Webhooks → Add webhook.",
         "setupStepsGithubStep2": "Vložte níže uvedenou URL do pole Payload URL. Nastavte Content type na application/json.",
         "setupStepsGithubStep3": "Vložte níže uvedený tajný klíč do pole Secret.",
-        "setupStepsGithubStep4": "Zvolte „Let me select individual events“ a zaškrtněte „Issues“.",
+        "setupStepsGithubStep4": "Zvolte \"Nechat si vybrat jednotlivé události\" a zaškrtněte \"Issues\" a \"Issue comments\".",
         "setupStepsGithubStep5": "Klikněte na „Add webhook“. Pomocí „Odeslat testovací webhook“ níže ověřte pipeline.",
         "setupStepsAdoStep1": "Ve svém projektu Azure DevOps přejděte do Project settings → Service hooks → Create subscription.",
-        "setupStepsAdoStep2": "Zvolte „Web Hooks“ jako službu. Nastavte Trigger na „Work item updated“.",
+        "setupStepsAdoStep2": "Zvolte \"Web Hooks\" jako službu. Nastavte Trigger na \"Work item created\", poté opakujte tyto kroky pro druhé předplatné s \"Work item updated\".",
         "setupStepsAdoStep3": "Nastavte Resource details to send = All, aby byl zahrnut System.State.",
         "setupStepsAdoStep4": "Vložte níže uvedenou URL do pole URL. Nastavte Basic authentication uživatelské jméno a heslo na hodnoty, které jste zadali výše.",
         "setupStepsAdoStep5": "Uložte odběr. Pomocí „Odeslat testovací webhook“ níže ověřte pipeline.",
@@ -1847,6 +1865,53 @@
         "setupStepsMantisbtStep2": "V konfiguraci pluginu vyberte události vytvoření problému a aktualizace problému.",
         "setupStepsMantisbtStep3": "Vložte výše uvedenou URL adresu jako cíl webhooku a uložte.",
         "setupStepsMantisbtStep4": "Vytvořte nebo aktualizujte problém v MantisBT; stav propojeného problému se sem synchronizuje.",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "Příchozí webhook ClickUp",
+        "inboundClickupScopeHint": "ClickUp <code>taskCreated</code> a <code>taskStatusUpdated</code> události aktualizují propojené problémy TestPlanIt. Ostatní události úloh jsou přijímány, ale neaktualizují problémy.",
+        "inboundClickupRegisterHint": "ClickUp nemá stránku nastavení webhooků: webhooky se vytvářejí prostřednictvím jeho API a ClickUp si volí podpisový tajemství. Ponechte tajemství prázdné a TestPlanIt zaregistruje tento webhook v ClickUp pro propojený seznam pomocí vaší autorizace ClickUp.",
+        "inboundClickupSecret": "Tajemství webhooku (volitelné)",
+        "inboundClickupSecretHelp": "Potřebné pouze v případě, že jste si webhook vytvořili sami pomocí ClickUp API Create Webhook: vložte tajemství vrácené ClickUp. Uloženo šifrované v klidu.",
+        "setupStepsClickupStep1": "Pokud jste nechali tajemství prázdné, TestPlanIt již zaregistroval tento webhook s ClickUp pro propojený seznam — v ClickUp není co konfigurovat.",
+        "setupStepsClickupStep2": "Pokud jste si webhook zaregistrovali sami prostřednictvím ClickUp API Create Webhook, ujistěte se, že jeho koncový bod je následující adresa URL a přihlaste se k události taskStatusUpdated.",
+        "setupStepsClickupStep3": "Použijte níže \"Poslat testovací webhook\" k ověření kanálu. Rotace tajemství zaregistruje nový webhook v ClickUp.",
+        "actions": {
+          "description": "Co TestPlanIt dělá, když tento webhook obdrží událost. Akce se provádějí v uvedeném pořadí.",
+          "empty": "Žádné akce. Události jsou zaznamenávány, ale nic se neděje.",
+          "addTitle": "Přidat akci",
+          "editTitle": "Upravit akci",
+          "dialogDescription": "Zvolte událost, která spustí tuto akci, a co dělá.",
+          "trigger": {
+            "ISSUE_EVENT": "Jakákoli událost problému",
+            "ISSUE_STATUS_ENTERED": "Změny stavu problému"
+          },
+          "triggerHelp": {
+            "ISSUE_EVENT": "Jakákoli událost, kterou tracker pošle o problému.",
+            "ISSUE_CREATED": "Problém, který TestPlanIt ještě neviděl.",
+            "ISSUE_STATUS_ENTERED": "Problém se přesune do jednoho ze zvolených stavů."
+          },
+          "outcome": {
+            "cases_drafted": "Testovací případy navrženy",
+            "draft_queued": "Návrh testovacích případů",
+            "has_cases": "Problém již má testovací případy",
+            "no_llm": "Žádný aktivní model AI",
+            "no_template": "Žádná šablona",
+            "no_target": "Žádné úložiště nebo výchozí stav",
+            "draft_failed": "Návrh selhal",
+            "already_composed": "Běh už vytvořen pro tuto změnu",
+            "execute_failed": "Spuštění nebylo požadováno"
+          },
+          "dragToReorder": "Přetažením změníte pořadí",
+          "requirementsOnly": "Pouze požadavky",
+          "requirementsOnlyHelp": "Pouze problémy, které projekt klasifikuje jako požadavky.",
+          "includeChildIssues": "Zahrnout podřízené problémy",
+          "includeChildIssuesHelp": "Vezměte si také testovací případy propojené s podřízenými problémy.",
+          "caseFilter": "Filtry testovacích případů",
+          "caseFilterHelp": "Do spuštění jdou pouze testovací případy odpovídající každému filtru. Nechte prázdné, aby se vzaly všechny testovací případy, které akce vybere.",
+          "notifyHelp": "Kdo je informován, když jsou návrhy připraveny ke kontrole. Preference oznámení každé osoby se stále uplatňují.",
+          "draftFolderNote": "Testovací případy automaticky navržené webhookem {webhook}.",
+          "draftFolderNoteCases": "Navrženo uživatelem System; každý případ je propojen s problémem, ze kterého byl navržen.",
+          "viewFolder": "Zobrazit složku"
+        },
         "codeRepos": {
           "empty": "Pro analýzu dopadu není připojeno žádné úložiště. Nejprve <link>připojte nějaký</link>.",
           "unsupported": "Úložiště {provider} nemohou odesílat webhooky do TestPlanIt.",
@@ -1885,7 +1950,8 @@
           "sourceRepositoryHelp": "Spusťte analýzu dopadu a sestavte testovací běh, když je otevřen pull request nebo odeslány commity.",
           "noRepositoryAvailable": "Každé připojené úložiště již má webhook nebo nemůže webhooky odesílat.",
           "repositoryPlaceholder": "Vyberte úložiště"
-        }
+        },
+        "outboundSubsAlerts": "Upozornění"
       },
       "aiModels": {
         "description": "Nakonfigurujte AI modely pro inteligentní generování a analýzu testovacích případů",
@@ -2131,6 +2197,16 @@
       },
       "advanced": {
         "description": "Přepínače pro jednotlivé projekty pro volitelné funkce. Nové přepínače se zde objeví, jakmile budou zavedeny.",
+        "sections": {
+          "general": "Obecné",
+          "generalDescription": "Identita projektu a výchozí nastavení: kód používaný v klíčích záznamů, šablona, kterou nové testovací případy a relace používají, a zda má projekt oblast Požadavky.",
+          "reviews": "Recenze",
+          "reviewsDescription": "Jak se Přezkum a schválení uplatňují v tomto projektu: zda jsou přechody vyžadující přezkum bráněny schváleným požadavkem a jak dlouho má recenzent na vrácení rozhodnutí.",
+          "runs": "Testovací běhy",
+          "runsDescription": "Co může být součástí testovacího běhu a jak jsou běhy udržovány v pořádku: vyloučení konceptů případů, zamčení složení běhu po zahájení provádění, bránění případům jejich závislostmi a zavírání automatizovaných běhů, které přestaly hlásit.",
+          "results": "Výsledky",
+          "resultsDescription": "Zásady pro zaznamenané výsledky: zdůvodnění při změně výsledku, propojená úloha při selháních a jak dlouho zůstane výsledek upravitelný na místě."
+        },
         "recordKey": {
           "label": "Kód projektu",
           "description": "Krátký kód použitý v kosmetických klíčích záznamů, jako je {example}. 2–10 velkých písmen, žádné číslice. Ponechte prázdné pro zobrazení prostých číselných ID.",
@@ -2141,6 +2217,11 @@
           "taken": "Tento kód již používá jiný projekt. Vyberte jiný.",
           "savedToast": "Kód projektu uložen.",
           "saveError": "Nepodařilo se uložit kód projektu. Možná jej již používá jiný projekt."
+        },
+        "defaultTemplate": {
+          "description": "Nové testovací případy a relace v tomto projektu začínají touto šablonou.",
+          "unavailableTitle": "Výchozí šablona není dostupná",
+          "unavailableDescription": "{name} je zakázán, odstraněn nebo již není přiřazen k tomuto projektu, takže nové testovací případy a relace používají systémovou výchozí šablonu. Vyberte jinou výchozí šablonu nebo obnovte tuto."
         },
         "reviewWorkflow": {
           "label": "Povolit workflow revize",
@@ -2189,6 +2270,13 @@
           "disabledToast": "Testovací běhy již nebudou automaticky uzamykat svou kompozici",
           "saveError": "Nepodařilo se aktualizovat nastavení automatického uzamčení kompozice"
         },
+        "caseDependencies": {
+          "label": "Vynucovat závislosti testovacích případů v testovacích běhech",
+          "description": "Pokud je povoleno, je testovací případ v běhu blokován, dokud každý případ, na kterém závisí (odkaz \"Závisí na\"), projde ve stejném běhu. Blokované případy jsou v běhu označeny a výsledky pro ně jsou zamítnuty. Když projde poslední závislost, je přiřaditeli případu oznámeno, že je připraven. Závislosti, které nejsou v běhu, neblokují.",
+          "enabledToast": "Závislosti testovacích případů budou vynucovány v testovacích běhech",
+          "disabledToast": "Závislosti testovacích případů již nebudou vynucovány",
+          "saveError": "Nepodařilo se aktualizovat nastavení vynucování závislostí"
+        },
         "editWindow": {
           "label": "Okno úprav výsledku",
           "description": "Jak dlouho po zaznamenání výsledku lze tento výsledek stále upravovat na místě. Po uzavření okna vyžadují opravy nový pokus. Systémoví administrátoři mohou vždy upravovat.",
@@ -2223,6 +2311,23 @@
           "save": "Uložit nastavení úklidu",
           "savedToast": "Úklid opuštěné automatizace byl pro tento projekt aktualizován",
           "saveError": "Nepodařilo se aktualizovat úklid opuštěné automatizace"
+        },
+        "revertWindow": {
+          "label": "Vrácení rozhodnutí při kontrole",
+          "description": "Jak dlouho má recenzent čas vrátit své vlastní rozhodnutí v tomto projektu. Správci systému nejsou tímto limitem vázáni.",
+          "systemLockedTitle": "Vrácení je zakázáno v celém systému",
+          "systemLockedDescription": "Správce vypnul vracení rozhodnutí při kontrole pro všechny projekty. Toto nastavení zde nelze změnit.",
+          "modeInheritMinutes": "Zdědit systémový výchozí ({minutes, plural, one {# minuta} few {# minuty} many {# minut} other {# minut}})",
+          "modeDisable": "Zakázat vracení pro tento projekt",
+          "modeCustom": "Vlastní období",
+          "minutesBefore": "Omezení",
+          "minutesUnit": "{minutes, plural, one {minuta} few {minuty} many {minut} other {minut}}",
+          "minutesAriaLabel": "Počet minut, kdy zůstane rozhodnutí vrátitelné",
+          "systemMaxHint": "Systémové maximum: {minutes} minut",
+          "invalidMinutes": "Zadejte počet minut větší než nula",
+          "save": "Uložit limit vracení",
+          "savedToast": "Limit vracení uložen.",
+          "saveError": "Nepodařilo se uložit limit vracení. Zkuste to později."
         }
       },
       "impact": {
@@ -2527,17 +2632,17 @@
       "overdue": "Milník „{name}“ měl termín splnění {dueDate}"
     },
     "import": {
-      "importTitle": "Import z Jira",
-      "importDescription": "Vyberte Jira Fix Versions a sprinty pro synchronizaci jako milníky TestPlanIt.",
+      "importTitle": "Importovat z {provider}",
+      "importDescription": "Vyberte milníky {provider} pro synchronizaci jako milníky TestPlanIt.",
       "showClosed": "Zobrazit uzavřené",
       "alreadyLinked": "Již propojeno",
       "selectedCount": "{count, plural, one {# vybráno} few {# vybráno} many {# vybráno} other {# vybráno}}",
       "confirmSelection": "Importovat vybrané",
       "confirmSelectionCount": "{count, plural, one {Importovat # milník} few {Importovat # milníky} many {Importovat # milníku} other {Importovat # milníků}}",
       "empty": "Nenalezeny žádné milníky",
-      "previewFailed": "Nepodařilo se načíst milníky z Jira",
+      "previewFailed": "Nepodařilo se načíst milníky z {provider}",
       "importFailed": "Nepodařilo se importovat vybrané milníky",
-      "requestTimedOut": "Jira odpovídala příliš dlouho a požadavek vypršel. To obvykle znamená, že propojené projekty Jira mají velký počet verzí nebo nástěnek. Zkuste to znovu a ponechte volbu „Zobrazit uzavřené“ vypnutou, abyste zúžili požadavek.",
+      "requestTimedOut": "Služba {provider} příliš dlouho reaguje a požadavek vypršel. Obvykle to znamená, že propojené projekty {provider} mají velký počet verzí nebo desek. Zkuste to znovu a nechte \"Zobrazit uzavřené\" vypnuté, abyste zúžili požadavek.",
       "serviceUnavailable": "Server je dočasně nedostupný. Zkuste to prosím za chvíli znovu.",
       "unexpectedResponse": "Neočekávaná odpověď ze serveru (HTTP {status}). Zkuste to prosím znovu a pokud problém přetrvává, kontaktujte svého administrátora.",
       "importStarted": "Import zahájen",
@@ -2545,15 +2650,16 @@
       "kindSprint": "Sprint",
       "searchPlaceholder": "Hledat vydání a sprinty...",
       "emptyFiltered": "Žádné milníky neodpovídají vašim filtrům.",
-      "partialWarning": "Některé projekty Jira se nepodařilo načíst:",
-      "importing": "Importuje se {count, plural, one {# milník} few {# milníky} many {# milníku} other {# milníků}} z Jira…",
-      "completed": "Importováno {count, plural, one {# milník} few {# milníky} many {# milníku} other {# milníků}} z Jira",
+      "partialWarning": "Některé projekty {provider} se nepodařilo načíst:",
+      "importing": "Importuji {count, plural, one {# milník} few {# milníky} many {# milníků} other {# milníků}} z {provider}…",
+      "completed": "Importováno {count, plural, one {# milník} few {# milníky} many {# milníků} other {# milníků}} z {provider}",
       "stillRunning": "Import stále běží na pozadí — milníky se zobrazí po jeho dokončení."
     },
     "sync": {
-      "managedByJira": "Spravováno prostřednictvím Jira",
+      "managedByJira": "Spravováno poskytovatelem {provider}",
       "lastSynced": "Naposledy synchronizováno {time}",
       "providerJira": "Jira",
+      "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Synchronizovat nyní",
       "unlinkMenuItem": "Zrušit propojení s {provider}",
@@ -2853,7 +2959,9 @@
         "detailsDisplayMode": {
           "docked": "Ukotvený panel",
           "newWindow": "Nové okno"
-        }
+        },
+        "notificationsLabel": "Oznámení",
+        "notificationsMoved": "Spravovat oznámení a upozornění"
       },
       "assignments": {
         "title": "Přiřazení",
@@ -2886,11 +2994,109 @@
           "label": "Režim oznámení",
           "useGlobal": "Použít globální nastavení"
         },
-        "options": {
-          "title": "Další možnosti",
-          "email": {
-            "label": "E-mailová oznámení",
-            "description": "Přijímat oznámení prostřednictvím e-mailu"
+        "typeSection": {
+          "title": "Co mi mám oznámit",
+          "description": "Všechny typy oznámení jsou ve výchozím nastavení zapnuty. Vypněte ty, které nechcete. Režim oznámení výše stále rozhoduje, jak vás dosáhneme.",
+          "modeNoneNote": "Nic se nedoručuje, pokud je váš režim oznámení Žádný. Vaše volby zde se použijí, jakmile zvolíte jiný režim.",
+          "locked": "Vždy zapnuto",
+          "resetToDefaults": "Obnovit výchozí nastavení",
+          "adminOnly": "Odesláno správcům"
+        },
+        "groups": {
+          "assignments": "Přiřazení",
+          "comments": "Komentáře",
+          "reviews": "Recenze",
+          "runsAndMilestones": "Běhy a milníky",
+          "sharing": "Sdílení",
+          "aiAndJobs": "AI a úlohy",
+          "integrations": "Integrace",
+          "system": "Systém",
+          "administration": "Správa"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "Práce mi přiřazená",
+            "description": "Případ testovacího běhu vám je přiřazen jednotlivě nebo hromadně."
+          },
+          "SESSION_ASSIGNED": {
+            "label": "Relace mi přiřazená",
+            "description": "Relace je vytvořena s vámi jako jejím příjemcem nebo vám je znovu přiřazena."
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "Přiřazený případ odblokován",
+            "description": "Testovací případ vám přiřazený v běhu se stane spustitelným, protože případy, na kterých závisí, prošly."
+          },
+          "COMMENT_MENTION": {
+            "label": "Zmínky v komentářích",
+            "description": "Někdo vás @-zmíní v komentáři na případu, běhu, relaci, milníku nebo recenzi."
+          },
+          "REVIEW_REQUESTED": {
+            "label": "Recenze požadována",
+            "description": "Recenze je od vás požadována nebo z role, kterou zastáváte."
+          },
+          "REVIEW_APPROVED": {
+            "label": "Recenze schválena",
+            "description": "Recenzent schválí váš požadavek."
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "Požadovány změny",
+            "description": "Recenzent požaduje změny vašeho požadavku."
+          },
+          "REVIEW_REJECTED": {
+            "label": "Recenze odmítnuta",
+            "description": "Recenzent odmítne váš požadavek."
+          },
+          "REVIEW_CANCELLED": {
+            "label": "Recenze zrušena",
+            "description": "Požadavek, který jste měli zkontrolovat, je zrušen, nebo je položka pod přezkumem odstraněna."
+          },
+          "REVIEW_REMINDER": {
+            "label": "Připomenutí recenzí",
+            "description": "Recenze, kterou dlužíte, je starší než prahová hodnota připomenutí, nebo vás žadatel upozorní."
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "Testovací běh připraven k dokončení",
+            "description": "Každý případ v běhu, který můžete dokončit, má výsledek."
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "Připomenutí splatnosti milníků",
+            "description": "Milník, na kterém se podílíte, se blíží nebo je po splatnosti."
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "Odkaz pro sdílení zobrazen",
+            "description": "Někdo otevře odkaz na sdílení, který jste vytvořili s povoleným oznámením při zobrazení."
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "Kroky odvozené z AI",
+            "description": "Úloha odvozování kroků AI, kterou jste spustili, napsala kroky."
+          },
+          "CASES_DRAFTED": {
+            "label": "AI-navržené testovací případy",
+            "description": "Akce webhooku navrhla testovací případy pro problém a jmenovala vás jako kontrolora."
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "Integrace vyžaduje nové ověření",
+            "description": "Vaše připojení k integraci vypršelo nebo bylo odvoláno a musí být znovu připojeno."
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "Oznámení správce",
+            "description": "Správce odešle systémové oznámení každému uživateli."
+          },
+          "WHATS_NEW": {
+            "label": "Co je nového po upgradu",
+            "description": "Souhrn nových funkcí při první návštěvě po upgradu TestPlanIt."
+          },
+          "USER_REGISTERED": {
+            "label": "Nové registrace uživatelů",
+            "description": "Nový uživatel se zaregistruje pomocí formuláře, SSO nebo SAML."
+          },
+          "ALERT_TRIGGERED": {
+            "label": "Upozornění",
+            "description": "Upozornění, na které jste se přihlásili, se spustí, protože testovací metrika překročila linii, kterou sleduje."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "Rozhodnutí při kontrole vráceno",
+            "description": "Recenzent vrátí rozhodnutí týkající se požadavku, který jste vytvořili, a vrátí jej do jejich fronty."
           }
         },
         "success": {
@@ -2913,7 +3119,7 @@
           "newPasswordTooShort": "Nové heslo nesplňuje bezpečnostní požadavky."
         },
         "success": {
-          "passwordChanged": "Heslo bylo úspěšně změněno."
+          "passwordChanged": "Heslo bylo úspěšně změněno. Byli jste odhlášeni na všech ostatních zařízeních a prohlížečích."
         }
       },
       "auditLog": {
@@ -2928,6 +3134,27 @@
         "allTypes": "Všechny typy",
         "noMatchingEntries": "Žádné záznamy neodpovídají vybraným filtrům.",
         "showing": "{loaded} z {total} záznamů"
+      },
+      "trash": {
+        "description": "Odstraněné položky, které lze stále obnovit odsud.",
+        "empty": "Váš koš je prázdný. Odstraněné položky lze obnovit zde po dobu {days, plural, one {# dne} few {# dnů} many {# dnů} other {# dnů}}.",
+        "disabled": "Samoobslužné obnovení je vypnuté. Požádejte správce, aby obnovil odstraněné položky z Správce > Koš.",
+        "timeLeftColumn": "Zbývající čas",
+        "timeLeft": "{days, plural, =0 {Méně než den} one {# den} few {# dny} many {# dne} other {# dní}}",
+        "confirmDescription": "\"{name}\" bude obnovena do projektu {project} spolu se vším, co bylo odstraněno s ní.",
+        "bulkConfirmDescription": "Každá z {count} vybraných položek bude obnovena do svého projektu spolu se vším, co bylo odstraněno s ní.",
+        "restored": "\"{name}\" obnovena.",
+        "restoreFailed": "Nelze obnovit \"{name}\": {message}",
+        "bulkResult": "{restored, plural, one {# položka} few {# položky} many {# položek} other {# položek}} obnovena, {failed} selhalo.",
+        "failure": {
+          "parent_deleted": "její složka nebo nadřazená položka je stále odstraněna — obnovte ji nejdříve",
+          "name_conflict": "položka se stejným názvem již existuje",
+          "expired": "okno obnovení vypršelo",
+          "forbidden": "již nemáte oprávnění v tomto projektu",
+          "disabled": "samoobslužné obnovení je vypnuté",
+          "not_owner": "položku může obnovit pouze osoba, která ji smazala",
+          "not_found": "již se nenachází v koši"
+        }
       },
       "myComments": {
         "title": "Moje komentáře",
@@ -3015,7 +3242,8 @@
       "orange": "Oranžový",
       "accessible": "Přístupné",
       "accessibledark": "Přístupné (tmavé)"
-    }
+    },
+    "myAlerts": "Oznámení a upozornění"
   },
   "repository": {
     "version": {
@@ -3088,7 +3316,12 @@
       "noStepsInSelectedGroup": "Vybraná skupina neobsahuje žádné kroky.",
       "sharedGroupSuffix": "(Sdílené kroky)",
       "unnamedSharedGroup": "Nepojmenované sdílené kroky",
-      "noStepsInSelectedSharedGroup": "Vybraná sdílená skupina neobsahuje žádné kroky."
+      "noStepsInSelectedSharedGroup": "Vybraná sdílená skupina neobsahuje žádné kroky.",
+      "layout": {
+        "label": "Rozvržení kroku",
+        "stacked": "Naskládáno",
+        "sideBySide": "Vedle sebe"
+      }
     },
     "testCase": {
       "toggleAutomated": "Přepnout automatizované testování",
@@ -3137,6 +3370,13 @@
       "modifierHintMac": "Podržte ⇧ pro přesun nebo ⌥ pro kopírování při přetahování a přeskočte tuto nabídku.",
       "modifierHintWin": "Podržte Shift pro přesun nebo Ctrl pro kopírování při přetahování a přeskočte tuto nabídku.",
       "dropZoneReorder": "Přetáhněte pro přeuspořádání",
+      "dropZoneReorderBlockedSort": "Odeberte řazení, chcete-li změnit pořadí případů v rámci této složky",
+      "dropZoneReorderBlockedSortMac": "Odeberte řazení pro změnu pořadí — přidržte ⌥ pro zkopírování do této složky",
+      "dropZoneReorderBlockedSortWin": "Odeberte řazení pro změnu pořadí — přidržte Ctrl pro zkopírování do této složky",
+      "dropZoneReorderBlockedSearch": "Vymažte vyhledávání, chcete-li změnit pořadí případů v rámci této složky",
+      "dropZoneReorderBlockedSearchMac": "Vymažte vyhledávání pro změnu pořadí — přidržte ⌥ pro zkopírování do této složky",
+      "dropZoneReorderBlockedSearchWin": "Vymažte vyhledávání pro změnu pořadí — přidržte Ctrl pro zkopírování do této složky",
+      "dropZoneCopyHere": "Přetáhněte pro zkopírování do této složky",
       "dropZoneFolder": "Přetáhněte na složku pro vnoření, nebo mezi složky pro přeuspořádání",
       "dropZoneTreeMac": "Přetáhněte na složku — podržte ⇧ pro přesunutí, ⌥ pro kopírování",
       "dropZoneTreeWin": "Přetáhněte na složku — podržte Shift pro přesunutí, Ctrl pro kopírování",
@@ -3493,7 +3733,7 @@
     },
     "duplicates": {
       "findDuplicates": "Najít duplicity",
-      "viewResults": "Zobrazit {count, plural, one {# výsledek} few {# výsledky} other {# výsledků}}",
+      "viewDuplicates": "Zobrazit duplikáty",
       "retryScan": "Zopakovat kontrolu",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Vylepšování výsledků pomocí AI...",
@@ -3577,8 +3817,8 @@
         "description": "Vyberte, zda chcete generovat testovací případy z problému nebo z dokumentu s požadavky.",
         "folderContextTip": "Existující testovací případy ze složky \"{folderName}\" a jejích nadřazených/podřazených složek budou použity jako kontext, aby se zabránilo duplicitám. Před pokračováním se ujistěte, že jste vybrali správnou složku.",
         "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
-        "folderContextEmptyTitle": "Žádné existující testovací případy k použití jako kontext",
-        "folderContextEmpty": "Složka \"{folderName}\" a její nadřazené/podřazené složky neobsahují testovací případy, takže AI nemá příklady stylu vašeho projektu nebo stávajícího pokrytí. Pro lepší výsledky spusťte generátor ze složky, do které tyto testovací případy patří, vedle souvisejících případů.",
+        "folderContextEmptyTitle": "V této složce zatím nejsou žádné testovací případy",
+        "folderContextEmpty": "\"{folderName}\" a její nadřazené/podřízené složky nemají žádné testovací případy. AI bude hledat související testovací případy jinde v tomto projektu, aby se naučila váš styl a vyhnula se duplikátům. Pro nejlepší výsledky spusťte generátor ze složky, do které tyto testovací případy patří.",
         "currentFolder": "aktuální složka",
         "fromIssue": "Z problému",
         "fromDocument": "Z dokumentu",
@@ -3665,6 +3905,8 @@
       "generatingLegacy": "Generování testovacích případů pomocí AI...",
       "expandProgress": "{done, number} z {total, number} vygenerováno",
       "import": "{count, plural, =0 {Importovat testovací případy} =1 {Importovat 1 testovací případ} other {Importovat # testovacích případů}}",
+      "stage": "{count, plural, =0 {Testovací případy v přípravě} =1 {Testovací případ v přípravě 1} other {Testovací případy v přípravě #}}",
+      "stageDescription": "Testovací případy v přípravě jsou soukromé. Zkontrolujte je v sekci Moje případy v přípravě a vytvořte je tam. Do úložiště se přidají teprve poté, když to uděláte.",
       "importing": "{count, plural, =0 {Importování testovacích případů...} =1 {Importování 1 testovacího případu...} other {Importování # testovacích případů...}}",
       "externalSystem": "Externí systém",
       "autoGenerateTags": "Automaticky generovat štítky pro testovací případy",
@@ -3678,7 +3920,8 @@
       "datasetMoreRows": "...a {count, plural, one {# další řádek} few {# další řádky} many {# dalšího řádku} other {# dalších řádků}}",
       "parameterChipSensitive": "citlivé",
       "success": {
-        "imported": "{count, plural, =1 {Úspěšně importován 1 testovací případ} other {Úspěšně importováno # testovacích případů}}"
+        "imported": "{count, plural, =1 {Úspěšně importován 1 testovací případ} other {Úspěšně importováno # testovacích případů}}",
+        "staged": "{count, plural, =1 {V přípravě 1 testovací případ} other {V přípravě # testovacích případů}}"
       },
       "importData": {
         "issueDescription": "Externí problém propojený z generování testovacích případů",
@@ -3687,6 +3930,7 @@
       "errors": {
         "generateFailed": "Generování testovacích případů se nezdařilo. Zkuste to prosím znovu.",
         "importFailed": "Import testovacích případů se nezdařil. Zkuste to prosím znovu.",
+        "stageFailed": "Nepodařilo se připravit testovací případy. Zkuste to prosím znovu.",
         "noTestCasesGenerated": "Nebyly vygenerovány žádné testovací případy. Zkuste to prosím znovu s jinými vstupy.",
         "jobNoLongerAvailable": "Toto generování již není k dispozici. Spusťte nové z průvodce Generovat testovací případy.",
         "noAiModel": "Pro tento projekt není nakonfigurován žádný AI model. Nakonfigurujte prosím AI model v nastavení projektu.",
@@ -3695,6 +3939,7 @@
         "noTemplateSelected": "Vyberte prosím šablonu pro testovací případy.",
         "noFieldsSelected": "Vyberte prosím alespoň jedno pole, pro které se má obsah generovat.",
         "noTestCasesSelectedForImport": "Vyberte prosím alespoň jeden testovací případ k importu.",
+        "noTestCasesSelectedForStage": "Vyberte prosím alespoň jeden testovací případ k přípravě.",
         "templateRequired": "Výběr šablony je povinný. Vraťte se prosím zpět a vyberte šablonu.",
         "repositoryNotFound": "Úložiště projektu nebylo nalezeno. Kontaktujte prosím svého správce.",
         "workflowNotConfigured": "Pracovní postup projektu není nakonfigurován. Zkontrolujte prosím nastavení projektu.",
@@ -3776,7 +4021,9 @@
         "description": "{count, plural, =1 {Máte 1 testovací případ s neuloženými úpravami.} other {Máte # testovacích případů s neuloženými úpravami.}}",
         "warning": "Pokud budete pokračovat bez uložení, vaše změny budou ztraceny.",
         "saveAllAndImport": "Uložit vše a importovat",
-        "discardAndImport": "Zahodit úpravy a importovat"
+        "discardAndImport": "Zahodit úpravy a importovat",
+        "saveAllAndStage": "Uložit vše a připravit",
+        "discardAndStage": "Zahodit změny a připravit"
       },
       "linkedIssuesDroppedTitle": "Některé propojené problémy nebyly zahrnuty",
       "linkedIssuesDropped": "{count, plural, =1 {# propojený problém byl vynechán} other {# propojených problémů bylo vynecháno}} kvůli limitu tokenů: {keys}.",
@@ -3791,6 +4038,38 @@
         "skippedSummary": "{count, plural, =1 {# obrázek přeskočen} few {# obrázky přeskočeny} many {# obrázku přeskočeno} other {# obrázků přeskočeno}} (příliš velký nebo nepodporovaný): {names}",
         "includeUrlScreenshots": "Zahrnout snímky obrazovky stránky, pokud jsou k dispozici"
       }
+    },
+    "savedDrafts": {
+      "title": "Moje připravené případy",
+      "description": "Testovací případy, které jste napsali a připravili místo vytvoření. Vidíte je pouze vy. Otevřete jeden z nich k přezkoumání nebo vytvořte několik najednou.",
+      "empty": "V tomto projektu nemáte žádné připravené testovací případy.",
+      "saveDraft": "Připravit případ",
+      "saveTitle": "Pojmenujte testovací případ",
+      "renameTitle": "Přejmenovat testovací případ",
+      "saveDescription": "Připravený testovací případ je uveden pod jeho názvem. Vidíte jej pouze vy; do úložiště se nic nepřidá, dokud jej nevytvoříte.",
+      "saved": "Testovací případ připraven",
+      "saveFailed": "Testovací případ se nepodařilo připravit",
+      "renamed": "Připravený případ přejmenován",
+      "deleted": "Připravený případ smazán",
+      "deleteFailed": "Připravený případ se nepodařilo smazat",
+      "deleteTitle": "Smazat tento připravený případ?",
+      "deleteDescription": "\"{name}\" bude smazán. Nikdy nebyl vytvořen, takže se nic jiného nezmění.",
+      "folderDeleted": "Složka smazána",
+      "folderFallback": "Složka připraveného případu byla smazána; případ bude vytvořen v \"{folder}\".",
+      "selectFolderFirst": "Před otevřením tohoto připraveného případu vyberte složku.",
+      "problemCount": "{count, plural, one {{count} problém} few {{count} problémy} many {{count} problémů} other {{count} problémů}}",
+      "updated": "Aktualizováno {age}",
+      "createSelected": "{count, plural, =0 {Vytvořit vybrané} other {Vytvořit {count} vybraných}}",
+      "createdToast": "{count, plural, one {{count} testovací případ vytvořen} few {{count} testovací případy vytvořeny} many {{count} testovacích případů vytvořeno} other {{count} testovacích případů vytvořeno}}",
+      "failedToast": "{count, plural, one {{count} připravený případ se nepodařilo vytvořit} few {{count} připravené případy se nepodařilo vytvořit} many {{count} připravených případů se nepodařilo vytvořit} other {{count} připravených případů se nepodařilo vytvořit}}",
+      "problemFolder": "Složka byla smazána. Otevřete připravený případ a vyberte složku.",
+      "problemTemplate": "Šablona již není přiřazena tomuto projektu. Otevřete připravený případ a vyberte jednu.",
+      "problemState": "Stav již neexistuje. Otevřete připravený případ a vyberte jeden.",
+      "problemField": "{field}: {message}",
+      "notCreated": "Nevytvořeno: {message}",
+      "openToFix": "Otevřete připravený případ a opravte jej.",
+      "elsewhereTitle": "Máte také připravené případy v",
+      "elsewhereCount": "{count, plural, one {{count} připravený případ} few {{count} připravené případy} many {{count} připravených případů} other {{count} připravených případů}}"
     },
     "filterBar": {
       "addFilter": "Přidat filtr",
@@ -4020,7 +4299,10 @@
       "filterAllEntityTypes": "Všechny typy entit",
       "filterEntityTypeCase": "Testovací případy",
       "filterEntityTypeRun": "Testovací běhy",
-      "filterAllProjects": "Všechny projekty"
+      "filterAllProjects": "Všechny projekty",
+      "actionRevert": "Vrátit rozhodnutí",
+      "revertedBadge": "Vráceno",
+      "revertedBadgeTooltip": "{count, plural, one {Vráceno jednou} few {Vráceno # krát} many {Vráceno # krát} other {Vráceno # krát}}"
     },
     "requester": {
       "openButton": "Vyžádat kontrolu",
@@ -4081,6 +4363,23 @@
       "alreadyDecidedError": "O této kontrole už bylo rozhodnuto.",
       "decideError": "Vaše rozhodnutí se nepodařilo zaznamenat. Zkuste to za chvíli znovu.",
       "panelSummary": "Požadavek na kontrolu od {requesterName}: přechod do stavu {targetStateName}"
+    },
+    "revert": {
+      "confirm": "Vrátit rozhodnutí",
+      "description": "Tato kontrola se vrátí do stavu čekání na vaše rozhodnutí a žadatel je upozorněn. Komentář, který jste zanechal, zůstane ve vlákně.",
+      "descriptionApproved": "Tato kontrola se vrátí do stavu čekání na vaše rozhodnutí a položka se vrátí do svého předchozího stavu. Žadatel je upozorněn.",
+      "error": "Nepodařilo se vrátit rozhodnutí. Zkuste to později.",
+      "errorEntityMoved": "Tato položka se od schválení posunula dál, takže schválení nelze vrátit.",
+      "errorForbidden": "Pouze recenzent, který učinil toto rozhodnutí, jej může vrátit.",
+      "errorNotRevertable": "Toto rozhodnutí nelze již vrátit.",
+      "errorSuperseded": "Pro tuto položku již existuje novější požadavek na kontrolu, takže toto rozhodnutí nelze vrátit.",
+      "errorWindowExpired": "Časový limit pro vrácení tohoto rozhodnutí vypršel.",
+      "success": "Rozhodnutí vráceno. Kontrola opět čeká na vaše rozhodnutí.",
+      "title": "Vrátit vaše rozhodnutí?",
+      "titleOther": "Vrátit toto rozhodnutí?",
+      "descriptionOther": "Tato kontrola se vrátí do stavu čekání na rozhodnutí a žadatel je upozorněn. Komentář recenzenta zůstane ve vlákně.",
+      "descriptionOtherApproved": "Tato kontrola se vrátí do stavu čekání na rozhodnutí a položka se vrátí do svého předchozího stavu. Žadatel je upozorněn.",
+      "successOther": "Rozhodnutí vráceno. Kontrola opět čeká na rozhodnutí."
     }
   },
   "runs": {
@@ -4102,6 +4401,13 @@
       "lockError": "Nepodařilo se uzamknout složení běhu",
       "unlockError": "Nepodařilo se odemknout složení běhu",
       "addBlocked": "Složení tohoto běhu je uzamčeno, proto nelze přidávat testovací případy. Chcete-li změnit sadu případů, nejprve jej odemkněte."
+    },
+    "dependencies": {
+      "blocked": "Blokováno",
+      "blockedBy": "Blokováno až {count, plural, one {tento případ prošel} few {tyto # případy prošly} many {těchto # případů prošlo} other {tyto případy projdou}} v tomto běhu:",
+      "blockedNotice": "Tento testovací případ nelze spustit, dokud {count, plural, one {případ, na kterém závisí, neprošel} few {všechny # případy, na kterých závisí, neprošly} many {všech # případů, na kterých závisí, neprošlo} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
+      "notInRun": "{count, plural, one {# případ, na kterém tento závisí, je} few {# případy, na kterých tento závisí, jsou} many {# případů, na kterých tento závisí, je} other {# případy, na kterých tento závisí, jsou}} v tomto běhu a nebudou blokovat spuštění:",
+      "unblocked": "Všechny případy, na kterých tento závisí, v tomto běhu prošly."
     },
     "distribute": {
       "title": "Rozdělit přiřazení",
@@ -4307,7 +4613,7 @@
     },
     "junitFilters": {
       "retried": "Opakováno",
-      "clear": "Vymazat filtry"
+      "clear": "Vymazat všechny filtry"
     },
     "impact": {
       "title": "Dopad",
@@ -4380,9 +4686,12 @@
         "selectedOf": "Vybrány {selected, number} z {total, number} postižených testovacích případů",
         "thresholdHint": "Testy, které skórují {threshold, number} nebo více, se na začátku vyberou a zobrazí; pokud chcete vidět zbytek, snižte minimální skóre. Každý test ukazuje, proč byl vybrán.",
         "shownCount": "Zobrazeno {shown, number} z {total, number}",
-        "minScore": "Minimální skóre",
+        "scoreColumn": "Skóre dopadu",
+        "minScore": "Minimální skóre dopadu",
         "selectShown": "Vybrat zobrazené ({count, number})",
         "deselectShown": "Zrušit výběr zobrazených ({count, number})",
+        "hiddenSelected": "{count, plural, one {# vybraný testovací případ je skryt vašimi filtry} few {# vybrané testovací případy jsou skryty vašimi filtry} many {# vybraných testovacích případů je skryto vašimi filtry} other {# vybraných testovacích případů je skryto vašimi filtry}}.",
+        "deselectHidden": "Zrušit výběr skrytých",
         "noneShown": "Žádné testy se neshodují s filtry.",
         "reasons": "Proč",
         "tierPinned": "Fixováno",
@@ -4391,8 +4700,6 @@
         "tierPinnedTooltip": "Kódový pin na tento případ protíná změnu. Fixované případy se vždy umístí na prvním místě.",
         "tierAffectedTooltip": "Ostatní signály umisťují tento případ na nebo nad prahovou hodnotu dopadu {threshold, number}.",
         "tierRelatedTooltip": "Propojeno s výrazně ovlivněným případem, nebo jeho signály skórují pod {threshold, number}.",
-        "showDetails": "Zobrazit důvody",
-        "hideDetails": "Skrýt důvody",
         "excluded": "{count, plural, one {# případ již v běhu byl přeskočen} other {# případy již v běhu byly přeskočeny}}"
       },
       "noAffected": {
@@ -4465,12 +4772,30 @@
       },
       "repositoryPlaceholder": "Vyberte úložiště…",
       "chooseRepository": "Vyberte, které z připojených úložišť projektu obsahuje změny k analýze."
+    },
+    "risk": {
+      "prioritizeByRisk": "Prioritizovat podle rizika",
+      "title": "Prioritizovat podle rizika",
+      "description": "Případy, které si nejvíce zaslouží spuštění, nejprve s nejvyšším rizikem. Případy, které se již v tomto běhu nacházejí, jsou vynechány.",
+      "minimumScore": "Minimální skóre rizika",
+      "showing": "{shown, plural, one {# případ načten} few {# případy načteny} many {# případů načteno} other {# případů načteno}} z {total, plural, one {# shoda} few {# shody} many {# shod} other {# shod}}",
+      "loadedSelected": "{shown, plural, =2 {Oba načtené případy jsou vybrány} one {Načtený případ je vybrán} other {Všech # načtených případů je vybráno}}.",
+      "selectAllMatches": "{total, plural, =2 {Vybrat obě shody} one {Vybrat jedinou shodu} other {Vybrat všech # shod}}",
+      "allMatchesSelected": "{total, plural, =2 {Obě shody jsou vybrány} one {Jediná shoda je vybrána} other {Všech # shod je vybráno}}.",
+      "noneMatch": "V tomto skóre nebo vyšší nejsou žádné hodnocené případy.",
+      "caseColumn": "Testovací případ",
+      "scoreColumn": "Skóre rizika",
+      "addCases": "{count, plural, =0 {Přidat případy} one {Přidat # případ} few {Přidat # případy} many {Přidat # případů} other {Přidat # případů}}"
+    },
+    "caseSelection": {
+      "menuLabel": "Způsoby výběru testovacích případů"
     }
   },
   "admin": {
     "menu": {
       "header": "Hlavní",
       "fields": "Pole",
+      "rootCauses": "Hlavní příčiny",
       "appConfig": "Konfigurace aplikace",
       "recordKeys": "Klíče záznamů",
       "imports": "Importy dat",
@@ -4851,6 +5176,8 @@
       "sections": {
         "providers": {
           "title": "Poskytovatelé přihlášení",
+          "addSaml": "Přidat poskytovatele SAML",
+          "samlBadge": "SAML",
           "description": "Nakonfigurujte, jak se uživatelé mohou přihlásit do vaší aplikace"
         }
       },
@@ -4892,6 +5219,7 @@
         "samlSettings": {
           "title": "Nastavení SAML",
           "description": "Konfigurujte nastavení svého poskytovatele identity SAML",
+          "providerNameDescription": "Zobrazí se na tlačítku přihlášení, proto každému poskytovateli SAML dejte název, který vaši uživatelé poznají.",
           "ssoUrl": "URL adresa SSO (vstupní bod)",
           "entityId": "ID entity (vydavatel)",
           "certificate": "Certifikát X.509",
@@ -4932,6 +5260,7 @@
         "enabled": "Poskytovatel povolen",
         "disabled": "Poskytovatel zakázán",
         "updateFailed": "Aktualizace poskytovatele se nezdařila",
+        "providerNameExists": "Poskytovatel s tímto názvem již existuje",
         "configUpdated": "Konfigurace SAML byla aktualizována",
         "configCreated": "Konfigurace SAML byla vytvořena",
         "configSaveFailed": "Uložení konfigurace SAML se nezdařilo",
@@ -5038,7 +5367,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "Jsou vyžadovány vstupní bod, vydavatel, certifikát a zpětná URL adresa"
+            "allRequired": "Název, vstupní bod, vydavatel, certifikát a adresa URL zpětného volání jsou povinné"
           }
         },
         "disableEmailVerification": {
@@ -5210,6 +5539,7 @@
       "confirmSetAsDefault": "Nastavit jako výchozí šablonu",
       "confirmSetAsDefaultDescription": "Opravdu chcete nastavit tuto šablonu jako výchozí?",
       "confirmSetAsDefaultProjects": "Tato šablona bude přidána do všech projektů.",
+      "projectDefaultWarning": "{count, plural, one {Tento projekt používá tuto šablonu jako svou výchozí. Jeho nové testovací případy a relace budou místo toho používat systémovou výchozí šablonu.} few {Tyto projekty používají tuto šablonu jako svou výchozí. Jejich nové testovací případy a relace budou místo toho používat systémovou výchozí šablonu.} many {Tyto projekty používají tuto šablonu jako svou výchozí. Jejich nové testovací případy a relace budou místo toho používat systémovou výchozí šablonu.} other {Tyto projekty používají tuto šablonu jako svou výchozí. Jejich nové testovací případy a relace budou místo toho používat systémovou výchozí šablonu.}}",
       "add": {
         "button": "Přidat šablonu",
         "title": "Přidat novou šablonu",
@@ -5393,6 +5723,7 @@
       "scimProvisionerBadge": "Poskytovatel SCIM",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Spravováno pomocí SCIM. Spravujte na stránce administrace SCIM.",
+      "systemUserTooltip": "Vestavěný uživatel pro práci, kterou TestPlanIt provádí automaticky, jako jsou akce webhooku. Nemůže se přihlásit nebo upravovat.",
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Ano",
       "scimUserLockedTitle": "Uživatel je spravován pomocí SCIM",
@@ -5645,7 +5976,19 @@
         "thresholdUnit": "{count, plural, one {den} few {dny} many {dne} other {dní}}",
         "thresholdHelp": "Kolik dní může žádost o revizi čekat na vyřízení, než revidenti obdrží připomínkové oznámení. U nových žádostí začíná počítání času okamžikem odeslání.",
         "thresholdUpdateSuccess": "Nastavení připomenutí revize aktualizováno.",
-        "thresholdUpdateError": "Aktualizace nastavení připomenutí se nezdařila. Zkuste to prosím za chvíli znovu."
+        "thresholdUpdateError": "Aktualizace nastavení připomenutí se nezdařila. Zkuste to prosím za chvíli znovu.",
+        "revertPolicy": {
+          "label": "Vrácení rozhodnutí při kontrole",
+          "modeAria": "Režim zásad vracení",
+          "modeNone": "Projekty se rozhodují ({hours}h ve výchozím nastavení)",
+          "modeDisabled": "Vracení je všude zakázáno",
+          "modeMax": "Povolte vracení po dobu až",
+          "minutesUnit": "{minutes, plural, one {minuta} few {minuty} many {minut} other {minut}}",
+          "minutesAriaLabel": "Maximální počet minut, kdy zůstane rozhodnutí vrátitelné",
+          "invalidMinutes": "Zadejte počet minut větší než nula",
+          "savedToast": "Zásada vracení uložena.",
+          "saveError": "Nepodařilo se uložit zásadu vracení. Zkuste to později."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "Přepnout pracovní postup revize pro {name}",
@@ -5658,7 +6001,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "Funkce pracovního postupu revize je zakázána na systémové úrovni. Pro opětovné povolení přepněte pokročilé nastavení projektu nebo nastavte proměnnou TESTPLANIT_REVIEW_FEATURE_ENABLED.",
-        "requiresReviewDefaultDisabled": "Výchozí stav pracovního postupu nemůže vyžadovat revizi — nové entity sem přicházejí a nemají žádný předchozí stav, který by bylo možné blokovat."
+        "requiresReviewDefaultDisabled": "Výchozí stav pracovního postupu nemůže vyžadovat revizi — nové entity sem přicházejí a nemají žádný předchozí stav, který by bylo možné blokovat.",
+        "requiresReviewLabel": "Vyžaduje kontrolu"
       },
       "add": {
         "button": "Přidat pracovní postup",
@@ -5972,6 +6316,30 @@
         "confirmMessage": "Opravdu chcete smazat typ milníku {name}?"
       }
     },
+    "rootCauses": {
+      "description": "Hlavní příčiny, které Failure Patterns přiřazuje k seskupeným selháním. AI si vybírá ze seznamu pomocí jednotlivých popisů.",
+      "filterPlaceholder": "Filtrovat hlavní příčiny...",
+      "reordered": "Hlavní příčiny přeuspořádány",
+      "descriptionPlaceholder": "Kdy se tato hlavní příčina vztahuje? AI pomocí tohoto textu rozhoduje.",
+      "columns": {
+        "signatures": "Vzory"
+      },
+      "add": {
+        "button": "Přidat hlavní příčinu",
+        "title": "Přidat hlavní příčinu"
+      },
+      "edit": {
+        "title": "Upravit hlavní příčinu"
+      },
+      "errors": {
+        "nameExists": "Hlavní příčina s tímto názvem již existuje"
+      },
+      "delete": {
+        "confirmMessage": "Opravdu chcete odstranit hlavní příčinu {name}?",
+        "inUse": "{count, plural, one {# vzor selhání ji používá.} few {# vzory selhání jej používají.} many {# vzorů selhání jej používá.} other {# vzorů selhání jej používá.}}",
+        "moveLabel": "{count, plural, one {Přesunout vzor na} few {Přesunout # vzory na} many {Přesunout # vzorů na} other {Přesunout # vzorů na}}"
+      }
+    },
     "issue_config": {
       "link_title": "Propojit nástroj pro sledování problémů",
       "link_description": "Nakonfigurujte základní URL pro ručně propojené problémy. Při propojování problému pouze pomocí externího ID bude tato základní URL předřazena pro vytvoření úplného odkazu.",
@@ -6063,7 +6431,8 @@
         "stepSequenceMatchCases": "Případy shody sekvencí kroků",
         "testRunCases": "Případy testovacího běhu",
         "testRunCaseDataSetSnapshots": "Snímky datové sady testovacího běhu",
-        "testRunCaseIterations": "Iterace testovacího běhu"
+        "testRunCaseIterations": "Iterace testovacího běhu",
+        "alertRules": "Upozornění"
       },
       "table": {
         "title": "Smazané {itemType}",
@@ -6075,7 +6444,11 @@
         "purgeConfirmationMessage": "Opravdu chcete trvale smazat tento řádek z tabulky {itemType}? Tuto akci nelze vrátit zpět a může odstranit přidružená data."
       },
       "filterTypesPlaceholder": "Filtrovat typy položek...",
-      "summary": "{count, plural, =0 {Koš je prázdný} one {# položka v koši} few {# položky v koši} many {# položky v koši} other {# položek v koši}}"
+      "summary": "{count, plural, =0 {Koš je prázdný} one {# položka v koši} few {# položky v koši} many {# položky v koši} other {# položek v koši}}",
+      "userWindow": {
+        "label": "Okno samoobslužného obnovení",
+        "invalid": "Zadejte celé číslo dní (0 ho vypne)."
+      }
     },
     "notifications": {
       "title": "Správa oznámení",
@@ -6218,6 +6591,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "Připojte se k vlastní instanci MantisBT pro sledování úkolů"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "Připojte se na ClickUp pro sledování úkolů a správu projektů"
         }
       },
       "filterPlaceholder": "Filtrovat integrace...",
@@ -6328,7 +6705,13 @@
         "mantisBTApiKeyHelp": "Vytvořte jej v nastavení účtu MantisBT → API tokeny",
         "mantisBTUrl": "URL adresa MantisBT",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "Základní URL adresa vaší instance MantisBT"
+        "mantisBTUrlHelp": "Základní URL adresa vaší instance MantisBT",
+        "clickupTeamId": "ID týmu ClickUp (pracovní prostor)",
+        "clickupTeamIdPlaceholder": "např. 9013456789",
+        "clickupTeamIdHelp": "Najdete v URL adrese ClickUp za app.clickup.com/",
+        "clickupListId": "Výchozí ID seznamu ClickUp",
+        "clickupListIdPlaceholder": "např. 901234567",
+        "clickupListIdHelp": "Seznam, ve kterém se ve výchozím nastavení vytváří úkoly; lze přepsat pro jednotlivý problém"
       },
       "authType": {
         "api_key": "Klíč API",
@@ -6404,7 +6787,6 @@
         "defaultModelPlaceholder": "gpt-4o, claude-3-5-sonnet-20241022, atd.",
         "defaultModelDescription": "Model, který se má použít jako výchozí",
         "maxTokensPerRequest": "Maximální počet tokenů na požadavek",
-        "maxRequestsPerMinute": "Maximální počet požadavků za minutu",
         "costPerInputToken": "Cena za 1M vstupních tokenů ($)",
         "costPerOutputToken": "Cena za 1M výstupních tokenů ($)",
         "monthlyBudget": "Měsíční rozpočet ($)",
@@ -6548,7 +6930,8 @@
         "generate_from_url_app": "Generovat testovací případy z URL (testování aplikace)",
         "automation_candidates": "Report kandidátů na automatizaci",
         "derive_case_steps": "Odvození kroků pomocí AI",
-        "impact_analysis": "Dopad: Výběr postižených testů"
+        "impact_analysis": "Dopad: Výběr postižených testů",
+        "failure_triage": "Failure Patterns: Hlavní příčina"
       }
     },
     "elasticsearch": {
@@ -6625,6 +7008,7 @@
         "audit-logs": "Auditní záznamy",
         "budget-alerts": "Upozornění na rozpočet",
         "auto-tag": "Automatické štítkování AI",
+        "failure-triage": "Vzory selhání",
         "repo-cache": "Mezipaměť úložiště",
         "copy-move": "Kopírovat a přesunout",
         "duplicate-scan": "Kontrola duplicit",
@@ -6783,7 +7167,8 @@
         "markRead": "Označit jako přečtené",
         "markUnread": "Označit jako nepřečtené",
         "markAllRead": "Označit vše jako přečtené",
-        "deleteAll": "Odstranit vše"
+        "deleteAll": "Odstranit vše",
+        "manageAlerts": "Spravovat oznámení a upozornění"
       },
       "success": {
         "deleted": "Oznámení smazáno",
@@ -6827,19 +7212,10 @@
         "shareLinkAccessedMessage": "{viewer} zobrazil váš sdílený report: \"{shareTitle}\"",
         "viewedYourSharedLink": "zobrazil váš sdílený odkaz",
         "viewedAt": "Zobrazeno v",
-        "budgetDisclaimer": "Limity rozpočtu jsou pouze informativní a nezabraňují použití.",
-        "llmBudgetExceededTitle": "Rozpočet LLM byl překročen",
-        "llmBudgetThresholdTitle": "Rozpočet LLM využit z {threshold}%",
-        "llmBudgetExceededMessage": "{providerName} překročil svůj měsíční rozpočet: utraceno {spend} z rozpočtu {budget}.",
-        "llmBudgetThresholdMessage": "{providerName} využil {threshold}% svého měsíčního rozpočtu: {spend} z {budget}.",
         "userRegisteredTitle": "Registrace nového uživatele",
         "userRegisteredMessageSso": "{userName} ({userEmail}) se zaregistroval přes SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) se zaregistroval prostřednictvím registračního formuláře",
         "viewUserList": "Zobrazit seznam uživatelů",
-        "reviewGeneratedCases": "Zkontrolujte generované testovací případy",
-        "generateFromUrlCompleteTitle": "Stránky úspěšně procrawleny",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# stránka procrawlována} few {# stránky procrawlovány} many {# stránek procrawlováno} other {# stránek procrawlováno}} z {url} v projektu \"{projectName}\". Klikněte pro kontrolu a generování testovacích případů.",
-        "generateFromUrlFailedTitle": "Crawlování URL se nezdařilo",
         "reviewRequestedTitle": "Vyžádána revize",
         "reviewApprovedTitle": "Revize schválena",
         "reviewChangesRequestedTitle": "Vyžádány změny",
@@ -6869,18 +7245,81 @@
         "reviewCancelledEmailMessage": "{actorName} zrušil žádost o revizi na {entityLabel} \"{entityName}\" v projektu \"{projectName}\".",
         "reviewReminderTitle": "Revize stále čeká na vyřízení",
         "reviewReminderAction": "stále čeká na vaši revizi",
-        "reviewReminderEmailMessage": "Připomenutí: žádost uživatele {actorName} o revizi {entityLabel} \"{entityName}\" v projektu \"{projectName}\" čeká na vyřízení již {hoursPending} hodin.",
-        "reviewReminderHoursPending": "Čeká {hoursPending, plural, one {# hodinu} few {# hodiny} many {# hodiny} other {# hodin}}",
+        "reviewReminderEmailMessage": "Připomenutí: žádost uživatele {actorName} o kontrolu na {entityLabel} \"{entityName}\" v projektu \"{projectName}\" čeká {pendingFor}.",
+        "reviewReminderHoursPending": "Čeká {pendingFor}",
         "aiStepsDerivedTitle": "Kroky testu odvozené AI jsou připraveny",
         "aiStepsDerivedMessage": "{count, plural, one {# testovacímu případu byly přiřazeny} few {# testovacím případům byly přiřazeny} many {# testovacím případům byly přiřazeny} other {# testovacím případům byly přiřazeny}} kroky odvozené pomocí AI — zkontrolujte jejich přesnost.",
         "aiStepsDerivedReviewLink": "Zkontrolovat testovací běh",
+        "casesDraftedTitle": "AI-navržené testovací případy jsou připraveny",
+        "casesDraftedMessage": "{count, plural, one {# testovací případ byl} few {# testovací případy byly} many {# testovacích případů bylo} other {# testovacích případů bylo}} navrženo pro {issueKey} — zkontrolujte přesnost.",
+        "casesDraftedReviewLink": "Zkontrolovat v {folderName}",
         "integrationAuthExpiredTitle": "Platnost připojení integrace vypršela",
         "integrationAuthExpiredMessage": "Platnost vašeho připojení k \"{integrationName}\" vypršela. Znovu se připojte pro obnovení synchronizace úkolů.",
         "integrationAuthExpiredReconnect": "Znovu se připojit",
         "runReadyToCompleteTitle": "Testovací běh připraven k dokončení",
         "runReadyToCompleteExecuted": "{count, plural, one {# případ byl proveden} =2 {Oba případy byly provedeny} few {Všechny # případy byly provedeny} many {Všechny # případy byly provedeny} other {Všech # případů bylo provedeno}}.",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# případ byl proveden} =2 {Oba případy byly provedeny} few {Všechny # případy byly provedeny} many {Všechny # případy byly provedeny} other {Všech # případů bylo provedeno}} v testovacím běhu \"{testRunName}\" (projekt \"{projectName}\"). Běh je připraven k označení jako dokončený.",
-        "runReadyToCompleteReason": "Toto oznámení dostáváte, protože můžete dokončovat testovací běhy v tomto projektu."
+        "runReadyToCompleteReason": "Toto oznámení dostáváte, protože můžete dokončovat testovací běhy v tomto projektu.",
+        "runCaseUnblockedTitle": "Testovací případ připraven ke spuštění",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} proběhl úspěšně, takže tento případ přiřazený vám již není blokován:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" v testovacím běhu \"{testRunName}\" (projekt \"{projectName}\") již není blokován: \"{prerequisiteName}\" proběhl úspěšně. Je vám přiřazen a připraven ke spuštění.",
+        "runCaseUnblockedReason": "Tuto zprávu dostáváte, protože vám je testovací případ přiřazen.",
+        "inTestRun": "v testovacím běhu",
+        "alertTriggeredTitle": "Upozornění spuštěno",
+        "alertTriggeredRule": "Pravidlo: {ruleName}",
+        "alertTriggeredEmailMessage": "Upozornění \"{ruleName}\" spuštěno pro {subjectLabel} \"{subjectName}\" v projektu \"{projectName}\": {detail}",
+        "alertTriggeredEmailMessageSystem": "Upozornění \"{ruleName}\" spuštěno pro {subjectLabel} \"{subjectName}\": {detail}",
+        "alertTriggeredReason": "Obdrželi jste toto, protože se přihlašujete k tomuto upozornění.",
+        "alertSubject": {
+          "CASE": "testovací případ",
+          "RUN": "testovací běh",
+          "MILESTONE": "milník",
+          "SESSION": "relace",
+          "PROJECT": "projekt",
+          "WEBHOOK": "webhook",
+          "LLM_INTEGRATION": "Integrace modelu AI",
+          "CODE_REPOSITORY": "připojení úložiště",
+          "INTEGRATION": "integrace",
+          "QUEUE": "fronta",
+          "SYSTEM": "instalace"
+        },
+        "alertMetric": {
+          "RESULT_DURATION_DEVIATION": "Výsledek trval {elapsed}, {deviation}% od výchozího {baseline} (více než {threshold}% povoleno).",
+          "CASE_REGRESSED": "Případ selhal po úspěšném průchodu {passedBefore, plural, one {jeho posledního výsledku} few {jeho posledních # výsledků} many {jeho posledních # výsledků} other {jeho posledních # výsledků}}.",
+          "CASE_RECOVERED": "Případ prošel po neúspěšném průchodu {failedBefore, plural, one {jeho posledního výsledku} few {jeho posledních # výsledků} many {jeho posledních # výsledků} other {jeho posledních # výsledků}}.",
+          "RUN_DURATION_DEVIATION": "Běh trval {elapsed}, {deviation}% od výchozího {baseline} (více než {threshold}% povoleno).",
+          "RUN_NOT_PROGRESSING": "Běh nemá nový výsledek již {idleHours, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold}).",
+          "AUTOMATED_EXECUTION_FAILED": "Automatické spuštění na {target} skončilo s {status}{error, select, other {: {error}}}",
+          "RUN_UNTESTED_SHARE": "{untestedPercent}% případů běhu nemá výsledek s {daysRemaining, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} před splatností milníku (prahová hodnota {threshold}%).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# problém je} few {# problémy jsou} many {# problémů je} other {# problémů je}} propojeno s výsledky běhu (prahová hodnota {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# vzor selhání se objevil} few {# vzory selhání se objevily} many {# vzorů selhání se objevilo} other {# vzorů selhání se objevilo}} poprvé v běhu (práh {threshold}).",
+          "SESSION_OVERRUN": "Relace trvala {elapsed} proti odhadu {estimate}, {overrun}% více (více než {threshold}% povoleno).",
+          "REQUIREMENT_COVERAGE_BELOW": "{covered} z {total} požadavků ({coverage}%) {basis, select, PASSING {má procházející poslední výsledek} other {je propojen s testovacím případem}} (prahová hodnota {threshold}%).",
+          "STALE_CASES": "{stale, plural, one {# případ má} few {# případy mají} many {# případů má} other {# případů má}} žádný výsledek za {days, plural, one {# den} few {# dny} many {# dny} other {# dny}} (prahová hodnota {threshold}).",
+          "AUTOMATION_SHARE_BELOW": "{automated} z {total} případů ({automatedPercent}%) jsou automatizovány (prahová hodnota {threshold}%).",
+          "WEBHOOK_FAILURE_RATE": "{failed} z posledních {sampleCount} doručení selhalo ({failureRate}%, prahová hodnota {threshold}%).",
+          "CONSECUTIVE_FAILURES": "Případ selhal {streak, plural, one {# krát} few {# krát} many {# krát} other {# krát}} po sobě (prahová hodnota {threshold}).",
+          "CASE_FLAKY": "Výsledek se přepnul {flips, plural, one {# krát} few {# krát} many {# krát} other {# krát}} v posledních {sampleCount} výsledcích (prahová hodnota {threshold}).",
+          "RUN_PASS_RATE_BELOW": "Míra úspěšnosti je {passRate}% v {sampleCount} výsledcích (prahová hodnota {threshold}%).",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# výsledek selhal} few {# výsledky selhaly} many {# výsledků selhalo} other {# výsledků selhalo}} (prahová hodnota {threshold}).",
+          "MILESTONE_BEHIND": "Milník je {completion}% hotov s {daysRemaining, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} do zbytku (prahová hodnota {threshold}%).",
+          "MILESTONE_OVERDUE": "Milník je {daysOverdue, plural, one {# den} few {# dny} many {# dny} other {# dny}} po splatnosti.",
+          "LLM_BUDGET_USED": "Výdaje za fakturační období jsou {spend} z {budget} měsíčního rozpočtu ({percent}%, prahová hodnota {threshold}%).",
+          "LLM_ERROR_RATE": "{failed} z posledních {sampleCount} požadavků selhalo ({failureRate}%, prahová hodnota {threshold}%).",
+          "LLM_RATE_LIMITED": "Poskytovatel omezil {blocked, plural, one {# požadavek} few {# požadavky} many {# požadavků} other {# požadavků}} v posledních {hours, plural, one {# hodinę} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold}).",
+          "CODE_REPOSITORY_CACHE_FAILING": "Mezipaměť úložiště selhala již {hours, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold}){error, select, other {: {error}}}",
+          "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# uživatel musí} few {# uživatelé musí} many {# uživatelů musí} other {# uživatelů musí}} znovu ověřit integraci (prahová hodnota {threshold}).",
+          "QUEUE_FAILED_JOBS": "{failed, plural, one {# úloha selhala} few {# úlohy selhaly} many {# úloh selhalo} other {# úloh selhalo}} ve frontě (prahová hodnota {threshold}).",
+          "QUEUE_BACKLOG": "Nejstarší z {waiting, plural, one {# čekající úlohy} few {# čekajících úloh} many {# čekajících úloh} other {# čekajících úloh}} čeká {minutes, plural, one {# minutu} few {# minuty} many {# minut} other {# minut}} (prahová hodnota {threshold}).",
+          "AUDIT_BACKLOG": "Nejstarší nezpracovaná změna auditu je stará {minutes, plural, one {# minutu} few {# minuty} many {# minut} other {# minut}} (prahová hodnota {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# účet je} few {# účty jsou} many {# účtů je} other {# účtů je}} uzamčen po neúspěšných přihlášeních (prahová hodnota {threshold}).",
+          "NO_AUTOMATED_RESULTS": "Žádný automatizovaný výsledek nebyl přijat za {hours, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold})."
+        },
+        "reviewDecisionRevertedAction": "vrátili své rozhodnutí na",
+        "reviewDecisionRevertedEmailMessage": "{actorName} vrátili své rozhodnutí na {entityLabel} \"{entityName}\" v projektu \"{projectName}\" — čeká se na kontrolu.",
+        "reviewDecisionRevertedTitle": "Rozhodnutí při kontrole vráceno",
+        "reviewDecisionRevertedActionOther": "vrátili rozhodnutí uživatele {deciderName} na",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} vrátili rozhodnutí uživatele {deciderName} na {entityLabel} \"{entityName}\" v projektu \"{projectName}\" — čeká se na kontrolu."
       }
     },
     "issues": {
@@ -7029,6 +7468,9 @@
     "issueType": "Typ problému",
     "selectIssueType": "Vybrat typ problému",
     "noIssueTypes": "Nejsou k dispozici žádné typy problémů",
+    "assignees": "Přiřazené osoby",
+    "selectAssignees": "Vyberte přiřazené osoby",
+    "assigneesLimit": "Až {max} přiřazených osob",
     "priorityUrgent": "Naléhavé",
     "additionalFields": "Další pole",
     "createIssueInJira": "Vytvořit problém v Jiře",
@@ -7451,6 +7893,7 @@
       "TestRunResults": "Výsledky testovacího běhu",
       "TestRunResultRestrictedFields": "Omezená pole výsledku testovacího běhu",
       "AutomatedExecution": "Automatizované provedení",
+      "FailurePatterns": "Vzory selhání",
       "Sessions": "Relace",
       "SessionsRestrictedFields": "Omezená pole relací",
       "ClosedSessions": "Uzavřené relace",
@@ -7459,7 +7902,8 @@
       "SharedSteps": "Sdílené kroky",
       "Issues": "Problémy",
       "Reporting": "Vytváření sestav",
-      "Settings": "Nastavení projektu"
+      "Settings": "Správa projektu",
+      "Alerts": "Upozornění"
     },
     "WorkflowType": {
       "NOT_STARTED": "Nezahájeno",
@@ -7493,6 +7937,11 @@
     "alreadyLinked": "Tento případ je již propojen.",
     "cannotLinkSelf": "Případ nelze propojit sám se sebou.",
     "circularLink": "Byl zjištěn cyklický odkaz.",
+    "dependsOn": "Závisí na",
+    "blocks": "Blokuje",
+    "dependsOnOption": "Závisí na — tento případ vyžaduje, aby se nejdříve úspěšně provedl vybraný případ",
+    "blocksOption": "Blokuje — vybraný případ vyžaduje, aby se nejdříve úspěšně provedl tento případ",
+    "dependencyHint": "Pokud je vynucení závislostí povoleno, nelze případ v testu spustit, dokud se v tomto testu úspěšně neprovedly případy, na kterých závisí.",
     "failedToCreate": "Nepodařilo se vytvořit odkaz.",
     "confirmRemoveLink": "Opravdu chcete odebrat tento odkaz?",
     "DEPENDS_ON": "Závislost",
@@ -7512,6 +7961,9 @@
     "businessHours": "{hours, number, ::.0} pracovních hodin"
   },
   "help": {
+    "webhookAction": {
+      "labels": "## Štítky\nŠtítky, které problém v trackeru má. Akce vezme pouze problém, který má alespoň jeden z nich; ponechte prázdné, aby se problémy braly bez ohledu na štítky.\n\n- Jira, GitHub, GitLab a Gitea: štítky problému\n- Azure DevOps, ClickUp a MantisBT: značky problému\n- Redmine: kategorie problému\n- Porovnávání ignoruje velikost písmen"
+    },
     "auditLogs": "## Protokoly auditu\nZobrazte celosystémovou stopu auditu pro sledování bezpečnosti a souladu s předpisy",
     "statuses": "## Stavy\nSpravujte stavy, které testeři přiřazují při zaznamenávání výsledku testu, jako Prošel, Neprošel a Blokováno.",
     "configurations": "## Konfigurace\nKonfigurace jsou kombinací kategorií a variant používaných k definování testovacího prostředí. Například OS/prohlížeč, testovací server, jazyk atd.",
@@ -7543,7 +7995,7 @@
     "projectAiModels": "## AI modely\nZvolte AI model a konfiguraci promptu, které tento projekt používá pro své funkce podporované AI, jako je generování testovacích případů a automatické štítkování.",
     "projectQuickScript": "## QuickScript\nPropojte úložiště kódu, aby tento projekt mohl generovat testovací případy z vašich automatizovaných testovacích souborů, s výběrem, kterou větev a cesty zahrnout.",
     "projectParameters": "## Parametry testovacích případů\nNakonfigurujte datově řízené testování tohoto projektu — názvy vlastností iterace JUnit pro importované výsledky a znovupoužitelné datové sady pro parametrizované případy.",
-    "projectAdvanced": "## Pokročilé\nPokročilá nastavení pro tento projekt — prefix ID záznamu, pracovní postup revize výsledků, automatické vytváření úkolů při selhání a okno pro úpravu výsledků.",
+    "projectAdvanced": "## Pokročilé\nNastavení jednotlivých projektů seskupená do kategorií Obecné, Recenze, Testovací běhy a Výsledky. Otevřete ? u libovolného nastavení, abyste se dozvěděli více. Přepínače se ukládají okamžitě po změně; kód projektu a nastavení časového okna se ukládají pomocí vlastního tlačítka Uložit.",
     "projectShares": "## Spravovat sdílení\nSdílitelné odkazy na reporty tohoto projektu, každý s vlastní úrovní přístupu — veřejný, vyžadující přihlášení nebo chráněný heslem. Odvolání odkazu ukončí jeho přístup.",
     "projectAccess": "## Přístup\nKaždý uživatel, který může otevřít tento projekt, a role, která určuje, co zde mohou dělat. Role uživatele pochází z jejich vlastního nastavení přístupu k projektu, skupiny, do které patří, nebo výchozího přístupu projektu, v tomto pořadí. Správci systému a správci projektů mají plný přístup bez ohledu na roli. Přístup se změňuje správcem v sekci Administrace › Projekty › Upravit projekt.",
     "groups": "## Skupiny\nSkupiny vám umožňují přiřadit přístup k projektu a role mnoha uživatelům najednou. Přidejte členy přímo, nebo namapujte skupinu od vašeho poskytovatele identity.",
@@ -7584,6 +8036,7 @@
     "elasticsearchReindex": "## Znovu indexovat data\nPřestavte vyhledávací indexy pro zlepšení výkonu vyhledávání.",
     "queues": "## Fronty úloh na pozadí\nSledujte a spravujte fronty pro zpracování úloh na pozadí.",
     "trash": "## Koš\nObnovte nebo trvale odstraňte měkce smazané záznamy napříč systémem.",
+    "userTrashWindow": "## Okno samoobslužného obnovení\nPočet dní, během kterých mohou uživatelé obnovit položky, které sami smazali, ze sekce **Koš** v jejich profilu. Nastavte na **0** pro vypnutí samoobslužného obnovení. Položky mimo toto okno jednoduše zmizí z koše uživatele — nic se nevymaže a správci mohou stále obnovit nebo vymazat cokoli odsud.",
     "systemWebhooks": "## Systémové webhooky\nCíle odchozích webhooků pro systémové události, které nejsou vázány na jeden projekt — v současnosti jde o události životního cyklu uživatelů a skupin SCIM 2.0. Příchozí a projektově vázané odchozí webhooky nastavte místo toho na stránce nastavení projektu.",
     "workflows": "## Pracovní postupy\nSpravujte stavy pracovního postupu pro testovací případy, testovací běhy a relace.",
     "workflowReviews": "## Pracovní postup revize\nVynucujte revize tím, že zablokujete přechody pracovního postupu, dokud nebude uděleno schválení. Když je tato funkce povolena, projekty se mohou jednotlivě přihlásit nebo odhlásit prostřednictvím svého pokročilého nastavení. Vypnutím zabráníte bránám schválení pracovního postupu.",
@@ -7643,7 +8096,7 @@
       "documentation": "## Dokumentace\nDoplňující podrobnosti, odkazy a podpůrné materiály.\n\n- Technické specifikace\n- Návrhové dokumenty\n- Externí odkazy\n- Poznámky ze schůzek a rozhodnutí",
       "automaticCompletion": "## Automatické dokončení k datu splatnosti\nAutomaticky označí tento milník jako dokončený po dosažení jeho data splatnosti.\n\n- Milník bude dokončen v naplánovaném čase v den splatnosti\n- Užitečné pro časově ohraničené milníky, které by se měly uzavřít bez ohledu na stav dokončení\n- Lze přepsat ručním dokončením milníku před datem splatnosti\n- Vyžaduje nastavené datum splatnosti",
       "notifyDaysBefore": "## Upozornit dnů před datem splatnosti\nOdesílá oznámení přiřazeným členům týmu, když se blíží datum splatnosti milníku.\n\n- Zapnutím povolíte oznámení, vypnutím je zakážete\n- Zadejte počet dnů před datem splatnosti, kdy se mají začít odesílat připomínky\n- Oznámení jsou odesílána uživatelům přiřazeným k testovacím běhům a relacím v rámci tohoto milníku\n- U milníků po termínu budou připomínky odesílány i nadále, dokud nebudou dokončeny",
-      "managedByJira": "## Spravováno pomocí Jira\nNázev, data a stav tohoto milníku jsou spravovány pomocí Jira. Proveďte změny tam, aby se aktualizovaly zde."
+      "managedByJira": "## Spravováno nástrojem pro sledování\nNázev, data a stav tohoto milníku jsou spravovány nástrojem pro sledování problémů, ze kterého byl importován. Proveďte tam změny, aby se aktualizovaly i zde."
     },
     "session": {
       "name": "## Název relace\nJasný, výstižný název, který identifikuje účel vaší testovací relace.\n\n- Měl by být jedinečný a smysluplný\n- Pomáhá členům týmu pochopit, co se testuje\n- Používá se v sestavách a sledování",
@@ -7695,7 +8148,7 @@
       "name": "## Název role\nJasný, stručný a výstižný název nebo klíčové slovo (slova), které se používají napříč všemi projekty.\n\n- Pomáhá členům týmu rychle najít související testovací případy, testovací běhy a relace.",
       "isDefault": "## Výchozí role\nUdává, zda je tato role výchozí pro váš projekt.\n\n- Výchozí role je předvybraná pro nové uživatele\n- Lze kdykoli změnit",
       "permissions": {
-        "canAddEdit": "## Přidat/Upravit\nUdává, zda může tato role přidávat a upravovat související oblast aplikace.\n\n- **Automatizované provedení** uděluje právo spouštět, opakovat a zrušovat automatizovaná provedení u CI poskytovatele. Zaznamenávání výsledků stále vyžaduje **Výsledky testovacích běhů** Přidat/Upravit a spuštění z úložiště také vyžaduje **Testovací běhy** Přidat/Upravit, protože vytváří nebo rozšiřuje běh.",
+        "canAddEdit": "## Přidat/Upravit\nUdává, zda tato role může přidávat a upravovat související aplikační oblast.\n\n- **Automatické spouštění** uděluje právo spouštět, opakovat a rušit automatizovaná spouštění u poskytovatele CI. Zaznamenávání výsledků stále vyžaduje **Výsledky testovacího běhu** Přidat/Upravit a spuštění z úložiště také vyžaduje **Testovací běhy** Přidat/Upravit, protože vytváří nebo prodlužuje běh.\n- **Failure Patterns** uděluje právo nastavit nebo vymazat hlavní příčinu vzoru selhání nebo požádat AI, vyřešit, ignorovat nebo znovu otevřít, upravit jeho poznámky, propojit a odpojit problémy a karanténu nebo uvolnit své testovací případy. Každý s přístupem k projektu může vidět jeho vzory selhání; správci projektů spravují nastavení Failure Patterns.\n- **Upozornění** uděluje právo vytvářet upozornění v projektu a upravovat, pozastavovat a odstraňovat ty, které jste vytvořili. Správci projektů spravují všechna upozornění a odběry jiných uživatelů; každý se může přihlásit nebo opustit upozornění.",
         "canDelete": "## Smazat\nUdává, zda může tato role mazat související oblast aplikace.",
         "canClose": "## Uzavřít\nUdává, zda může tato role uzavírat související oblast aplikace.",
         "canApprove": "## Schválit\nUrčuje, zda tato role může schvalovat žádosti o revizi pro související oblast aplikace. Vztahuje se pouze na Úložiště testovacích případů, testovací běhy a relace.",
@@ -7726,10 +8179,9 @@
       "maxTokensPerRequest": "## Maximální počet tokenů na požadavek\n**Pevný strop na _výstupní_ tokeny**, které může model vygenerovat v jedné odpovědi.\n\n- Omezuje délku **odpovědi** modelu — nikoli množství kontextu, který mu posíláte\n- Požadavky, které žádají o více než tento limit, jsou **odmítnuty ještě před tím, než se dostanou k modelu**\n- Nastavte jej na skutečný maximální výstup vašeho modelu — např. `128000` pro Claude Opus/Sonnet, `64000` pro Claude Haiku, `65536` pro Gemini, `16384` pro GPT-4o\n- Příliš nízká hodnota → funkce AI selžou nebo produkují oříznutý výstup",
       "defaultMaxTokens": "## Výchozí maximální počet tokenů\n**Délka _výstupu_**, o kterou tento AI model při požadavcích žádá, omezená hodnotou _Maximální počet tokenů na požadavek_.\n\n- **Generování testovacích případů** (ze všech zdrojů, včetně panelu problémů Jira), **Analýza testovacích případů z Markdownu**, **Asistent psaní v editoru** a **Chytrý výběr testovacích případů** vždy používají tuto hodnotu — jejich _Maximální počet výstupních tokenů_ z konfigurace promptu se nepoužije\n- **Generování kódu při exportu**, **Návrhy štítků AI**, **Odvozování kroků AI** a **Sestava kandidátů na automatizaci** místo toho používají vlastní _Maximální počet výstupních tokenů_ z **Administrace → Konfigurace promptů**\n- Modely, které před odpovědí přemýšlejí (např. Claude Opus 5), spotřebují část tohoto rozpočtu na uvažování — ponechte prostor pro odpověď\n- **Neurčuje**, kolik kódu repozitáře odešle modelu QuickScript — tento rozpočet se odvozuje automaticky z kontextového okna modelu\n- Udržujte ji ≤ _Maximální počet tokenů na požadavek_",
       "repoContextBudget": "## Rozpočet kontextu repozitáře\nKolik kódu z vašeho připojeného repozitáře QuickScript předá modelu při generování skriptu.\n\n- **Nastavuje se automaticky** podle vstupního kontextového okna vybraného modelu — zde není co konfigurovat\n- Modely s větším kontextem (Claude, Gemini) dostanou více; malé lokální modely dostanou bezpečné množství, které nepřeteče\n- Více kontextu ukotví skript ve vašich skutečných page objektech a fixturách — nemění to délku vygenerovaného skriptu",
-      "maxRequestsPerMinute": "## Maximální počet požadavků za minutu\nOmezuje, kolik volání API lze provést k tomuto poskytovateli za minutu.\n\n- Nastavte podle limitu rychlosti vašeho tarifu u poskytovatele\n- Nadbytečné požadavky jsou zařazeny do fronty, nikoli odmítnuty\n- Limit vašeho tarifu zkontrolujte v dokumentaci poskytovatele",
       "costPerInputToken": "## Náklady na 1 milion vstupních tokenů (USD)\nNáklady v USD na **milion** vstupních (prompt) tokenů odeslaných modelu.\n\n- Používá se pro sledování nákladů a upozornění na rozpočet\n- Automaticky vyplněno, pokud váš poskytovatel uvádí ceny modelu (LiteLLM, OpenRouter, Together AI) — použije se při výběru modelu nebo spuštění Testovacího připojení\n- Jinak jej najdete na stránce s cenami vašeho poskytovatele\n- Příklad: `0.15` = 0,15 USD za milion vstupních tokenů",
       "costPerOutputToken": "## Náklady na 1 milion výstupních tokenů (USD)\nNáklady v USD na **milion** výstupních (completion) tokenů vygenerovaných modelem.\n\n- Obvykle vyšší než náklady na vstupní tokeny\n- Používá se pro sledování nákladů a upozornění na rozpočet\n- Automaticky vyplněno, pokud váš poskytovatel uvádí ceny modelu (LiteLLM, OpenRouter, Together AI) — použije se při výběru modelu nebo spuštění Testovacího připojení\n- Jinak jej najdete na stránce s cenami vašeho poskytovatele\n- Příklad: `0.60` = 0,60 USD za milion výstupních tokenů",
-      "monthlyBudget": "## Měsíční rozpočet (USD)\nVolitelný cíl výdajů pro tuto integraci.\n\n- Nastavením na `0` vypnete sledování rozpočtu\n- Rozpočet je **pouze informativní** — nezabraňuje použití LLM\n- Oznámení obdržíte při dosažení 80 %, 90 % a 100 % rozpočtu\n- Náklady jsou počítány pomocí výše uvedených sazeb za token",
+      "monthlyBudget": "## Měsíční rozpočet (USD)\nVolitelný cíl výdajů pro tuto integraci.\n\n- Nastavte na `0` pro deaktivaci sledování rozpočtu\n- Rozpočet je **pouze pro informaci** — neblokuje používání LLM\n- Upozornění s metrikou **Rozpočet AI použitý** (Systém, na stránce Oznámení a upozornění) upozorní své předplatitele, když výdaje dosáhnou procenta, které nastavíte; uložením tohoto formuláře nebo resetováním výdajů jej může během stejného období znovu spustit\n- Náklady se počítají pomocí výše uvedených sazeb za token",
       "billingPeriodStartDay": "## Počáteční den fakturačního období\nDen v měsíci (1–31), kdy začíná vaše fakturační období.\n\n- Výchozí hodnota `1` odpovídá kalendářnímu měsíci\n- Nastavte na `15` pro cyklus od 15. do 15. (např. aby odpovídal datu fakturace vašeho poskytovatele)\n- Hodnoty `29–31` se automaticky upraví na poslední den kratších měsíců (únor v nepřestupných letech atd.)\n- Ovlivňuje okno výdajů pro **Měsíční rozpočet** a akci **Resetovat výdaje**",
       "defaultTemperature": "## Výchozí teplota\nUrčuje míru náhodnosti odpovědí modelu (0–2).\n\n- **0:** Deterministické — u stejného vstupu vždy stejný výstup\n- **0,3:** Zaměřené — doporučeno pro generování testů a kódu\n- **1+:** Kreativní — pestřejší odpovědi\n- Jednotlivé funkce mohou tuto hodnotu přepsat v konfiguraci promptu",
       "timeout": "## Časový limit požadavku (ms)\nJak dlouho čekat na odpověď, než bude požadavek zrušen.\n\n- Hodnota je v milisekundách (např. `30000` = 30 sekund)\n- Streamované požadavky (např. náhled exportu kódu) tento časový limit ignorují\n- Zvyšte pro pomalé nebo velké modely\n- Rozsah: 5 000 – 600 000 ms",
@@ -7758,6 +8210,8 @@
       "redmineUrl": "## URL adresa Redmine\nZákladní URL adresa vaší instance Redmine.\n\n- Formát: https://redmine.example.com\n- Nezahrnujte /issues ani jiné cesty\n- Musí být přístupná z tohoto serveru",
       "mantisBTApiKey": "## API token MantisBT\nVáš osobní token REST API.\n\n- Vytvořte jej v nastavení účtu MantisBT → API tokeny\n- Je omezen na oprávnění vašeho uživatele; pro sdílené integrace použijte servisní účet",
       "mantisBTUrl": "## URL adresa MantisBT\nZákladní URL adresa vaší instance MantisBT.\n\n- Formát: https://mantisbt.example.com\n- Nezahrnujte /api/rest ani jiné cesty\n- Musí být přístupná z tohoto serveru",
+      "clickupTeamId": "## ID týmu ClickUp (Workspace)\nNumerické ID týmu ClickUp (nazývaného také Workspace), ke kterému úkoly patří.\n\n- Najdete v adrese URL ClickUp: app.clickup.com/{teamId}/...\n- Vyžadováno pro procházení Spaces/Folders/Lists při výběru projektu",
+      "clickupListId": "## Výchozí ID seznamu ClickUp\nSeznam, ve kterém se ve výchozím nastavení vytvářejí nové úkoly.\n\n- Najdete v adrese URL ClickUp nebo pomocí možnosti \"Kopírovat odkaz\" seznamu\n- Volitelné — konkrétní seznam lze zvolit jednotlivě pro každý problém",
       "githubBaseUrl": "## Základní URL adresa API\nÚplný kořen API GitHub pro GitHub Enterprise Server.\n\n- Obvykle končí na /api/v3\n- Ponechte prázdné pro použití api.github.com\n- Musí být přístupný z tohoto serveru"
     },
     "config": {
@@ -7847,8 +8301,8 @@
       "state": "## Stav\nUveďte aktuální stav pracovního postupu těchto testovacích případů.",
       "estimate": "## Odhad\nRučně zadaný odhadovaný čas potřebný k dokončení každého z těchto testovacích případů.",
       "automated": "## Automatizováno\nUdává, zda jsou tyto testovací případy automatizované, nebo ne.",
-      "tags": "## Štítky\nPoužijte relevantní štítky pro kategorizaci a filtrování těchto testovacích případů.",
-      "issues": "## Problémy\nPropojte veškeré související problémy (chyby, úkoly atd.) s těmito testovacími případy."
+      "tags": "## Značky\nUplaťte relevantní značky pro kategorizaci a filtrování těchto testovacích případů.\n\n- **Přidat** přidá vybrané značky ke každému testovacímu případu a zachová značky, které již mají.\n- **Odebrat** odebere vybrané značky z každého testovacího případu, který je má.\n- **Nahradit vše** ponechá každý testovací případ přesně s vybranými značkami.",
+      "issues": "## Problémy\nPropojte všechny související problémy (chyby, úkoly atd.) s těmito testovacími případy.\n\n- **Přidat** propojí vybrané problémy s každým testovacím případem a zachová již propojené problémy.\n- **Odebrat** zruší propojení vybraných problémů z každého testovacího případu, který je má.\n- **Nahradit vše** ponechá každý testovací případ propojený přesně s vybranými problémy."
     },
     "caseField": {
       "displayName": "## Zobrazovaný název\nJedná se o srozumitelný název pole, který se zobrazí uživatelům ve formulářích a zobrazeních. Zvolte jej jasný a výstižný.",
@@ -7913,6 +8367,10 @@
       "lastActiveDate": "## Datum poslední aktivity\nNejnovější datum aktivity.",
       "averageAge": "## Průměrné stáří\nPrůměrné stáří položek ve dnech.",
       "issueCount": "## Počet problémů\nCelkový počet sledovaných problémů.",
+      "linkedCaseCount": "## Propojené případy\nPočet různých testovacích případů propojených s problémy skupiny. Případ propojený s několika problémy ve stejné skupině se počítá jednou.",
+      "firstCaseCreated": "## První vytvořený případ\nKdy byl nejdříve vytvořen testovací případ v této skupině.",
+      "lastCaseCreated": "## Poslední vytvořený případ\nKdy byl nejnověji vytvořen testovací případ v této skupině.",
+      "caseCreationSpan": "## Časový rozsah vytváření případů\nDny mezi nejdřívějším a nejnovějším vytvořením testovacího případu ve skupině — jak dlouho trvalo psaní případů skupiny.",
       "milestoneCount": "## Počet milníků\nCelkový počet milníků.",
       "milestoneCompletionRate": "## Míra dokončení milníků\nProcento dokončených milníků.",
       "averageMilestoneDuration": "## Průměrná doba trvání milníku\nPrůměrná doba trvání milníků ve dnech.",
@@ -7929,6 +8387,9 @@
       "selectionPrecision": "## Přesnost výběru (%)\nZ případů, které analýzy dopadu vybraly a které byly následně provedeny, podíl, který selhal. Prázdné, pokud nic vybraného neběželo."
     },
     "reportDimensions": {
+      "issue": "## Dimenze Problémy\nSeskupuje podle problémů propojených s testovacím případem. Případ propojený s několika problémy se počítá v každém; případy bez propojených problémů spadají do Žádné.",
+      "resultSource": "## Dimenze Zdroj výsledku\nSeskupuje spuštění podle jejich zdroje: výsledky zadané v aplikaci (Ruční) nebo importované automatizované výsledky, jako jsou JUnit (Automatizované).",
+      "rootCause": "## Dimenze Hlavní příčina\nSeskupuje automatizované výsledky podle hlavní příčiny jejich selhání — klasifikace osoby, pokud byla provedena, jinak klasifikace AI. Ruční výsledky, úspěšné výsledky a neklasifikovaná selhání spadají do Žádné.",
       "user": "## Dimenze uživatele\nSeskupuje výsledky podle uživatele, který provedl testy nebo je přiřazen k položkám.",
       "status": "## Dimenze stavu\nSeskupuje výsledky podle stavu provedení testu (např. Úspěšný, Neúspěšný, Blokován).",
       "project": "## Dimenze projektu\nSeskupuje výsledky podle projektu pro analýzu napříč projekty.",
@@ -7961,7 +8422,7 @@
       "dimensions": "## Dimenze\nVyberte dimenze, které chcete analyzovat ve své sestavě. Dimenze jsou atributy kategorizující vaše data, jako je datum, uživatel, stav atd. Pořadí můžete změnit přetažením.",
       "metrics": "## Metriky\nVyberte metriky, které chcete měřit ve své sestavě. Metriky jsou kvantitativní měření odvozená z vašich dat, jako je počet výsledků testů, míra úspěšnosti, průměrný uplynulý čas atd. Pořadí můžete změnit přetažením.",
       "dateRange": "## Rozsah dat\nFiltrujte data vaší zprávy podle specifického časového období. Zvolte předvolbu, jako je \"Posledních 7 dní\", \"Poslední měsíc\" nebo \"Posledních N dní\", nebo vyberte vlastní počáteční a koncové datum v kalendáři.\n\nPředvolba zůstává relativní: uložená zpráva nebo odkaz živého sdílení pracuje s daty znovu pokaždé, když se otevře, v časové zóně. Vlastní data zůstávají pevná. Tento filtr se vztahuje na příslušné pole data pro každý typ zprávy (např. datum provedení pro výsledky testů, datum vytvoření pro testovací případy).",
-      "dimensionFilters": "## Filtry\nZúžte report na konkrétní hodnoty každé vybrané dimenze. Ponechte filtr prázdný, chcete-li zahrnout všechny hodnoty dané dimenze. Datumové dimenze se místo toho filtrují pomocí výběru rozsahu dat."
+      "dimensionFilters": "## Filtry\nZúžte report na konkrétní hodnoty každé vybrané dimenze. Ponechte filtr prázdný, chcete-li zahrnout všechny hodnoty dané dimenze. Přepněte filtr na Vyloučit, chcete-li ponechat vše kromě vybraných hodnot — užitečné pro uložené reporty, které by měly automaticky pokrývat nové hodnoty. Datumové dimenze se místo toho filtrují pomocí výběru rozsahu dat."
     },
     "codeRepository": {
       "name": "## Název úložiště\nPřívětivý zobrazovaný název pro toto připojení úložiště.\n\n- Používá se k identifikaci v nastavení kódového kontextu projektu.\n- Nemusí odpovídat názvu úložiště u poskytovatele.",
@@ -8254,7 +8715,15 @@
     "projectSessionsFilters": "## Filtrování relací\n\nPřepnutím štítku zúžíte seznam. Štítky se vztahují na obě karty, Aktivní i Dokončené, a jsou na tomto zařízení zapamatovány pro tento projekt.\n\n- **Moje relace** — pouze relace, kterých se účastníte: vytvořili jste relaci nebo je vám přiřazena.",
     "projectImpact": "## Dopad\nPřipojte úložiště testované aplikace, aby tento projekt mohl spouštět analýzu dopadu testů: vyberte dva commity a zjistěte, které testovací případy jsou změnami ovlivněny, a připněte testovací případy ke kódu, který pokrývají.",
     "pathPatterns": "## Vzory cest\nKaždý řádek kombinuje základní **cestu** se **vzorem** glob. Řádky se sčítají: soubor je zahrnut, pokud jej některý řádek vyhovuje.\n\n- `src` + `**/*` — vše pod `src`\n- prázdné nebo `.` + `**/*` — každý soubor v úložišti\n- `src` + `**/!(*.test|*.spec).ts` — soubory `.ts` kromě testů\n\n### Vyloučit\nZaškrtněte **Vyloučit** na řádku, abyste odebrali jeho soubory i v případě, že je jiný řádek zahrnuje. Vyloučení se vztahují na selektor souborů a mezipaměť, a pro dopad na změněné soubory analýzy, takže soubor, který se mění téměř v každém pull requestu, přestane stahovat nesouvisející testovací případy. Alespoň jeden řádek musí zůstat nezaškrtnutý.\n\n- prázdné + `**/CHANGELOG*` — každý changelog v kterékoliv hloubce\n- `app` + `build.gradle.kts` — soubor sestavení, který pouze zvyšuje verzi",
-    "projectAutomation": "## Automatizované provedení\nCíle provedení říkají TestPlanIt, kde spustit automatizované případy tohoto projektu: pracovní postup GitHub Actions, kanál GitLab CI nebo podepsaný webhook pro libovolný jiný systém. Když je běh spuštěn, TestPlanIt spustí úlohu s ID běhu a adresou URL plánu; úloha přečte plán, spustí odpovídající testy a vrátí výsledky pomocí reportéra nebo CLI připnutého k tomuto běhu. Cíle mohou být zakázány bez jejich odstranění."
+    "projectAutomation": "## Automatizované provedení\nCíle provedení říkají TestPlanIt, kde spustit automatizované případy tohoto projektu: pracovní postup GitHub Actions, kanál GitLab CI nebo podepsaný webhook pro libovolný jiný systém. Když je běh spuštěn, TestPlanIt spustí úlohu s ID běhu a adresou URL plánu; úloha přečte plán, spustí odpovídající testy a vrátí výsledky pomocí reportéra nebo CLI připnutého k tomuto běhu. Cíle mohou být zakázány bez jejich odstranění.",
+    "userAlerts": "## Oznámení a upozornění\n**Předvolby oznámení** rozhodují, jak vás dosáhneme (v aplikaci, e-mail, přehled) a které typy oznámení vůbec obdržíte.\n\n**Upozornění** sledují testovací metriku a upozorňují své předplatitele, když překročí linii, například výsledek, který trvá o 50% déle než obvyklá doba případu, případ, který selže třikrát za sebou, běh, jehož míra úspěšnosti klesne pod 90%, nebo milník, který je pozadu s dny do konce. Seznam ukazuje každé upozornění ve vašich projektech; přepínač **Upozornit mě** se přihlašuje nebo opouští jeden. **Přidat upozornění** vytváří vaše vlastní v jakémkoli projektu, kde má vaše role **Upozornění** Přidat/Upravit; správci projektů spravují všechna upozornění v jejich projektu a předplatná ostatních lidí. Upozornění se v rámci svého chladícího cyklu spustí maximálně jednou na subjekt a zůstane tiché, dokud nemá dostatek výsledků.",
+    "projectTriage": "## Failure Patterns\nAutomatizovaná selhání, která sdílejí stejnou výjimku, zprávu a horní rámce zásobníku, se seskupují do jednoho **vzoru selhání**. Každý vzor ukazuje, jak často se stalo, které testovací případy a běhy se dotkly, a názor AI na jeho hlavní příčinu (chyba produktu, chyba testu, prostředí nebo instabilní ve výchozím nastavení). Vyřešte nebo ignorujte vzor, jakmile je zpracován; znovu se otevře sám, pokud se selhání vrátí.",
+    "projectTriageSettings": "## Nastavení Failure Patterns\nSeskupování běhů na každém automatizovaném výsledku, který přijde, a nic nestojí. Návrh AI hlavní příčiny používá model AI přiřazený funkci **Failure Patterns: Root Cause** na stránce Modely AI; vypněte jej zde, abyste zachovali seskupování bez jakýchkoli volání AI. **Analyzovat existující výsledky** seskupuje každé automatizované selhání již zaznamenané v tomto projektu.",
+    "projectQuarantine": "## Karanténa testovacích případů\nKaranténa testovacího případu pokračuje v běhu a zaznamenávání výsledků, ale její selhání jsou vynechána z průchodu/selhání běhu a zobrazena jako samostatný počet. Karanténu případu z vzoru selhání, zatímco se příčina řeší. Karanténa se sama zvedne, jakmile případ projde několikrát po sobě nastavené v nastavení Failure Patterns, pokud nebyl označen k ručnímu uvolnění; uvolněte jej zde nebo ze vzoru kdykoli.",
+    "rootCauses": "## Hlavní příčiny\nHlavní příčiny, které Failure Patterns přiřazuje k seskupeným selháním, automaticky nebo ručně. Každá má popis, který AI čte, aby se rozhodla, kdy se vztahuje. Přejmenujte, překolorujte nebo přeuspořádejte, přidejte své vlastní nebo odstraňte ty, které nepoužíváte; odstranění ponechá její vzory bez hlavní příčiny.",
+    "rootCauseDescription": "## Popis\nAI čte tento popis, aby se rozhodla, kdy se hlavní příčina vztahuje na vzor selhání, takže popište důkazy, které na ni ukazují.",
+    "projectRiskSettings": "## Nastavení hodnocení rizika\nKaždý testovací případ dostane skóre rizika 0-100 na základě své historie selhání, nestability, zastarání, kritičnosti propojených požadavků a propojených defektů — deterministické, bez volání umělé inteligence. Skóre se obnovují po příchodu výsledků a během noční prověrky. **Váhy komponent** určují, jak moc se každý signál počítá v poměru k ostatním; nula odstraní komponentu. **Přepočítat všechna skóre** přehodnotí celý projekt nyní místo čekání na noční prověrku.",
+    "reviewRevert": "## Vrácení rozhodnutí při kontrole\nJak dlouho má recenzent čas vrátit zaznamenané rozhodnutí, měřeno od času, kdy se rozhodl. Vrácení vrátí požadavek do fronty recenzenta; pokud už schválení posunulo položku dál, položka se vrátí na místo, kde byla. Správci systému nejsou tímto limitem vázáni a mohou vrátit rozhodnutí jakéhokoli věku. Projekty mohou limit zkrátit v nastavení Pokročilé, ale nikdy jej nerozšiřují."
   },
   "reports": {
     "ui": {
@@ -8322,12 +8791,16 @@
           "unit": "Období",
           "days": "Posledních {count, plural, one {# den} few {# dny} many {# dne} other {# dní}}",
           "weeks": "Posledních {count, plural, one {# týden} few {# týdny} many {# týdne} other {# týdnů}}",
-          "months": "Posledních {count, plural, one {# měsíc} few {# měsíce} many {# měsíce} other {# měsíců}}"
+          "months": "Posledních {count, plural, one {# měsíc} few {# měsíce} many {# měsíce} other {# měsíců}}",
+          "calendarWeeks": "Posledních {count, plural, one {# kalendářní týden} few {# kalendářní týdny} many {# kalendářních týdnů} other {# kalendářních týdnů}}",
+          "calendarMonths": "Posledních {count, plural, one {# kalendářní měsíc} few {# kalendářní měsíce} many {# kalendářních měsíců} other {# kalendářních měsíců}}"
         },
         "rollingUnits": {
           "days": "dny",
           "weeks": "týdny",
-          "months": "měsíce"
+          "months": "měsíce",
+          "calendarWeeks": "kalendářní týdny (od začátku týdne)",
+          "calendarMonths": "kalendářní měsíce (od 1. dne)"
         }
       },
       "dateGrouping": {
@@ -8388,7 +8861,7 @@
           "description": "Vytváření problémů, jejich řešení a analýza dopadu"
         },
         "automationTrends": {
-          "label": "Trendy automatizace",
+          "label": "Trend automatizovaných testovacích případů",
           "description": "Sledujte pokrok v automatizaci týden po týdnu podle priority"
         },
         "flakyTests": {
@@ -8434,6 +8907,10 @@
         "codePinCoverage": {
           "label": "Pokrytí kódových pinů",
           "description": "Kde jsou kódové piny, podle úložiště a adresáře, a kde nedošlo k pokrytí nedávných změn"
+        },
+        "resultsTrend": {
+          "label": "Trend míry selhání výsledků testů",
+          "description": "Míra úspěchu a selhání výsledků testů v průběhu času a zda se míra selhání zlepšuje či zhoršuje"
         }
       },
       "flakyTests": {
@@ -8753,7 +9230,7 @@
           "description": "Využití tokenů, náklady a spolehlivost funkcí LLM napříč projekty"
         },
         "automationTrends": {
-          "label": "Trendy automatizace napříč projekty",
+          "label": "Trend automatizovaných testovacích případů v rámci projektů",
           "description": "Sledujte pokrok automatizace týden po týdnu podle priority napříč projekty"
         },
         "flakyTests": {
@@ -8787,6 +9264,10 @@
         "codePinCoverage": {
           "label": "Pokrytí kódových pinů projektů Cross-Project",
           "description": "Pokrytí kódových pinů ve všech projektech s povolenou analýzou dopadu"
+        },
+        "resultsTrend": {
+          "label": "Trend míry selhání výsledků testů v rámci projektů",
+          "description": "Míra úspěchu a selhání výsledků testů v průběhu času podle projektu a zda se míra selhání zlepšuje či zhoršuje"
         }
       },
       "folderDescendants": {
@@ -8800,7 +9281,11 @@
       },
       "groupedTotal": "Součet {count, plural, one {# řádku} few {# řádků} many {# řádku} other {# řádků}} v této skupině",
       "dimensionFilters": {
-        "allValues": "Všechny hodnoty"
+        "allValues": "Všechny hodnoty",
+        "noValues": "Nic vyloučeno",
+        "modeLabel": "Režim filtru",
+        "include": "Zahrnout",
+        "exclude": "Vyloučit"
       },
       "impactAnalysis": {
         "lookbackDaysHelp": "Analýzy zahájené v rámci tohoto počtu dní. Všechny časy čtou každou analýzu, kterou projekt uchovává.",
@@ -8851,6 +9336,79 @@
         "chart": {
           "byDirectory": "Piny a nepokryté soubory podle adresáře"
         }
+      },
+      "resultsTrend": {
+        "period": "Období",
+        "runSource": "Typy výsledků",
+        "runSources": {
+          "automated": "Automatizované",
+          "manual": "Manuálně"
+        },
+        "showPassRate": "Zobrazit procento úspěšnosti",
+        "showPassRateHelp": "Nakreslete procento úspěšnosti na pravé ose grafu s vlastním přizpůsobeným trendem a přidejte jej do hlavních čísel. Ve výchozím nastavení vypnuto: zpráva se týká míry selhání.",
+        "showFailRate": "Zobrazit míru selhání",
+        "showFailRateHelp": "Nakreslete míru selhání na pravé ose grafu s přizpůsobeným trendem a zobrazte ji v hlavních číslech. Ve výchozím nastavení zapnuto.",
+        "showCounts": "Zobrazit celkový počet výsledků",
+        "showCountsHelp": "Nakreslete součty prošlých, selhavších, přeskočených a ostatních výsledků jako skládané sloupce v grafu vedle sazeb. Ve výchozím nastavení vypnuto: zpráva se týká sazeb.",
+        "countSkipped": "Počítat přeskočené výsledky v sazbách",
+        "countSkippedHelp": "Přeskočené výsledky jsou vynechány ze jmenovatele míry úspěchu a selhání, pokud není toto nastavení zapnuto. Ostatní stavy zůstávají.",
+        "includeAborted": "Zahrnout přerušené testy",
+        "includeAbortedHelp": "Testy v stavu přerušeného testu projektu se počítají, pokud to není vypnuto.",
+        "latestAttemptOnly": "Pouze poslední pokus",
+        "latestAttemptOnlyHelp": "Počítejte jeden výsledek na případ na test, jeho poslední pokus, místo každého importovaného pokusu.",
+        "failRate": "Míra selhání",
+        "skipped": "Přeskočeno",
+        "other": "Ostatní",
+        "inProgress": "probíhá",
+        "verdict": {
+          "better": "Míra selhání se zlepšuje",
+          "worse": "Míra selhání se zhoršuje",
+          "steady": "Míra selhání se drží na stejné úrovni",
+          "notEnough": "Dosud není dostatek úplných období k určení trendu.",
+          "notEnoughDetail": "Trend vyžaduje nejméně dvě úplná období s výsledky.",
+          "detail": "Trendová čára běží od {start} do {end}, změna {change} bodů během {count} úplných {grouping, select, daily {dní} weekly {týdnů} monthly {měsíců} quarterly {čtvrtletí} other {let}}."
+        },
+        "stats": {
+          "lastComplete": "Poslední úplné období ({period}), v porovnání s průměrem úplných období před ním.",
+          "results": "Provedené výsledky",
+          "runs": "Testy",
+          "deltaPoints": "{change} bodů v porovnání s předchozím {count, plural, one {# období} few {# období} many {# období} other {# období}}",
+          "deltaPercent": "{change}% v porovnání s předchozím {count, plural, one {# období} few {# období} many {# období} other {# období}}",
+          "noBaseline": "Nic staršího k porovnání"
+        },
+        "chart": {
+          "allProjects": "Všechny vybrané projekty",
+          "period": "{grouping, select, weekly {Týden od {date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {Týden od {period}} other {{period}}} (probíhá)",
+          "rateTrend": "Trend {rate}"
+        },
+        "heatmap": {
+          "title": "Míra selhání podle projektu a období",
+          "help": "Každá buňka je míra selhání projektu za období; stínování dosahuje plné intenzity na 35%. Trendový sloupec je změna v přizpůsobené trendové čáře míry selhání během úplných období. * označuje období v pokroku.",
+          "trend": "Trend"
+        },
+        "trend": {
+          "points": "{change} bodů"
+        },
+        "detail": {
+          "title": "Výsledky a sazby podle období"
+        },
+        "method": {
+          "title": "Jak se to počítá",
+          "runSource": {
+            "automated": "Pouze automatizované testy: každý typ testu kromě manuálního se jejich importovanými výsledky. Test patří do období, ve kterém byl vytvořen.",
+            "manual": "Pouze ruční testy s výsledky na nich zaznamenanými. Test patří do období, ve kterém byl vytvořen.",
+            "both": "Každý test: automatizované testy se jejich importovanými výsledky a manuální testy s výsledky na nich zaznamenanými. Test patří do období, ve kterém byl vytvořen."
+          },
+          "periods": "{grouping, select, daily {Dny} weekly {Týdny (počínaje pondělím)} monthly {Měsíce} quarterly {Čtvrtletí} other {Roky}} se řezají v {timezone}. Aktuální je v pokroku a je vyloučen z trendu a hlavních čísel.",
+          "everyAttempt": "Opakovaný test se počítá jednou za pokus.",
+          "latestAttempt": "Počítá se pouze poslední pokus každého případu v testu.",
+          "skippedExcluded": "Přeskočené výsledky (stav, který je dokončen bez úspěchu nebo selhání) jsou vynechány z procentuální sazby úspěchu a selhání; ostatní stavy zůstávají.",
+          "skippedCounted": "Přeskočené výsledky se počítají v procentuální sazbě úspěchu a selhání.",
+          "abortedIncluded": "Testy v stavu přerušeného testu jsou zahrnuty.",
+          "abortedExcluded": "Testy v stavu přerušeného testu jsou vyloučeny.",
+          "trend": "Trend je přímka přizpůsobená míře selhání během úplných období s výsledky. Změna více než jednoho bodu tak či onak se nazývá lepší nebo horší."
+        }
       }
     },
     "errors": {
@@ -8881,6 +9439,9 @@
       "issueType": "Typ problému",
       "issueTracker": "Nástroj pro sledování problémů",
       "issueStatus": "Stav problému",
+      "issue": "Problém",
+      "resultSource": "Zdroj výsledku",
+      "rootCause": "Hlavní příčina",
       "tag": "Štítek",
       "feature": "Funkce",
       "model": "Model",
@@ -8918,6 +9479,10 @@
       "averageElapsed": "Průměrný čas na spuštění",
       "lastActiveDate": "Datum poslední aktivity",
       "issueCount": "Počet problémů",
+      "linkedCaseCount": "Propojené případy",
+      "firstCaseCreated": "První vytvořený případ",
+      "lastCaseCreated": "Poslední vytvořený případ",
+      "caseCreationSpan": "Časový rozsah vytváření případů (dny)",
       "averageAge": "Průměrné stáří (dny)",
       "sessionCount": "Počet relací",
       "activeSessions": "Aktivní relace",
@@ -9395,9 +9960,12 @@
       "exists": "Existuje",
       "not_exists": "Neexistuje"
     },
+    "recordMatches": "{count, plural, one {# záznam odpovídající ID} few {# záznamy odpovídající ID} many {# záznamů odpovídajících ID} other {# záznamů odpovídajících ID}}",
     "help": {
       "exactPhrases": "Přesné fráze",
       "exactPhrasesDesc": "Chcete-li vyhledat přesné fráze, uzavřete výrazy do uvozovek:",
+      "ids": "ID",
+      "idsDesc": "Zadejte ID s # nebo bez něj, abyste našli záznam přímo. Oddělte několik pomocí OR, čárek nebo mezer, abyste je našli všechny:",
       "proximity": "Vyhledávání podle blízkosti",
       "proximityDesc": "slova vzdálená od sebe maximálně N pozic",
       "booleanOperators": "Booleovské operátory",
@@ -9970,5 +10538,660 @@
     "update": "Aktualizovat pomocí aktuálního mapování",
     "updateConfirm": "„{name}",
     "savePrompt": "Uložit toto mapování sloupců pro příště?"
+  },
+  "alerts": {
+    "title": "Upozornění",
+    "description": "Upozornění, která sledujete ve vašich projektech, a upozornění v těchto projektech, kterých se můžete účastnit.",
+    "addRule": "Přidat upozornění",
+    "editRule": "Upravit upozornění",
+    "deleteRule": "Smazat upozornění",
+    "deleteConfirm": "Smazat upozornění \"{name}\"? Jeho předplatitelé přestanou dostávat oznámení a může být obnoven z koše.",
+    "pauseTitle": "Pozastavit toto upozornění pro všechny?",
+    "pauseConfirm": "\"{name}\" se přestane spouštět pro {count, plural, =0 {všechny} one {jeho jediného předplatitele} =2 {oba jeho předplatitele} other {všech # jeho předplatitelů}}, ne jen pro vás, dokud jej někdo znovu nepovolí. Chcete-li zastavit pouze svá vlastní oznámení, místo toho vypněte Upozornit mě.",
+    "columns": {
+      "name": "Pravidlo",
+      "condition": "Podmínka",
+      "scope": "Rozsah",
+      "subscribers": "Předplatitelé",
+      "lastFired": "Naposledy spuštěno",
+      "enabled": "Povoleno",
+      "notifyMe": "Upozornit mě",
+      "actions": "Akce",
+      "project": "Projekt"
+    },
+    "neverFired": "Nikdy",
+    "systemScope": "Systém",
+    "systemSubjects": {
+      "audit": "Protokol auditu",
+      "lockouts": "Uživatelské účty",
+      "automated-results": "Automatizované výsledky"
+    },
+    "paused": "Pozastaveno",
+    "filters": {
+      "label": "Filtrovat upozornění",
+      "on": "Zapnuto",
+      "off": "Vypnuto"
+    },
+    "history": "Historie",
+    "subscribers": "Předplatitelé",
+    "subscriberCount": "{count, plural, =0 {Žádní předplatitelé} one {# předplatitel} other {# předplatitelů}}",
+    "toasts": {
+      "created": "Pravidlo vytvořeno.",
+      "updated": "Pravidlo aktualizováno.",
+      "deleted": "Pravidlo odstraněno.",
+      "enabled": "Pravidlo povoleno.",
+      "disabled": "Pravidlo pozastaveno.",
+      "subscribed": "Budete upozorněni, když se toto pravidlo spustí.",
+      "unsubscribed": "Nebudete více upozorňováni tímto pravidlem.",
+      "subscriberAdded": "{name} se přihlásil.",
+      "subscriberRemoved": "{name} se odhlásil.",
+      "saveError": "Nepodařilo se uložit pravidlo.",
+      "subscriptionError": "Nepodařilo se aktualizovat předplatné."
+    },
+    "form": {
+      "name": "Název",
+      "namePlaceholder": "např. Zpomalení toku v nákupním košíku",
+      "description": "Popis",
+      "descriptionPlaceholder": "Volitelná poznámka pro ostatní předplatitele",
+      "metric": "Metrika",
+      "metricLocked": "Metriku nelze změnit po vytvoření upozornění. Místo toho vytvořte nové upozornění.",
+      "condition": "Podmínka",
+      "scope": "Rozsah",
+      "scopeType": "Sledovat",
+      "scopeFolder": "Složka",
+      "scopeTag": "Štítek",
+      "scopeCase": "Testovací případ",
+      "scopeMilestone": "Milník",
+      "scopeRunName": "Název běhu obsahuje",
+      "scopeRunNamePlaceholder": "např. Noční",
+      "scopePickFolder": "Vyberte složku",
+      "scopePickTag": "Vyberte štítek",
+      "scopePickCase": "Vyberte testovací případ",
+      "scopePickMilestone": "Vyberte milník",
+      "scopeWebhook": "Webhook",
+      "scopePickWebhook": "Vyberte webhook",
+      "scopeLlmIntegration": "Integrace",
+      "scopePickLlmIntegration": "Vyberte integraci",
+      "scopeCodeRepository": "Připojení úložiště",
+      "scopePickCodeRepository": "Vyberte připojení úložiště",
+      "scopeIntegration": "Integrace",
+      "scopePickIntegration": "Vyberte integraci",
+      "scopeQueue": "Fronta",
+      "scopePickQueue": "Vyberte frontu",
+      "systemScope": "Systém",
+      "systemScopeHelp": "Upozornění systému sleduje něco spravovaného pro celou instalaci, například rozpočet modelu AI. Vidí jej pouze správci.",
+      "coverageBasis": "Počítat jako pokryté",
+      "coverageBasisOptions": {
+        "LINKED": "Propojeno s alespoň jedním testovacím případem",
+        "PASSING": "Poslední výsledek prošel"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "Okno výchozího nastavení (běhy)",
+        "WEBHOOK_FAILURE_RATE": "Poslední doručení",
+        "LLM_ERROR_RATE": "Poslední požadavky"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "Minimální běhy",
+        "WEBHOOK_FAILURE_RATE": "Minimální doručení",
+        "LLM_ERROR_RATE": "Minimální požadavky"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "Dny před splatností milníku",
+        "STALE_CASES": "Dny bez výsledku",
+        "LLM_RATE_LIMITED": "Během posledních (hodin)"
+      },
+      "scopeCaseSearch": "Hledat podle názvu nebo ID",
+      "direction": "Směr",
+      "baselineType": "Výchozí nastavení",
+      "baselineWindow": "Okno výchozího nastavení (výsledky)",
+      "minSamples": "Minimální výsledky",
+      "resultSource": "Výsledky k sledování",
+      "evaluateOn": "Vyhodnotit",
+      "daysRemaining": "Zbývající dny",
+      "cooldown": "Chladící doba (minuty)",
+      "cooldownHelp": "Poté, co se pravidlo spustí pro subjekt, pro daný subjekt bude mlčet tak dlouho. 0 deaktivuje chladící dobu.",
+      "emitWebhook": "Odeslat událost webhooku alert.triggered",
+      "emitWebhookHelp": "Odchozí webhoky přihlášené k Upozornění obdrží stejnou datovou část, aby mohly příspěvky publikovat nástroje Slack nebo jiné.",
+      "enabled": "Povoleno",
+      "audience": "Publikum",
+      "audienceHelp": "Kdo je upozorněn, když se upozornění spustí. Jste přidáni ve výchozím nastavení do upozornění, která vytvoříte; kdokoli se může odhlásit nebo znovu připojit.",
+      "audienceHelpSystem": "Kdo je upozorněn, když se upozornění spustí. V publiku upozornění systému mohou být pouze správci; jste přidáni ve výchozím nastavení.",
+      "searchMembers": "Hledat členy projektu",
+      "you": "vy",
+      "cannotManageSubscribers": "Můžete se přihlásit nebo odhlásit sami. Přihlášení jiných členů vyžaduje práva správy projektů.",
+      "validation": {
+        "nameRequired": "Zadejte název.",
+        "scopeRequired": "Zvolte, co pravidlo sleduje.",
+        "runNameRequired": "Zadejte část názvu běhu.",
+        "percentRange": "Zadejte procento mezi {min} a {max}.",
+        "countRange": "Zadejte celé číslo mezi {min} a {max}.",
+        "windowRange": "Zadejte okno mezi {min} a {max} výsledky.",
+        "minSamplesRange": "Zadejte hodnotu mezi {min} a {max}.",
+        "minSamplesWindow": "Minimální výsledky nemohou překročit okno výchozího nastavení.",
+        "cooldownRange": "Zadejte minuty mezi {min} a {max}.",
+        "daysRange": "Zadejte dny mezi {min} a {max}.",
+        "windowBelowMinSamples": "Okno výchozího nastavení nesmí být menší než minimální výsledky."
+      },
+      "project": "Projekt",
+      "projectPlaceholder": "Vyberte projekt",
+      "projectHelp": "Jsou uvedeny pouze projekty, kde vaše role může vytvářet upozornění.",
+      "dialogDescription": "Sledujte jednu testovací metriku a upozorňujte publikum, když překročí linii, kterou nastavíte.",
+      "metricSearch": "Hledat metriky",
+      "metricNoMatch": "Žádná metrika neodpovídá.",
+      "checkedDaily": "Kontrolováno denně",
+      "checkedHourly": "Kontrolováno každou hodinu",
+      "needsProject": "Nejdříve vyberte projekt.",
+      "followAlert": "Upozornit mě",
+      "leaveAlert": "Přestaňte mě upozorňovat",
+      "delivery": "Doručení",
+      "thresholdLabels": {
+        "RESULT_DURATION_DEVIATION": "Odchylka (%)",
+        "CASE_REGRESSED": "Prahová hodnota",
+        "CONSECUTIVE_FAILURES": "Selhání za sebou",
+        "CASE_FLAKY": "Přepnutí",
+        "RUN_PASS_RATE_BELOW": "Míra úspěšnosti pod (%)",
+        "RUN_FAILURE_COUNT": "Neúspěšné výsledky, více než",
+        "RUN_DURATION_DEVIATION": "Odchylka (%)",
+        "RUN_NOT_PROGRESSING": "Nečinnost déle než (hodin)",
+        "AUTOMATED_EXECUTION_FAILED": "Prahová hodnota",
+        "RUN_UNTESTED_SHARE": "Netestované případy přes (%)",
+        "RUN_ISSUES_OPENED": "Propojené problémy, více než",
+        "NEW_FAILURE_SIGNATURES": "Nové vzory selhání, více než",
+        "SESSION_OVERRUN": "Více než odhad o více (%)",
+        "MILESTONE_BEHIND": "Dokončení pod (%)",
+        "MILESTONE_OVERDUE": "Prahová hodnota",
+        "REQUIREMENT_COVERAGE_BELOW": "Pokrytí pod (%)",
+        "STALE_CASES": "Staré případy, více než",
+        "AUTOMATION_SHARE_BELOW": "Automatizovaný podíl pod (%)",
+        "WEBHOOK_FAILURE_RATE": "Míra selhání přes (%)",
+        "LLM_BUDGET_USED": "Rozpočet použitý (%)",
+        "LLM_ERROR_RATE": "Neúspěšné požadavky přes (%)",
+        "LLM_RATE_LIMITED": "Požadavky s omezenou rychlostí, alespoň",
+        "CODE_REPOSITORY_CACHE_FAILING": "Selhávání alespoň (hodin)",
+        "INTEGRATION_REAUTH_NEEDED": "Uživatelé potřebující znovu ověření, alespoň",
+        "QUEUE_FAILED_JOBS": "Neúspěšné úlohy, více než",
+        "QUEUE_BACKLOG": "Nejstarší čekající úloha starší než (minuty)",
+        "AUDIT_BACKLOG": "Nejstarší nezpracovaná změna starší než (minuty)",
+        "ACCOUNT_LOCKOUTS": "Uzamčené účty, alespoň",
+        "NO_AUTOMATED_RESULTS": "Bez automatizovaných výsledků pro (hodin)"
+      }
+    },
+    "direction": {
+      "ABOVE": "Výše (pomalejší)",
+      "BELOW": "Níže (rychlejší)",
+      "EITHER": "Výše nebo níže"
+    },
+    "baseline": {
+      "MEAN": "Průměr",
+      "MEDIAN": "Medián"
+    },
+    "resultSource": {
+      "MANUAL": "Manuální výsledky",
+      "AUTOMATED": "Automatizované výsledky",
+      "BOTH": "Manuální a automatizované"
+    },
+    "evaluateOn": {
+      "RUN_COMPLETION": "Když se běh dokončí",
+      "AS_RESULTS_ARRIVE": "Jak přicházejí výsledky"
+    },
+    "scopeType": {
+      "PROJECT": "Celý projekt",
+      "FOLDER": "Případy ve složce",
+      "TAG": "Případy se štítkem",
+      "CASE": "Jeden testovací případ",
+      "RUN_NAME": "Běhy, jejichž název obsahuje",
+      "MILESTONE": "Jeden milník",
+      "WEBHOOK": "Jeden webhook"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "Všechny relace",
+      "TAG": "Relace se štítkem"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "Všechny odchozí webhoky",
+      "WEBHOOK": "Jeden webhook"
+    },
+    "scopeTypeLlm": {
+      "PROJECT": "Všechny integrace modelů AI",
+      "LLM_INTEGRATION": "Jedna integrace"
+    },
+    "scopeTypeCodeRepositories": {
+      "PROJECT": "Všechna připojení úložiště",
+      "CODE_REPOSITORY": "Jedno připojení úložiště"
+    },
+    "scopeTypeIntegrations": {
+      "PROJECT": "Všechny integrace",
+      "INTEGRATION": "Jedna integrace"
+    },
+    "scopeTypeQueues": {
+      "PROJECT": "Všechny fronty",
+      "QUEUE": "Jedna fronta"
+    },
+    "scopeTypeSystem": {
+      "PROJECT": "Celá instalace"
+    },
+    "scopeTypeRuns": {
+      "PROJECT": "Všechny běhy",
+      "TAG": "Běhy se štítkem",
+      "RUN_NAME": "Běhy, jejichž název obsahuje"
+    },
+    "scopeTypeMilestones": {
+      "PROJECT": "Všechny milníky",
+      "MILESTONE": "Jeden milník"
+    },
+    "scopeDisplay": {
+      "PROJECT": "Celý projekt",
+      "FOLDER": "Složka: {name}",
+      "TAG": "Štítek: {name}",
+      "CASE": "Případ: {name}",
+      "RUN_NAME": "Běhy obsahující \"{text}\"",
+      "MILESTONE": "Milník: {name}",
+      "WEBHOOK": "Webhook: {name}",
+      "LLM_INTEGRATION": "Integrace: {name}",
+      "ALL_LLM_INTEGRATIONS": "Všechny integrace modelů AI",
+      "CODE_REPOSITORY": "Úložiště: {name}",
+      "ALL_CODE_REPOSITORIES": "Všechna připojení úložiště",
+      "INTEGRATION": "Integrace: {name}",
+      "ALL_INTEGRATIONS": "Všechny integrace",
+      "QUEUE": "Fronta: {name}",
+      "ALL_QUEUES": "Všechny fronty",
+      "WHOLE_INSTALLATION": "Celá instalace",
+      "missing": "(odebráno)"
+    },
+    "subjectType": {
+      "CASE": "Testovací případ",
+      "RUN": "Testovací běh",
+      "MILESTONE": "Milník",
+      "SESSION": "Relace",
+      "PROJECT": "Projekt",
+      "WEBHOOK": "Webhook"
+    },
+    "metrics": {
+      "RESULT_DURATION_DEVIATION": {
+        "label": "Doba trvání výsledku se odchyluje od výchozího nastavení",
+        "description": "Výsledek trvá mnohem déle nebo kratší dobu než nedávné výsledky případu. Výsledky bez uplynulého času se ignorují.",
+        "summary": "Doba trvání výsledku je více než {threshold}% {direction, select, ABOVE {výše} BELOW {níže} other {výše nebo níže}} {baseline, select, MEAN {průměru} other {mediánu}} posledních {window} výsledků případu, po minimálně {minSamples} výsledcích"
+      },
+      "CASE_REGRESSED": {
+        "label": "Případ se regresoval",
+        "description": "Případ, který prošel svými nedávnými výsledky, nyní selže. Zachytí nové selhání stabilního případu.",
+        "summary": "Případ selže po průchodu posledních {window} výsledků"
+      },
+      "CASE_RECOVERED": {
+        "label": "Případ se zotavil",
+        "description": "Případ prošel po neúspěšném průchodu každého ze svých posledních výsledků.",
+        "summary": "Případ prošel po selhání posledních {window, plural, one {# výsledku} few {# výsledků} many {# výsledků} other {# výsledků}}"
+      },
+      "CONSECUTIVE_FAILURES": {
+        "label": "Postupné selhání",
+        "description": "Případ selže daný počet krát za sebou.",
+        "summary": "Případ selže {threshold, plural, one {# krát} few {# krát} many {# krát} other {# krát}} za sebou"
+      },
+      "CASE_FLAKY": {
+        "label": "Případ se stal nestabilní",
+        "description": "Případ se opakovaně přepíná mezi úspěchem a selháním v rámci svých nedávných výsledků. Používá stejné vstupy jako zpráva Flaky Tests.",
+        "summary": "Případ se přepíná mezi úspěchem a selháním minimálně {threshold, plural, one {# krát} few {# krát} many {# krát} other {# krát}} v posledních {window} výsledcích"
+      },
+      "RUN_PASS_RATE_BELOW": {
+        "label": "Míra úspěšnosti běhu pod prahovou hodnotou",
+        "description": "Míra úspěšnosti běhu, počítaná nad výsledky s výsledkem úspěchu nebo selhání, klesne pod procento.",
+        "summary": "Míra úspěšnosti běhu je pod {threshold}% jakmile je k dispozici minimálně {minSamples} výsledků s výsledkem, {evaluateOn, select, AS_RESULTS_ARRIVE {vyhodnoceno jak přicházejí výsledky} other {vyhodnoceno po dokončení běhu}}"
+      },
+      "RUN_FAILURE_COUNT": {
+        "label": "Počet selhání běhu",
+        "description": "Běh má více než daný počet neúspěšných výsledků.",
+        "summary": "Běh má více než {threshold, plural, one {# neúspěšný výsledek} few {# neúspěšné výsledky} many {# neúspěšných výsledků} other {# neúspěšných výsledků}}, {evaluateOn, select, AS_RESULTS_ARRIVE {vyhodnoceno jak přicházejí výsledky} other {vyhodnoceno po dokončení běhu}}"
+      },
+      "RUN_DURATION_DEVIATION": {
+        "label": "Doba trvání běhu se odchyluje od výchozího nastavení",
+        "description": "Celková doba trvání dokončeného běhu se odchyluje od běhů, které jeho rozsah seskupuje dohromady (stejný štítek nebo fragment názvu).",
+        "summary": "Doba trvání dokončeného běhu je více než {threshold}% {direction, select, ABOVE {výše} BELOW {níže} other {výše nebo níže}} {baseline, select, MEAN {průměru} other {mediánu}} posledních {window} běhů, po minimálně {minSamples} běhech"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "Běh nepostupuje",
+        "description": "Otevřený běh nemá nový výsledek daný počet hodin. Kontrolováno každou hodinu.",
+        "summary": "Otevřený běh nemá nový výsledek po dobu více než {threshold, plural, one {# hodiny} few {# hodin} many {# hodin} other {# hodin}}"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "Automatické spuštění selhalo",
+        "description": "Automatické spuštění běhu se nezdaří, nelze jej odeslat nebo vypršel časový limit.",
+        "summary": "Automatické spuštění se nezdaří, nelze jej odeslat nebo vypršel časový limit"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "Podíl netestovaných v běhu",
+        "description": "Příliš mnoho případů běhu stále nemá výsledek s několika málo dny před splatností milníku. Kontrolováno denně.",
+        "summary": "Více než {threshold}% případů běhu nemá výsledek s {days, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} nebo méně před splatností milníku"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "Problémy otevřené z běhu",
+        "description": "Více než daný počet problémů je propojen s výsledky běhu.",
+        "summary": "Více než {threshold, plural, one {# problém je} few {# problémy jsou} many {# problémů je} other {# problémů je}} propojen s výsledky běhu, {evaluateOn, select, AS_RESULTS_ARRIVE {vyhodnoceno jak přicházejí výsledky} other {vyhodnoceno po dokončení běhu}}"
+      },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "Nové vzory selhání v běhu",
+        "description": "Běh zavádí vzory selhání, které projekt ještě neviděl. Vyžaduje Failure Patterns povolenou pro projekt.",
+        "summary": "Více než {threshold, plural, one {# vzor selhání se objeví} few {# vzory selhání se objeví} many {# vzorů selhání se objeví} other {# vzorů selhání se objeví}} poprvé v běhu, {evaluateOn, select, AS_RESULTS_ARRIVE {vyhodnoceno, když výsledky přijdou} other {vyhodnoceno, když se běh dokončí}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "Relace překročila odhad",
+        "description": "Uplynulý čas dokončené relace překročuje její odhad o procento.",
+        "summary": "Uplynulý čas dokončené relace je více než {threshold}% nad jejím odhadem"
+      },
+      "MILESTONE_BEHIND": {
+        "label": "Milník je pozadu",
+        "description": "Případy běhu milníku nejsou dost dokončeny s několika málo dny před splatností. Kontrolováno denně.",
+        "summary": "Milník je pod {threshold}% hotov s {days, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} nebo méně zbývajícím"
+      },
+      "MILESTONE_OVERDUE": {
+        "label": "Milník je po splatnosti",
+        "description": "Splatnost milníku již uplynula a není dokončen. Kontrolováno denně.",
+        "summary": "Milník překračuje svůj termín bez dokončení"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "Pokrytí požadavků pod prahovou hodnotou",
+        "description": "Méně než daný podíl požadavků projektu se počítá jako pokryté. Kontrolováno denně.",
+        "summary": "Méně než {threshold}% požadavků {basis, select, PASSING {mají procházející poslední výsledek} other {je propojen s alespoň jedním testovacím případem}}"
+      },
+      "STALE_CASES": {
+        "label": "Staré případy",
+        "description": "Více než daný počet případů přešlo bez výsledku daný počet dní. Kontrolováno denně.",
+        "summary": "Více než {threshold, plural, one {# případ má} few {# případy mají} many {# případů má} other {# případů má}} žádný výsledek za {days, plural, one {# den} few {# dny} many {# dny} other {# dny}}"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "Podíl automatizace pod prahovou hodnotou",
+        "description": "Méně než daný podíl případů v rozsahu jsou automatizovány. Kontrolováno denně.",
+        "summary": "Méně než {threshold}% případů je automatizováno"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "Míra selhání webhooku",
+        "description": "Příliš mnoho nedávných doručení odchozího webhooku selhalo. Kontrolováno každou hodinu.",
+        "summary": "Více než {threshold}% posledních {window} doručení odchozího webhooku selhalo, po minimálně {minSamples} doručeních"
+      },
+      "LLM_BUDGET_USED": {
+        "label": "Rozpočet AI použitý",
+        "description": "Výdaje integrace modelu AI za své fakturační období dosáhnou podílu jeho měsíčního rozpočtu. Spustí se jednou za období pro každou integraci.",
+        "summary": "Výdaje dosáhnou {threshold}% měsíčního rozpočtu integrace"
+      },
+      "LLM_ERROR_RATE": {
+        "label": "Míra chyby požadavku AI",
+        "description": "Příliš mnoho nedávných požadavků integrace modelu AI selhalo.",
+        "summary": "Více než {threshold}% posledních {window} požadavků integrace selhalo, po minimálně {minSamples} požadavcích"
+      },
+      "LLM_RATE_LIMITED": {
+        "label": "Omezování rychlosti poskytovatele AI",
+        "description": "Poskytovatel opakovaně omezoval požadavky integrace modelu AI.",
+        "summary": "Poskytovatel omezil alespoň {threshold, plural, one {# požadavek} few {# požadavky} many {# požadavků} other {# požadavků}} během {days, plural, one {# hodiny} few {# hodin} many {# hodin} other {# hodin}}"
+      },
+      "CODE_REPOSITORY_CACHE_FAILING": {
+        "label": "Mezipaměť úložiště selhává",
+        "description": "Připojení úložiště kódu neobnovilo svou mezipaměť úspěšně chvíli. Kontrolováno každou hodinu.",
+        "summary": "Mezipaměť připojení úložiště selhává již více než {threshold, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}}"
+      },
+      "INTEGRATION_REAUTH_NEEDED": {
+        "label": "Opětovné ověření integrace je nutné",
+        "description": "Mnoho uživatelů ztratilo připojení k integraci a musí se znovu ověřit. Kontrolováno denně.",
+        "summary": "Alespoň {threshold, plural, one {# uživatel musí} few {# uživatelé musí} many {# uživatelů musí} other {# uživatelů musí}} znovu ověřit integraci"
+      },
+      "QUEUE_FAILED_JOBS": {
+        "label": "Neúspěšné úlohy fronty",
+        "description": "Fronta na pozadí obsahuje příliš mnoho neúspěšných úloh. Kontrolováno každou hodinu.",
+        "summary": "Více než {threshold, plural, one {# úloha selhala} few {# úlohy selhaly} many {# úloh selhalo} other {# úloh selhalo}} ve frontě"
+      },
+      "QUEUE_BACKLOG": {
+        "label": "Fronta je přetížena",
+        "description": "Nejstarší čekající úloha fronty na pozadí čeká příliš dlouho, znamení zastaveného pracovníka. Kontrolováno každou hodinu.",
+        "summary": "Nejstarší čekající úloha fronty je starší než {threshold, plural, one {# minuta} few {# minuty} many {# minut} other {# minut}}"
+      },
+      "AUDIT_BACKLOG": {
+        "label": "Neuvolnění záznamů auditu",
+        "description": "Zachycené změny se nezapisují do protokolu auditu, znamení zastaveného pracovníka auditu. Kontrolováno každou hodinu.",
+        "summary": "Nejstarší nezpracovaná změna auditu je starší než {threshold, plural, one {# minuta} few {# minuty} many {# minut} other {# minut}}"
+      },
+      "ACCOUNT_LOCKOUTS": {
+        "label": "Uzamčení účtů",
+        "description": "Několik účtů je zároveň uzamčeno po neúspěšných přihlášeních, znamení útoku na vyplňování přihlašovacích údajů. Kontrolováno každou hodinu.",
+        "summary": "Alespoň {threshold, plural, one {# účet je} few {# účty jsou} many {# účtů je} other {# účtů je}} uzamčen po neúspěšných přihlášeních"
+      },
+      "NO_AUTOMATED_RESULTS": {
+        "label": "Bez automatizovaných výsledků",
+        "description": "Žádný automatizovaný testovací výsledek nepřišel z žádného potrubí nějakou dobu. Kontrolováno denně.",
+        "summary": "Žádný automatizovaný výsledek nebyl přijat za {threshold, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}}"
+      }
+    },
+    "sourceSummary": "Výsledky: {source, select, MANUAL {manuální} AUTOMATED {automatizované} other {manuální a automatizované}}",
+    "historyDialog": {
+      "title": "Historie: {name}",
+      "empty": "Toto pravidlo se ještě nespustilo.",
+      "columns": {
+        "firedAt": "Spuštěno",
+        "subject": "Subjekt",
+        "observed": "Pozorováno",
+        "threshold": "Prahová hodnota",
+        "notified": "Oznámeno"
+      },
+      "webhookSent": "Webhook odeslán"
+    },
+    "descriptionFor": "Upozornění {name} sleduje a další upozornění v jejich projektech.",
+    "empty": "Ve vašich projektech ještě nejsou žádná upozornění.",
+    "emptyCanCreate": "Ve vašich projektech ještě nejsou žádná upozornění. Přidejte si jeden, aby mohli začít.",
+    "pageDescription": "Jak jste upozorňováni, co vám řekneme a která upozornění sledujete.",
+    "pageDescriptionFor": "Jak {name} je upozorňován a která upozornění sledují.",
+    "pageTabs": {
+      "alerts": "Upozornění",
+      "notifications": "Oznámení"
+    },
+    "metricGroups": {
+      "CASE": "Výsledky testovacího případu",
+      "RUN": "Testovací běhy",
+      "SESSION": "Relace",
+      "MILESTONE": "Milníky",
+      "PROJECT": "Stav projektu",
+      "WEBHOOK": "Webhoky",
+      "LLM_INTEGRATION": "Modely AI",
+      "CODE_REPOSITORY": "Úložiště kódu",
+      "INTEGRATION": "Integrace",
+      "QUEUE": "Fronty na pozadí",
+      "SYSTEM": "Instalace"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Otevřít",
+      "RESOLVED": "Vyřešeno",
+      "IGNORED": "Ignorováno"
+    },
+    "unclassified": "Žádná hlavní příčina",
+    "source": {
+      "AI": "Hlavní příčina navržena AI",
+      "labelAI": "AI",
+      "labelMANUAL": "Manuální"
+    },
+    "columns": {
+      "classification": "Hlavní příčina",
+      "occurrences": "Výskyty",
+      "firstSeen": "Poprvé viděno",
+      "lastSeen": "Naposledy viděno",
+      "classifiedBy": "Nastaveno"
+    },
+    "filters": {
+      "searchPlaceholder": "Hledat vzory selhání...",
+      "flakyOnly": "Kandidáti na flaky",
+      "sourceAll": "Nastaveno kýmkoli",
+      "sourceAi": "Nastaveno AI",
+      "sourceManual": "Nastaveno ručně",
+      "sourceNone": "Nenastaveno"
+    },
+    "actions": {
+      "resolve": "Vyřešit",
+      "ignore": "Ignorovat",
+      "classify": "Navrhnout hlavní příčinu s AI",
+      "setClassification": "Nastavit hlavní příčinu"
+    },
+    "detail": {
+      "exceptionType": "Typ výjimky",
+      "normalizedMessage": "Normalizovaná zpráva",
+      "frames": "Horní stack frames",
+      "sampleTrace": "Poslední selhání",
+      "affectedCases": "{count, plural, one {# ovlivněný testovací případ} few {# ovlivněné testovací případy} many {# ovlivněných testovacích případů} other {# ovlivněných testovacích případů}}",
+      "recentOccurrences": "{count, plural, one {# nedávný výskyt} few {# nedávné výskyty} many {# nedávných výskytů} other {# nedávných výskytů}}",
+      "rationale": "Zdůvodnění",
+      "suggestedIssueTitle": "Navrhovaný název problému",
+      "nextStep": "Navrhovaný další krok",
+      "noAi": "Zatím žádný návrh AI.",
+      "noDetails": "Toto selhání nemělo zprávu nebo stack trace, takže je seskupeno podle testovacího případu.",
+      "notesPlaceholder": "Poznámky pro tým...",
+      "lastRun": "Poslední běh",
+      "aiSuggestion": "Návrh AI",
+      "unlinkConfirmDescription": "Tím se problém z tohoto vzoru selhání odstraní. Samotný problém se uchovává a lze jej znovu připojit později.",
+      "signatureLabel": "Vzor selhání",
+      "affectedCasesLabel": "Ovlivněné testovací případy"
+    },
+    "flakyCandidate": "Kandidát na flaky",
+    "flakyCandidateHint": "Postižené testovací případy se v nedávné historii překloňují mezi úspěchem a neúspěchem.",
+    "knownIssue": "Známý problém",
+    "notGrouped": "{count, plural, one {# selhání dosud není seskupeno} few {# selhání dosud nejsou seskupena} many {# selhání dosud není seskupeno} other {# selhání dosud není seskupeno}}",
+    "runPanel": {
+      "title": "Vzory selhání",
+      "inRun": "{count, plural, one {# v tomto běhu} other {# v tomto běhu}}",
+      "hint": "Kliknutím na vzor níže filtrujte výsledky.",
+      "open": "Zobrazit vzor",
+      "inRunColumn": "V tomto běhu",
+      "selectedClusters": "{count, plural, one {# vybraný vzor} few {# vybrané vzory} many {# vybraných vzorů} other {# vybraných vzorů}}",
+      "clearSelected": "Vymazat vybrané vzory"
+    },
+    "toasts": {
+      "updated": "Vzor selhání aktualizován",
+      "updateFailed": "Nepodařilo se aktualizovat vzor selhání",
+      "classifyQueued": "Požadavek na návrh AI hlavní příčiny odeslán do fronty",
+      "noAiModel": "Pro tuto funkci není nakonfigurován žádný model AI",
+      "issueLinked": "Problém propojen"
+    },
+    "empty": {
+      "title": "Zatím žádné vzory selhání",
+      "description": "Vzory selhání se zde objevují, jakmile přijdou automatizované výsledky se selháním. Chcete-li seskupit selhání již zaznamenána v tomto projektu, použijte Analyze existing results v nastavení Failure Patterns."
+    },
+    "settings": {
+      "description": "Seskupujte automatizovaná selhání do vzorů a nechte AI navrhnout jejich hlavní příčinu.",
+      "enableLabel": "Povolit Failure Patterns",
+      "enableDescription": "Seskupte každé automatizované selhání v tomto projektu podle výjimky, zprávy a stack frames, když dorazí výsledky.",
+      "autoClassifyLabel": "Navrhnout hlavní příčiny s AI",
+      "autoClassifyDescription": "Požádejte model AI projektu, aby si vybral hlavní příčinu pro každý nový vzor selhání z katalogu Root Causes. Vyžaduje model AI přiřazený funkci Failure Patterns: Root Cause.",
+      "backfillLabel": "Analyzovat existující výsledky",
+      "backfillDescription": "Seskupte všechna automatizovaná selhání již zaznamenána v tomto projektu. Běží na pozadí.",
+      "backfillStarted": "Analýza zahájena",
+      "backfillRunning": "Analýza... {processed, plural, one {# selhání seskupeno} few {# selhání seskupena} many {# selhání seskupeno} other {# selhání seskupeno}}",
+      "backfillDone": "Analýza dokončena",
+      "backfillFailed": "Analýza se nezdařila",
+      "backfillQueueUnavailable": "Fronta úloh na pozadí není k dispozici",
+      "enabledToast": "Failure Patterns povoleny",
+      "disabledToast": "Failure Patterns zakázány",
+      "autoClassifyOnToast": "Návrhy AI hlavní příčiny povoleny",
+      "autoClassifyOffToast": "Návrhy AI hlavní příčiny zakázány",
+      "autoReleaseLabel": "Automaticky uvolnit karanténu po",
+      "autoReleasePassesLabel": "po sobě jdoucí průchody",
+      "autoReleaseDescription": "Karanténa testovacího případu se uvolní poté, co bude úspěšně projít tolikrát po sobě od doby, kdy byla karanténa zavedena. Přeskočené výsledky se ignorují. Karanténa označená \"ponechat až do ručního uvolnění\" zůstává.",
+      "autoReleaseOnToast": "Automatické uvolnění povoleno",
+      "autoReleaseOffToast": "Automatické uvolnění zakázáno",
+      "autoReleasePassesSaved": "{count, plural, one {Karanténa se uvolní po # po sobě jdoucího průchodu} few {Karanténa se uvolní po # po sobě jdoucích průchodech} many {Karanténa se uvolní po # po sobě jdoucích průchodech} other {Karanténa se uvolní po # po sobě jdoucích průchodech}}",
+      "autoReleasePassesInvalid": "Zadejte počet průchodů mezi 1 a 100",
+      "openTriage": "Otevřít Failure Patterns"
+    },
+    "quarantine": {
+      "label": "V karanténě",
+      "title": "Karanténa testovacích případů",
+      "hint": "Selhání karanténního testovacího případu jsou vynechána z průchodu/selhání běhu a počítána odděleně. Testovací případ pokračuje v běhu a zaznamenávání výsledků.",
+      "metricHint": "Selhání testovacích případů v karanténě v tomto běhu. Nezapočítávají se do procenta úspěšnosti.",
+      "action": "Karanténa",
+      "actionAll": "Karanténa postižených testovacích případů",
+      "release": "Uvolnit",
+      "reasonLabel": "Důvod",
+      "reasonPlaceholder": "Proč je tento testovací případ v karanténě? (volitelné)",
+      "keepLabel": "Zachovat v karanténě až do ručního uvolnění",
+      "keepHint": "Přeskakuje automatické uvolnění projektu po po sobě jdoucích průchodech.",
+      "dialogTitle": "{count, plural, one {Karanténa # testovací případ} few {Karanténa # testovací případy} many {Karanténa # testovacích případů} other {Karanténa # testovacích případů}}",
+      "releaseConfirmTitle": "Uvolnit z karantény?",
+      "releaseConfirmDescription": "Selhání testovacího případu se znovu počítají v průchodu/selhání běhu.",
+      "quarantinedToast": "{count, plural, one {# testovací případ v karanténě} few {# testovací případy v karanténě} many {# testovacích případů v karanténě} other {# testovacích případů v karanténě}}",
+      "releasedToast": "Testovací případ uvolněn z karantény",
+      "failedToast": "Nepodařilo se aktualizovat karanténu",
+      "listButton": "{count, plural, =0 {Testovací případy v karanténě} one {# testovací případ v karanténě} other {# testovacích případů v karanténě}}",
+      "columns": {
+        "signature": "Vzor selhání",
+        "by": "Karanténa nastavena",
+        "since": "Od",
+        "releasePolicy": "Uvolnit"
+      },
+      "releaseAuto": "{count, plural, one {Automaticky po # po sobě jdoucího průchodu} few {Automaticky po # po sobě jdoucích průchodech} many {Automaticky po # po sobě jdoucích průchodech} other {Automaticky po # po sobě jdoucích průchodech}}",
+      "releaseManual": "Ručně",
+      "empty": "V tomto projektu nejsou v karanténě žádné testovací případy."
+    }
+  },
+  "risk": {
+    "score": "Skóre rizika",
+    "notScored": "Dosud není hodnoceno",
+    "breakdown": {
+      "title": "Proč toto skóre",
+      "pointsOfWeight": "{points} bodů · váha {weight}",
+      "components": {
+        "failureHistory": "Historie selhání",
+        "flakiness": "Nestabilita",
+        "staleness": "Zastarání",
+        "criticality": "Kritičnost",
+        "defects": "Propojené defekty"
+      },
+      "lastExecuted": "Poslední spuštění",
+      "neverExecuted": "Nikdy neprovedeno",
+      "verdicts": "{failed} z {sampled, plural, one {# nedávného automatizovaného výsledku} few {# nedávných automatizovaných výsledků} many {# nedávných automatizovaných výsledků} other {# nedávných automatizovaných výsledků}} selhalo",
+      "flips": "{flips, plural, one {# přechod úspěch/selhání} few {# přechody úspěch/selhání} many {# přechodů úspěch/selhání} other {# přechodů úspěch/selhání}}",
+      "requirements": "{count, plural, one {# propojený požadavek} few {# propojené požadavky} many {# propojených požadavků} other {# propojených požadavků}} · nejvyšší priorita {priority}",
+      "suspect": "{count, plural, one {# požadavek se změnil} few {# požadavky se změnily} many {# požadavků se změnilo} other {# požadavků se změnilo}} od posledního běhu",
+      "defects": "{count, plural, one {# propojený defekt} few {# propojené defekty} many {# propojených defektů} other {# propojených defektů}} · nejvyšší priorita {priority}",
+      "caseCriticality": "Kritičnost případu: {value}",
+      "noPriority": "nespecifikováno",
+      "quarantined": "Karanténa"
+    },
+    "settings": {
+      "description": "Každý testovací případ dostane skóre rizika 0-100 na základě své historie selhání, nestability, zastarání, kritičnosti propojených požadavků a propojených defektů. Skóre se obnovují po příchodu výsledků a během noční prověrky a jsou podkladem pro sloupec Skóre rizika v repozitáři a filtr.",
+      "enableLabel": "Spravovat skóre rizika",
+      "enableDescription": "Když je vypnuté, existující skóre zůstanou, ale přestane se aktualizovat a filtr Skóre rizika zmizí.",
+      "enabledToast": "Hodnocení rizika povoleno",
+      "disabledToast": "Hodnocení rizika zakázáno",
+      "weightsTitle": "Váhy komponent",
+      "weightsDescription": "Jak moc se každý signál počítá v poměru k ostatním. Skóre se normalizuje podle součtu, takže váhy se nemusí sčítat až na 100. Nula odstraní komponentu.",
+      "components": {
+        "failureHistory": "Historie selhání",
+        "flakiness": "Nestabilita",
+        "staleness": "Zastarání",
+        "criticality": "Kritičnost",
+        "defects": "Propojené defekty"
+      },
+      "weightsSaved": "Váhy uloženy",
+      "weightsInvalid": "Váhy musí být čísla mezi 0 a {max}",
+      "weightsReset": "Váhy obnoveny na výchozí nastavení",
+      "resetDefaults": "Obnovit výchozí nastavení",
+      "usingDefaults": "Používá se výchozí nastavení systému",
+      "criticalityFieldTitle": "Pole kritičnosti případu",
+      "criticalityFieldDescription": "Volitelné rozevíracího pole případu, které ovlivňuje kritičnost každého případu. Možnosti se počítají podle jejich pořadí: horní možnost 100, spodní 10, rovnoměrně rozestupované — názvy nikdy nezáleží.",
+      "criticalityFieldNone": "Žádné",
+      "criticalityFieldSaved": "Pole kritičnosti uloženo",
+      "criticalityFieldCleared": "Pole kritičnosti vymazáno",
+      "criticalityFieldOptions": "Váhy možností podle pořadí:",
+      "issuePrioritiesTitle": "Priority problémů",
+      "issuePrioritiesDescription": "Požadavky a defekty mají prioritu z vašeho sledovacího systému jako bezplatný text. Mapujte názvy, které váš projekt skutečně používá, na váhu 0-100. Nemapované názvy se počítají jako neutrální (50). Nic není vestavěno — toto je vaše slovní zásoba, ne naše.",
+      "issuePrioritiesEmpty": "Dosud neexistují propojené požadavky nebo defekty s prioritami.",
+      "issuePrioritiesCount": "{count, plural, one {# propojený problém} few {# propojené problémy} many {# propojených problémů} other {# propojených problémů}}",
+      "issuePrioritiesUnused": "není v použití",
+      "issuePrioritiesSaved": "Priority problémů uloženy",
+      "issuePrioritiesInvalid": "Váhy musí být čísla mezi 0 a 100",
+      "backfillLabel": "Přepočítat všechna skóre",
+      "backfillDescription": "Přehodnoťte každý testovací případ v projektu nyní místo čekání na noční prověrku.",
+      "backfillStarted": "Přepočet zahájen",
+      "backfillRunning": "Přepočítávání… {processed, plural, one {# případ hodnocen} few {# případy hodnoceny} many {# případů hodnoceno} other {# případů hodnoceno}}",
+      "backfillDone": "Přepočet dokončen",
+      "backfillFailed": "Přepočet selhal",
+      "backfillAlreadyRunning": "Přepočet již probíhal — po jeho dokončení znovu spusťte Přepočítat všechna skóre, aby každý případ odrážel nové váhy",
+      "backfillQueueUnavailable": "Fronta úloh na pozadí není k dispozici",
+      "openRepository": "Otevřít úložiště"
+    }
   }
 }

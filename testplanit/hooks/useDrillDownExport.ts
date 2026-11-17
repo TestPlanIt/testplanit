@@ -11,6 +11,7 @@ import type {
   DrillDownRecord,
 } from "~/lib/types/reportDrillDown";
 import { toHumanReadable } from "~/utils/duration";
+import { apiFetch } from "~/lib/basePath";
 
 interface UseDrillDownExportProps {
   /** The drill-down context */
@@ -46,7 +47,7 @@ export function useDrillDownExport({
       let hasMore = true;
 
       while (hasMore) {
-        const response = await fetch("/api/report-builder/drill-down", {
+        const response = await apiFetch("/api/report-builder/drill-down", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

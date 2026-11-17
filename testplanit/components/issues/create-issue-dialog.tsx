@@ -4,6 +4,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,6 +34,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
 import { isIntegrationAuthCompleteMessage } from "~/lib/integrations/oauthPopup";
+import { trackerLabelStyle } from "~/lib/integrations/trackerLabelStyle";
+import { isDarkTheme } from "~/utils/theme";
+import { useTheme } from "next-themes";
+import { Avatar } from "@/components/Avatar";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { AlertCircle, Asterisk, ExternalLink, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -41,6 +46,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
+import { apiFetch } from "~/lib/basePath";
 
 // INT-05: description accepts either a plain string (manual issue create
 // flow) or a TipTap doc (programmatic prefill from a failed iteration).
@@ -52,6 +58,59 @@ const tiptapDocSchema = z.object({
   content: z.array(z.unknown()),
 });
 type TiptapDocValue = z.infer<typeof tiptapDocSchema>;
+
+/** What a tracker offers on create beyond title and body. */
+interface TrackerCreateMetadata {
+  labels: Array<{ id: string; name: string; color?: string }>;
+  milestones: Array<{
+    id: string;
+    title: string;
+    state: string;
+    dueOn?: string | null;
+  }>;
+  assignees: Array<{ id: string; name: string; avatarUrl?: string }>;
+  issueTypes: Array<{
+    id: string;
+    name: string;
+    description?: string | null;
+    color?: string | null;
+  }>;
+}
+
+/** Trackers whose create form offers labels, assignees, milestone and type. */
+const METADATA_PROVIDERS = new Set(["GITHUB"]);
+
+/** Trackers with no priority field; they are not sent one. */
+const PRIORITY_LESS_PROVIDERS = new Set(["GITHUB", "GITEA", "GITLAB"]);
+
+const MAX_ASSIGNEES = 10;
+
+/** Select item standing for "nothing chosen"; Radix refuses an empty value. */
+const NONE_VALUE = "__none__";
+
+/** Tracker metadata is kept per integration and project across dialog opens. */
+const METADATA_TTL_MS = 5 * 60 * 1000;
+const metadataCache = new Map<
+  string,
+  { at: number; data: TrackerCreateMetadata }
+>();
+
+function pageOf<T>(
+  items: T[],
+  label: (item: T) => string,
+  query: string,
+  page: number,
+  pageSize: number
+): { results: T[]; total: number } {
+  const needle = query.trim().toLowerCase();
+  const filtered = needle
+    ? items.filter((item) => label(item).toLowerCase().includes(needle))
+    : items;
+  return {
+    results: filtered.slice(page * pageSize, (page + 1) * pageSize),
+    total: filtered.length,
+  };
+}
 
 const createIssueSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -87,7 +146,8 @@ interface CreateIssueDialogProps {
     | "sessionResult"
     | "testRun"
     | "testRunResult"
-    | "testRunStepResult";
+    | "testRunStepResult"
+    | "failureSignature";
   entityId?: number;
 }
 
@@ -119,6 +179,21 @@ export function CreateIssueDialog({
   const [customFieldValues, setCustomFieldValues] = useState<
     Record<string, any>
   >({});
+  const [trackerMetadata, setTrackerMetadata] =
+    useState<TrackerCreateMetadata | null>(null);
+  const [loadingMetadata, setLoadingMetadata] = useState(false);
+  const [selectedLabels, setSelectedLabels] = useState<
+    TrackerCreateMetadata["labels"]
+  >([]);
+  const [selectedAssignees, setSelectedAssignees] = useState<
+    TrackerCreateMetadata["assignees"]
+  >([]);
+  const [selectedMilestone, setSelectedMilestone] = useState<string | null>(
+    null
+  );
+  const [selectedTrackerType, setSelectedTrackerType] = useState<string | null>(
+    null
+  );
 
   // INT-05: when defaultValues.description is a TipTap doc we hold the
   // doc in a ref + compute its markdown preview to seed the textarea.
@@ -247,6 +322,36 @@ export function CreateIssueDialog({
   // For Simple URL integrations, we always create internal issues
   const useIntegration = !!activeIntegration && !isSimpleUrlIntegration;
 
+  const provider = activeIntegration?.integration?.provider ?? "";
+  const { resolvedTheme } = useTheme();
+  const darkTheme = isDarkTheme(resolvedTheme);
+  const offersMetadata = useIntegration && METADATA_PROVIDERS.has(provider);
+  const sendsPriority = !PRIORITY_LESS_PROVIDERS.has(provider);
+
+  const fetchLabelOptions = useCallback(
+    async (query: string, page: number, pageSize: number) =>
+      pageOf(
+        trackerMetadata?.labels ?? [],
+        (label) => label.name,
+        query,
+        page,
+        pageSize
+      ),
+    [trackerMetadata]
+  );
+
+  const fetchAssigneeOptions = useCallback(
+    async (query: string, page: number, pageSize: number) =>
+      pageOf(
+        trackerMetadata?.assignees ?? [],
+        (user) => user.name,
+        query,
+        page,
+        pageSize
+      ),
+    [trackerMetadata]
+  );
+
   // Check if external integration is properly configured
   // Prefer IntegrationProject records; fall back to legacy config check
   const isIntegrationConfigured = useMemo(() => {
@@ -283,7 +388,7 @@ export function CreateIssueDialog({
     if (!integrationId) return { authenticated: false };
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/integrations/${integrationId}/auth/check`
       );
       const data = await response.json();
@@ -299,7 +404,7 @@ export function CreateIssueDialog({
       if (!activeIntegration) return [];
 
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/integrations/${activeIntegration.integrationId}/issue-types`
         );
         if (response.ok) {
@@ -372,7 +477,7 @@ export function CreateIssueDialog({
 
     setLoadingFields(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/integrations/${activeIntegration.integrationId}/issue-type-fields?issueTypeId=${selectedIssueType.id}&projectKey=${encodeURIComponent(effectiveProjectKey)}`
       );
       if (response.ok) {
@@ -408,8 +513,96 @@ export function CreateIssueDialog({
       setSelectedIssueType(null);
       setIssueTypeFields([]);
       setCustomFieldValues({});
+      setTrackerMetadata(null);
+      setSelectedLabels([]);
+      setSelectedAssignees([]);
+      setSelectedMilestone(null);
+      setSelectedTrackerType(null);
     }
   }, [open]);
+
+  // Labels, assignees, milestones and types belong to one repository, so a
+  // change of target project drops what was picked for the previous one.
+  useEffect(() => {
+    setSelectedLabels([]);
+    setSelectedAssignees([]);
+    setSelectedMilestone(null);
+    setSelectedTrackerType(null);
+  }, [effectiveProjectKey]);
+
+  // Load what the tracker offers on create for the selected project.
+  useEffect(() => {
+    if (
+      !open ||
+      !offersMetadata ||
+      !integrationId ||
+      !effectiveProjectKey ||
+      authError ||
+      !isIntegrationConfigured
+    ) {
+      return;
+    }
+
+    const cacheKey = `${integrationId}:${effectiveProjectKey}`;
+    const cached = metadataCache.get(cacheKey);
+    if (cached && Date.now() - cached.at < METADATA_TTL_MS) {
+      setTrackerMetadata(cached.data);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingMetadata(true);
+    apiFetch(
+      `/api/integrations/${integrationId}/create-metadata?projectKey=${encodeURIComponent(effectiveProjectKey)}`
+    )
+      .then(async (response) => {
+        if (response.status === 401) {
+          const errorData = await response.json();
+          if (!cancelled) {
+            setAuthError(
+              errorData.authUrl || errorData.error || "Authentication required"
+            );
+          }
+          return null;
+        }
+        if (!response.ok) {
+          return null;
+        }
+        const body = await response.json();
+        if (!body || typeof body !== "object" || Array.isArray(body)) {
+          return null;
+        }
+        const data: TrackerCreateMetadata = {
+          labels: Array.isArray(body.labels) ? body.labels : [],
+          milestones: Array.isArray(body.milestones) ? body.milestones : [],
+          assignees: Array.isArray(body.assignees) ? body.assignees : [],
+          issueTypes: Array.isArray(body.issueTypes) ? body.issueTypes : [],
+        };
+        return data;
+      })
+      .then((data) => {
+        if (cancelled || !data) return;
+        metadataCache.set(cacheKey, { at: Date.now(), data });
+        setTrackerMetadata(data);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch create-issue metadata:", error);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMetadata(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    open,
+    offersMetadata,
+    integrationId,
+    effectiveProjectKey,
+    authError,
+    isIntegrationConfigured,
+  ]);
 
   const onSubmit = async (values: CreateIssueFormValues) => {
     setIsCreating(true);
@@ -486,6 +679,12 @@ export function CreateIssueDialog({
             case "testRunStepResult":
               createData.testRunStepResults = {
                 connect: [{ id: entityId }],
+              };
+              break;
+            case "failureSignature":
+              // Explicit FailureSignatureIssue join (failure triage).
+              createData.failureSignatures = {
+                create: [{ signatureId: entityId }],
               };
               break;
           }
@@ -565,6 +764,12 @@ export function CreateIssueDialog({
                 connect: [{ id: entityId }],
               };
               break;
+            case "failureSignature":
+              // Explicit FailureSignatureIssue join (failure triage).
+              createData.failureSignatures = {
+                create: [{ signatureId: entityId }],
+              };
+              break;
           }
         }
 
@@ -590,7 +795,7 @@ export function CreateIssueDialog({
           projectId: projectId.toString(),
           title: values.title,
           description: submittedDescription,
-          priority: values.priority,
+          priority: sendsPriority ? values.priority : undefined,
           customFields: customFieldValues,
           // Include internal TestPlanIt project ID for database storage
           testplanitProjectId: projectId,
@@ -611,10 +816,26 @@ export function CreateIssueDialog({
         // Use the selected issue type (only for providers that support it)
         if (selectedIssueType) {
           payload.issueType = selectedIssueType.id;
-        } else if (activeIntegration.integration?.provider !== "GITHUB") {
-          // Try common issue type IDs as fallback (for Jira, Azure DevOps, etc.)
-          const commonTypes = ["10001", "10002", "10003", "10004", "10005"];
-          payload.issueType = commonTypes[0];
+        } else if (activeIntegration.integration?.provider === "JIRA") {
+          // Jira requires an issue type; fall back to the id its default
+          // scheme gives the first standard type. Other trackers pick their
+          // own default when none is sent.
+          payload.issueType = "10001";
+        }
+
+        if (offersMetadata) {
+          if (selectedLabels.length > 0) {
+            payload.labels = selectedLabels.map((label) => label.name);
+          }
+          if (selectedAssignees.length > 0) {
+            payload.assigneeIds = selectedAssignees.map((user) => user.id);
+          }
+          if (selectedMilestone) {
+            payload.milestone = selectedMilestone;
+          }
+          if (selectedTrackerType) {
+            payload.issueType = selectedTrackerType;
+          }
         }
 
         // Add entity linking information
@@ -635,10 +856,13 @@ export function CreateIssueDialog({
             case "testRunStepResult":
               payload.testRunStepResultId = entityId.toString();
               break;
+            case "failureSignature":
+              payload.failureSignatureId = entityId.toString();
+              break;
           }
         }
 
-        const response = await fetch(endpoint, {
+        const response = await apiFetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -968,6 +1192,159 @@ export function CreateIssueDialog({
                 </FormItem>
               )}
             />
+
+            {offersMetadata && !authError && isIntegrationConfigured && (
+              <div className="space-y-4" data-testid="tracker-create-fields">
+                {trackerMetadata && trackerMetadata.issueTypes.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="tracker-issue-type">
+                      {t("issues.issueType")}
+                    </Label>
+                    <Select
+                      value={selectedTrackerType ?? NONE_VALUE}
+                      onValueChange={(value) =>
+                        setSelectedTrackerType(
+                          value === NONE_VALUE ? null : value
+                        )
+                      }
+                    >
+                      <SelectTrigger
+                        id="tracker-issue-type"
+                        data-testid="tracker-issue-type-select"
+                      >
+                        <SelectValue
+                          placeholder={t("issues.selectIssueType")}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NONE_VALUE}>
+                          {t("common.access.none")}
+                        </SelectItem>
+                        {trackerMetadata.issueTypes.map((type) => (
+                          <SelectItem key={type.id} value={type.id}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="space-y-2" data-testid="tracker-labels">
+                  <Label>
+                    {t(
+                      "projects.settings.integrations.integration.requirementsConfig.labelsLabel"
+                    )}
+                  </Label>
+                  <MultiAsyncCombobox<TrackerCreateMetadata["labels"][number]>
+                    disabled={loadingMetadata}
+                    value={selectedLabels}
+                    onValueChange={setSelectedLabels}
+                    fetchOptions={fetchLabelOptions}
+                    renderOption={(label) => (
+                      <span
+                        className="inline-flex max-w-full items-center rounded-full border px-2 py-0.5 text-xs font-medium"
+                        style={trackerLabelStyle(label.color, darkTheme)}
+                      >
+                        <span className="truncate">{label.name}</span>
+                      </span>
+                    )}
+                    getSelectedOptionStyle={(label) =>
+                      trackerLabelStyle(label.color, darkTheme)
+                    }
+                    getOptionValue={(label) => label.id}
+                    getOptionLabel={(label) => label.name}
+                    placeholder={t(
+                      "projects.settings.integrations.integration.requirementsConfig.labelsPlaceholder"
+                    )}
+                    ariaLabel={t(
+                      "projects.settings.integrations.integration.requirementsConfig.labelsLabel"
+                    )}
+                    className="w-full"
+                    hideSelectAll
+                  />
+                </div>
+
+                <div className="space-y-2" data-testid="tracker-assignees">
+                  <Label>{t("issues.assignees")}</Label>
+                  <MultiAsyncCombobox<
+                    TrackerCreateMetadata["assignees"][number]
+                  >
+                    disabled={loadingMetadata}
+                    value={selectedAssignees}
+                    onValueChange={(users) =>
+                      setSelectedAssignees(users.slice(0, MAX_ASSIGNEES))
+                    }
+                    fetchOptions={fetchAssigneeOptions}
+                    renderOption={(user) => (
+                      <span className="flex items-center gap-2">
+                        <Avatar
+                          image={user.avatarUrl ?? null}
+                          alt={user.name}
+                          width={20}
+                          height={20}
+                          showTooltip={false}
+                        />
+                        <span className="truncate">{user.name}</span>
+                      </span>
+                    )}
+                    renderSelectedOption={(user) => (
+                      <span className="flex items-center gap-1">
+                        <Avatar
+                          image={user.avatarUrl ?? null}
+                          alt={user.name}
+                          width={16}
+                          height={16}
+                          showTooltip={false}
+                        />
+                        <span className="truncate">{user.name}</span>
+                      </span>
+                    )}
+                    getOptionValue={(user) => user.id}
+                    getOptionLabel={(user) => user.name}
+                    placeholder={t("issues.selectAssignees")}
+                    ariaLabel={t("issues.assignees")}
+                    className="w-full"
+                    hideSelectAll
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("issues.assigneesLimit", { max: MAX_ASSIGNEES })}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tracker-milestone">
+                    {t("common.fields.milestone")}
+                  </Label>
+                  <Select
+                    disabled={loadingMetadata}
+                    value={selectedMilestone ?? NONE_VALUE}
+                    onValueChange={(value) =>
+                      setSelectedMilestone(value === NONE_VALUE ? null : value)
+                    }
+                  >
+                    <SelectTrigger
+                      id="tracker-milestone"
+                      data-testid="tracker-milestone-select"
+                    >
+                      <SelectValue
+                        placeholder={t("alerts.form.scopePickMilestone")}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE_VALUE}>
+                        {t("common.access.none")}
+                      </SelectItem>
+                      {(trackerMetadata?.milestones ?? []).map((milestone) => (
+                        <SelectItem key={milestone.id} value={milestone.id}>
+                          {milestone.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
 
             {["JIRA", "AZURE_DEVOPS"].includes(
               activeIntegration?.integration?.provider ?? ""

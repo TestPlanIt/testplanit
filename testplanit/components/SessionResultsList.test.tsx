@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { Session } from "next-auth";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -463,6 +463,39 @@ describe("SessionResultsList", () => {
     // Edit button is rendered when !isCompleted && canEditResults
     const editButton = screen.getByTitle("actions.edit");
     expect(editButton).toBeInTheDocument();
+  });
+
+  it("keeps the edit dialog's submit from reaching a form the list sits inside", async () => {
+    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: [buildMockResult({ createdById: "user-123" })],
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+    // The session page renders the list inside its own <form>; a submit that
+    // bubbles out of the portalled dialog saves the whole session.
+    const onPageSubmit = vi.fn((e: React.FormEvent) => e.preventDefault());
+
+    renderWithQueryClient(
+      <form onSubmit={onPageSubmit}>
+        <SessionResultsList
+          sessionId={1}
+          projectId="1"
+          canEditResults={true}
+          canDeleteResults={true}
+          isCompleted={false}
+        />
+      </form>
+    );
+
+    fireEvent.click(screen.getByTitle("actions.edit"));
+    const dialogForm = await waitFor(() => {
+      const form = document.querySelector('[role="dialog"] form');
+      expect(form).not.toBeNull();
+      return form as HTMLFormElement;
+    });
+    fireEvent.submit(dialogForm);
+
+    expect(onPageSubmit).not.toHaveBeenCalled();
   });
 
   it("hides edit button when session is completed", () => {

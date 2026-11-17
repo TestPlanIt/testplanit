@@ -337,6 +337,34 @@ module.exports = {
       },
     },
     {
+      name: "failure-triage-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/failureTriageWorker.ts"
+        : "dist/workers/failureTriageWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("512M", { shared: true }),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
+      name: "risk-score-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/riskScoreWorker.ts"
+        : "dist/workers/riskScoreWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("512M", { shared: true }),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
       name: "step-scan-worker",
       script: isDev ? "tsx" : "node",
       args: isDev
@@ -449,6 +477,20 @@ module.exports = {
       },
     },
     {
+      name: "audit-log-retention-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/auditLogRetentionWorker.ts"
+        : "dist/workers/auditLogRetentionWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("3G"),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
       name: "dataset-lease-sweep-worker",
       script: isDev ? "tsx" : "node",
       args: isDev
@@ -472,6 +514,32 @@ module.exports = {
       autorestart: true,
       watch: false,
       ...memoryLimits("3G"),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
+      name: "alert-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev ? "workers/alertWorker.ts" : "dist/workers/alertWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("512M", { shared: true }),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
+      name: "webhook-actions-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/webhookActionsWorker.ts"
+        : "dist/workers/webhookActionsWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("512M", { shared: true }),
       env: {
         NODE_ENV: "production",
       },

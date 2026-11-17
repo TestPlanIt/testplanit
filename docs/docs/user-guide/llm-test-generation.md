@@ -108,6 +108,8 @@ Choose your test generation source:
 - Bulk select/deselect options available
 - Edit any test case inline before importing (click the Edit button)
 - Tags can be added or removed interactively during editing using tag badges with add/remove controls
+- **Import** creates the selected test cases in the repository
+- **Stage** saves the selected test cases as your [staged test cases](./projects/staged-test-cases.md) instead of creating them, so you can review each one in the Add Case dialog and create them later from **My Staged Cases**. Staged cases keep the template, field values, steps, generated tags, and the link to the source issue that an import would have written. Stage is available when the wizard was opened from a repository folder; the pre-seeded launches from a milestone or the coverage-gaps report import only
 
 **Linked-issue context notice:**
 
@@ -158,15 +160,19 @@ The **Generate Test Cases** button only appears when all of the above are met. I
 
 ### Context and parity
 
-Generation from the panel assembles the same LLM context as the in-app wizard's streaming generation: the issue's title, description, and comments; **linked Jira issues** (one hop) with their own titles, bodies, and comments; the test cases already linked to the issue, wherever they live in the repository; and existing test cases in the destination folder (when you generate into an existing folder). The same token-budgeting and trimming rules apply.
+Generation from the panel assembles the same LLM context as the in-app wizard's streaming generation: the issue's title, description, and comments; **linked Jira issues** (one hop) with their own titles, bodies, and comments; the test cases already linked to the issue, wherever they live in the repository; existing test cases in the destination folder (when you generate into an existing folder); and related test cases from elsewhere in the project, matched to the issue by content. The same token-budgeting and trimming rules apply.
 
 When the generating model is vision-capable, the issue's image attachments ride along automatically under the same limits as the wizard (up to 5 images, 4 MB each) — the panel offers no image picker.
 
-Because linked cases do not depend on a folder, the panel has meaningful existing-case context even on the first generation for an issue that has no destination folder picked yet.
+Because linked cases and related cases do not depend on a folder, the panel has meaningful existing-case context even on the first generation for an issue that has no destination folder picked yet, or when the destination folder is still empty.
 
 :::note
 Parameter and starter-dataset generation is not offered from the Jira panel.
 :::
+
+## Generating from a webhook action
+
+An issue-tracker webhook can draft test cases on its own: a [**Generate Test Cases with AI** action](./webhooks.md#issue-tracker-actions) fires when the tracker reports a new issue, or an issue entering a chosen status, and drafts cases from the issue's title, description, status and priority with the project's AI model. The action chooses the template, state and count, and names the users and groups to tell when the drafts are ready; the drafts land in a folder named after the action, linked to the issue and created by the System user. Image attachments, linked issues, parameters and starter datasets are not part of a webhook-drafted generation.
 
 ## Generation Process
 
@@ -174,7 +180,7 @@ When you click "Generate":
 
 **For Issue/Document sources:**
 
-1. **Context Analysis**: The AI analyzes the source material, the test cases already linked to the source issue, and existing test cases in the folder
+1. **Context Analysis**: The AI analyzes the source material, the test cases already linked to the source issue, existing test cases in the folder, and related test cases from elsewhere in the project
 2. **Streaming Generation**: Test cases appear in real-time as the AI generates them, with partial field previews as data arrives
 3. **Field Population**: Custom fields are populated with relevant content
 4. **Quality Validation**: Generated content is validated for completeness
@@ -258,6 +264,7 @@ The AI considers:
 
 - **Existing Test Cases**: Avoids duplication of current test scenarios in the folder
 - **Cases Already Linked to the Source Issue**: Test cases anywhere in the repository that are already linked to the issue you are generating from are included first, ahead of folder cases, so regenerating for an issue extends its coverage instead of repeating it. This applies to any connected issue source — Jira, GitHub, Azure DevOps, or a manual issue — and does not depend on a folder, so it is the context that carries surfaces where no folder is involved, such as the milestone issue list or the Jira panel. A case that is both linked to the issue and in the folder is only sent once.
+- **Related Test Cases Elsewhere in the Project**: When Elasticsearch is configured, test cases from other folders whose names and content resemble the source issue are included after the folder's own cases, as examples of the project's naming, step granularity, and expected-result style. Cases on the selected template rank first. Without Elasticsearch, the newest cases on the selected template stand in. This fills the gap when the destination folder is new or empty, which is common for the Jira panel's "Generated from Jira" folder and for folders that webhook actions draft into. In the two-phase flow (outline, then expand), a few of these cases are also shown in full while each test case's steps are written.
 - **Project Domain**: Understands your application type and testing needs
 - **Template Structure**: Adapts content to fit your specific template fields
 - **Source Issue Comments**: The full comment thread on the selected issue is included alongside its title and description.

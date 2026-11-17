@@ -61,7 +61,7 @@ export async function GET(
     let generatedTestCases = null;
     if (state === "completed" && result?.crawlOnly) {
       try {
-        const connection = await queue.client;
+        const connection = await queue.getBackend().client;
 
         // Check for previously generated test cases (saved after SSE streaming)
         const savedResults = await connection.get(
@@ -126,7 +126,7 @@ export async function PUT(
     const { jobId } = await params;
     const body = await request.json();
 
-    const connection = await queue.client;
+    const connection = await queue.getBackend().client;
     await connection.set(
       `generate-from-url:generated:${jobId}`,
       JSON.stringify(body),
@@ -166,7 +166,7 @@ export async function DELETE(
     }
 
     const { jobId } = await params;
-    const connection = await queue.client;
+    const connection = await queue.getBackend().client;
     await connection.del(
       `generate-from-url:pages:${jobId}`,
       `generate-from-url:generated:${jobId}`

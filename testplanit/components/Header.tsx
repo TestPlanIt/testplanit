@@ -16,11 +16,9 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
-import svgIcon from "~/public/tpi_logo.svg";
 
 import {
   FeedbackBanner,
@@ -30,6 +28,7 @@ import { GlobalSearchSheet } from "@/components/GlobalSearchSheet";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ProjectQuickSelector } from "@/components/ProjectQuickSelector";
 import { ReviewInboxButton } from "@/components/reviews/ReviewInboxButton";
+import { TestPlanItLogo, TestPlanItMark } from "@/components/TestPlanItLogo";
 import { useContainerCompact } from "@/components/ui/action-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,6 +36,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -48,6 +49,7 @@ import { UserDropdownMenu } from "@/components/UserDropdownMenu";
 import { useHeaderAlertCounts } from "~/hooks/useHeaderAlertCounts";
 import { getVersionString } from "~/lib/version";
 import { cn } from "~/utils";
+import { apiFetch } from "~/lib/basePath";
 import {
   DEFAULT_TRIAL_CONTACT,
   isContactWebLink,
@@ -77,7 +79,8 @@ export const Header = () => {
   const [trialTotalDays, setTrialTotalDays] = useState<number>(0);
   const versionString = getVersionString();
   // Collapse the header action icons (search, help, notifications, review inbox)
-  // into a single kebab menu once the header row gets too narrow to show them.
+  // into a single kebab menu, and the logo to its mark, once the header row
+  // gets too narrow to show them.
   const { ref: headerRef, compact: isHeaderCompact } =
     useContainerCompact(1024);
   // When collapsed, the notification + review-inbox icons hide inside the
@@ -133,7 +136,7 @@ export const Header = () => {
   useEffect(() => {
     const fetchTrialConfig = async () => {
       try {
-        const response = await fetch("/api/config/trial");
+        const response = await apiFetch("/api/config/trial");
         if (response.ok) {
           const data = await response.json();
           if (data.feedbackSurveyUrl) {
@@ -294,6 +297,13 @@ export const Header = () => {
           {t("feedback.menuItem")}
         </DropdownMenuItem>
       )}
+      <DropdownMenuSeparator />
+      <DropdownMenuLabel
+        className="text-xs font-normal text-muted-foreground"
+        data-testid="app-version"
+      >
+        {tCommon("pageTitles.appName")} {versionString}
+      </DropdownMenuLabel>
     </>
   );
 
@@ -311,24 +321,13 @@ export const Header = () => {
               <span id="header-logo" className="px-1 inline-block">
                 <Link
                   href="/"
-                  className="flex font-semibold tracking-tight text-2xl cursor-pointer text-[rgb(133,89,233)] no-underline"
+                  className="flex mx-2 cursor-pointer no-underline"
                 >
-                  <Image
-                    className="mx-2"
-                    alt={t("common.branding.logoAlt")}
-                    src={svgIcon}
-                    style={{
-                      width: "40px",
-                      height: "auto",
-                    }}
-                    priority={true}
-                  />
-                  <div className="flex flex-col">
-                    <span className="">{tCommon("pageTitles.appName")}</span>
-                    <div className="-mt-1 text-xs text-muted-foreground/60">
-                      {versionString}
-                    </div>
-                  </div>
+                  {isHeaderCompact ? (
+                    <TestPlanItMark className="w-11" />
+                  ) : (
+                    <TestPlanItLogo className="h-7" />
+                  )}
                 </Link>
               </span>
               <Separator orientation="vertical" className="mx-4 h-8" />

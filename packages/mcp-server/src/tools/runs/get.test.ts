@@ -121,7 +121,7 @@ describe("registerRunsGet", () => {
     expect(data.testCasesNextCursor).toBeNull();
   });
 
-  it("R3: counts SUM to total — including untested groups", async () => {
+  it("counts SUM to total — including untested groups", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawRun({ testCases: [makeTestCase(1)] }));
     mockZenstack.mockResolvedValueOnce([
       { statusId: 1, _count: { id: 5 } },

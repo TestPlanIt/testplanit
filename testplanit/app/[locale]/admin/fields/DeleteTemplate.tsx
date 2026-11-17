@@ -9,6 +9,8 @@ import { useForm } from "react-hook-form";
 import { TriangleAlert } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
+import { AlertDescription } from "@/components/ui/alert";
+import { WarningAlert } from "@/components/ui/warning-alert";
 
 import {
   AlertDialog,
@@ -22,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { useTranslations } from "next-intl";
+import { ProjectDefaultTemplateWarning } from "./ProjectDefaultTemplateWarning";
 
 interface DeleteTemplateProps {
   template: Templates;
@@ -51,6 +54,20 @@ export function DeleteTemplate({
     where: {
       AND: [{ isDefault: true }, { isEnabled: true }, { isDeleted: false }],
     },
+  });
+
+  // Projects that have this template assigned as their default; deleting it
+  // sends them to the system default.
+  const { data: projectDefaults } = useClientQueries(
+    schema
+  ).projects.useFindMany({
+    where: {
+      isDeleted: false,
+      defaultTemplateId: template.id,
+      assignedTemplates: { some: { templateId: template.id } },
+    },
+    select: { id: true, name: true, iconUrl: true },
+    orderBy: { name: "asc" },
   });
 
   const form = useForm();
@@ -119,10 +136,14 @@ export function DeleteTemplate({
                 })}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-900 dark:text-yellow-200 p-3 rounded border border-yellow-300 dark:border-yellow-700">
-              <p className="font-semibold mb-1">{t("warning")}</p>
-              <p className="text-sm">{tGlobal("runs.delete.warning")}</p>
-            </div>
+            <WarningAlert>
+              <TriangleAlert className="h-4 w-4" />
+              <AlertDescription className="space-y-2">
+                <p>{t("warning")}</p>
+                <p>{tGlobal("runs.delete.warning")}</p>
+              </AlertDescription>
+            </WarningAlert>
+            <ProjectDefaultTemplateWarning projects={projectDefaults ?? []} />
             <AlertDialogFooter>
               {errors.root && (
                 <div

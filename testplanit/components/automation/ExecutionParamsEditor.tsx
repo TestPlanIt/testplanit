@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -12,9 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import {
@@ -27,6 +26,7 @@ import {
   type ExecutionParamType,
 } from "~/lib/execution/types";
 import { StaticValuesMultiSelect } from "./StaticValuesMultiSelect";
+import { ValuesInput } from "@/components/ui/values-input";
 
 /**
  * One parameter while it is being edited. Each kind keeps its own default so
@@ -156,82 +156,6 @@ export function useProjectConfigurationOptions(
     for (const row of rows) labels[String(row.id)] = row.name;
     return { values: Object.keys(labels), labels, isLoading };
   }, [data, isLoading]);
-}
-
-interface ValuesInputProps {
-  values: string[];
-  onChange: (values: string[]) => void;
-  disabled?: boolean;
-  testIdPrefix: string;
-}
-
-/**
- * Tag list for a choice parameter's values: Enter (or a comma) adds the
- * typed value, Backspace on an empty field removes the last one.
- */
-function ValuesInput({
-  values,
-  onChange,
-  disabled,
-  testIdPrefix,
-}: ValuesInputProps) {
-  const t = useTranslations("automation.settings");
-  const tCommon = useTranslations("common");
-  const [draft, setDraft] = useState("");
-
-  const commit = () => {
-    const value = draft.trim();
-    setDraft("");
-    if (!value || values.includes(value)) return;
-    onChange([...values, value]);
-  };
-
-  return (
-    <div className="space-y-1.5">
-      {values.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {values.map((value) => (
-            <Badge
-              key={value}
-              variant="secondary"
-              className="gap-1 font-mono"
-              data-testid={`${testIdPrefix}-value`}
-            >
-              {value}
-              {!disabled && (
-                <button
-                  type="button"
-                  className="rounded-sm hover:text-destructive"
-                  onClick={() => onChange(values.filter((v) => v !== value))}
-                  aria-label={tCommon("actions.remove")}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </Badge>
-          ))}
-        </div>
-      )}
-      <Input
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === MULTISELECT_SEPARATOR) {
-            e.preventDefault();
-            commit();
-          } else if (e.key === "Backspace" && !draft && values.length > 0) {
-            onChange(values.slice(0, -1));
-          }
-        }}
-        onBlur={commit}
-        placeholder={t("parameterValuesPlaceholder")}
-        aria-label={t("parameterValues")}
-        disabled={disabled}
-        className="font-mono text-sm"
-        data-testid={`${testIdPrefix}-values-input`}
-      />
-    </div>
-  );
 }
 
 interface ExecutionParamsEditorProps {
@@ -460,6 +384,10 @@ export function ExecutionParamsEditor({
                     values={row.values}
                     onChange={(values) => setValues(index, row, values)}
                     disabled={disabled}
+                    separator={MULTISELECT_SEPARATOR}
+                    placeholder={t("parameterValuesPlaceholder")}
+                    ariaLabel={t("parameterValues")}
+                    className="font-mono"
                     testIdPrefix={prefix}
                   />
                 </div>

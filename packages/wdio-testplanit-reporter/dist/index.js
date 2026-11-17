@@ -373,9 +373,9 @@ ${error.stack}` : "";
   }
   /**
    * Decide whether to write a Cucumber scenario's captured steps to its case,
-   * and write them via the shared mapper. No-op for non-Cucumber frameworks
-   * (D-09). Writes on fresh create when captureSteps is on (D-04), or replaces
-   * existing steps when overwriteSteps is on (D-05).
+   * and write them via the shared mapper. No-op for non-Cucumber frameworks.
+   * Writes on fresh create when captureSteps is on, or replaces
+   * existing steps when overwriteSteps is on.
    */
   async writeScenarioSteps(testCaseId, action, result) {
     if (this.detectedFramework !== "cucumber") return;
@@ -442,8 +442,8 @@ ${error.stack}` : "";
    * Write derived case Steps for a case (ported from the Playwright reporter).
    * Dedups in-flight writes per case id; when `replace` is set, soft-deletes
    * existing steps first and SKIPS the create if the delete fails (never-clobber
-   * guard, CORE-01). Passes `CaseStepRow[]` directly to `createSteps` so the
-   * mapper's `expectedResult` is preserved (D-06).
+   * guard). Passes `CaseStepRow[]` directly to `createSteps` so the
+   * mapper's `expectedResult` is preserved.
    */
   writeCaseSteps(testCaseId, caseStepRows, replace) {
     if (!caseStepRows || caseStepRows.length === 0) return Promise.resolve();
@@ -1334,12 +1334,20 @@ ${error.stack}` : "";
       }
       const runCaseKey = `${this.state.testRunId}_${repositoryCaseId}`;
       if (!this.state.testRunCaseMap.has(runCaseKey)) {
-        const testRunCase = await this.client.findOrAddTestCaseToRun({
-          testRunId: this.state.testRunId,
-          repositoryCaseId
-        });
-        this.state.testRunCaseMap.set(runCaseKey, testRunCase.id);
-        this.log("Added case to run:", testRunCase.id);
+        try {
+          const testRunCase = await this.client.findOrAddTestCaseToRun({
+            testRunId: this.state.testRunId,
+            repositoryCaseId
+          });
+          this.state.testRunCaseMap.set(runCaseKey, testRunCase.id);
+          this.log("Added case to run:", testRunCase.id);
+        } catch (err) {
+          this.state.testRunCaseMap.set(runCaseKey, 0);
+          this.log(
+            "Could not add case to run (composition locked?); reporting the result anyway:",
+            err instanceof Error ? err.message : String(err)
+          );
+        }
       }
       const statusId = this.state.statusIds[result.status] || this.state.statusIds.failed;
       const junitType = this.mapStatusToJUnitType(result.status);

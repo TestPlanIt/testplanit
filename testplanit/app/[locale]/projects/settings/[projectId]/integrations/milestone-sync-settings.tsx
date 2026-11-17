@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  isMilestoneSyncProvider,
+  milestoneKindsFor,
+} from "~/lib/integrations/milestoneSyncProviders";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
@@ -40,19 +44,7 @@ interface MilestoneSyncConfig {
   autoTrackExcludedExternalProjectIds?: string[];
 }
 
-/**
- * Providers whose adapter declares a non-`false` `milestones` capability
- * (`IssueAdapterCapabilities.milestones`). Adapters run server-side only
- * (credentialed API clients), so this small client-safe map mirrors each
- * adapter's `getCapabilities()` return value rather than round-tripping to
- * the server just to learn a static, provider-determined fact. Source of
- * truth: `lib/integrations/adapters/*Adapter.ts` `getCapabilities()`.
- */
-const MILESTONE_CAPABLE_PROVIDERS = new Set(["JIRA"]);
-
-function isMilestoneSyncCapable(provider: string): boolean {
-  return MILESTONE_CAPABLE_PROVIDERS.has(provider);
-}
+const isMilestoneSyncCapable = isMilestoneSyncProvider;
 
 const DEFAULT_CONFIG: MilestoneSyncConfig = {
   enabled: false,
@@ -114,14 +106,25 @@ export function MilestoneSyncSettings({
     { enabled: isMilestoneSyncCapable(integration.provider) }
   );
 
+  // The kinds this tracker offers; a provider with only releases never
+  // shows, saves or compares a sprint kind.
+  const providerKinds = useMemo(
+    () => milestoneKindsFor(integration.provider),
+    [integration.provider]
+  );
+
   const savedConfig = useMemo(() => {
     const raw = (projectIntegration.config as Record<string, any>) || {};
     const milestoneSync: Partial<MilestoneSyncConfig> = raw.milestoneSync ?? {};
-    return {
+    const merged = {
       ...DEFAULT_CONFIG,
       ...milestoneSync,
     } as MilestoneSyncConfig;
-  }, [projectIntegration.config]);
+    return {
+      ...merged,
+      kinds: merged.kinds.filter((kind) => providerKinds.includes(kind)),
+    };
+  }, [projectIntegration.config, providerKinds]);
 
   // Pending edits held locally, committed only by an explicit Save — the
   // same deviation from the old persist-on-toggle pattern that
@@ -272,19 +275,21 @@ export function MilestoneSyncSettings({
                 {t("milestoneSync.releasesLabel")}
               </Label>
             </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="milestoneSyncKindIteration"
-                checked={pending.kinds.includes("ITERATION")}
-                disabled={isSaving}
-                onCheckedChange={(checked) =>
-                  handleKindToggle("ITERATION", !!checked)
-                }
-              />
-              <Label htmlFor="milestoneSyncKindIteration">
-                {t("milestoneSync.sprintsLabel")}
-              </Label>
-            </div>
+            {providerKinds.includes("ITERATION") && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="milestoneSyncKindIteration"
+                  checked={pending.kinds.includes("ITERATION")}
+                  disabled={isSaving}
+                  onCheckedChange={(checked) =>
+                    handleKindToggle("ITERATION", !!checked)
+                  }
+                />
+                <Label htmlFor="milestoneSyncKindIteration">
+                  {t("milestoneSync.sprintsLabel")}
+                </Label>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

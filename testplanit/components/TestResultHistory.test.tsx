@@ -186,6 +186,14 @@ vi.mock("./tiptap/TipTapEditor", () => ({
   ),
 }));
 
+// Read-only content renders through the static renderer; the stub keeps the
+// editor's test id so the assertions below cover both.
+vi.mock("./tiptap/ReadOnlyRichText", () => ({
+  default: ({ content }: { content: any }) => (
+    <div data-testid="tiptap-editor">{JSON.stringify(content)}</div>
+  ),
+}));
+
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -262,7 +270,7 @@ const mockTestCase = {
   project: { id: 1, name: "Project" },
   steps: [],
   source: "manual",
-  testRuns: [
+  testRunCases: [
     {
       id: 101,
       testRun: {
@@ -355,7 +363,7 @@ describe("TestResultHistory", () => {
   it("renders empty state when no results exist", () => {
     const testCaseNoResults = {
       ...mockTestCase,
-      testRuns: [],
+      testRunCases: [],
       junitResults: [],
     };
     mockUseFindFirstRepositoryCases.mockReturnValue({
@@ -414,7 +422,7 @@ describe("TestResultHistory", () => {
   it("renders pending result when test run case has no results", () => {
     const testCaseWithPending = {
       ...mockTestCase,
-      testRuns: [
+      testRunCases: [
         {
           id: 201,
           testRun: {
@@ -440,6 +448,144 @@ describe("TestResultHistory", () => {
 
     // "status.pending" should appear
     expect(screen.getByText("status.pending")).toBeInTheDocument();
+    expect(screen.queryByText("labels.untested")).not.toBeInTheDocument();
+  });
+
+  it("renders untested instead of pending when the run is completed", () => {
+    const testCaseWithUntested = {
+      ...mockTestCase,
+      testRunCases: [
+        {
+          id: 202,
+          testRun: {
+            id: 21,
+            name: "Completed Run",
+            milestone: null,
+            isCompleted: true,
+            completedAt: new Date("2024-01-20T10:00:00Z"),
+            isDeleted: false,
+            configurationGroupId: null,
+            configuration: null,
+          },
+          results: [], // No results in a locked run = untested
+        },
+      ],
+      junitResults: [],
+    };
+    mockUseFindFirstRepositoryCases.mockReturnValue({
+      data: testCaseWithUntested,
+      isLoading: false,
+    });
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    expect(screen.getByText("labels.untested")).toBeInTheDocument();
+    expect(screen.queryByText("status.pending")).not.toBeInTheDocument();
+  });
+
+  // Pending rows (open runs) lead the history; everything else, including
+  // Untested rows from completed runs, follows in execution order, with an
+  // Untested row anchored to the run's completion time.
+  it("sorts open-run pending rows first and completed-run untested rows chronologically", () => {
+    const testCaseWithMixedRuns = {
+      ...mockTestCase,
+      testRunCases: [
+        ...mockTestCase.testRunCases, // Passed on 2024-01-15
+        {
+          id: 203,
+          testRun: {
+            id: 22,
+            name: "Old Completed Run",
+            milestone: null,
+            isCompleted: true,
+            completedAt: new Date("2024-01-01T10:00:00Z"),
+            isDeleted: false,
+            configurationGroupId: null,
+            configuration: null,
+          },
+          results: [],
+        },
+        {
+          id: 201,
+          testRun: {
+            id: 20,
+            name: "Pending Run",
+            milestone: null,
+            isCompleted: false,
+            isDeleted: false,
+            configurationGroupId: null,
+            configuration: null,
+          },
+          results: [],
+        },
+        {
+          id: 202,
+          testRun: {
+            id: 21,
+            name: "Recent Completed Run",
+            milestone: null,
+            isCompleted: true,
+            completedAt: new Date("2024-01-20T10:00:00Z"),
+            isDeleted: false,
+            configurationGroupId: null,
+            configuration: null,
+          },
+          results: [],
+        },
+      ],
+      // JUnit "Failed" on 2024-01-14 stays in via mockTestCase.junitResults
+    };
+    mockUseFindFirstRepositoryCases.mockReturnValue({
+      data: testCaseWithMixedRuns,
+      isLoading: false,
+    });
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    const labels = ["status.pending", "labels.untested", "Passed", "Failed"];
+    const rowStatuses = Array.from(document.querySelectorAll("tbody tr"))
+      .map((row) => labels.find((label) => row.textContent?.includes(label)))
+      .filter((label): label is string => Boolean(label));
+
+    expect(rowStatuses).toEqual([
+      "status.pending", // open run leads
+      "labels.untested", // completed 2024-01-20
+      "Passed", // executed 2024-01-15
+      "Failed", // executed 2024-01-14
+      "labels.untested", // completed 2024-01-01
+    ]);
+  });
+
+  it("still labels a completed run untested when it has no completion date", () => {
+    const testCaseWithUndatedCompletion = {
+      ...mockTestCase,
+      testRunCases: [
+        {
+          id: 204,
+          testRun: {
+            id: 23,
+            name: "Completed Without Date",
+            milestone: null,
+            isCompleted: true,
+            completedAt: null,
+            isDeleted: false,
+            configurationGroupId: null,
+            configuration: null,
+          },
+          results: [],
+        },
+      ],
+      junitResults: [],
+    };
+    mockUseFindFirstRepositoryCases.mockReturnValue({
+      data: testCaseWithUndatedCompletion,
+      isLoading: false,
+    });
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    expect(screen.getByText("labels.untested")).toBeInTheDocument();
+    expect(screen.queryByText("status.pending")).not.toBeInTheDocument();
   });
 
   it("shows expand/collapse toggle buttons in table header", () => {
@@ -503,7 +649,7 @@ describe("TestResultHistory", () => {
   it("renders Add to Test Run button when user has add/edit run permission", () => {
     const testCaseNoResults = {
       ...mockTestCase,
-      testRuns: [],
+      testRunCases: [],
       junitResults: [],
     };
     mockUseFindFirstRepositoryCases.mockReturnValue({
@@ -565,9 +711,9 @@ describe("TestResultHistory", () => {
     });
     const testCaseWithStepResults = {
       ...mockTestCase,
-      testRuns: [
+      testRunCases: [
         {
-          ...mockTestCase.testRuns[0],
+          ...mockTestCase.testRunCases[0],
           results: [resultWithSteps],
         },
       ],
@@ -603,9 +749,9 @@ describe("TestResultHistory", () => {
     mockUseFindFirstRepositoryCases.mockReturnValue({
       data: {
         ...mockTestCase,
-        testRuns: [
+        testRunCases: [
           {
-            ...mockTestCase.testRuns[0],
+            ...mockTestCase.testRunCases[0],
             results: [{ ...mockManualResult, id: 3 }],
           },
         ],
@@ -653,7 +799,7 @@ describe("TestResultHistory", () => {
   it("hides Add to Test Run button when user lacks permission", () => {
     const testCaseNoResults = {
       ...mockTestCase,
-      testRuns: [],
+      testRunCases: [],
       junitResults: [],
     };
     mockUseFindFirstRepositoryCases.mockReturnValue({
@@ -709,7 +855,11 @@ describe("TestResultHistory", () => {
     beforeEach(() => {
       virtualHookMock.window = null;
       mockUseFindFirstRepositoryCases.mockReturnValue({
-        data: { ...mockTestCase, testRuns: [], junitResults: manyJunitResults },
+        data: {
+          ...mockTestCase,
+          testRunCases: [],
+          junitResults: manyJunitResults,
+        },
         isLoading: false,
       });
     });
@@ -737,5 +887,46 @@ describe("TestResultHistory", () => {
       expect(virtualHookMock.lastOpts?.count).toBe(0);
       expect(document.querySelector("tbody[aria-hidden]")).toBeNull();
     });
+  });
+});
+
+describe("TestResultHistory — collapsing", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("runs none of its queries while collapsed", () => {
+    window.localStorage.setItem(
+      "case-panel-collapsed:test-result-history",
+      "true"
+    );
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    expect(screen.getByText("testResultHistory")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("result-history-collapse-toggle")
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(mockUseFindFirstRepositoryCases).not.toHaveBeenCalled();
+    expect(mockUseFindManyRepositoryCaseVersions).not.toHaveBeenCalled();
+  });
+
+  it("loads the history once expanded and remembers the choice", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(
+      "case-panel-collapsed:test-result-history",
+      "true"
+    );
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+    await user.click(screen.getByTestId("result-history-collapse-toggle"));
+
+    expect(mockUseFindFirstRepositoryCases).toHaveBeenCalled();
+    expect(
+      screen.getByTestId("result-history-collapse-toggle")
+    ).toHaveAttribute("aria-expanded", "true");
+    expect(
+      window.localStorage.getItem("case-panel-collapsed:test-result-history")
+    ).toBe("false");
   });
 });

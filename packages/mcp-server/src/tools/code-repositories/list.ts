@@ -27,9 +27,10 @@ export function registerCodeRepositoriesList(
     "testplanit_code_repositories_list",
     {
       description:
-        "List the project's code-repository configuration. Returns ProjectCodeRepositoryConfig rows with the underlying CodeRepository denormalized inline (id, name, provider, status, lastTestedAt, settings stripped to a public-key allow-list, and a derived web url). The secrets column is never returned. One row per project today (schema enforces @@unique([projectId])).",
+        "List the code repositories bound to a project. Each row is one binding (ProjectCodeRepositoryConfig) and carries its `purpose`: QUICKSCRIPT bindings point at the repository that holds the project's automated tests (QuickScript generation and test-case links read it); IMPACT bindings point at the application code that impact analysis and Code Pins read. A project holds up to one binding per purpose and repository, so expect several rows; filter by `purpose` to pick one side. The repository is denormalized inline: id, name, provider, status, lastTestedAt, settings reduced to the provider's public keys (owner/repo, projectPath, workspace/repoSlug, organizationUrl/project/repositoryId, baseUrl), and a derived web url. Credentials are never returned.",
       inputSchema: {
         projectId: z.number().int().positive(),
+        purpose: z.enum(["QUICKSCRIPT", "IMPACT"]).optional(),
         cursor: z.number().int().positive().optional(),
         limit: z.number().int().positive().max(MAX_LIMIT).optional(),
       },
@@ -42,11 +43,12 @@ export function registerCodeRepositoriesList(
           // CodeRepository carries `isDeleted`; the join table does not.
           repository: { isDeleted: false },
         };
+        if (input.purpose !== undefined) where.purpose = input.purpose;
         const body: Record<string, unknown> = {
           where,
           include: PROJECT_REPO_CONFIG_INCLUDE,
-          // BL-04 deterministic ordering — newest first; id breaks ties for
-          // rows created in the same millisecond.
+          // Deterministic ordering — newest first; id breaks ties for rows
+          // created in the same millisecond.
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take: limit + 1,
         };

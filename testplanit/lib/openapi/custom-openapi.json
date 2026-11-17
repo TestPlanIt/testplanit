@@ -640,6 +640,15 @@
                           "type": "object",
                           "description": "Custom field values keyed by the template field's display name. A name not on the template fails that case.",
                           "additionalProperties": true
+                        },
+                        "automated": {
+                          "type": "boolean",
+                          "description": "Marks the case as automated."
+                        },
+                        "estimate": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Estimated duration in seconds."
                         }
                       }
                     }

@@ -5,6 +5,11 @@ import { useIssueColors } from "~/hooks/useIssueColors";
 import { toHumanReadable } from "~/utils/duration";
 import { metricUnit } from "~/utils/metricUnits";
 import { stringToColorCode } from "~/utils/stringToColorCode";
+import { formatReportPeriod } from "~/utils/reportPeriodFormat";
+import type { DateGrouping } from "~/lib/reports/dateGrouping";
+import type { ResultsTrendMeta } from "~/utils/resultsTrendShared";
+import type { IssueTestCoverageSummary } from "~/utils/issueTestCoverageSummary";
+import type { TestCaseHealthSummary } from "~/utils/testCaseHealthSummary";
 import { FlakyTestsBubbleChart } from "./FlakyTestsBubbleChart";
 import { IssueTestCoverageChart } from "./IssueTestCoverageChart";
 import RecentResultsDonut from "./RecentResultsDonut";
@@ -18,6 +23,7 @@ import {
   SmallMultipleData,
 } from "./ReportSmallMultiplesGroupedBar";
 import { ReportSunburstChart } from "./ReportSunburstChart";
+import { ResultsTrendChart } from "./ResultsTrendChart";
 import { CodePinCoverageChart } from "./CodePinCoverageChart";
 import { ImpactAnalysisChart } from "./ImpactAnalysisChart";
 import { TestCaseHealthChart } from "./TestCaseHealthChart";
@@ -105,6 +111,11 @@ const TOTAL_SERIES_COLOR = "hsl(262, 83%, 58%)";
 // Props for the main chart component
 interface ReportChartProps {
   results: any[];
+  /**
+   * A server-paged report's chart numbers over its whole filtered set
+   * (test-case-health `summary`), when `results` is only a page.
+   */
+  chartSummary?: unknown;
   /** Multi-line chart: also plot the sum of every series at each date. */
   showTotals?: boolean;
   dimensions: { value: string; label: string }[];
@@ -114,6 +125,10 @@ interface ReportChartProps {
   consecutiveRuns?: number; // For flaky tests report
   totalFlakyTests?: number; // Total count of flaky tests (for showing "not shown" count)
   projectId?: number | string; // Project ID for building links in charts
+  /** The period each date row covers; labels the time axis' tooltips. */
+  dateGrouping?: DateGrouping;
+  /** Results trend: the weeks, projects and settings of the run. */
+  resultsTrend?: ResultsTrendMeta;
 }
 
 // Helper to determine chart type
@@ -153,6 +168,8 @@ const getChartType = (
     "priority",
     "configuration",
     "trigger",
+    "resultSource",
+    "rootCause",
     "codeRepository",
   ];
 
@@ -162,6 +179,7 @@ const getChartType = (
 
   // Check if any metric is a date metric - these shouldn't be visualized in charts
   const hasDateMetric = metrics.some((metric) => {
+    if (metricUnit(metric.value) === "date") return true;
     const label = metric.label.toLowerCase();
     return (
       label.includes("date") ||
@@ -365,6 +383,7 @@ const getColor = (
 
 export const ReportChart: React.FC<ReportChartProps> = ({
   results,
+  chartSummary,
   showTotals = false,
   dimensions,
   metrics,
@@ -373,9 +392,15 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   consecutiveRuns = 10,
   totalFlakyTests,
   projectId,
+  dateGrouping = "daily",
+  resultsTrend,
 }) => {
   const locale = useLocale();
   const t = useTranslations();
+  // A date row is keyed by the UTC start of its period; the tooltip spells
+  // the period out at the grouping's precision.
+  const formatPeriodLabel = (date: Date) =>
+    formatReportPeriod(date, dateGrouping, locale);
   const { getPriorityDotColor, getStatusDotColor } = useIssueColors();
 
   // Early return if results is not a valid array
@@ -391,6 +416,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 
   // Filter out date metrics for chart rendering (they can still appear in the table)
   const chartMetrics = metrics.filter((metric) => {
+    if (metricUnit(metric.value) === "date") return false;
     const label = metric.label.toLowerCase();
     return !(
       label.includes("date") ||
@@ -514,7 +540,13 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   // Special handling for test case health report - use combined donut + scatter chart
   // Shows health status distribution and health score vs days since execution
   if (reportType && matchesReportType(reportType, "test-case-health")) {
-    return <TestCaseHealthChart data={results} projectId={projectId} />;
+    return (
+      <TestCaseHealthChart
+        data={results}
+        summary={chartSummary as TestCaseHealthSummary | null | undefined}
+        projectId={projectId}
+      />
+    );
   }
 
   // Impact analysis history: summary tiles + analyses per week by trigger.
@@ -527,10 +559,26 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     return <CodePinCoverageChart data={results} />;
   }
 
+  // Results trend: verdict, headline stats, rate chart, heatmap
+  // and per-project detail. Needs the run's week axis to lay out.
+  if (
+    reportType &&
+    matchesReportType(reportType, "results-trend") &&
+    resultsTrend
+  ) {
+    return <ResultsTrendChart data={results} meta={resultsTrend} />;
+  }
+
   // Special handling for issue test coverage report - use stacked bar chart
   // Shows issues with their linked test cases and pass/fail/untested breakdown
   if (reportType && matchesReportType(reportType, "issue-test-coverage")) {
-    return <IssueTestCoverageChart data={results} projectId={projectId} />;
+    return (
+      <IssueTestCoverageChart
+        data={results}
+        summary={chartSummary as IssueTestCoverageSummary | null | undefined}
+        projectId={projectId}
+      />
+    );
   }
 
   const chartType = getChartType(dimensions, chartMetrics, results);
@@ -689,6 +737,9 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           <ReportLineChart
             data={transformedData}
             durationTicks={isElapsedTimeMetric(metric)}
+            formatDate={
+              dimension?.value === "date" ? formatPeriodLabel : undefined
+            }
           />
         );
       }
@@ -956,6 +1007,9 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         <ReportMultiLineChart
           data={transformedData}
           durationTicks={chartMetrics.every(isElapsedTimeMetric)}
+          formatDate={
+            dateDimension.value === "date" ? formatPeriodLabel : undefined
+          }
         />
       );
     }

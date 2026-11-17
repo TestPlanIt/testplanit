@@ -51,6 +51,7 @@ import { useDragLayer, useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { useCopyMoveJob } from "~/components/copy-move/useCopyMoveJob";
 import { isMacPlatform, useDragModifier } from "~/hooks/useDragModifier";
+import type { CopyDropHandler } from "@/components/dnd/CopyIntoFolderDropTarget";
 import { useDragTargetKind } from "~/hooks/useDragTargetKind";
 import { ItemTypes } from "~/types/dndTypes";
 import { DeleteFolderModal } from "./DeleteFolderModal";
@@ -275,6 +276,9 @@ const TreeView: React.FC<{
   /** Ref to an element to scope DnD events to (prevents "Cannot have two HTML5 backends" error in portals) */
   dndRootElement?: HTMLElement | null;
   onCopyMoveFolder?: (folderId: number, folderName: string) => void;
+  /** Hands the parent the tree's copy routine so a copy dropped on the case
+   * list runs through the same job tracking, spinner and toasts. */
+  onCopyDropHandlerReady?: (handler: CopyDropHandler) => void;
 }> = ({
   onSelectFolder,
   onHierarchyChange,
@@ -287,6 +291,7 @@ const TreeView: React.FC<{
   onRefetchStats,
   dndRootElement,
   onCopyMoveFolder,
+  onCopyDropHandlerReady,
 }) => {
   const { projectId } = useParams<{ projectId: string }>();
   const t = useTranslations();
@@ -763,6 +768,10 @@ const TreeView: React.FC<{
   );
 
   useEffect(() => {
+    onCopyDropHandlerReady?.(handleCopyDrop);
+  }, [onCopyDropHandlerReady, handleCopyDrop]);
+
+  useEffect(() => {
     if (copyMoveJob.status === "completed") {
       const submitted = lastSubmittedRef.current;
       setPendingCopyTargets((prev) => {
@@ -1007,7 +1016,9 @@ const TreeView: React.FC<{
         const nodeId = selectedFolderId.toString();
         const node = treeRef.current?.get(nodeId);
         if (node) {
-          node.select();
+          // Selecting on load must not take keyboard focus: focus moving to
+          // the tree closes any menu the user has just opened.
+          node.tree.select(node, { focus: false });
           setSelectedId(nodeId);
 
           // Also ensure parent nodes are open

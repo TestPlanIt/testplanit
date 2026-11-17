@@ -42,10 +42,13 @@ test.describe("Report Builder - Multiple Report Types", () => {
     projectId: number,
     reportType: string,
     dimensions?: string[],
-    metrics?: string[]
+    metrics?: string[],
+    // Pre-built reports keep their settings (lookback, grouping, toggles) on
+    // the Reports tab; the Report Builder tab's form is the custom one.
+    tab: "builder" | "reports" = "builder"
   ) {
     const params = new URLSearchParams({
-      tab: "builder",
+      tab,
       reportType,
     });
 
@@ -261,6 +264,76 @@ test.describe("Report Builder - Multiple Report Types", () => {
     });
   });
 
+  test("Date dimension offers Group By and re-buckets rows by month", async ({
+    api,
+    page,
+  }) => {
+    const projectId = await createProjectWithTestData(api);
+    const groupBy = page.getByTestId("date-grouping-select");
+
+    await test.step("Group By is absent without the date dimension", async () => {
+      await navigateToReport(
+        page,
+        projectId,
+        "repository-stats",
+        ["testCase"],
+        ["testCaseCount"]
+      );
+      await expect(
+        page.locator('[data-testid="run-report-button"]')
+      ).toBeEnabled({ timeout: 10000 });
+      await expect(groupBy).toHaveCount(0);
+    });
+
+    await test.step("Group By appears with the date dimension, defaulting to Daily", async () => {
+      await navigateToReport(
+        page,
+        projectId,
+        "repository-stats",
+        ["date"],
+        ["testCaseCount"]
+      );
+      await expect(groupBy).toBeVisible({ timeout: 10000 });
+      await expect(groupBy).toHaveText("Daily");
+    });
+
+    await test.step("Run daily: the two cases created today land on one day row", async () => {
+      await runReport(page);
+      const table = page.locator("[role='table']").first();
+      await expect(table).toBeVisible({ timeout: 10000 });
+      // A day label carries a day number (en-US: 10/6/2026).
+      await expect(table.locator("[role='cell']").first()).toHaveText(
+        /^\d{1,2}\/\d{1,2}\/\d{4}$/
+      );
+      await expect(page).toHaveURL(/dateGrouping=daily/);
+    });
+
+    await test.step("Switch to Monthly: re-runs, labels the month, updates the URL", async () => {
+      await groupBy.click();
+      await page.getByRole("option", { name: "Monthly" }).click();
+      await expect(groupBy).toHaveText("Monthly");
+      await expect(page).toHaveURL(/dateGrouping=monthly/, { timeout: 10000 });
+      const firstCell = page
+        .locator("[role='table']")
+        .first()
+        .locator("[role='cell']")
+        .first();
+      // A month label is "Oct 2026": no day number.
+      await expect(firstCell).toHaveText(/^[A-Z][a-z]{2} \d{4}$/, {
+        timeout: 15000,
+      });
+    });
+
+    await test.step("Reload restores Monthly from the URL", async () => {
+      await page.reload();
+      await page.waitForLoadState("networkidle");
+      await expect(groupBy).toHaveText("Monthly", { timeout: 10000 });
+      await expect(
+        page.locator("[role='table']").first().locator("[role='cell']").first()
+      ).toHaveText(/^[A-Z][a-z]{2} \d{4}$/, { timeout: 15000 });
+    });
+  });
+
   test("Report builder URL params persist dimensions and metrics on reload", async ({
     api,
     page,
@@ -298,6 +371,54 @@ test.describe("Report Builder - Multiple Report Types", () => {
       // Report should auto-run with persisted params
       const table = page.locator("[role='table']").first();
       await expect(table).toBeVisible({ timeout: 10000 });
+    });
+  });
+
+  test("Report builder loads the results-trend report and re-runs on a setting change", async ({
+    api,
+    page,
+  }) => {
+    const projectId = await createProjectWithTestData(api);
+    // An automated run with no results yet still counts as a run, so the
+    // report has a row to show.
+    await api.createTestRun(projectId, `Trend JUnit Run ${Date.now()}`, {
+      testRunType: "JUNIT",
+    });
+
+    await test.step("Open the results-trend pre-built report", async () => {
+      await navigateToReport(
+        page,
+        projectId,
+        "results-trend",
+        undefined,
+        undefined,
+        "reports"
+      );
+      await expect(page.getByTestId("results-trend-settings")).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.getByTestId("report-date-grouping")).toBeVisible();
+    });
+
+    await test.step("Run the report and verify the verdict and the table", async () => {
+      await runReport(page);
+      await expect(page.getByTestId("results-trend-verdict")).toBeVisible({
+        timeout: 30_000,
+      });
+      await expect(page.locator("[role='table']").first()).toBeVisible();
+    });
+
+    await test.step("Changing the grouping re-runs the report and lands in the URL", async () => {
+      await page.getByTestId("report-date-grouping").click();
+      await page.getByRole("option", { name: "Monthly" }).click();
+      await expect
+        .poll(() => new URL(page.url()).searchParams.get("dateGrouping"), {
+          timeout: 15_000,
+        })
+        .toBe("monthly");
+      await expect(page.getByTestId("results-trend-verdict")).toBeVisible({
+        timeout: 30_000,
+      });
     });
   });
 });

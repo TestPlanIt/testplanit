@@ -4,14 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   mockRotate,
-  mockUpdateEvents,
+  mockUpdateBaseBranch,
   mockDelete,
   mockSetActive,
   mockSendTest,
   mockToastError,
 } = vi.hoisted(() => ({
   mockRotate: vi.fn(),
-  mockUpdateEvents: vi.fn(),
+  mockUpdateBaseBranch: vi.fn(),
   mockDelete: vi.fn(),
   mockSetActive: vi.fn(),
   mockSendTest: vi.fn(),
@@ -30,15 +30,18 @@ vi.mock("sonner", () => ({
 }));
 vi.mock("~/app/actions/webhook-config", () => ({
   createOrRotateCodeRepositoryWebhook: (...a: unknown[]) => mockRotate(...a),
-  updateCodeRepositoryWebhookEvents: (...a: unknown[]) =>
-    mockUpdateEvents(...a),
+  updateCodeRepositoryWebhookBaseBranch: (...a: unknown[]) =>
+    mockUpdateBaseBranch(...a),
   deleteInboundWebhook: (...a: unknown[]) => mockDelete(...a),
   setWebhookActive: (...a: unknown[]) => mockSetActive(...a),
   sendTestWebhook: (...a: unknown[]) => mockSendTest(...a),
 }));
-vi.mock("./repository-webhook-auto-execute", () => ({
-  RepositoryWebhookAutoExecute: () => (
-    <div data-testid="webhook-repository-auto-execute" />
+vi.mock("./webhook-actions-section", () => ({
+  WebhookActionsSection: (props: any) => (
+    <div
+      data-testid="webhook-actions-section"
+      data-props={JSON.stringify(props)}
+    />
   ),
 }));
 vi.mock("@/components/webhooks/webhook-adapter-icon", () => ({
@@ -86,21 +89,21 @@ vi.mock("@/components/ui/alert-dialog", () => ({
 
 import { RepositoryWebhookCard } from "./repository-webhook-card";
 
-// The auto-execute section has its own tests
-// (repository-webhook-auto-execute.test.tsx); here it is a placeholder.
+// The rules section has its own tests
+// (webhook-actions-section.render.test.tsx); here it is a placeholder.
+
+function sectionProps() {
+  return JSON.parse(
+    screen.getByTestId("webhook-actions-section").getAttribute("data-props")!
+  );
+}
 
 const hook = {
   id: "whc-1",
   token: "whk_" + "a".repeat(64),
   adapterType: "GITHUB" as const,
   isActive: true,
-  subscribedEvents: ["code:pull_request", "code:push"],
   baseBranch: null,
-  autoExecuteEnabled: false,
-  autoExecuteTargetId: null,
-  autoExecuteRef: null,
-  autoExecuteInputs: {},
-  autoRunMinScore: null,
   endpointHealth: "HEALTHY" as const,
   lastReceivedAt: null,
   codeRepositoryConfig: {
@@ -121,40 +124,33 @@ describe("RepositoryWebhookCard", () => {
     });
   });
 
-  it("shows the redacted URL, the branch-specific push label and the health badge", () => {
+  it("shows the redacted URL, the health badge and the webhook's rules", () => {
     render(
       <RepositoryWebhookCard projectId={42} hook={hook} onChanged={onChanged} />
     );
     expect(screen.getByTestId("webhook-url")).not.toHaveTextContent(
       "a".repeat(64)
     );
+    expect(sectionProps()).toEqual({
+      projectId: 42,
+      webhookConfigId: "whc-1",
+      source: "repository",
+      baseBranch: "main",
+    });
     expect(
-      screen.getByText('codeRepos.eventPush:{"branch":"main"}')
-    ).toBeInTheDocument();
+      screen.queryByTestId("webhook-repository-min-score")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("webhook-repository-event-push")
+    ).not.toBeInTheDocument();
     expect(
       screen.getByTestId("webhook-health-badge-repository-9")
     ).toHaveTextContent("healthBadge.HEALTHY");
     expect(screen.getByTestId("webhook-rotate-button")).toBeInTheDocument();
   });
 
-  it("switches an event off through the events action", async () => {
-    mockUpdateEvents.mockResolvedValue({ success: true });
-    render(
-      <RepositoryWebhookCard projectId={42} hook={hook} onChanged={onChanged} />
-    );
-    fireEvent.click(screen.getByTestId("webhook-repository-event-push"));
-    await waitFor(() =>
-      expect(mockUpdateEvents).toHaveBeenCalledWith({
-        projectId: 42,
-        webhookConfigId: "whc-1",
-        subscribedEvents: ["code:pull_request"],
-      })
-    );
-    expect(onChanged).toHaveBeenCalled();
-  });
-
-  it("saves an edited base branch and relabels the push event", async () => {
-    mockUpdateEvents.mockResolvedValue({ success: true });
+  it("saves an edited base branch through the base branch action", async () => {
+    mockUpdateBaseBranch.mockResolvedValue({ success: true });
     render(
       <RepositoryWebhookCard projectId={42} hook={hook} onChanged={onChanged} />
     );
@@ -162,87 +158,38 @@ describe("RepositoryWebhookCard", () => {
       screen.queryByTestId("webhook-repository-base-branch-save")
     ).not.toBeInTheDocument();
     fireEvent.change(screen.getByTestId("webhook-repository-base-branch"), {
-      target: { value: "develop" },
+      target: { value: " develop " },
     });
-    expect(
-      screen.getByText('codeRepos.eventPush:{"branch":"develop"}')
-    ).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("webhook-repository-base-branch-save"));
     await waitFor(() =>
-      expect(mockUpdateEvents).toHaveBeenCalledWith({
+      expect(mockUpdateBaseBranch).toHaveBeenCalledWith({
         projectId: 42,
         webhookConfigId: "whc-1",
         baseBranch: "develop",
       })
     );
+    expect(onChanged).toHaveBeenCalled();
   });
 
-  it("saves a minimum score, clears it when emptied, and refuses one outside 0–100", async () => {
-    mockUpdateEvents.mockResolvedValue({ success: true });
-    const { rerender } = render(
-      <RepositoryWebhookCard projectId={42} hook={hook} onChanged={onChanged} />
-    );
-    expect(
-      screen.queryByTestId("webhook-repository-min-score-save")
-    ).not.toBeInTheDocument();
-
-    fireEvent.change(screen.getByTestId("webhook-repository-min-score"), {
-      target: { value: "70" },
-    });
-    fireEvent.click(screen.getByTestId("webhook-repository-min-score-save"));
-    await waitFor(() =>
-      expect(mockUpdateEvents).toHaveBeenCalledWith({
-        projectId: 42,
-        webhookConfigId: "whc-1",
-        autoRunMinScore: 70,
-      })
-    );
-
-    fireEvent.change(screen.getByTestId("webhook-repository-min-score"), {
-      target: { value: "101" },
-    });
-    fireEvent.click(screen.getByTestId("webhook-repository-min-score-save"));
-    expect(mockToastError).toHaveBeenCalledWith("codeRepos.minScoreInvalid");
-    expect(mockUpdateEvents).toHaveBeenCalledTimes(1);
-
-    rerender(
+  it("clears a saved base branch with null and hands it to the rules", async () => {
+    mockUpdateBaseBranch.mockResolvedValue({ success: true });
+    render(
       <RepositoryWebhookCard
         projectId={42}
-        hook={{ ...hook, autoRunMinScore: 70 }}
+        hook={{ ...hook, baseBranch: "develop" }}
         onChanged={onChanged}
       />
     );
-    fireEvent.change(screen.getByTestId("webhook-repository-min-score"), {
+    expect(sectionProps().baseBranch).toBe("develop");
+    fireEvent.change(screen.getByTestId("webhook-repository-base-branch"), {
       target: { value: "" },
     });
-    fireEvent.click(screen.getByTestId("webhook-repository-min-score-save"));
+    fireEvent.click(screen.getByTestId("webhook-repository-base-branch-save"));
     await waitFor(() =>
-      expect(mockUpdateEvents).toHaveBeenLastCalledWith({
+      expect(mockUpdateBaseBranch).toHaveBeenCalledWith({
         projectId: 42,
         webhookConfigId: "whc-1",
-        autoRunMinScore: null,
-      })
-    );
-  });
-
-  it("switches branch pushes on", async () => {
-    mockUpdateEvents.mockResolvedValue({ success: true });
-    render(
-      <RepositoryWebhookCard projectId={42} hook={hook} onChanged={onChanged} />
-    );
-    expect(
-      screen.getByTestId("webhook-repository-event-branch-push")
-    ).not.toBeChecked();
-    fireEvent.click(screen.getByTestId("webhook-repository-event-branch-push"));
-    await waitFor(() =>
-      expect(mockUpdateEvents).toHaveBeenCalledWith({
-        projectId: 42,
-        webhookConfigId: "whc-1",
-        subscribedEvents: [
-          "code:pull_request",
-          "code:push",
-          "code:branch_push",
-        ],
+        baseBranch: null,
       })
     );
   });
@@ -328,17 +275,37 @@ describe("RepositoryWebhookCard", () => {
     );
   });
 
-  it("reports a failed event update", async () => {
-    mockUpdateEvents.mockResolvedValue({
+  it("hides the rules while a new URL is revealed", async () => {
+    mockRotate.mockResolvedValue({
+      success: true,
+      configId: "whc-1",
+      url: "https://app.example.test/api/webhooks/whk_new",
+      secret: "s",
+    });
+    render(
+      <RepositoryWebhookCard projectId={42} hook={hook} onChanged={onChanged} />
+    );
+    fireEvent.click(screen.getByTestId("webhook-rotate-button"));
+    fireEvent.click(screen.getByTestId("webhook-rotate-dialog-confirm"));
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("webhook-actions-section")
+      ).not.toBeInTheDocument()
+    );
+  });
+
+  it("reports a failed base branch update", async () => {
+    mockUpdateBaseBranch.mockResolvedValue({
       success: false,
       error: "Webhook not found",
     });
     render(
       <RepositoryWebhookCard projectId={42} hook={hook} onChanged={onChanged} />
     );
-    fireEvent.click(
-      screen.getByTestId("webhook-repository-event-pull-request")
-    );
+    fireEvent.change(screen.getByTestId("webhook-repository-base-branch"), {
+      target: { value: "develop" },
+    });
+    fireEvent.click(screen.getByTestId("webhook-repository-base-branch-save"));
     await waitFor(() =>
       expect(mockToastError).toHaveBeenCalledWith("Webhook not found")
     );

@@ -64,7 +64,7 @@ describe("testplanit_cases_delete", () => {
     );
   });
 
-  it("NEVER calls delete or deleteMany (T-06-06 invariant)", async () => {
+  it("NEVER calls delete or deleteMany", async () => {
     zenstackMock.mockResolvedValueOnce({ id: 99, isDeleted: true });
 
     await callTool({ caseId: 99 });
@@ -99,7 +99,7 @@ describe("testplanit_cases_delete", () => {
     expect(result.isError).toBe(true);
   });
 
-  it("READ_ONLY_TOKEN regression: returns mode:read message (T-06-01)", async () => {
+  it("READ_ONLY_TOKEN regression: returns mode:read message", async () => {
     zenstackMock.mockRejectedValueOnce(
       new TestPlanItHttpError("Forbidden", { statusCode: 403, code: "READ_ONLY_TOKEN" }),
     );

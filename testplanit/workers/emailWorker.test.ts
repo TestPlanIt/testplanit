@@ -861,6 +861,7 @@ describe("EmailWorker", () => {
       const placeholders = messageCall?.[2] as any;
       expect(placeholders.actorName).toBe("Alice Requester");
       expect(placeholders.hoursPending).toBe(36);
+      expect(placeholders.pendingFor).toBe("1 day");
       expect(placeholders.entityName).toBe("Login flow");
       expect(placeholders.projectName).toBe("Project Alpha");
     });
@@ -934,6 +935,7 @@ describe("EmailWorker", () => {
       const placeholders = messageCall?.[2] as any;
       expect(placeholders.actorName).toBe("Alice Requester");
       expect(placeholders.hoursPending).toBe(36);
+      expect(placeholders.pendingFor).toBe("1 day");
 
       // URL composed for the digest entry
       const digestArgs = mockSendDigestEmail.mock.calls[0][0];
@@ -942,6 +944,158 @@ describe("EmailWorker", () => {
       );
     });
   });
+  describe("ALERT_TRIGGERED email", () => {
+    const thresholdNotification = {
+      ...baseNotification,
+      id: "notif-threshold",
+      type: "ALERT_TRIGGERED",
+      title: "Alert fired: Slow checkout",
+      message: "English fallback persisted on the row",
+      data: {
+        eventId: 101,
+        ruleId: 4,
+        ruleName: "Slow checkout",
+        metric: "CONSECUTIVE_FAILURES",
+        projectId: 7,
+        projectName: "Shop",
+        subjectType: "CASE",
+        subjectId: 9,
+        subjectName: "Checkout",
+        observedValue: 3,
+        baselineValue: null,
+        thresholdValue: 3,
+        testRunId: 42,
+        details: { streak: 3 },
+      },
+    };
+
+    it("immediate path: links to the case in its run and composes the message from the metric", async () => {
+      mockDb.notification.findUnique.mockResolvedValue(thresholdNotification);
+
+      const { processor } = await import("./emailWorker");
+      const { getServerTranslation } =
+        await import("../lib/server-translations");
+
+      await processor({
+        id: "job-threshold",
+        name: "send-notification-email",
+        data: {
+          notificationId: "notif-threshold",
+          userId: "user-1",
+          immediate: true,
+        },
+      } as Job);
+
+      const callArgs = mockSendNotificationEmail.mock.calls[0][0];
+      expect(callArgs.notificationUrl).toBe(
+        "http://localhost:3000/en-US/projects/runs/7/42?selectedCase=9"
+      );
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.alertTriggeredTitle"
+      );
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.alertMetric.CONSECUTIVE_FAILURES",
+        { streak: 3, threshold: 3 }
+      );
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.alertSubject.CASE"
+      );
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.alertTriggeredEmailMessage",
+        expect.objectContaining({
+          ruleName: "Slow checkout",
+          subjectName: "Checkout",
+          projectName: "Shop",
+          detail:
+            "components.notifications.content.alertMetric.CONSECUTIVE_FAILURES",
+        })
+      );
+    });
+  });
+
+  describe("RUN_CASE_UNBLOCKED email", () => {
+    const unblockedNotification = {
+      ...baseNotification,
+      id: "notif-unblocked",
+      type: "RUN_CASE_UNBLOCKED",
+      title: "Test case ready to execute",
+      message: "English fallback persisted on the row",
+      data: {
+        testRunId: "run-1",
+        testRunName: "Order to billing",
+        projectId: "proj-1",
+        projectName: "Telco",
+        testRunCaseId: 20,
+        testCaseId: "case-2",
+        testCaseName: "Verify provisioning",
+        prerequisiteCaseName: "Create order",
+        unblockedById: "crm",
+      },
+    };
+
+    it("immediate path: links straight to the case in its run", async () => {
+      mockDb.notification.findUnique.mockResolvedValue(unblockedNotification);
+
+      const { processor } = await import("./emailWorker");
+
+      await processor({
+        id: "job-unblocked-url",
+        name: "send-notification-email",
+        data: {
+          notificationId: "notif-unblocked",
+          userId: "user-1",
+          immediate: true,
+        },
+      } as Job);
+
+      const callArgs = mockSendNotificationEmail.mock.calls[0][0];
+      expect(callArgs.notificationUrl).toBe(
+        "http://localhost:3000/en-US/projects/runs/proj-1/run-1?selectedCase=case-2"
+      );
+    });
+
+    it("immediate path: resolves the title, message and reason keys with the case names", async () => {
+      mockDb.notification.findUnique.mockResolvedValue(unblockedNotification);
+
+      const { processor } = await import("./emailWorker");
+      const { getServerTranslation } =
+        await import("../lib/server-translations");
+
+      await processor({
+        id: "job-unblocked-i18n",
+        name: "send-notification-email",
+        data: {
+          notificationId: "notif-unblocked",
+          userId: "user-1",
+          immediate: true,
+        },
+      } as Job);
+
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.runCaseUnblockedTitle"
+      );
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.runCaseUnblockedEmailMessage",
+        {
+          testCaseName: "Verify provisioning",
+          testRunName: "Order to billing",
+          projectName: "Telco",
+          prerequisiteName: "Create order",
+        }
+      );
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.runCaseUnblockedReason"
+      );
+    });
+  });
+
   describe("RUN_READY_TO_COMPLETE email", () => {
     const readyNotification = {
       ...baseNotification,

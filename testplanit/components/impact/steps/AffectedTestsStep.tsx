@@ -1,8 +1,11 @@
 "use client";
 
+import { RiskScoreCell } from "@/components/risk/RiskScoreCell";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { DataTable } from "@/components/tables/DataTable";
 import type { SortConfig } from "@/components/tables/dataTableShared";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,16 +20,10 @@ import {
 } from "@/components/ui/tooltip";
 import type {
   ColumnDef,
+  ExpandedState,
   RowSelectionState,
 } from "@/components/tables/tableFeatures";
-import {
-  AlertCircle,
-  AlertTriangle,
-  ChevronDown,
-  ChevronRight,
-  Info,
-  Sparkles,
-} from "lucide-react";
+import { AlertCircle, AlertTriangle, Info, Sparkles } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import type {
@@ -219,15 +216,33 @@ export function facetCounts(
   };
 }
 
+export interface RiskRow {
+  id: number;
+  riskScore: number | null;
+  riskReasons: unknown;
+}
+
 export function sortCases(
   cases: ImpactAnalysisCaseRow[],
-  sort: SortConfig
+  sort: SortConfig,
+  riskByCase?: ReadonlyMap<number, RiskRow>
 ): ImpactAnalysisCaseRow[] {
   const dir = sort.direction === "asc" ? 1 : -1;
+  // An unscored case has no risk to rank by, so it sorts last either way.
+  const riskOf = (row: ImpactAnalysisCaseRow) =>
+    riskByCase?.get(row.caseId)?.riskScore ?? null;
   const compare = (a: ImpactAnalysisCaseRow, b: ImpactAnalysisCaseRow) => {
     switch (sort.column) {
       case "case":
         return a.case.name.localeCompare(b.case.name) * dir;
+      case "risk": {
+        const left = riskOf(a);
+        const right = riskOf(b);
+        if (left === right) return 0;
+        if (left === null) return 1;
+        if (right === null) return -1;
+        return (left - right) * dir;
+      }
       case "tier":
         return (TIER_RANK[a.tier] - TIER_RANK[b.tier]) * dir;
       default:
@@ -269,12 +284,14 @@ export function AffectedTestsStep({
   onPinCreated,
 }: AffectedTestsStepProps) {
   const t = useTranslations("runs.impact");
+  const tRisk = useTranslations("risk");
   const tRuns = useTranslations("runs");
   const tCommon = useTranslations("common");
   const tCodePins = useTranslations("repository.codePins");
-  const tDuplicates = useTranslations("repository.duplicates");
   const locale = useLocale();
-  const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
+  // DataTable owns the expander chevron and the detail row; this is just the
+  // open/closed state it drives, keyed by `getRowId`.
+  const [expanded, setExpanded] = useState<ExpandedState>({});
   const threshold = affectedThresholdOf(result, cases);
   // The list opens showing what starts selected: the cases at or above the
   // affected threshold. Lowering the score reveals the rest.
@@ -326,9 +343,29 @@ export function AffectedTestsStep({
     [facets.reasons, filters.reasons]
   );
 
+  // Standing risk for the analysed cases: what this change touches, ordered
+  // by what is worth running. The analysis itself stores no risk score.
+  const analysedCaseIds = useMemo(
+    () => cases.map((row) => row.caseId),
+    [cases]
+  );
+  const { data: riskRows } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
+    {
+      where: { id: { in: analysedCaseIds } },
+      select: { id: true, riskScore: true, riskReasons: true },
+    },
+    { enabled: analysedCaseIds.length > 0 }
+  );
+  const riskByCase = useMemo(
+    () => new Map(((riskRows ?? []) as RiskRow[]).map((row) => [row.id, row])),
+    [riskRows]
+  );
+
   const shown = useMemo(
-    () => sortCases(filterCases(cases, filters), sort),
-    [cases, filters, sort]
+    () => sortCases(filterCases(cases, filters), sort, riskByCase),
+    [cases, filters, sort, riskByCase]
   );
   const rows = useMemo<AffectedRow[]>(
     () => shown.map((row) => ({ ...row, id: row.caseId })),
@@ -337,6 +374,10 @@ export function AffectedTestsStep({
   const shownSelectedCount = shown.filter((row) =>
     selected.has(row.caseId)
   ).length;
+  // Selected cases the filters currently hide. Deselecting what is shown
+  // keeps these on purpose, so they have to be visible somewhere or the
+  // checkboxes and the Add button appear to disagree.
+  const hiddenSelectedCount = selectedCaseIds.length - shownSelectedCount;
 
   const rowSelection = useMemo<RowSelectionState>(
     () => Object.fromEntries(selectedCaseIds.map((id) => [String(id), true])),
@@ -358,21 +399,18 @@ export function AffectedTestsStep({
     [rowSelection, onSetSelection]
   );
 
+  /** Drop the selected cases the filters are hiding, keeping the visible ones. */
+  const deselectHidden = () => {
+    const shownIds = new Set(shown.map((row) => row.caseId));
+    onSetSelection(selectedCaseIds.filter((id) => shownIds.has(id)));
+  };
+
   /** Select or deselect just the rows the filters leave visible. */
   const setShownSelected = (on: boolean) => {
     const shownIds = new Set(shown.map((row) => row.caseId));
     const kept = selectedCaseIds.filter((id) => !shownIds.has(id));
     onSetSelection(on ? [...kept, ...shownIds] : kept);
   };
-
-  const toggleExpanded = useCallback((caseId: number) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(caseId)) next.delete(caseId);
-      else next.add(caseId);
-      return next;
-    });
-  }, []);
 
   const handleSortChange = useCallback((column: string) => {
     setSort((prev) =>
@@ -398,7 +436,7 @@ export function AffectedTestsStep({
       const groups = groupReasonsByKind(row.reasons ?? []);
       return (
         <div
-          className="mt-2 space-y-2 rounded-md bg-muted/30 p-2 text-sm"
+          className="space-y-2 p-3 text-sm"
           data-testid={`impact-rationale-${row.caseId}`}
         >
           {[...groups.entries()].map(([kind, reasons]) => {
@@ -510,13 +548,12 @@ export function AffectedTestsStep({
                 {row.original.case.folder.name}
               </p>
             )}
-            {expanded.has(row.original.caseId) && renderRationale(row.original)}
           </div>
         ),
       },
       {
         id: "score",
-        header: tDuplicates("columnScore"),
+        header: t("affected.scoreColumn"),
         size: 90,
         enableSorting: true,
         cell: ({ row }) => (
@@ -524,6 +561,22 @@ export function AffectedTestsStep({
             {Math.round(row.original.score).toLocaleString(locale)}
           </Badge>
         ),
+      },
+      {
+        id: "risk",
+        header: tRisk("score"),
+        size: 90,
+        minSize: 90,
+        enableSorting: true,
+        cell: ({ row }) => {
+          const risk = riskByCase.get(row.original.caseId);
+          return (
+            <RiskScoreCell
+              score={risk?.riskScore ?? null}
+              reasons={risk?.riskReasons}
+            />
+          );
+        },
       },
       {
         id: "tier",
@@ -558,53 +611,8 @@ export function AffectedTestsStep({
           <ReasonBadges reasons={row.original.reasons ?? []} />
         ),
       },
-      {
-        id: "details",
-        header: "",
-        size: 48,
-        minSize: 48,
-        enableSorting: false,
-        enableResizing: false,
-        enableHiding: false,
-        cell: ({ row }) => {
-          const isExpanded = expanded.has(row.original.caseId);
-          return (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => toggleExpanded(row.original.caseId)}
-              aria-expanded={isExpanded}
-              aria-label={
-                isExpanded
-                  ? t("affected.hideDetails")
-                  : t("affected.showDetails")
-              }
-              data-testid={`impact-recommendation-toggle-${row.original.caseId}`}
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </Button>
-          );
-        },
-      },
     ],
-    [
-      t,
-      tCommon,
-      tCodePins,
-      tDuplicates,
-      locale,
-      projectId,
-      threshold,
-      expanded,
-      renderRationale,
-      toggleExpanded,
-    ]
+    [t, tRisk, tCommon, tCodePins, locale, projectId, threshold, riskByCase]
   );
   const columnVisibility = useMemo(
     () => Object.fromEntries(columns.map((column) => [column.id, true])),
@@ -856,6 +864,27 @@ export function AffectedTestsStep({
             </span>
           </div>
 
+          {hiddenSelectedCount > 0 && (
+            <div
+              className="flex flex-wrap items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm"
+              data-testid="impact-hidden-selection"
+            >
+              <span>
+                {t("affected.hiddenSelected", { count: hiddenSelectedCount })}
+              </span>
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="h-auto p-0"
+                onClick={deselectHidden}
+                data-testid="impact-deselect-hidden"
+              >
+                {t("affected.deselectHidden")}
+              </Button>
+            </div>
+          )}
+
           <DataTable<AffectedRow>
             columns={columns}
             data={rows}
@@ -867,6 +896,9 @@ export function AffectedTestsStep({
             onColumnVisibilityChange={noopVisibilityChange}
             sortConfig={sort}
             onSortChange={handleSortChange}
+            expanded={expanded}
+            onExpandedChange={setExpanded}
+            renderExpandedRow={renderRationale}
             storageKey="impact-affected-tests"
             enableColumnReorder={false}
             enableColumnMenu={false}

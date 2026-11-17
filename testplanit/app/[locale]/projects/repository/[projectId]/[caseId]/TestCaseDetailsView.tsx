@@ -104,6 +104,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  startTransition,
 } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { PanelImperativeHandle } from "react-resizable-panels";
@@ -145,6 +146,7 @@ import {
   pickerOwnedIssueIds,
   planCaseIssueLinkWrite,
 } from "~/utils/caseIssueLinkWrite";
+import { shouldResetCaseForm } from "~/utils/caseFormReset";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { ExtendedCases } from "../columns";
@@ -156,6 +158,7 @@ import { StepsDisplay } from "./StepsDisplay";
 import { type LinkAttachmentInput } from "@/components/UploadAttachments";
 import TestCaseFormControls from "./TestCaseFormControl";
 import { tipTapJSONEquals } from "~/utils/tiptapConversion";
+import { apiFetch } from "~/lib/basePath";
 
 // Type Definitions (ensure these are present and correct)
 // Helper function to parse JsonValue to TipTap content (ensure this is present)
@@ -585,10 +588,14 @@ export function TestCaseDetailsView({
   const { data: projectSettings } = useClientQueries(
     schema
   ).projects.useFindUnique(
-    { where: { id: Number(projectId) }, select: { quickScriptEnabled: true } },
+    {
+      where: { id: Number(projectId) },
+      select: { quickScriptEnabled: true, riskScoringEnabled: true },
+    },
     { enabled: isValidProjectId }
   );
   const quickScriptEnabled = projectSettings?.quickScriptEnabled ?? false;
+  const riskScoringEnabled = projectSettings?.riskScoringEnabled === true;
   const [isQuickScriptModalOpen, setIsQuickScriptModalOpen] = useState(false);
 
   const { data, isLoading, refetch, error } =
@@ -725,7 +732,7 @@ export function TestCaseDetailsView({
               },
             },
           },
-          testRuns: {
+          testRunCases: {
             select: {
               id: true,
               isCompleted: true,
@@ -738,78 +745,6 @@ export function TestCaseDetailsView({
                   milestone: {
                     select: {
                       name: true,
-                    },
-                  },
-                },
-              },
-              results: {
-                select: {
-                  id: true,
-                  status: {
-                    select: {
-                      name: true,
-                      color: {
-                        select: {
-                          value: true,
-                        },
-                      },
-                    },
-                  },
-                  executedBy: {
-                    select: {
-                      id: true,
-                      name: true,
-                    },
-                  },
-                  executedAt: true,
-                  editedBy: {
-                    select: {
-                      id: true,
-                      name: true,
-                    },
-                  },
-                  editedAt: true,
-                  notes: true,
-                  elapsed: true,
-                  attempt: true,
-                  stepResults: {
-                    include: {
-                      stepStatus: {
-                        select: {
-                          name: true,
-                          color: {
-                            select: {
-                              value: true,
-                            },
-                          },
-                        },
-                      },
-                      step: true,
-                    },
-                    orderBy: {
-                      step: {
-                        order: "asc",
-                      },
-                    },
-                  },
-                  attachments: {
-                    where: { isDeleted: false },
-                    select: {
-                      id: true,
-                      name: true,
-                      url: true,
-                      note: true,
-                      mimeType: true,
-                      size: true,
-                      createdAt: true,
-                      createdById: true,
-                      isDeleted: true,
-                      testCaseId: true,
-                      sessionId: true,
-                      sessionResultsId: true,
-                      testRunsId: true,
-                      testRunResultsId: true,
-                      testRunStepResultId: true,
                     },
                   },
                 },
@@ -1183,9 +1118,25 @@ export function TestCaseDetailsView({
     }
   }, [testcase, templates, setSelectedTemplateId]);
 
+  // The template the form was last reset for; undefined until the first reset.
+  const lastResetTemplateIdRef = useRef<number | null | undefined>(undefined);
+
   // Effect 2: React to selectedTemplateId changes to update schema and form defaults
   useEffect(() => {
     if (!isFormInitialized.current || !testcase || !templates) return;
+
+    // A background refetch mid-edit must not reset the form — see
+    // shouldResetCaseForm for why those runs happen so often.
+    if (
+      !shouldResetCaseForm({
+        isEditMode,
+        selectedTemplateId,
+        lastResetTemplateId: lastResetTemplateIdRef.current,
+        hasCarriedValues: carriedValuesRef.current !== null,
+      })
+    ) {
+      return;
+    }
 
     const selectedTemplate = templates.find(
       (template) => template.id === selectedTemplateId
@@ -1267,6 +1218,7 @@ export function TestCaseDetailsView({
         }
       }
       reset(nextValues);
+      lastResetTemplateIdRef.current = selectedTemplateId;
       // The carried values already hold the restored draft, so they are what
       // a later run has to bring back.
       if (restoredDraftValuesRef.current) {
@@ -1276,14 +1228,18 @@ export function TestCaseDetailsView({
     }
 
     reset(defaultValues);
+    lastResetTemplateIdRef.current = selectedTemplateId;
     // Re-apply a restored draft on the far side of the reset above, every time
     // this effect runs. The baseline stays the case's own values, so the
     // restored content reads as unsaved work and keeps auto-saving.
     if (restoredDraftValuesRef.current) {
       reset(restoredDraftValuesRef.current);
     }
+    // isEditMode: leaving edit mode (Cancel, Save) resets to the saved case
+    // even when the template did not change.
   }, [
     selectedTemplateId,
+    isEditMode,
     testcase,
     templates,
     reset,
@@ -1392,6 +1348,8 @@ export function TestCaseDetailsView({
     useClientQueries(schema).repositoryCases.useUpdate();
   const { mutateAsync: updateCaseFieldValues } =
     useClientQueries(schema).caseFieldValues.useUpdate();
+  const { mutateAsync: deleteCaseFieldValues } =
+    useClientQueries(schema).caseFieldValues.useDelete();
   const { mutateAsync: createCaseFieldVersionValues } =
     useClientQueries(schema).caseFieldVersionValues.useCreate();
   const { mutateAsync: createAttachments } =
@@ -1434,8 +1392,12 @@ export function TestCaseDetailsView({
       !isEditMode
     ) {
       editParamProcessed.current = true;
-      setSelectedTemplateId(testcase.template.id);
-      setIsEditMode(true);
+      // The edit form mounts an editor per field and per step; rendering it
+      // as a transition keeps the loaded view on screen until it is ready.
+      startTransition(() => {
+        setSelectedTemplateId(testcase.template.id);
+        setIsEditMode(true);
+      });
     }
   }, [searchParams, startInEditMode, canAddEdit, testcase, isEditMode]);
 
@@ -1982,7 +1944,7 @@ export function TestCaseDetailsView({
       }[] = [];
       if (newIssueIds.length > 0) {
         try {
-          const res = await fetch(
+          const res = await apiFetch(
             `/api/model/issue/findMany?q=${encodeURIComponent(
               JSON.stringify({
                 where: { id: { in: newIssueIds } },
@@ -2083,7 +2045,7 @@ export function TestCaseDetailsView({
 
       // Create version snapshot using centralized API endpoint
       // Note: The test case was already updated with currentVersion + 1 above and refetched
-      const versionResponse = await fetch(
+      const versionResponse = await apiFetch(
         `/api/repository/cases/${updatedTestCase.id}/versions`,
         {
           method: "POST",
@@ -2154,17 +2116,30 @@ export function TestCaseDetailsView({
         })
         .filter(({ fieldId }) => !isNaN(fieldId));
 
-      const createCaseFieldVersionValuesPromises = formFields.map(
-        async ({ displayName, value }: { displayName: string; value: any }) => {
-          await createCaseFieldVersionValues({
-            data: {
-              version: { connect: { id: newCaseVersion.id } },
-              field: displayName,
-              value: value,
-            },
-          });
-        }
-      );
+      // A cleared field has no value row and no version row, as Add Case
+      // stores it; "" and null both mean cleared.
+      const isCleared = (value: unknown) =>
+        value === undefined || value === null || value === "";
+
+      const createCaseFieldVersionValuesPromises = formFields
+        .filter(({ value }) => !isCleared(value))
+        .map(
+          async ({
+            displayName,
+            value,
+          }: {
+            displayName: string;
+            value: any;
+          }) => {
+            await createCaseFieldVersionValues({
+              data: {
+                version: { connect: { id: newCaseVersion.id } },
+                field: displayName,
+                value: value,
+              },
+            });
+          }
+        );
       await Promise.all(createCaseFieldVersionValuesPromises);
 
       // Sync CaseFieldValues (the main table that's displayed on the details page)
@@ -2175,13 +2150,18 @@ export function TestCaseDetailsView({
             (cfv) => cfv.fieldId === fieldId
           );
 
-          if (existingValue) {
+          if (existingValue && isCleared(value)) {
+            // Cleared: remove the row rather than storing null or 0
+            await deleteCaseFieldValues({
+              where: { id: existingValue.id },
+            });
+          } else if (existingValue) {
             // Update existing field value
             await updateCaseFieldValues({
               where: { id: existingValue.id },
-              data: { value: value ?? null },
+              data: { value },
             });
-          } else if (value !== undefined && value !== null && value !== "") {
+          } else if (!isCleared(value)) {
             // Create new field value only if there's an actual value
             await createCaseFieldValues({
               data: {
@@ -2913,7 +2893,7 @@ export function TestCaseDetailsView({
             <div className="px-6 pb-4">
               <Alert className="border-warning/50 bg-warning/10">
                 <AlertCircle className="h-4 w-4 text-warning" />
-                <AlertDescription className="text-sm text-warning-foreground">
+                <AlertDescription className="text-sm text-warning-text">
                   {t("repository.templateNotAssignedWarning", {
                     templateName: testcase.template?.templateName || "",
                     projectName: testcase.project?.name || "",
@@ -3091,7 +3071,7 @@ export function TestCaseDetailsView({
                       <div className="mb-4 me-6">
                         <Alert className="border-warning/50 bg-warning/10 mb-2">
                           <AlertCircle className="h-4 w-4 text-warning" />
-                          <AlertDescription className="text-sm text-warning-foreground">
+                          <AlertDescription className="text-sm text-warning-text">
                             {t("repository.orphanedStepsWarning", {
                               templateName:
                                 displayedTemplate?.templateName || "",
@@ -3131,7 +3111,7 @@ export function TestCaseDetailsView({
                       <div className="mb-4 me-6">
                         <Alert className="border-warning/50 bg-warning/10 mb-2">
                           <AlertCircle className="h-4 w-4 text-warning" />
-                          <AlertDescription className="text-sm text-warning-foreground">
+                          <AlertDescription className="text-sm text-warning-text">
                             {t("repository.orphanedFieldsWarning", {
                               count: orphanedFieldValues.length,
                               templateName:
@@ -3340,6 +3320,7 @@ export function TestCaseDetailsView({
                     session={session}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
                     compact={headerCompact}
+                    riskScoringEnabled={riskScoringEnabled}
                   />
                 </div>
               </ResizablePanel>

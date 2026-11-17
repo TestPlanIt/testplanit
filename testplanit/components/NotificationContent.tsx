@@ -6,10 +6,12 @@ import { SessionNameDisplay } from "@/components/SessionNameDisplay";
 import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
+import { AlertTriggeredNotification } from "@/components/notifications/AlertTriggeredNotification";
 import TextFromJson from "@/components/TextFromJson";
 import { ExternalLink, Megaphone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
+import { formatHoursAsRelativeDuration } from "~/utils/duration";
 
 interface NotificationContentProps {
   notification: any;
@@ -419,76 +421,6 @@ export function NotificationContent({
     );
   }
 
-  // Handle LLM budget alerts
-  if (notification.type === "LLM_BUDGET_ALERT") {
-    const threshold = data.threshold;
-    const isExceeded = typeof threshold === "number" && threshold >= 100;
-    // LLM providers (OpenAI/Anthropic/Google) bill in USD. The currency
-    // code is hardcoded here intentionally; multi-currency support
-    // would require tracking the provider's billing currency in the
-    // LlmIntegration model.
-    const fmt =
-      typeof Intl !== "undefined"
-        ? new Intl.NumberFormat(locale, {
-            style: "currency",
-            currency: "USD",
-          })
-        : null;
-    const formatAmount = (n: unknown): string => {
-      if (typeof n !== "number") {
-        // Older notification rows may have stored the amount as a
-        // pre-formatted string (e.g. "1234.56"). Render as-is so the
-        // bell doesn't show "NaN" until the row ages out.
-        return String(n ?? "");
-      }
-      return fmt ? fmt.format(n) : `$${n.toFixed(2)}`;
-    };
-    const spend = formatAmount(data.currentSpend);
-    const budget = formatAmount(data.budgetLimit);
-    const providerName = data.providerName ?? "";
-
-    if (data.providerName == null || data.threshold == null) {
-      // Old-shape fallback — render the persisted text rather than
-      // attempt to compose from a partial payload.
-      return (
-        <div className="space-y-2">
-          <h4 className="font-medium text-sm">{notification.title}</h4>
-          <div className="text-sm text-muted-foreground">
-            <p>{notification.message}</p>
-            <p className="text-xs mt-2">{t("budgetDisclaimer")}</p>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-2">
-        <h4 className="font-medium text-sm">
-          {isExceeded
-            ? t("llmBudgetExceededTitle")
-            : t("llmBudgetThresholdTitle", { threshold })}
-        </h4>
-        <div className="text-sm text-muted-foreground">
-          <p>
-            {isExceeded
-              ? t("llmBudgetExceededMessage", {
-                  providerName,
-                  spend,
-                  budget,
-                })
-              : t("llmBudgetThresholdMessage", {
-                  providerName,
-                  threshold,
-                  spend,
-                  budget,
-                })}
-          </p>
-          <p className="text-xs mt-2">{t("budgetDisclaimer")}</p>
-        </div>
-      </div>
-    );
-  }
-
   // Handle new-user-registration notifications (sent to system admins).
   if (notification.type === "USER_REGISTERED") {
     if (data.newUserName && data.newUserEmail) {
@@ -540,7 +472,8 @@ export function NotificationContent({
     notification.type === "REVIEW_CHANGES_REQUESTED" ||
     notification.type === "REVIEW_REJECTED" ||
     notification.type === "REVIEW_CANCELLED" ||
-    notification.type === "REVIEW_REMINDER"
+    notification.type === "REVIEW_REMINDER" ||
+    notification.type === "REVIEW_DECISION_REVERTED"
   ) {
     if (data.projectId && data.entityType && data.entityId) {
       const entityLink =
@@ -591,6 +524,17 @@ export function NotificationContent({
         title = t("reviewCancelledTitle");
         action = t("reviewCancelledAction");
         actorUserId = data.cancelerUserId;
+      } else if (notification.type === "REVIEW_DECISION_REVERTED") {
+        title = t("reviewDecisionRevertedTitle");
+        // An admin can revert somebody else's decision; name them rather than
+        // implying the reverter decided it.
+        action =
+          data.deciderUserId && data.deciderUserId !== data.reverterUserId
+            ? t("reviewDecisionRevertedActionOther", {
+                deciderName: data.deciderName ?? "",
+              })
+            : t("reviewDecisionRevertedAction");
+        actorUserId = data.reverterUserId;
       } else {
         // REVIEW_REMINDER
         title = t("reviewReminderTitle");
@@ -602,7 +546,8 @@ export function NotificationContent({
         notification.type === "REVIEW_REQUESTED"
           ? data.commentText
           : notification.type === "REVIEW_CANCELLED" ||
-              notification.type === "REVIEW_REMINDER"
+              notification.type === "REVIEW_REMINDER" ||
+              notification.type === "REVIEW_DECISION_REVERTED"
             ? undefined
             : data.decisionComment;
 
@@ -677,6 +622,10 @@ export function NotificationContent({
                 <div className="text-xs">
                   {t("reviewReminderHoursPending", {
                     hoursPending: data.hoursPending,
+                    pendingFor: formatHoursAsRelativeDuration(
+                      data.hoursPending,
+                      locale
+                    ),
                   })}
                 </div>
               )}
@@ -700,7 +649,10 @@ export function NotificationContent({
   }
 
   // Handle system announcements
-  if (notification.type === "SYSTEM_ANNOUNCEMENT") {
+  if (
+    notification.type === "SYSTEM_ANNOUNCEMENT" ||
+    notification.type === "WHATS_NEW"
+  ) {
     const hasRichContent = notification.data?.richContent;
     const hasHtmlContent = notification.data?.htmlContent;
 
@@ -741,49 +693,38 @@ export function NotificationContent({
     );
   }
 
-  // Handle URL generation completion
-  if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
-    if (data.projectId && data.jobId) {
-      const reviewLink = `/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
-      const isFailure = data.error === true;
-
-      return (
-        <div className="space-y-2">
-          <h4 className="font-medium text-sm">{notification.title}</h4>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p>{notification.message}</p>
-            {data.url && <p className="text-xs truncate">{data.url}</p>}
-            {!isFailure && (
-              <div className="flex items-center gap-1">
-                <Link
-                  href={reviewLink}
-                  className="font-medium text-primary hover:underline inline-flex items-center gap-1"
-                >
-                  {t("reviewGeneratedCases")}
-                  <ExternalLink className="h-3 w-3" />
-                </Link>
-              </div>
-            )}
-            {data.projectName && (
-              <div className="flex items-center gap-1 flex-wrap">
-                <span>{t("inProject")}</span>
-                <ProjectNameCell
-                  projectId={data.projectId}
-                  value={data.projectName}
-                  size="sm"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    // Fallback for notifications without complete data
+  if (notification.type === "CASES_DRAFTED") {
+    const folderLink =
+      data.projectId && data.folderId
+        ? `/projects/repository/${data.projectId}/?node=${data.folderId}`
+        : null;
     return (
-      <div className="space-y-1">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
-        <p className="text-sm text-muted-foreground">{notification.message}</p>
+      <div className="space-y-2">
+        <h4 className="font-medium text-sm">{t("casesDraftedTitle")}</h4>
+        <div className="text-sm text-muted-foreground space-y-1">
+          <p>
+            {t("casesDraftedMessage", {
+              count: data.caseCount ?? 0,
+              issueKey: data.issueKey ?? "",
+            })}
+          </p>
+          {folderLink && (
+            <div className="flex items-center gap-1">
+              <Link
+                href={folderLink}
+                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                {t("casesDraftedReviewLink", {
+                  folderName: data.folderName ?? "",
+                })}
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
+          {data.issueTitle && (
+            <p className="text-xs truncate">{data.issueTitle}</p>
+          )}
+        </div>
       </div>
     );
   }
@@ -824,6 +765,69 @@ export function NotificationContent({
         <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
+  }
+
+  if (notification.type === "RUN_CASE_UNBLOCKED") {
+    if (data.projectId && data.testRunId && data.testCaseId) {
+      const caseLink = `/projects/runs/${data.projectId}/${data.testRunId}?selectedCase=${data.testCaseId}`;
+      return (
+        <div
+          className="space-y-2"
+          data-testid="notification-run-case-unblocked"
+        >
+          <h4 className="font-medium text-sm">{t("runCaseUnblockedTitle")}</h4>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p>
+              {t("runCaseUnblockedPrerequisitePassed", {
+                prerequisiteName: data.prerequisiteCaseName ?? "",
+              })}
+            </p>
+            <div className="flex items-center gap-1">
+              <Link
+                href={caseLink}
+                data-testid="notification-run-case-unblocked-link"
+                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <CaseDisplay
+                  testCase={{
+                    id: data.testCaseId,
+                    name: data.testCaseName || data.entityName,
+                  }}
+                  showIcon={true}
+                />
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+            <div className="flex items-center gap-1 flex-wrap">
+              <span>{t("inTestRun")}</span>
+              <TestRunNameDisplay
+                testRun={{ id: data.testRunId, name: data.testRunName }}
+                showIcon={true}
+              />
+            </div>
+            <div className="flex items-center gap-1 flex-wrap">
+              <span>{t("inProject")}</span>
+              <ProjectNameCell
+                projectId={data.projectId}
+                value={data.projectName}
+                size="sm"
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-1">
+        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <p className="text-sm text-muted-foreground">{notification.message}</p>
+      </div>
+    );
+  }
+
+  if (notification.type === "ALERT_TRIGGERED") {
+    return <AlertTriggeredNotification data={data} />;
   }
 
   if (notification.type === "RUN_READY_TO_COMPLETE") {

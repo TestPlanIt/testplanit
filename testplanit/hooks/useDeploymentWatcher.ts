@@ -10,6 +10,7 @@ import {
   setVersionCheckRequester,
   subscribeToUpdateBanner,
 } from "~/lib/deploymentSkew";
+import { apiFetch } from "~/lib/basePath";
 
 export const VERSION_POLL_INTERVAL_MS = 5 * 60 * 1000;
 /** Re-check after a first mismatch, long enough to outlast a blue-green switch. */
@@ -17,7 +18,7 @@ export const VERSION_CONFIRM_DELAY_MS = 30 * 1000;
 
 async function fetchServerBuildId(): Promise<string | null> {
   try {
-    const response = await fetch("/api/version", { cache: "no-store" });
+    const response = await apiFetch("/api/version", { cache: "no-store" });
     if (!response.ok) return null;
     const body = await response.json();
     return typeof body?.buildId === "string" ? body.buildId : null;

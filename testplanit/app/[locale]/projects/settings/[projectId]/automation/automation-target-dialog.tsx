@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -599,15 +600,17 @@ export function AutomationTargetDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor="automation-target-timeout">{t("timeout")}</Label>
-            <Input
+            <NumberInput
               id="automation-target-timeout"
-              type="number"
               min={5}
               max={24 * 60}
               value={timeoutMinutes}
-              onChange={(e) =>
-                setTimeoutMinutes(
-                  Math.min(24 * 60, Math.max(5, Number(e.target.value) || 5))
+              onChange={(value) => {
+                if (value != null) setTimeoutMinutes(value);
+              }}
+              onBlur={() =>
+                setTimeoutMinutes((current) =>
+                  Math.min(24 * 60, Math.max(5, Math.round(current)))
                 )
               }
               className="w-32"

@@ -194,3 +194,66 @@ describe("admin/users columns — SCIM Provisioner badge", () => {
     expect(menuItem).not.toHaveAttribute("data-disabled");
   });
 });
+
+const systemUser = {
+  ...scimUser,
+  id: "system-automation-user",
+  name: "System",
+  email: "automation@__system__",
+  isActive: true,
+  scimGivenName: null,
+} as unknown as ExtendedUser;
+
+describe("admin/users columns — System user", () => {
+  const { result } = renderHook(() =>
+    useColumns(
+      userPreferences,
+      vi.fn(),
+      tCommon,
+      tAdmin,
+      vi.fn(),
+      vi.fn(),
+      vi.fn(),
+      vi.fn()
+    )
+  );
+  const columns = result.current;
+
+  test("Name cell badges the System user and no one else", () => {
+    renderCell(columns, "name", systemUser);
+    const badge = screen.getByTestId("system-user-badge");
+    expect(badge).toHaveTextContent("admin.auditLogs.systemActor");
+    expect(badge).toHaveAttribute("title", "admin.users.systemUserTooltip");
+    expect(screen.queryByTestId("scim-provisioner-badge")).toBeNull();
+  });
+
+  test("Name cell does NOT badge a regular user row", () => {
+    renderCell(columns, "name", { ...normalUser, scimGivenName: null } as any);
+    expect(screen.queryByTestId("system-user-badge")).toBeNull();
+  });
+
+  test("Active toggle is locked for the System user and free for a regular user", () => {
+    const { unmount } = renderCell(columns, "isActive", systemUser);
+    expect(screen.getByTestId("switch")).toBeDisabled();
+    unmount();
+
+    renderCell(columns, "isActive", {
+      ...normalUser,
+      scimGivenName: null,
+    } as any);
+    expect(screen.getByTestId("switch")).toBeEnabled();
+  });
+
+  test("Actions cell disables Edit and hides password and Delete actions", async () => {
+    const user = userEvent.setup();
+    renderCell(columns, "actions", systemUser);
+    await user.click(screen.getByRole("button"));
+    const editItem = await screen.findByText("common.actions.edit");
+    const menuItem = editItem.closest('[role="menuitem"]');
+    expect(menuItem).toHaveAttribute("data-disabled");
+    expect(menuItem).toHaveAttribute("title", "admin.users.systemUserTooltip");
+    expect(screen.queryByText("admin.users.forcePasswordChange")).toBeNull();
+    expect(screen.queryByText("admin.users.revokePassword")).toBeNull();
+    expect(screen.queryByText("common.actions.delete")).toBeNull();
+  });
+});

@@ -29,6 +29,17 @@ describe("reportBuilderStateConfigFromReportConfig", () => {
     });
   });
 
+  it("carries exclude filter modes and drops unknown ones", () => {
+    expect(
+      reportBuilderStateConfigFromReportConfig({
+        ...customConfig,
+        dimensionFilterModes: { testRun: "exclude", status: "sideways" },
+      })
+    ).toMatchObject({
+      dimensionFilterModes: { testRun: "exclude" },
+    });
+  });
+
   it("returns null for pre-built configs and non-objects", () => {
     expect(
       reportBuilderStateConfigFromReportConfig({

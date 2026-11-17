@@ -91,6 +91,9 @@ async function signInAsAdmin(
   page: import("@playwright/test").Page,
   _baseURL: string
 ): Promise<import("@playwright/test").Cookie[]> {
+  // The default storageState is already signed in as admin, and the proxy
+  // sends a signed-in visitor away from /signin — start from a clean slate.
+  await page.context().clearCookies();
   const signinPage = new SigninPage(page);
   await signinPage.goto();
   await signinPage.fillCredentials(ADMIN_EMAIL, ADMIN_PASSWORD);

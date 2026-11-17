@@ -79,7 +79,7 @@ export async function POST(
       return NextResponse.json({ message: "Analysis already finished" });
     }
 
-    const connection = await queue!.client;
+    const connection = await queue!.getBackend().client;
     await setCancelFlags(connection, [impactCancelKey(job.id as string)]);
     return NextResponse.json({
       message:

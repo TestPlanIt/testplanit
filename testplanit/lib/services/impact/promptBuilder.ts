@@ -1,4 +1,5 @@
 import { estimatePromptTokens } from "~/lib/llm/content";
+import { extractTextFromTipTap } from "~/lib/llm/services/tiptap-text";
 
 const VARIABLE_PATTERN = /\{\{([A-Z0-9_]+)\}\}/g;
 const ELLIPSIS = "…";
@@ -63,24 +64,6 @@ export interface RawCaseForPrompt {
 export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + ELLIPSIS;
-}
-
-function extractTextFromTipTap(content: unknown): string {
-  if (!content) return "";
-  if (typeof content === "string") {
-    try {
-      return extractTextFromTipTap(JSON.parse(content));
-    } catch {
-      return content;
-    }
-  }
-  if (typeof content !== "object") return "";
-  const node = content as Record<string, unknown>;
-  if (node.type === "text" && typeof node.text === "string") return node.text;
-  if (Array.isArray(node.content)) {
-    return node.content.map(extractTextFromTipTap).join(" ");
-  }
-  return "";
 }
 
 function buildFolderPath(folder: RawCaseFolder | null | undefined): string {

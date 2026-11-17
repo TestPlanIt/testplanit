@@ -86,7 +86,14 @@ vi.mock("@/components/UnifiedSearch", () => ({
             id: 40,
             entityType: SearchableEntityType.ISSUE,
             score: 1.0,
-            source: { id: 40, name: "Bug", projectId: 5, isDeleted: false },
+            // An issue lists every project it is visible in, displayed
+            // project first.
+            source: {
+              id: 40,
+              name: "Bug",
+              projectId: [5, 9],
+              isDeleted: false,
+            },
           },
         },
         {

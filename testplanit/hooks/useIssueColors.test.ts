@@ -23,15 +23,28 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
-// Helper to build color families
+// Helper to build color families.
+//
+// SIX shades per family, orders 0-5, exactly as db/seed.ts seeds them. This
+// fixture used to run to order 6, which is why an out-of-range `getColor(…, 6)`
+// looked fine here while painting the grey fallback in production: Urgent lost
+// its red and Closed rendered grey-on-grey at 2.44:1.
 function buildColorData() {
-  const families = ["Red", "Green", "Blue", "Black", "Indigo", "Yellow"];
+  const families = [
+    "Red",
+    "Orange",
+    "Green",
+    "Blue",
+    "Black",
+    "Indigo",
+    "Yellow",
+  ];
   const colors: any[] = [];
   let id = 1;
   let familyId = 1;
 
   families.forEach((familyName) => {
-    for (let order = 0; order <= 6; order++) {
+    for (let order = 0; order <= 5; order++) {
       colors.push({
         id: id++,
         value: `#${familyName.toLowerCase()}-${order}`,
@@ -103,7 +116,9 @@ describe("useIssueColors", () => {
 
     const style = result.current.getPriorityStyle("urgent");
     expect(style.backgroundColor).toBe("#C8C9CA");
-    expect(style.color).toBe("#6C6D6E");
+    // Was #6C6D6E, which is 3.13:1 on this fill — the placeholder failed AA
+    // for as long as the colours took to load.
+    expect(style.color).toBe("#333435");
     expect(style.borderColor).toBe("#B1B2B3");
   });
 
@@ -141,11 +156,14 @@ describe("useIssueColors", () => {
       expect(style.backgroundColor).toContain("red");
     });
 
-    it("should return Red-based colors for 'high' priority", () => {
+    it("should return Orange-based colors for 'high' priority", () => {
+      // High is orange, not a second red tint. Its own comments always said
+      // "Lightest orange" while the code read the Red family, which is what
+      // left Urgent reaching for a seventh red that does not exist.
       const { result } = renderHook(() => useIssueColors());
 
       const style = result.current.getPriorityStyle("high");
-      expect(style.backgroundColor).toContain("red");
+      expect(style.backgroundColor).toContain("orange");
     });
 
     it("should return Green-based colors for 'medium' priority", () => {
@@ -401,5 +419,141 @@ describe("getIssuePriorityVariant (legacy)", () => {
 
   it("should return 'default' for unknown priority", () => {
     expect(getIssuePriorityVariant("unknown")).toBe("default");
+  });
+});
+
+/**
+ * The assertion that makes the original bug class impossible to reintroduce.
+ *
+ * Seven of the twelve branches failed WCAG AA before this suite measured them:
+ * Urgent painted the grey fallback from an out-of-range `getColor(…, 6)`
+ * (4.22:1), High was a second red tint (3.92:1), Medium inked Green[1]
+ * (3.97:1), the neutral and loading chips inked Black[1] (3.13:1) and
+ * Closed/Done was grey on grey (2.44:1). Asserting the measured ratio against
+ * the REAL seeded palette — rather than which family a branch happens to
+ * reach for — is what would have caught every one of them.
+ */
+describe("badge contrast against the seeded palette", () => {
+  const SEEDED_SHADES: Record<string, string[]> = {
+    Black: ["#333435", "#6C6D6E", "#838485", "#9A9B9C", "#B1B2B3", "#C8C9CA"],
+    Red: ["#8D2007", "#BD2B0A", "#ED360C", "#F44B25", "#F66F51", "#F88F77"],
+    Orange: ["#783702", "#A54C03", "#D76304", "#FA7C14", "#FB9846", "#FCB478"],
+    Yellow: ["#664400", "#996600", "#CC8800", "#FFAA00", "#FFBB33", "#FFCC66"],
+    Green: ["#164621", "#206530", "#2A843F", "#36AB51", "#51C86C", "#7BD590"],
+    Blue: ["#0A4C57", "#0E6B7C", "#128BA1", "#16ABC5", "#27CAE7", "#55D5EC"],
+    Indigo: ["#134664", "#195D84", "#1F74A4", "#258AC4", "#58A5D1", "#8CC1DF"],
+    Violet: ["#372C77", "#493A9C", "#5D4CBD", "#786AC8", "#8C80D0", "#A79EDB"],
+    Pink: ["#632243", "#7A2A53", "#983468", "#BE4182", "#CB679B", "#D88DB4"],
+  };
+
+  const luminance = (hex: string) => {
+    const [r, g, b] = [1, 3, 5]
+      .map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+      .map((c) =>
+        c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+      );
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const ratio = (a: string, b: string) => {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+
+  beforeEach(() => {
+    // Same shape as buildColorData, but carrying the production hexes so the
+    // ratios below are the ones users actually see.
+    const colors: any[] = [];
+    let id = 1;
+    let familyId = 1;
+    for (const [name, shades] of Object.entries(SEEDED_SHADES)) {
+      shades.forEach((value, order) => {
+        colors.push({
+          id: id++,
+          value,
+          order,
+          colorFamily: { id: familyId, name, order: familyId },
+        });
+      });
+      familyId++;
+    }
+    mockColorsData.data = colors;
+    mockColorsData.isLoading = false;
+  });
+
+  const PRIORITIES = [
+    "urgent",
+    "highest",
+    "critical",
+    "sanity",
+    "high",
+    "medium",
+    "low",
+    "lowest",
+    "something-unrecognised",
+    null,
+  ];
+  const STATUSES = [
+    "open",
+    "new",
+    "todo",
+    "backlog",
+    "in progress",
+    "active",
+    "done",
+    "closed",
+    "resolved",
+    "blocked",
+    "on hold",
+    "review",
+    "qa",
+    "something-unrecognised",
+    null,
+  ];
+
+  it("inks every priority badge at 4.5:1 or better", () => {
+    const { result } = renderHook(() => useIssueColors());
+    const failures = PRIORITIES.map((p) => {
+      const s = result.current.getPriorityStyle(p);
+      return {
+        p,
+        ratio: ratio(s.color as string, s.backgroundColor as string),
+      };
+    }).filter((r) => r.ratio < 4.5);
+
+    expect(failures).toEqual([]);
+  });
+
+  it("inks every status badge at 4.5:1 or better", () => {
+    const { result } = renderHook(() => useIssueColors());
+    const failures = STATUSES.map((st) => {
+      const s = result.current.getStatusStyle(st);
+      return {
+        st,
+        ratio: ratio(s.color as string, s.backgroundColor as string),
+      };
+    }).filter((r) => r.ratio < 4.5);
+
+    expect(failures).toEqual([]);
+  });
+
+  it("falls back to the black/white pick only where the family ink cannot reach AA", () => {
+    const { result } = renderHook(() => useIssueColors());
+    // The seeded Red is the one family whose darkest shade is still only
+    // 3.92:1 on its own lightest tint, so Urgent and Blocked take the pick.
+    expect(result.current.getPriorityStyle("urgent").color).toBe("#000000");
+    expect(result.current.getStatusStyle("blocked").color).toBe("#000000");
+    // Everywhere else the family's own ink is readable and is kept.
+    expect(result.current.getPriorityStyle("high").color).toBe("#783702");
+    expect(result.current.getStatusStyle("in progress").color).toBe("#164621");
+  });
+
+  it("publishes --status-surface-fg so the accessible themes can override", () => {
+    const { result } = renderHook(() => useIssueColors());
+    // CSSProperties has no index signature, so the custom property needs the
+    // double assertion to be read by name.
+    const style = result.current.getPriorityStyle(
+      "medium"
+    ) as unknown as Record<string, string>;
+    expect(style["--status-surface-fg"]).toBeTruthy();
   });
 });

@@ -37,6 +37,35 @@ function row(overrides: Record<string, unknown>) {
 }
 
 describe("RequirementCoverageChangesOverview", () => {
+  it("draws from the server summary when one is given, not from the rows on screen", () => {
+    render(
+      <RequirementCoverageChangesOverview
+        rows={[row({ requirementId: 4, changeKind: "UNCHANGED" })]}
+        summary={{
+          total: 13085,
+          byKind: {
+            ADDED: 5,
+            REMOVED: 6,
+            COVERAGE_CHANGED: 40,
+            LINKS_CHANGED: 50,
+            RESULTS_CHANGED: 10,
+            UNCHANGED: 12974,
+          },
+          newlyCovered: 7,
+          newlyUncovered: 8,
+          nowFailing: 9,
+          noLongerFailing: 3,
+        }}
+      />
+    );
+    const tile = (key: string) =>
+      screen.getByTestId(`requirement-changes-tile-${key}`).textContent;
+    expect(tile("changed")).toContain("111");
+    expect(tile("newly-covered")).toContain("7");
+    expect(tile("newly-uncovered")).toContain("8");
+    expect(tile("now-failing")).toContain("9");
+  });
+
   it("derives the tiles and kind bars from the rows", () => {
     render(
       <RequirementCoverageChangesOverview

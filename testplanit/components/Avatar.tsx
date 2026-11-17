@@ -5,7 +5,10 @@ import {
 } from "@/components/ui/tooltip";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
-import { stringToColorCode } from "~/utils/stringToColorCode";
+import {
+  stringToColorCode,
+  textColorClassFor,
+} from "~/utils/stringToColorCode";
 
 interface AvatarProps {
   image: string | null;
@@ -40,8 +43,15 @@ const Avatar: React.FC<AvatarProps> = ({
     }
   }, [width, height]);
 
+  // `textColor` is applied with className below, so both branches have to yield
+  // a class. The caller-supplied branch used to hand back "#000", which is not a
+  // class name at all — the initials silently inherited whatever colour the
+  // surrounding text had, whatever colour the caller painted behind them.
   const { colorCode, textColor } = backgroundColor
-    ? { colorCode: backgroundColor, textColor: "#000" }
+    ? {
+        colorCode: backgroundColor,
+        textColor: textColorClassFor(backgroundColor),
+      }
     : stringToColorCode(alt);
 
   const renderContent = () =>
@@ -73,10 +83,11 @@ const Avatar: React.FC<AvatarProps> = ({
     ) : (
       <div
         className={textColor}
-        // Marks the generated initials tile so the a11y scan can exclude it from
-        // the color-contrast gate: the background is a per-name generated color
-        // (not a theme token), and the full name is always exposed via the
-        // tooltip / img alt, so the initials are supplementary. Visual-neutral.
+        // Marks the generated initials tile for the a11y scan. This is the one
+        // surface whose contrast depends on the name hash rather than on a
+        // theme token, so it is worth being able to select on — but it is no
+        // longer excluded from the colour gate: the foreground is derived with
+        // the WCAG formula, so the pair never falls below 4.58:1.
         data-avatar-initials="true"
         style={{
           width,

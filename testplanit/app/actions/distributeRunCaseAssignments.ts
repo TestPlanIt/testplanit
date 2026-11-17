@@ -13,7 +13,6 @@ import {
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { getServerAuthSession } from "~/server/auth";
 import { getProjectEffectiveMembers } from "./getProjectEffectiveMembers";
-import { notifyBulkTestCaseAssignment } from "./test-run-notifications";
 
 export interface DistributeAssignmentsInput {
   /** The sibling/config runs to distribute across (one entry for a single run). */
@@ -184,12 +183,7 @@ export const distributeRunCaseAssignments = withActionAuditContext(
         });
       }
 
-      // 6. Notify each assignee (best-effort — never fail the distribution).
-      await Promise.allSettled(
-        [...idsByUser].map(([userId, ids]) =>
-          notifyBulkTestCaseAssignment(ids, userId, projectId)
-        )
-      );
+      // The write hook notifies each assignee.
 
       for (const runId of uniqueRunIds) {
         revalidatePath(`/projects/runs/${projectId}/${runId}`);

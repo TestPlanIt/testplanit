@@ -17,10 +17,17 @@ import { NUDGE_COOLDOWN_MS } from "~/lib/services/reviewReminderConfig";
 import { resolveBulkReviewTargets } from "~/lib/services/reviewGate";
 import { baseDb } from "~/lib/db";
 import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
+import { revertReviewDecision } from "~/lib/services/reviewDecisionRevert";
 import {
   AlreadyPendingError,
   IneligibleAssigneeError,
+  isFeatureDisabledError,
   isIneligibleAssigneeError,
+  isIneligibleReverterError,
+  isNotFoundError,
+  isReviewEntityMovedError,
+  isReviewSupersededError,
+  isRevertWindowExpiredError,
 } from "~/lib/utils/errors";
 import { areaForEntityType } from "~/lib/utils/reviewAreas";
 import {
@@ -1192,6 +1199,83 @@ export const cancelReviewRequest = withActionAuditContext(
       });
     } catch (auditErr) {
       console.error("cancelReviewRequest: audit emission failed", auditErr);
+    }
+
+    revalidatePath("/");
+    return { success: true, reviewRequestId };
+  }
+);
+
+interface RevertDecisionSuccess {
+  success: true;
+  reviewRequestId: string;
+}
+
+interface RevertDecisionFailure {
+  success: false;
+  error:
+    | "UNAUTHORIZED"
+    | "NOT_FOUND"
+    | "NOT_REVERTABLE"
+    | "FORBIDDEN"
+    | "WINDOW_EXPIRED"
+    | "SUPERSEDED"
+    | "ENTITY_MOVED"
+    | "FEATURE_DISABLED"
+    | "INTERNAL_ERROR";
+  message?: string;
+}
+
+export type RevertDecisionResult =
+  RevertDecisionSuccess | RevertDecisionFailure;
+
+/**
+ * Revert a decided ReviewRequest back to PENDING so the same reviewer can
+ * decide it again.
+ *
+ * Thin wrapper over `revertReviewDecision`, which holds every guard (decider
+ * -or-admin eligibility, the revert window, the supersession check, the
+ * atomic status-scoped flip). This layer only maps typed errors onto the
+ * action's result envelope, the way the decide API route does.
+ *
+ * Soft-delete invariant: a STATUS flip, not a row deletion.
+ */
+export const revertReviewDecisionAction = withActionAuditContext(
+  async (reviewRequestId: string): Promise<RevertDecisionResult> => {
+    const session = await getServerAuthSession();
+    if (!session?.user?.id) {
+      return { success: false, error: "UNAUTHORIZED" };
+    }
+
+    try {
+      await revertReviewDecision(session, reviewRequestId);
+    } catch (err) {
+      if (isFeatureDisabledError(err)) {
+        return { success: false, error: "FEATURE_DISABLED" };
+      }
+      if (isIneligibleReverterError(err)) {
+        return { success: false, error: "FORBIDDEN" };
+      }
+      if (isRevertWindowExpiredError(err)) {
+        return { success: false, error: "WINDOW_EXPIRED" };
+      }
+      if (isReviewSupersededError(err)) {
+        return { success: false, error: "SUPERSEDED" };
+      }
+      if (isReviewEntityMovedError(err)) {
+        return { success: false, error: "ENTITY_MOVED" };
+      }
+      if (isNotFoundError(err)) {
+        return { success: false, error: "NOT_FOUND" };
+      }
+      if (
+        err instanceof Error &&
+        err.message.toLowerCase().includes("not revertable")
+      ) {
+        return { success: false, error: "NOT_REVERTABLE" };
+      }
+      console.error("revertReviewDecisionAction failed", err);
+      return { success: false, error: "INTERNAL_ERROR" };
     }
 
     revalidatePath("/");

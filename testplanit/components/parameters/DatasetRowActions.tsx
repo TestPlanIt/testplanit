@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 export interface DatasetRowActionsProps {
   caseId: number;
@@ -44,11 +45,14 @@ export function DatasetRowActions({
   const handleDelete = async () => {
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/repository/cases/${caseId}/dataset/rows`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rowIds: selectedRowIds }),
-      });
+      const res = await apiFetch(
+        `/api/repository/cases/${caseId}/dataset/rows`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rowIds: selectedRowIds }),
+        }
+      );
       if (!res.ok) {
         toast.error(t("datasetSaveError"));
         return;

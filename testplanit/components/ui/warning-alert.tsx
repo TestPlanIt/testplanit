@@ -24,6 +24,11 @@ import { cn } from "~/utils";
  * below WCAG AA contrast on several themes (Light + System tokens both
  * suffered). The icon and AlertTitle still carry the amber accent so the
  * "warning" signal is preserved.
+ *
+ * Those two use `text-warning-text`, the ink token, rather than `text-warning`,
+ * which is the fill colour: on this component's own `bg-warning/15` surface the
+ * fill reads 1.9:1. An arbitrary variant compiles to its own selector, so the
+ * global `.text-warning` ink override cannot reach it from here.
  */
 const WarningAlert = React.forwardRef<
   HTMLDivElement,
@@ -32,7 +37,7 @@ const WarningAlert = React.forwardRef<
   <Alert
     ref={ref}
     className={cn(
-      "border-warning/50 bg-warning/15 text-foreground [&>svg]:text-warning [&_h5]:text-warning",
+      "border-warning/50 bg-warning/15 text-foreground [&>svg]:text-warning-text [&_h5]:text-warning-text",
       className
     )}
     {...props}

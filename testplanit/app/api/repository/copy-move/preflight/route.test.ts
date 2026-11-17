@@ -14,6 +14,7 @@ const {
   mockDbRepositoriesFindFirst,
   mockDbWorkflowsFindMany,
   mockDbAppConfigFindUnique,
+  mockFindProjectDefaultTemplateId,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockEnhance: vi.fn(),
@@ -26,6 +27,12 @@ const {
   mockDbRepositoriesFindFirst: vi.fn(),
   mockDbWorkflowsFindMany: vi.fn(),
   mockDbAppConfigFindUnique: vi.fn(),
+  mockFindProjectDefaultTemplateId: vi.fn(),
+}));
+
+vi.mock("~/lib/defaultTemplate", () => ({
+  findProjectDefaultTemplateId: (...args: any[]) =>
+    mockFindProjectDefaultTemplateId(...args),
 }));
 
 // ─── Mock next-auth ───────────────────────────────────────────────────────────
@@ -208,6 +215,7 @@ function setupDefaultMocks() {
 describe("POST /api/repository/copy-move/preflight", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFindProjectDefaultTemplateId.mockResolvedValue(null);
   });
 
   // Test 1
@@ -300,6 +308,25 @@ describe("POST /api/repository/copy-move/preflight", () => {
     const data = await res.json();
     expect(data.templateMismatch).toBe(false);
     expect(data.missingTemplates).toHaveLength(0);
+  });
+
+  it("returns the target project's first template assignment as targetTemplateId when it has no default", async () => {
+    setupDefaultMocks();
+    const { POST } = await import("./route");
+    const data = await (await POST(makeRequest(validBody))).json();
+    expect(data.targetTemplateId).toBe(10);
+  });
+
+  it("returns the target project's default template as targetTemplateId", async () => {
+    setupDefaultMocks();
+    mockFindProjectDefaultTemplateId.mockResolvedValue(30);
+    const { POST } = await import("./route");
+    const data = await (await POST(makeRequest(validBody))).json();
+    expect(mockFindProjectDefaultTemplateId).toHaveBeenCalledWith(
+      expect.anything(),
+      validBody.targetProjectId
+    );
+    expect(data.targetTemplateId).toBe(30);
   });
 
   // Test 7

@@ -49,7 +49,7 @@ describe("createStepsForCase", () => {
         testCase: { connect: { id: 99 } },
         order: 0,
         step: "a",
-        expectedResult: null,
+        expectedResult: "",
       },
     });
 
@@ -111,11 +111,26 @@ describe("createStepsForCase", () => {
 
 // ── replaceStepsForCase ───────────────────────────────────────────────────────
 
+const NO_HARD_DELETES = () => {
+  expect(zenstackMock).not.toHaveBeenCalledWith(
+    "steps",
+    "delete",
+    expect.anything(),
+    expect.anything(),
+  );
+  expect(zenstackMock).not.toHaveBeenCalledWith(
+    "steps",
+    "deleteMany",
+    expect.anything(),
+    expect.anything(),
+  );
+};
+
 describe("replaceStepsForCase", () => {
-  it("soft-deletes current steps then creates new ones in order", async () => {
-    // updateMany (soft-delete)
-    zenstackMock.mockResolvedValueOnce({ count: 2 });
-    // create calls for new steps
+  it("creates the new steps in order, then soft-deletes the ones that were there", async () => {
+    // findMany (the current set)
+    zenstackMock.mockResolvedValueOnce([{ id: 1 }, { id: 2 }]);
+    // create calls for new steps, then the updateMany
     zenstackMock.mockResolvedValue({ id: 200 });
 
     await replaceStepsForCase(
@@ -124,68 +139,59 @@ describe("replaceStepsForCase", () => {
       env,
     );
 
-    // First call MUST be updateMany to soft-delete
-    const updateManyCall = zenstackMock.mock.calls[0];
-    expect(updateManyCall[0]).toBe("steps");
-    expect(updateManyCall[1]).toBe("updateMany");
-    expect(updateManyCall[2]).toMatchObject({
+    const ops = zenstackMock.mock.calls.map((c) => c[1]);
+    expect(ops).toEqual(["findMany", "create", "create", "updateMany"]);
+
+    expect(zenstackMock.mock.calls[0][2]).toMatchObject({
       where: { testCaseId: 55, isDeleted: false },
+    });
+    // Only the steps that existed before are retired — never the new ones.
+    expect(zenstackMock.mock.calls[3][2]).toMatchObject({
+      where: { id: { in: [1, 2] } },
       data: { isDeleted: true },
     });
 
-    // Subsequent calls are creates
-    expect(zenstackMock.mock.calls[1][1]).toBe("create");
-    expect(zenstackMock.mock.calls[2][1]).toBe("create");
-
-    // CRITICAL (T-06-06): NEVER calls delete or deleteMany
-    expect(zenstackMock).not.toHaveBeenCalledWith(
-      "steps",
-      "delete",
-      expect.anything(),
-      expect.anything(),
-    );
-    expect(zenstackMock).not.toHaveBeenCalledWith(
-      "steps",
-      "deleteMany",
-      expect.anything(),
-      expect.anything(),
-    );
+    NO_HARD_DELETES();
   });
 
-  it("soft-deletes existing steps even when new steps array is empty", async () => {
+  it("soft-deletes existing steps even when the new steps array is empty", async () => {
+    zenstackMock.mockResolvedValueOnce([{ id: 1 }, { id: 2 }, { id: 3 }]);
     zenstackMock.mockResolvedValueOnce({ count: 3 });
 
     await replaceStepsForCase(55, [], env);
 
-    // Must still call updateMany to soft-delete
-    expect(zenstackMock).toHaveBeenCalledTimes(1);
-    expect(zenstackMock.mock.calls[0][1]).toBe("updateMany");
-
-    // CRITICAL: no delete or deleteMany
-    expect(zenstackMock).not.toHaveBeenCalledWith(
-      "steps",
-      "delete",
-      expect.anything(),
-      expect.anything(),
-    );
-    expect(zenstackMock).not.toHaveBeenCalledWith(
-      "steps",
-      "deleteMany",
-      expect.anything(),
-      expect.anything(),
-    );
+    expect(zenstackMock).toHaveBeenCalledTimes(2);
+    expect(zenstackMock.mock.calls[1][1]).toBe("updateMany");
+    expect(zenstackMock.mock.calls[1][2]).toMatchObject({
+      where: { id: { in: [1, 2, 3] } },
+    });
+    NO_HARD_DELETES();
   });
 
-  it("updateMany fires before any create (ordering guarantee)", async () => {
-    const callOrder: string[] = [];
-    zenstackMock.mockImplementation(async (_model, operation) => {
-      callOrder.push(operation as string);
-      return operation === "updateMany" ? { count: 1 } : { id: 1 };
-    });
+  it("skips the soft-delete when the case had no steps", async () => {
+    zenstackMock.mockResolvedValueOnce([]);
+    zenstackMock.mockResolvedValue({ id: 200 });
 
-    await replaceStepsForCase(77, [{ text: "step" }], env);
+    await replaceStepsForCase(55, [{ text: "only" }], env);
 
-    expect(callOrder[0]).toBe("updateMany");
-    expect(callOrder[1]).toBe("create");
+    const ops = zenstackMock.mock.calls.map((c) => c[1]);
+    expect(ops).toEqual(["findMany", "create"]);
+  });
+
+  it("leaves the old steps in place when a create fails", async () => {
+    zenstackMock.mockResolvedValueOnce([{ id: 1 }]);
+    zenstackMock.mockResolvedValueOnce({ id: 200 });
+    zenstackMock.mockRejectedValueOnce(new Error("422"));
+
+    await expect(
+      replaceStepsForCase(55, [{ text: "a" }, { text: "b" }], env),
+    ).rejects.toThrow("422");
+
+    expect(zenstackMock).not.toHaveBeenCalledWith(
+      "steps",
+      "updateMany",
+      expect.anything(),
+      expect.anything(),
+    );
   });
 });

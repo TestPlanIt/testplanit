@@ -1,6 +1,10 @@
 import { baseDb } from "~/lib/db";
 import { getEffectiveCaseCompletion } from "~/lib/services/effectiveCaseStatus";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
+import {
+  QUARANTINED_COLOR,
+  QUARANTINED_STATUS_NAME,
+} from "~/lib/services/testRunSummary-shared";
 import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 
 export type MilestoneSegment = {
@@ -261,6 +265,8 @@ async function getAutomatedTestRunSegments(
 ): Promise<MilestoneSegment[]> {
   if (runIds.length === 0) return [];
 
+  // Failures of quarantined cases (failure triage) form their own segment
+  // so they are not drawn as failures.
   const rows = await baseDb.$queryRaw<
     Array<{
       testRunId: number;
@@ -270,6 +276,7 @@ async function getAutomatedTestRunSegments(
       colorValue: string | null;
       statusOrder: number | null;
       resultType: string | null;
+      quarantined: boolean;
       count: bigint;
       elapsed: number | null;
     }>
@@ -282,6 +289,7 @@ async function getAutomatedTestRunSegments(
       COALESCE(c.value, '#9ca3af') as "colorValue",
       s.order as "statusOrder",
       jr.type as "resultType",
+      (q.id IS NOT NULL AND jr.type IN ('FAILURE', 'ERROR')) as "quarantined",
       COUNT(*) as "count",
       COALESCE(SUM(jr.time), 0) as "elapsed"
     FROM "JUnitTestResult" jr
@@ -289,25 +297,43 @@ async function getAutomatedTestRunSegments(
     JOIN "TestRuns" tr ON su."testRunId" = tr.id
     LEFT JOIN "Status" s ON jr."statusId" = s.id
     LEFT JOIN "Color" c ON s."colorId" = c.id
+    LEFT JOIN "CaseQuarantine" q ON q."caseId" = jr."repositoryCaseId"
     WHERE su."testRunId" = ANY(${runIds}::int[])
-    GROUP BY su."testRunId", tr.name, jr."statusId", s.name, c.value, s.order, jr.type
+    GROUP BY su."testRunId", tr.name, jr."statusId", s.name, c.value, s.order, jr.type, "quarantined"
     ORDER BY su."testRunId", jr."statusId" ASC NULLS LAST
   `;
 
-  return rows.map((row, index) => ({
-    id: `test-run-junit-${row.testRunId}-${row.statusId ?? row.resultType ?? "null"}-${index}`,
-    type: "test-run" as const,
-    sourceId: row.testRunId,
-    sourceName: row.testRunName,
-    statusId: row.statusId,
-    statusName: row.statusName || row.resultType || "Untested",
-    colorValue: row.colorValue || "#9ca3af",
-    elapsed: Number(row.elapsed || 0),
-    estimate: null,
-    isPending: false,
-    itemCount: Number(row.count),
-    statusOrder: row.statusOrder,
-  }));
+  return rows.map((row, index) =>
+    row.quarantined
+      ? {
+          id: `test-run-junit-${row.testRunId}-quarantined-${index}`,
+          type: "test-run" as const,
+          sourceId: row.testRunId,
+          sourceName: row.testRunName,
+          statusId: null,
+          statusName: QUARANTINED_STATUS_NAME,
+          colorValue: QUARANTINED_COLOR,
+          elapsed: Number(row.elapsed || 0),
+          estimate: null,
+          isPending: false,
+          itemCount: Number(row.count),
+          statusOrder: null,
+        }
+      : {
+          id: `test-run-junit-${row.testRunId}-${row.statusId ?? row.resultType ?? "null"}-${index}`,
+          type: "test-run" as const,
+          sourceId: row.testRunId,
+          sourceName: row.testRunName,
+          statusId: row.statusId,
+          statusName: row.statusName || row.resultType || "Untested",
+          colorValue: row.colorValue || "#9ca3af",
+          elapsed: Number(row.elapsed || 0),
+          estimate: null,
+          isPending: false,
+          itemCount: Number(row.count),
+          statusOrder: row.statusOrder,
+        }
+  );
 }
 
 export async function getSessionSegments(

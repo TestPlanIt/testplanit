@@ -42,6 +42,8 @@ import {
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { resetUrlWriteOverlay } from "~/utils/urlParamWrite";
+
 // ---- Hoisted spies / mutable holders (referenced from vi.mock factories) ----
 
 const {
@@ -153,6 +155,9 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
     await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...original,
+    // No QueryClientProvider in this tree; useSavedCaseDrafts reads the client
+    // for its refresh() and never calls it here.
+    useQueryClient: () => ({ invalidateQueries: vi.fn() }),
     useQuery: (options: any) => {
       if (options?.queryKey?.[0] === "viewOptions") {
         viewOptionsQueryHolder.current = options;
@@ -195,6 +200,20 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
         data: caseFoldersHolder.current,
         isLoading: false,
       }),
+    },
+    // The My Drafts list checks drafts against templates and states.
+    templates: {
+      useFindMany: () => ({ data: [], isLoading: false }),
+    },
+    workflows: {
+      useFindMany: () => ({ data: [], isLoading: false }),
+    },
+    // The My Drafts button lists the user's saved drafts; none here.
+    caseDraft: {
+      useFindMany: () => ({ data: [], isLoading: false }),
+      useCreate: () => ({ mutateAsync: vi.fn() }),
+      useUpdate: () => ({ mutateAsync: vi.fn() }),
+      useDelete: () => ({ mutateAsync: vi.fn() }),
     },
   }),
 }));
@@ -298,6 +317,9 @@ vi.mock("@/components/dnd/DragStateBridge", () => ({
 }));
 vi.mock("@/components/dnd/DropZoneOverlay", () => ({
   DropZoneOverlay: ({ children }: any) => <div>{children}</div>,
+}));
+vi.mock("@/components/dnd/CopyIntoFolderDropTarget", () => ({
+  CopyIntoFolderDropTarget: ({ children }: any) => <div>{children}</div>,
 }));
 vi.mock("@/components/ui/SimpleDndProvider", () => ({
   SimpleDndProvider: ({ children }: any) => children,
@@ -413,6 +435,9 @@ function writtenViewUrl() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Module state shared by every URL writer; without this a previous test's
+  // pending write suppresses this one as a no-op.
+  resetUrlWriteOverlay();
   setLocation("");
   paramsHolder.current = { projectId: "42" };
   viewOptionsHolder.current = { data: makeViewOptionsData(), isError: false };

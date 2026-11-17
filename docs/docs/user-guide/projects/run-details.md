@@ -30,7 +30,7 @@ The header displays:
     - **Assign**: Opens the [Distribute assignments](#distributing-assignments) dialog to spread the run's test cases across several team members at once (requires add/edit permission on Test Runs).
     - **Execute automated cases** (in the case list header, left of **Start manual testing**): Dispatches the run's automated cases to one of the project's execution targets. Select rows in the case list to execute only those: the button then reads **Execute N selected automated cases** and requests just the automated cases among the selection. Shown when the project has an enabled target and the user can add/edit runs; disabled while the run has no automated cases, none of the selected cases are automated, or an execution is already in flight. See [Automated execution](#automated-execution).
     - **Lock composition**: A toggle that freezes the run's case set. See [Composition lock](#composition-lock).
-    - **Complete**: Opens a confirmation dialog to mark the run as finished. Here you select the final "Done" state from the workflow and set the completion date. This action is irreversible (if user has permission).
+    - **Complete**: Opens a confirmation dialog to mark the run as finished. Here you select the final "Done" state from the workflow and set the completion date. This action is irreversible (if user has permission). The same dialog opens on its own when a result you record gives every case in the run a result, so you can complete the run right away; cancel it to keep the run open.
   - **View Mode (Completed Run)**:
     - Displays a "Completed On [Date]" badge.
     - **Duplicate**: Opens the duplication dialog to create a copy of the test run.
@@ -185,7 +185,7 @@ This table lists all the test cases included in the current test run:
 - **State**: The workflow state of the test case version included in the run.
 - **Priority**: The priority of the test case version.
 - **Assignee**: The user assigned to execute this test case within this run. Can often be assigned/changed here.
-- **Status**: The current execution status for this case _within this run_ (e.g., Not Started, Passed, Failed). This often acts as a link to start or view the execution.
+- **Status**: The current execution status for this case _within this run_ (e.g., Not Started, Passed, Failed). This often acts as a link to start or view the execution. When the project [enforces test case dependencies](./settings/advanced.md#enforce-test-case-dependencies-in-test-runs), a case whose prerequisites haven't passed in this run shows a **Blocked** badge next to its status, and the status control is disabled until they do; hover the badge to see which cases it is waiting on.
 - **Last Result**: Sometimes shows the status of the most recent execution attempt if multiple attempts are allowed.
 - **Tags**: Tags associated with the test case version.
 - **Actions** (Ellipsis Menu):

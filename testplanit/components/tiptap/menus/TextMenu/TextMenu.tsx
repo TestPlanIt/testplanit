@@ -58,7 +58,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onBold}
           active={states.isBold}
         >
-          <Icon name="Bold" />
+          <Icon name="LetterB" />
         </MemoButton>
         <MemoButton
           tooltip={t("italic")}

@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PanelCollapseToggle } from "@/components/PanelCollapseToggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import {
@@ -38,6 +39,7 @@ import {
   type CodePinSource,
   type PinStaleReason,
 } from "~/hooks/useCodePins";
+import { usePanelCollapsed } from "~/hooks/usePanelCollapsed";
 import { schema } from "~/zenstack/schema";
 import { AddCodePinDialog } from "./AddCodePinDialog";
 import { CodePinKindBadge } from "./CodePinKindBadge";
@@ -134,6 +136,10 @@ export function CodePinsPanel({
   const configFor = (configId: number) =>
     impactConfigs.find((config) => config.id === configId) ?? null;
 
+  const { collapsed, toggle, hydrated } = usePanelCollapsed("code-pins");
+
+  // Collapsed skips the fetch (it runs a repository staleness check), except
+  // read-only, which needs the pins to decide whether to show the panel.
   const {
     pins,
     stalenessError,
@@ -143,7 +149,9 @@ export function CodePinsPanel({
     dismissStale,
     isMutating,
     isLoading,
-  } = useCodePins(caseId, { enabled });
+  } = useCodePins(caseId, {
+    enabled: enabled && hydrated && (!collapsed || readOnly),
+  });
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingPin, setEditingPin] = useState<CodePin | null>(null);
@@ -505,6 +513,11 @@ export function CodePinsPanel({
     <Card shadow="none" data-testid="case-code-pins">
       <CardHeader className="flex flex-row items-center justify-between p-4">
         <CardTitle className="flex items-center gap-2 min-w-0">
+          <PanelCollapseToggle
+            collapsed={collapsed}
+            onToggle={toggle}
+            testId="case-code-pins-collapse-toggle"
+          />
           <Pin className="w-5 h-5 shrink-0" />
           <span className="shrink-0">{t("title")}</span>
           {/* Badged so the repository reads as the connected source, not as
@@ -567,44 +580,46 @@ export function CodePinsPanel({
           </Button>
         )}
       </CardHeader>
-      <CardContent className="p-0">
-        {isLoading ? (
-          <div
-            className="mx-4 mb-4 space-y-3"
-            data-testid="case-code-pins-loading"
-            aria-busy="true"
-          >
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-            <span className="sr-only">{tCommon("loading")}</span>
-          </div>
-        ) : pins.length === 0 ? (
-          <div className="text-muted-foreground ms-4 -mt-6 mb-4 text-sm space-y-1">
-            <div>{t("empty")}</div>
-            <div className="text-xs">{t("description")}</div>
-          </div>
-        ) : (
-          <DataTable<CodePin>
-            columns={columns}
-            data={pins}
-            getRowId={(pin) => String(pin.id)}
-            rowTestIdPrefix="case-code-pin"
-            columnVisibility={columnVisibility}
-            onColumnVisibilityChange={noopVisibilityChange}
-            storageKey="case-code-pins"
-            enableColumnReorder={false}
-            enableColumnMenu={false}
-          />
-        )}
-        {stalenessError && (
-          <div
-            className="px-4 pb-3 pt-2 text-xs text-muted-foreground"
-            data-testid="case-code-pins-staleness-error"
-          >
-            {stalenessError}
-          </div>
-        )}
-      </CardContent>
+      {!collapsed && (
+        <CardContent className="p-0">
+          {isLoading || !hydrated ? (
+            <div
+              className="mx-4 mb-4 space-y-3"
+              data-testid="case-code-pins-loading"
+              aria-busy="true"
+            >
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <span className="sr-only">{tCommon("loading")}</span>
+            </div>
+          ) : pins.length === 0 ? (
+            <div className="text-muted-foreground ms-4 -mt-6 mb-4 text-sm space-y-1">
+              <div>{t("empty")}</div>
+              <div className="text-xs">{t("description")}</div>
+            </div>
+          ) : (
+            <DataTable<CodePin>
+              columns={columns}
+              data={pins}
+              getRowId={(pin) => String(pin.id)}
+              rowTestIdPrefix="case-code-pin"
+              columnVisibility={columnVisibility}
+              onColumnVisibilityChange={noopVisibilityChange}
+              storageKey="case-code-pins"
+              enableColumnReorder={false}
+              enableColumnMenu={false}
+            />
+          )}
+          {stalenessError && (
+            <div
+              className="px-4 pb-3 pt-2 text-xs text-muted-foreground"
+              data-testid="case-code-pins-staleness-error"
+            >
+              {stalenessError}
+            </div>
+          )}
+        </CardContent>
+      )}
 
       {isAddOpen && (
         <AddCodePinDialog

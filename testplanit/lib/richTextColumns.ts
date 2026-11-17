@@ -25,6 +25,7 @@
  * `normalizeTextLongFieldValueWrite` below.
  */
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
+import { emptyEditorContent } from "~/app/constants/backend";
 
 /** Model name -> the model's own rich-text `Json` fields. */
 export const RICH_TEXT_COLUMNS: Readonly<Record<string, readonly string[]>> = {
@@ -48,13 +49,15 @@ export const RICH_TEXT_COLUMNS: Readonly<Record<string, readonly string[]>> = {
 /**
  * Convert one field value to the canonical shape.
  *
- * Only strings are rewritten. `null` and `undefined` mean "cleared" and must
- * stay that way — `ensureTipTapJSON` would turn them into an empty document
- * and lose that distinction. Objects are already canonical, and that includes
- * the ORM's `DbNull` / `JsonNull` sentinels, which must reach the driver
- * untouched.
+ * Strings are rewritten into a document. `null` means "cleared" and becomes
+ * the empty document, which is what every web UI editor stores when a user
+ * empties it (the ORM rejects a bare `null` on an optional Json column, so a
+ * clear from an API client used to fail outright). `undefined` leaves the
+ * column alone. Objects are already canonical, and that includes the ORM's
+ * `DbNull` / `JsonNull` sentinels, which must reach the driver untouched.
  */
 function canonicalize(value: unknown): unknown {
+  if (value === null) return emptyEditorContent;
   return typeof value === "string" ? ensureTipTapJSON(value) : value;
 }
 

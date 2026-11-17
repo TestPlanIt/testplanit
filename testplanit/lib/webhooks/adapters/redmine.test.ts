@@ -121,6 +121,7 @@ describe("redmineAdapter (inbound webhook)", () => {
       expect(redmineAdapter.extractLinkedIssueRef(parsed)).toEqual({
         externalKey: "#5",
         externalSystem: "REDMINE",
+        externalId: "5",
       });
     });
 
@@ -128,6 +129,7 @@ describe("redmineAdapter (inbound webhook)", () => {
       expect(redmineAdapter.extractLinkedIssueRef(OPENED)).toEqual({
         externalKey: "#5",
         externalSystem: "REDMINE",
+        externalId: "5",
       });
     });
 

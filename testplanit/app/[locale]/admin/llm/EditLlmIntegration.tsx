@@ -53,6 +53,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { getBillingPeriodStart } from "~/lib/utils/billingPeriod";
+import { apiFetch } from "~/lib/basePath";
 
 const createFormSchema = (
   t: any,
@@ -86,7 +87,6 @@ const createFormSchema = (
     deploymentName: z.string().optional(),
     defaultModel: z.string().min(1, t("validation.defaultModelRequired")),
     maxTokensPerRequest: z.number().min(1).max(1048576),
-    maxRequestsPerMinute: z.number().min(1).max(10000),
     costPerInputToken: z.number().min(0),
     costPerOutputToken: z.number().min(0),
     monthlyBudget: z.number().min(0).optional(),
@@ -125,7 +125,6 @@ const FIELD_TO_SECTION: Record<string, string> = {
   deploymentName: "provider",
   defaultModel: "provider",
   maxTokensPerRequest: "provider",
-  maxRequestsPerMinute: "provider",
   costPerInputToken: "cost-and-budget",
   costPerOutputToken: "cost-and-budget",
   monthlyBudget: "cost-and-budget",
@@ -213,7 +212,6 @@ export function EditLlmIntegration({
       provider: "OPENAI",
       defaultModel: "",
       maxTokensPerRequest: 4096,
-      maxRequestsPerMinute: 60,
       costPerInputToken: 0,
       costPerOutputToken: 0,
       monthlyBudget: 0,
@@ -292,7 +290,7 @@ export function EditLlmIntegration({
     modelPricingRef.current = {};
 
     try {
-      const response = await fetch("/api/admin/llm/available-models", {
+      const response = await apiFetch("/api/admin/llm/available-models", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -387,7 +385,7 @@ export function EditLlmIntegration({
     setStoredCredentials(null);
     void (async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/admin/llm/integrations/${integration.id}/credentials`
         );
         if (!response.ok || cancelled) return;
@@ -421,8 +419,6 @@ export function EditLlmIntegration({
         defaultModel: integration.llmProviderConfig?.defaultModel || "",
         maxTokensPerRequest:
           integration.llmProviderConfig?.maxTokensPerRequest || 4096,
-        maxRequestsPerMinute:
-          integration.llmProviderConfig?.maxRequestsPerMinute || 60,
         costPerInputToken:
           Number(integration.llmProviderConfig?.costPerInputToken) || 0,
         costPerOutputToken:
@@ -458,7 +454,7 @@ export function EditLlmIntegration({
         defaultModel: values.defaultModel,
       };
 
-      const response = await fetch("/api/admin/llm/test-credentials", {
+      const response = await apiFetch("/api/admin/llm/test-credentials", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -518,7 +514,7 @@ export function EditLlmIntegration({
     let capabilitiesForSave = probedCapabilities;
     if (!capabilitiesForSave) {
       try {
-        const probeResp = await fetch("/api/admin/llm/test-credentials", {
+        const probeResp = await apiFetch("/api/admin/llm/test-credentials", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -609,7 +605,6 @@ export function EditLlmIntegration({
           data: {
             defaultModel: values.defaultModel,
             maxTokensPerRequest: values.maxTokensPerRequest,
-            maxRequestsPerMinute: values.maxRequestsPerMinute,
             costPerInputToken: new Decimal(values.costPerInputToken),
             costPerOutputToken: new Decimal(values.costPerOutputToken),
             monthlyBudget: new Decimal(values.monthlyBudget || 0),
@@ -620,15 +615,16 @@ export function EditLlmIntegration({
             streamingEnabled: values.streamingEnabled,
             isDefault: values.isDefault,
             settings: mergedSettings as JsonValue,
-            // Reset budget alert thresholds when config is saved — allows re-alerting against updated budget
-            alertThresholdsFired: {},
+            // Saving the config lets the AI budget alerts fire again in
+            // this period, against the updated budget.
+            budgetAlertResetAt: new Date(),
           },
         });
       }
 
       // Clear the server-side LLM adapter cache so the new settings take effect
       try {
-        await fetch("/api/admin/llm/clear-cache", {
+        await apiFetch("/api/admin/llm/clear-cache", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ llmIntegrationId: integration.id }),
@@ -669,6 +665,13 @@ export function EditLlmIntegration({
           createdAt: { gte: periodStart },
         },
       });
+      // Spend starts over, so the AI budget alerts may fire again.
+      if (integration.llmProviderConfig) {
+        await updateLlmProviderConfig({
+          where: { id: integration.llmProviderConfig.id },
+          data: { budgetAlertResetAt: new Date() },
+        });
+      }
 
       toast.success(tBudgetAlert("spendReset"));
     } catch (error: any) {
@@ -1041,29 +1044,6 @@ export function EditLlmIntegration({
                               <FormLabel className="flex items-center">
                                 {tAdd("defaultMaxTokens")}
                                 <HelpPopover helpKey="llm.defaultMaxTokens" />
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(parseInt(e.target.value))
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="maxRequestsPerMinute"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="flex items-center">
-                                {tAdd("maxRequestsPerMinute")}
-                                <HelpPopover helpKey="llm.maxRequestsPerMinute" />
                               </FormLabel>
                               <FormControl>
                                 <Input

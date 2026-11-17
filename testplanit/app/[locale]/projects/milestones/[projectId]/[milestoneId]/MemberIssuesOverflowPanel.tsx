@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import type { MemberOverflowResponse } from "~/app/api/milestones/[milestoneId]/members/overflow/route";
 import { useMilestoneLiveStream } from "~/hooks/useMilestoneLiveStream";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { apiFetch } from "~/lib/basePath";
 
 interface MemberIssuesOverflowPanelProps {
   milestoneId: number;
@@ -50,7 +51,7 @@ export function MemberIssuesOverflowPanel({
   const { data, isLoading, refetch } = useQuery<MemberOverflowResponse>({
     queryKey: ["milestoneMemberOverflow", milestoneId],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/milestones/${milestoneId}/members/overflow`
       );
       if (!response.ok) {
@@ -96,7 +97,7 @@ export function MemberIssuesOverflowPanel({
   const handleImport = async () => {
     setIsImporting(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/milestones/${milestoneId}/members/overflow`,
         { method: "POST" }
       );

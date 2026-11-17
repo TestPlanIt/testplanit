@@ -1,4 +1,8 @@
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
+import {
+  enqueueAlertExecutionEvaluation,
+  projectHasActiveAlertRules,
+} from "~/lib/services/alertEnqueue";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import type { DbClient, TxClient } from "~/lib/zenstack";
 import {
@@ -422,6 +426,25 @@ export async function finalizeExecution(
     (status === "SUCCEEDED" || status === "FAILED")
   ) {
     await completeAdHocRun(db, updated.testRunId, now);
+  }
+  // Alerts: a failed, undispatchable or timed-out execution is a subject
+  // for the "automated execution failed" metric. Best-effort, off the path.
+  if (
+    status === "FAILED" ||
+    status === "DISPATCH_FAILED" ||
+    status === "TIMED_OUT"
+  ) {
+    try {
+      if (await projectHasActiveAlertRules(db as any, updated.projectId)) {
+        void enqueueAlertExecutionEvaluation({
+          executionId: updated.id,
+          projectId: updated.projectId,
+          tenantId: opts.tenantId,
+        });
+      }
+    } catch (error) {
+      console.error("[alerts] execution enqueue failed:", error);
+    }
   }
 }
 

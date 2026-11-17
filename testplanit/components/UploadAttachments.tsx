@@ -476,10 +476,10 @@ export default function UploadAttachments({
     return (
       <div className="flex flex-col gap-1">
         <div
-          className={`items-center justify-center border-2 ${
+          className={`items-center justify-center border-2 border-dashed ${
             isDragging && !disabled
-              ? "bg-accent dark:bg-primary"
-              : "border-dashed border-muted"
+              ? "border-primary bg-primary/5"
+              : "border-muted"
           } rounded-lg p-2 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           onDragOver={disabled ? undefined : handleDragOver}
           onDragLeave={disabled ? undefined : handleDragLeave}
@@ -557,7 +557,7 @@ export default function UploadAttachments({
                       size="icon"
                       onClick={() => removeFile(index)}
                       aria-label={tGlobal("common.actions.remove")}
-                      className="shrink-0 h-6 w-6 p-0.5 text-foreground/70 hover:text-destructive"
+                      className="shrink-0 h-6 w-6 p-0.5 text-foreground/70 hover:text-destructive-text"
                     >
                       <XCircle className="w-4 h-4" />
                     </Button>
@@ -584,7 +584,7 @@ export default function UploadAttachments({
                     size="icon"
                     onClick={() => removeLink(index)}
                     aria-label={tGlobal("common.actions.remove")}
-                    className="shrink-0 h-6 w-6 p-0.5 text-foreground/70 hover:text-destructive"
+                    className="shrink-0 h-6 w-6 p-0.5 text-foreground/70 hover:text-destructive-text"
                   >
                     <XCircle className="w-4 h-4" />
                   </Button>
@@ -606,10 +606,10 @@ export default function UploadAttachments({
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent
-        className={`flex flex-col items-center justify-center border-2 ${
+        className={`flex flex-col items-center justify-center border-2 border-dashed ${
           isDragging && !disabled
-            ? "bg-accent dark:bg-primary"
-            : "border-dashed border-muted"
+            ? "border-primary bg-primary/5"
+            : "border-muted"
         } rounded-lg p-4 space-y-2`}
         onDragOver={disabled ? undefined : handleDragOver}
         onDragLeave={disabled ? undefined : handleDragLeave}

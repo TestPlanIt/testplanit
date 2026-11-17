@@ -28,6 +28,7 @@ import {
   getQueryBuilderForMetric,
 } from "~/utils/drillDownQueryBuilders";
 import { getFolderSubtreeIds } from "~/utils/reportGrouping";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
 /**
  * Result-level metrics on the test-execution and user-engagement reports
@@ -79,19 +80,34 @@ async function handleDualSourceDrillDown(
     manualQuery.where = { ...manualQuery.where, elapsed: { not: null } };
   }
 
-  const junitQuery = buildJunitResultQuery(context, {
-    requireTime: isElapsedMetric,
-  });
+  // The result-source dimension names the table a cell's rows came from, so
+  // its drill-down reads only that source. A classified root-cause cell can
+  // only match automated results — manual results never carry a failure
+  // signature (the "None" root-cause cell still reads both sources).
+  const resultSourceId = context.dimensions?.resultSource?.id;
+  const rootCauseId = context.dimensions?.rootCause?.id;
+  const rootCauseClassified =
+    rootCauseId !== undefined && rootCauseId !== null && rootCauseId !== "";
+  const includeManual = resultSourceId !== "AUTOMATED" && !rootCauseClassified;
+  const includeAutomated = resultSourceId !== "MANUAL";
+
+  const junitQuery = includeAutomated
+    ? buildJunitResultQuery(context, {
+        requireTime: isElapsedMetric,
+      })
+    : null;
 
   const [manualTotal, junitTotal] = await Promise.all([
-    baseDb.testRunResults.count({ where: manualQuery.where }),
+    includeManual
+      ? baseDb.testRunResults.count({ where: manualQuery.where })
+      : Promise.resolve(0),
     junitQuery
       ? baseDb.jUnitTestResult.count({ where: junitQuery.where })
       : Promise.resolve(0),
   ]);
 
   const data: any[] = [];
-  if (offset < manualTotal) {
+  if (includeManual && offset < manualTotal) {
     const manualRows = await baseDb.testRunResults.findMany({
       ...manualQuery,
       skip: offset,
@@ -138,11 +154,13 @@ async function handleDualSourceDrillDown(
   let aggregates: DrillDownResponse["aggregates"];
   if (context.metricId === "passRate") {
     const [manualStatus, junitStatus] = await Promise.all([
-      baseDb.testRunResults.groupBy({
-        by: ["statusId"],
-        where: manualQuery.where,
-        _count: { id: true },
-      }),
+      includeManual
+        ? baseDb.testRunResults.groupBy({
+            by: ["statusId"],
+            where: manualQuery.where,
+            _count: { id: true },
+          })
+        : Promise.resolve([] as any[]),
       junitQuery
         ? baseDb.jUnitTestResult.groupBy({
             by: ["statusId"],
@@ -285,7 +303,7 @@ async function resolveAutomatedRunCaseStatuses(rows: any[]) {
   }
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -412,6 +430,19 @@ export async function POST(req: NextRequest) {
       (query.where as any).id = { in: relevantIssueIds };
     }
 
+    // Same for the linked-cases metric, whose issue population is nested
+    // under the case's caseIssues join.
+    if (context.metricId === "linkedCaseCount" && context.projectId) {
+      const relevantIssueIds = await getProjectRelevantIssueIds(
+        Number(context.projectId)
+      );
+      const issueWhere = (query.where as any).caseIssues?.some?.issue;
+      if (issueWhere) {
+        delete issueWhere.projectId;
+        issueWhere.id = { in: relevantIssueIds };
+      }
+    }
+
     // Execute the query using dynamic model access
     const model = (baseDb as any)[modelName];
     if (!model) {
@@ -473,3 +504,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withReplicaRoute(reportPost);

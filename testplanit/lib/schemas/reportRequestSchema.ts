@@ -7,6 +7,8 @@ import { z } from "zod/v4";
 const PRE_BUILT_REPORT_TYPES = [
   "automation-trends",
   "cross-project-automation-trends",
+  "results-trend",
+  "cross-project-results-trend",
   "flaky-tests",
   "cross-project-flaky-tests",
   "test-case-health",
@@ -43,6 +45,15 @@ export const dimensionFiltersSchema = z.record(
   z.array(z.union([z.string(), z.number()]))
 );
 
+// How each dimension's value filter applies: keep only the selected values
+// (include, the default) or everything BUT them (exclude). Exclude keeps a
+// saved report correct as new values appear — "every project except the two
+// sandboxes" doesn't silently drop projects created later.
+export const dimensionFilterModesSchema = z.record(
+  z.string(),
+  z.enum(["include", "exclude"])
+);
+
 export const reportRequestSchema = z
   .object({
     reportType: z.string(),
@@ -67,16 +78,20 @@ export const reportRequestSchema = z
       .optional(),
     sortColumn: z.string().optional(),
     sortDirection: z.enum(["asc", "desc"]).optional(),
+    // The calendar period a date dimension buckets into. Handlers default
+    // it themselves: weekly for automation trends, daily for custom reports.
     dateGrouping: z
       .enum(["daily", "weekly", "monthly", "quarterly", "annually"])
-      .optional()
-      .default("weekly"),
+      .optional(),
     // When the folder dimension is grouped, roll each result up into its
     // ancestor folders so a parent folder includes its whole subtree.
     folderIncludeDescendants: z.boolean().optional().default(false),
     // Rows whose group key for a filtered dimension is not in the list are
     // dropped. Unknown dimension ids are ignored server-side.
     dimensionFilters: dimensionFiltersSchema.optional(),
+    // Flips a dimension's filter to "everything but the selected values".
+    // Dimensions without an entry (or without a filter) keep include.
+    dimensionFilterModes: dimensionFilterModesSchema.optional(),
     // Chart option carried in the run body so saved reports and shares keep
     // it: plot the sum of every series at each date. Aggregation ignores it.
     includeTotals: z.boolean().nullish(),

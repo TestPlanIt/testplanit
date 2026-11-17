@@ -15,6 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 export interface SelectSourceSwitchDialogProps {
   open: boolean;
@@ -48,7 +49,7 @@ export function SelectSourceSwitchDialog({
   const handleConfirm = async () => {
     setSubmitting(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/repository/cases/${caseId}/parameters/${paramId}`,
         {
           method: "PATCH",

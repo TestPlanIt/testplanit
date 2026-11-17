@@ -313,8 +313,10 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
       const hasTestCaseDimension = headers.some(
         (h) => /test\s*case/i.test(h) && !h.toLowerCase().includes("count")
       );
+      // Header text ends with the column menu's sr-only label, so the
+      // dimension label is a prefix: "TemplateColumn options".
       const hasTemplateColumn = headers.some((h) =>
-        /^template$/i.test(h.trim())
+        /^template/i.test(h.trim())
       );
 
       expect(hasTestCaseDimension).toBeTruthy();

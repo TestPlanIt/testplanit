@@ -91,9 +91,7 @@ async function handleWebhookReceive(
     isActive: boolean;
     allowUnsigned: boolean;
     codeRepositoryConfigId: number | null;
-    subscribedEvents: string[];
     baseBranch: string | null;
-    autoRunMinScore: number | null;
   } | null = null;
   try {
     webhookConfig = await baseDb.webhookConfig.findUnique({
@@ -106,9 +104,7 @@ async function handleWebhookReceive(
         isActive: true,
         allowUnsigned: true,
         codeRepositoryConfigId: true,
-        subscribedEvents: true,
         baseBranch: true,
-        autoRunMinScore: true,
       },
     });
   } catch (err) {
@@ -226,9 +222,7 @@ async function handleWebhookReceive(
           webhookConfigId: webhookConfig.id,
           projectId: webhookConfig.projectId,
           codeRepositoryConfigId: webhookConfig.codeRepositoryConfigId,
-          subscribedEvents: webhookConfig.subscribedEvents,
           baseBranch: webhookConfig.baseBranch,
-          autoRunMinScore: webhookConfig.autoRunMinScore,
           adapterType: webhookConfig.adapterType,
           eventType: verify.payload.eventType,
           payload: verify.payload,

@@ -201,6 +201,26 @@ describe("githubAdapter", () => {
     }
   });
 
+  it("verify() reports 'not_planned' as the external status of an issue closed as not planned", () => {
+    const body = bodyOf({
+      ...CANONICAL_PAYLOAD,
+      issue: { ...CANONICAL_PAYLOAD.issue, state_reason: "not_planned" },
+    });
+    const sig = signBody(body, SECRET);
+    const result = githubAdapter.verify(
+      body,
+      headersOf({
+        "x-hub-signature-256": sig,
+        "x-github-event": "issues",
+      }),
+      SECRET
+    );
+    expect(result.valid).toBe(true);
+    if (result.valid) {
+      expect(result.payload.externalStatus).toBe("not_planned");
+    }
+  });
+
   it("Test 8 (case-insensitive header reads): mixed-case headers accepted by Headers normalization", () => {
     const body = bodyOf(CANONICAL_PAYLOAD);
     const sig = signBody(body, SECRET);
@@ -250,6 +270,7 @@ describe("githubAdapter — extractLinkedIssueRef", () => {
     expect(ref).toEqual({
       externalKey: "octocat/Hello-World#42",
       externalSystem: "GITHUB",
+      externalId: "42",
     });
   });
 
@@ -319,10 +340,57 @@ describe("githubAdapter — extractExternalStatus", () => {
     ).toBeNull();
   });
 
-  it("returns null for eventType 'issue_comment' (comment events deferred)", () => {
+  it("returns the issue's status for an issue_comment event so the linked issue is refreshed", () => {
+    const commentPayload = {
+      action: "created",
+      issue: { number: 42, state: "open", state_reason: null },
+      comment: { id: 7, body: "Looks fixed" },
+      repository: { full_name: "octocat/Hello-World" },
+    };
     expect(
-      githubAdapter.extractExternalStatus(CANONICAL_PAYLOAD, "issue_comment")
+      githubAdapter.extractExternalStatus(commentPayload, "issue_comment")
+    ).toBe("open");
+    expect(githubAdapter.extractLinkedIssueRef(commentPayload)).toEqual({
+      externalKey: "octocat/Hello-World#42",
+      externalSystem: "GITHUB",
+      externalId: "42",
+    });
+  });
+
+  it("returns null for an issue_comment event on a pull request", () => {
+    const prCommentPayload = {
+      action: "created",
+      issue: {
+        number: 43,
+        state: "open",
+        pull_request: { url: "https://api.github.com/repos/o/r/pulls/43" },
+      },
+      comment: { id: 8, body: "LGTM" },
+      repository: { full_name: "octocat/Hello-World" },
+    };
+    expect(
+      githubAdapter.extractExternalStatus(prCommentPayload, "issue_comment")
     ).toBeNull();
+  });
+
+  it("returns 'not_planned' for an issue closed as not planned", () => {
+    const notPlanned = {
+      action: "closed",
+      issue: { number: 44, state: "closed", state_reason: "not_planned" },
+      repository: { full_name: "octocat/Hello-World" },
+    };
+    expect(githubAdapter.extractExternalStatus(notPlanned, "issues")).toBe(
+      "not_planned"
+    );
+    expect(
+      githubAdapter.extractExternalStatus(notPlanned, "issue_comment")
+    ).toBe("not_planned");
+  });
+
+  it("keeps 'closed' for an issue closed as completed", () => {
+    expect(
+      githubAdapter.extractExternalStatus(CANONICAL_PAYLOAD, "issues")
+    ).toBe("closed");
   });
 
   it("returns null when issue.state is missing on an issues event", () => {
@@ -364,6 +432,7 @@ describe("githubAdapter — extractExternalStatus", () => {
     expect(linkedRef).toEqual({
       externalKey: "octocat/Hello-World#42",
       externalSystem: "GITHUB",
+      externalId: "42",
     });
 
     const status = githubAdapter.extractExternalStatus(
@@ -371,5 +440,79 @@ describe("githubAdapter — extractExternalStatus", () => {
       result.payload.eventType
     );
     expect(status).toBe("closed");
+  });
+});
+
+describe("githubAdapter — milestone events", () => {
+  const REPO = { full_name: "acme/app" };
+
+  function verified(event: string, payload: unknown) {
+    const body = bodyOf(payload);
+    const result = githubAdapter.verify(
+      body,
+      headersOf({
+        "x-hub-signature-256": signBody(body, SECRET),
+        "x-github-event": event,
+      }),
+      SECRET
+    );
+    if (!result.valid) throw new Error(`unexpected ${result.reason}`);
+    return result.payload;
+  }
+
+  it("turns a milestone event into milestone_<action> and extracts its ref", () => {
+    const payload = verified("milestone", {
+      action: "closed",
+      milestone: { number: 4, title: "v1.2" },
+      repository: REPO,
+    });
+
+    expect(payload.eventType).toBe("milestone_closed");
+    expect(payload.synthetic).toBe(false);
+    expect(
+      githubAdapter.extractMilestoneEventRef!(payload, "milestone_closed")
+    ).toEqual({
+      kind: "RELEASE",
+      externalId: "acme/app#4",
+      externalProjectId: "acme/app",
+      merge: false,
+    });
+  });
+
+  it("routes issues milestoned/demilestoned to milestone sync with the milestone that changed", () => {
+    const payload = verified("issues", {
+      action: "demilestoned",
+      issue: { number: 7, state: "open", milestone: null },
+      milestone: { number: 4 },
+      repository: REPO,
+    });
+
+    expect(payload.eventType).toBe("milestone_demilestoned");
+    expect(
+      githubAdapter.extractMilestoneEventRef!(payload, "milestone_demilestoned")
+    ).toMatchObject({ externalId: "acme/app#4" });
+  });
+
+  it("leaves other issues actions on the issue path", () => {
+    const payload = verified("issues", {
+      action: "edited",
+      issue: { number: 7, state: "open" },
+      repository: REPO,
+    });
+    expect(payload.eventType).toBe("issues");
+    expect(
+      githubAdapter.extractMilestoneEventRef!(payload, "issues")
+    ).toBeNull();
+  });
+
+  it("returns no ref for a milestone payload without a number", () => {
+    const payload = verified("milestone", {
+      action: "edited",
+      milestone: { title: "nameless" },
+      repository: REPO,
+    });
+    expect(
+      githubAdapter.extractMilestoneEventRef!(payload, "milestone_edited")
+    ).toBeNull();
   });
 });

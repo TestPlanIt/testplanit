@@ -23,6 +23,19 @@ const CANONICAL_PAYLOAD = {
   },
 };
 
+// The shape Azure DevOps documents for workitem.updated: the resource is the
+// update (its own id, the changed fields as old/new pairs) with the work
+// item's id in workItemId and its current fields under revision.
+const UPDATE_SHAPED_PAYLOAD = {
+  eventType: "workitem.updated",
+  resource: {
+    id: 3,
+    workItemId: 297,
+    fields: { "System.State": { oldValue: "New", newValue: "Active" } },
+    revision: { id: 297, fields: { "System.State": "Active" } },
+  },
+};
+
 describe("azureDevopsAdapter", () => {
   it("Test 0: adapterType is AZURE_DEVOPS", () => {
     expect(azureDevopsAdapter.adapterType).toBe("AZURE_DEVOPS");
@@ -268,6 +281,7 @@ describe("azureDevopsAdapter", () => {
       ).toEqual({
         externalKey: "297",
         externalSystem: "AZURE_DEVOPS",
+        externalId: "297",
       });
     });
 
@@ -307,13 +321,13 @@ describe("azureDevopsAdapter", () => {
       ).toBeNull();
     });
 
-    it("Test 8c: returns null for workitem.created (no_handler in)", () => {
+    it("Test 8c: reads the state of a created work item", () => {
       expect(
         azureDevopsAdapter.extractExternalStatus(
-          CANONICAL_PAYLOAD,
+          { resource: { id: 5, fields: { "System.State": "New" } } },
           "workitem.created"
         )
-      ).toBeNull();
+      ).toBe("New");
     });
 
     it("Test 8d: returns null for workitem.deleted (no_handler in)", () => {
@@ -325,22 +339,68 @@ describe("azureDevopsAdapter", () => {
       ).toBeNull();
     });
 
-    it("Test 8e: returns null when System.State is missing for workitem.updated", () => {
+    it("Test 8e: an update that leaves the state alone is still an issue event", () => {
       expect(
         azureDevopsAdapter.extractExternalStatus(
           { resource: { id: 1, fields: {} } },
           "workitem.updated"
         )
-      ).toBeNull();
+      ).toBe("");
     });
 
-    it("Test 8f: returns null when System.State is non-string", () => {
+    it("Test 8f: reads the current state from an update's revision, then its new value", () => {
       expect(
         azureDevopsAdapter.extractExternalStatus(
-          { resource: { id: 1, fields: { "System.State": 42 } } },
+          UPDATE_SHAPED_PAYLOAD,
           "workitem.updated"
         )
-      ).toBeNull();
+      ).toBe("Active");
+      expect(
+        azureDevopsAdapter.extractExternalStatus(
+          {
+            resource: {
+              id: 3,
+              workItemId: 297,
+              fields: {
+                "System.State": { oldValue: "New", newValue: "Active" },
+              },
+            },
+          },
+          "workitem.updated"
+        )
+      ).toBe("Active");
+    });
+  });
+
+  describe("update-shaped payloads", () => {
+    it("keys the work item by workItemId, not the update's own id", () => {
+      expect(
+        azureDevopsAdapter.extractLinkedIssueRef(UPDATE_SHAPED_PAYLOAD)
+      ).toEqual({
+        externalKey: "297",
+        externalSystem: "AZURE_DEVOPS",
+        externalId: "297",
+      });
+    });
+
+    it("falls back to the revision's id when workItemId is absent", () => {
+      expect(
+        azureDevopsAdapter.extractLinkedIssueRef({
+          resource: { id: 3, revision: { id: 297 } },
+        })
+      ).toMatchObject({ externalKey: "297" });
+    });
+
+    it("verify() denormalizes the work item id and current state", () => {
+      const result = azureDevopsAdapter.verify(
+        bodyOf(UPDATE_SHAPED_PAYLOAD),
+        headersOf({ authorization: basicAuthHeader("tpi", "s3cret") }),
+        ADO_SECRET
+      );
+      expect(result.valid).toBe(true);
+      if (!result.valid) return;
+      expect(result.payload.issueKey).toBe("297");
+      expect(result.payload.externalStatus).toBe("Active");
     });
   });
 
@@ -363,6 +423,7 @@ describe("azureDevopsAdapter", () => {
       expect(linkedRef).toEqual({
         externalKey: "297",
         externalSystem: "AZURE_DEVOPS",
+        externalId: "297",
       });
 
       const status = azureDevopsAdapter.extractExternalStatus(

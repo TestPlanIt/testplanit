@@ -1,4 +1,8 @@
 import type { Issue } from "~/zenstack/models";
+import {
+  collectIssueProjectIds,
+  ISSUE_PROJECT_IDS_SELECT,
+} from "~/lib/issues/projectMembershipWhere";
 import type { DbClient } from "~/lib/zenstack";
 import { rawDb as defaultDb } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
@@ -111,13 +115,89 @@ function getProjectFromIssue(issue: IssueForIndexing): {
 }
 
 /**
+ * Every project each issue is visible in, by issue id — the one predicate
+ * `issueInProjectWhere` spells, read back through its select. Issues missing
+ * from the result (or a client without the relations) are left to the
+ * caller's fallback.
+ */
+async function reachableProjectIds(
+  db: DbClient,
+  issueIds: number[]
+): Promise<Map<number, number[]>> {
+  const reach = new Map<number, number[]>();
+  const CHUNK = 500;
+  for (let i = 0; i < issueIds.length; i += CHUNK) {
+    const rows = await db.issue.findMany({
+      where: { id: { in: issueIds.slice(i, i + CHUNK) } },
+      select: { id: true, ...ISSUE_PROJECT_IDS_SELECT },
+    });
+    for (const row of rows ?? []) {
+      if (typeof row?.id !== "number") continue;
+      reach.set(row.id, [...collectIssueProjectIds(row)]);
+    }
+  }
+  return reach;
+}
+
+/**
+ * The document both writers index for an issue. `projectId` is the list of
+ * every project the issue is visible in, with the displayed project first:
+ * an issue row is shared across the projects that imported or linked it, so
+ * a project-scoped search (and the projects facet) has to match any of them.
+ * The display fields describe the first entry.
+ */
+function buildIssueDocument(
+  issue: IssueForIndexing,
+  projectInfo: { id: number; name: string; iconUrl?: string | null },
+  projectIds: number[] | undefined
+) {
+  const noteText = issue.note ? extractTextFromNode(issue.note) : "";
+
+  const searchableContent = [
+    issue.name,
+    issue.title,
+    issue.description || "",
+    issue.externalId || "",
+    noteText,
+    issue.integration?.name || "",
+  ].join(" ");
+
+  return {
+    id: issue.id,
+    projectId: [
+      projectInfo.id,
+      ...(projectIds ?? []).filter((id) => id !== projectInfo.id),
+    ],
+    projectName: projectInfo.name,
+    projectIconUrl: projectInfo.iconUrl,
+    name: issue.name,
+    title: issue.title,
+    description: issue.description,
+    externalId: issue.externalId,
+    note: noteText,
+    url: (issue.data as any)?.url,
+    issueSystem: issue.integration?.name || "Unknown",
+    isDeleted: issue.isDeleted,
+    isRequirement: issue.isRequirement,
+    createdAt: issue.createdAt,
+    createdById: issue.createdById,
+    createdByName: issue.createdBy.name,
+    createdByImage: issue.createdBy.image,
+    searchableContent,
+  };
+}
+
+/**
  * Index a single issue to Elasticsearch
  * @param issue - The issue to index
  * @param tenantId - Optional tenant ID for multi-tenant mode
+ * @param projectIds - Every project the issue is visible in; defaults to the
+ *   displayed project alone
  */
 export async function indexIssue(
   issue: IssueForIndexing,
-  tenantId?: string
+  tenantId?: string,
+  projectIds?: number[]
 ): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
@@ -137,43 +217,10 @@ export async function indexIssue(
     return;
   }
 
-  // Extract text from TipTap JSON for note field
-  const noteText = issue.note ? extractTextFromNode(issue.note) : "";
-
-  const searchableContent = [
-    issue.name,
-    issue.title,
-    issue.description || "",
-    issue.externalId || "",
-    noteText,
-    issue.integration?.name || "",
-  ].join(" ");
-
-  const document = {
-    id: issue.id,
-    projectId: projectInfo.id,
-    projectName: projectInfo.name,
-    projectIconUrl: projectInfo.iconUrl,
-    name: issue.name,
-    title: issue.title,
-    description: issue.description,
-    externalId: issue.externalId,
-    note: noteText,
-    url: (issue.data as any)?.url,
-    issueSystem: issue.integration?.name || "Unknown",
-    isDeleted: issue.isDeleted,
-    isRequirement: issue.isRequirement,
-    createdAt: issue.createdAt,
-    createdById: issue.createdById,
-    createdByName: issue.createdBy.name,
-    createdByImage: issue.createdBy.image,
-    searchableContent,
-  };
-
   await client.index({
     index: indexName,
     id: issue.id.toString(),
-    document,
+    document: buildIssueDocument(issue, projectInfo, projectIds),
     refresh: true,
   });
 }
@@ -307,9 +354,11 @@ export async function syncIssueToElasticsearch(
       return false;
     }
 
+    const reach = await reachableProjectIds(rawDb, [issueId]);
+
     // Index issue including deleted ones (filtering happens at search time based on admin permissions)
     // Note: indexIssue will skip issues without a valid project link
-    await indexIssue(issue as IssueForIndexing, tenantId);
+    await indexIssue(issue as IssueForIndexing, tenantId, reach.get(issueId));
     return true;
   } catch (error) {
     console.error(`Failed to sync issue ${issueId}:`, error);
@@ -520,6 +569,11 @@ export async function syncProjectIssuesToElasticsearch(
     return;
   }
 
+  const reach = await reachableProjectIds(
+    db,
+    issues.map((issue) => issue.id)
+  );
+
   const bulkBody = [];
   let skippedCount = 0;
 
@@ -534,18 +588,6 @@ export async function syncProjectIssuesToElasticsearch(
       continue;
     }
 
-    // Extract text from TipTap JSON for note field
-    const noteText = issue.note ? extractTextFromNode(issue.note) : "";
-
-    const searchableContent = [
-      issue.name,
-      issue.title,
-      issue.description || "",
-      issue.externalId || "",
-      noteText,
-      issue.integration?.name || "",
-    ].join(" ");
-
     bulkBody.push({
       index: {
         _index: indexName,
@@ -553,26 +595,13 @@ export async function syncProjectIssuesToElasticsearch(
       },
     });
 
-    bulkBody.push({
-      id: issue.id,
-      projectId: projectInfo.id,
-      projectName: projectInfo.name,
-      projectIconUrl: projectInfo.iconUrl,
-      name: issue.name,
-      title: issue.title,
-      description: issue.description,
-      externalId: issue.externalId,
-      note: noteText,
-      url: (issue.data as any)?.url,
-      issueSystem: issue.integration?.name || "Unknown",
-      isDeleted: issue.isDeleted,
-      isRequirement: issue.isRequirement,
-      createdAt: issue.createdAt,
-      createdById: issue.createdById,
-      createdByName: issue.createdBy.name,
-      createdByImage: issue.createdBy.image,
-      searchableContent,
-    });
+    bulkBody.push(
+      buildIssueDocument(
+        issue as IssueForIndexing,
+        projectInfo,
+        reach.get(issue.id)
+      )
+    );
   }
 
   if (bulkBody.length === 0) {

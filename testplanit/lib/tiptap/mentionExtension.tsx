@@ -1,12 +1,16 @@
 import Mention from "@tiptap/extension-mention";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { ReactRenderer } from "@tiptap/react";
 import { SuggestionOptions } from "@tiptap/suggestion";
 import tippy, { Instance as TippyInstance } from "tippy.js";
+import { contrastingTextColor } from "~/utils/contrastingTextColor";
+import { stringToColorCode } from "~/utils/stringToColorCode";
 import {
   MentionSuggestion,
   MentionSuggestionRef,
   MentionUser,
 } from "~/components/comments/MentionSuggestion";
+import { apiFetch, stripBasePath, withBasePath } from "~/lib/basePath";
 
 /**
  * Fetch users for mention suggestions
@@ -19,7 +23,7 @@ async function fetchMentionUsers(
   projectId: number
 ): Promise<MentionUser[]> {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `/api/users/search-for-mentions?q=${encodeURIComponent(query)}&projectId=${projectId}`
     );
 
@@ -87,9 +91,6 @@ export function createMentionExtension(projectId: number) {
       const userImage = node.attrs.image as string | null;
       const userId = node.attrs.id as string;
 
-      // Get current locale from URL
-      const locale = window.location.pathname.split("/")[1] || "en-US";
-
       // Generate initials (same logic as Avatar component)
       const abbreviateAltText = (altText: string): string => {
         let result = altText.charAt(0);
@@ -100,36 +101,12 @@ export function createMentionExtension(projectId: number) {
         return result.toUpperCase();
       };
 
-      // Generate color code (same logic as stringToColorCode utility)
-      const stringToColorCode = (
-        inputString: string
-      ): { colorCode: string; textColor: string } => {
-        let hash = 0;
-        for (let i = 0; i < inputString.length; i++) {
-          hash = inputString.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        let colorCode = "#";
-        let red = 0,
-          green = 0,
-          blue = 0;
-
-        for (let i = 0; i < 3; i++) {
-          const value = (hash >> (i * 8)) & 0xff;
-          if (i === 0) blue = value;
-          else if (i === 1) green = value;
-          else if (i === 2) red = value;
-
-          colorCode += ("00" + value.toString(16)).substr(-2);
-        }
-
-        const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-        const textColor = luminance < 128 ? "#ffffff" : "#000000";
-
-        return { colorCode, textColor };
-      };
-
       const initials = abbreviateAltText(userName);
-      const { colorCode, textColor } = stringToColorCode(userName);
+      // Shared with the avatar rather than reimplemented. The copy that lived
+      // here summed raw channels with red and blue transposed, so it picked an
+      // unreadable foreground for 14.2% of the colours it could generate.
+      const { colorCode } = stringToColorCode(userName);
+      const textColor = contrastingTextColor(colorCode);
 
       // Build avatar element (image or initials)
       const avatarElement = userImage
@@ -167,11 +144,33 @@ export function createMentionExtension(projectId: number) {
           {
             class:
               "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 cursor-pointer hover:bg-secondary/80 transition-colors",
-            onclick: `window.location.href='/${locale}/users/profile/${userId}'`,
           },
           avatarElement,
           ["span", { class: "text-sm" }, userName],
         ],
+      ];
+    },
+    // Clicking a mention opens the profile. Handled here rather than with an
+    // inline onclick attribute, which the Content-Security-Policy forbids.
+    addProseMirrorPlugins() {
+      const typeName = this.name;
+      return [
+        ...(this.parent?.() ?? []),
+        new Plugin({
+          key: new PluginKey("mentionClick"),
+          props: {
+            handleClickOn(_view, _pos, node) {
+              if (node.type.name !== typeName) return false;
+              const locale =
+                stripBasePath(window.location.pathname).split("/")[1] ||
+                "en-US";
+              window.location.href = withBasePath(
+                `/${locale}/users/profile/${node.attrs.id}`
+              );
+              return true;
+            },
+          },
+        }),
       ];
     },
   }).configure({

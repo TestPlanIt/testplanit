@@ -109,6 +109,7 @@ const typeToken = (t: string) => (t === "Boolean" ? "Bool" : t);
 
 function filterName(f: FieldDef): string {
   if (f.array) {
+    if (isEnum(f.type)) return `Enum${f.type}NullableListFilter`;
     if (f.type !== "String") throw new Error(`no list filter for ${f.type}[]`);
     return "StringNullableListFilter";
   }
@@ -118,7 +119,7 @@ function filterName(f: FieldDef): string {
 }
 
 function aggFilterName(f: FieldDef): string {
-  if (f.array) return "StringNullableListFilter";
+  if (f.array) return filterName(f);
   const nullable = f.optional ? "Nullable" : "";
   if (isEnum(f.type)) return `Enum${f.type}${nullable}WithAggregatesFilter`;
   return `${typeToken(f.type)}${nullable}WithAggregatesFilter`;
@@ -254,12 +255,19 @@ for (const m of Object.values(models)) {
 }
 
 // Enum demand: which enums appear on model fields, and with which nullability.
-const enumUse = new Map<string, { nullable: boolean; nonNull: boolean }>();
+// A list field (`Enum[]`) wants only the list filter, not the scalar ones.
+type EnumUse = { nullable: boolean; nonNull: boolean; list: boolean };
+const enumUse = new Map<string, EnumUse>();
 for (const m of Object.values(models)) {
   for (const f of scalarsOf(m)) {
     if (!isEnum(f.type)) continue;
-    const u = enumUse.get(f.type) ?? { nullable: false, nonNull: false };
-    if (f.optional) u.nullable = true;
+    const u = enumUse.get(f.type) ?? {
+      nullable: false,
+      nonNull: false,
+      list: false,
+    };
+    if (f.array) u.list = true;
+    else if (f.optional) u.nullable = true;
     else u.nonNull = true;
     enumUse.set(f.type, u);
   }
@@ -274,9 +282,22 @@ const put = (name: string, def: Json) => {
   schemas[name] = def;
 };
 
-function emitEnum(name: string, use: { nullable: boolean; nonNull: boolean }) {
+function emitEnum(name: string, use: EnumUse) {
   const e = enums[name];
   put(name, { type: "string", enum: Object.keys(e.values) });
+  if (use.list) {
+    // Same shape as StringNullableListFilter, with the enum as the item type.
+    put(
+      `Enum${name}NullableListFilter`,
+      obj({
+        equals: oneOf(NULL, arrayOf(ref(name))),
+        has: oneOf(NULL, ref(name)),
+        hasEvery: arrayOf(ref(name)),
+        hasSome: arrayOf(ref(name)),
+        isEmpty: BOOL,
+      })
+    );
+  }
   const filterBody = (nested: string, nullable: boolean): Json => {
     const val = nullable ? oneOf(NULL, ref(name)) : ref(name);
     const list = nullable

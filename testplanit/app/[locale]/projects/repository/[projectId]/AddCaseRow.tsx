@@ -24,8 +24,10 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
+import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
 import { IconName } from "~/types/globals";
 import { randomUuid } from "~/utils/randomUuid";
+import { apiFetch } from "~/lib/basePath";
 
 function buildFormSchema(t: (key: any) => string) {
   return z.object({
@@ -98,9 +100,9 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   );
 
   // Fetch every template assigned to the project, then pick the default
-  // client-side with a fallback to the first one. Filtering by
-  // `isDefault: true` server-side is racy: when an admin (or a parallel
-  // E2E test) creates another default template, the server cascade flips
+  // client-side (project default, system default, then the first one).
+  // Filtering by `isDefault: true` server-side is racy: when an admin (or a
+  // parallel E2E test) creates another default template, the server cascade flips
   // every other template's `isDefault` to `false`. A server-side filter
   // would briefly return nothing for projects whose only assigned template
   // is the seeded "Default Template", which leaves `template.id` as 0 and
@@ -121,7 +123,10 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
       enabled: !!folderId,
     }
   );
-  const template = templates?.find((t) => t.isDefault) ?? templates?.[0];
+  const { template } = resolveDefaultTemplate(
+    templates,
+    folder?.project?.defaultTemplateId
+  );
 
   const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
@@ -226,7 +231,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
 
   const checkForDuplicates = async (caseName: string, caseId: number) => {
     try {
-      const res = await fetch("/api/duplicate-scan/check-new", {
+      const res = await apiFetch("/api/duplicate-scan/check-new", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

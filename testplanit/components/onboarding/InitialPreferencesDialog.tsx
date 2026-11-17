@@ -48,6 +48,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import { languageNames } from "~/i18n/navigation";
+import { colorSchemeForTheme } from "~/utils/theme";
+import { clientCookie } from "~/lib/auth/cookieScope";
 
 type TimezoneOption = {
   id: string;
@@ -231,7 +233,7 @@ export function InitialPreferencesDialog() {
       case "Orange":
         return <Circle className="h-4 w-4 fill-orange-500" />;
       case "Purple":
-        return <Circle className="h-4 w-4 fill-purple-500" />;
+        return <Circle className="h-4 w-4 fill-[#8559E9]" />;
       case "Accessible":
         return <Accessibility className="h-4 w-4 text-blue-700" />;
       case "AccessibleDark":
@@ -254,7 +256,7 @@ export function InitialPreferencesDialog() {
       case "Orange":
         return "text-orange-500";
       case "Purple":
-        return "text-purple-500";
+        return "text-[#8559E9]";
       case "Accessible":
         return "text-blue-700";
       case "AccessibleDark":
@@ -290,12 +292,7 @@ export function InitialPreferencesDialog() {
           // Add the new theme class
           html.classList.add(themeLower);
           // Update color scheme for browser native elements
-          html.style.colorScheme =
-            themeLower === "dark" || themeLower === "accessibledark"
-              ? "dark"
-              : themeLower === "light" || themeLower === "accessible"
-                ? "light"
-                : "";
+          html.style.colorScheme = colorSchemeForTheme(themeLower);
         });
       }
     },
@@ -338,13 +335,6 @@ export function InitialPreferencesDialog() {
         timezone: data.timezone,
         notificationMode: data.notificationMode,
         detailsDisplayMode: data.detailsDisplayMode,
-        emailNotifications:
-          data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
-          data.notificationMode === "IN_APP_EMAIL_DAILY",
-        inAppNotifications:
-          data.notificationMode === "IN_APP" ||
-          data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
-          data.notificationMode === "IN_APP_EMAIL_DAILY",
         hasCompletedInitialPreferencesSetup: true,
       };
 
@@ -360,7 +350,9 @@ export function InitialPreferencesDialog() {
 
       if (localeChanged) {
         const urlLocale = data.locale.replace("_", "-");
-        document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+        document.cookie = clientCookie("NEXT_LOCALE", urlLocale, [
+          "max-age=31536000",
+        ]);
         window.location.reload();
         return;
       }
@@ -429,12 +421,7 @@ export function InitialPreferencesDialog() {
           "accessibledark"
         );
         html.classList.add(originalTheme);
-        html.style.colorScheme =
-          originalTheme === "dark" || originalTheme === "accessibledark"
-            ? "dark"
-            : originalTheme === "light" || originalTheme === "accessible"
-              ? "light"
-              : "";
+        html.style.colorScheme = colorSchemeForTheme(originalTheme);
       }
     }
 

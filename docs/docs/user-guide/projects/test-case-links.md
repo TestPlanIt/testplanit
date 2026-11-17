@@ -19,7 +19,7 @@ Test case linking provides:
 
 ## Link Types
 
-TestPlanIt supports two types of test case links:
+TestPlanIt supports three types of test case links:
 
 ### Same Test, Different Source
 
@@ -43,30 +43,66 @@ JUnit Test: "com.example.auth.LoginTest.testSuccessfulLogin"
 - Ensure test case parity across different test types
 - Identify gaps in automation coverage
 
+### Duplicated From
+
+**Purpose**: Records that a test case was created as a copy of another. TestPlanIt adds this link automatically when you copy a case within a project, and you can also add it by hand. It carries no execution meaning.
+
 ### Depends On
 
-**Purpose**: Indicates that one test case depends on another.
+**Purpose**: Indicates that one test case depends on another. The link has a direction: the case that **depends on** the other is the dependant, and the other case is its **prerequisite**.
 
 **Common Use Cases**:
 - Test execution order requirements
 - Setup/precondition dependencies
 - Integration test dependencies
 - Data dependency relationships
+- Cross-team end-to-end scenarios, where each team's part is its own test case and must run after the previous one has passed
 
 **Example**:
 ```
-Test Case A: "Create User Account"
-    ↓ DEPENDS_ON
-Test Case B: "User Login"
-    ↓ DEPENDS_ON
 Test Case C: "Update User Profile"
+    depends on ↓
+Test Case B: "User Login"
+    depends on ↓
+Test Case A: "Create User Account"
 ```
+
+On each case the panel shows the relationship from that case's side:
+
+- **Depends on** — the linked case is a prerequisite of this one (shown on C for B, and on B for A).
+- **Blocks** — the linked case depends on this one (shown on A for B, and on B for C).
+
+When you add the link you can choose either direction, so you can record "C depends on B" from either C's page (*Depends on*) or B's page (*Blocks*). Both create the same link.
 
 **Benefits**:
 - Document test execution prerequisites
 - Plan test run sequencing
 - Identify blockers when tests fail
 - Understand test case relationships
+- With [dependency enforcement](#enforcing-dependencies-in-test-runs) enabled, sequence execution inside a test run and hand off to the next tester automatically
+
+### Enforcing dependencies in test runs
+
+By default a *Depends on* link is documentation only. A project can turn it into an execution gate with the **Enforce test case dependencies in test runs** toggle under **Settings → Advanced** (see [Advanced settings](settings/advanced.md#enforce-test-case-dependencies-in-test-runs)).
+
+When enforcement is on, inside every test run of the project:
+
+- A test case is **blocked** while any case it depends on, *in that same run*, has not **passed** (a status flagged as a success). Untested, failed, retest and blocked prerequisites all keep the gate shut.
+- A blocked case is marked **Blocked** in the run's case table and in the execution panel, with the prerequisites it is waiting on. Its result controls are disabled, and the server refuses a result for it from every path — the web app, the API and the MCP server — so the sequence can't be bypassed.
+- When the last prerequisite passes, the case's gate opens and its **assignee is notified** (in-app and by email, following their notification preferences) that the case is ready to execute. This is the handoff between testers: assign each case in the chain to the person responsible for it, and each one is told when it is their turn. Resubmitting an already-passed result does not notify again.
+- If a prerequisite is later changed to a non-passing result, its dependants are blocked again.
+- A prerequisite that is **not in the run** never blocks: a run's behaviour depends only on what is in it. The execution panel lists such missing prerequisites as a warning so the omission is visible. A prerequisite removed from the run counts as not in it. In a [multi-configuration run](run-details.md#multi-configuration-support) each configuration is its own run, so the prerequisite has to be in the same configuration's run.
+- A run is naturally complete only once every case has a result, so the scenario is done when every part has passed.
+
+A few details worth knowing:
+
+- **The Blocked marker is not the Blocked status.** A gated case keeps whatever status it has (usually *Untested*); the badge and the disabled controls are the only change. The *Blocked* status remains something a tester records deliberately, for example for an environment problem.
+- **Only new results are gated.** Turning the setting on never alters results already recorded, and a result that exists on a blocked case can still be edited in place. The gate refuses new attempts only.
+- **Parameterized cases** are gated as a whole: every iteration result, including a bulk skip, is refused while the case is blocked. A parameterized prerequisite counts as passed only when its rolled-up case status is a pass, which means every iteration has passed.
+- **Automated results are not gated.** Results that arrive through the automation import or the test reporters set a case's status directly rather than recording an attempt, so they are applied regardless of dependencies.
+- **API and MCP clients** get the same refusal as the web app: a `409` response with the code `DEPENDENCIES_NOT_PASSED` and the list of prerequisites still blocking the case.
+
+Links are checked for cycles when they are created, so a chain of dependencies always has a start.
 
 ## Accessing Linked Cases
 
@@ -110,9 +146,11 @@ To create links, you need:
      - Paginated results for large repositories
      - Shows test case source icons
      - Excludes already-linked cases
-   - **Select Link Type**: Choose either:
-     - "Same Test, Different Source"
-     - "Depends On"
+   - **Select Link Type**: Choose one of:
+     - **Depends on** — this case requires the selected case to pass first
+     - **Blocks** — the selected case requires this case to pass first (the same dependency, recorded from the other side)
+     - **Same Test (Different Source)**
+     - **Duplicated From**
 5. Click **Add Link** to save
 
 ### Link Validation
@@ -120,7 +158,7 @@ To create links, you need:
 The system prevents invalid links:
 - **Self-Links**: Cannot link a test case to itself
 - **Duplicate Links**: Cannot create the same link twice
-- **Circular Links**: Prevents circular dependency chains
+- **Circular Dependencies**: A *Depends on* link that would make a case depend on itself, directly or through other cases, is rejected. The check is made on the server, so it also covers links created through the API, restored from the trash, or carried over when cases are merged.
 
 If validation fails, an error message explains the issue.
 
@@ -164,17 +202,9 @@ Removing a link is permanent and cannot be undone. The link relationship is dele
 
 ## Link Directionality
 
-Links have a direction based on the order they were created:
+Every link is stored once, from Case A to Case B. For *Same Test, Different Source* links the direction carries no meaning. For *Depends on* links it does: **Case A depends on Case B**, so Case B is the prerequisite.
 
-### Outgoing Links
-- Created from the current test case (Case A) to another case (Case B)
-- Current case is the "source" of the link
-
-### Incoming Links
-- Created from another test case to the current case
-- Current case is the "target" of the link
-
-**Display**: The Linked Cases panel shows both outgoing and incoming links together, making it easy to see all relationships.
+The Linked Cases panel shows both outgoing and incoming links together, and labels a dependency from the current case's point of view — **Depends on** when the current case is the dependant, **Blocks** when it is the prerequisite.
 
 ## Impact on Forecasting
 
@@ -288,7 +318,7 @@ API Test: "Search Endpoint"
 2. Create "Depends On" links from dependent tests to prerequisites
 3. Use links to plan test run order
 4. Review dependency chain before execution
-5. Block dependent tests when prerequisites fail
+5. Turn on [dependency enforcement](#enforcing-dependencies-in-test-runs) so dependent cases are blocked until their prerequisites pass, and the next tester is notified when they do
 
 **Benefits**:
 - Document execution order requirements
@@ -467,5 +497,6 @@ Content-Type: application/json
 **Related Documentation**:
 - [Test Case Repository](./repository.md) - Managing test cases
 - [Test Execution](./test-case-execution.md) - Running tests
+- [Advanced Settings](./settings/advanced.md#enforce-test-case-dependencies-in-test-runs) - Enforcing dependencies in test runs
 - [Forecasting](../forecasting.md) - Understanding time forecasts
 - [JUnit Import](../../import-export.md) - Importing automated tests

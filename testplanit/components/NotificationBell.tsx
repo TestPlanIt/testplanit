@@ -2,7 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { DateFormatter } from "@/components/DateFormatter";
+import { RelativeTimeTooltip } from "@/components/RelativeTimeTooltip";
 import { NotificationContent } from "@/components/NotificationContent";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, EyeIcon, Trash } from "lucide-react";
+import { Bell, BellRing, EyeIcon, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -40,8 +40,8 @@ import {
   markNotificationAsRead,
   markNotificationAsUnread,
 } from "~/app/actions/notifications";
-import { createDeferredEventSource } from "~/hooks/deferredEventSource";
-import { usePathname, useRouter } from "~/lib/navigation";
+import { useNotificationStream } from "~/hooks/notificationStreamManager";
+import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
 interface NotificationItemProps {
@@ -100,7 +100,14 @@ function NotificationItem({
       className={cn(
         "p-3 border-b last:border-0 hover:bg-muted/50 transition-colors",
         !notification.isRead && "bg-primary/20",
-        isUnreadAnnouncement && "bg-accent dark:bg-primary/30"
+        // An announcement has to read as louder than a plain unread row. cn is
+        // twMerge, so this fill REPLACES the one above rather than stacking on
+        // it — `bg-accent` therefore made the loudest row the palest one in
+        // light mode, since --accent and --muted are the same value there. The
+        // start bar does the real work: a tint this pale can only shift
+        // luminance by ~1.6:1, where the bar is 17:1 against the row.
+        isUnreadAnnouncement &&
+          "border-s-4 border-s-primary bg-primary/35 dark:bg-primary/30"
       )}
       data-notification-item
       data-state={notification.isRead ? "read" : "unread"}
@@ -108,15 +115,14 @@ function NotificationItem({
       onMouseLeave={handleMouseLeave}
     >
       <div className="flex justify-between items-start gap-2">
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <NotificationContent notification={notification} />
-          <p className="text-xs text-muted-foreground">
-            <DateFormatter
-              date={notification.createdAt}
-              formatString={userPreferences?.dateFormat}
-              timezone={userPreferences?.timezone}
-            />
-          </p>
+          <RelativeTimeTooltip
+            date={notification.createdAt}
+            dateFormat={userPreferences?.dateFormat}
+            timezone={userPreferences?.timezone}
+            className="mt-1.5 ms-auto w-fit text-end text-xs text-muted-foreground"
+          />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -220,28 +226,14 @@ export function NotificationBell({
     return () => window.removeEventListener("focus", handleFocus);
   }, [session?.user?.id, refetch]);
 
-  // SSE wake-up: open EventSource when authenticated; refetch on each event.
+  // SSE wake-up: subscribe to the page's shared notification stream when
+  // authenticated; refetch on each event.
   // Read path remains useClientQueries(schema).notification.useFindMany → getEnhancedDb (Architectural Directive 2 / ISO-02).
   // SSE is the sole update source — no polling fallback remains (UI-03 / D-23).
-  // Reconnect → server emits {event:"sync"} → onmessage → refetch catches anything missed.
-  useEffect(() => {
-    if (!session?.user?.id) return;
-    if (typeof window === "undefined" || typeof EventSource === "undefined") {
-      return;
-    }
-    const eventSource = createDeferredEventSource("/api/notifications/stream");
-    eventSource.onmessage = () => {
-      void refetch();
-    };
-    eventSource.onerror = (err) => {
-      // EventSource auto-reconnects on transport drop. Log to console only —
-      // a user-visible toast would be noisy on transient blips. (CR / D-22 + PATTERNS §6 decision.)
-      console.warn("[NotificationBell] SSE transport error", err);
-    };
-    return () => {
-      eventSource.close();
-    };
-  }, [session?.user?.id, refetch]);
+  // Reconnect → server emits {event:"sync"} → listener → refetch catches anything missed.
+  useNotificationStream(() => {
+    void refetch();
+  }, !!session?.user?.id);
 
   // Check for URL parameter to open notifications
   useEffect(() => {
@@ -353,7 +345,7 @@ export function NotificationBell({
           </Button>
         </div>
       </div>
-      <ScrollArea className="h-[400px]">
+      <ScrollArea className="h-[400px] [&_[data-radix-scroll-area-viewport]>div]:block! [&_[data-radix-scroll-area-viewport]>div]:max-w-full!">
         {notifications && notifications.length > 0 ? (
           notifications.map((notification) => (
             <NotificationItem
@@ -374,6 +366,20 @@ export function NotificationBell({
           </div>
         )}
       </ScrollArea>
+      <div className="border-t px-4 py-2 flex">
+        <DropdownMenuItem
+          asChild
+          className="w-auto cursor-pointer gap-1 px-0 py-0 font-medium text-primary no-underline hover:underline focus:bg-transparent focus:text-primary focus:underline"
+        >
+          <Link
+            href={`/users/profile/${session?.user?.id ?? ""}/alerts`}
+            data-testid="notification-panel-alerts-link"
+          >
+            <BellRing className="h-4 w-4" />
+            {t("actions.manageAlerts")}
+          </Link>
+        </DropdownMenuItem>
+      </div>
     </>
   );
 

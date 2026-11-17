@@ -40,7 +40,7 @@ export function registerSessionResultsList(
       try {
         const limit = input.limit ?? DEFAULT_LIMIT;
 
-        // R4 / Pitfall 4 invariant: SessionResults has NO `testCaseId` column.
+        // SessionResults has NO `testCaseId` column.
         // The annotation `SessionResultsWhereInput` would TS2353 if any
         // `testCaseId` assignment were ever introduced. The input schema does
         // not declare `testCaseId` either; zod's raw-shape validator strips
@@ -57,7 +57,7 @@ export function registerSessionResultsList(
         const body: Record<string, unknown> = {
           where,
           include: SESSION_RESULT_LIST_INCLUDE,
-          // BL-04: deterministic page ordering. Newest result first; id breaks
+          // deterministic page ordering. Newest result first; id breaks
           // ties for results recorded in the same millisecond.
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take: limit + 1,

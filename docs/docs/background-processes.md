@@ -18,15 +18,20 @@ The application uses the following background processes:
 6. **Elasticsearch Reindex Worker** - Reindexes entities for search functionality
 7. **Auto Tag Worker** - Runs AI-powered automatic tagging on test cases and other entities
 8. **Audit Log Worker** - Persists audit log entries for user and system actions
-9. **Budget Alert Worker** - Checks and sends alerts for AI model budget thresholds
+9. **Budget Alert Worker** - Evaluates the AI budget alert rules after AI usage
 10. **Repo Cache Worker** - Automatically refreshes expired code repository caches for QuickScript
 11. **Magic Select Worker** - Processes AI-powered test case selection jobs for test runs
 12. **Webhook Dispatch Worker** - Delivers outbound webhooks to subscribed external endpoints
 13. **Webhook Outbox Worker** - Polls the outbox table and fans events out to webhook configs
 14. **Webhook Retention Worker** - Daily purge of webhook delivery / dedup / outbox rows older than 30 days
 15. **DataChangeLog Retention Worker** - Daily purge of processed audit change-capture rows older than 30 days
-16. **Dataset Lease Sweep Worker** - Reaps expired dataset-row leases (test-data reservations) roughly once a minute
-17. **Scheduler** - Sets up recurring jobs (cron jobs)
+16. **Audit Log Retention Worker** - Daily archive or deletion of audit log entries older than `AUDIT_LOG_RETENTION_DAYS` (off unless set)
+17. **Dataset Lease Sweep Worker** - Reaps expired dataset-row leases (test-data reservations) roughly once a minute
+18. **Alert Worker** - Evaluates alert rules when results land, when runs complete, when automated executions fail and sessions complete, and on hourly and daily scheduled passes
+19. **Webhook Actions Worker** - Runs an issue-tracker webhook's [actions](./user-guide/webhooks.md#issue-tracker-actions) (importing the issue, creating test runs, drafting test cases with AI) after the webhook has been answered
+20. **Failure Triage Worker** - Groups automated failures into failure patterns, asks the project's LLM for a root cause and releases recovered quarantines
+21. **Risk Score Worker** - Keeps every test case's risk score current after results land and in a nightly sweep
+22. **Scheduler** - Sets up recurring jobs (cron jobs)
 
 ## Workers
 
@@ -99,7 +104,7 @@ The application uses the following background processes:
 
 ### Budget Alert Worker
 
-- Checks AI model budget thresholds and sends alerts
+- Runs after each recorded AI usage or failure and evaluates the AI model [alert rules](./user-guide/alerts.md#system-alerts) (budget used, request error rate, provider rate limiting)
 - Default concurrency: 2
 - Location: `workers/budgetAlertWorker.ts`
 
@@ -127,6 +132,23 @@ The application uses the following background processes:
 - Default concurrency: 1 (each job can involve provider API calls and multiple LLM batches)
 - Location: `workers/impactAnalysisWorker.ts`
 
+### Failure Triage Worker
+
+- Consumes the `failure-triage` BullMQ queue: a debounced job per test run whenever automated FAILURE/ERROR results arrive, a per-project backfill started from the project's settings, and on-demand classification jobs
+- Fingerprints each failure (exception type, message with volatile values masked, top application stack frames), attaches it to the matching `FailureSignature` in the project or creates one, recomputes the signature's occurrence/case/run counters, and flags signatures whose cases flip between pass and fail
+- When the project allows it and an LLM provider resolves for the `failure_triage` feature, asks the model to pick a root cause for each new pattern from the Root Causes catalogue
+- Releases quarantined cases that have passed the project's configured number of consecutive times since they were quarantined
+- Default concurrency: 2 (overridable via `FAILURE_TRIAGE_CONCURRENCY`)
+- Location: `workers/failureTriageWorker.ts`
+
+### Risk Score Worker
+
+- Consumes the `risk-score` BullMQ queue: a debounced job per test run whenever manual or automated results arrive (rescoring just the cases whose results landed recently), a per-project recompute, and a nightly sweep over every project with risk scoring enabled
+- Scores each test case 0-100 from its failure history, flakiness, staleness, linked requirement criticality (including suspect links), and linked defects, using the project's configured component weights
+- Persists the score with a per-component breakdown; the debounced and nightly passes only write (and re-index) cases whose score or inputs actually changed, while the on-demand per-project recompute rewrites everything so configuration changes propagate
+- Default concurrency: 2 (overridable via `RISK_SCORE_CONCURRENCY`)
+- Location: `workers/riskScoreWorker.ts`
+
 ### Webhook Dispatch Worker
 
 - Consumes the `webhook-dispatch` BullMQ queue and POSTs each event to its subscribed endpoints
@@ -138,7 +160,7 @@ The application uses the following background processes:
 ### Execution Dispatch Worker
 
 - Consumes the `execution-dispatch` BullMQ queue: starts the CI job for a requested automated execution (GitHub Actions `workflow_dispatch`, GitLab pipeline, or a signed generic webhook) and records the outcome on the `TestRunExecution` row
-- Never retries a dispatch (starting a job twice is worse than a recorded failure a person can retry); the scheduler's `poll-active-executions` job on the same queue asks each provider for job status every minute with a per-execution backoff, times out executions past their target's limit, and fails requests still `PENDING` after ten minutes so a stalled dispatch never blocks the run
+- Never retries a dispatch (starting a job twice is worse than a recorded failure a person can retry); a `poll-active-executions` job on the same queue runs every minute while an execution is in flight (it is registered when an execution is requested and removes itself once none remain) and asks each provider for job status with a per-execution backoff, times out executions past their target's limit, and fails requests still `PENDING` after ten minutes so a stalled dispatch never blocks the run
 - Default concurrency: 3 (overridable via `EXECUTION_DISPATCH_CONCURRENCY`)
 - Location: `workers/executionDispatchWorker.ts`
 
@@ -165,6 +187,16 @@ The application uses the following background processes:
 - Standalone daily loop (no BullMQ queue) — self-schedules internally rather than via the scheduler
 - Location: `workers/dataChangeLogRetentionWorker.ts`
 
+### Audit Log Retention Worker
+
+- Off unless `AUDIT_LOG_RETENTION_DAYS` (or a tenant's `auditLogRetentionDays`) is set; see [Retention](user-guide/audit-logs.md#retention)
+- Wakes once per day and removes `AuditLog` rows older than the window
+- `archive` mode (default): writes them to object storage as gzipped NDJSON, one calendar month (UTC) at a time, up to 25,000 rows per file. Each file is read back and its SHA-256 checked before anything is deleted; the file's manifest row and the deletion of its rows commit in one transaction. Emits one `AUDIT_LOG_ARCHIVED` event per run
+- `delete` mode: batched `LIMIT 1000` deletes, nothing kept. Emits one `AUDIT_LOG_PURGED` event per run
+- Multi-tenant aware: applies each tenant's own retention per cycle and skips tenants with none; archives go under a per-tenant key prefix
+- Standalone daily loop (no BullMQ queue) — self-schedules internally rather than via the scheduler
+- Location: `workers/auditLogRetentionWorker.ts`
+
 ### Dataset Lease Sweep Worker
 
 - Wakes roughly once a minute and clears dataset-row leases (the [test-data reservation](./test-data-reservation.md) API) whose TTL has lapsed
@@ -174,11 +206,27 @@ The application uses the following background processes:
 - Standalone polled loop (no BullMQ queue) — self-schedules internally rather than via the scheduler
 - Location: `workers/datasetLeaseSweepWorker.ts`
 
+### Alert Worker
+
+- Evaluates [alert](./user-guide/alerts.md) rules: one job per recorded result (manual and automated), one deduplicated job per run when results arrive or the run completes, one job per failed or timed-out automated execution, one per completed session, an hourly job per tenant for stalled runs and webhook failure rates, and a daily job per tenant for the milestone, untested-share and project health metrics
+- Records a `AlertEvent` row per firing, notifies the rule's subscribers through the notification worker, and optionally writes a `alert.triggered` outbox event for webhooks
+- Default concurrency: 2 (`ALERT_CONCURRENCY`)
+- Location: `workers/alertWorker.ts`
+
+### Webhook Actions Worker
+
+- Runs the [actions](./user-guide/webhooks.md#issue-tracker-actions) of an issue-tracker inbound webhook, one job per delivery: refreshes the issue from the tracker, imports it when an **Import Issues** action takes it, and creates a test run for each **Create Test Run** action the event triggers
+- Each **Generate Test Cases with AI** action the event triggers gets a job of its own on the same queue (retried three times with backoff), so the model call never holds up the delivery's other actions; the drafts are persisted, linked to the issue, and the action's reviewers notified
+- A job whose issue is being synced by another process retries with backoff
+- Default concurrency: 2 (`WEBHOOK_ACTIONS_CONCURRENCY`)
+- Location: `workers/webhookActionsWorker.ts`
+
 ### Scheduler
 
 - Sets up recurring jobs using cron patterns
 - Configures daily digest emails (8 AM)
 - Configures forecast updates (3 AM)
+- Configures the nightly risk-score sweep (3:30 AM)
 - Configures code repository cache refresh (4 AM)
 - Configures the abandoned automated-run sweep (every 15 minutes)
 - Location: `scheduler.ts`
@@ -277,6 +325,11 @@ Every worker's `--max-old-space-size` is 75% of its `max_memory_restart` ceiling
 | Webhook Outbox Worker          | 3G                   | 2304M                  | Same heavy dependency tree as dispatch; caches one Prisma client per tenant in multi-tenant mode                                                                                                                                                                                                                                                                                                                                                 |
 | Webhook Retention Worker       | 3G                   | 2304M                  | Iterates every tenant's database per pass; headroom protects against batched-delete loops on tenants with large retention backlogs. Tenant Prisma clients are disconnected after each pass to release Rust query engine buffers, so steady-state should drop substantially after the first few passes — these ceilings can be lowered once production telemetry confirms it.                                                                     |
 | DataChangeLog Retention Worker | 3G                   | 2304M                  | Loads the audit log service plus the raw Prisma base client and runs a batched-delete loop over the high-volume change-capture table; headroom mirrors the webhook retention worker so a large purge backlog (e.g. after a heavy import) does not trip the ceiling mid-pass.                                                                                                                                                                     |
+| Dataset Lease Sweep Worker     | 3G                   | 2304M                  | Sweeps every configured tenant's database on a ~60s loop to reap lapsed dataset-row leases; the per-tenant client footprint is the same as the retention workers'                                                                                                                                                                                                                                                                                |
+| Execution Dispatch Worker      | 3G                   | 2304M                  | Dispatches automated-execution jobs and polls active executions per tenant each minute, caching one client per tenant in multi-tenant mode                                                                                                                                                                                                                                                                                                       |
+| Audit Log Retention Worker     | 3G                   | 2304M                  | Holds one 25,000-row batch and its compressed file in memory while uploading and verifying it; headroom mirrors the retention workers.                                                                                                                                                                                                                                                                                                           |
+
+Every other worker runs on the default 512 MB tier, including the newer Alert, Webhook Actions and Failure Triage workers.
 
 The Repo Cache Worker stays on the default 512 MB tier, but a cache refresh holds a repository's whole archive and its cached file contents in memory at once. Caching a very large repository can push it over the ceiling: PM2 restarts the worker, BullMQ redelivers the refresh job, and it starts over on the same repository. Override via `REPO_CACHE_MAX_MEMORY_RESTART` (e.g. `2G`), host RAM permitting, or exclude binaries and build output from the configuration's path patterns.
 
@@ -344,7 +397,7 @@ You can monitor worker health and performance using:
 
 ### Memory issues
 
-- Most workers run with a 512 MB ceiling; the sync worker runs with a 1 GB ceiling; the forecast, SCIM access recompute, and Elasticsearch reindex workers run with a 2 GB ceiling; the audit log worker, the three webhook workers (dispatch, outbox, retention), and the DataChangeLog retention worker run with a 3 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
+- Most workers run with a 512 MB ceiling; the sync worker runs with a 1 GB ceiling; the forecast, SCIM access recompute, and Elasticsearch reindex workers run with a 2 GB ceiling; the audit log worker, the three webhook workers (dispatch, outbox, retention), the DataChangeLog retention worker, and the audit log retention worker run with a 3 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
 - If a worker is being killed and restarted by PM2 in a tight loop (visible as repeated `restart` events in `pm2 status`), raise its ceiling before assuming there is a real leak: `TESTMO_IMPORT_MAX_MEMORY_RESTART`, `ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART` or `REPO_CACHE_MAX_MEMORY_RESTART` for those workers, or `WORKER_MAX_MEMORY_RESTART` for the 512 MB tier. Other elevated workers are set in `ecosystem.config.js`.
 - Monitor with `pm2 monit`
 
@@ -400,6 +453,9 @@ FORECAST_CONCURRENCY=5
 
 # Budget Alert Worker (default: 2)
 BUDGET_ALERT_CONCURRENCY=2
+
+# Alert Worker (default: 2)
+ALERT_CONCURRENCY=2
 
 # Elasticsearch Reindex Worker (I/O-intensive, default: 2)
 # Balanced for Elasticsearch performance; increase for faster reindexing

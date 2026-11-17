@@ -5,7 +5,7 @@ import {
 } from "./list.js";
 
 /**
- * Aggregate dependencies for the Phase 8 code-repositories read tools. Only
+ * Aggregate dependencies for the code-repositories read tools. Only
  * one tool today (`testplanit_code_repositories_list`); aliasing rather than
  * intersecting keeps room to add `_get` etc. via union extension when the
  * single-row-per-project invariant relaxes.

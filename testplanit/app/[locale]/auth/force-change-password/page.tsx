@@ -21,9 +21,9 @@ import {
 import { KeyRound, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import { useEffect, useState } from "react";
-import svgIcon from "~/public/tpi_logo.svg";
+import { TestPlanItMark } from "@/components/TestPlanItLogo";
+import { apiFetch, withBasePath } from "~/lib/basePath";
 
 export default function ForceChangePasswordPage() {
   const { data: session, update: updateSession } = useSession();
@@ -40,7 +40,7 @@ export default function ForceChangePasswordPage() {
   // Fetch policy requirements on mount (per D-05, CONTEXT specifics)
   useEffect(() => {
     if (!session?.user?.id) return;
-    fetch(`/api/users/${session.user.id}/password-policy`)
+    apiFetch(`/api/users/${session.user.id}/password-policy`)
       .then((res) => res.json())
       .then((data) => {
         if (data.policy) setPolicy(data.policy);
@@ -67,7 +67,7 @@ export default function ForceChangePasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/users/${session?.user?.id}/force-change-password`,
         {
           method: "POST",
@@ -99,7 +99,7 @@ export default function ForceChangePasswordPage() {
 
       // Hard redirect — window.location.href forces full page load,
       // ensuring middleware re-reads the updated JWT
-      window.location.href = "/";
+      window.location.href = withBasePath("/");
     } catch {
       setErrors([t("auth.forceChangePassword.genericError")]);
       setIsLoading(false);
@@ -108,7 +108,7 @@ export default function ForceChangePasswordPage() {
 
   async function handleSignOut() {
     const { signOut } = await import("next-auth/react");
-    await signOut({ callbackUrl: "/signin" });
+    await signOut({ callbackUrl: withBasePath("/signin") });
   }
 
   return (
@@ -116,12 +116,7 @@ export default function ForceChangePasswordPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <Image
-              alt="TestPlanIt Logo"
-              src={svgIcon}
-              style={{ width: "40px", height: "auto" }}
-              priority={true}
-            />
+            <TestPlanItMark className="w-10" />
           </div>
           <CardTitle className="flex items-center justify-center gap-2">
             <KeyRound className="h-5 w-5" />

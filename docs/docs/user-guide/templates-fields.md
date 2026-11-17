@@ -25,8 +25,8 @@ The Templates table lists all defined templates with columns for:
 - **Case Fields:** A count or list of included Case Fields.
 - **Result Fields:** A count or list of included Result Fields.
 - **Projects:** A count or list of projects this template is assigned to (or "Default" if it's the default template).
-- **Enabled:** A switch indicating if the template is active.
-- **Default:** A switch indicating if this is the default template for all projects that don't have a specific template assigned.
+- **Enabled:** A switch indicating if the template is active. Turning it off for a template that projects use as their [default template](projects/settings/advanced.md#default-template) first lists those projects and asks you to confirm.
+- **Default:** A switch indicating if this is the default template for all projects that don't have a specific template assigned. A project can preselect a different template for its new cases and sessions under **Settings → Advanced → [Default template](projects/settings/advanced.md#default-template)**.
 - **Actions:** Buttons to edit or delete the template. (Note: The default template cannot be deleted).
 
 ### Adding a New Template
@@ -43,13 +43,15 @@ The Templates table lists all defined templates with columns for:
 ### Editing an Existing Template
 
 1. Click the **Edit** button for the desired template.
-2. Modify the **Name**, **Enabled** status, **Default** status, assigned **Case Fields**, **Result Fields**, and **Project assignments** as needed.
+2. Modify the **Name**, **Enabled** status, **Default** status, assigned **Case Fields**, **Result Fields**, and **Project assignments** as needed. If disabling the template or removing a project from it would take it away from a project that uses it as its [default template](projects/settings/advanced.md#default-template), a warning lists those projects.
 3. Click "Submit".
 
 ### Deleting a Template
 
 1. Click the **Delete** button for the desired template. (Note: Default templates cannot be deleted).
-2. Confirm the deletion in the dialog box. This marks the template as deleted and removes its associations.
+2. Confirm the deletion in the dialog box. This marks the template as deleted and removes its associations. The dialog lists any projects that use the template as their [default template](projects/settings/advanced.md#default-template).
+
+Projects whose default template is disabled, deleted, or unassigned fall back to the system default template for new test cases and sessions, and their **Settings → Advanced** page shows a warning until a project admin chooses another default or the template is restored.
 
 ## Case Fields
 

@@ -1,13 +1,19 @@
+import { RiskScoreCell } from "@/components/risk/RiskScoreCell";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@/components/tables/tableFeatures";
 import { useTranslations } from "next-intl";
-import { useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { getMaxOrderInTestRun } from "~/app/actions/test-run";
-import { usePathname, useRouter } from "~/lib/navigation";
+import { useUrlParamWriter } from "~/hooks/useUrlParamWriter";
 import { cn } from "~/utils";
 
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
@@ -69,6 +75,10 @@ import type {
   Workflows,
 } from "~/zenstack/models";
 import {
+  isBlockedByDependencies,
+  type CaseDependencyState,
+} from "~/utils/caseDependencies";
+import {
   Activity,
   ArrowRight,
   ArrowRightLeft,
@@ -93,7 +103,6 @@ import {
   UserCog,
 } from "lucide-react";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
-import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
 import { useDetailsDisplayMode } from "~/hooks/useDetailsDisplayMode";
 import LoadingSpinner from "~/components/LoadingSpinner";
@@ -108,6 +117,8 @@ import { DeleteCaseModal } from "./DeleteCase";
 
 export interface ExtendedCases extends RepositoryCases {
   className: string | null;
+  /** Run mode, with dependency enforcement on: this case's gate state. */
+  dependencyState?: CaseDependencyState;
   source: RepositoryCaseSource;
   state: Pick<Workflows, "id" | "name"> & {
     icon: Pick<FieldIcon, "name">;
@@ -194,7 +205,7 @@ export interface ExtendedCases extends RepositoryCases {
   startedAt?: Date | null;
   completedAt?: Date | null;
   elapsed?: number | null;
-  testRuns?: {
+  testRunCases?: {
     id: number;
     testRun: {
       id: number;
@@ -319,9 +330,7 @@ const NameCell = React.memo(function NameCell({
   showDescendants,
   folderPathMap,
 }: NameCellProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const replaceUrlParams = useUrlParamWriter();
   const { opensInNewWindow } = useDetailsDisplayMode();
   // Plain repository browsing with the "new window" preference: the click
   // opens the full case page in a new window instead of the docked panel.
@@ -382,9 +391,9 @@ const NameCell = React.memo(function NameCell({
   if (isRunMode && canAddEditResults) {
     const handleClick = () => {
       if (isSoftDeletedInRun) return;
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("selectedCase", id.toString());
-      router.replace(`${pathname}?${params.toString()}`);
+      // Through the shared writer so this click cannot drop a `view`, `f` or
+      // `columns` write the page still has in flight.
+      replaceUrlParams((params) => params.set("selectedCase", id.toString()));
     };
 
     return (
@@ -422,10 +431,13 @@ const NameCell = React.memo(function NameCell({
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    const params = new URLSearchParams(searchParams.toString());
-                    params.set("view", "folders");
-                    params.set("node", folder.id.toString());
-                    router.push(`${pathname}?${params.toString()}`);
+                    replaceUrlParams(
+                      (params) => {
+                        params.set("view", "folders");
+                        params.set("node", folder.id.toString());
+                      },
+                      { history: "push" }
+                    );
                   }}
                 >
                   <Folder className="w-3 h-3 me-1 shrink-0" />
@@ -476,10 +488,10 @@ const NameCell = React.memo(function NameCell({
           )
             return;
           e.preventDefault();
-          const params = new URLSearchParams(searchParams.toString());
-          params.set("case", id.toString());
           // push (not replace) so the browser Back button closes the panel.
-          router.push(`${pathname}?${params.toString()}`);
+          replaceUrlParams((params) => params.set("case", id.toString()), {
+            history: "push",
+          });
         }}
       >
         <div className="truncate whitespace-nowrap overflow-hidden">
@@ -504,10 +516,13 @@ const NameCell = React.memo(function NameCell({
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  const params = new URLSearchParams(searchParams.toString());
-                  params.set("view", "folders");
-                  params.set("node", folder.id.toString());
-                  router.push(`${pathname}?${params.toString()}`);
+                  replaceUrlParams(
+                    (params) => {
+                      params.set("view", "folders");
+                      params.set("node", folder.id.toString());
+                    },
+                    { history: "push" }
+                  );
                 }}
               >
                 <Folder className="w-3 h-3 me-1 shrink-0" />
@@ -540,6 +555,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   onOpenAddResultModal,
   onOpenAssignModal,
   totalIterations,
+  dependencyState,
 }: {
   status: ExtendedCases["testRunStatus"];
   caseId: number;
@@ -578,13 +594,13 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
     selectedCases?: ExtendedCases[];
   }) => void;
   totalIterations?: number;
+  /** Dependency gate state; a blocked case cannot open the result form. */
+  dependencyState?: CaseDependencyState;
 }) {
   // For parameterized cases, the status is derived from the iteration
   // rollup (no per-case-level result writes). Render a click-to-open-sheet
   // button instead of the status-picker dropdown.
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const replaceUrlParams = useUrlParamWriter();
   const isParameterized = (totalIterations ?? 0) > 0;
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [isBulkAssign, setIsBulkAssign] = useState(false);
@@ -643,13 +659,19 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
 
   const handleOpenParameterizedSheet = () => {
     if (isSoftDeletedInRun) return;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("selectedCase", caseId.toString());
-    router.replace(`${pathname}?${params.toString()}`);
+    // Through the shared writer so this click cannot drop a `view`, `f` or
+    // `columns` write the page still has in flight.
+    replaceUrlParams((params) => params.set("selectedCase", caseId.toString()));
   };
+
+  // A case blocked by an unpassed dependency in this run cannot take a
+  // result (the server refuses one); the cell shows why instead. Assigning
+  // it must keep working — the handoff notifies the assignee.
+  const isBlocked = isBlockedByDependencies(dependencyState);
 
   // Combine isCompleted with isSoftDeletedInRun for disabling logic
   const isDisabled = isCompleted || isSoftDeletedInRun;
+  const isResultDisabled = isDisabled || isBlocked;
 
   const rowSelection = table?.store?.state.rowSelection;
   const selectedCount = rowSelection ? Object.keys(rowSelection).length : 0;
@@ -708,7 +730,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   };
 
   const handleStatusChange = (statusId: string) => {
-    if (isCompleted) return;
+    if (isCompleted || isBlocked) return;
     if (isInitialRender) return;
     if (onOpenAddResultModal) {
       onOpenAddResultModal({
@@ -742,7 +764,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   };
 
   const handleSingleResult = () => {
-    if (isCompleted) return;
+    if (isCompleted || isBlocked) return;
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
@@ -766,10 +788,57 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
     return "color" in s && s.color !== undefined;
   };
 
+  // Blocked: the status control becomes a read-only lock with the blockers
+  // in its tooltip. A plain element rather than a disabled button, because a
+  // disabled button swallows the hover the tooltip needs.
+  const blockedControl =
+    isBlocked && dependencyState ? (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              role="status"
+              className="flex-1 min-w-0 h-8 inline-flex items-center gap-1.5 rounded-md border border-dashed px-3 text-sm text-muted-foreground overflow-hidden"
+              data-testid={`testrun-status-cell-blocked-${caseId}`}
+              aria-label={t("runs.dependencies.blocked")}
+            >
+              <Lock className="h-3.5 w-3.5 shrink-0" />
+              <StatusDisplay
+                name={displayStatus.name}
+                color={
+                  hasColor(displayStatus)
+                    ? displayStatus.color.value
+                    : undefined
+                }
+                className="flex items-center space-x-1 min-w-0 overflow-hidden"
+                nameClassName="truncate"
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="max-w-xs">
+            <p>
+              {t("runs.dependencies.blockedBy", {
+                count: dependencyState.blockedBy.length,
+              })}
+            </p>
+            <ul className="mt-1 list-disc ps-4">
+              {dependencyState.blockedBy.map((prerequisite) => (
+                <li key={prerequisite.testRunCaseId}>
+                  {prerequisite.name ?? `#${prerequisite.repositoryCaseId}`}
+                </li>
+              ))}
+            </ul>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ) : null;
+
   return (
     <>
       <div className="flex items-center justify-between w-full">
-        {isParameterized ? (
+        {blockedControl ? (
+          blockedControl
+        ) : isParameterized ? (
           <Button
             variant="outline"
             className="flex-1 min-w-0 h-8 bg-transparent hover:bg-muted hover:text-foreground justify-between gap-1 overflow-hidden"
@@ -794,7 +863,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
               <Button
                 variant="outline"
                 className="flex-1 min-w-0 h-8 bg-transparent hover:bg-muted hover:text-foreground justify-start overflow-hidden"
-                disabled={isDisabled}
+                disabled={isResultDisabled}
               >
                 <StatusDisplay
                   name={displayStatus.name}
@@ -864,10 +933,10 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                 </DropdownMenuItem>
                 {!isParameterized && (
                   <DropdownMenuItem
-                    className={`flex items-center ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`flex items-center ${isResultDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
                     onClick={handleBulkResult}
-                    disabled={isDisabled}
-                    style={{ opacity: isDisabled ? 0.5 : 1 }}
+                    disabled={isResultDisabled}
+                    style={{ opacity: isResultDisabled ? 0.5 : 1 }}
                   >
                     <Plus className="me-2 h-4 w-4" />
                     <span>
@@ -891,10 +960,10 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                 </DropdownMenuItem>
                 {!isParameterized && (
                   <DropdownMenuItem
-                    className={`flex items-center ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`flex items-center ${isResultDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
                     onClick={handleSingleResult}
-                    disabled={isDisabled}
-                    style={{ opacity: isDisabled ? 0.5 : 1 }}
+                    disabled={isResultDisabled}
+                    style={{ opacity: isResultDisabled ? 0.5 : 1 }}
                   >
                     <Plus className="me-2 h-4 w-4" />
                     <span>{t("common.actions.addResult")}</span>
@@ -1200,7 +1269,7 @@ const ActionsCell = React.memo(function ActionsCell({
                   setShowDeleteModal(true);
                 }
               }}
-              className="text-destructive focus:text-destructive"
+              className="text-destructive focus:text-destructive-text"
             >
               <Trash className="me-2 h-4 w-4" />
               <span>{t("common.actions.delete")}</span>
@@ -1258,9 +1327,9 @@ const AssigneeCell = React.memo(function AssigneeCell({
     setIsAssigning(true);
 
     try {
-      const previousAssigneeId = row.original.assignedTo?.id || null;
       const userId = user?.id || null;
 
+      // The server notifies the new assignee.
       await updateTestRunCase({
         where: {
           id: row.original.testRunCaseId,
@@ -1269,15 +1338,6 @@ const AssigneeCell = React.memo(function AssigneeCell({
           assignedToId: userId,
         },
       });
-
-      // Send notification for the assignment
-      if (userId && userId !== previousAssigneeId) {
-        await notifyTestCaseAssignment(
-          row.original.testRunCaseId,
-          userId,
-          previousAssigneeId
-        );
-      }
 
       toast.success(
         userId ? t("common.success.assigned") : t("common.success.unassigned")
@@ -1321,21 +1381,30 @@ const AssigneeCell = React.memo(function AssigneeCell({
 
 // Component for displaying last test result in repository mode
 // Component for select all checkbox with shift-key detection and tooltip
+/**
+ * How many cases are selected across all pages. Provided around the table
+ * rather than passed to getColumns: the count changes on every click, and a
+ * rebuilt column set remounts every cell of every row.
+ */
+export const SelectedCaseCountContext = createContext(0);
+
 const SelectAllCheckbox = React.memo(function SelectAllCheckbox({
   table,
   handleSelectAllClick,
   selectCaseLabel,
   totalItems,
-  isAllSelected,
 }: {
   table: any;
   handleSelectAllClick?: (event: React.MouseEvent) => void;
   selectCaseLabel: string;
   totalItems: number;
-  isAllSelected: boolean;
 }) {
   const [isShiftPressed, setIsShiftPressed] = useState(false);
   const t = useTranslations();
+  const selectedCount = useContext(SelectedCaseCountContext);
+
+  // Determine if all items are selected (for tooltip message)
+  const isAllSelected = selectedCount >= totalItems && totalItems > 0;
 
   // Track shift key state
   useEffect(() => {
@@ -1440,6 +1509,7 @@ export const getColumns = (
     name: string;
     estimate: string;
     forecast: string;
+    riskScore: string;
     state: string;
     automated: string;
     template: string;
@@ -1490,8 +1560,9 @@ export const getColumns = (
   }) => void,
   isMultiConfigRun?: boolean,
   totalItems?: number,
-  selectedCount?: number,
-  enableReorder?: boolean,
+  /** Render the grip in the selection column. True whenever rows can be
+   * dragged at all (to reorder or to a folder), not only when reorder is on. */
+  showDragHandle?: boolean,
   quickScriptEnabled?: boolean,
   canAddEdit?: boolean,
   onQuickScript?: (caseId: number) => void,
@@ -1556,12 +1627,7 @@ export const getColumns = (
   const selectionColumn: ColumnDef<ExtendedCases> = {
     id: "select",
     header: ({ table }) => {
-      // Show handle when reordering is enabled
-      const showHandle = enableReorder;
-
-      // Determine if all items are selected (for tooltip message)
-      const isAllSelected =
-        (selectedCount ?? 0) >= (totalItems ?? 0) && (totalItems ?? 0) > 0;
+      const showHandle = showDragHandle;
 
       return (
         <div
@@ -1574,15 +1640,13 @@ export const getColumns = (
             handleSelectAllClick={handleSelectAllClick}
             selectCaseLabel={columnTranslations.selectCase}
             totalItems={totalItems ?? 0}
-            isAllSelected={isAllSelected}
           />
         </div>
       );
     },
     cell: ({ row }) => {
       const isDeletedInRun = isRunMode && row.original.isDeleted;
-      // Show handle when reordering is enabled
-      const showHandle = enableReorder;
+      const showHandle = showDragHandle;
 
       return (
         <div
@@ -2010,7 +2074,7 @@ export const getColumns = (
             size: 100,
             minSize: 100,
             cell: ({ row }: { row: { original: ExtendedCases } }) => {
-              const mappedTestRuns = row.original.testRuns
+              const mappedTestRuns = row.original.testRunCases
                 ?.map((trLink) => {
                   if (
                     trLink.testRun &&
@@ -2167,6 +2231,25 @@ export const getColumns = (
             type="automated"
           />
         </div>
+      ),
+    },
+    {
+      id: "riskScore",
+      accessorKey: "riskScore",
+      header: columnTranslations.riskScore,
+      enableSorting: !isCompleted,
+      enableResizing: true,
+      enableHiding: true,
+      meta: {
+        isVisible: false,
+      },
+      size: 90,
+      minSize: 70,
+      cell: ({ row }) => (
+        <RiskScoreCell
+          score={row.original.riskScore ?? null}
+          reasons={row.original.riskReasons ?? null}
+        />
       ),
     },
     {
@@ -2420,6 +2503,7 @@ export const getColumns = (
             }
             onOpenAssignModal={onOpenAssignModal}
             totalIterations={row.original.totalIterations}
+            dependencyState={row.original.dependencyState}
           />
         );
       },

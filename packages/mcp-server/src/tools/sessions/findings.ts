@@ -16,9 +16,9 @@ export interface SessionsFindingsDeps {
 const FINDINGS_TAKE_CAP = 500;
 
 // Issue-detail include for issueId mode — surfaces linkedSessions and
-// linkedSessionResults inline (D7-11 issueId-mode response). Each include
-// carries `where: { isDeleted: false }` and a take cap so a single issue
-// surfacing in many sessions cannot fan out to an unbounded payload (T-07-06).
+// linkedSessionResults inline. Each include carries
+// `where: { isDeleted: false }` and a take cap so a single issue
+// surfacing in many sessions cannot fan out to an unbounded payload.
 const ISSUE_DETAIL_INCLUDE = {
   sessions: {
     where: { isDeleted: false },
@@ -88,9 +88,9 @@ export function registerSessionsFindings(
     },
     async (input) => {
       try {
-        // XOR validation per D7-11 / RESEARCH discretion. We validate inside
+        // XOR validation. We validate inside
         // the handler (not via zod refine on the raw shape) — same pattern
-        // Phase 6 folder reparent disambiguation uses; raw-shape inputSchema
+        // folder reparent disambiguation uses; raw-shape inputSchema
         // doesn't compose cleanly with refine.
         const hasSession = input.sessionId !== undefined;
         const hasIssue = input.issueId !== undefined;
@@ -128,9 +128,9 @@ export function registerSessionsFindings(
               priority: true,
               integration: { select: { provider: true } },
             },
-            // BL-04 deterministic ordering — newest first; id breaks ties.
+            // Deterministic ordering — newest first; id breaks ties.
             orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-            // T-07-06 cap — take FINDINGS_TAKE_CAP+1 to detect overflow.
+            // Cap — take FINDINGS_TAKE_CAP+1 to detect overflow.
             take: FINDINGS_TAKE_CAP + 1,
           };
 
@@ -147,7 +147,7 @@ export function registerSessionsFindings(
 
           // Resolve session header for the response envelope. If the host's
           // ZenStack @@allow policy denies the row (or it truly doesn't exist),
-          // findUnique returns null — surfaced as not-found per T-07-02.
+          // findUnique returns null — surfaced as not-found.
           const session = await zenstack<{ id: number; name: string } | null>(
             "sessions",
             "findUnique",

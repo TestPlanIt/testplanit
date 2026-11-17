@@ -73,7 +73,7 @@ const buildCase = (overrides: Record<string, unknown> = {}) => ({
   forecastAutomated: null,
   template: { caseFields: [] },
   caseFieldValues: [],
-  testRuns: [],
+  testRunCases: [],
   ...overrides,
 });
 
@@ -103,7 +103,7 @@ const mockLinkedCases = (...testCases: any[]) => {
       template,
       caseFieldValues: _values,
       steps: _steps,
-      testRuns: _runs,
+      testRunCases: _runs,
       ...row
     } = testCase;
     return {
@@ -137,7 +137,7 @@ const mockLinkedCases = (...testCases: any[]) => {
   vi.mocked(baseDb.testRunCases.findMany).mockResolvedValue(
     testCases
       .filter((testCase) =>
-        (testCase.testRuns ?? []).some(
+        (testCase.testRunCases ?? []).some(
           (runCase: any) => runCase.results.length > 0
         )
       )
@@ -195,7 +195,7 @@ describe("jira test-info deleted cases", () => {
         id: 12,
         name: "Results gone",
         isDeleted: true,
-        testRuns: [buildRunCase([])],
+        testRunCases: [buildRunCase([])],
       })
     );
 
@@ -212,7 +212,7 @@ describe("jira test-info deleted cases", () => {
         id: 11,
         name: "Gone",
         isDeleted: true,
-        testRuns: [buildRunCase([buildResult()])],
+        testRunCases: [buildRunCase([buildResult()])],
       })
     );
     // The ranking service decides what the history holds; the route hydrates
@@ -248,7 +248,12 @@ describe("jira test-info deleted cases", () => {
         editedBy: null,
         testRunCase: {
           id: 55,
-          testRun: { id: 7, name: "Regression", isCompleted: true },
+          testRun: {
+            id: 7,
+            name: "Regression",
+            isCompleted: true,
+            configuration: { name: "Chrome / Windows" },
+          },
         },
       },
     ] as never);
@@ -269,6 +274,7 @@ describe("jira test-info deleted cases", () => {
         resultId: 900,
         testRunId: 7,
         testRunName: "Regression",
+        testRunConfigurationName: "Chrome / Windows",
         testRunIsCompleted: true,
         status: "Passed",
         statusColor: "#16a34a",
@@ -282,7 +288,12 @@ describe("jira test-info deleted cases", () => {
     // `source` stays MANUAL on an imported case that later gained automation,
     // so the boolean is the only thing that can distinguish the two.
     mockLinkedCases(
-      buildCase({ id: 12, name: "Automated", automated: true, testRuns: [] })
+      buildCase({
+        id: 12,
+        name: "Automated",
+        automated: true,
+        testRunCases: [],
+      })
     );
 
     const response = await GET(buildRequest());
@@ -293,7 +304,7 @@ describe("jira test-info deleted cases", () => {
 
   it("defaults the automated flag to false when the column is null", async () => {
     mockLinkedCases(
-      buildCase({ id: 13, name: "Legacy", automated: null, testRuns: [] })
+      buildCase({ id: 13, name: "Legacy", automated: null, testRunCases: [] })
     );
 
     const response = await GET(buildRequest());
@@ -304,14 +315,14 @@ describe("jira test-info deleted cases", () => {
 
   it("reports an automated execution as the latest result", async () => {
     // The regression this guards: the panel used to read only the loaded
-    // `testRuns` relation, which holds manual TestRunResults, so an automated
+    // `testRunCases` relation, which holds manual TestRunResults, so an automated
     // case showed a stale manual result instead of its most recent CI run.
     mockLinkedCases(
       buildCase({
         id: 14,
         name: "CI case",
         automated: true,
-        testRuns: [buildRunCase([buildResult({ id: 901 })])],
+        testRunCases: [buildRunCase([buildResult({ id: 901 })])],
       })
     );
     vi.mocked(getLatestTestResultsByCase).mockResolvedValue(
@@ -354,6 +365,7 @@ describe("jira test-info deleted cases", () => {
         resultId: 5000,
         testRunId: 70,
         testRunName: "Web Regression",
+        testRunConfigurationName: null,
         status: "Failed",
         // CI wrote it: no user, no edit trail, no per-case version.
         executedBy: { id: null, name: "Automation" },
@@ -366,7 +378,7 @@ describe("jira test-info deleted cases", () => {
   });
 
   it("still returns a live case that has never been run", async () => {
-    mockLinkedCases(buildCase({ id: 10, name: "Live", testRuns: [] }));
+    mockLinkedCases(buildCase({ id: 10, name: "Live", testRunCases: [] }));
 
     const response = await GET(buildRequest());
     const body = await response.json();
@@ -660,11 +672,13 @@ describe("jira test-info field queries", () => {
 });
 
 describe("jira test-info runs and sessions", () => {
+  // Run 7 was created for a configuration; run 8 has none.
   const runRow = (id: number) => ({
     id,
     name: `Run ${id}`,
     isDeleted: false,
     state: { name: "Active", icon: { name: "Play" }, color: { value: "#00f" } },
+    configuration: id === 7 ? { name: "Chrome / Windows" } : null,
     project: { id: 5 },
   });
 
@@ -746,6 +760,7 @@ describe("jira test-info runs and sessions", () => {
     });
     expect(body.testRuns.map((run: any) => run.id)).toEqual([7, 8]);
     expect(body.testRuns[0]).toMatchObject({
+      configurationName: "Chrome / Windows",
       total: 2,
       passedCount: 1,
       summaryText: "1 Passed, 1 Pending",
@@ -767,6 +782,7 @@ describe("jira test-info runs and sessions", () => {
       },
     ]);
     expect(body.testRuns[1]).toMatchObject({
+      configurationName: null,
       total: 0,
       summaryText: "",
       displayItems: [],

@@ -15,6 +15,7 @@ import { AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 interface DatasetDeleteConfirmDialogProps {
   projectId: number;
@@ -69,7 +70,7 @@ export function DatasetDeleteConfirmDialog({
       const url = confirm
         ? `/api/projects/${projectId}/datasets/${dataSetId}?confirm=true`
         : `/api/projects/${projectId}/datasets/${dataSetId}`;
-      const res = await fetch(url, { method: "DELETE" });
+      const res = await apiFetch(url, { method: "DELETE" });
       if (res.status === 409 && !confirm) {
         const json = (await res.json().catch(() => ({}))) as {
           error?: string;

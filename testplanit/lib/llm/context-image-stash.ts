@@ -46,7 +46,7 @@ function stashKey(contextId: string): string {
 async function redisClient() {
   const queue = getGenerateFromUrlQueue();
   if (!queue) return null;
-  return await queue.client;
+  return await queue.getBackend().client;
 }
 
 export async function stashContextImages(

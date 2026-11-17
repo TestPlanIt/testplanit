@@ -23,7 +23,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Alert } from "~/components/ui/alert";
 import { translateServerError } from "~/lib/i18n/translateServerError";
 import { useRouter } from "~/lib/navigation";
-import svgIcon from "~/public/tpi_logo.svg";
+import { TestPlanItMark } from "@/components/TestPlanItLogo";
+import { apiFetch } from "~/lib/basePath";
 
 export default function TwoFactorSetupPage() {
   const router = useRouter();
@@ -65,7 +66,7 @@ export default function TwoFactorSetupPage() {
         : "/api/auth/two-factor/setup-required";
       const body = isSsoFlow ? {} : { setupToken: token };
 
-      const response = await fetch(endpoint, {
+      const response = await apiFetch(endpoint, {
         method: isSsoFlow ? "GET" : "POST",
         headers: isSsoFlow ? {} : { "Content-Type": "application/json" },
         body: isSsoFlow ? undefined : JSON.stringify(body),
@@ -107,7 +108,7 @@ export default function TwoFactorSetupPage() {
         ? { token: verificationCode }
         : { token: verificationCode, setupToken: token };
 
-      const response = await fetch(endpoint, {
+      const response = await apiFetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -154,12 +155,7 @@ export default function TwoFactorSetupPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <Image
-              alt="TestPlanIt Logo"
-              src={svgIcon}
-              style={{ width: "40px", height: "auto" }}
-              priority={true}
-            />
+            <TestPlanItMark className="w-10" />
           </div>
           <CardTitle className="flex items-center justify-center gap-2">
             <Shield className="h-5 w-5" />

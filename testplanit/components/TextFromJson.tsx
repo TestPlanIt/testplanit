@@ -1,4 +1,4 @@
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import React, { useEffect, useState } from "react";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
@@ -84,7 +84,10 @@ const TipTapEditorWrapper: React.FC<{
     if (typeof jsonString === "string" && jsonString.includes("<")) {
       return (
         <div
-          className="prose prose-sm max-w-none"
+          // prose ships its own LIGHT palette, so this raw-HTML fallback needs
+          // the invert on the two dark themes: --tw-prose-links resolves to
+          // gray-900, which is 1.1:1 on .dark and 1.05:1 on .accessibledark.
+          className="prose prose-sm dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{ __html: jsonString }}
         />
       );
@@ -94,10 +97,9 @@ const TipTapEditorWrapper: React.FC<{
 
   return (
     <div className="compact-prose">
-      <TipTapEditor
+      <ReadOnlyRichText
         key={room}
         content={content}
-        readOnly={true}
         className="w-full"
         parameters={parameters}
       />

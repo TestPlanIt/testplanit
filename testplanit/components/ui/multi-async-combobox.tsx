@@ -45,8 +45,11 @@ interface MultiAsyncComboboxProps<T> {
   value: T[];
   onValueChange: (value: T[]) => void;
   fetchOptions: AsyncOptionsFetcher<T>;
-  renderOption: (option: T) => React.ReactNode;
+  /** Renders a list entry; `search` is the text the listed options were fetched for. */
+  renderOption: (option: T, search: string) => React.ReactNode;
   renderSelectedOption?: (option: T) => React.ReactNode;
+  /** Inline style for a selected option's chip, e.g. a tracker label's colour. */
+  getSelectedOptionStyle?: (option: T) => React.CSSProperties | undefined;
   getOptionValue: (option: T) => string | number;
   getOptionLabel: (option: T) => string;
   placeholder?: string;
@@ -70,6 +73,7 @@ export function MultiAsyncCombobox<T>({
   fetchOptions,
   renderOption,
   renderSelectedOption,
+  getSelectedOptionStyle,
   getOptionValue,
   getOptionLabel,
   placeholder,
@@ -203,7 +207,7 @@ export function MultiAsyncCombobox<T>({
       onSelect={() => toggleOption(option)}
     >
       <div className="flex items-center w-full [&_a]:no-underline [&_a]:text-inherit [&_a:hover]:text-inherit">
-        {renderOption(option)}
+        {renderOption(option, debouncedSearch)}
         {!hideSelected && isSelected(option) ? (
           <Check className="ms-auto h-4 w-4" />
         ) : (
@@ -250,6 +254,7 @@ export function MultiAsyncCombobox<T>({
                   key={getOptionValue(v)}
                   variant="secondary"
                   className="me-1 shrink-0 min-w-[80px] max-w-[200px] overflow-hidden"
+                  style={getSelectedOptionStyle?.(v)}
                   title={getOptionLabel(v)}
                 >
                   <span className="min-w-0 flex-1 truncate">
@@ -273,7 +278,7 @@ export function MultiAsyncCombobox<T>({
                     }}
                     onClick={(e) => removeOption(v, e)}
                   >
-                    <X className="h-3 w-3 hover:text-destructive" />
+                    <X className="h-3 w-3 rounded-sm hover:bg-destructive hover:text-destructive-foreground" />
                   </span>
                 </Badge>
               ))

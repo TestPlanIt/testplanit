@@ -112,6 +112,43 @@ describe("compileRepoPredicates — boolean dimensions", () => {
   });
 });
 
+describe("compileRepoPredicates — riskScore", () => {
+  const riskRegistry = buildFilterDimensions({ includeRiskScore: true });
+  const compileRisk = (operator: string, values: (number | string)[]) =>
+    compileRepoPredicates(
+      [predicate("riskScore", operator, values)],
+      riskRegistry
+    );
+
+  it("compiles comparison operators onto the scalar", () => {
+    expect(compileRisk("eq", [50])).toEqual([{ riskScore: 50 }]);
+    expect(compileRisk("ne", [50])).toEqual([{ riskScore: { not: 50 } }]);
+    expect(compileRisk("gte", [70])).toEqual([{ riskScore: { gte: 70 } }]);
+    expect(compileRisk("lt", [10])).toEqual([{ riskScore: { lt: 10 } }]);
+  });
+
+  it("compiles between as an inclusive range with parse-sorted bounds", () => {
+    expect(compileRisk("between", [40, 80])).toEqual([
+      { riskScore: { gte: 40, lte: 80 } },
+    ]);
+  });
+
+  it("compiles any/none as scored / not yet scored", () => {
+    expect(compileRisk("any", [])).toEqual([{ riskScore: { not: null } }]);
+    expect(compileRisk("none", [])).toEqual([{ riskScore: null }]);
+  });
+
+  it("drops non-finite values and unknown operators", () => {
+    expect(compileRisk("eq", ["abc"])).toEqual([]);
+    expect(compileRisk("between", [40, "abc"])).toEqual([]);
+    expect(compileRisk("in", [50])).toEqual([]);
+  });
+
+  it("drops a riskScore predicate when the registry lacks the dimension", () => {
+    expect(compileOne(predicate("riskScore", "eq", [50]))).toEqual([]);
+  });
+});
+
 describe("compileRepoPredicates — inReview", () => {
   const inReviewRegistry = buildFilterDimensions({ includeInReview: true });
   const compileInReview = (

@@ -48,6 +48,7 @@ TestPlanIt currently supports the following SSO providers:
 - Supports any SAML 2.0 compliant identity provider
 - Compatible with popular providers like Okta, Azure AD, OneLogin, etc.
 - Flexible configuration for enterprise requirements
+- Several SAML providers can run side by side, each with its own configuration and its own button on the sign-in page
 
 ## SSO Configuration
 
@@ -63,7 +64,7 @@ The Force SSO toggle (and the two Force 2FA toggles) have moved from the SSO pag
 
 #### SAML Provider
 
-Toggle to enable/disable SAML authentication. When enabled, additional configuration is required.
+Each SAML provider gets its own row, with its own toggle. A provider must be configured before it can be enabled, and only enabled, configured providers appear on the sign-in page.
 
 #### Apple Sign In
 
@@ -357,7 +358,11 @@ The signup page behavior is affected by both Force SSO and the self-registration
 
 ## SAML Configuration
 
-When SAML is enabled, administrators can configure SAML settings by clicking the settings icon next to the SAML provider.
+Every SAML setting lives on the provider's own page (`/admin/sso/saml/<providerId>`) — identity provider details, signature validation, user provisioning, and attribute mapping. Click **Configure** on a provider's row at `/admin/sso` to open it.
+
+To connect an identity provider, click **Add SAML Provider** at `/admin/sso`. TestPlanIt creates the provider **disabled** and opens its page, so you fill in the configuration before turning it on. Give it a **Name** your users will recognize — the name labels the button on the sign-in page ("Sign in with Okta"), which matters when more than one provider is connected.
+
+There is no limit on the number of SAML providers. Each is configured, enabled and disabled independently, and **Delete** on a provider's row removes it along with its configuration. Deleting a provider does not delete the user accounts it provisioned; those users simply lose that route to sign in.
 
 ### Required SAML Settings
 
@@ -378,7 +383,7 @@ The SAML specification allows the IdP to sign the assertion, the outer response,
 | **Require signed assertions** | **On**  | The SAML assertion (the inner element carrying the authenticated identity) must be signed. Turning this off is unsafe. |
 | **Require signed response**   | **Off** | The outer SAML response must also be signed. Optional — TestPlanIt still validates the signature when present.         |
 
-If your IdP signs only the assertion (Okta's default), leave **Require signed response** off. If your IdP signs the full response and you want to require it, turn it on. Both toggles appear on the initial Configure SAML dialog and the per-provider edit page (`/admin/sso/saml/[providerId]`) so you can re-tighten without a code change.
+If your IdP signs only the assertion (Okta's default), leave **Require signed response** off. If your IdP signs the full response and you want to require it, turn it on.
 
 #### User Provisioning
 

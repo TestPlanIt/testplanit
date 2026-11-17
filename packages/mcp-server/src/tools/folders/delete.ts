@@ -22,15 +22,15 @@ const FOLDER_DELETE_SELECT = {
 
 /**
  * Soft-delete a folder. The MCP tool layer enforces the "no cases,
- * no sub-folders" rule (BL-01) before issuing the soft-delete PATCH —
+ * no sub-folders" rule before issuing the soft-delete PATCH —
  * the host REST API does NOT enforce this constraint at the ZenStack
  * layer (verified by validation-errors.spec.ts), so the pre-check has
  * to live here.
  *
  * Non-empty folders yield a structured TestPlanItHttpError with status
- * 422 which `mapHttpErrorToToolResult` surfaces as a CASE-12 error.
+ * 422 which `mapHttpErrorToToolResult` surfaces as a tool error.
  *
- * T-06-06: ALWAYS uses `update` with `isDeleted: true`. NEVER calls
+ * ALWAYS uses `update` with `isDeleted: true`. NEVER calls
  * ZenStack `delete` or `deleteMany`.
  */
 export function registerFoldersDelete(server: McpServer, deps: FoldersDeleteDeps): void {
@@ -45,7 +45,7 @@ export function registerFoldersDelete(server: McpServer, deps: FoldersDeleteDeps
     },
     async (input) => {
       try {
-        // BL-01: pre-check that the folder is empty before issuing the
+        // pre-check that the folder is empty before issuing the
         // soft-delete PATCH. Two `findMany` reads with take:1 are cheap
         // and avoid double-counting on the host. Empty arrays mean clear.
         const [activeCases, activeChildren] = await Promise.all([

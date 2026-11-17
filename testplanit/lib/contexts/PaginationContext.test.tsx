@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { resetUrlWriteOverlay } from "~/utils/urlParamWrite";
 import { PaginationProvider, usePagination } from "./PaginationContext";
 
 // The App Router commits a `router.replace` asynchronously: the URL the hooks
@@ -12,7 +13,10 @@ let sessionData: { user?: { preferences?: { itemsPerPage?: string } } } | null =
   null;
 
 const replace = vi.fn((href: string) => {
-  pendingSearch = new URLSearchParams(href.replace(/^\?/, ""));
+  // The writer navigates to a pathname-qualified href, so take whatever
+  // follows the first "?" rather than assuming a bare query string.
+  const query = href.includes("?") ? href.slice(href.indexOf("?") + 1) : "";
+  pendingSearch = new URLSearchParams(query);
 });
 
 vi.mock("next/navigation", () => ({
@@ -21,6 +25,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ replace, push: vi.fn() }),
+  usePathname: () => "/test",
 }));
 
 vi.mock("next-auth/react", () => ({
@@ -57,6 +62,9 @@ beforeEach(() => {
   pendingSearch = null;
   sessionData = null;
   replace.mockClear();
+  // The pending-write overlay is module state shared by every writer, so it
+  // outlives a test unless it is cleared here.
+  resetUrlWriteOverlay();
 });
 
 describe("PaginationProvider URL sync", () => {
@@ -64,7 +72,7 @@ describe("PaginationProvider URL sync", () => {
     renderPagination();
 
     expect(replace).toHaveBeenCalledTimes(1);
-    expect(replace).toHaveBeenCalledWith("?page=1&pageSize=10", {
+    expect(replace).toHaveBeenCalledWith("/test?page=1&pageSize=10", {
       scroll: false,
     });
   });
@@ -86,7 +94,7 @@ describe("PaginationProvider URL sync", () => {
     act(() => result.current.setPageSize(25));
 
     expect(replace).toHaveBeenCalledTimes(1);
-    expect(replace).toHaveBeenCalledWith("?page=1&pageSize=25", {
+    expect(replace).toHaveBeenCalledWith("/test?page=1&pageSize=25", {
       scroll: false,
     });
 
@@ -116,7 +124,7 @@ describe("PaginationProvider URL sync", () => {
 
     act(() => result.current.setCurrentPage(4));
 
-    expect(replace).toHaveBeenCalledWith("?page=4&pageSize=50", {
+    expect(replace).toHaveBeenCalledWith("/test?page=4&pageSize=50", {
       scroll: false,
     });
     commitUrl([rerender]);

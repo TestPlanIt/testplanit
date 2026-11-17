@@ -311,7 +311,7 @@ export function MemberIssueRowActions({
             )}
             {showUnlink && (
               <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
+                className="text-destructive focus:text-destructive-text"
                 disabled={isUnlinking}
                 onClick={() => setConfirmOpen(true)}
                 data-testid="member-issue-unlink"

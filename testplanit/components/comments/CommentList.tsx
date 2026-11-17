@@ -215,7 +215,7 @@ export function CommentList({
       {comments.length === 0 && (
         <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
           <MessageSquare className="mb-2 h-12 w-12 opacity-20" />
-          <p className="text-sm">{t("comments.noComments")}</p>
+          <p className="text-sm text-foreground">{t("comments.noComments")}</p>
         </div>
       )}
     </div>

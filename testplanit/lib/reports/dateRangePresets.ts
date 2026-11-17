@@ -48,7 +48,19 @@ export const DATE_RANGE_PRESETS = Object.values(
 
 export type DateRangePresetKey = (typeof DATE_RANGE_PRESETS)[number];
 
-export const ROLLING_RANGE_UNITS = ["days", "weeks", "months"] as const;
+/**
+ * Rolling-window units. The calendar variants align the window's start to
+ * the period boundary — "last 8 calendar months" runs from the 1st of the
+ * month 7 months back through today — so a monthly trend's first bucket is
+ * a complete month instead of a partial one.
+ */
+export const ROLLING_RANGE_UNITS = [
+  "days",
+  "weeks",
+  "months",
+  "calendarWeeks",
+  "calendarMonths",
+] as const;
 export type RollingRangeUnit = (typeof ROLLING_RANGE_UNITS)[number];
 
 /** A rolling "last N" window stays within a sensible span. */
@@ -247,7 +259,13 @@ export function resolveRelativeDateRange(
           ? subDays(today, range.amount - 1)
           : range.unit === "weeks"
             ? subWeeks(today, range.amount)
-            : subMonths(today, range.amount);
+            : range.unit === "months"
+              ? subMonths(today, range.amount)
+              : // Calendar units: today's period plus the N−1 before it,
+                // aligned to the period start so the first one is complete.
+                range.unit === "calendarWeeks"
+                ? startOfWeek(subWeeks(today, range.amount - 1), week)
+                : startOfMonth(subMonths(today, range.amount - 1));
       to = endOfDay(today);
       break;
   }

@@ -46,10 +46,18 @@ interface NumericFilterInputProps {
   /** Structured chip-editor mode: the committed {operator, values}. */
   value?: FilterInputValue | null;
   /**
-   * Structured change path — emits only complete, parseable states (the chip
-   * editor debounces free-text edits before persisting).
+   * Structured change path — reports the editor's current value on every
+   * edit, emitting an empty `values` array while the entry is incomplete.
+   * It is a pending signal, not a commit: the chip editor holds typed values
+   * off-URL and applies them only on confirm.
    */
   onValueChange?: (next: FilterInputValue) => void;
+  /**
+   * Explicit confirm (Enter or the apply button) for a valid entry. The chip
+   * editor treats this as "apply and close", so a typed filter reaches the
+   * URL exactly once per editing session.
+   */
+  onConfirm?: () => void;
   /** Operator whitelist for structured mode; defaults to the legacy set. */
   operators?: readonly string[];
 }
@@ -78,6 +86,7 @@ export function NumericFilterInput({
   currentFilter,
   value,
   onValueChange,
+  onConfirm,
   operators,
 }: NumericFilterInputProps) {
   const t = useTranslations();
@@ -117,10 +126,16 @@ export function NumericFilterInput({
       return;
     }
     const num1 = parseFloat(raw1);
-    if (isNaN(num1)) return;
+    if (isNaN(num1)) {
+      onValueChange({ operator: op, values: [] });
+      return;
+    }
     if (op === "between") {
       const num2 = parseFloat(raw2);
-      if (isNaN(num2) || num1 >= num2) return;
+      if (isNaN(num2) || num1 >= num2) {
+        onValueChange({ operator: op, values: [] });
+        return;
+      }
       onValueChange({ operator: op, values: [num1, num2] });
       return;
     }
@@ -130,6 +145,7 @@ export function NumericFilterInput({
   const handleApply = () => {
     if (isValueless) {
       emitStructured(operator, value1, value2);
+      onConfirm?.();
       return;
     }
     const num1 = parseFloat(value1);
@@ -143,6 +159,7 @@ export function NumericFilterInput({
       onFilterApply?.(operator as NumericOperator, num1);
     }
     emitStructured(operator, value1, value2);
+    onConfirm?.();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -274,6 +291,8 @@ export function NumericFilterInput({
             onClick={handleApply}
             disabled={!isValid()}
             className="h-8 w-8 p-0 shrink-0"
+            aria-label={t("common.actions.apply")}
+            data-testid="filter-input-apply"
           >
             <Check className="h-3 w-3" />
           </Button>

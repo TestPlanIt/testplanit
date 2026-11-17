@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef } from "react";
 
@@ -147,7 +147,11 @@ export function MapColumnsStep({
                     {parameters.map((p) => (
                       <SelectItem key={p.name} value={p.name}>
                         {p.name}
-                        {p.required ? " *" : ""}
+                        {p.required && (
+                          <sup>
+                            <Asterisk className="w-3 h-3 text-destructive" />
+                          </sup>
+                        )}
                       </SelectItem>
                     ))}
                   </SelectContent>

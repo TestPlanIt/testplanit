@@ -23,6 +23,7 @@ import { usePendingReviewRequests } from "~/hooks/usePendingReviewRequests";
 import { usePendingReviewsByEntity } from "~/hooks/usePendingReviewsByEntity";
 import { Link } from "~/lib/navigation";
 import { toHumanReadable } from "~/utils/duration";
+import { apiFetch } from "~/lib/basePath";
 
 interface UserAssignmentsProps {
   userId: string;
@@ -178,7 +179,7 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
   const { data, isLoading } = useQuery<UserDashboardData>({
     queryKey: ["userDashboard", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/users/${userId}/dashboard`);
+      const response = await apiFetch(`/api/users/${userId}/dashboard`);
       if (!response.ok) {
         throw new Error("Failed to fetch user dashboard data");
       }

@@ -5,6 +5,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 vi.mock("../../api.js", () => ({
   zenstack: vi.fn(),
+  getHostJson: vi.fn(),
 }));
 
 vi.mock("../../http.js", async () => {
@@ -16,12 +17,13 @@ vi.mock("../../http.js", async () => {
   return { ...actual, validateToken: vi.fn() };
 });
 
-import { zenstack } from "../../api.js";
+import { getHostJson, zenstack } from "../../api.js";
 import { validateToken, TestPlanItHttpError } from "../../http.js";
 import { registerReviewsList } from "./list.js";
 
 const mockZenstack = vi.mocked(zenstack);
 const mockValidateToken = vi.mocked(validateToken);
+const mockGetHostJson = vi.mocked(getHostJson);
 
 const mockEnv = {
   apiUrl: "https://testplanit.example.com",
@@ -84,16 +86,29 @@ function mockCalls(opts: {
   sessions?: Array<{ id: number; name: string | null; isDeleted: boolean }>;
   comments?: Array<{ reviewRequestId: string | null; content: unknown }>;
 }) {
+  const globalRoleId = opts.globalRoleId === undefined ? 3 : opts.globalRoleId;
+  mockGetHostJson.mockResolvedValue({
+    userId: VIEWER_ID,
+    where: [
+      { assigneeUserId: VIEWER_ID },
+      ...(opts.roleIds ?? []).map((roleId, i) => ({
+        projectId: 10 + i,
+        assigneeRoleId: roleId,
+        entityType: { in: ["CASE", "RUN", "SESSION"] },
+      })),
+      ...(globalRoleId != null
+        ? [
+            {
+              assigneeRoleId: globalRoleId,
+              entityType: { in: ["CASE", "RUN", "SESSION"] },
+              project: { defaultAccessType: "GLOBAL_ROLE" },
+            },
+          ]
+        : []),
+    ],
+  });
   mockZenstack.mockImplementation(((model: string) => {
     switch (model) {
-      case "user":
-        return Promise.resolve({
-          roleId: opts.globalRoleId === undefined ? 3 : opts.globalRoleId,
-          projectPermissions: (opts.roleIds ?? []).map((roleId) => ({
-            roleId,
-            accessType: "SPECIFIC_ROLE",
-          })),
-        });
       case "reviewRequest":
         return Promise.resolve(opts.rows ?? []);
       case "repositoryCases":
@@ -150,6 +165,12 @@ function stubFeatureFlag(enabled: boolean) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // A plain scope unless a test sets its own; mockRejectedValue from an
+  // earlier test would otherwise leak through clearAllMocks.
+  mockGetHostJson.mockResolvedValue({
+    userId: VIEWER_ID,
+    where: [{ assigneeUserId: VIEWER_ID }],
+  });
   mockValidateToken.mockResolvedValue({
     ok: true,
     user: {
@@ -169,12 +190,13 @@ afterEach(() => {
 });
 
 describe("testplanit_reviews_list", () => {
-  it("scopes the pending queue to the token owner and the roles they hold", async () => {
+  it("scopes the pending queue to the token owner and the roles they hold per project", async () => {
     mockCalls({ globalRoleId: 3, roleIds: [7, 9], rows: [makeRow("r1")] });
     const client = await setupClient();
 
     await callTool(client);
 
+    expect(mockGetHostJson).toHaveBeenCalledWith("/api/reviews/assignee-scope", mockEnv);
     const where = bodyFor("reviewRequest")?.where as { AND: any[] };
     expect(where.AND).toEqual(
       expect.arrayContaining([
@@ -184,7 +206,13 @@ describe("testplanit_reviews_list", () => {
         {
           OR: [
             { assigneeUserId: VIEWER_ID },
-            { assigneeRoleId: { in: [3, 7, 9] } },
+            { projectId: 10, assigneeRoleId: 7, entityType: { in: ["CASE", "RUN", "SESSION"] } },
+            { projectId: 11, assigneeRoleId: 9, entityType: { in: ["CASE", "RUN", "SESSION"] } },
+            {
+              assigneeRoleId: 3,
+              entityType: { in: ["CASE", "RUN", "SESSION"] },
+              project: { defaultAccessType: "GLOBAL_ROLE" },
+            },
           ],
         },
       ]),
@@ -265,7 +293,7 @@ describe("testplanit_reviews_list", () => {
       reviewFeatureEnabled: false,
     });
     expect(mockZenstack).not.toHaveBeenCalled();
-    expect(mockValidateToken).not.toHaveBeenCalled();
+    expect(mockGetHostJson).not.toHaveBeenCalled();
   });
 
   it("treats an unreachable feature-flag endpoint as enabled", async () => {
@@ -445,13 +473,13 @@ describe("testplanit_reviews_list", () => {
   });
 
   it("surfaces a token failure through the friendly error mapping", async () => {
-    mockValidateToken.mockResolvedValue({
-      ok: false,
-      message: "HTTP 401: token tpi_test... rejected",
-      code: "EXPIRED_TOKEN",
-      statusCode: 401,
-    });
     mockCalls({ rows: [] });
+    mockGetHostJson.mockRejectedValue(
+      new TestPlanItHttpError("HTTP 401: token tpi_test... rejected", {
+        code: "EXPIRED_TOKEN",
+        statusCode: 401,
+      }),
+    );
     const client = await setupClient();
 
     const result = (await callTool(client)) as {

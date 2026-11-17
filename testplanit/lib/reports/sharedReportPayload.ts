@@ -1,4 +1,5 @@
 import { internalAppUrl } from "~/lib/internalAppUrl";
+import { withBasePath } from "~/lib/basePath";
 import {
   getCrossProjectReportTypes,
   getProjectReportTypes,
@@ -86,7 +87,8 @@ export async function buildSharedReportPayload({
   const baseUrl = internalAppUrl();
 
   // First, fetch metadata (dimensions and metrics with labels) from GET endpoint
-  const metadataUrl = new URL(endpoint, baseUrl);
+  // The standalone server answers only under the prefix, even on loopback.
+  const metadataUrl = new URL(withBasePath(endpoint), baseUrl);
   if (projectId) {
     metadataUrl.searchParams.set("projectId", projectId.toString());
   }
@@ -111,7 +113,7 @@ export async function buildSharedReportPayload({
 
   // Then, call the report builder POST endpoint to get data
   // Always fetch ALL results for shared reports (ignore saved pagination settings)
-  const reportBuilderUrl = new URL(endpoint, baseUrl);
+  const reportBuilderUrl = new URL(withBasePath(endpoint), baseUrl);
 
   // Forward ALL config parameters to the report endpoint (generic approach)
   // This ensures pre-built reports get all their required parameters
@@ -219,6 +221,9 @@ export async function buildSharedReportPayload({
     },
     // Pass through additional fields for specialized reports (automation-trends, flaky-tests, etc.)
     ...(reportData.projects && { projects: reportData.projects }),
+    // Test-case-health: the chart's numbers over the whole set, so the
+    // viewer draws them from the summary rather than from every row.
+    ...(reportData.summary && { chartSummary: reportData.summary }),
     ...(reportData.dateGrouping && {
       dateGrouping: reportData.dateGrouping,
     }),
@@ -228,6 +233,10 @@ export async function buildSharedReportPayload({
     ...(reportData.totalFlakyTests && {
       totalFlakyTests: reportData.totalFlakyTests,
     }),
+    // Results trend: the period axis and settings the chart lays
+    // out from (projects ride the generic pass-through above).
+    ...(reportData.periods && { periods: reportData.periods }),
+    ...(reportData.settings && { settings: reportData.settings }),
     ...(isIterationMatrix && {
       matrixAxes: {
         caseAxis: reportData.caseAxis,

@@ -25,7 +25,23 @@ interface DragTargetContextValue {
    */
   isDraggingFolder: boolean;
   setIsDraggingFolder: (dragging: boolean) => void;
+  /**
+   * Why a dragged case cannot be dropped back into the list right now, or null
+   * when reordering is available. Rows stay draggable so the case can still be
+   * dropped on a folder; the list drop zone reads this to say what to undo.
+   */
+  reorderBlockedReason: ReorderBlockedReason;
+  setReorderBlockedReason: (reason: ReorderBlockedReason) => void;
+  /**
+   * The case list can take a copy-modifier drop that copies the dragged cases
+   * into the folder it is showing. Published by the list (which knows the
+   * folder, view and permissions) for the list drop zone and its drop target.
+   */
+  canCopyIntoCurrentFolder: boolean;
+  setCanCopyIntoCurrentFolder: (can: boolean) => void;
 }
+
+export type ReorderBlockedReason = "sort" | "search" | null;
 
 const DragTargetContext = createContext<DragTargetContextValue>({
   isOverReorderZone: false,
@@ -34,6 +50,10 @@ const DragTargetContext = createContext<DragTargetContextValue>({
   setIsDraggingCase: () => {},
   isDraggingFolder: false,
   setIsDraggingFolder: () => {},
+  reorderBlockedReason: null,
+  setReorderBlockedReason: () => {},
+  canCopyIntoCurrentFolder: false,
+  setCanCopyIntoCurrentFolder: () => {},
 });
 
 export function DragTargetProvider({ children }: { children: ReactNode }) {
@@ -46,6 +66,10 @@ export function DragTargetProvider({ children }: { children: ReactNode }) {
 
   const [isDraggingCase, setIsDraggingCase] = useState(false);
   const [isDraggingFolder, setIsDraggingFolder] = useState(false);
+  const [reorderBlockedReason, setReorderBlockedReason] =
+    useState<ReorderBlockedReason>(null);
+  const [canCopyIntoCurrentFolder, setCanCopyIntoCurrentFolder] =
+    useState(false);
 
   const setIsOverReorderZone = useCallback((entering: boolean) => {
     setHoverCount((prev) => Math.max(0, prev + (entering ? 1 : -1)));
@@ -60,6 +84,10 @@ export function DragTargetProvider({ children }: { children: ReactNode }) {
         setIsDraggingCase,
         isDraggingFolder,
         setIsDraggingFolder,
+        reorderBlockedReason,
+        setReorderBlockedReason,
+        canCopyIntoCurrentFolder,
+        setCanCopyIntoCurrentFolder,
       }}
     >
       {children}

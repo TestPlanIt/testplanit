@@ -1,4 +1,5 @@
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
+import { getAppUrl } from "~/lib/appUrl";
 
 /**
  * Shared helpers for Slack formatters. All formatters use the same
@@ -19,7 +20,7 @@ export const COLOR_YELLOW = "#eab308";
 
 /** Resolve the deployed app base URL. NEXTAUTH_URL is the codebase precedent. */
 function baseUrl(): string {
-  return process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  return getAppUrl();
 }
 
 /** Locale-less paths; next-intl resolves the recipient's preferred locale at request time. */

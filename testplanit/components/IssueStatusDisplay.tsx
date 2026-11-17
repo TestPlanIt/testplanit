@@ -21,6 +21,7 @@ export function IssueStatusDisplay({
 
   return (
     <Badge
+      data-status-surface
       variant="outline"
       className={`whitespace-nowrap ${className ?? ""}`}
       style={style}

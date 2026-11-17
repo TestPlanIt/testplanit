@@ -44,6 +44,7 @@ import { codeLanguageFromPath } from "~/lib/utils/codeLanguageFromPath";
 import { cn } from "~/utils";
 import { getDateFnsLocale } from "~/utils/locales";
 import { mapDateTimeFormatString } from "~/utils/mapDateTimeFormat";
+import { apiFetch } from "~/lib/basePath";
 
 export interface PinRepositoryOption {
   configId: number;
@@ -111,7 +112,7 @@ async function fetchRepositoryFile(
   path: string
 ): Promise<{ content: string; sha: string | null }> {
   const params = new URLSearchParams({ configId: String(configId), path });
-  const res = await fetch(
+  const res = await apiFetch(
     `/api/code-repositories/${repositoryId}/file?${params.toString()}`
   );
   if (!res.ok) {
@@ -250,7 +251,7 @@ export function AddCodePinDialog({
         take: pageSize,
         select: { id: true, name: true },
       };
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/model/RepositoryCases/findMany?q=${encodeURIComponent(
           JSON.stringify(params)
         )}`
@@ -258,7 +259,7 @@ export function AddCodePinDialog({
       const data = await res.json();
       const results: CaseOption[] = Array.isArray(data.data) ? data.data : [];
 
-      const countRes = await fetch(
+      const countRes = await apiFetch(
         `/api/model/RepositoryCases/count?q=${encodeURIComponent(
           JSON.stringify({ where })
         )}`

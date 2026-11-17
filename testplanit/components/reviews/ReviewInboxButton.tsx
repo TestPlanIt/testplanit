@@ -10,11 +10,9 @@ import { Inbox } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
-import { useEffect } from "react";
-
-import { createDeferredEventSource } from "~/hooks/deferredEventSource";
+import { useNotificationStream } from "~/hooks/notificationStreamManager";
 import { pendingReviewsForViewerWhere } from "~/hooks/usePendingReviewRequests";
-import { useReviewAssigneeRoleIds } from "~/hooks/useReviewAssigneeRoleIds";
+import { useReviewAssigneeScope } from "~/hooks/useReviewAssigneeScope";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { Link } from "~/lib/navigation";
 
@@ -52,16 +50,13 @@ export function ReviewInboxButton({
   const queryClient = useQueryClient();
   const { enabled, isLoading: featureLoading } = useReviewFeatureEnabled();
 
-  // Role memberships (global + SPECIFIC_ROLE) — feeds the role-holder branch
-  // of the count query's OR clause.
-  const currentUserRoleIds = useReviewAssigneeRoleIds(session?.user?.id);
+  // The roles the viewer holds per project — the role-holder branches of the
+  // count query's OR clause.
+  const { assigneeOr } = useReviewAssigneeScope(session?.user?.id);
 
   const { data: count } = useClientQueries(schema).reviewRequest.useCount(
     {
-      where: pendingReviewsForViewerWhere(
-        session?.user?.id,
-        currentUserRoleIds
-      ),
+      where: pendingReviewsForViewerWhere(assigneeOr),
     },
     { enabled: !!session?.user?.id && enabled === true }
   );
@@ -78,27 +73,16 @@ export function ReviewInboxButton({
   // The handler invalidates the whole ReviewRequest cache rather than
   // refetching this one count: ZenStack keys generated queries under
   // ["zenstack", "<Model>", …], so the prefix also refreshes the home
-  // dashboard's pending-review queue and any open entity's status banner. One
-  // stream connection serves every review surface — each opening its own
-  // EventSource would burn scarce HTTP/1.1 connection slots.
-  useEffect(() => {
-    if (!session?.user?.id || enabled !== true) return;
-    if (typeof window === "undefined" || typeof EventSource === "undefined") {
-      return;
-    }
-    const eventSource = createDeferredEventSource("/api/notifications/stream");
-    eventSource.onmessage = () => {
+  // dashboard's pending-review queue and any open entity's status banner. The
+  // stream itself is shared with the bell through notificationStreamManager.
+  useNotificationStream(
+    () => {
       void queryClient.invalidateQueries({
         queryKey: ["zenstack", "ReviewRequest"],
       });
-    };
-    eventSource.onerror = (err) => {
-      console.warn("[ReviewInboxButton] SSE transport error", err);
-    };
-    return () => {
-      eventSource.close();
-    };
-  }, [session?.user?.id, enabled, queryClient]);
+    },
+    !!session?.user?.id && enabled === true
+  );
 
   // Count of access-visible projects with the per-project toggle on. The
   // enhanced auto-API enforces project access policies, so this naturally

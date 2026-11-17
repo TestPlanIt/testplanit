@@ -24,7 +24,7 @@ import type {
 } from "~/zenstack/models";
 import type { UserGetPayload } from "~/zenstack/input";
 import { useQuery } from "@tanstack/react-query";
-import { CirclePlay, Compass, LinkIcon, Lock, Star } from "lucide-react";
+import { CirclePlay, Compass, LinkIcon, Lock } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
@@ -43,6 +43,8 @@ import UserWorkGanttChart, {
   type PlotTask,
 } from "./dataVisualizations/UserWorkGanttChart";
 import LoadingSpinner from "./LoadingSpinner";
+import { TestPlanItAnimatedMark } from "./TestPlanItLogo";
+import { apiFetch } from "~/lib/basePath";
 
 // Updated Helper type for TestRunCases
 type TestCaseWithResults = TestRunCases & {
@@ -281,7 +283,7 @@ export function UserDashboard() {
     useQuery<UserDashboardData>({
       queryKey: ["userDashboard", userId],
       queryFn: async () => {
-        const response = await fetch(`/api/users/${userId}/dashboard`);
+        const response = await apiFetch(`/api/users/${userId}/dashboard`);
         if (!response.ok) {
           throw new Error("Failed to fetch user dashboard data");
         }
@@ -818,7 +820,7 @@ export function UserDashboard() {
         id="dashboard-header"
         className="text-primary text-center py-8 flex flex-col items-center justify-start gap-3 h-full w-full"
       >
-        <Star className="h-12 w-12 animate-bounce fill-primary/20" />
+        <TestPlanItAnimatedMark className="w-10" />
         <span>{t("home.dashboard.noItems")}</span>
       </div>
     );

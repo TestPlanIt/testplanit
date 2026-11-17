@@ -146,7 +146,7 @@ describe("POST /api/reports/automation-candidates (pre-stream gates)", () => {
         steps: [{ id: 1 }],
         caseFieldValues: [],
         caseIssues: [],
-        _count: { testRuns: 0 },
+        _count: { testRunCases: 0 },
       },
     ]);
     vi.mocked(getEnhancedDb).mockResolvedValue({

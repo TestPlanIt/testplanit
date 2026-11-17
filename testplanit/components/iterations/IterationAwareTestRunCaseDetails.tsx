@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
 import { useActiveIterationFromUrl } from "~/hooks/useActiveIterationFromUrl";
 import type { OverrideParameterSchemaEntry } from "~/lib/schemas/iterationOverrideSchema";
+import { isBlockedByDependencies } from "~/utils/caseDependencies";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 
 import { IterationBulkConfirmDialog } from "./IterationBulkConfirmDialog";
@@ -26,6 +27,7 @@ import type {
   IterationMenuAction,
   IterationParameterMeta,
 } from "./types";
+import { apiFetch } from "~/lib/basePath";
 
 interface IterationAwareTestRunCaseDetailsProps {
   testRunCaseId: number;
@@ -374,7 +376,7 @@ export function IterationAwareTestRunCaseDetails({
         });
         return;
       }
-      const res = await fetch(`/api/test-runs/submit-result`, {
+      const res = await apiFetch(`/api/test-runs/submit-result`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -494,7 +496,10 @@ export function IterationAwareTestRunCaseDetails({
               projectId={projectId}
               iteration={activeIteration}
               totalIterations={totalIterations}
-              isDisabled={isRunCompleted}
+              isDisabled={
+                isRunCompleted ||
+                isBlockedByDependencies(innerProps.dependencyState)
+              }
               canAddEditResults={canAddEditResults}
               stepParameters={stepParameters}
               onAfterSubmit={handleAdvanceAfterResult}

@@ -1,11 +1,15 @@
 import { NextRequest } from "next/server";
 import { handleCodePinCoverageReportPOST } from "~/utils/codePinCoverageReportUtils";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
-export async function GET() {
+async function reportGet() {
   // A pre-built report: no dimension or metric selection.
   return Response.json({ dimensions: [], metrics: [] });
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   return handleCodePinCoverageReportPOST(req, false);
 }
+
+export const GET = withReplicaRoute(reportGet);
+export const POST = withReplicaRoute(reportPost);

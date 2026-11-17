@@ -107,6 +107,7 @@ describe("mantisbtAdapter (inbound webhook)", () => {
       expect(mantisbtAdapter.extractLinkedIssueRef(payload)).toEqual({
         externalKey: "#42",
         externalSystem: "MANTISBT",
+        externalId: "42",
       });
     });
 

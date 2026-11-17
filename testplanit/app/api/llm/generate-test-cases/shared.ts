@@ -147,6 +147,7 @@ export interface GenerationContext {
       step: string;
       expectedResult: string;
     }>;
+    source?: ExistingCaseSource;
   }>;
   folderContext: number;
   linkedIssues?: LinkedIssueContext[];
@@ -199,12 +200,21 @@ export interface GeneratedTestCase {
 // Server-side context: fetch test cases from folder hierarchy
 // ---------------------------------------------------------------------------
 
+/**
+ * Where a context case came from. `linked` and `hierarchy` cases sit next to
+ * the generated ones and are rendered as coverage not to duplicate; `related`
+ * cases were matched by content from elsewhere in the project and are
+ * rendered as examples of the project's style.
+ */
+export type ExistingCaseSource = "linked" | "hierarchy" | "related";
+
 /** A single existing test case as context for the LLM prompt. */
 export interface ExistingTestCaseContext {
   name: string;
   template: string;
   description?: string;
   steps?: Array<{ step: string; expectedResult: string }>;
+  source?: ExistingCaseSource;
 }
 
 /** Extract plain text from a TipTap JSON or string value. */
@@ -385,6 +395,7 @@ export async function fetchIssueLinkedCasesContext(
 
   for (const row of rows) {
     const ctx = namesOnly ? toNameOnlyCaseContext(row) : toCaseContext(row);
+    ctx.source = "linked";
     const tokens = namesOnly
       ? estimateNameOnlyTokens(ctx)
       : estimateCaseTokens(ctx);
@@ -397,10 +408,117 @@ export async function fetchIssueLinkedCasesContext(
   return { cases, caseIds, tokensUsed };
 }
 
+/** What the generation is about, for the content-matched related-case tier. */
+export interface RelatedCasesSource {
+  title: string;
+  description?: string;
+  notes?: string;
+  templateId?: number;
+  tenantId?: string;
+  /**
+   * Ranks the project's cases by relevance — `makeRelatedCaseFinder` in
+   * ./related-cases. Injected because this module is also loaded by the
+   * wizard in the browser and must not import the search client itself.
+   */
+  find: RelatedCaseFinder;
+}
+
+/** The finder's input: who is generating what, and which cases to skip. */
+export interface RelatedCasesQuery {
+  projectId: number;
+  /** Issue title, document title, or page title. */
+  title: string;
+  description?: string;
+  /** The user's extra guidance — usually names the feature under test. */
+  notes?: string;
+  /** Cases on this template are ranked ahead of otherwise equal matches. */
+  templateId?: number;
+  excludeCaseIds?: Set<number>;
+  tenantId?: string;
+  limit?: number;
+}
+
+/** Ranked case ids, best match first. */
+export type RelatedCaseFinder = (query: RelatedCasesQuery) => Promise<number[]>;
+
+/** How many related cases to hydrate before the token budget trims. */
+const RELATED_CASES_LIMIT: Record<HierarchyContextMode, number> = {
+  full: 8,
+  names: 20,
+};
+
 /**
- * Existing-case context: issue-linked cases first, then the folder hierarchy
- * with the remaining budget. Both feed the same "do not duplicate" prompt
- * section, so a case is emitted at most once across the two.
+ * Cases from anywhere in the project that read like the issue, in the order
+ * the finder ranked them (see ./related-cases for what that means with and
+ * without Elasticsearch), hydrated from the database within the budget.
+ */
+export async function fetchRelatedCasesContext(
+  db: DbClient,
+  projectId: number,
+  related: RelatedCasesSource,
+  tokenBudget: number,
+  mode: HierarchyContextMode = "full",
+  excludeCaseIds?: Set<number>,
+  maxCases?: number
+): Promise<ExistingTestCaseContext[]> {
+  if (tokenBudget <= 0 || maxCases === 0) return [];
+
+  const limit = Math.min(
+    RELATED_CASES_LIMIT[mode],
+    maxCases ?? Number.POSITIVE_INFINITY
+  );
+  const query: RelatedCasesQuery = {
+    projectId,
+    title: related.title,
+    description: related.description,
+    notes: related.notes,
+    templateId: related.templateId,
+    tenantId: related.tenantId,
+    excludeCaseIds,
+    limit,
+  };
+
+  const ids = await related.find(query);
+  if (ids.length === 0) return [];
+
+  const namesOnly = mode === "names";
+  const rows: Array<Record<string, any>> = await db.repositoryCases.findMany({
+    where: {
+      id: { in: ids },
+      projectId,
+      isDeleted: false,
+      isArchived: false,
+    },
+    select: buildCaseSelect(namesOnly),
+  });
+  const rank = new Map(ids.map((id, i) => [id, i]));
+  rows.sort((a, b) => (rank.get(a.id) ?? 999) - (rank.get(b.id) ?? 999));
+
+  const results: ExistingTestCaseContext[] = [];
+  let tokensUsed = 0;
+  for (const row of rows) {
+    if (results.length >= limit) break;
+    const ctx = namesOnly ? toNameOnlyCaseContext(row) : toCaseContext(row);
+    ctx.source = "related";
+    const tokens = namesOnly
+      ? estimateNameOnlyTokens(ctx)
+      : estimateCaseTokens(ctx);
+    if (tokensUsed + tokens > tokenBudget) break;
+    results.push(ctx);
+    tokensUsed += tokens;
+  }
+  return results;
+}
+
+/**
+ * Existing-case context in three tiers sharing one token budget: cases linked
+ * to the issue, then the folder hierarchy, then — when the caller describes
+ * what is being generated — cases from elsewhere in the project matched by
+ * content. The first two render as coverage not to duplicate, the third as
+ * style examples. A case is emitted at most once across the tiers.
+ *
+ * `maxCases` caps the total; the expand phase uses it to pull a few full
+ * exemplars without paying for the whole folder.
  */
 export async function fetchExistingCasesContext(
   db: DbClient,
@@ -408,11 +526,14 @@ export async function fetchExistingCasesContext(
   source: {
     folderId?: number | null;
     issueRef?: IssueCaseLinkRef | null;
+    related?: RelatedCasesSource | null;
   },
   tokenBudget: number,
-  mode: HierarchyContextMode = "full"
+  mode: HierarchyContextMode = "full",
+  options?: { maxCases?: number }
 ): Promise<ExistingTestCaseContext[]> {
   if (tokenBudget <= 0) return [];
+  const maxCases = options?.maxCases ?? Number.POSITIVE_INFINITY;
 
   const linked = source.issueRef
     ? await fetchIssueLinkedCasesContext(
@@ -423,22 +544,41 @@ export async function fetchExistingCasesContext(
         mode
       )
     : { cases: [], caseIds: new Set<number>(), tokensUsed: 0 };
+  const results = linked.cases.slice(0, maxCases);
+  const seenIds = new Set(linked.caseIds);
+  let tokensUsed = linked.tokensUsed;
 
-  const hierarchyBudget = tokenBudget - linked.tokensUsed;
-  if (typeof source.folderId !== "number" || hierarchyBudget <= 0) {
-    return linked.cases;
+  if (typeof source.folderId === "number" && tokensUsed < tokenBudget) {
+    const hierarchy = await fetchHierarchyContextDetailed(
+      db,
+      projectId,
+      source.folderId,
+      tokenBudget - tokensUsed,
+      mode,
+      seenIds
+    );
+    for (const c of hierarchy.cases) {
+      if (results.length >= maxCases) break;
+      results.push(c);
+    }
+    for (const id of hierarchy.caseIds) seenIds.add(id);
+    tokensUsed += hierarchy.tokensUsed;
   }
 
-  const hierarchy = await fetchHierarchyContext(
-    db,
-    projectId,
-    source.folderId,
-    hierarchyBudget,
-    mode,
-    linked.caseIds
-  );
+  if (source.related && tokensUsed < tokenBudget && results.length < maxCases) {
+    const related = await fetchRelatedCasesContext(
+      db,
+      projectId,
+      source.related,
+      tokenBudget - tokensUsed,
+      mode,
+      seenIds,
+      Number.isFinite(maxCases) ? maxCases - results.length : undefined
+    );
+    results.push(...related);
+  }
 
-  return [...linked.cases, ...hierarchy];
+  return results;
 }
 
 /**
@@ -465,6 +605,30 @@ export async function fetchHierarchyContext(
   mode: HierarchyContextMode = "full",
   excludeCaseIds?: Set<number>
 ): Promise<ExistingTestCaseContext[]> {
+  const detailed = await fetchHierarchyContextDetailed(
+    db,
+    projectId,
+    folderId,
+    tokenBudget,
+    mode,
+    excludeCaseIds
+  );
+  return detailed.cases;
+}
+
+/** `fetchHierarchyContext` plus the ids and budget it consumed. */
+async function fetchHierarchyContextDetailed(
+  db: DbClient,
+  projectId: number,
+  folderId: number,
+  tokenBudget: number,
+  mode: HierarchyContextMode = "full",
+  excludeCaseIds?: Set<number>
+): Promise<{
+  cases: ExistingTestCaseContext[];
+  caseIds: Set<number>;
+  tokensUsed: number;
+}> {
   const namesOnly = mode === "names";
 
   const caseSelect = buildCaseSelect(namesOnly);
@@ -520,6 +684,7 @@ export async function fetchHierarchyContext(
   ];
 
   const results: ExistingTestCaseContext[] = [];
+  const caseIds = new Set<number>();
   let tokensUsed = 0;
 
   for (const folderIds of groups) {
@@ -544,16 +709,18 @@ export async function fetchHierarchyContext(
       // Already emitted by the issue-linked pass — don't list it twice.
       if (excludeCaseIds?.has(row.id)) continue;
       const ctx = namesOnly ? toNameOnlyCaseContext(row) : toCaseContext(row);
+      ctx.source = "hierarchy";
       const tokens = namesOnly
         ? estimateNameOnlyTokens(ctx)
         : estimateCaseTokens(ctx);
       if (tokensUsed + tokens > tokenBudget) break;
       results.push(ctx);
+      caseIds.add(row.id);
       tokensUsed += tokens;
     }
   }
 
-  return results;
+  return { cases: results, caseIds, tokensUsed };
 }
 
 // ---------------------------------------------------------------------------
@@ -935,8 +1102,34 @@ ${excludedFieldNames.map((name) => `- ${name}`).join("\n")}
     const languageTail = rendered.includes("LANGUAGE CONSISTENCY")
       ? ""
       : languageConsistencyInstruction;
+    // A prompt that does not place {{EXAMPLE_STRUCTURE}} never shows the
+    // model the template's fields, so the model answers in a shape of its
+    // own (top-level `description` and `steps`, say) and every field value
+    // is lost before the preview. The output format is appended for such a
+    // prompt, worded to override any structure the prompt text describes.
+    const outputFormat = baseTemplate.includes("{{EXAMPLE_STRUCTURE}}")
+      ? ""
+      : `OUTPUT FORMAT (the only accepted response shape; it replaces any JSON structure described above):
+{
+  "testCases": [
+${exampleStructure}
+  ]
+}
+
+REQUIRED FIELDS (must be included in every test case):
+${requiredFieldsList || "- (none)"}
+
+ADDITIONAL FIELDS (include ALL of these in fieldValues):
+${optionalFieldsList || "- (none)"}
+
+- Each test case object must contain ONLY: id, name, fieldValues${autoGenerateTags ? ", tags" : ""}. Do NOT include description, priority, automated, steps, or any other top-level keys.
+- ALL data belongs inside fieldValues using the exact field names shown above${stepsInstruction}${priorityInstruction}
+- For single-select fields with options, use exactly one of the provided options
+- For multiselect fields, provide an array of 1-3 relevant options from the list
+- CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly${tagInstructions ? `\n${tagInstructions}` : ""}`;
     return [
       rendered,
+      outputFormat,
       usesExclusionVariable ? "" : exclusionInstruction,
       parameterInstructions,
       languageTail,
@@ -1105,6 +1298,43 @@ function withLinkedIssuesSlot(baseTemplate: string): string {
   return `${baseTemplate}{{LINKED_ISSUES_SECTION}}`;
 }
 
+type PromptCase = NonNullable<GenerationContext["existingTestCases"]>[number];
+
+/** Folder and issue-linked cases on one side, content-matched cases on the other. */
+function splitCasesBySource(cases: PromptCase[] | undefined): {
+  local: PromptCase[];
+  related: PromptCase[];
+} {
+  const local: PromptCase[] = [];
+  const related: PromptCase[] = [];
+  for (const tc of cases ?? []) {
+    if (tc.source === "related") related.push(tc);
+    else local.push(tc);
+  }
+  return { local, related };
+}
+
+/** Numbered list of cases with description and steps. */
+function renderFullCases(cases: PromptCase[]): string {
+  let out = "";
+  cases.forEach((tc, i) => {
+    out += `\n${i + 1}. ${tc.name}`;
+    if (tc.description) {
+      out += `\n   Description: ${tc.description}`;
+    }
+    if (tc.steps && tc.steps.length > 0) {
+      out += `\n   Steps:`;
+      tc.steps.forEach((step, stepIndex) => {
+        out += `\n     ${stepIndex + 1}. ${step.step}`;
+        if (step.expectedResult) {
+          out += ` → Expected: ${step.expectedResult}`;
+        }
+      });
+    }
+  });
+  return out;
+}
+
 export function buildUserPrompt(
   issue: IssueData,
   context: GenerationContext,
@@ -1118,25 +1348,17 @@ export function buildUserPrompt(
     userNotesSection = `\n\nADDITIONAL TESTING GUIDANCE: ${context.userNotes}`;
   }
 
+  const { local, related } = splitCasesBySource(context.existingTestCases);
   let existingCasesSection = "";
-  if (context.existingTestCases && context.existingTestCases.length > 0) {
-    existingCasesSection = `\n\nEXISTING TEST CASES IN FOLDER:`;
-    context.existingTestCases.forEach((tc, i) => {
-      existingCasesSection += `\n${i + 1}. ${tc.name}`;
-      if (tc.description) {
-        existingCasesSection += `\n   Description: ${tc.description}`;
-      }
-      if (tc.steps && tc.steps.length > 0) {
-        existingCasesSection += `\n   Steps:`;
-        tc.steps.forEach((step, stepIndex) => {
-          existingCasesSection += `\n     ${stepIndex + 1}. ${step.step}`;
-          if (step.expectedResult) {
-            existingCasesSection += ` → Expected: ${step.expectedResult}`;
-          }
-        });
-      }
-    });
+  if (local.length > 0) {
+    existingCasesSection += `\n\nEXISTING TEST CASES IN FOLDER:`;
+    existingCasesSection += renderFullCases(local);
     existingCasesSection += `\n\nUse these existing test cases to understand the testing patterns, step granularity, and domain terminology used in this project. Generate new cases that complement — not duplicate — the existing coverage. Each new test case must cover different functionality, scenarios, or edge cases not already tested.`;
+  }
+  if (related.length > 0) {
+    existingCasesSection += `\n\nRELATED TEST CASES ELSEWHERE IN THIS PROJECT:`;
+    existingCasesSection += renderFullCases(related);
+    existingCasesSection += `\n\nThese cases live in other folders and were matched to this issue by content. Use them as examples of this project's naming, step granularity, and expected-result style. Treat any scenario they already cover as existing coverage — do not generate it again.`;
   }
 
   if (baseTemplate) {
@@ -1268,16 +1490,24 @@ STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}
     prompt += `\n\nADDITIONAL TESTING GUIDANCE: ${context.userNotes}`;
   }
 
-  if (context.existingTestCases && context.existingTestCases.length > 0) {
-    // Names-only on purpose: keeps the outline prompt small so the LLM
-    // returns quickly even when the folder has many cases. Titles are
-    // enough signal for the model to avoid generating overlapping
-    // outlines — full case detail would just inflate latency.
+  // Names-only on purpose: keeps the outline prompt small so the LLM
+  // returns quickly even when the folder has many cases. Titles are
+  // enough signal for the model to avoid generating overlapping
+  // outlines — full case detail would just inflate latency.
+  const { local, related } = splitCasesBySource(context.existingTestCases);
+  if (local.length > 0) {
     prompt += `\n\nEXISTING TEST CASE TITLES — DO NOT DUPLICATE OR SUBSTANTIALLY OVERLAP:`;
-    context.existingTestCases.forEach((tc, i) => {
+    local.forEach((tc, i) => {
       prompt += `\n${i + 1}. ${tc.name}`;
     });
     prompt += `\n\nThe titles and summaries you generate must cover scenarios NOT already represented above. Skip any scenario that is already covered, even if your wording would be slightly different.`;
+  }
+  if (related.length > 0) {
+    prompt += `\n\nRELATED TEST CASE TITLES ELSEWHERE IN THIS PROJECT:`;
+    related.forEach((tc, i) => {
+      prompt += `\n${i + 1}. ${tc.name}`;
+    });
+    prompt += `\n\nThese were matched to the issue by content from other folders. Match their naming style, and skip any scenario they already cover.`;
   }
 
   prompt += `\n\nGenerate a list of test case titles and one-sentence summaries that cover the key scenarios for this issue.`;
@@ -1306,7 +1536,17 @@ export function buildExpandUserPrompt(
   context: GenerationContext,
   baseTemplate?: string
 ): string {
-  const outlineSection = `\n\nTEST CASE TO GENERATE:\nTitle: "${outline.title}"\nSummary: ${outline.summary}\n\nGenerate a complete test case for the title and summary above. The test case must match that title exactly.`;
+  // A few full cases from the project so the written steps match the
+  // team's granularity and wording. The expand route fetches these server-
+  // side; a client-supplied context carries none.
+  let exemplarsSection = "";
+  if (context.existingTestCases && context.existingTestCases.length > 0) {
+    exemplarsSection = `\n\nEXAMPLE TEST CASES FROM THIS PROJECT:`;
+    exemplarsSection += renderFullCases(context.existingTestCases);
+    exemplarsSection += `\n\nMatch the step granularity, wording, and expected-result style of these examples. Do not copy their content — they show how this project writes test cases, not what to test.`;
+  }
+
+  const outlineSection = `${exemplarsSection}\n\nTEST CASE TO GENERATE:\nTitle: "${outline.title}"\nSummary: ${outline.summary}\n\nGenerate a complete test case for the title and summary above. The test case must match that title exactly.`;
 
   // Ground each expanded case in the same issue context the outline saw:
   // source comments + one-hop linked issues. The enrichment is fetched once
@@ -1393,7 +1633,18 @@ export function parseAndValidateTestCases(
   try {
     const cleanContent = rawContent.trim();
 
-    let jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+    // A bare array of cases, `[ {...}, {...} ]`, fenced or not, is what a
+    // model falls back to when nothing pinned the structure. The object
+    // matcher would take the first "{" through the last "}" of it and fail
+    // on the comma between the cases, so the array is matched whole; the
+    // parsed-array branch below already accepts it.
+    const unfenced = cleanContent
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/```\s*$/, "")
+      .trim();
+    let jsonMatch = unfenced.startsWith("[")
+      ? unfenced.match(/\[[\s\S]*\]/)
+      : cleanContent.match(/\{[\s\S]*\}/);
 
     if (!jsonMatch) {
       const codeBlockMatch = cleanContent.match(
@@ -1592,6 +1843,7 @@ export function parseAndValidateTestCases(
         tc.fieldValues,
         template
       );
+      liftTopLevelFieldValues(tc, template, validatedFieldValues);
 
       template.fields.forEach((field) => {
         if (field.options && validatedFieldValues[field.name]) {
@@ -1618,17 +1870,6 @@ export function parseAndValidateTestCases(
       });
 
       normalizeStepsFieldValue(validatedFieldValues, template, tc.steps);
-
-      // If the LLM put priority at the top level instead of in fieldValues,
-      // move it into fieldValues for any priority-like field
-      if (tc.priority && typeof tc.priority === "string") {
-        const priorityFieldDef = template.fields.find((f) =>
-          f.name.toLowerCase().includes("priority")
-        );
-        if (priorityFieldDef && !validatedFieldValues[priorityFieldDef.name]) {
-          validatedFieldValues[priorityFieldDef.name] = tc.priority;
-        }
-      }
 
       // INT-06: extract + validate parameters and starterDataset when
       // present. ABSENT keys preserve legacy behavior (no fields, no
@@ -1879,6 +2120,60 @@ function normalizeStepsFieldValue(
   if (steps.length > 0) fieldValues[stepsFieldDef.name] = steps;
 }
 
+/** Keys of a generated case that are never field values. */
+const TOP_LEVEL_CASE_KEYS = new Set([
+  "id",
+  "name",
+  "fieldValues",
+  "tags",
+  "steps",
+  "automated",
+  "parameters",
+  "starterDataset",
+]);
+
+/** `Post Conditions`, `post_conditions` and `postConditions` compare equal. */
+const canonicalFieldKey = (key: string): string =>
+  key.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/**
+ * Field values a model put at the top level of a case instead of under
+ * `fieldValues`: `"description": …` for a Description field, `"priority"`
+ * for a priority-like one. Matched by field name with case, spaces and
+ * punctuation ignored; a value already present under fieldValues wins, and
+ * steps keep their own normalization.
+ */
+function liftTopLevelFieldValues(
+  tc: GeneratedTestCase,
+  template: TemplateData,
+  fieldValues: Record<string, any>
+): void {
+  const topLevel = tc as unknown as Record<string, unknown>;
+  const byCanonical = new Map<string, unknown>();
+  for (const [key, value] of Object.entries(topLevel)) {
+    if (TOP_LEVEL_CASE_KEYS.has(key) || value === null || value === undefined)
+      continue;
+    const canonical = canonicalFieldKey(key);
+    if (!byCanonical.has(canonical)) byCanonical.set(canonical, value);
+  }
+  if (byCanonical.size === 0) return;
+
+  for (const field of template.fields) {
+    if (field.type.toLowerCase() === "steps") continue;
+    const current = fieldValues[field.name];
+    if (current !== undefined && current !== null && current !== "") continue;
+    let value = byCanonical.get(canonicalFieldKey(field.name));
+    if (
+      value === undefined &&
+      field.name.toLowerCase().includes("priority") &&
+      typeof topLevel.priority === "string"
+    ) {
+      value = topLevel.priority;
+    }
+    if (value !== undefined) fieldValues[field.name] = value;
+  }
+}
+
 function stripUnknownFieldValues(
   fieldValues: Record<string, any> | undefined,
   template: TemplateData
@@ -1903,6 +2198,7 @@ export function validateTestCase(
     tc.fieldValues,
     template
   );
+  liftTopLevelFieldValues(tc, template, validatedFieldValues);
   template.fields.forEach((field) => {
     if (field.options && validatedFieldValues[field.name]) {
       const fieldValue = validatedFieldValues[field.name];
@@ -1927,16 +2223,6 @@ export function validateTestCase(
   });
 
   normalizeStepsFieldValue(validatedFieldValues, template, tc.steps);
-
-  // If the LLM put priority at the top level, move into fieldValues
-  if (tc.priority && typeof tc.priority === "string") {
-    const priorityFieldDef = template.fields.find((f) =>
-      f.name.toLowerCase().includes("priority")
-    );
-    if (priorityFieldDef && !validatedFieldValues[priorityFieldDef.name]) {
-      validatedFieldValues[priorityFieldDef.name] = tc.priority;
-    }
-  }
 
   return {
     id: tc.id || `generated_${Date.now()}_${index}`,

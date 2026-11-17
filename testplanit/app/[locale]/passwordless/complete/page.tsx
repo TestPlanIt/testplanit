@@ -9,6 +9,8 @@ import { AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link, useRouter } from "~/lib/navigation";
+import { stripBasePath } from "~/lib/basePath";
+import { clientCookie } from "~/lib/auth/cookieScope";
 
 /**
  * Same-browser completion for the device-bound passwordless flow.
@@ -42,9 +44,11 @@ export default function PasswordlessCompletePage() {
       const session = await getSession();
       if (session?.user?.preferences?.locale) {
         const urlLocale = session.user.preferences.locale.replace("_", "-");
-        document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+        document.cookie = clientCookie("NEXT_LOCALE", urlLocale, [
+          "max-age=31536000",
+        ]);
       }
-      router.push(callbackUrl);
+      router.push(stripBasePath(callbackUrl));
     };
 
     void (async () => {

@@ -9,6 +9,7 @@ import { Milestone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback } from "react";
 import { cn } from "~/utils";
+import { apiFetch } from "~/lib/basePath";
 
 interface MilestonesCountDisplayProps {
   /**
@@ -91,7 +92,7 @@ export const MilestonesCountDisplay: React.FC<MilestonesCountDisplayProps> = ({
         },
       };
 
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/model/Milestones/findMany?q=${encodeURIComponent(JSON.stringify(params))}`
       );
       if (!response.ok) {
@@ -104,7 +105,7 @@ export const MilestonesCountDisplay: React.FC<MilestonesCountDisplayProps> = ({
         ? (payload.data as MilestoneRow[])
         : [];
 
-      const countResponse = await fetch(
+      const countResponse = await apiFetch(
         `/api/model/Milestones/count?q=${encodeURIComponent(JSON.stringify({ where }))}`
       );
       let total = results.length;

@@ -37,6 +37,8 @@ interface AutomatedRunMetricsProps {
   projectId?: string | number;
   /** Makes the Flaky Tests tile a filter shortcut when provided. */
   onFlakyClick?: () => void;
+  /** Makes the Quarantined tile a filter shortcut when provided. */
+  onQuarantinedClick?: () => void;
   /** Makes the Retries tile a filter shortcut when provided. */
   onRetriesClick?: () => void;
 }
@@ -110,9 +112,11 @@ export function AutomatedRunMetrics({
   results,
   projectId: propProjectId,
   onFlakyClick,
+  onQuarantinedClick,
   onRetriesClick,
 }: AutomatedRunMetricsProps) {
   const tCommon = useTranslations("common");
+  const tTriage = useTranslations("triage");
   const locale = useLocale();
   const params = useParams();
   const projectId = propProjectId || (params.projectId as string | undefined);
@@ -165,8 +169,17 @@ export function AutomatedRunMetrics({
       value: `${metrics.passRate.toFixed(0)}%`,
       hint: tCommon("labels.passRateHint", {
         passed: metrics.passedCount,
-        total: metrics.totalCount,
+        total: metrics.totalCount - metrics.quarantinedCount,
       }),
+    });
+  }
+  if (metrics.quarantinedCount > 0) {
+    tiles.push({
+      label: tTriage("quarantine.label"),
+      value: metrics.quarantinedCount.toLocaleString(locale),
+      hint: tTriage("quarantine.metricHint"),
+      onClick: onQuarantinedClick,
+      testId: "metric-tile-quarantined",
     });
   }
   if (concurrency !== null) {

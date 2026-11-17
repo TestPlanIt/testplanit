@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { AlertCircleIcon, CheckIcon } from "lucide-react";
+import { AlertCircleIcon, Asterisk, CheckIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -198,7 +198,11 @@ export function SharedDatasetMappingFields({
                         {parameters.map((p) => (
                           <SelectItem key={p.name} value={p.name}>
                             {p.name}
-                            {p.required ? " *" : ""}
+                            {p.required && (
+                              <sup>
+                                <Asterisk className="w-3 h-3 text-destructive" />
+                              </sup>
+                            )}
                           </SelectItem>
                         ))}
                       </SelectContent>

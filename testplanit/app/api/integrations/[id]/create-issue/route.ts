@@ -1,5 +1,10 @@
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { baseDb } from "@/lib/db";
+import { getEnhancedDb } from "~/lib/auth/utils";
+import {
+  isProjectAdminFor,
+  userHasAreaPermission,
+} from "~/lib/services/areaPermission";
 import { resolveEditorMediaAttachments } from "@/lib/integrations/editorMediaAttachments";
 import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import type { JsonValue } from "@zenstackhq/orm";
@@ -25,13 +30,16 @@ const createIssueSchema = z.object({
   issueType: z.string().optional(),
   priority: z.string().optional(),
   assigneeId: z.string().optional(),
+  assigneeIds: z.array(z.string()).max(10).optional(),
   labels: z.array(z.string()).optional(),
+  milestone: z.string().optional(),
   customFields: z.record(z.string(), z.any()).optional(),
   testCaseId: z.string().optional(),
   testRunId: z.string().optional(),
   sessionId: z.string().optional(),
   testRunResultId: z.string().optional(),
   testRunStepResultId: z.string().optional(),
+  failureSignatureId: z.string().optional(),
 });
 
 export async function POST(
@@ -164,6 +172,59 @@ export async function POST(
           );
         }
       }
+    }
+
+    // An issue created from a failure pattern is linked to it. The pattern
+    // decides the project, and linking needs the same right as linking from
+    // the pattern page. Checked before anything is created in the tracker.
+    let failureSignatureId: number | null = null;
+    if (validatedData.failureSignatureId !== undefined) {
+      const rawId = validatedData.failureSignatureId.trim();
+      failureSignatureId = Number(rawId);
+      if (!/^[1-9]\d*$/.test(rawId) || failureSignatureId > 2147483647) {
+        return NextResponse.json(
+          { error: "Invalid failure pattern id" },
+          { status: 400 }
+        );
+      }
+      const db = await getEnhancedDb(session);
+      const signature = await db.failureSignature.findFirst({
+        where: { id: failureSignatureId },
+        select: { projectId: true },
+      });
+      if (!signature) {
+        return NextResponse.json(
+          { error: "Failure pattern not found" },
+          { status: 404 }
+        );
+      }
+      if (
+        validatedData.testplanitProjectId !== undefined &&
+        validatedData.testplanitProjectId !== signature.projectId
+      ) {
+        return NextResponse.json(
+          { error: "The failure pattern belongs to a different project" },
+          { status: 400 }
+        );
+      }
+      const allowed =
+        (await isProjectAdminFor(session.user.id, signature.projectId)) ||
+        (await userHasAreaPermission(
+          session.user.id,
+          signature.projectId,
+          "FailurePatterns",
+          "canAddEdit"
+        ));
+      if (!allowed) {
+        return NextResponse.json(
+          {
+            error:
+              "You do not have permission to link issues to this failure pattern",
+          },
+          { status: 403 }
+        );
+      }
+      internalProjectId = signature.projectId;
     }
 
     // Initialize adapter through IntegrationManager. OAuth integrations carry a
@@ -338,7 +399,9 @@ export async function POST(
       issueType: validatedData.issueType,
       priority: validatedData.priority,
       assigneeId: validatedData.assigneeId,
+      assigneeIds: validatedData.assigneeIds,
       labels: validatedData.labels,
+      milestone: validatedData.milestone,
       customFields: validatedData.customFields,
     };
 
@@ -383,7 +446,8 @@ export async function POST(
       validatedData.testRunId ||
       validatedData.sessionId ||
       validatedData.testRunResultId ||
-      validatedData.testRunStepResultId
+      validatedData.testRunStepResultId ||
+      failureSignatureId !== null
     ) {
       // Entity links to (re)connect on both create and update. The test-case
       // link is handled separately via the RepositoryCaseIssue join after the
@@ -470,6 +534,20 @@ export async function POST(
         await baseDb.repositoryCaseIssue.upsert({
           where: { caseId_issueId: { caseId, issueId: issue.id } },
           create: { caseId, issueId: issue.id },
+          update: {},
+        });
+      }
+      // An issue created from a failure pattern is its known issue. Same
+      // explicit join, same idempotent upsert; authorized above.
+      if (failureSignatureId !== null) {
+        await baseDb.failureSignatureIssue.upsert({
+          where: {
+            signatureId_issueId: {
+              signatureId: failureSignatureId,
+              issueId: issue.id,
+            },
+          },
+          create: { signatureId: failureSignatureId, issueId: issue.id },
           update: {},
         });
       }

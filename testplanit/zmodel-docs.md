@@ -43,6 +43,7 @@ Defines distinct functional areas within the application for granular permission
 - TestRunResults
 - TestRunResultRestrictedFields
 - AutomatedExecution
+- FailurePatterns
 - Sessions
 - SessionsRestrictedFields
 - ClosedSessions
@@ -52,6 +53,7 @@ Defines distinct functional areas within the application for granular permission
 - Issues
 - Reporting
 - Settings
+- Alerts
 
 ### AuditAction
 
@@ -337,7 +339,6 @@ Categorizes workflows based on their general state (NOT_STARTED, IN_PROGRESS, DO
 - [LlmIntegration](#llmintegration)
 - [LlmPromptTemplate](#llmprompttemplate)
 - [LlmProviderConfig](#llmproviderconfig)
-- [LlmRateLimit](#llmratelimit)
 - [LlmResponseCache](#llmresponsecache)
 - [LlmUsage](#llmusage)
 - [Milestones](#milestones)
@@ -1346,7 +1347,6 @@ erDiagram
 "LlmIntegration" ||--o{ "LlmResponseCache": llmResponseCaches
 "LlmIntegration" ||--o{ "ProjectLlmIntegration": projectLlmIntegrations
 "LlmIntegration" ||--o{ "LlmPromptTemplate": llmPromptTemplates
-"LlmIntegration" ||--o{ "LlmRateLimit": llmRateLimits
 
 ```
 
@@ -1404,8 +1404,6 @@ erDiagram
   String defaultModel
   Json availableModels
   Int maxTokensPerRequest
-  Int maxRequestsPerMinute
-  Int maxRequestsPerDay  "?"
   Decimal costPerInputToken
   Decimal costPerOutputToken
   Decimal monthlyBudget  "?"
@@ -1427,42 +1425,6 @@ erDiagram
 - Deny all operations if the user is not authenticated.
 - Allow read access if the authenticated user has any access level (not null).
 - Allow all operations if the authenticated user has 'ADMIN' access.
-
-### LlmRateLimit
-
-Manages rate limits for LLM usage at different scopes (global, integration, project, user) to control consumption.
-
-```mermaid
-erDiagram
-"LlmRateLimit" {
-  String id PK
-  Int llmIntegrationId FK "?"
-  String scope
-  String scopeId  "?"
-  String feature  "?"
-  String windowType
-  Int windowSize
-  Int maxRequests
-  Int maxTokens  "?"
-  Int currentRequests
-  Int currentTokens
-  DateTime windowStart
-  Boolean blockOnExceed
-  Boolean queueOnExceed
-  Boolean alertOnExceed
-  Int priority
-  Boolean isActive
-  DateTime createdAt
-  DateTime updatedAt
-}
-
-"LlmRateLimit" }o--|| "LlmIntegration": llmIntegration
-
-```
-
-- Deny all operations if the user is not authenticated.
-- Allow read access if the authenticated user has any access level (not null).
-- Allow create, update, and delete operations if the authenticated user has 'ADMIN' access.
 
 ### LlmResponseCache
 
@@ -3302,8 +3264,7 @@ erDiagram
   TimeFormat timeFormat
   String timezone
   NotificationMode notificationMode
-  Boolean emailNotifications
-  Boolean inAppNotifications
+  NotificationType[] mutedNotificationTypes
   Boolean hasCompletedWelcomeTour
   Boolean hasCompletedInitialPreferencesSetup
 }

@@ -3,6 +3,7 @@ import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest, LlmResponse } from "@/lib/llm/types";
 import { baseDb } from "@/lib/db";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -24,6 +25,7 @@ import {
   type LinkedIssueContext,
   type TestCaseOutline,
 } from "../shared";
+import { makeRelatedCaseFinder } from "../related-cases";
 import {
   OUTLINE_CTX_MIN_USEFUL,
   OUTLINE_RETRY_MAX_DEPTH,
@@ -321,7 +323,17 @@ export async function POST(request: NextRequest) {
           ? await fetchExistingCasesContext(
               baseDb,
               projectId,
-              { folderId: context.folderContext, issueRef },
+              {
+                folderId: context.folderContext,
+                issueRef,
+                related: {
+                  find: makeRelatedCaseFinder(baseDb),
+                  title: issue.title,
+                  description: issue.description,
+                  notes: context.userNotes,
+                  tenantId: getCurrentTenantId(),
+                },
+              },
               caseContextBudget,
               "names"
             )

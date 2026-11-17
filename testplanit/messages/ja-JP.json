@@ -8,6 +8,7 @@
       "editAction": "編集 ({count})",
       "completeAction": "完了 ({count})",
       "deleteAction": "削除 ({count})",
+      "restoreAction": "復元 ({count})",
       "editTitle": "一括編集 ({count})",
       "applyToCount": "変更は {count, plural, other {#件のアイテム}} に適用されます。",
       "tagsAdditiveHint": "選択したタグは各項目に追加されます。既存のタグは保持されます。",
@@ -126,6 +127,8 @@
       "exportingPdf": "エクスポート中...",
       "change": "変化",
       "viewAll": "すべて表示",
+      "viewSystemOutput": "ログを表示",
+      "viewSystemError": "エラーを表示",
       "undo": "元に戻す",
       "undoDelete": "削除を元に戻す",
       "automated": {
@@ -338,6 +341,7 @@
       "milestoneTypes": "マイルストーンの種類",
       "milestones": "マイルストーン",
       "createdAt": "作成日",
+      "stagedAt": "ステージング日時",
       "completedOn": "完了日",
       "variants": "変種",
       "emailVerified": "メール認証済み",
@@ -503,6 +507,7 @@
       "complete": {
         "title": "完全なテスト実行",
         "description": "このテスト実行を完了してもよろしいですか?",
+        "allCasesCompletedDescription": "このテスト実行のすべてのテストケースに結果があります。このテスト実行を完了しますか？",
         "warning": "完了すると、テスト実行を変更できなくなります。",
         "completing": "完了中...",
         "apple": {
@@ -577,6 +582,7 @@
       "addFieldTo": "{section}にフィールドを追加",
       "selectTemplates": "テンプレートを選択",
       "selectUsers": "ユーザーを選択",
+      "selectGroups": "グループを選択",
       "selectOption": "オプションを選択",
       "date": "日付を選択",
       "selectEncoding": "エンコードを選択してください...",
@@ -694,6 +700,8 @@
       "failedToDeleteRepository": "リポジトリの削除に失敗しました",
       "permissionDenied": "このページにアクセスする権限がありません。",
       "resultSubmitPermissionDenied": "この案件については、結果を提出できません。プロジェクト管理者に依頼して、あなたに割り当ててもらってください。",
+      "dependenciesNotPassed": "依存関係によってブロックされています",
+      "dependenciesNotPassedDescription": "このテストケースは、{count, plural, =0 {依存している全てのケースが} one {依存しているケースが} other {依存している全て # つのケースが}}このラン内でパスするまで実行できません。",
       "justificationRequired": "正当化が必要",
       "justificationRequiredDescription": "完了した結果を別の結果に変更するには、変更内容を説明する結果の詳細が必要です。",
       "requiredFieldMissing": "必須項目である結果フィールドに値が入力されていません。",
@@ -736,7 +744,10 @@
       "adminSamlConfig": "管理者 - SAML設定",
       "apiDocumentation": "APIドキュメント",
       "sharedContent": "共有コンテンツ",
-      "impact": "影響分析"
+      "impact": "影響分析",
+      "alerts": "通知とアラート",
+      "triage": "障害パターン",
+      "riskScoring": "リスク スコアリング"
     },
     "aria": {
       "userMenu": "ユーザーメニュー",
@@ -824,6 +835,9 @@
       "viewTestRunDetails": "テスト実行の詳細を表示",
       "sortByStatus": "ステータス別にグループ化",
       "sortByDate": "日付順に並べ替え",
+      "estimateFromCases": "推定残り時間: {value} (ケースに入力された見積もりから)",
+      "estimateEntered": "見積もり: {value} (ケースに入力されたもの)",
+      "forecastFromHistory": "予測: {value} (過去の実行時間から)",
       "testRuns": "{count, plural, =0 {テスト実行なし} =1 {テスト実行 1 回} other {テスト実行#}}",
       "sessions": "{count, plural, =0 {セッションなし} =1 {セッション 1 件} other {セッション#}}",
       "issues": "{count, plural, =0 {問題なし} =1 {1件の問題} other {#件の問題}}",
@@ -868,8 +882,7 @@
     "for": "のために",
     "and": "そして",
     "branding": {
-      "logoAlt": "TestPlanIt ロゴ",
-      "tagline": "あらゆるものをテストする"
+      "logoAlt": "TestPlanIt ロゴ"
     },
     "table": {
       "columns": {
@@ -1239,6 +1252,7 @@
       "accessDenied": "アクセスが拒否されました。アカウントが非アクティブであるか、サインインする権限がない可能性があります。",
       "configuration": "サーバー構成に問題があります。",
       "verification": "このサインインリンクは期限切れか、既に使用されています。マジックリンクは一度しか使用できません — サインインするには新しいリンクをリクエストしてください。",
+      "sessionEnded": "セッションが期限切れです。もう一度サインインしてください。",
       "invalid2FACode": "認証コードが無効です。もう一度お試しください。",
       "twoFactorTokenRequired": "トークンが必要です",
       "verificationCodeRequired": "認証コードが必要です"
@@ -1575,6 +1589,9 @@
           },
           "mantisbt": {
             "description": "課題追跡のために、自己ホスト型のMantisBTインスタンスに接続します。"
+          },
+          "clickup": {
+            "description": "タスク追跡とプロジェクト管理のため ClickUp に接続します。"
           }
         }
       },
@@ -1657,7 +1674,8 @@
           "scimGroupMemberAdded": "メンバーが追加されました",
           "scimGroupMemberRemoved": "メンバーが削除されました",
           "scimGroupDeleted": "グループが削除されました",
-          "scimGroupMemberAddedSummary": "メンバーが追加されました（一括同期の概要）"
+          "scimGroupMemberAddedSummary": "メンバーが追加されました（一括同期の概要）",
+          "triggered": "トリガー済み"
         },
         "iterationResultHelp": "反復処理の結果（合格、不合格、スキップ、その他のステータス）が記録されるたびに発生します。長時間の自動化実行では、使用頻度を少なくしてください（反復処理ごとに1つのイベント）。",
         "events": {
@@ -1732,13 +1750,13 @@
         "inboundChooserGitea": "ギテア",
         "inboundJiraTitle": "JiraインバウンドWebhook",
         "inboundGithubTitle": "GitHubの受信Webhook",
-        "inboundGithubScopeHint": "GitHub <code>の課題</code> のイベントは、リンクされた TestPlanIt の課題を更新します。プル リクエストと課題コメントのイベントは受け付けられますが、課題はまだ更新されません。",
+        "inboundGithubScopeHint": "GitHub <code>issues</code> イベントはリンクされた TestPlanIt の課題を更新し、未完了として閉じることを含めて、<code>issue_comment</code> イベントはそれらを更新します。プル リクエスト イベントは受け付けられていますが、課題は更新されません。",
         "inboundGitlabTitle": "GitLabの受信Webhook",
         "inboundGitlabScopeHint": "GitLab <code>Issue Hook</code> イベントは、リンクされた TestPlanIt の課題を更新します。他のイベントタイプも受け入れられますが、課題は更新されません。",
         "inboundGiteaTitle": "Giteaの受信Webhook",
         "inboundGiteaScopeHint": "Gitea <code>の課題</code> のイベントは、リンクされた TestPlanIt の課題を更新します。他のイベントタイプも受け入れられますが、課題は更新されません。",
         "inboundAdoTitle": "Azure DevOps インバウンド Webhook",
-        "inboundAdoScopeHint": "Azure DevOps <code>workitem.updated</code> イベントは、リンクされた TestPlanIt の課題を更新します。その他のイベントも受け付けますが、課題は更新されません。",
+        "inboundAdoScopeHint": "Azure DevOps <code>workitem.created</code> および <code>workitem.updated</code> イベントは、リンクされた TestPlanIt の課題を更新します。その他のイベントも受け付けますが、課題は更新されません。",
         "inboundAdoUsername": "ユーザー名",
         "inboundAdoUsernamePlaceholder": "サービスアカウント",
         "inboundAdoUsernameHelp": "Azure DevOps Service Hook側で設定されています。TestPlanItはHTTP基本認証を使用してこれを検証します。",
@@ -1752,10 +1770,10 @@
         "setupStepsGithubStep1": "GitHubリポジトリで、[設定] → [Webhook] → [Webhookを追加] に移動します。",
         "setupStepsGithubStep2": "以下のURLをペイロードURLフィールドに貼り付けてください。コンテンツタイプをapplication/jsonに設定してください。",
         "setupStepsGithubStep3": "以下の秘密情報を「秘密情報」欄に貼り付けてください。",
-        "setupStepsGithubStep4": "「個々のイベントを選択する」を選択し、「問題」にチェックを入れます。",
+        "setupStepsGithubStep4": "「個々のイベントを選択する」を選択し、「Issues」と「Issue comments」にチェックを入れます。",
         "setupStepsGithubStep5": "「Webhookを追加」をクリックしてください。パイプラインを確認するには、下の「テストWebhookを送信」を使用してください。",
         "setupStepsAdoStep1": "Azure DevOps プロジェクトで、[プロジェクト設定] → [サービス フック] → [サブスクリプションの作成] に移動します。",
-        "setupStepsAdoStep2": "サービスとして「Webフック」を選択します。トリガーを「作業項目が更新されました」に設定します。",
+        "setupStepsAdoStep2": "サービスとして「Web Hooks」を選択します。トリガーを「Work item created」に設定してから、「Work item updated」で2番目のサブスクリプションについてこれらの手順を繰り返します。",
         "setupStepsAdoStep3": "送信するリソースの詳細を「すべて」に設定すると、System.State が含まれます。",
         "setupStepsAdoStep4": "以下のURLをURL欄に貼り付けてください。基本認証のユーザー名とパスワードは、上記で入力した値に設定してください。",
         "setupStepsAdoStep5": "購読を保存してください。パイプラインを確認するには、以下の「テストWebhookを送信」を使用してください。",
@@ -1847,6 +1865,53 @@
         "setupStepsMantisbtStep2": "プラグインの設定で、課題作成イベントと課題更新イベントを選択してください。",
         "setupStepsMantisbtStep3": "上記のURLをウェブフックの送信先として貼り付けて保存してください。",
         "setupStepsMantisbtStep4": "MantisBTで課題を作成または更新すると、リンクされた課題のステータスがここに同期されます。",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "ClickUp インバウンド Webhook",
+        "inboundClickupScopeHint": "ClickUp <code>taskCreated</code> および <code>taskStatusUpdated</code> イベントは、リンクされた TestPlanIt の課題を更新します。その他のタスクイベントも受け付けますが、課題は更新されません。",
+        "inboundClickupRegisterHint": "ClickUp には Webhook 設定ページがありません。Webhook はその API を通じて作成され、ClickUp が署名シークレットを選択します。シークレットを空のままにすると、TestPlanIt がこの Webhook を ClickUp に登録し、ClickUp 認可を使用してリンクされたリストに登録します。",
+        "inboundClickupSecret": "Webhook シークレット (オプション)",
+        "inboundClickupSecretHelp": "ClickUp の Create Webhook API を使用して自分で Webhook を作成した場合にのみ必要です。ClickUp が返したシークレットを貼り付けてください。保存時に暗号化されます。",
+        "setupStepsClickupStep1": "シークレットを空のままにした場合、TestPlanIt はすでにこの Webhook を ClickUp に登録していますため、ClickUp で設定する必要はありません。",
+        "setupStepsClickupStep2": "ClickUp の Create Webhook API を使用して自分で Webhook を登録した場合は、そのエンドポイントが以下の URL であることを確認し、taskStatusUpdated イベントにサブスクライブしてください。",
+        "setupStepsClickupStep3": "以下の「テスト Webhook を送信」を使用してパイプラインを確認してください。シークレットをローテーションすると、ClickUp に新しい Webhook が登録されます。",
+        "actions": {
+          "description": "このウェブフックがイベントを受け取るときに TestPlanIt が実行するアクション。アクションは記載された順序で実行されます。",
+          "empty": "アクションなし。イベントは記録されますが、何も起きません。",
+          "addTitle": "アクションを追加",
+          "editTitle": "アクションを編集",
+          "dialogDescription": "このアクションをトリガーするイベントと実行内容を選択します。",
+          "trigger": {
+            "ISSUE_EVENT": "任意の課題イベント",
+            "ISSUE_STATUS_ENTERED": "課題のステータスが変更"
+          },
+          "triggerHelp": {
+            "ISSUE_EVENT": "トラッカーが課題について送信するあらゆるイベント。",
+            "ISSUE_CREATED": "TestPlanIt がまだ見たことのない課題。",
+            "ISSUE_STATUS_ENTERED": "課題が選択されたステータスのいずれかに移動します。"
+          },
+          "outcome": {
+            "cases_drafted": "テストケースをドラフト",
+            "draft_queued": "テストケースをドラフト中",
+            "has_cases": "課題に既にテストケースがあります",
+            "no_llm": "アクティブな AI モデルなし",
+            "no_template": "テンプレートなし",
+            "no_target": "リポジトリまたはデフォルトステータスなし",
+            "draft_failed": "ドラフト作成に失敗しました",
+            "already_composed": "この変更に対してランは既に作成されています",
+            "execute_failed": "実行が要求されていません"
+          },
+          "dragToReorder": "ドラッグして並べ替え",
+          "requirementsOnly": "要件のみ",
+          "requirementsOnlyHelp": "プロジェクトが要件として分類する課題のみ。",
+          "includeChildIssues": "子課題を含める",
+          "includeChildIssuesHelp": "課題の子課題にリンクされたテストケースも取得します。",
+          "caseFilter": "テストケースフィルター",
+          "caseFilterHelp": "すべてのフィルターに一致するテストケースのみが実行に含まれます。アクションが選択するすべてのテストケースを含めるには、空のままにしてください。",
+          "notifyHelp": "ドラフトの準備ができたときに通知される対象者。各ユーザーの通知設定は引き続き適用されます。",
+          "draftFolderNote": "{webhook} ウェブフックによって自動的にドラフトされたテストケース。",
+          "draftFolderNoteCases": "システムユーザーによってドラフトされました。各ケースは、ドラフト元の課題にリンクされています。",
+          "viewFolder": "フォルダを表示"
+        },
         "codeRepos": {
           "empty": "影響分析用に接続されたリポジトリがありません。最初に<link>接続してください</link>。",
           "unsupported": "{provider}リポジトリはTestPlanItにウェブフックを送信できません。",
@@ -1885,7 +1950,8 @@
           "sourceRepositoryHelp": "プルリクエストが開かれたときまたはコミットがプッシュされたときに、テスト対象のアプリケーションの影響分析を開始し、テスト実行を構成します。",
           "noRepositoryAvailable": "接続されているすべてのリポジトリは既にウェブフックを持っているか、ウェブフックを送信できません。",
           "repositoryPlaceholder": "リポジトリを選択"
-        }
+        },
+        "outboundSubsAlerts": "アラート"
       },
       "aiModels": {
         "description": "インテリジェントなテストケース生成と分析のための AI モデルを構成する",
@@ -2131,6 +2197,16 @@
       },
       "advanced": {
         "description": "プロジェクトごとに、独自の機能設定を切り替えることができます。新しい設定項目は、導入され次第ここに表示されます。",
+        "sections": {
+          "general": "一般的な",
+          "generalDescription": "プロジェクトのアイデンティティとデフォルト設定：レコードキーで使用されるコード、新しいテストケースとセッションが開始するテンプレート、プロジェクトに要件エリアがあるかどうか。",
+          "reviews": "レビュー",
+          "reviewsDescription": "このプロジェクトにレビューと承認がどのように適用されるか：レビューが必要な遷移が承認されたリクエストでゲートされるかどうか、およびレビュアーが決定を取り消すまでの時間。",
+          "runs": "テスト実行",
+          "runsDescription": "テスト実行に含まれる可能性のあるもの、および実行をきれいに保つ方法：ドラフトケースの除外、実行開始後の実行コンポジションのロック、依存関係でのケースのゲート、およびレポートが停止した自動実行のクローズ。",
+          "results": "結果",
+          "resultsDescription": "記録された結果のガバナンス：結果が反転する場合の正当性、失敗時のリンクされた問題、および結果が所定の場所で編集可能なままである期間。"
+        },
         "recordKey": {
           "label": "プロジェクトコード",
           "description": "{example} のような見せかけのレコードキーに使用される短いコードです。2〜10文字の大文字で、数字は使用できません。空欄にすると、単純な数値IDが表示されます。",
@@ -2141,6 +2217,11 @@
           "taken": "そのコードは既に別のプロジェクトで使用されています。別のコードを選択してください。",
           "savedToast": "プロジェクトコードを保存しました。",
           "saveError": "プロジェクトコードを保存できませんでした。既に別のプロジェクトで使用されている可能性があります。"
+        },
+        "defaultTemplate": {
+          "description": "このプロジェクトの新しいテストケースとセッションは、このテンプレートで開始します。",
+          "unavailableTitle": "デフォルトテンプレートは利用できません",
+          "unavailableDescription": "{name}は無効になっているか、削除されているか、このプロジェクトに割り当てられなくなったため、新しいテストケースとセッションは代わりにシステムのデフォルトテンプレートを使用します。別のデフォルトテンプレートを選択するか、このテンプレートを復元してください。"
         },
         "reviewWorkflow": {
           "label": "レビューワークフローを有効にする",
@@ -2189,6 +2270,13 @@
           "disabledToast": "テスト実行は、構成が自動的にロックされなくなります",
           "saveError": "構成の自動ロック設定の更新に失敗しました"
         },
+        "caseDependencies": {
+          "label": "テストランでテストケースの依存関係を強制する",
+          "description": "有効にすると、ラン内のテストケースは、依存する全てのケース (「依存」リンク) が同じラン内でパスするまでブロックされます。ブロックされたケースはランで表示され、それらの結果は拒否されます。最後の依存関係がパスすると、ケースの担当者にそれが準備できたことが通知されます。ラン内にない依存関係はブロックしません。",
+          "enabledToast": "テストケースの依存関係はテストランで強制されます",
+          "disabledToast": "テストケースの依存関係は強制されなくなります",
+          "saveError": "依存関係の強制設定の更新に失敗しました"
+        },
         "editWindow": {
           "label": "結果編集ウィンドウ",
           "description": "結果が記録されてから一定期間内であれば、その場で編集できます。期間が終了すると、修正には再入力が必要になります。システム管理者はいつでも編集できます。",
@@ -2223,6 +2311,23 @@
           "save": "クリーンアップ設定を保存",
           "savedToast": "このプロジェクトの放置された自動化のクリーンアップを更新しました",
           "saveError": "放置された自動化のクリーンアップの更新に失敗しました"
+        },
+        "revertWindow": {
+          "label": "レビュー決定の取り消し",
+          "description": "レビュアーがこのプロジェクトで自分の決定を取り消すことができる期間。システム管理者はこの制限の対象外です。",
+          "systemLockedTitle": "取り消しがシステム全体で無効になっています",
+          "systemLockedDescription": "管理者がすべてのプロジェクトのレビュー決定の取り消しをオフにしています。この設定はここで変更できません。",
+          "modeInheritMinutes": "システムデフォルトを継承する（{minutes, plural, other {# 分}}）",
+          "modeDisable": "このプロジェクトの取り消しを無効にする",
+          "modeCustom": "カスタムウィンドウ",
+          "minutesBefore": "制限",
+          "minutesUnit": "{minutes, plural, other {分}}",
+          "minutesAriaLabel": "決定が取り消し可能な状態で残る分数",
+          "systemMaxHint": "システム最大: {minutes} 分",
+          "invalidMinutes": "0より大きい分数を入力してください",
+          "save": "取り消し制限を保存",
+          "savedToast": "取り消し制限が保存されました。",
+          "saveError": "取り消し制限を保存できませんでした。しばらくしてからもう一度お試しください。"
         }
       },
       "impact": {
@@ -2527,17 +2632,17 @@
       "overdue": "マイルストーン「{name}」の期限は {dueDate}でした"
     },
     "import": {
-      "importTitle": "Jira からインポート",
-      "importDescription": "TestPlanIt マイルストーンとして同期する Jira の Fix Version とスプリントを選択してください。",
+      "importTitle": "{provider} からインポート",
+      "importDescription": "TestPlanIt マイルストーンとして同期する {provider} マイルストーンを選択してください。",
       "showClosed": "終了したものを表示",
       "alreadyLinked": "既にリンクされています",
       "selectedCount": "{count, plural, other {#件選択済み}}",
       "confirmSelection": "選択項目をインポート",
       "confirmSelectionCount": "{count, plural, other {マイルストーン # 件をインポート}}",
       "empty": "マイルストーンが見つかりません",
-      "previewFailed": "Jira からマイルストーンを読み込めませんでした",
+      "previewFailed": "{provider} からマイルストーンを読み込めませんでした",
       "importFailed": "選択したマイルストーンのインポートに失敗しました",
-      "requestTimedOut": "Jiraの応答に時間がかかりすぎたため、リクエストがタイムアウトしました。これは通常、連携しているJiraプロジェクトに多数のバージョンやボードが存在する場合に発生します。「クローズ済みを表示」をオフにしたまま、もう一度お試しください。",
+      "requestTimedOut": "{provider} は応答に時間がかかり、リクエストがタイムアウトしました。これは通常、リンクされた {provider} プロジェクトが多くのバージョンまたはボードを持っていることを意味します。もう一度試して、「完了したものを表示」をオフのままにしてリクエストを絞ります。",
       "serviceUnavailable": "サーバーが一時的に利用できません。しばらくしてからもう一度お試しください。",
       "unexpectedResponse": "サーバーから予期しない応答がありました（HTTP {status}）。もう一度お試しいただき、問題が続く場合は管理者にお問い合わせください。",
       "importStarted": "インポートを開始しました",
@@ -2545,15 +2650,16 @@
       "kindSprint": "スプリント",
       "searchPlaceholder": "リリースとスプリントを検索…",
       "emptyFiltered": "フィルター条件に一致するマイルストーンはありません。",
-      "partialWarning": "一部の Jira プロジェクトを取得できませんでした：",
-      "importing": "{count, plural, other {#件のマイルストーン}}を Jira からインポート中…",
-      "completed": "{count, plural, other {#件のマイルストーン}}を Jira からインポートしました",
+      "partialWarning": "一部の {provider} プロジェクトを取得できませんでした：",
+      "importing": "{count, plural, other {#件のマイルストーン}}を {provider} からインポート中…",
+      "completed": "{count, plural, other {#件のマイルストーン}}を {provider} からインポートしました",
       "stillRunning": "インポートはバックグラウンドで実行中です — 完了するとマイルストーンが表示されます。"
     },
     "sync": {
-      "managedByJira": "Jira によって管理されています",
+      "managedByJira": "{provider} によって管理されています",
       "lastSynced": "最終同期: {time}",
       "providerJira": "Jira",
+      "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "今すぐ同期",
       "unlinkMenuItem": "{provider} からリンクを解除",
@@ -2853,7 +2959,9 @@
         "detailsDisplayMode": {
           "docked": "ドッキングパネル",
           "newWindow": "新しいウィンドウ"
-        }
+        },
+        "notificationsLabel": "通知",
+        "notificationsMoved": "通知とアラートを管理"
       },
       "assignments": {
         "title": "割り当て",
@@ -2886,11 +2994,109 @@
           "label": "通知モード",
           "useGlobal": "グローバル設定を使用する"
         },
-        "options": {
-          "title": "追加オプション",
-          "email": {
-            "label": "メール通知",
-            "description": "メールで通知を受け取る"
+        "typeSection": {
+          "title": "何について通知を受け取るか",
+          "description": "すべての種類の通知はデフォルトでオンになっています。不要な通知をオフに切り替えてください。上記の通知モードはどのように通知を受け取るかを決定します。",
+          "modeNoneNote": "通知モードが「なし」の場合、何も配信されません。ここでの選択は、別のモードを選択するとすぐに適用されます。",
+          "locked": "常にオン",
+          "resetToDefaults": "デフォルトにリセット",
+          "adminOnly": "管理者に送信"
+        },
+        "groups": {
+          "assignments": "割り当て",
+          "comments": "コメント",
+          "reviews": "レビュー",
+          "runsAndMilestones": "実行とマイルストーン",
+          "sharing": "共有",
+          "aiAndJobs": "AIとジョブ",
+          "integrations": "統合",
+          "system": "システム",
+          "administration": "管理"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "割り当てられた作業",
+            "description": "テスト実行ケースが個別または一括で割り当てられます。"
+          },
+          "SESSION_ASSIGNED": {
+            "label": "割り当てられたセッション",
+            "description": "セッションがあなたを割り当て担当者として作成されるか、あなたに再割り当てされます。"
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "割り当てられたケースがブロック解除されました",
+            "description": "依存するケースがパスしたため、実行中にあなたに割り当てられたテストケースが実行可能になります。"
+          },
+          "COMMENT_MENTION": {
+            "label": "コメントでの言及",
+            "description": "誰かがケース、実行、セッション、マイルストーン、またはレビューのコメントであなたを@メンションします。"
+          },
+          "REVIEW_REQUESTED": {
+            "label": "レビュー依頼",
+            "description": "あなたまたはあなたが保有するロールからレビューがリクエストされます。"
+          },
+          "REVIEW_APPROVED": {
+            "label": "レビュー承認済み",
+            "description": "レビュアーがあなたのリクエストを承認します。"
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "変更依頼",
+            "description": "レビュアーがあなたのリクエストに対する変更をリクエストします。"
+          },
+          "REVIEW_REJECTED": {
+            "label": "レビュー却下",
+            "description": "レビュアーがあなたのリクエストを却下します。"
+          },
+          "REVIEW_CANCELLED": {
+            "label": "レビューキャンセル",
+            "description": "レビューをするようにリクエストされたリクエストがキャンセルされるか、レビュー対象のアイテムが削除されます。"
+          },
+          "REVIEW_REMINDER": {
+            "label": "レビューリマインダー",
+            "description": "あなたが負っているレビューがリマインダー閾値より古いか、リクエスター者があなたにプッシュします。"
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "テスト実行完了の準備完了",
+            "description": "完了できる実行内のすべてのケースに結果があります。"
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "マイルストーン期限リマインダー",
+            "description": "関係しているマイルストーンが近く期限切れまたは期限切れです。"
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "共有リンク表示",
+            "description": "誰かが通知オン表示が有効になっている、あなたが作成した共有リンクを開きます。"
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "AIステップ派生",
+            "description": "開始したAIステップ派生ジョブがステップを書き込みました。"
+          },
+          "CASES_DRAFTED": {
+            "label": "AI生成テストケース",
+            "description": "ウェブフックアクションがあるイベントのテストケースをドラフトし、レビューアーとしてあなたの名前を入れました。"
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "統合の再認可が必要",
+            "description": "統合への接続が期限切れまたは取り消されたため、再接続する必要があります。"
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "管理者のお知らせ",
+            "description": "管理者がすべてのユーザーにシステム通知を送信します。"
+          },
+          "WHATS_NEW": {
+            "label": "アップグレード後の新機能",
+            "description": "TestPlanItがアップグレードされた後の最初の訪問時に新機能の概要が表示されます。"
+          },
+          "USER_REGISTERED": {
+            "label": "新規ユーザー登録",
+            "description": "新しいユーザーがフォーム、SSO、またはSAMLを通じてサインアップします。"
+          },
+          "ALERT_TRIGGERED": {
+            "label": "アラート",
+            "description": "購読しているアラートは、監視しているテストメトリクスが一定ラインを超えたために発火します。"
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "レビュー決定が取り消されました",
+            "description": "レビュアーが依頼した決定を取り消し、リクエストをレビュアーのキューに戻します。"
           }
         },
         "success": {
@@ -2913,7 +3119,7 @@
           "newPasswordTooShort": "新しいパスワードはセキュリティ要件を満たしていません。"
         },
         "success": {
-          "passwordChanged": "パスワードが正常に変更されました。"
+          "passwordChanged": "パスワードが正常に変更されました。他のデバイスとブラウザからサインアウトしました。"
         }
       },
       "auditLog": {
@@ -2928,6 +3134,27 @@
         "allTypes": "すべてのタイプ",
         "noMatchingEntries": "選択したフィルターに一致するエントリーはありません。",
         "showing": "{total}件中{loaded}件のエントリー"
+      },
+      "trash": {
+        "description": "削除されたアイテムで、ここからまだ復元できます。",
+        "empty": "ゴミ箱に何もありません。削除したアイテムは{days, plural, one {# 日間} other {# 日間}}ここから復元できます。",
+        "disabled": "セルフサービス復元がオフです。削除されたアイテムを復元するには、管理者に依頼して管理画面 > ゴミ箱から復元してもらってください。",
+        "timeLeftColumn": "残り時間",
+        "timeLeft": "{days, plural, =0 {1 日未満} one {# 日} other {# 日}}",
+        "confirmDescription": "\"{name}\" は {project} に復元されます。これと一緒に削除されたアイテムも復元されます。",
+        "bulkConfirmDescription": "選択された {count} 個のアイテムはそれぞれのプロジェクトに復元されます。これらと一緒に削除されたアイテムも復元されます。",
+        "restored": "\"{name}\" が復元されました。",
+        "restoreFailed": "\"{name}\" を復元できません: {message}",
+        "bulkResult": "{restored, plural, one {# 個のアイテム} other {# 個のアイテム}}が復元されました。{failed} 個が失敗しました。",
+        "failure": {
+          "parent_deleted": "そのフォルダまたは親が削除されたままです — まずそれを復元してください",
+          "name_conflict": "同じ名前のアイテムが既に存在します",
+          "expired": "復元期間が過ぎています",
+          "forbidden": "そのプロジェクトの権限がなくなりました",
+          "disabled": "セルフサービス復元がオフです",
+          "not_owner": "削除したユーザーのみが復元できます",
+          "not_found": "ゴミ箱に含まれていません"
+        }
       },
       "myComments": {
         "title": "自分のコメント",
@@ -3015,7 +3242,8 @@
       "orange": "オレンジ",
       "accessible": "アクセス可能",
       "accessibledark": "アクセシブル（ダーク）"
-    }
+    },
+    "myAlerts": "通知とアラート"
   },
   "repository": {
     "version": {
@@ -3088,7 +3316,12 @@
       "noStepsInSelectedGroup": "選択したグループにはステップがありません。",
       "sharedGroupSuffix": "（共有ステップ）",
       "unnamedSharedGroup": "名前のない共有ステップ",
-      "noStepsInSelectedSharedGroup": "選択した共有グループにはステップがありません。"
+      "noStepsInSelectedSharedGroup": "選択した共有グループにはステップがありません。",
+      "layout": {
+        "label": "ステップレイアウト",
+        "stacked": "スタック",
+        "sideBySide": "左右並列"
+      }
     },
     "testCase": {
       "toggleAutomated": "自動テストを切り替える",
@@ -3137,6 +3370,13 @@
       "modifierHintMac": "⇧キーを押しながらドラッグすると移動、⌥キーを押しながらドラッグするとコピーできます。このメニューをスキップするには、⇧キーを押しながらドラッグしてください。",
       "modifierHintWin": "このメニューをスキップするには、ドラッグ中にShiftキーを押しながら移動するか、Ctrlキーを押しながらドラッグしてコピーしてください。",
       "dropZoneReorder": "ドロップして並べ替え",
+      "dropZoneReorderBlockedSort": "並び替えを削除して、このフォルダ内のケースを並び替えます",
+      "dropZoneReorderBlockedSortMac": "並び替えを削除して並び替えます - ⌥を押してこのフォルダにコピーします",
+      "dropZoneReorderBlockedSortWin": "並び替えを削除して並び替えます - Ctrlを押してこのフォルダにコピーします",
+      "dropZoneReorderBlockedSearch": "検索をクリアして、このフォルダ内のケースを並び替えます",
+      "dropZoneReorderBlockedSearchMac": "検索をクリアして並び替えます - ⌥を押してこのフォルダにコピーします",
+      "dropZoneReorderBlockedSearchWin": "検索をクリアして並び替えます - Ctrlを押してこのフォルダにコピーします",
+      "dropZoneCopyHere": "このフォルダにコピーするためにドロップします",
       "dropZoneFolder": "フォルダにドロップしてネストするか、フォルダ間にドロップして並べ替えます",
       "dropZoneTreeMac": "フォルダにドロップ — ⇧を押しながらで移動、⌥を押しながらでコピー",
       "dropZoneTreeWin": "フォルダにドロップ — Shiftを押しながらで移動、Ctrlを押しながらでコピー",
@@ -3493,7 +3733,7 @@
     },
     "duplicates": {
       "findDuplicates": "重複データの検索",
-      "viewResults": "表示 {count, plural, one {# 結果} other {# 結果}}",
+      "viewDuplicates": "重複を表示",
       "retryScan": "スキャンを再試行",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "AIを活用して成果を向上させる…",
@@ -3577,8 +3817,8 @@
         "description": "問題からテスト ケースを生成するか、要件ドキュメントから生成するかを選択します。",
         "folderContextTip": "重複を避けるため、「{folderName}」およびその親/子フォルダにある既存のテストケースがコンテキストとして使用されます。続行する前に、正しいフォルダを選択していることを確認してください。",
         "folderContextCount": "\"{folderName}\" とその親/子フォルダには {count, plural, =1 {1 個の既存テストケース} other {# 個の既存テストケース}} が含まれています。AI はプロジェクトのスタイルに合わせて重複を避けるため、コンテキストに収まる限り多くのテストケースを使用します。",
-        "folderContextEmptyTitle": "コンテキストとして使用する既存テストケースがありません",
-        "folderContextEmpty": "\"{folderName}\"とその親/子フォルダにテストケースがないため、AIがプロジェクトのスタイルや既存のカバレッジの例がありません。より良い結果を得るために、これらのテストケースが属するフォルダから、関連するケースの隣でジェネレータを開始してください。",
+        "folderContextEmptyTitle": "このフォルダにはまだテストケースがありません",
+        "folderContextEmpty": "\"{folderName}\" とその親/子フォルダにはテストケースがありません。AIはこのプロジェクト内の他の場所から関連するテストケースを探して、あなたのスタイルを学び、重複を避けます。最良の結果を得るために、これらのテストケースが属するフォルダからジェネレータを起動してください。",
         "currentFolder": "現在のフォルダ",
         "fromIssue": "発行元",
         "fromDocument": "文書から",
@@ -3665,6 +3905,8 @@
       "generatingLegacy": "AIによるテストケースの生成...",
       "expandProgress": "{done, number} の {total, number} が生成されました",
       "import": "{count, plural, =0 {テストケースをインポート} =1 {1 つのテストケースをインポート} other {# つのテストケースをインポート}}",
+      "stage": "{count, plural, =0 {ステージテストケース} =1 {ステージ 1 テストケース} other {ステージ # テストケース}}",
+      "stageDescription": "ステージ済みテストケースはお客様のみが利用できます。「マイステージケース」で確認してから作成してください。リポジトリには作成するまで何も追加されません。",
       "importing": "{count, plural, =0 {テストケースをインポートしています...} =1 {1 つのテストケースをインポートしています...} other {# つのテストケースをインポートしています...}}",
       "externalSystem": "外部システム",
       "autoGenerateTags": "テストケースのタグを自動生成する",
@@ -3678,7 +3920,8 @@
       "datasetMoreRows": "...そして {count, plural, one {# 行がさらに続く} other {# 行がさらに続く}}",
       "parameterChipSensitive": "センシティブ",
       "success": {
-        "imported": "{count, plural, =1 {1 つのテストケースを正常にインポートしました} other {# つのテストケースを正常にインポートしました}}"
+        "imported": "{count, plural, =1 {1 つのテストケースを正常にインポートしました} other {# つのテストケースを正常にインポートしました}}",
+        "staged": "{count, plural, =1 {# テストケースをステージ済みにしました} other {# テストケースをステージ済みにしました}}"
       },
       "importData": {
         "issueDescription": "テストケース生成からリンクされた外部問題",
@@ -3687,6 +3930,7 @@
       "errors": {
         "generateFailed": "テストケースを生成できませんでした。もう一度お試しください。",
         "importFailed": "テストケースのインポートに失敗しました。もう一度お試しください。",
+        "stageFailed": "テストケースをステージできませんでした。もう一度お試しください。",
         "noTestCasesGenerated": "テストケースが生成されませんでした。別の入力でもう一度お試しください。",
         "jobNoLongerAvailable": "この生成方法は現在利用できません。テストケース生成ウィザードから新しい生成を開始してください。",
         "noAiModel": "このプロジェクトにはAIモデルが設定されていません。プロジェクト設定でAIモデルを設定してください。",
@@ -3695,6 +3939,7 @@
         "noTemplateSelected": "テストケースのテンプレートを選択してください。",
         "noFieldsSelected": "コンテンツを生成するフィールドを少なくとも1つ選択してください。",
         "noTestCasesSelectedForImport": "インポートするテストケースを少なくとも1つ選択してください。",
+        "noTestCasesSelectedForStage": "ステージするテストケースを少なくとも1つ選択してください。",
         "templateRequired": "テンプレートの選択が必要です。戻ってテンプレートを選択してください。",
         "repositoryNotFound": "プロジェクトリポジトリが見つかりません。管理者にお問い合わせください。",
         "workflowNotConfigured": "プロジェクトのワークフローが設定されていません。プロジェクト設定を確認してください。",
@@ -3776,7 +4021,9 @@
         "description": "{count, plural, =1 {保存されていない編集のあるテストケースが 1 件あります。} other {保存されていない編集のあるテストケースが # 件あります。}}",
         "warning": "保存せずに続行すると、変更内容は失われます。",
         "saveAllAndImport": "すべて保存してインポート",
-        "discardAndImport": "編集を破棄してインポート"
+        "discardAndImport": "編集を破棄してインポート",
+        "saveAllAndStage": "すべて保存してステージ",
+        "discardAndStage": "編集を破棄してステージ"
       },
       "linkedIssuesDroppedTitle": "関連する問題の一部は含まれていません",
       "linkedIssuesDropped": "{count, plural, =1 {# リンクされた問題は削除されました} other {# リンクされた問題は削除されました}} トークン予算のため: {keys}。",
@@ -3791,6 +4038,38 @@
         "skippedSummary": "{count, plural, =1 {#枚の画像} other {#枚の画像}}がスキップされました (サイズが大きすぎるか、サポートされていません): {names}",
         "includeUrlScreenshots": "利用可能な場合はページのスクリーンショットを含める"
       }
+    },
+    "savedDrafts": {
+      "title": "ステージングされたケース",
+      "description": "あなたが作成してステージングした代わりに作成されたテストケース。あなただけが見ることができます。開いてレビューするか、一度に複数作成します。",
+      "empty": "このプロジェクトではステージングされたテストケースはありません。",
+      "saveDraft": "ケースをステージング",
+      "saveTitle": "テストケースに名前を付けてください",
+      "renameTitle": "テストケースの名前を変更",
+      "saveDescription": "ステージングされたテストケースはその名前で表示されます。あなただけが見ることができます。リポジトリには作成するまで何も追加されません。",
+      "saved": "テストケースがステージングされました",
+      "saveFailed": "テストケースをステージングできませんでした",
+      "renamed": "ステージングケースの名前が変更されました",
+      "deleted": "ステージングケースが削除されました",
+      "deleteFailed": "ステージングケースを削除できませんでした",
+      "deleteTitle": "このステージングケースを削除しますか？",
+      "deleteDescription": "\"{name}\"が削除されます。作成されたことがないため、他に何も変わりません。",
+      "folderDeleted": "フォルダが削除されました",
+      "folderFallback": "ステージングケースのフォルダが削除されました。ケースは\"{folder}\"に作成されます。",
+      "selectFolderFirst": "このステージングケースを開く前にフォルダを選択してください。",
+      "problemCount": "{count, plural, one {{count}個の問題} other {{count}個の問題}}",
+      "updated": "{age}に更新されました",
+      "createSelected": "{count, plural, =0 {選択項目を作成} other {選択された{count}を作成}}",
+      "createdToast": "{count, plural, one {{count}個のテストケースが作成されました} other {{count}個のテストケースが作成されました}}",
+      "failedToast": "{count, plural, one {{count}個のステージングケースを作成できませんでした} other {{count}個のステージングケースを作成できませんでした}}",
+      "problemFolder": "フォルダが削除されました。ステージングケースを開いてフォルダを選択してください。",
+      "problemTemplate": "テンプレートはこのプロジェクトに割り当てられなくなりました。ステージングケースを開いて選択してください。",
+      "problemState": "状態は存在しなくなりました。ステージングケースを開いて選択してください。",
+      "problemField": "{field}: {message}",
+      "notCreated": "作成されていません: {message}",
+      "openToFix": "ステージングケースを開いて修正してください。",
+      "elsewhereTitle": "次の場所にもステージングケースがあります",
+      "elsewhereCount": "{count, plural, one {{count}個のステージングケース} other {{count}個のステージングケース}}"
     },
     "filterBar": {
       "addFilter": "フィルターを追加",
@@ -4020,7 +4299,10 @@
       "filterAllEntityTypes": "すべてのエンティティタイプ",
       "filterEntityTypeCase": "テストケース",
       "filterEntityTypeRun": "テスト実行",
-      "filterAllProjects": "すべてのプロジェクト"
+      "filterAllProjects": "すべてのプロジェクト",
+      "actionRevert": "決定を取り消す",
+      "revertedBadge": "取り消し済み",
+      "revertedBadgeTooltip": "{count, plural, other {# 回前に取り消し済み}}"
     },
     "requester": {
       "openButton": "レビューを依頼する",
@@ -4081,6 +4363,23 @@
       "alreadyDecidedError": "この審査は既に決定済みです。",
       "decideError": "お客様のご決定を記録できませんでした。しばらくしてからもう一度お試しください。",
       "panelSummary": "{requesterName}からのレビュー依頼： {targetStateName} への移行"
+    },
+    "revert": {
+      "confirm": "決定を取り消す",
+      "description": "このレビューは決定待ちに戻り、リクエスターに通知されます。スレッドに残したコメントは保持されます。",
+      "descriptionApproved": "このレビューは決定待ちに戻り、アイテムは以前の状態に戻ります。リクエスターに通知されます。",
+      "error": "決定を取り消すことができませんでした。しばらくしてからもう一度お試しください。",
+      "errorEntityMoved": "承認以降にこのアイテムが変更されたため、承認の取り消しはできなくなりました。",
+      "errorForbidden": "この決定を取り消すことができるのは、その決定を下したレビュアーのみです。",
+      "errorNotRevertable": "この決定は取り消せなくなりました。",
+      "errorSuperseded": "このアイテムの新しいレビューリクエストが既に存在するため、この決定は取り消せません。",
+      "errorWindowExpired": "この決定の取り消し期間が終了しました。",
+      "success": "決定が取り消されました。レビューは再度決定待ちになっています。",
+      "title": "決定を取り消しますか？",
+      "titleOther": "この決定を取り消しますか？",
+      "descriptionOther": "このレビューは決定待ちに戻り、リクエスターに通知されます。レビュアーのコメントはスレッドに残ります。",
+      "descriptionOtherApproved": "このレビューは決定待ちに戻り、アイテムは以前の状態に戻ります。リクエスターに通知されます。",
+      "successOther": "決定が取り消されました。レビューは再度決定待ちになっています。"
     }
   },
   "runs": {
@@ -4102,6 +4401,13 @@
       "lockError": "実行構成のロックに失敗しました",
       "unlockError": "実行構成のロック解除に失敗しました",
       "addBlocked": "この実行の構成はロックされているため、テストケースを追加できません。ケースセットを変更するには、まずロックを解除してください。"
+    },
+    "dependencies": {
+      "blocked": "ブロックされました",
+      "blockedBy": "{count, plural, one {このケースがパスする} other {これらのケースがパスする}}までブロックされています。この実行では:",
+      "blockedNotice": "このテストケースは、{count, plural, one {依存するケースがこの実行でパスするまで} other {依存するすべての # ケースがこの実行でパスするまで}}実行できません。",
+      "notInRun": "{count, plural, one {これが依存する # ケースはこの実行内にありません} other {これが依存する # ケースはこの実行内にありません}}、実行をブロックしません:",
+      "unblocked": "このケースが依存するすべてのケースがこの実行でパスしました。"
     },
     "distribute": {
       "title": "割り当てを分配",
@@ -4307,7 +4613,7 @@
     },
     "junitFilters": {
       "retried": "リトライ済み",
-      "clear": "フィルターをクリア"
+      "clear": "すべてのフィルターをクリア"
     },
     "impact": {
       "title": "影響",
@@ -4380,9 +4686,12 @@
         "selectedOf": "{total, number}個の影響を受けたテストケース中{selected, number}個を選択",
         "thresholdHint": "{threshold, number}以上の得点を持つテストは選択済みで表示されます。最小スコアを下げると、残りを表示できます。すべてのテストは選択理由を表示します。",
         "shownCount": "{total, number}個中{shown, number}個を表示",
-        "minScore": "最小スコア",
+        "scoreColumn": "影響スコア",
+        "minScore": "最小影響スコア",
         "selectShown": "表示済みを選択({count, number})",
         "deselectShown": "表示済みを選択解除({count, number})",
+        "hiddenSelected": "{count, plural, one {# 件の選択されたテストケースがフィルタで非表示になっています} other {# 件の選択されたテストケースがフィルタで非表示になっています}}。",
+        "deselectHidden": "非表示を選択解除",
         "noneShown": "フィルターに一致するテストはありません。",
         "reasons": "理由",
         "tierPinned": "ピン止めされた",
@@ -4391,8 +4700,6 @@
         "tierPinnedTooltip": "このケースのコードピンが変更と交差しています。ピン止めされたケースは常に最初にランク付けされます。",
         "tierAffectedTooltip": "他の信号はこのケースを{threshold, number}の影響を受けたしきい値以上に置きます。",
         "tierRelatedTooltip": "強く影響を受けたケースにリンクされているか、そのシグナルが{threshold, number}以下のスコアされました。",
-        "showDetails": "理由を表示",
-        "hideDetails": "理由を非表示",
         "excluded": "{count, plural, one {# 実行済みの場合はスキップされた} other {# 実行済みの場合はスキップされた}}"
       },
       "noAffected": {
@@ -4465,12 +4772,30 @@
       },
       "repositoryPlaceholder": "リポジトリを選択…",
       "chooseRepository": "プロジェクトの接続されたリポジトリのうち、分析する変更を保持するリポジトリを選択してください。"
+    },
+    "risk": {
+      "prioritizeByRisk": "リスク別に優先順位を付ける",
+      "title": "リスク別に優先順位を付ける",
+      "description": "実行の価値が最も高いケース。デフォルトではリスクが最も高い順です。このラン内に既にあるケースは除外されます。",
+      "minimumScore": "最小リスク スコア",
+      "showing": "{shown, plural, one {# ケースが読み込まれました} other {# ケースが読み込まれました}} / {total, plural, one {# 件の一致} other {# 件の一致}}",
+      "loadedSelected": "{shown, plural, =2 {読み込まれた両方のケースが選択されています} one {読み込まれたケースが選択されています} other {読み込まれたすべての # ケースが選択されています}}。",
+      "selectAllMatches": "{total, plural, =2 {両方の一致を選択} one {唯一の一致を選択} other {すべての # 件の一致を選択}}",
+      "allMatchesSelected": "{total, plural, =2 {両方の一致が選択されています} one {唯一の一致が選択されています} other {すべての # 件の一致が選択されています}}。",
+      "noneMatch": "このスコア以上のスコア付きケースがありません。",
+      "caseColumn": "テストケース",
+      "scoreColumn": "リスク スコア",
+      "addCases": "{count, plural, =0 {ケースを追加} one {# ケースを追加} other {# ケースを追加}}"
+    },
+    "caseSelection": {
+      "menuLabel": "テスト ケースを選択する方法"
     }
   },
   "admin": {
     "menu": {
       "header": "主要",
       "fields": "フィールド",
+      "rootCauses": "根本原因",
       "appConfig": "アプリケーション構成",
       "recordKeys": "レコードキー",
       "imports": "データのインポート",
@@ -4851,6 +5176,8 @@
       "sections": {
         "providers": {
           "title": "サインインプロバイダー",
+          "addSaml": "SAMLプロバイダーを追加",
+          "samlBadge": "SAML",
           "description": "ユーザーがアプリケーションにサインインする方法を設定します。"
         }
       },
@@ -4892,6 +5219,7 @@
         "samlSettings": {
           "title": "SAML設定",
           "description": "SAML IDプロバイダーの設定を構成する",
+          "providerNameDescription": "サインインボタンに表示されるため、ユーザーが認識できる各SAMLプロバイダーに名前を付けてください。",
           "ssoUrl": "SSO URL (エントリ ポイント)",
           "entityId": "エンティティID（発行者）",
           "certificate": "X.509証明書",
@@ -4932,6 +5260,7 @@
         "enabled": "プロバイダーが有効",
         "disabled": "プロバイダーが無効です",
         "updateFailed": "プロバイダーの更新に失敗しました",
+        "providerNameExists": "この名前のプロバイダーは既に存在します",
         "configUpdated": "SAML設定が更新されました",
         "configCreated": "SAML設定が作成されました",
         "configSaveFailed": "SAML設定を保存できませんでした",
@@ -5038,7 +5367,7 @@
           },
           "redirectUri": "/api/auth/コールバック/saml",
           "validation": {
-            "allRequired": "エントリポイント、発行者、証明書、コールバックURLは必須です"
+            "allRequired": "名前、エントリポイント、発行者、証明書、およびコールバックURLは必須です"
           }
         },
         "disableEmailVerification": {
@@ -5210,6 +5539,7 @@
       "confirmSetAsDefault": "デフォルトのテンプレートとして設定",
       "confirmSetAsDefaultDescription": "このテンプレートをデフォルトとして設定してもよろしいですか?",
       "confirmSetAsDefaultProjects": "このテンプレートはすべてのプロジェクトに追加されます。",
+      "projectDefaultWarning": "{count, plural, other {これらのプロジェクトはこのテンプレートをデフォルトとして使用しています。新しいテストケースとセッションはシステムのデフォルトテンプレートを使用します。}}",
       "add": {
         "button": "テンプレートを追加",
         "title": "新しいテンプレートを追加",
@@ -5393,6 +5723,7 @@
       "scimProvisionerBadge": "SCIMプロビジョナー",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "SCIMによって管理されています。SCIMの管理ページから管理してください。",
+      "systemUserTooltip": "ウェブフックアクションなど、TestPlanIt が自動的に実行するための組み込みユーザー。サインインまたは編集できません。",
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "はい",
       "scimUserLockedTitle": "ユーザーはSCIMによって管理されています",
@@ -5645,7 +5976,19 @@
         "thresholdUnit": "{count, plural, other {日}}",
         "thresholdHelp": "レビュー依頼が保留状態になってから、レビュー担当者にリマインダー通知が届くまで何日間待つことができますか？新規依頼は提出された時点からカウントが開始されます。",
         "thresholdUpdateSuccess": "レビューリマインダーの設定が更新されました。",
-        "thresholdUpdateError": "リマインダー設定の更新に失敗しました。しばらくしてからもう一度お試しください。"
+        "thresholdUpdateError": "リマインダー設定の更新に失敗しました。しばらくしてからもう一度お試しください。",
+        "revertPolicy": {
+          "label": "レビュー決定の取り消し",
+          "modeAria": "ポリシーモードを取り消す",
+          "modeNone": "プロジェクトが決定します（デフォルトでは {hours}h）",
+          "modeDisabled": "取り消しがすべての場所で無効です",
+          "modeMax": "最大で次の期間は取り消しを許可する",
+          "minutesUnit": "{minutes, plural, other {分}}",
+          "minutesAriaLabel": "決定が取り消し可能な状態で残る最大分数",
+          "invalidMinutes": "0より大きい分数を入力してください",
+          "savedToast": "取り消しポリシーが保存されました。",
+          "saveError": "取り消しポリシーを保存できませんでした。しばらくしてからもう一度お試しください。"
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "{name} のレビューワークフローを切り替える",
@@ -5658,7 +6001,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "レビューワークフロー機能はシステムレベルで無効になっています。プロジェクトの詳細設定を切り替えるか、TESTPLANIT_REVIEW_FEATURE_ENABLED を設定して再度有効にしてください。",
-        "requiresReviewDefaultDisabled": "デフォルトのワークフロー状態ではレビューを要求できません。新しいエンティティはここに到着し、ゲートするための以前の状態がありません。"
+        "requiresReviewDefaultDisabled": "デフォルトのワークフロー状態ではレビューを要求できません。新しいエンティティはここに到着し、ゲートするための以前の状態がありません。",
+        "requiresReviewLabel": "レビューが必須"
       },
       "add": {
         "button": "ワークフローを追加",
@@ -5972,6 +6316,30 @@
         "confirmMessage": "マイルストーンタイプ {name} を削除してもよろしいですか？"
       }
     },
+    "rootCauses": {
+      "description": "障害パターンが故障のグループに割り当てる根本原因。AIは各説明を使用してこのリストから選択します。",
+      "filterPlaceholder": "フィルターする根本原因…",
+      "reordered": "根本原因が並べ替えられました",
+      "descriptionPlaceholder": "この根本原因はいつ適用されますか？AIはこのテキストを使用して判断します。",
+      "columns": {
+        "signatures": "パターン"
+      },
+      "add": {
+        "button": "根本原因を追加",
+        "title": "根本原因を追加"
+      },
+      "edit": {
+        "title": "根本原因を編集"
+      },
+      "errors": {
+        "nameExists": "この名前の根本原因は既に存在します"
+      },
+      "delete": {
+        "confirmMessage": "{name}根本原因を削除してもよろしいですか？",
+        "inUse": "{count, plural, other {# 件の障害パターンがそれを使用しています。}}",
+        "moveLabel": "{count, plural, other {# 件のパターンを}}"
+      }
+    },
     "issue_config": {
       "link_title": "リンク問題トラッカー",
       "link_description": "手動でリンクされた課題のベースURLを設定します。外部IDのみを使用して課題をリンクする場合、このベースURLが先頭に追加され、完全なリンクが作成されます。",
@@ -6063,7 +6431,8 @@
         "stepSequenceMatchCases": "ステップシーケンスマッチケース",
         "testRunCases": "テスト実行ケース",
         "testRunCaseDataSetSnapshots": "テスト実行データセットスナップショット",
-        "testRunCaseIterations": "テスト実行イテレーション"
+        "testRunCaseIterations": "テスト実行イテレーション",
+        "alertRules": "アラート"
       },
       "table": {
         "title": "削除されました {itemType}",
@@ -6075,7 +6444,11 @@
         "purgeConfirmationMessage": "{itemType} テーブルからこの行を完全に削除してもよろしいですか? この操作は元に戻すことができず、関連データが削除される可能性があります。"
       },
       "filterTypesPlaceholder": "項目タイプをフィルタリング…",
-      "summary": "{count, plural, =0 {ゴミ箱は空です} other {ゴミ箱内に#件のアイテム}}"
+      "summary": "{count, plural, =0 {ゴミ箱は空です} other {ゴミ箱内に#件のアイテム}}",
+      "userWindow": {
+        "label": "セルフサービス復元ウィンドウ",
+        "invalid": "整数の日数を入力してください (0 でオフになります)。"
+      }
     },
     "notifications": {
       "title": "通知管理",
@@ -6218,6 +6591,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "課題追跡のために、自己ホスト型のMantisBTインスタンスに接続します"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "タスク追跡とプロジェクト管理のために ClickUp に接続します"
         }
       },
       "filterPlaceholder": "フィルター統合...",
@@ -6328,7 +6705,13 @@
         "mantisBTApiKeyHelp": "MantisBTのアカウント設定 → [APIトークン] で作成してください",
         "mantisBTUrl": "MantisBT URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "MantisBTインスタンスのベースURL"
+        "mantisBTUrlHelp": "MantisBTインスタンスのベースURL",
+        "clickupTeamId": "ClickUp チーム (ワークスペース) ID",
+        "clickupTeamIdPlaceholder": "例：9013456789",
+        "clickupTeamIdHelp": "ClickUp URL の app.clickup.com/ の後に記載されています",
+        "clickupListId": "デフォルト ClickUp リスト ID",
+        "clickupListIdPlaceholder": "例：901234567",
+        "clickupListIdHelp": "デフォルトでタスクが作成されるリスト。問題ごとにオーバーライドできます"
       },
       "authType": {
         "api_key": "APIキー",
@@ -6404,7 +6787,6 @@
         "defaultModelPlaceholder": "gpt-4o、claude-3-5-sonnet-20241022 など。",
         "defaultModelDescription": "デフォルトで使用するモデル",
         "maxTokensPerRequest": "リクエストあたりの最大トークン数",
-        "maxRequestsPerMinute": "1分あたりの最大リクエスト数",
         "costPerInputToken": "100万トークンあたりのコスト（ドル）",
         "costPerOutputToken": "100万トークンあたりのコスト（ドル）",
         "monthlyBudget": "月間予算（$）",
@@ -6548,7 +6930,8 @@
         "generate_from_url_app": "URLからテストケースを生成する（アプリケーションテスト）",
         "automation_candidates": "自動化候補者レポート",
         "derive_case_steps": "AIステップ導出",
-        "impact_analysis": "影響: 影響を受けたテスト選択"
+        "impact_analysis": "影響: 影響を受けたテスト選択",
+        "failure_triage": "障害パターン：根本原因"
       }
     },
     "elasticsearch": {
@@ -6625,6 +7008,7 @@
         "audit-logs": "監査ログ",
         "budget-alerts": "予算アラート",
         "auto-tag": "AI自動タグ付け",
+        "failure-triage": "障害パターン",
         "repo-cache": "リポジトリキャッシュ",
         "copy-move": "コピー＆移動",
         "duplicate-scan": "重複スキャン",
@@ -6783,7 +7167,8 @@
         "markRead": "既読にする",
         "markUnread": "未読としてマーク",
         "markAllRead": "すべてを既読にする",
-        "deleteAll": "すべて削除"
+        "deleteAll": "すべて削除",
+        "manageAlerts": "通知とアラートを管理"
       },
       "success": {
         "deleted": "通知を削除しました",
@@ -6827,19 +7212,10 @@
         "shareLinkAccessedMessage": "{viewer} があなたの共有レポートを閲覧しました: \"{shareTitle}\"",
         "viewedYourSharedLink": "共有されたリンクを確認しました",
         "viewedAt": "閲覧場所",
-        "budgetDisclaimer": "予算制限はあくまで参考情報であり、利用を妨げるものではありません。",
-        "llmBudgetExceededTitle": "LLMの予算を超過",
-        "llmBudgetThresholdTitle": "LLM予算 {threshold}使用率 %",
-        "llmBudgetExceededMessage": "{providerName} は月間予算を超過しました: {spend} が {budget} の予算を消費しました。",
-        "llmBudgetThresholdMessage": "{providerName} は月間予算の {threshold}% を使用しました: {spend} / {budget}。",
         "userRegisteredTitle": "新規ユーザー登録",
         "userRegisteredMessageSso": "{userName} ({userEmail}) は SSO 経由で登録されました",
         "userRegisteredMessageForm": "{userName} ({userEmail}) が登録フォームから登録しました",
         "viewUserList": "ユーザーリストを表示",
-        "reviewGeneratedCases": "生成されたテストケースを確認する",
-        "generateFromUrlCompleteTitle": "ページのクロールが正常に完了しました",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# ページ} other {# ページ}} はプロジェクト \"{projectName}\" の {url} からクロールされました。クリックして確認し、テストケースを生成してください。",
-        "generateFromUrlFailedTitle": "URLクロールに失敗しました",
         "reviewRequestedTitle": "レビュー依頼",
         "reviewApprovedTitle": "レビュー承認済み",
         "reviewChangesRequestedTitle": "変更依頼",
@@ -6869,18 +7245,81 @@
         "reviewCancelledEmailMessage": "{actorName} は、プロジェクト \"{projectName} \" の {entityLabel} \"{entityName}\" のレビュー要求をキャンセルしました。",
         "reviewReminderTitle": "審査はまだ保留中です",
         "reviewReminderAction": "まだレビューをお待ちしています",
-        "reviewReminderEmailMessage": "リマインダー: {actorName}によるプロジェクト \"{projectName}\" の {entityLabel} \"{entityName}\" のレビュー依頼は、 {hoursPending} 時間保留されています。",
-        "reviewReminderHoursPending": "{hoursPending, plural, one {# 時間} other {# 時間}} 保留中",
+        "reviewReminderEmailMessage": "リマインダー: {actorName}によるプロジェクト\"{projectName}\"の{entityLabel}\"{entityName}\"のレビュー依頼は{pendingFor}間保留されています。",
+        "reviewReminderHoursPending": "{pendingFor}保留中",
         "aiStepsDerivedTitle": "AI導出のテストステップの準備が完了しました",
         "aiStepsDerivedMessage": "{count, plural, other {#件のテストケース}}にAI導出のステップが付与されました — 正確性を確認してください。",
         "aiStepsDerivedReviewLink": "テスト実行を確認",
+        "casesDraftedTitle": "AI生成テストケースの準備が完了",
+        "casesDraftedMessage": "{count, plural, one {# テストケースが} other {# テストケースが}}ドラフトされました {issueKey} について — 正確性を確認してください。",
+        "casesDraftedReviewLink": "{folderName} でレビュー",
         "integrationAuthExpiredTitle": "統合の接続が期限切れです",
         "integrationAuthExpiredMessage": "「{integrationName}」への接続が期限切れになりました。課題の同期を再開するには再接続してください。",
         "integrationAuthExpiredReconnect": "再接続",
         "runReadyToCompleteTitle": "テスト実行の完了準備が整いました",
         "runReadyToCompleteExecuted": "{count, plural, =2 {両方のケースが}other {すべての#件のケースが}}実行されました。",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, =2 {両方のケースが}other {すべての#件のケースが}}テストラン「{testRunName}」（プロジェクト「{projectName}」）で実行されました。このテストランは完了としてマークする準備ができています。",
-        "runReadyToCompleteReason": "このプロジェクトでテスト実行を完了する権限があるため、この通知を受信しています。"
+        "runReadyToCompleteReason": "このプロジェクトでテスト実行を完了する権限があるため、この通知を受信しています。",
+        "runCaseUnblockedTitle": "テスト ケース実行準備完了",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} が成功したため、割り当てられたこのケースはブロック解除されました:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" (プロジェクト \"{projectName}\") のテスト実行 \"{testRunName}\" は、ブロック解除されました: \"{prerequisiteName}\" が成功しました。あなたに割り当てられており、実行準備ができています。",
+        "runCaseUnblockedReason": "テスト ケースがあなたに割り当てられているため、このメッセージを受け取っています。",
+        "inTestRun": "テスト実行内",
+        "alertTriggeredTitle": "アラート発火",
+        "alertTriggeredRule": "ルール: {ruleName}",
+        "alertTriggeredEmailMessage": "アラート「{ruleName}」が {subjectLabel}「{subjectName}」に対してプロジェクト「{projectName}」で発火しました: {detail}",
+        "alertTriggeredEmailMessageSystem": "アラート「{ruleName}」が {subjectLabel}「{subjectName}」に対して発火しました: {detail}",
+        "alertTriggeredReason": "このアラートに登録しているため、これを受け取っています。",
+        "alertSubject": {
+          "CASE": "テストケース",
+          "RUN": "テスト実行",
+          "MILESTONE": "マイルストーン",
+          "SESSION": "セッション",
+          "PROJECT": "プロジェクト",
+          "WEBHOOK": "ウェブフック",
+          "LLM_INTEGRATION": "AI モデル統合",
+          "CODE_REPOSITORY": "リポジトリ接続",
+          "INTEGRATION": "統合",
+          "QUEUE": "キュー",
+          "SYSTEM": "インストレーション"
+        },
+        "alertMetric": {
+          "RESULT_DURATION_DEVIATION": "結果に {elapsed} 時間かかり、ベースライン {baseline} から {deviation}% の乖離があります（許可 {threshold}% 以下）。",
+          "CASE_REGRESSED": "ケースは {passedBefore, plural, one {最後の結果の後で} other {最後の # 件の結果の後で}} 失敗しました。",
+          "CASE_RECOVERED": "ケースは {failedBefore, plural, one {最後の結果の後で} other {最後の # 件の結果の後で}} 成功しました。",
+          "RUN_DURATION_DEVIATION": "実行に {elapsed} 時間かかり、ベースライン {baseline} から {deviation}% の乖離があります（許可 {threshold}% 以下）。",
+          "RUN_NOT_PROGRESSING": "実行は {idleHours, plural, one {# 時間} other {# 時間}} の間に新しい結果を得ていません（閾値 {threshold}）。",
+          "AUTOMATED_EXECUTION_FAILED": "{target} での自動実行は {status}{error, select, other {: {error}}} で終了しました",
+          "RUN_UNTESTED_SHARE": "実行ケースの {untestedPercent}% にはマイルストーン期限 {daysRemaining, plural, one {# 日} other {# 日}} 前に結果がありません（閾値 {threshold}%）。",
+          "RUN_ISSUES_OPENED": "実行の結果にリンクされている {issues, plural, one {# 課題} other {# 課題}}（閾値 {threshold}）。",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, other {# 件の障害パターンが}}実行中に初めて表示されました（閾値 {threshold}）。",
+          "SESSION_OVERRUN": "セッションに {elapsed} 時間かかり、見積 {estimate} に対して {overrun}% オーバーです（許可 {threshold}% 以下）。",
+          "REQUIREMENT_COVERAGE_BELOW": "{covered} / {total} 要件（{coverage}%）{basis, select, PASSING {は最新の結果が成功している} other {テストケースにリンクされている}}（閾値 {threshold}%）。",
+          "STALE_CASES": "{stale, plural, one {# ケースが} other {# ケースが}} {days, plural, one {# 日} other {# 日}} 間結果を得ていません（閾値 {threshold}）。",
+          "AUTOMATION_SHARE_BELOW": "{automated} / {total} ケース（{automatedPercent}%）が自動化されています（閾値 {threshold}%）。",
+          "WEBHOOK_FAILURE_RATE": "最後の {sampleCount} 件の配信のうち {failed} 件が失敗しました（{failureRate}%、閾値 {threshold}%）。",
+          "CONSECUTIVE_FAILURES": "ケースが {streak, plural, one {# 回} other {# 回}} 連続で失敗しました（閾値 {threshold}）。",
+          "CASE_FLAKY": "結果が最後の {sampleCount} 件の結果を通じて {flips, plural, one {# 回} other {# 回}} 変動しました（閾値 {threshold}）。",
+          "RUN_PASS_RATE_BELOW": "成功率は {sampleCount} 件の結果を通じて {passRate}% です（閾値 {threshold}%）。",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# 結果が} other {# 結果が}} 失敗しました（閾値 {threshold}）。",
+          "MILESTONE_BEHIND": "マイルストーンは {completion}% 完了で、{daysRemaining, plural, one {# 日} other {# 日}} 残っています（閾値 {threshold}%）。",
+          "MILESTONE_OVERDUE": "マイルストーンは期限を {daysOverdue, plural, one {# 日} other {# 日}} 超過しています。",
+          "LLM_BUDGET_USED": "請求期間の支出は月額予算 {budget} のうち {spend} です（{percent}%、閾値 {threshold}%）。",
+          "LLM_ERROR_RATE": "最後の {sampleCount} 件のリクエストのうち {failed} 件が失敗しました（{failureRate}%、閾値 {threshold}%）。",
+          "LLM_RATE_LIMITED": "プロバイダーは過去 {hours, plural, one {# 時間} other {# 時間}} 内に {blocked, plural, one {# リクエスト} other {# リクエスト}} をレート制限しました（閾値 {threshold}）。",
+          "CODE_REPOSITORY_CACHE_FAILING": "リポジトリキャッシュが {hours, plural, one {# 時間} other {# 時間}} 間失敗しています（閾値 {threshold}）{error, select, other {: {error}}}",
+          "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# ユーザーが} other {# ユーザーが}} 統合の再認可を行う必要があります（閾値 {threshold}）。",
+          "QUEUE_FAILED_JOBS": "キューで {failed, plural, one {# ジョブが} other {# ジョブが}} 失敗しました（閾値 {threshold}）。",
+          "QUEUE_BACKLOG": "{{waiting, plural, one {# 待機中のジョブ} other {# 待機中のジョブ}} の最古のものが {minutes, plural, one {# 分} other {# 分}} 待機しています（閾値 {threshold}）。",
+          "AUDIT_BACKLOG": "最も古い未処理の監査変更は {minutes, plural, one {# 分} other {# 分}} です（閾値 {threshold}）。",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# アカウントが} other {# アカウントが}} ログイン試行失敗後ロックされています（閾値 {threshold}）。",
+          "NO_AUTOMATED_RESULTS": "{hours, plural, one {# 時間} other {# 時間}} の間に自動結果が到着しています（閾値 {threshold}）。"
+        },
+        "reviewDecisionRevertedAction": "その決定を取り消しました",
+        "reviewDecisionRevertedEmailMessage": "{actorName} は、プロジェクト \"{projectName}\" の {entityLabel} \"{entityName}\" の決定を取り消しました — 再度レビュー待ちになっています。",
+        "reviewDecisionRevertedTitle": "レビュー決定が取り消されました",
+        "reviewDecisionRevertedActionOther": "{deciderName} の決定を取り消しました",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} は、プロジェクト \"{projectName}\" の {entityLabel} \"{entityName}\" に対する {deciderName} の決定を取り消しました — 再度レビュー待ちになっています。"
       }
     },
     "issues": {
@@ -7029,6 +7468,9 @@
     "issueType": "問題の種類",
     "selectIssueType": "問題の種類を選択",
     "noIssueTypes": "利用可能な問題タイプはありません",
+    "assignees": "担当者",
+    "selectAssignees": "担当者を選択してください",
+    "assigneesLimit": "最大{max}人の担当者",
     "priorityUrgent": "緊急",
     "additionalFields": "追加フィールド",
     "createIssueInJira": "Jiraで課題を作成する",
@@ -7451,6 +7893,7 @@
       "TestRunResults": "テスト実行結果",
       "TestRunResultRestrictedFields": "テスト実行結果の制限フィールド",
       "AutomatedExecution": "自動化実行",
+      "FailurePatterns": "障害パターン",
       "Sessions": "セッション",
       "SessionsRestrictedFields": "セッション制限フィールド",
       "ClosedSessions": "クローズドセッション",
@@ -7459,7 +7902,8 @@
       "SharedSteps": "共有ステップ",
       "Issues": "問題",
       "Reporting": "報告",
-      "Settings": "プロジェクト設定"
+      "Settings": "プロジェクト管理",
+      "Alerts": "アラート"
     },
     "WorkflowType": {
       "NOT_STARTED": "開始されていません",
@@ -7493,6 +7937,11 @@
     "alreadyLinked": "このケースはすでにリンクされています。",
     "cannotLinkSelf": "ケースをそれ自身にリンクすることはできません。",
     "circularLink": "循環リンクが検出されました。",
+    "dependsOn": "依存",
+    "blocks": "ブロック",
+    "dependsOnOption": "依存 — このケースは選択されたケースが最初に合格することを必要とします",
+    "blocksOption": "ブロック — 選択されたケースは、このケースが最初に合格することを必要とします",
+    "dependencyHint": "依存関係の強制がオンの場合、テスト実行内のケースは、依存しているケースがその実行で合格するまで実行できません。",
     "failedToCreate": "リンクの作成に失敗しました。",
     "confirmRemoveLink": "このリンクを削除してもよろしいですか?",
     "DEPENDS_ON": "依存",
@@ -7512,6 +7961,9 @@
     "businessHours": "{hours, number, ::.0}営業時間"
   },
   "help": {
+    "webhookAction": {
+      "labels": "## ラベル\n課題があなたのトラッカーで保有するタグ。アクションは少なくとも1つのタグを持つ課題のみを取得します。空のままにすると、ラベルに関係なく課題を取得します。\n\n- Jira、GitHub、GitLab、Gitea: 課題のラベル\n- Azure DevOps、ClickUp、MantisBT: 課題のタグ\n- Redmine: 課題のカテゴリ\n- マッチングは大文字と小文字を区別しません"
+    },
     "auditLogs": "## 監査ログ\nセキュリティとコンプライアンスの追跡のために、システム全体の監査証跡を表示します",
     "statuses": "## ステータス\n合格、不合格、保留など、テスト結果を記録する際にテスターが割り当てるステータスを管理します。",
     "configurations": "## 構成\n構成とは、テスト環境を定義するために使用されるカテゴリとバリアントの組み合わせです。例えば、OS/ブラウザ、テストサーバー、言語などです。",
@@ -7543,7 +7995,7 @@
     "projectAiModels": "## AIモデル\nテストケース生成や自動タグ付けなど、このプロジェクトのAI支援機能で使用するAIモデルとプロンプト設定を選択します。",
     "projectQuickScript": "## QuickScript\nコードリポジトリを接続して、このプロジェクトが自動テストファイルからテストケースを生成できるようにし、含めるブランチとパスを選択します。",
     "projectParameters": "## テストケースパラメータ\nこのプロジェクトのデータ駆動テストを設定します。インポートされた結果のJUnitイテレーションプロパティ名と、パラメータ化されたケース用の再利用可能なデータセットです。",
-    "projectAdvanced": "## 詳細設定\nこのプロジェクトの詳細設定です。レコードIDのプレフィックス、結果のレビューワークフロー、失敗時の自動課題作成、および結果の編集期間を設定します。",
+    "projectAdvanced": "## 詳細設定\nプロジェクト毎の設定で、一般的な、レビュー、テスト実行および結果にグループ化されています。設定の？を開くと、その設定の機能が説明されます。スイッチは変更されると同時に保存されます。プロジェクトコードと時間ウィンドウ設定は、独自の保存ボタンで保存されます。",
     "projectShares": "## 共有の管理\nこのプロジェクトのレポートへの共有可能なリンクで、それぞれに公開、サインイン必須、パスワード保護のいずれかのアクセスレベルがあります。リンクを取り消すとアクセスが遮断されます。",
     "projectAccess": "## アクセス\nこのプロジェクトを開くことができるすべてのユーザーと、ここで何ができるかを決定するロール。ユーザーのロールは、自分のプロジェクトアクセス設定、属するグループ、またはプロジェクトのデフォルトアクセスから、この順序で決定されます。システム管理者とプロジェクト管理者は、ロールに関係なく完全なアクセス権を持ちます。アクセスは、管理者が「管理」>「プロジェクト」>「プロジェクトの編集」で変更します。",
     "groups": "## グループ\nグループを使用すると、多数のユーザーに対してプロジェクトアクセスとロールを一度に割り当てることができます。メンバーを直接追加するか、IDプロバイダーからグループをマッピングします。",
@@ -7584,6 +8036,7 @@
     "elasticsearchReindex": "## データの再インデックス\n検索パフォーマンスを向上させるために検索インデックスを再構築します。",
     "queues": "## バックグラウンドジョブキュー\nバックグラウンドジョブ処理キューを監視・管理します。",
     "trash": "## ゴミ箱\nシステム全体でソフトデリートされたレコードを復元または完全に削除します。",
+    "userTrashWindow": "## セルフサービス復元ウィンドウ\nユーザーが自分で削除したアイテムをプロフィールの **ゴミ箱** セクションから復元できる日数です。**0** に設定するとセルフサービス復元がオフになります。ウィンドウ外のアイテムはユーザーのゴミ箱に表示されなくなるだけです。何も削除されず、管理者はここで何でも復元または削除できます。",
     "systemWebhooks": "## システムWebhook\n単一のプロジェクトに紐づかないシステムレベルのイベント向けの送信Webhook宛先です。現在はSCIM 2.0のユーザーおよびグループのライフサイクルイベントが対象です。受信Webhookおよびプロジェクトスコープの送信Webhookは、プロジェクト設定ページから設定してください。",
     "workflows": "## ワークフロー\nテストケース、テスト実行、セッションのワークフロー状態を管理します。",
     "workflowReviews": "## レビューワークフロー\n承認が得られるまでワークフローの遷移を制限することで、レビューを強制します。有効にすると、プロジェクトは詳細設定から個別に有効/無効を選択できます。無効にすると、ワークフローの承認制限が解除されます。",
@@ -7643,7 +8096,7 @@
       "documentation": "## ドキュメント\n追加の詳細、参考資料、およびサポート資料。\n\n- 技術仕様\n- 設計ドキュメント\n- 外部参照\n- 会議の議事録と決定事項",
       "automaticCompletion": "## 期日自動完了\n期日が来ると、このマイルストーンを自動的に完了としてマークします。\n\n- マイルストーンは期日の予定時刻に完了します\n- 完了ステータスに関係なく閉じる必要がある時間指定のマイルストーンに役立ちます\n- 期日前にマイルストーンを手動で完了することで上書きできます\n- 期日を設定する必要があります",
       "notifyDaysBefore": "## 期日前に通知\nマイルストーンの期日が近づくと、割り当てられたチームメンバーに通知を送信します。\n\n- 通知を有効にするにはオンに切り替え、無効にするにはオフにします\n- 期日の何日前にリマインダーの送信を開始するかを入力します\n- 通知は、このマイルストーン内のテスト実行とセッションに割り当てられたユーザーに送信されます\n- 期限を過ぎたマイルストーンは、完了するまでリマインダーを送信し続けます",
-      "managedByJira": "## Jiraによって管理\nこのマイルストーンの名前、日付、状態は Jira によって管理されています。こちらで更新するには、そちらで変更してください。"
+      "managedByJira": "## トラッカーによって管理されています\nこのマイルストーンの名前、日付、および状態は、それがインポートされた課題トラッカーによって管理されています。こちらで更新するには、そちらで変更してください。"
     },
     "session": {
       "name": "## セッション名\nテストセッションの目的を明確に示す説明的な名前。\n\n- ユニークで意味のあるものにする必要があります\n- チームメンバーがテスト対象を理解するのに役立ちます\n- レポートや追跡で使用されます",
@@ -7695,7 +8148,7 @@
       "name": "## ロール名\nすべてのプロジェクトで使用される、明確で簡潔な説明的な名前またはキーワード。\n\n- チームメンバーが関連するテストケース、テスト実行、およびセッションをすばやく見つけるのに役立ちます。",
       "isDefault": "## デフォルトのロール\nこのロールがプロジェクトのデフォルトかどうかを示します。\n\n- デフォルトのロールは新しいユーザーには事前に選択されています\n- いつでも変更できます",
       "permissions": {
-        "canAddEdit": "## 追加/編集\nこのロールが関連するアプリケーション領域を追加および編集できるかどうかを示します。\n\n- **自動化実行**により、CIプロバイダーで自動化実行を開始、再試行、キャンセルする権利が付与されます。結果の記録には**テスト実行結果**の追加/編集が必要であり、リポジトリから実行を開始するには、実行を作成または拡張するため、**テスト実行**の追加/編集も必要です。",
+        "canAddEdit": "## 追加/編集\nこのロールが関連するアプリケーション領域を追加・編集できるかどうかを示します。\n\n- **自動実行** は、CIプロバイダーで自動実行を開始、再試行、キャンセルする権利を付与します。結果を記録するには、**テスト実行結果** の追加/編集が必要であり、リポジトリから開始する場合は、実行を作成または拡張するため **テスト実行** の追加/編集も必要です。\n- **障害パターン** は、障害パターンの根本原因を設定または削除し、AIに1つを求める、解決、無視または再度開く、メモを編集し、問題をリンクおよびリンク解除し、テストケースを隔離またはリリースする権利を付与します。プロジェクトにアクセスできる誰もが障害パターンを見ることができます。プロジェクト管理者が障害パターン設定を管理します。\n- **アラート** は、プロジェクトでアラートを作成し、作成したアラートを編集、一時停止、削除する権利を付与します。プロジェクト管理者は、すべてのアラートと他のユーザーのサブスクリプションを管理します。誰もがアラートをフォローするか離脱できます。",
         "canDelete": "## 削除\nこのロールが関連するアプリケーション領域を削除できるかどうかを示します。",
         "canClose": "## 閉じる\nこのロールが関連するアプリケーション領域を閉じることができるかどうかを示します。",
         "canApprove": "## 承認\nこのロールが関連するアプリケーション領域のレビュー要求を承認できるかどうかを示します。テストケースリポジトリ、テスト実行、およびセッションにのみ適用されます。",
@@ -7726,10 +8179,9 @@
       "maxTokensPerRequest": "## リクエストごとの最大トークン数\nモデルが1回の応答で生成できる**_出力_トークンの上限**です。\n\n- モデルの**返信**の長さを制限します — 送信するコンテキストの量ではありません\n- これを超えるリクエストは、**モデルに到達する前に拒否されます**\n- モデルの実際の最大出力に設定してください — 例: Claude Opus/Sonnet は `128000`、Claude Haiku は `64000`、Gemini は `65536`、GPT-4o は `16384`\n- 低すぎると → AI機能が失敗するか、出力が切り捨てられます",
       "defaultMaxTokens": "## デフォルトの最大トークン数\nこのAIモデルへのリクエストが要求する**出力の長さ**で、_リクエストごとの最大トークン数_によって制限されます。\n\n- **テストケース生成**（Jira課題パネルを含むすべてのソース）、**Markdownテストケース解析**、**エディタ執筆アシスタント**、および**スマートテストケース選択**は常にこの値を使用します。これらのプロンプト設定の_最大出力トークン数_は適用されません\n- **エクスポートコード生成**、**AIタグ提案**、**AIステップ導出**、および**自動化候補レポート**は、代わりに**管理 → プロンプト設定**の独自の_最大出力トークン数_を使用します\n- 回答前に思考するモデル（例: Claude Opus 5）は、この予算の一部を推論に使用します — 返信のための余裕を残してください\n- QuickScriptがモデルに送信するリポジトリコードの量は制御**しません** — その予算はモデルのコンテキストウィンドウから自動的に算出されます\n- _リクエストごとの最大トークン数_以下に保ってください",
       "repoContextBudget": "## リポジトリコンテキスト予算\nスクリプトを生成する際に、QuickScriptが接続されたリポジトリのコードをどれだけモデルに送るかを示します。\n\n- 選択したモデルの入力コンテキストウィンドウから**自動的に設定**されます — ここで設定する項目はありません\n- コンテキストが大きいモデル（Claude、Gemini、DeepSeek）はより多く受け取り、小さなローカルモデルは溢れない安全な量を受け取ります\n- コンテキストが多いほど、実際のページオブジェクトやフィクスチャに基づいたスクリプトになります — 生成されるスクリプトの長さが変わるわけではありません",
-      "maxRequestsPerMinute": "## 1分あたりの最大リクエスト数\nこのプロバイダに対して1分あたりに実行できるAPI呼び出しの数を制限します。\n\n- プロバイダプランのレート制限に合わせて設定します。\n- 超過リクエストは拒否されず、キューに格納されます。\n- プランの制限については、プロバイダのドキュメントを確認してください。",
       "costPerInputToken": "## 100万入力トークンあたりのコスト（USD）\nモデルに送信される**100万**入力（プロンプト）トークンあたりのコスト（USD）です。\n\n- コスト追跡と予算アラートに使用されます\n- プロバイダーがモデルの価格情報を提供している場合（LiteLLM、OpenRouter、Together AI）に、モデルを選択したときや接続テストを実行したときに自動的に入力されます\n- それ以外の場合は、プロバイダーの価格ページでご確認ください\n- 例: `0.15` = 100万入力トークンあたり$0.15",
       "costPerOutputToken": "## 100万出力トークンあたりのコスト（USD）\nモデルによって生成される**100万**出力（完了）トークンあたりのコスト（USD）です。\n\n- 通常、入力トークンのコストよりも高くなります\n- コスト追跡と予算アラートに使用されます\n- プロバイダーがモデルの価格情報を提供している場合（LiteLLM、OpenRouter、Together AI）に、モデルを選択したときや接続テストを実行したときに自動的に入力されます\n- それ以外の場合は、プロバイダーの価格ページでご確認ください\n- 例: `0.60` = 100万出力トークンあたり$0.60",
-      "monthlyBudget": "## 月間予算 (USD)\nこの統合におけるオプションの支出目標です。\n\n- 予算追跡を無効にするには「0」に設定します。\n- 予算は**情報提供のみ**であり、LLMの使用をブロックするものではありません。\n- 予算の80%、90%、100%に達した時点で通知を受け取ります。\n- コストは上記のトークンごとのレートを使用して計算されます。",
+      "monthlyBudget": "## 月額予算（USD）\nこの統合のオプションの支出目標。\n\n- 予算追跡を無効にするには `0` に設定します\n- 予算は **情報提供のみ** です — LLM の使用をブロックしません\n- **AI 予算使用** メトリクス（通知とアラートページのシステム）を含むアラートは、支出があなたが設定した割合に達したときに購読者に通知します。このフォームを保存するか支出をリセットすると、同じ期間内に再度発火できます\n- コストは上記のトークン当たりレートを使用して計算されます",
       "billingPeriodStartDay": "## 請求期間開始日\n請求期間が始まる月の日 (1～31)。\n\n- デフォルト値の「1」はカレンダーの月と一致します。\n- 15日から15日までのサイクルにするには「15」に設定します (例: プロバイダーの請求書の日付に合わせるため)。\n- 値「29～31」は、短い月の最終日 (閏年でない年の2月など) に自動的に固定されます。\n- **月間予算**の支出期間と**支出のリセット**アクションに影響します。",
       "defaultTemperature": "## デフォルト温度\nモデル応答のランダム性を制御します (0～2)。\n\n- **0:** 決定論的 — 同じ入力に対して同一の出力\n- **0.3:** 集中的 — テスト生成とコード出力に推奨\n- **1+:** 創造的 — より多様な応答\n- 個々の機能はプロンプト設定でこれを上書きできます",
       "timeout": "## リクエストタイムアウト (ms)\nリクエストがキャンセルされるまでの応答待ち時間。\n\n- 値はミリ秒単位です (例: `30000` = 30 秒)\n- ストリーミングリクエスト (例: コードのエクスポートプレビュー) はこのタイムアウトを無視します\n- 処理が遅い場合や大規模なモデルの場合は値を増やしてください\n- 範囲: 5,000 ～ 600,000 ms",
@@ -7758,6 +8210,8 @@
       "redmineUrl": "## Redmine URL\nRedmineインスタンスのベースURL。\n\n- 形式: https://redmine.example.com\n- /issuesやその他のパスを含めないでください\n- このサーバーからアクセスできる必要があります",
       "mantisBTApiKey": "## MantisBT APIトークン\nあなたの個人用REST APIトークンです。\n\n- MantisBTのアカウント設定 → [APIトークン] で作成してください\n- ユーザーの権限に応じたスコープになります。共有インテグレーションにはサービスアカウントを使用してください",
       "mantisBTUrl": "## MantisBT URL\nMantisBTインスタンスのベースURL。\n\n- 形式: https://mantisbt.example.com\n- /api/restやその他のパスを含めないでください\n- このサーバーからアクセスできる必要があります",
+      "clickupTeamId": "## ClickUp Team（Workspace）ID\nClickUp Team（Workspaceとも呼ばれます）のタスクが属する数値ID。\n\n- ClickUp URLで見つかります：app.clickup.com/{teamId}/...\n- プロジェクトを選択する際にSpaces/Folders/Listsを閲覧するために必要です",
+      "clickupListId": "## デフォルトのClickUp List ID\n新しいタスクがデフォルトで作成されるList。\n\n- ClickUp URLまたはListの「リンクをコピー」オプションを使用して見つかります\n- オプション — 代わりに問題ごとに特定のListを選択できます",
       "githubBaseUrl": "## APIベースURL\nGitHub Enterprise Serverの完全なGitHub APIルート。\n\n- 通常は/api/v3で終わります\n- api.github.comを使用する場合は空白のままにしてください\n- このサーバーからアクセスできる必要があります"
     },
     "config": {
@@ -7847,8 +8301,8 @@
       "state": "## 状態\nこれらのテストケースの現在のワークフロー状態を示します。",
       "estimate": "## 見積もり\n各テストケースを完了するのにかかる手動で入力された推定時間。",
       "automated": "## 自動化\nこれらのテストケースが自動化されているかどうかを示します。",
-      "tags": "## タグ\n関連するタグを適用して、これらのテストケースを分類およびフィルタリングします。",
-      "issues": "## 問題\n関連する問題 (バグ、タスクなど) をこれらのテスト ケースにリンクします。"
+      "tags": "## タグ\nこれらのテストケースを分類およびフィルタリングするために関連するタグを適用します。\n\n- **追加**は、選択したタグをすべてのテストケースに追加し、既に持っているタグを保持します。\n- **削除**は、選択したタグをそれを持つすべてのテストケースから削除します。\n- **すべてを置き換える**は、すべてのテストケースに正確に選択したタグを残します。",
+      "issues": "## 問題\n関連する問題（バグ、タスクなど）をこれらのテストケースにリンクします。\n\n- **追加**は、選択した問題をすべてのテストケースにリンクし、既にリンクされている問題を保持します。\n- **削除**は、選択した問題をそれを持つすべてのテストケースからリンク解除します。\n- **すべてを置き換える**は、すべてのテストケースを正確に選択した問題にリンクしたままにします。"
     },
     "caseField": {
       "displayName": "## 表示名\nこれは、フォームやビューでユーザーに表示されるフィールドの、人間が読める名前です。明確で説明的な名前にしてください。",
@@ -7913,6 +8367,10 @@
       "lastActiveDate": "## 最終アクティブ日\n最新のアクティビティの日付。",
       "averageAge": "## 平均年齢\nアイテムの平均年齢（日数）。",
       "issueCount": "## 問題数\n追跡された問題の合計数。",
+      "linkedCaseCount": "## リンクされたケース\nグループの問題にリンクされた異なるテストケースの数。同じグループ内の複数の問題にリンクされたケースは1回としてカウントされます。",
+      "firstCaseCreated": "## 最初のケース作成\nこのグループの最初のテストケースが作成された日時。",
+      "lastCaseCreated": "## 最後のケース作成\nこのグループの最新のテストケースが作成された日時。",
+      "caseCreationSpan": "## ケース作成期間\nグループの最初と最新のテストケース作成の間の日数 — グループのケースの作成にかかった時間。",
       "milestoneCount": "## マイルストーン数\nマイルストーンの合計数。",
       "milestoneCompletionRate": "## マイルストーン完了率\n完了したマイルストーンの割合。",
       "averageMilestoneDuration": "## 平均マイルストーン期間\nマイルストーンの平均期間（日数）。",
@@ -7929,6 +8387,9 @@
       "selectionPrecision": "## 選択精度（%）\nインパクト分析が選択し、その後実行されたケースのうち、失敗したケースの割合。何も選択されていない場合は空です。"
     },
     "reportDimensions": {
+      "issue": "## 問題ディメンション\nテストケースにリンクされた問題でグループ化します。複数の問題にリンクされたケースはそれぞれにカウントされ、リンクされた問題がないケースは「なし」に分類されます。",
+      "resultSource": "## 結果ソースディメンション\n実行の出所でグループ化します：アプリに入力された結果（手動）またはJUnitなどのインポートされた自動化結果（自動）。",
+      "rootCause": "## 根本原因ディメンション\n自動化された結果を失敗パターンの根本原因でグループ化します — 分類が行われた場合はその人の分類、そうでない場合はAIの分類。手動結果、成功した結果、および分類されていない失敗は「なし」に分類されます。",
       "user": "## ユーザー ディメンション\nテストを実行したユーザーまたはアイテムに割り当てられているユーザーごとに結果をグループ化します。",
       "status": "## ステータス ディメンション\nテスト実行ステータス (合格、不合格、ブロックなど) 別に結果をグループ化します。",
       "project": "## プロジェクト ディメンション\nプロジェクト間の分析のために結果をプロジェクトごとにグループ化します。",
@@ -7961,7 +8422,7 @@
       "dimensions": "## ディメンション\nレポートで分析したいディメンションを選択します。ディメンションとは、日付、ユーザー、ステータスなど、データを分類する属性です。ドラッグして順序を変更できます。",
       "metrics": "## メトリクス\nレポートで測定するメトリクスを選択します。メトリクスとは、テスト結果数、合格率、平均経過時間など、データから得られる定量的な測定値です。ドラッグして順序を変更できます。",
       "dateRange": "## 日付範囲\n特定の期間でレポートデータをフィルタリングします。「過去7日間」「過去1か月」「過去N日」などのプリセットを選択するか、カレンダーで開始日と終了日を選択します。\n\nプリセットは相対的なままです：保存されたレポートまたはライブ共有リンクは開くたびに日付を改めて計算し、タイムゾーンで表示されます。カスタム日付は固定されます。このフィルターは、各レポートタイプに関連する日付フィールドに適用されます(たとえば、テスト結果の実行日、テストケースの作成日)。",
-      "dimensionFilters": "## フィルター\nレポートを選択した各ディメンションの特定の値に絞り込みます。そのディメンションのすべての値を含めるには、フィルターを空のままにしてください。日付ディメンションは、代わりに日付範囲ピッカーでフィルタリングされます。"
+      "dimensionFilters": "## フィルター\nレポートを選択した各ディメンションの特定の値に絞り込みます。そのディメンションのすべての値を含めるには、フィルターを空のままにしてください。フィルターを除外に切り替えて、選択した値以外のすべてを保持します — 保存されたレポートが新しい値を自動的にカバーし続ける場合に便利です。日付ディメンションは、代わりに日付範囲ピッカーでフィルタリングされます。"
     },
     "codeRepository": {
       "name": "## リポジトリ名\nこのリポジトリ接続の分かりやすい表示名。\n\n- プロジェクトコードコンテキスト設定で識別するために使用されます。\n- プロバイダのリポジトリ名と一致する必要はありません。",
@@ -8254,7 +8715,15 @@
     "projectSessionsFilters": "## セッションのフィルタリング\n\nチップを切り替えてリストを絞り込みます。チップは「進行中」タブと「完了」タブの両方に適用され、このプロジェクトについてこのデバイスに記憶されます。\n\n- **マイセッション** — 自分が関与しているセッションのみ：自分が作成したセッション、または自分に割り当てられたセッション。",
     "projectImpact": "## インパクト\nテスト対象のアプリケーションのリポジトリを接続して、このプロジェクトがテストインパクト分析を実行できるようにします：2つのコミットを選択して、変更がどのテストケースに影響を与えるかを確認し、テストケースをそれらがカバーするコードにピン留めします。",
     "pathPatterns": "## パスパターン\n各行は基本的な**パス**とグロブ**パターン**を組み合わせます。行は累積されます。任意の行がファイルに一致する場合、ファイルが含まれます。\n\n- `src` + `**/*` — `src`の下のすべて\n- 空白または`.` + `**/*` — リポジトリ内のすべてのファイル\n- `src` + `**/!(*.test|*.spec).ts` — テストを除く`.ts`ファイル\n\n### 除外\n行で**除外**をチェックして、別の行が含める場合でもそのファイルを削除します。除外はファイルピッカーとキャッシュに適用され、インパクト分析の変更されたファイルに対して適用されるため、ほぼすべてのプルリクエストで変更されるファイルは関連のないテストケースを取得できなくなります。少なくとも1行はチェックなしのままにしておく必要があります。\n\n- 空白 + `**/CHANGELOG*` — あらゆる深さのすべてのチェンジログ\n- `app` + `build.gradle.kts` — バージョンをバンプするだけのビルドファイル",
-    "projectAutomation": "## 自動化実行\n実行ターゲットは、このプロジェクトの自動化されたケースをどこで実行するかをTestPlanItに伝えます：GitHub Actionsワークフロー、GitLab CIパイプライン、または他のシステムの署名付きウェブフック。実行が実行されると、TestPlanItはジョブを実行IDと計画URLで開始します。ジョブは計画を読み取り、一致するテストを実行して、その実行にピン留めされたレポーターまたはCLIで結果を報告します。ターゲットは削除せずに無効にできます。"
+    "projectAutomation": "## 自動化実行\n実行ターゲットは、このプロジェクトの自動化されたケースをどこで実行するかをTestPlanItに伝えます：GitHub Actionsワークフロー、GitLab CIパイプライン、または他のシステムの署名付きウェブフック。実行が実行されると、TestPlanItはジョブを実行IDと計画URLで開始します。ジョブは計画を読み取り、一致するテストを実行して、その実行にピン留めされたレポーターまたはCLIで結果を報告します。ターゲットは削除せずに無効にできます。",
+    "userAlerts": "## 通知とアラート\n**通知設定** は、連絡する方法（アプリ内、メール、ダイジェスト）と、受け取る通知タイプを決定します。\n\n**アラート** はテストメトリクスを監視し、境界線を超えたときに購読者に通知します。例えば、結果が通常より50%長くかかる、ケースが3回連続で失敗する、成功率が90%以下に低下するランなど、または期限までのマイルストーンです。リストはプロジェクト内のすべてのアラートを表示します。**通知してください** スイッチはいずれかに従うか退出します。**アラートを追加** は、ロールが **アラート** 追加/編集を持つプロジェクトで独自に作成します。プロジェクト管理者はプロジェクト内のすべてのアラートと他のユーザーのサブスクリプションを管理します。アラートはクールダウン内の被験体あたり最大1回発火し、十分な結果を得るまで沈黙したままです。",
+    "projectTriage": "## 障害パターン\n同じ例外、メッセージ、トップスタックフレームを共有する自動化された障害は、1つの**障害パターン**にグループ化されます。各パターンは、発生頻度、影響を受けたテストケースと実行、およびAIの根本原因（製品バグ、テストバグ、環境またはデフォルトではflaky）を示します。パターンが処理されたら、解決または無視します。障害が戻った場合、それは自動的に再度開きます。",
+    "projectTriageSettings": "## 障害パターン設定\nすべての自動化された結果が到着するたびにグループ化を実行し、コストはかかりません。AI根本原因提案は、AIモデルページの**障害パターン：根本原因** 機能に割り当てられたAIモデルを使用します。ここでそれをオフにして、AIコールなしでグループ化を続けます。**既存の結果を分析** は、このプロジェクトに既に記録されているすべての自動化された障害をグループ化します。",
+    "projectQuarantine": "## 隔離されたテストケース\n隔離されたテストケースは実行を続けて結果を記録しますが、その障害は実行パス/失敗から除外され、別個のカウントとして表示されます。原因が修正されている間に、障害パターンからケースを隔離します。隔離は、ケースが障害パターン設定で設定された回数を連続してパスすると自動的に解除されます。手動でリリースするようにマークされていない場合。ここまたはパターンからいつでもそれをリリースします。",
+    "rootCauses": "## 根本原因\n障害パターンがAIまたは手動でグループ化された障害に割り当てる根本原因。各々は、AIがいつそれが適用されるかを決定するために読む説明を持っています。名前を変更、色を変更、または並べ替え、独自のを追加、または使用しないものを削除します。1つを削除すると、そのパターンは根本原因なしになります。",
+    "rootCauseDescription": "## 説明\nAIはこの説明を読んで、根本原因が障害パターンに適用される時期を判断するため、それを指す証拠を説明します。",
+    "projectRiskSettings": "## リスク スコアリング設定\n各テスト ケースは、障害履歴、不安定性、古さ、リンクされた要件の重大度、リンクされた欠陥から 0～100 のリスク スコアを取得します。決定論的で、AI呼び出しはありません。スコアは結果が到着した後と夜間スイープで更新されます。**コンポーネント ウェイト**は、各シグナルがどの程度カウントされるかを設定します。ゼロはコンポーネントを削除します。**すべてのスコアを再計算**は、夜間スイープを待つのではなく、プロジェクト全体を今すぐ再スコアします。",
+    "reviewRevert": "## レビュー決定の取り消し\nレビュアーが記録した決定を取り消すことができる期間。決定時から計測されます。取り消すとリクエストはレビュアーのキューに戻ります。承認によってアイテムが既に先に進んでいた場合、アイテムは以前の状態に戻ります。システム管理者はこの制限の対象外であり、任意の年代の決定を取り消すことができます。プロジェクトは詳細設定で制限を短縮できますが、延長することはできません。"
   },
   "reports": {
     "ui": {
@@ -8322,12 +8791,16 @@
           "unit": "期間",
           "days": "過去 {count, plural, other {# 日}}",
           "weeks": "過去 {count, plural, other {# 週}}",
-          "months": "過去 {count, plural, other {# ヶ月}}"
+          "months": "過去 {count, plural, other {# ヶ月}}",
+          "calendarWeeks": "過去 {count, plural, other {# カレンダーウィーク}}",
+          "calendarMonths": "過去 {count, plural, other {# カレンダーヶ月}}"
         },
         "rollingUnits": {
           "days": "日",
           "weeks": "週",
-          "months": "ヶ月"
+          "months": "ヶ月",
+          "calendarWeeks": "カレンダーウィーク（週の開始から）",
+          "calendarMonths": "カレンダー月（1日から）"
         }
       },
       "dateGrouping": {
@@ -8388,7 +8861,7 @@
           "description": "問題の作成、解決、影響分析"
         },
         "automationTrends": {
-          "label": "自動化のトレンド",
+          "label": "自動テストケースのトレンド",
           "description": "優先順位ごとに自動化の進捗状況を週ごとに追跡"
         },
         "flakyTests": {
@@ -8434,6 +8907,10 @@
         "codePinCoverage": {
           "label": "コードピンカバレッジ",
           "description": "コードピンがある場所：リポジトリとディレクトリ、および最近の変更がカバーされなかった場所"
+        },
+        "resultsTrend": {
+          "label": "テスト結果の失敗率のトレンド",
+          "description": "テスト結果の合格率と失敗率の時系列変化、および失敗率が改善または悪化しているかどうか"
         }
       },
       "flakyTests": {
@@ -8753,7 +9230,7 @@
           "description": "プロジェクト全体におけるLLM機能のトークン使用量、コスト、信頼性"
         },
         "automationTrends": {
-          "label": "プロジェクト間自動化のトレンド",
+          "label": "クロスプロジェクト自動テストケースのトレンド",
           "description": "プロジェクト全体の優先度別に自動化の進捗状況を週ごとに追跡"
         },
         "flakyTests": {
@@ -8787,6 +9264,10 @@
         "codePinCoverage": {
           "label": "プロジェクト横断的コードピンカバレッジ",
           "description": "インパクト分析が有効なすべてのプロジェクトにおけるコードピンカバレッジ"
+        },
+        "resultsTrend": {
+          "label": "クロスプロジェクトテスト結果の失敗率のトレンド",
+          "description": "プロジェクト別のテスト結果の合格率と失敗率の時系列変化、および失敗率が改善または悪化しているかどうか"
         }
       },
       "folderDescendants": {
@@ -8800,7 +9281,11 @@
       },
       "groupedTotal": "このグループの {count, plural, other {# 行}} の合計",
       "dimensionFilters": {
-        "allValues": "すべての値"
+        "allValues": "すべての値",
+        "noValues": "除外なし",
+        "modeLabel": "フィルターモード",
+        "include": "含む",
+        "exclude": "除外"
       },
       "impactAnalysis": {
         "lookbackDaysHelp": "この日数以内に開始された分析。すべての時間は、プロジェクトが保持するすべての分析を読み取ります。",
@@ -8851,6 +9336,79 @@
         "chart": {
           "byDirectory": "ディレクトリ別のピンと未カバーファイル"
         }
+      },
+      "resultsTrend": {
+        "period": "期間",
+        "runSource": "結果のタイプ",
+        "runSources": {
+          "automated": "自動化",
+          "manual": "手動"
+        },
+        "showPassRate": "合格率を表示",
+        "showPassRateHelp": "グラフの右軸に合格率をその適合トレンドで描画し、それをヘッドラインの数字に追加します。デフォルトではオフです：レポートは失敗率についてです。",
+        "showFailRate": "失敗率を表示",
+        "showFailRateHelp": "グラフの右軸に失敗率をその適合トレンドで描画し、ヘッドラインの数字に表示します。デフォルトではオンです。",
+        "showCounts": "結果の合計を表示",
+        "showCountsHelp": "合格、失敗、スキップ、その他の合計を積み上げ棒としてグラフの横に描画します。デフォルトではオフです：レポートは率についてです。",
+        "countSkipped": "スキップされた結果を率に数える",
+        "countSkippedHelp": "スキップされた結果は、これがオンでない限り、合格率と失敗率の分母から除外されます。その他のステータスは常に含まれます。",
+        "includeAborted": "中止されたランを含める",
+        "includeAbortedHelp": "プロジェクトの中止されたラン状態にあるランはこれがオフでない限りカウントされます。",
+        "latestAttemptOnly": "最新の試行のみ",
+        "latestAttemptOnlyHelp": "すべてのインポートされた試行ではなく、実行ごとにケースあたり1つの結果、その最新の試行をカウントします。",
+        "failRate": "失敗率",
+        "skipped": "スキップしました",
+        "other": "その他",
+        "inProgress": "進行中",
+        "verdict": {
+          "better": "失敗率が改善しています",
+          "worse": "失敗率が悪化しています",
+          "steady": "失敗率は一定に保たれています",
+          "notEnough": "トレンドをまだ呼び出すには、完全な期間が十分ではありません。",
+          "notEnoughDetail": "トレンドは、結果のある少なくとも2つの完全な期間が必要です。",
+          "detail": "トレンドラインは{start}から{end}に実行され、{count}の完全な{grouping, select, daily{日}weekly{週}monthly{月}quarterly{四半期}other{年}}にわたって{change}ポイントの変更です。"
+        },
+        "stats": {
+          "lastComplete": "最後の完全な期間（{period}）は、その前の完全な期間の平均と比較されます。",
+          "results": "実行された結果",
+          "runs": "ラン",
+          "deltaPoints": "{change}ポイント対。以前の{count, plural, one {# 期間} other {# 期間}}",
+          "deltaPercent": "{change}％対。以前の{count, plural, one {# 期間} other {# 期間}}",
+          "noBaseline": "比較する以前のデータはありません"
+        },
+        "chart": {
+          "allProjects": "選択されたすべてのプロジェクト",
+          "period": "{grouping, select, weekly{週{date}}other{{date}}}",
+          "partialPeriod": "{grouping, select, weekly{週{period}}other{{period}}}（進行中）",
+          "rateTrend": "{rate}トレンド"
+        },
+        "heatmap": {
+          "title": "プロジェクトと期間別の失敗率",
+          "help": "各セルはその期間のプロジェクトの失敗率です。陰影は35％で最大強度に達します。トレンド列は、完全な期間にわたる適合失敗率線の変更です。*は進行中の期間をマークします。",
+          "trend": "トレンド"
+        },
+        "trend": {
+          "points": "{change}ポイント"
+        },
+        "detail": {
+          "title": "期間別の結果と率"
+        },
+        "method": {
+          "title": "これはどのようにカウントされるか",
+          "runSource": {
+            "automated": "自動化されたランのみ：手動を除くすべてのラン型。ランはそれが作成された期間に属しています。",
+            "manual": "手動ランのみで、それらに記録された結果があります。ランはそれが作成された期間に属しています。",
+            "both": "すべてのラン：インポートされた結果のある自動化されたラン、および記録された結果のある手動ラン。ランはそれが作成された期間に属しています。"
+          },
+          "periods": "{grouping, select, daily{日}weekly{週（月曜日から開始）}monthly{月}quarterly{四半期}other{年}}は{timezone}で切られます。現在のものは進行中で、トレンドとヘッドラインの数字から除外されます。",
+          "everyAttempt": "再試行されたテストは試行ごとに1回カウントされます。",
+          "latestAttempt": "各ランのケースの最新の試行のみがカウントされます。",
+          "skippedExcluded": "スキップされた結果（合格または失敗なしで完了するステータス）は合格率と失敗率から除外されます。その他のステータスは含まれたままです。",
+          "skippedCounted": "スキップされた結果は合格率と失敗率でカウントされます。",
+          "abortedIncluded": "中止されたラン状態のランが含まれます。",
+          "abortedExcluded": "中止されたラン状態のランは除外されます。",
+          "trend": "トレンドは、完全な期間にわたる失敗率に適合する直線です。どちらの方向でも1ポイント以上の変更は、改善または悪化と呼びます。"
+        }
       }
     },
     "errors": {
@@ -8881,6 +9439,9 @@
       "issueType": "問題の種類",
       "issueTracker": "課題追跡システム",
       "issueStatus": "問題ステータス",
+      "issue": "問題",
+      "resultSource": "結果ソース",
+      "rootCause": "根本原因",
       "tag": "タグ",
       "feature": "機能",
       "model": "モデル",
@@ -8918,6 +9479,10 @@
       "averageElapsed": "実行あたりの平均時間",
       "lastActiveDate": "最終アクティブ日",
       "issueCount": "発行数",
+      "linkedCaseCount": "リンクされたケース",
+      "firstCaseCreated": "最初のケース作成",
+      "lastCaseCreated": "最後のケース作成",
+      "caseCreationSpan": "ケース作成期間（日数）",
       "averageAge": "平均年齢（日数）",
       "sessionCount": "セッション数",
       "activeSessions": "アクティブなセッション",
@@ -9395,9 +9960,12 @@
       "exists": "存在する",
       "not_exists": "存在しない"
     },
+    "recordMatches": "{count, plural, one {ID でマッチした # レコード} other {ID でマッチした # レコード}}",
     "help": {
       "exactPhrases": "正確なフレーズ",
       "exactPhrasesDesc": "正確なフレーズに一致させるには、用語を引用符で囲んでください。",
+      "ids": "ID",
+      "idsDesc": "レコードを直接見つけるには、# あり/なしで ID を入力します。複数を検索するには、OR、コンマ、またはスペースで区切ります:",
       "proximity": "近接検索",
       "proximityDesc": "互いにN文字以内の単語",
       "booleanOperators": "ブール演算子",
@@ -9970,5 +10538,660 @@
     "update": "現在のマッピングで更新",
     "updateConfirm": "「{name}」は現在の列マッピングと設定で更新されます。",
     "savePrompt": "この列マッピングを次回のために保存しますか？"
+  },
+  "alerts": {
+    "title": "アラート",
+    "description": "プロジェクト全体で従うアラートと、従うことができるプロジェクトのアラート。",
+    "addRule": "アラートを追加",
+    "editRule": "アラートを編集",
+    "deleteRule": "アラートを削除",
+    "deleteConfirm": "アラート「{name}」を削除しますか？その購読者は通知を受け取られなくなり、ゴミ箱から復元できます。",
+    "pauseTitle": "このアラートを全員のために一時停止しますか？",
+    "pauseConfirm": "「{name}」は {count, plural, =0 {全員} one {その唯一の購読者} =2 {両方の購読者} other {その # 人の購読者すべて}} に対して発火を停止し、他の誰かがそれを再度有効にするまで、あなただけではなく停止します。自分の通知のみを停止するには、代わりに通知してくださいをオフにします。",
+    "columns": {
+      "name": "ルール",
+      "condition": "条件",
+      "scope": "範囲",
+      "subscribers": "購読者",
+      "lastFired": "最後に発火",
+      "enabled": "有効",
+      "notifyMe": "通知してください",
+      "actions": "アクション",
+      "project": "プロジェクト"
+    },
+    "neverFired": "一度もない",
+    "systemScope": "システム",
+    "systemSubjects": {
+      "audit": "監査ログ",
+      "lockouts": "ユーザーアカウント",
+      "automated-results": "自動化された結果"
+    },
+    "paused": "一時停止",
+    "filters": {
+      "label": "アラートをフィルター",
+      "on": "オン",
+      "off": "オフ"
+    },
+    "history": "履歴",
+    "subscribers": "購読者",
+    "subscriberCount": "{count, plural, =0 {購読者なし} one {# 購読者} other {# 購読者}}",
+    "toasts": {
+      "created": "ルールが作成されました。",
+      "updated": "ルールが更新されました。",
+      "deleted": "ルールが削除されました。",
+      "enabled": "ルールが有効化されました。",
+      "disabled": "ルールが一時停止されました。",
+      "subscribed": "このルールが発火したときに通知されます。",
+      "unsubscribed": "このルールから通知を受け取れなくなります。",
+      "subscriberAdded": "{name} は登録しました。",
+      "subscriberRemoved": "{name} は登録解除しました。",
+      "saveError": "ルールを保存できませんでした。",
+      "subscriptionError": "サブスクリプションを更新できませんでした。"
+    },
+    "form": {
+      "name": "名前",
+      "namePlaceholder": "例: チェックアウトフロー の遅延",
+      "description": "説明",
+      "descriptionPlaceholder": "他の購読者向けのオプションの説明",
+      "metric": "メトリック",
+      "metricLocked": "アラートが作成された後、メトリックを変更することはできません。代わりに新しいアラートを作成します。",
+      "condition": "条件",
+      "scope": "範囲",
+      "scopeType": "監視",
+      "scopeFolder": "フォルダ",
+      "scopeTag": "タグ",
+      "scopeCase": "テストケース",
+      "scopeMilestone": "マイルストーン",
+      "scopeRunName": "実行名に含まれる",
+      "scopeRunNamePlaceholder": "例: 夜間",
+      "scopePickFolder": "フォルダを選択",
+      "scopePickTag": "タグを選択",
+      "scopePickCase": "テストケースを選択",
+      "scopePickMilestone": "マイルストーンを選択",
+      "scopeWebhook": "ウェブフック",
+      "scopePickWebhook": "ウェブフックを選択",
+      "scopeLlmIntegration": "統合",
+      "scopePickLlmIntegration": "統合を選択",
+      "scopeCodeRepository": "リポジトリ接続",
+      "scopePickCodeRepository": "リポジトリ接続を選択",
+      "scopeIntegration": "統合",
+      "scopePickIntegration": "統合を選択",
+      "scopeQueue": "キュー",
+      "scopePickQueue": "キューを選択",
+      "systemScope": "システム",
+      "systemScopeHelp": "システムアラートは、AI モデルの予算など、インストレーション全体の管理下にあるものを監視します。管理者のみがそれを見ます。",
+      "coverageBasis": "カバー済みとしてカウント",
+      "coverageBasisOptions": {
+        "LINKED": "少なくともつのテストケースにリンク",
+        "PASSING": "最新の結果が成功"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "ベースラインウィンドウ（実行）",
+        "WEBHOOK_FAILURE_RATE": "最後の配信",
+        "LLM_ERROR_RATE": "最後のリクエスト"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "最小実行",
+        "WEBHOOK_FAILURE_RATE": "最小配信",
+        "LLM_ERROR_RATE": "最小リクエスト"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "マイルストーンの期限が来るまでの日数",
+        "STALE_CASES": "結果なしの日数",
+        "LLM_RATE_LIMITED": "過去（時間）以内"
+      },
+      "scopeCaseSearch": "名前または ID で検索",
+      "direction": "方向",
+      "baselineType": "ベースライン",
+      "baselineWindow": "ベースラインウィンドウ（結果）",
+      "minSamples": "最小結果",
+      "resultSource": "監視する結果",
+      "evaluateOn": "評価",
+      "daysRemaining": "残り日数",
+      "cooldown": "クールダウン（分）",
+      "cooldownHelp": "ルールがある被験体に対して発火した後、その被験体については長時間沈黙しています。0 はクールダウンを無効にします。",
+      "emitWebhook": "alert.triggeredウェブフックイベントを送信",
+      "emitWebhookHelp": "アラートにサブスクリプションしたアウトバウンドウェブフックは同じペイロードを受け取るため、Slack や他のツールがそれを投稿できます。",
+      "enabled": "有効",
+      "audience": "対象者",
+      "audienceHelp": "アラートが発火したときに通知される対象者。デフォルトで作成するアラートに追加されます。誰でも退出して再参加できます。",
+      "audienceHelpSystem": "アラートが発火したときに通知される対象者。管理者のみがシステムアラートの対象者に含まれることができます。デフォルトで追加されます。",
+      "searchMembers": "プロジェクトメンバーを検索",
+      "you": "あなた",
+      "cannotManageSubscribers": "自分を登録または登録解除できます。他のメンバーを登録するにはプロジェクト管理権が必要です。",
+      "validation": {
+        "nameRequired": "名前を入力してください。",
+        "scopeRequired": "ルールが監視する対象を選択してください。",
+        "runNameRequired": "実行名の一部を入力してください。",
+        "percentRange": "{min} ～ {max} の間のパーセンテージを入力してください。",
+        "countRange": "{min} ～ {max} の間の整数を入力してください。",
+        "windowRange": "{min} ～ {max} の結果のウィンドウを入力してください。",
+        "minSamplesRange": "{min} ～ {max} の値を入力してください。",
+        "minSamplesWindow": "最小結果がベースラインウィンドウを超えることはできません。",
+        "cooldownRange": "{min} ～ {max} の分を入力してください。",
+        "daysRange": "{min} ～ {max} の日数を入力してください。",
+        "windowBelowMinSamples": "ベースラインウィンドウが最小結果より小さくすることはできません。"
+      },
+      "project": "プロジェクト",
+      "projectPlaceholder": "プロジェクトを選択",
+      "projectHelp": "アラートを作成できるプロジェクトのみが表示されます。",
+      "dialogDescription": "つのテストメトリクスを監視し、設定した線を超えたときに対象者に通知します。",
+      "metricSearch": "メトリックを検索",
+      "metricNoMatch": "マッチするメトリックはありません。",
+      "checkedDaily": "毎日チェック",
+      "checkedHourly": "毎時チェック",
+      "needsProject": "最初にプロジェクトを選択してください。",
+      "followAlert": "通知してください",
+      "leaveAlert": "通知を停止してください",
+      "delivery": "配信",
+      "thresholdLabels": {
+        "RESULT_DURATION_DEVIATION": "乖離（%）",
+        "CASE_REGRESSED": "閾値",
+        "CONSECUTIVE_FAILURES": "連続失敗",
+        "CASE_FLAKY": "フリップ",
+        "RUN_PASS_RATE_BELOW": "成功率未満（%）",
+        "RUN_FAILURE_COUNT": "失敗した結果、以上",
+        "RUN_DURATION_DEVIATION": "乖離（%）",
+        "RUN_NOT_PROGRESSING": "以上のアイドル時間（時間）",
+        "AUTOMATED_EXECUTION_FAILED": "閾値",
+        "RUN_UNTESTED_SHARE": "未テストケース以上（%）",
+        "RUN_ISSUES_OPENED": "リンクされた課題、以上",
+        "NEW_FAILURE_SIGNATURES": "新しい障害パターン、以上",
+        "SESSION_OVERRUN": "見積を超える以上（%）",
+        "MILESTONE_BEHIND": "完了以下（%）",
+        "MILESTONE_OVERDUE": "閾値",
+        "REQUIREMENT_COVERAGE_BELOW": "カバレッジ以下（%）",
+        "STALE_CASES": "古いケース、以上",
+        "AUTOMATION_SHARE_BELOW": "自動化シェア以下（%）",
+        "WEBHOOK_FAILURE_RATE": "故障率以上（%）",
+        "LLM_BUDGET_USED": "使用予算（%）",
+        "LLM_ERROR_RATE": "失敗したリクエスト以上（%）",
+        "LLM_RATE_LIMITED": "レート制限されたリクエスト、少なくとも",
+        "CODE_REPOSITORY_CACHE_FAILING": "少なくとも（時間）失敗中",
+        "INTEGRATION_REAUTH_NEEDED": "再認可が必要なユーザー、少なくとも",
+        "QUEUE_FAILED_JOBS": "失敗したジョブ、以上",
+        "QUEUE_BACKLOG": "最も古い待機ジョブが古い（分）",
+        "AUDIT_BACKLOG": "最も古い未処理の変更が古い（分）",
+        "ACCOUNT_LOCKOUTS": "ロックされたアカウント、少なくとも",
+        "NO_AUTOMATED_RESULTS": "自動結果がない（時間）"
+      }
+    },
+    "direction": {
+      "ABOVE": "上記（遅い）",
+      "BELOW": "下記（速い）",
+      "EITHER": "上記または下記"
+    },
+    "baseline": {
+      "MEAN": "平均",
+      "MEDIAN": "中央値"
+    },
+    "resultSource": {
+      "MANUAL": "手動結果",
+      "AUTOMATED": "自動化された結果",
+      "BOTH": "手動と自動化"
+    },
+    "evaluateOn": {
+      "RUN_COMPLETION": "実行完了時",
+      "AS_RESULTS_ARRIVE": "結果が到着すると"
+    },
+    "scopeType": {
+      "PROJECT": "プロジェクト全体",
+      "FOLDER": "フォルダ内のケース",
+      "TAG": "タグ付きのケース",
+      "CASE": "つのテストケース",
+      "RUN_NAME": "名前に含まれる実行",
+      "MILESTONE": "つのマイルストーン",
+      "WEBHOOK": "つのウェブフック"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "すべてのセッション",
+      "TAG": "タグ付きのセッション"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "すべてのアウトバウンドウェブフック",
+      "WEBHOOK": "つのウェブフック"
+    },
+    "scopeTypeLlm": {
+      "PROJECT": "すべての AI モデル統合",
+      "LLM_INTEGRATION": "つの統合"
+    },
+    "scopeTypeCodeRepositories": {
+      "PROJECT": "すべてのリポジトリ接続",
+      "CODE_REPOSITORY": "つのリポジトリ接続"
+    },
+    "scopeTypeIntegrations": {
+      "PROJECT": "すべての統合",
+      "INTEGRATION": "つの統合"
+    },
+    "scopeTypeQueues": {
+      "PROJECT": "すべてのキュー",
+      "QUEUE": "つのキュー"
+    },
+    "scopeTypeSystem": {
+      "PROJECT": "インストレーション全体"
+    },
+    "scopeTypeRuns": {
+      "PROJECT": "すべての実行",
+      "TAG": "タグ付きの実行",
+      "RUN_NAME": "名前に含まれる実行"
+    },
+    "scopeTypeMilestones": {
+      "PROJECT": "すべてのマイルストーン",
+      "MILESTONE": "つのマイルストーン"
+    },
+    "scopeDisplay": {
+      "PROJECT": "プロジェクト全体",
+      "FOLDER": "フォルダ: {name}",
+      "TAG": "タグ: {name}",
+      "CASE": "ケース: {name}",
+      "RUN_NAME": "「{text}」を含む実行",
+      "MILESTONE": "マイルストーン: {name}",
+      "WEBHOOK": "ウェブフック: {name}",
+      "LLM_INTEGRATION": "統合: {name}",
+      "ALL_LLM_INTEGRATIONS": "すべての AI モデル統合",
+      "CODE_REPOSITORY": "リポジトリ: {name}",
+      "ALL_CODE_REPOSITORIES": "すべてのリポジトリ接続",
+      "INTEGRATION": "統合: {name}",
+      "ALL_INTEGRATIONS": "すべての統合",
+      "QUEUE": "キュー: {name}",
+      "ALL_QUEUES": "すべてのキュー",
+      "WHOLE_INSTALLATION": "インストレーション全体",
+      "missing": "(削除)"
+    },
+    "subjectType": {
+      "CASE": "テストケース",
+      "RUN": "テスト実行",
+      "MILESTONE": "マイルストーン",
+      "SESSION": "セッション",
+      "PROJECT": "プロジェクト",
+      "WEBHOOK": "ウェブフック"
+    },
+    "metrics": {
+      "RESULT_DURATION_DEVIATION": {
+        "label": "結果の期間がベースラインから乖離",
+        "description": "結果が最近の結果から大幅に長くまたは短くなります。経過時間のない結果は無視されます。",
+        "summary": "結果の期間が {minSamples} 結果以上後に、ケースの最後の {window} 結果の {baseline, select, MEAN {平均} other {中央値}} から {threshold}% {direction, select, ABOVE {以上} BELOW {以下} other {以上または以下}}"
+      },
+      "CASE_REGRESSED": {
+        "label": "ケースが再開されました",
+        "description": "最近の結果から成功したケースが失敗します。安定したケースの新しい失敗を捕捉します。",
+        "summary": "ケースは最後の {window} 結果から失敗します"
+      },
+      "CASE_RECOVERED": {
+        "label": "ケースが復旧されました",
+        "description": "ケースは最後の結果のすべてが失敗した後に成功します。",
+        "summary": "ケースは最後の {window, plural, one {# 結果の後で} other {# 結果の後で}} 失敗します"
+      },
+      "CONSECUTIVE_FAILURES": {
+        "label": "連続失敗",
+        "description": "ケースが与えられた回数連続で失敗します。",
+        "summary": "ケースが {threshold, plural, one {# 回} other {# 回}} 連続で失敗"
+      },
+      "CASE_FLAKY": {
+        "label": "ケースが不安定になりました",
+        "description": "ケースは最近の結果内で成功と失敗の間で繰り返し変動します。不安定なテストレポートと同じ入力を使用します。",
+        "summary": "ケースは最後の {window} 結果を通じて {threshold, plural, one {# 回} other {# 回}} 少なくとも成功と失敗の間で変動"
+      },
+      "RUN_PASS_RATE_BELOW": {
+        "label": "実行成功率が閾値以下",
+        "description": "成功または失敗の判定を持つ結果に対してカウントされる実行の成功率が、パーセンテージを下回ります。",
+        "summary": "実行の成功率は {minSamples} 結果以上が判定を取得した後 {threshold}% 未満で、{evaluateOn, select, AS_RESULTS_ARRIVE {結果が到着すると評価} other {実行が完了すると評価}}"
+      },
+      "RUN_FAILURE_COUNT": {
+        "label": "実行の失敗数",
+        "description": "実行が与えられた数以上の失敗した結果を持ちます。",
+        "summary": "実行は {threshold, plural, other {# 失敗した結果}} を超え、{evaluateOn, select, AS_RESULTS_ARRIVE {結果が到着すると評価} other {実行が完了すると評価}}"
+      },
+      "RUN_DURATION_DEVIATION": {
+        "label": "実行期間がベースラインから乖離",
+        "description": "完了した実行の総期間は、そのスコープがグループ化する実行から乖離しています（同じタグまたは名前フラグメント）。",
+        "summary": "完了した実行の期間が {minSamples} 実行以上後に、最後の {window} 実行の {baseline, select, MEAN {平均} other {中央値}} から {threshold}% {direction, select, ABOVE {以上} BELOW {以下} other {以上または以下}}"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "実行が進行していません",
+        "description": "開いている実行が与えられた時間数に対して新しい結果を持たないでした。毎時チェック。",
+        "summary": "開いている実行が {threshold, plural, one {# 時間} other {# 時間}} 以上新しい結果を持たないでした"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "自動実行に失敗",
+        "description": "実行の自動実行は失敗したか、ディスパッチできるか、タイムアウトしました。",
+        "summary": "自動実行は失敗したか、ディスパッチできるか、またはタイムアウト"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "実行未テストシェア",
+        "description": "実行のケースが多すぎて、マイルストーンの期限前に数日で結果を持っていません。毎日チェック。",
+        "summary": "実行のケースの {threshold}% 以上が、マイルストーンの期限が {days, plural, one {# 日} other {# 日}} 以下である場合は結果を持たないでした"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "実行から開いた課題",
+        "description": "実行結果にリンクされている与えられた数以上の課題。",
+        "summary": "実行結果にリンクされている {threshold, plural, other {# 件の課題}} 以上で、{evaluateOn, select, AS_RESULTS_ARRIVE {結果が到着すると評価} other {実行が完了すると評価}}"
+      },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "実行での新しい障害パターン",
+        "description": "実行は、プロジェクトが以前に見たことのない障害パターンを導入します。プロジェクトに対して有効にされた障害パターンが必要です。",
+        "summary": "{threshold, plural, other {# 件以上の障害パターンが}}実行で初めて表示され、{evaluateOn, select, AS_RESULTS_ARRIVE {結果が到着するにつれて評価された} other {実行完了時に評価された}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "セッションが見積を超えました",
+        "description": "完了したセッションの経過時間がパーセンテージで見積を超えます。",
+        "summary": "完了したセッションの経過時間が見積を超える {threshold}% 以上"
+      },
+      "MILESTONE_BEHIND": {
+        "label": "マイルストーン完了が遅延",
+        "description": "マイルストーンの実行ケースは期限日が近いため十分に完了していません。毎日チェック。",
+        "summary": "マイルストーンは {threshold}% 未満で、{days, plural, one {# 日} other {# 日}} 以下残っています"
+      },
+      "MILESTONE_OVERDUE": {
+        "label": "マイルストーン期限超過",
+        "description": "マイルストーンの期限が過ぎ、完了していません。毎日チェック。",
+        "summary": "マイルストーンは完了せずに期限を過ぎます"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "要件カバレッジが閾値以下",
+        "description": "プロジェクトの要件の与えられたシェアより少ない部分がカバー済みとしてカウントされます。毎日チェック。",
+        "summary": "要件の {threshold}% 未満 {basis, select, PASSING {最新の結果が成功している} other {少なくとも 1 つのテストケースにリンク}}"
+      },
+      "STALE_CASES": {
+        "label": "古いケース",
+        "description": "与えられた数以上のケースが何日も結果がありません。毎日チェック。",
+        "summary": "{threshold, plural, one {# ケースが} other {# ケースが}} {days, plural, one {# 日} other {# 日}} 間結果を持たないでした"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "自動化シェアが閾値以下",
+        "description": "スコープ内のケースの与えられたシェアより少ない部分が自動化されます。毎日チェック。",
+        "summary": "ケースの {threshold}% 未満が自動化されます"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "ウェブフック故障率",
+        "description": "アウトバウンドウェブフックの最近の配信が多すぎて失敗しました。毎時チェック。",
+        "summary": "アウトバウンドウェブフックの最後の {window} 配信の {threshold}% 以上が、{minSamples} 配信以上の後に失敗しました"
+      },
+      "LLM_BUDGET_USED": {
+        "label": "AI 予算使用",
+        "description": "AIモデル統合の支出が請求期間の月額予算のシェアに達します。期間および統合ごとに発火します。",
+        "summary": "支出が統合の月額予算の {threshold}% に達します"
+      },
+      "LLM_ERROR_RATE": {
+        "label": "AI リクエスト エラー率",
+        "description": "AI モデル統合の最近のリクエストが多すぎて失敗しました。",
+        "summary": "統合の最後の {window} リクエストの {threshold}% 以上が、{minSamples} リクエスト以上の後に失敗しました"
+      },
+      "LLM_RATE_LIMITED": {
+        "label": "AI プロバイダーのレート制限",
+        "description": "プロバイダーが AI モデル統合のリクエストを繰り返しスロットルしました。",
+        "summary": "プロバイダーは {days, plural, one {# 時間} other {# 時間}} 内に少なくとも {threshold, plural, one {# リクエスト} other {# リクエスト}} をレート制限しました"
+      },
+      "CODE_REPOSITORY_CACHE_FAILING": {
+        "label": "リポジトリキャッシュが失敗中",
+        "description": "コードリポジトリ接続がキャッシュを正常に更新しておりません。毎時チェック。",
+        "summary": "リポジトリ接続のキャッシュが {threshold, plural, one {# 時間} other {# 時間}} 以上失敗しています"
+      },
+      "INTEGRATION_REAUTH_NEEDED": {
+        "label": "統合の再認可が必要",
+        "description": "多くのユーザーが統合への接続を失い、再認可が必要です。毎日チェック。",
+        "summary": "少なくとも {threshold, plural, one {# ユーザーが} other {# ユーザーが}} 統合の再認可を行う必要があります"
+      },
+      "QUEUE_FAILED_JOBS": {
+        "label": "キューの失敗したジョブ",
+        "description": "バックグラウンドキューが失敗したジョブを多すぎます。毎時チェック。",
+        "summary": "キューで {{threshold, plural, one {# ジョブが} other {# ジョブが}} 失敗しました"
+      },
+      "QUEUE_BACKLOG": {
+        "label": "キューのバックログ",
+        "description": "バックグラウンドキューの最も古い待機ジョブが長く待機しており、停止したワーカーの兆候です。毎時チェック。",
+        "summary": "キューの最も古い待機ジョブが {{threshold, plural, one {# 分} other {# 分}} より古い"
+      },
+      "AUDIT_BACKLOG": {
+        "label": "監査ログのバックログ",
+        "description": "キャプチャされた変更が監査ログに書き込まれておらず、停止した監査ワーカーの兆候です。毎時チェック。",
+        "summary": "最も古い未処理の監査変更が {{threshold, plural, one {# 分} other {# 分}} より古い"
+      },
+      "ACCOUNT_LOCKOUTS": {
+        "label": "アカウントロック",
+        "description": "複数のアカウントが同時にログイン試行失敗後にロックされており、認証情報詰め込み攻撃の兆候です。毎時チェック。",
+        "summary": "少なくとも {{threshold, plural, one {# アカウント} other {# アカウント}} がログイン失敗後にロック"
+      },
+      "NO_AUTOMATED_RESULTS": {
+        "label": "自動結果なし",
+        "description": "自動テスト結果がパイプラインから何らかの時間到着していません。毎日チェック。",
+        "summary": "{{threshold, plural, one {# 時間} other {# 時間}} の間に自動結果が到着していません"
+      }
+    },
+    "sourceSummary": "結果: {source, select, MANUAL {手動} AUTOMATED {自動化} other {手動と自動化}}",
+    "historyDialog": {
+      "title": "履歴: {name}",
+      "empty": "このルールはまだ発火していません。",
+      "columns": {
+        "firedAt": "発火",
+        "subject": "被験体",
+        "observed": "確認",
+        "threshold": "閾値",
+        "notified": "通知"
+      },
+      "webhookSent": "ウェブフック送信"
+    },
+    "descriptionFor": "アラート {name} は、プロジェクトの他のアラートに従います。",
+    "empty": "プロジェクトにまだアラートがありません。",
+    "emptyCanCreate": "プロジェクトにまだアラートがありません。追加して開始します。",
+    "pageDescription": "通知方法、通知内容、および従うアラート。",
+    "pageDescriptionFor": "{name} はどのように通知されるか、および従うアラート。",
+    "pageTabs": {
+      "alerts": "アラート",
+      "notifications": "通知"
+    },
+    "metricGroups": {
+      "CASE": "テストケース結果",
+      "RUN": "テスト実行",
+      "SESSION": "セッション",
+      "MILESTONE": "マイルストーン",
+      "PROJECT": "プロジェクトヘルス",
+      "WEBHOOK": "ウェブフック",
+      "LLM_INTEGRATION": "AI モデル",
+      "CODE_REPOSITORY": "コードリポジトリ",
+      "INTEGRATION": "統合",
+      "QUEUE": "バックグラウンドキュー",
+      "SYSTEM": "インストレーション"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "開く",
+      "RESOLVED": "解決済み",
+      "IGNORED": "無視"
+    },
+    "unclassified": "根本原因なし",
+    "source": {
+      "AI": "AIが提案した根本原因",
+      "labelAI": "AI",
+      "labelMANUAL": "手動"
+    },
+    "columns": {
+      "classification": "根本原因",
+      "occurrences": "発生数",
+      "firstSeen": "最初に確認",
+      "lastSeen": "最後に確認",
+      "classifiedBy": "設定者"
+    },
+    "filters": {
+      "searchPlaceholder": "障害パターンを検索…",
+      "flakyOnly": "不安定候補",
+      "sourceAll": "誰でも設定",
+      "sourceAi": "AIが設定",
+      "sourceManual": "手動で設定",
+      "sourceNone": "未設定"
+    },
+    "actions": {
+      "resolve": "解決",
+      "ignore": "無視",
+      "classify": "AIで根本原因を提案",
+      "setClassification": "根本原因を設定"
+    },
+    "detail": {
+      "exceptionType": "例外タイプ",
+      "normalizedMessage": "正規化されたメッセージ",
+      "frames": "トップスタックフレーム",
+      "sampleTrace": "最新の失敗",
+      "affectedCases": "{count, plural, one {# 個の影響を受けるテストケース} other {# 個の影響を受けるテストケース}}",
+      "recentOccurrences": "{count, plural, one {# 個の最近の出現} other {# 個の最近の出現}}",
+      "rationale": "根拠",
+      "suggestedIssueTitle": "推奨される問題のタイトル",
+      "nextStep": "推奨される次のステップ",
+      "noAi": "AIの提案はまだありません。",
+      "noDetails": "この失敗にはメッセージまたはスタックトレースがなかったため、テストケースでグループ化されます。",
+      "notesPlaceholder": "チームのためのメモ…",
+      "lastRun": "最後の実行",
+      "aiSuggestion": "AI提案",
+      "unlinkConfirmDescription": "これにより、この障害パターンから問題が削除されます。問題自体は保持され、後で再度リンクできます。",
+      "signatureLabel": "障害パターン",
+      "affectedCasesLabel": "影響を受けたテストケース"
+    },
+    "flakyCandidate": "不安定な候補",
+    "flakyCandidateHint": "影響を受けたテストケースは最近の履歴でパスと失敗を切り替えます。",
+    "knownIssue": "既知の問題",
+    "notGrouped": "{count, plural, one {# 個の失敗がまだグループ化されていません} other {# 個の失敗がまだグループ化されていません}}",
+    "runPanel": {
+      "title": "障害パターン",
+      "inRun": "{count, plural, one {# このランの中で} other {# このランの中で}}",
+      "hint": "パターンをクリックして、以下の結果をフィルター処理します。",
+      "open": "パターンを表示",
+      "inRunColumn": "このランで",
+      "selectedClusters": "{count, plural, other {# 件のパターンが選択されました}}",
+      "clearSelected": "選択したパターンをクリア"
+    },
+    "toasts": {
+      "updated": "障害パターンが更新されました",
+      "updateFailed": "障害パターンを更新できませんでした",
+      "classifyQueued": "AIルートコーズサジェスチョンがリクエストされました",
+      "noAiModel": "この機能用にAIモデルが設定されていません",
+      "issueLinked": "問題がリンクされました"
+    },
+    "empty": {
+      "title": "まだ障害パターンはありません",
+      "description": "障害パターンは、失敗を伴う自動化された結果が到着するにつれてここに表示されます。このプロジェクトに既に記録されている障害をグループ化するには、障害パターン設定で既存の結果を分析を使用します。"
+    },
+    "settings": {
+      "description": "自動化された障害をパターンにグループ化し、AIに根本原因を提案させます。",
+      "enableLabel": "障害パターンを有効化",
+      "enableDescription": "結果が到着すると、このプロジェクトのすべての自動失敗を例外、メッセージ、スタックフレーム別にグループ化します。",
+      "autoClassifyLabel": "AIで根本原因を提案",
+      "autoClassifyDescription": "プロジェクトのAIモデルに、根本原因カタログから各新しい障害パターンの根本原因を選択するよう求めます。障害パターン：根本原因機能に割り当てられたAIモデルが必要です。",
+      "backfillLabel": "既存の結果を分析",
+      "backfillDescription": "このプロジェクトに既に記録されているすべての自動失敗をグループ化します。バックグラウンドで実行されます。",
+      "backfillStarted": "分析が開始されました",
+      "backfillRunning": "分析中... {processed, plural, one {# 個の失敗がグループ化されました} other {# 個の失敗がグループ化されました}}",
+      "backfillDone": "分析完了",
+      "backfillFailed": "分析に失敗しました",
+      "backfillQueueUnavailable": "バックグラウンドジョブキューが利用できません",
+      "enabledToast": "障害パターンが有効化されました",
+      "disabledToast": "障害パターンが無効化されました",
+      "autoClassifyOnToast": "AIルートコーズサジェスチョンが有効化されました",
+      "autoClassifyOffToast": "AIルートコーズサジェスチョンが無効化されました",
+      "autoReleaseLabel": "自動隔離解除の後",
+      "autoReleasePassesLabel": "連続パス",
+      "autoReleaseDescription": "隔離されたテストケースは、隔離されてからこの回数連続してパスすると、リリースされます。スキップされた結果は無視されます。「手動でリリースするまで保持」とマークされた隔離は保持されます。",
+      "autoReleaseOnToast": "自動リリースが有効化されました",
+      "autoReleaseOffToast": "自動リリースが無効化されました",
+      "autoReleasePassesSaved": "{count, plural, other {隔離は # 件の連続パスの後にリリースされます}}",
+      "autoReleasePassesInvalid": "1～100の連続パス数を入力してください",
+      "openTriage": "障害パターンを開く"
+    },
+    "quarantine": {
+      "label": "隔離",
+      "title": "隔離されたテストケース",
+      "hint": "隔離されたテストケースの障害は、実行パス/失敗から除外され、個別にカウントされます。テストケースは実行を続けて結果を記録します。",
+      "metricHint": "この実行での隔離されたテストケースの障害。それらはパスレートに対してカウントされません。",
+      "action": "隔離",
+      "actionAll": "影響を受けたテストケースを隔離",
+      "release": "リリース",
+      "reasonLabel": "理由",
+      "reasonPlaceholder": "なぜこのテストケースが隔離されていますか？（オプション）",
+      "keepLabel": "手動でリリースされるまで隔離を維持",
+      "keepHint": "連続パス後のプロジェクトの自動リリースをスキップします。",
+      "dialogTitle": "{count, plural, other {# 件のテストケースを隔離}}",
+      "releaseConfirmTitle": "隔離からリリースしますか？",
+      "releaseConfirmDescription": "テストケースの障害は、実行パス/失敗に対して再度カウントされます。",
+      "quarantinedToast": "{count, plural, other {# 件のテストケースが隔離されました}}",
+      "releasedToast": "テストケースが隔離からリリースされました",
+      "failedToast": "隔離を更新できませんでした",
+      "listButton": "{count, plural, =0 {隔離されたテストケース} other {# 件の隔離されたテストケース}}",
+      "columns": {
+        "signature": "障害パターン",
+        "by": "隔離者",
+        "since": "以来",
+        "releasePolicy": "リリース"
+      },
+      "releaseAuto": "{count, plural, other {自動的に # 件の連続パスの後}}",
+      "releaseManual": "手動",
+      "empty": "このプロジェクトでは、隔離されたテストケースはありません。"
+    }
+  },
+  "risk": {
+    "score": "リスク スコア",
+    "notScored": "まだスコアが付いていません",
+    "breakdown": {
+      "title": "このスコアの理由",
+      "pointsOfWeight": "{points} ポイント · ウェイト {weight}",
+      "components": {
+        "failureHistory": "障害履歴",
+        "flakiness": "不安定性",
+        "staleness": "古さ",
+        "criticality": "重大度",
+        "defects": "リンクされた欠陥"
+      },
+      "lastExecuted": "最後に実行された",
+      "neverExecuted": "実行されたことがない",
+      "verdicts": "{failed} / {sampled, plural, one {# 件の最近の自動化結果} other {# 件の最近の自動化結果}}が失敗しました",
+      "flips": "{flips, plural, one {# 件のパス/フェイル フリップ} other {# 件のパス/フェイル フリップ}}",
+      "requirements": "{count, plural, one {# 件のリンクされた要件} other {# 件のリンクされた要件}} · 最優先事項 {priority}",
+      "suspect": "{count, plural, one {# 件の要件が変更されました} other {# 件の要件が変更されました}} 前回のラン以降",
+      "defects": "{count, plural, one {# 件のリンクされた欠陥} other {# 件のリンクされた欠陥}} · 最優先事項 {priority}",
+      "caseCriticality": "ケースの重大度: {value}",
+      "noPriority": "未指定",
+      "quarantined": "隔離されている"
+    },
+    "settings": {
+      "description": "各テスト ケースは、障害履歴、不安定性、古さ、リンクされた要件の重大度、リンクされた欠陥から 0～100 のリスク スコアを取得します。スコアは結果が到着した後と夜間スイープで更新され、リポジトリのリスク スコア列とフィルタを強化します。",
+      "enableLabel": "リスク スコアを維持する",
+      "enableDescription": "オフにすると、既存のスコアは保持されますが、更新が停止し、リスク スコア フィルタが消えます。",
+      "enabledToast": "リスク スコアリングが有効になっています",
+      "disabledToast": "リスク スコアリングが無効になっています",
+      "weightsTitle": "コンポーネント ウェイト",
+      "weightsDescription": "各シグナルが他のシグナルに比べてどの程度カウントされるか。スコアは合計で正規化されるため、ウェイトを 100 に加算する必要はありません。ゼロはコンポーネントを削除します。",
+      "components": {
+        "failureHistory": "障害履歴",
+        "flakiness": "不安定性",
+        "staleness": "古さ",
+        "criticality": "重大度",
+        "defects": "リンクされた欠陥"
+      },
+      "weightsSaved": "ウェイトが保存されました",
+      "weightsInvalid": "ウェイトは 0 ～ {max} の数値である必要があります",
+      "weightsReset": "ウェイトがデフォルトにリセットされました",
+      "resetDefaults": "デフォルトにリセット",
+      "usingDefaults": "システム デフォルトを使用中",
+      "criticalityFieldTitle": "ケースの重大度フィールド",
+      "criticalityFieldDescription": "各ケースの重大度を定義する、オプションのドロップダウン ケース フィールド。オプションはその順序でカウントされます。最上位のオプションは 100、最下位は 10、均等間隔です。名前は関係ありません。",
+      "criticalityFieldNone": "なし",
+      "criticalityFieldSaved": "重大度フィールドが保存されました",
+      "criticalityFieldCleared": "重大度フィールドがクリアされました",
+      "criticalityFieldOptions": "オプション ウェイト(順序別):",
+      "issuePrioritiesTitle": "課題の優先度",
+      "issuePrioritiesDescription": "要件と欠陥には、トラッカーから自由形式でテキストとして優先度が付いています。プロジェクトが実際に使用する名前を 0～100 のウェイトにマップします。マップされていない名前は中立 (50) としてカウントされます。組み込みは何もありません。これはあなたの語彙であり、私たちのものではありません。",
+      "issuePrioritiesEmpty": "優先度を持つリンクされた要件または欠陥はまだありません。",
+      "issuePrioritiesCount": "{count, plural, one {# 件のリンクされた課題} other {# 件のリンクされた課題}}",
+      "issuePrioritiesUnused": "使用中ではない",
+      "issuePrioritiesSaved": "課題の優先度が保存されました",
+      "issuePrioritiesInvalid": "ウェイトは 0～100 の数値である必要があります",
+      "backfillLabel": "すべてのスコアを再計算",
+      "backfillDescription": "プロジェクト内のすべてのテスト ケースを夜間スイープを待つのではなく、今すぐ再スコアします。",
+      "backfillStarted": "再計算が開始されました",
+      "backfillRunning": "再計算中…{processed, plural, one {# ケースがスコア付けされました} other {# ケースがスコア付けされました}}",
+      "backfillDone": "再計算が完了しました",
+      "backfillFailed": "再計算に失敗しました",
+      "backfillAlreadyRunning": "再計算が既に実行中です。完了したら、すべてのスコアを再計算をもう一度実行して、すべてのケースに新しいウェイトが反映されるようにしてください",
+      "backfillQueueUnavailable": "バックグラウンド ジョブ キューが利用できません",
+      "openRepository": "リポジトリを開く"
+    }
   }
 }

@@ -1,6 +1,6 @@
 import type { TxClient } from "~/lib/zenstack";
 
-import { baseDb } from "~/lib/db";
+import type { baseDb } from "~/lib/db";
 import {
   isAutomatedTestRunType,
   isHybridTestRunType,
@@ -18,7 +18,13 @@ export type {
 export { aggregateRunCounts } from "./testRunSummary-shared";
 import {
   earliestIso,
+  JUNIT_SEGMENT_ORDER,
+  junitFallbackColor,
   latestIso,
+  QUARANTINED_COLOR,
+  QUARANTINED_RESULT_TYPE,
+  QUARANTINED_STATUS_NAME,
+  unexecutedStatusName,
   type PerCaseIterationCounts,
   type TestRunSummaryData,
 } from "./testRunSummary-shared";
@@ -29,6 +35,18 @@ import {
  * state inside the same transaction that produced the emission.
  */
 type DbLike = typeof baseDb | TxClient;
+
+/**
+ * `~/lib/db` is loaded on demand rather than imported: this module is reached
+ * from sideEffectsPlugin, and constructing the db singletons installs that
+ * plugin onto the client. A static import makes the cycle load-order
+ * dependent. Every caller on the mutation path passes its own transaction
+ * client, so this default is only resolved for callers that supply none.
+ */
+async function defaultDbClient(): Promise<DbLike> {
+  const db = await import("~/lib/db");
+  return db.baseDb;
+}
 
 /**
  * Compute the test run summary data shape used by the in-app summary UI
@@ -46,7 +64,7 @@ export async function getTestRunSummary(
   testRunId: number,
   options: { includeCaseDetails?: boolean; client?: DbLike } = {}
 ): Promise<TestRunSummaryData> {
-  const client: DbLike = options.client ?? baseDb;
+  const client: DbLike = options.client ?? (await defaultDbClient());
   const includeCaseDetails = options.includeCaseDetails ?? false;
 
   // Get test run type and workflow + linked issues
@@ -56,6 +74,7 @@ export async function getTestRunSummary(
       testRunType: true,
       forecastManual: true,
       projectId: true,
+      isCompleted: true,
       state: {
         select: {
           workflowType: true,
@@ -107,7 +126,8 @@ export async function getTestRunSummary(
         testRunId,
         testRun.forecastManual,
         includeCaseDetails,
-        client
+        client,
+        testRun.isCompleted
       );
 
   // A hybrid run is summarised as a manual run (its automated results are
@@ -133,6 +153,7 @@ export async function getTestRunSummary(
     ...baseSummary,
     testRunType: testRun.testRunType,
     workflowType: testRun.state?.workflowType ?? null,
+    isCompleted: testRun.isCompleted,
     commentsCount,
     issues: testRun.issues.map((issue) => ({
       ...issue,
@@ -152,19 +173,86 @@ export class TestRunNotFoundError extends Error {
   }
 }
 
+/**
+ * Collapses the quarantined rows of a per-status count into one Quarantined
+ * bucket (not a failure, but completed) and passes the rest through.
+ */
+export function foldQuarantinedStatusCounts<
+  T extends {
+    statusId: number | null;
+    statusName: string;
+    colorValue: string;
+    quarantined: boolean;
+    count: bigint | number;
+    isCompleted: boolean | null;
+    isSuccess?: boolean | null;
+    isFailure?: boolean | null;
+  },
+>(
+  rows: T[]
+): Array<{
+  statusId: number | null;
+  statusName: string;
+  colorValue: string;
+  count: number;
+  isCompleted: boolean | null;
+  isSuccess: boolean | null;
+  isFailure: boolean | null;
+  resultType?: string;
+}> {
+  const out: ReturnType<typeof foldQuarantinedStatusCounts> = [];
+  let quarantined = 0;
+  for (const row of rows) {
+    if (row.quarantined) {
+      quarantined += Number(row.count);
+      continue;
+    }
+    out.push({
+      statusId: row.statusId,
+      statusName: row.statusName,
+      colorValue: row.colorValue,
+      count: Number(row.count),
+      isCompleted: row.isCompleted,
+      isSuccess: row.isSuccess ?? null,
+      isFailure: row.isFailure ?? null,
+    });
+  }
+  if (quarantined > 0) {
+    out.push({
+      statusId: null,
+      statusName: QUARANTINED_STATUS_NAME,
+      colorValue: QUARANTINED_COLOR,
+      count: quarantined,
+      isCompleted: true,
+      isSuccess: false,
+      isFailure: false,
+      resultType: QUARANTINED_RESULT_TYPE,
+    });
+  }
+  return out;
+}
+
 export async function getRegularRunSummary(
   testRunId: number,
   forecastManual: number | null,
   includeCaseDetails: boolean,
-  client: DbLike = baseDb
+  client?: DbLike,
+  isRunCompleted = false
 ): Promise<
   Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
 > {
-  const statusCounts = await client.$queryRaw<
+  client ??= await defaultDbClient();
+  // Cases with no status have never been executed: Pending while the run is
+  // open, Untested once it is completed and locked.
+  const unexecutedLabel = unexecutedStatusName(isRunCompleted);
+  // A failing status on a quarantined case (failure triage) is reported as
+  // its own Quarantined bucket instead of as a failure.
+  const rawStatusCounts = await client.$queryRaw<
     Array<{
       statusId: number | null;
-      statusName: string;
+      statusName: string | null;
       colorValue: string;
+      quarantined: boolean;
       count: bigint;
       isCompleted: boolean | null;
       isSuccess: boolean | null;
@@ -173,8 +261,9 @@ export async function getRegularRunSummary(
   >`
     SELECT
       trc."statusId",
-      COALESCE(s.name, 'Pending') as "statusName",
+      s.name as "statusName",
       COALESCE(c.value, '#9ca3af') as "colorValue",
+      (q.id IS NOT NULL AND s."isFailure" = true) as quarantined,
       COUNT(*) as count,
       s."isCompleted",
       s."isSuccess",
@@ -182,11 +271,18 @@ export async function getRegularRunSummary(
     FROM "TestRunCases" trc
     LEFT JOIN "Status" s ON trc."statusId" = s.id
     LEFT JOIN "Color" c ON s."colorId" = c.id
+    LEFT JOIN "CaseQuarantine" q ON q."caseId" = trc."repositoryCaseId"
     WHERE trc."testRunId" = ${testRunId}
       AND trc."isDeleted" = false
-    GROUP BY trc."statusId", s.name, c.value, s."isCompleted", s."isSuccess", s."isFailure"
+    GROUP BY trc."statusId", s.name, c.value, quarantined, s."isCompleted", s."isSuccess", s."isFailure"
     ORDER BY trc."statusId" ASC NULLS LAST
   `;
+  const statusCounts = foldQuarantinedStatusCounts(
+    rawStatusCounts.map((row) => ({
+      ...row,
+      statusName: row.statusName ?? unexecutedLabel,
+    }))
+  );
 
   const elapsedResult = await client.$queryRaw<
     Array<{ totalElapsed: bigint | null }>
@@ -243,7 +339,7 @@ export async function getRegularRunSummary(
     configurationName: string | null;
     caseName: string;
     statusId: number | null;
-    statusName: string;
+    statusName: string | null;
     colorValue: string;
     executedAt: Date | null;
     executedByName: string | null;
@@ -252,6 +348,7 @@ export async function getRegularRunSummary(
     isPending: boolean;
     resultCount: bigint;
     statusOrder: number | null;
+    quarantined: boolean;
   }> = [];
 
   if (includeCaseDetails) {
@@ -263,7 +360,7 @@ export async function getRegularRunSummary(
         conf.name as "configurationName",
         rc.name as "caseName",
         trc."statusId",
-        COALESCE(s.name, 'Pending') as "statusName",
+        s.name as "statusName",
         COALESCE(c.value, '#9ca3af') as "colorValue",
         latest_result."executedAt",
         u.name as "executedByName",
@@ -271,13 +368,15 @@ export async function getRegularRunSummary(
         rc.estimate,
         CASE WHEN latest_result.id IS NULL THEN true ELSE false END as "isPending",
         COALESCE(result_count.count, 0) as "resultCount",
-        s.order as "statusOrder"
+        s.order as "statusOrder",
+        (q.id IS NOT NULL AND s."isFailure" = true) as quarantined
       FROM "TestRunCases" trc
       JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
       JOIN "TestRuns" tr ON trc."testRunId" = tr.id
       LEFT JOIN "Configurations" conf ON tr."configId" = conf.id
       LEFT JOIN "Status" s ON trc."statusId" = s.id
       LEFT JOIN "Color" c ON s."colorId" = c.id
+      LEFT JOIN "CaseQuarantine" q ON q."caseId" = trc."repositoryCaseId"
       LEFT JOIN LATERAL (
         SELECT
           trr.id,
@@ -336,6 +435,7 @@ export async function getRegularRunSummary(
       isCompleted: item.isCompleted ?? undefined,
       isSuccess: item.isSuccess ?? undefined,
       isFailure: item.isFailure ?? undefined,
+      ...(item.resultType ? { resultType: item.resultType } : {}),
     })),
     completionRate,
     totalElapsed,
@@ -345,6 +445,7 @@ export async function getRegularRunSummary(
   if (includeCaseDetails) {
     result.caseDetails = caseDetails.map((item) => ({
       ...item,
+      statusName: item.statusName ?? unexecutedLabel,
       resultCount: Number(item.resultCount),
     }));
   }
@@ -354,16 +455,20 @@ export async function getRegularRunSummary(
 
 export async function getJUnitRunSummary(
   testRunId: number,
-  client: DbLike = baseDb
+  client?: DbLike
 ): Promise<
   Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
 > {
+  client ??= await defaultDbClient();
+  // Failures of quarantined cases (failure triage) are grouped apart so
+  // they count as their own segment instead of as failures.
   const resultAggregates = await client.$queryRaw<
     Array<{
       statusId: number | null;
       statusName: string | null;
       colorValue: string | null;
       type: string | null;
+      quarantined: boolean;
       count: bigint;
       isCompleted: boolean | null;
       isSuccess: boolean | null;
@@ -375,6 +480,7 @@ export async function getJUnitRunSummary(
       s.name as "statusName",
       c.value as "colorValue",
       jtr.type,
+      (q.id IS NOT NULL AND jtr.type IN ('FAILURE', 'ERROR')) as quarantined,
       COUNT(*) as count,
       s."isCompleted",
       s."isSuccess",
@@ -383,8 +489,9 @@ export async function getJUnitRunSummary(
     JOIN "JUnitTestSuite" jts ON jtr."testSuiteId" = jts.id
     LEFT JOIN "Status" s ON jtr."statusId" = s.id
     LEFT JOIN "Color" c ON s."colorId" = c.id
+    LEFT JOIN "CaseQuarantine" q ON q."caseId" = jtr."repositoryCaseId"
     WHERE jts."testRunId" = ${testRunId}
-    GROUP BY jtr."statusId", s.name, c.value, jtr.type, s."isCompleted", s."isSuccess", s."isFailure"
+    GROUP BY jtr."statusId", s.name, c.value, jtr.type, quarantined, s."isCompleted", s."isSuccess", s."isFailure"
   `;
 
   const timeResult = await client.$queryRaw<
@@ -415,50 +522,45 @@ export async function getJUnitRunSummary(
     0
   );
   const totalFailures = resultAggregates
-    .filter((agg) => agg.type === "FAILURE")
+    .filter((agg) => agg.type === "FAILURE" && !agg.quarantined)
     .reduce((sum, agg) => sum + Number(agg.count), 0);
   const totalErrors = resultAggregates
-    .filter((agg) => agg.type === "ERROR")
+    .filter((agg) => agg.type === "ERROR" && !agg.quarantined)
     .reduce((sum, agg) => sum + Number(agg.count), 0);
   const totalSkipped = resultAggregates
     .filter((agg) => agg.type === "SKIPPED")
     .reduce((sum, agg) => sum + Number(agg.count), 0);
+  const totalQuarantined = resultAggregates
+    .filter((agg) => agg.quarantined)
+    .reduce((sum, agg) => sum + Number(agg.count), 0);
   const totalTime = Number(timeResult[0]?.totalTime || 0);
 
   const resultSegments = resultAggregates.map((agg, index) => {
-    const getFallbackColor = (type: string | null) => {
-      switch (type) {
-        case "FAILURE":
-        case "ERROR":
-          return "rgb(239, 68, 68)";
-        case "SKIPPED":
-          return "rgb(161, 161, 170)";
-        default:
-          return "rgb(34, 197, 94)";
-      }
-    };
-
+    if (agg.quarantined) {
+      return {
+        id: `aggregate-quarantined-${agg.statusId ?? "null"}-${agg.type ?? "UNKNOWN"}-${index}`,
+        statusName: QUARANTINED_STATUS_NAME,
+        statusColor: QUARANTINED_COLOR,
+        resultType: QUARANTINED_RESULT_TYPE,
+        count: Number(agg.count),
+        isAggregate: true,
+      };
+    }
     return {
       id: `aggregate-${agg.statusId ?? "null"}-${agg.type ?? "UNKNOWN"}-${index}`,
       statusName: agg.statusName || agg.type || "PASSED",
-      statusColor: agg.colorValue || getFallbackColor(agg.type),
+      statusColor: agg.colorValue || junitFallbackColor(agg.type),
       resultType: agg.type || "PASSED",
       count: Number(agg.count),
       isAggregate: true,
     };
   });
 
-  const order: Record<string, number> = {
-    ERROR: 0,
-    FAILURE: 1,
-    SKIPPED: 2,
-    PASSED: 3,
-  };
-  resultSegments.sort((a, b) => {
-    const orderA = order[a.resultType] ?? 99;
-    const orderB = order[b.resultType] ?? 99;
-    return orderA - orderB;
-  });
+  resultSegments.sort(
+    (a, b) =>
+      (JUNIT_SEGMENT_ORDER[a.resultType] ?? 99) -
+      (JUNIT_SEGMENT_ORDER[b.resultType] ?? 99)
+  );
 
   const statusCounts: TestRunSummaryData["statusCounts"] = [];
   const statusMap = new Map<
@@ -467,6 +569,32 @@ export async function getJUnitRunSummary(
   >();
 
   resultAggregates.forEach((agg) => {
+    if (agg.quarantined) {
+      const existing = statusMap.get(QUARANTINED_RESULT_TYPE);
+      if (existing) {
+        existing.count += Number(agg.count);
+        const row = statusCounts.find(
+          (c) => c.resultType === QUARANTINED_RESULT_TYPE
+        );
+        if (row) row.count += Number(agg.count);
+      } else {
+        statusMap.set(QUARANTINED_RESULT_TYPE, {
+          statusId: null,
+          count: Number(agg.count),
+        });
+        statusCounts.push({
+          statusId: null,
+          statusName: QUARANTINED_STATUS_NAME,
+          colorValue: QUARANTINED_COLOR,
+          count: Number(agg.count),
+          isCompleted: true,
+          isSuccess: false,
+          isFailure: false,
+          resultType: QUARANTINED_RESULT_TYPE,
+        });
+      }
+      return;
+    }
     const key = `${agg.statusId ?? "null"}-${agg.statusName ?? agg.type}`;
     const existing = statusMap.get(key);
     if (existing) {
@@ -479,13 +607,7 @@ export async function getJUnitRunSummary(
       statusCounts.push({
         statusId: agg.statusId,
         statusName: agg.statusName || agg.type || "PASSED",
-        colorValue:
-          agg.colorValue ||
-          (agg.type === "FAILURE" || agg.type === "ERROR"
-            ? "rgb(239, 68, 68)"
-            : agg.type === "SKIPPED"
-              ? "rgb(161, 161, 170)"
-              : "rgb(34, 197, 94)"),
+        colorValue: agg.colorValue || junitFallbackColor(agg.type),
         count: Number(agg.count),
         // Status-table flags when joined; fall back to JUnit `type` for unmapped junit results.
         isCompleted: agg.isCompleted ?? agg.type != null,
@@ -493,6 +615,7 @@ export async function getJUnitRunSummary(
         isFailure:
           agg.isFailure ??
           (agg.type === "FAILURE" || agg.type === "ERROR" ? true : undefined),
+        resultType: agg.type || "PASSED",
       });
     }
   });
@@ -519,6 +642,7 @@ export async function getJUnitRunSummary(
       totalFailures,
       totalErrors,
       totalSkipped,
+      totalQuarantined,
       totalTime,
       resultSegments,
     },
@@ -543,8 +667,9 @@ export async function getJUnitRunSummary(
  */
 export async function getPerCaseIterationCounts(
   testRunId: number,
-  client: DbLike = baseDb
+  client?: DbLike
 ): Promise<PerCaseIterationCounts[]> {
+  client ??= await defaultDbClient();
   const rows = await client.testRunCases.findMany({
     where: { testRunId, isDeleted: false },
     select: {

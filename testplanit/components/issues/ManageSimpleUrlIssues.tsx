@@ -31,6 +31,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { buildSimpleUrlLink } from "~/lib/integrations/simpleUrl";
+import { apiFetch } from "~/lib/basePath";
 
 interface ManageSimpleUrlIssuesProps {
   projectId: number;
@@ -171,8 +172,8 @@ export function ManageSimpleUrlIssues({
           JSON.stringify({ where: whereClause })
         );
         const [listRes, countRes] = await Promise.all([
-          fetch(`/api/model/issue/findMany?q=${q}`),
-          fetch(`/api/model/issue/count?q=${countQ}`),
+          apiFetch(`/api/model/issue/findMany?q=${q}`),
+          apiFetch(`/api/model/issue/count?q=${countQ}`),
         ]);
         const listJson = await listRes.json();
         const countJson = await countRes.json();
@@ -236,7 +237,7 @@ export function ManageSimpleUrlIssues({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-5 w-5 p-0 hover:bg-destructive/20 hover:text-destructive"
+                className="h-5 w-5 p-0 hover:bg-destructive/20 hover:text-destructive-text"
                 aria-label={t("common.actions.remove")}
                 onClick={() => handleRemoveIssue(issue.id)}
               >

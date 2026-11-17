@@ -99,7 +99,7 @@ describe("validateToken", () => {
     }
   });
 
-  it("returns the wider failure shape on 403 READ_ONLY_TOKEN — plan 05-07 consumes this directly", async () => {
+  it("returns the wider failure shape on 403 READ_ONLY_TOKEN", async () => {
     mockFetch.mockResolvedValueOnce(
       errorResponse(403, {
         error: "Token is read-only",
@@ -182,7 +182,7 @@ describe("validateToken", () => {
     }
   });
 
-  it("redacts the raw token from error messages (T-05-06)", async () => {
+  it("redacts the raw token from error messages", async () => {
     mockFetch.mockResolvedValueOnce(
       errorResponse(401, { error: "Invalid", code: "INVALID_TOKEN" }),
     );

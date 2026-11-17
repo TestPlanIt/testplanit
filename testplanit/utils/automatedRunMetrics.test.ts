@@ -73,6 +73,25 @@ describe("computeAutomatedRunMetrics", () => {
     expect(metrics.passRate).toBe(40);
   });
 
+  it("keeps quarantined failures out of the failed count and the pass rate", () => {
+    const metrics = computeAutomatedRunMetrics({
+      results: [
+        { resultType: "PASSED" },
+        { resultType: "PASSED" },
+        { resultType: "FAILURE", quarantined: true },
+        { resultType: "ERROR", quarantined: true },
+        { resultType: "FAILURE" },
+        // A quarantined case that passes is simply a pass.
+        { resultType: "PASSED", quarantined: true },
+      ],
+    });
+    expect(metrics.totalCount).toBe(6);
+    expect(metrics.passedCount).toBe(3);
+    expect(metrics.failedCount).toBe(1);
+    expect(metrics.quarantinedCount).toBe(2);
+    expect(metrics.passRate).toBe(75);
+  });
+
   it("sums, averages, and takes the median over positive times only", () => {
     const metrics = computeAutomatedRunMetrics({
       results: [

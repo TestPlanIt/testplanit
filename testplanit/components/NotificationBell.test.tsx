@@ -36,6 +36,7 @@ vi.mock("~/lib/navigation", () => ({
     replace: vi.fn(),
   }),
   usePathname: () => "/",
+  Link: ({ children, href }: any) => <a href={href}>{children}</a>,
 }));
 vi.mock("next/navigation", () => ({
   useSearchParams: () => ({

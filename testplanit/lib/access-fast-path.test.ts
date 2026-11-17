@@ -73,7 +73,12 @@ describe("tryFastPathCreate rich-text normalization", () => {
       (n: any) => n.text === "New leads"
     );
     expect(bold.marks).toEqual([{ type: "bold" }]);
-    expect(data.expectedResult).toBeNull();
+    // A cleared expected result is stored as the empty document, as the
+    // web UI's step editor stores it.
+    expect(data.expectedResult).toEqual({
+      type: "doc",
+      content: [{ type: "paragraph" }],
+    });
   });
 
   it("parses a document the web UI serialized", async () => {

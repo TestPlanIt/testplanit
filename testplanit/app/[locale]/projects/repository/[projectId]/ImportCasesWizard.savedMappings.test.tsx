@@ -66,6 +66,9 @@ const templates = [
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     templates: { useFindMany: () => ({ data: templates }) },
+    projects: {
+      useFindUnique: () => ({ data: { defaultTemplateId: null } }),
+    },
     repositoryFolders: { useFindMany: () => ({ data: [] }) },
     projectLlmIntegration: { useFindMany: () => ({ data: [] }) },
   }),
@@ -264,5 +267,32 @@ describe("ImportCasesWizard — applying a saved mapping", () => {
     await waitFor(() =>
       expect(mocks.savedProps.current.settings.rowMode).toBe("multi")
     );
+  });
+});
+
+describe("ImportCasesWizard — unmapped required fields", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.savedProps = null;
+    mocks.result = undefined;
+  });
+
+  it("names the unmapped required fields and disables Next until they are mapped", async () => {
+    parseWith({ ",": ["Prio", "Owner"] });
+    mocks.toApply = saved([["Owner", "name"]]);
+    await openMappingPage();
+
+    const list = screen.getByTestId("import-unmapped-required-fields");
+    expect(list).toHaveTextContent("common.name");
+    expect(screen.getByTestId("next-button")).toBeDisabled();
+
+    await apply();
+
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("import-unmapped-required-fields")
+      ).not.toBeInTheDocument()
+    );
+    expect(screen.getByTestId("next-button")).toBeEnabled();
   });
 });

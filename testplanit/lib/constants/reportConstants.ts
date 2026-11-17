@@ -25,6 +25,9 @@ export const METRIC_ID_MAP: Record<string, string> = {
   manualCount: "manualCount",
   totalSteps: "totalSteps",
   createdCaseCount: "createdCaseCount",
+  firstCaseCreated: "firstCaseCreated",
+  lastCaseCreated: "lastCaseCreated",
+  caseCreationSpan: "caseCreationSpan",
 
   // Session metrics - canonical IDs
   sessionResultCount: "sessionResultCount",
@@ -39,6 +42,7 @@ export const METRIC_ID_MAP: Record<string, string> = {
 
   // Issue tracking metrics - canonical IDs
   issueCount: "issueCount",
+  linkedCaseCount: "linkedCaseCount",
 
   // Project health metrics - canonical IDs
   milestoneCount: "milestoneCount",
@@ -80,6 +84,9 @@ export const METRIC_HELP_KEYS: Record<string, string> = {
   "reports.metrics.manualCount": "reportMetrics.manualCount",
   "reports.metrics.totalSteps": "reportMetrics.totalSteps",
   "reports.metrics.createdCaseCount": "reportMetrics.createdCaseCount",
+  "reports.metrics.firstCaseCreated": "reportMetrics.firstCaseCreated",
+  "reports.metrics.lastCaseCreated": "reportMetrics.lastCaseCreated",
+  "reports.metrics.caseCreationSpan": "reportMetrics.caseCreationSpan",
 
   // Session metrics
   "reports.metrics.sessionResultCount": "reportMetrics.sessionResultCount",
@@ -94,6 +101,7 @@ export const METRIC_HELP_KEYS: Record<string, string> = {
 
   // Issue tracking metrics
   "reports.metrics.issueCount": "reportMetrics.issueCount",
+  "reports.metrics.linkedCaseCount": "reportMetrics.linkedCaseCount",
 
   // Project health metrics
   "reports.metrics.milestoneCount": "reportMetrics.milestoneCount",
@@ -160,8 +168,11 @@ export const DIMENSION_ID_KEYS: Record<string, string> = {
   issueType: "issueTypeName",
   issueTracker: "integrationId",
   issueStatus: "status",
+  issue: "issueId",
   priority: "priority",
   source: "source",
+  resultSource: "resultSource",
+  rootCause: "rootCauseId",
   date: "date",
   feature: "feature",
   model: "model",
@@ -191,8 +202,11 @@ export const DIMENSION_LABEL_KEYS: Record<string, string> = {
   issueType: "reports.dimensions.issueType",
   issueTracker: "common.fields.issueTracker",
   issueStatus: "reports.dimensions.issueStatus",
+  issue: "reports.dimensions.issue",
   priority: "common.fields.priority",
   source: "reports.dimensions.source",
+  resultSource: "reports.dimensions.resultSource",
+  rootCause: "reports.dimensions.rootCause",
   date: "common.fields.date",
   feature: "reports.dimensions.feature",
   model: "reports.dimensions.model",
@@ -222,8 +236,11 @@ export const DIMENSION_HELP_KEYS: Record<string, string> = {
   issueType: "reportDimensions.issueType",
   issueTracker: "reportDimensions.issueTracker",
   issueStatus: "reportDimensions.issueStatus",
+  issue: "reportDimensions.issue",
   priority: "reportDimensions.priority",
   source: "reportDimensions.source",
+  resultSource: "reportDimensions.resultSource",
+  rootCause: "reportDimensions.rootCause",
   date: "reportDimensions.date",
   feature: "reportDimensions.feature",
   model: "reportDimensions.model",

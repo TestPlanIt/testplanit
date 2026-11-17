@@ -10,11 +10,13 @@ import { SectionHeader } from "@/components/ui/typography";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { cn } from "~/utils";
 import SoftDeletedDataTable from "./SoftDeletedDataTable";
+import { UserTrashWindowRow } from "./UserTrashWindowRow";
 
 import {
   softDeletedItemTypes,
   type TrashIconName as IconName,
 } from "./itemTypes";
+import { apiFetch } from "~/lib/basePath";
 
 export default function TrashPage() {
   const tGlobal = useTranslations();
@@ -28,7 +30,7 @@ export default function TrashPage() {
 
   const fetchCounts = useCallback(async () => {
     try {
-      const response = await fetch("/api/admin/trash/counts");
+      const response = await apiFetch("/api/admin/trash/counts");
       if (!response.ok) return;
       const { counts: fetchedCounts } = await response.json();
       setCounts(fetchedCounts ?? {});
@@ -88,10 +90,13 @@ export default function TrashPage() {
         </SectionHeader>
       </CardHeader>
       <CardContent>
+        <div className="mb-4">
+          <UserTrashWindowRow />
+        </div>
         {/* Bound the master-detail region to the viewport on desktop so the page
             itself doesn't scroll; each column then scrolls independently at full
             height (rail list when it overflows, table body for infinite scroll). */}
-        <div className="flex flex-col gap-4 md:h-[calc(100vh-15rem)] md:min-h-0 md:flex-row md:gap-6">
+        <div className="flex flex-col gap-4 md:h-[calc(100vh-19rem)] md:min-h-0 md:flex-row md:gap-6">
           {/* Left rail: filterable list of item types */}
           <div className="flex w-full shrink-0 flex-col md:w-72 md:min-h-0 md:border-e md:pe-4">
             <Filter

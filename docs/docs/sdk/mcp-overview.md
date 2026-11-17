@@ -17,7 +17,7 @@ The TestPlanIt MCP server lets AI agents — Claude Desktop, Cursor, custom MCP-
 - Create and update milestones, mark them started or complete, and list milestone progress with pooled status rollups inline
 - Resolve issues by external key (Jira / GitHub / Azure DevOps) and walk the issue → linked test cases graph
 - Traverse the bridge between automated tests (repository cases) and manual test cases via repository case links
-- List code repositories configured in a project (with credentials never returned)
+- List the code repositories bound to a project, for automated tests (QuickScript) or application code (impact analysis), with credentials never returned
 - List folders and tags scoped to a project, with usage counts and tree relationships preserved — the folder tree to any depth, with recursive and automated-case subtree totals on request
 - Count test cases server-side under any case filter, grouped by folder, top-level area, tag, state, source, or creator — automation-coverage rollups without paginating the repository
 - Generate a QuickScript (AI automation script) from one or more test cases, following the project's connected code repository when one is configured

@@ -290,7 +290,7 @@ describe("testplanit_cases_update", () => {
     expect(data).toMatchObject({ folder: { connect: { id: 55 } } });
   });
 
-  it("READ_ONLY_TOKEN regression: returns mode:read message (T-06-01)", async () => {
+  it("READ_ONLY_TOKEN regression: returns mode:read message", async () => {
     zenstackMock.mockRejectedValueOnce(
       new TestPlanItHttpError("Forbidden", { statusCode: 403, code: "READ_ONLY_TOKEN" }),
     );
@@ -302,7 +302,7 @@ describe("testplanit_cases_update", () => {
     expect(text).toContain("mode:read");
   });
 
-  it("NEVER calls delete or deleteMany across all update cases (T-06-06)", async () => {
+  it("NEVER calls delete or deleteMany across all update cases", async () => {
     await callTool({ caseId: 99, name: "n" });
     await callTool({ caseId: 99, tags: [1] });
     await callTool({ caseId: 99, steps: [{ text: "s" }] });
@@ -314,7 +314,7 @@ describe("testplanit_cases_update", () => {
     }
   });
 
-  it("returns CASE-02 shape after write", async () => {
+  it("returns the cases_get shape after write", async () => {
     fetchCaseDetailMock.mockResolvedValueOnce(FULL_DETAIL);
 
     const result = await callTool({ caseId: 99, name: "updated" });

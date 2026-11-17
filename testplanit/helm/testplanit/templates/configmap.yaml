@@ -12,7 +12,18 @@ metadata:
   {{- end }}
 data:
   NODE_ENV: "production"
-  NEXTAUTH_URL: {{ required "appUrl is required (the public https URL of this instance)" .Values.appUrl | quote }}
+  {{- $appUrl := required "appUrl is required (the public https URL of this instance)" .Values.appUrl | trimSuffix "/" }}
+  {{- if and .Values.basePath (not (hasSuffix .Values.basePath $appUrl)) }}
+  {{- fail (printf "appUrl (%s) must end with basePath (%s)" $appUrl .Values.basePath) }}
+  {{- end }}
+  APP_URL: {{ $appUrl | quote }}
+  {{- if .Values.basePath }}
+  # Under a path prefix NextAuth v4 needs its own route named in full.
+  NEXTAUTH_URL: {{ printf "%s/api/auth" $appUrl | quote }}
+  NEXT_PUBLIC_BASE_PATH: {{ .Values.basePath | quote }}
+  {{- else }}
+  NEXTAUTH_URL: {{ $appUrl | quote }}
+  {{- end }}
   NODE_OPTIONS: {{ .Values.config.nodeOptions | quote }}
   # Per-file upload ceiling. The entrypoint re-syncs Next's frozen server-action
   # body limit from this, so it applies on a pod restart without a rebuild.
@@ -34,7 +45,8 @@ data:
   AWS_BUCKET_NAME: {{ .Values.objectStorage.minio.bucket | quote }}
   AWS_REGION: "us-east-1"
   {{- if and .Values.ingress.enabled .Values.ingress.minioPath }}
-  AWS_PUBLIC_ENDPOINT_URL: "{{ .Values.appUrl | trimSuffix "/" }}{{ .Values.ingress.minioPath }}"
+  # The storage route is host-rooted (ingress.minioPath), not under basePath.
+  AWS_PUBLIC_ENDPOINT_URL: "{{ $appUrl | trimSuffix .Values.basePath }}{{ .Values.ingress.minioPath }}"
   {{- end }}
   {{- else }}
   {{- with .Values.objectStorage.external.endpoint }}

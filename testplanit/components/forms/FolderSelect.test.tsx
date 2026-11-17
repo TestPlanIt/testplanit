@@ -25,6 +25,7 @@ vi.mock("@/components/DynamicIcon", () => ({
 import {
   filterFolderOptions,
   flattenFolderOptions,
+  FolderMultiSelect,
   FolderSelect,
   transformFolders,
 } from "./FolderSelect";
@@ -328,5 +329,81 @@ describe("filterFolderOptions", () => {
 
   it("returns nothing when no name matches", () => {
     expect(filterFolderOptions(flat, "nonexistent")).toEqual([]);
+  });
+});
+
+describe("FolderMultiSelect", () => {
+  const sampleFolders = [
+    { value: "1", label: "Folder A", parentId: null },
+    { value: "2", label: "Folder B", parentId: null },
+    { value: "3", label: "Sub Folder", parentId: 1 },
+  ];
+
+  const optionOf = (folderId: string) =>
+    screen.getByTestId(`folder-select-option-${folderId}`) as HTMLElement;
+
+  it("lists the folders as the same indented tree as the single select", async () => {
+    render(
+      <FolderMultiSelect
+        value={[]}
+        onChange={vi.fn()}
+        folders={sampleFolders}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+    await waitFor(() => {
+      expect(screen.getByText("Sub Folder")).toBeInTheDocument();
+    });
+
+    expect(optionOf("1").style.paddingInlineStart).toBe("5px");
+    expect(optionOf("3").style.paddingInlineStart).toBe("15px");
+  });
+
+  it("reports every selected folder id as the selection grows", async () => {
+    const onChange = vi.fn();
+    render(
+      <FolderMultiSelect
+        value={[2]}
+        onChange={onChange}
+        folders={sampleFolders}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+    await waitFor(() => {
+      expect(screen.getByText("Sub Folder")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText("Sub Folder"));
+
+    expect(onChange).toHaveBeenCalledWith(["2", "3"]);
+  });
+
+  it("renders the caller's suffix after a folder name", async () => {
+    render(
+      <FolderMultiSelect
+        value={[]}
+        onChange={vi.fn()}
+        folders={sampleFolders}
+        renderOptionSuffix={(option) =>
+          option.value === "1" ? <span>{"(7)"}</span> : null
+        }
+      />
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+    await waitFor(() => {
+      expect(screen.getByText("Folder A")).toBeInTheDocument();
+    });
+
+    expect(optionOf("1")).toHaveTextContent("Folder A(7)");
+    expect(optionOf("2")).toHaveTextContent("Folder B");
+    expect(optionOf("2")).not.toHaveTextContent("(7)");
+  });
+
+  it("is disabled without folders", () => {
+    render(<FolderMultiSelect value={[]} onChange={vi.fn()} folders={[]} />);
+
+    expect(screen.getByRole("combobox")).toBeDisabled();
   });
 });

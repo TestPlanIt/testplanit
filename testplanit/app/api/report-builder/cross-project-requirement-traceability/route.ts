@@ -3,16 +3,20 @@ import {
   handleRequirementReportOptionsGET,
   handleRequirementCoverageReportPOST,
 } from "~/utils/requirementCoverageReportUtils";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
-export async function GET(req: NextRequest) {
+async function reportGet(req: NextRequest) {
   // Empty dimensions/metrics (specialized report), plus the projects this
   // report can be filtered to.
   return handleRequirementReportOptionsGET(req, true);
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   // The cross-project twin of `requirement-traceability`: one handler, one
   // shape, ADMIN-gated and anchored on every requirements-enabled project
   // instead of one.
   return handleRequirementCoverageReportPOST(req, "traceability", true);
 }
+
+export const GET = withReplicaRoute(reportGet);
+export const POST = withReplicaRoute(reportPost);

@@ -67,7 +67,7 @@ function caseRow(
     steps: [],
     caseFieldValues: [],
     caseIssues: [],
-    _count: { testRuns: executionCount ?? 0 },
+    _count: { testRunCases: executionCount ?? 0 },
     ...rest,
   };
 }

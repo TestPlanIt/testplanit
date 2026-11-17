@@ -37,6 +37,7 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { translateServerError } from "~/lib/i18n/translateServerError";
+import { apiFetch } from "~/lib/basePath";
 
 interface TwoFactorSettingsProps {
   userId: string;
@@ -81,7 +82,7 @@ export function TwoFactorSettings({
   useEffect(() => {
     async function checkTwoFactorRequired() {
       try {
-        const response = await fetch("/api/auth/two-factor/settings");
+        const response = await apiFetch("/api/auth/two-factor/settings");
         if (response.ok) {
           const data = await response.json();
           // Only force2FAAllLogins prevents users from disabling 2FA
@@ -103,7 +104,7 @@ export function TwoFactorSettings({
     setIsLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/auth/two-factor/setup");
+      const response = await apiFetch("/api/auth/two-factor/setup");
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error || "Failed to start 2FA setup");
@@ -125,7 +126,7 @@ export function TwoFactorSettings({
     setIsLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/auth/two-factor/enable", {
+      const response = await apiFetch("/api/auth/two-factor/enable", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: verificationCode }),
@@ -149,7 +150,7 @@ export function TwoFactorSettings({
     setIsLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/auth/two-factor/disable", {
+      const response = await apiFetch("/api/auth/two-factor/disable", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -177,7 +178,7 @@ export function TwoFactorSettings({
     setIsLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/auth/two-factor/regenerate-codes", {
+      const response = await apiFetch("/api/auth/two-factor/regenerate-codes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: regenerateCode }),

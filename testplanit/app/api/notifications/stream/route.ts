@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 // ---- env-driven config (D-17 / LIM-01 / LIM-02) ----
 const PER_TENANT_CAP = Number(process.env.SSE_PER_TENANT_CAP ?? "1000");
-const PER_USER_CAP = Number(process.env.SSE_PER_USER_CAP ?? "4");
+const PER_USER_CAP = Number(process.env.SSE_PER_USER_CAP ?? "10");
 const HEARTBEAT_MS = 25_000;
 const METRICS_INTERVAL_MS = 30_000;
 
@@ -27,6 +27,7 @@ interface ActiveConnection {
   userId: string;
   cleanup: () => Promise<void>;
   writeShutdown: () => void;
+  writeSuperseded: () => void;
   openedAt: number;
 }
 const tenantCounts: Map<string, number> = new Map();
@@ -108,7 +109,14 @@ export async function GET(req: NextRequest) {
   if (list.length >= PER_USER_CAP) {
     const oldest = list.shift();
     if (oldest) {
-      // cleanup() decrements counters and removes from registries
+      // Tell the evicted client why it is being closed so it stays closed
+      // (EventSource would otherwise auto-reconnect, evict another stream,
+      // and loop). cleanup() decrements counters and removes from registries.
+      try {
+        oldest.writeSuperseded();
+      } catch {
+        /* swallow — controller may already be closed */
+      }
       await oldest.cleanup().catch(() => undefined);
     }
   }
@@ -149,6 +157,9 @@ export async function GET(req: NextRequest) {
       }
       function writeShutdown() {
         write(encoder.encode(`event: shutdown\ndata: {}\n\n`));
+      }
+      function writeSuperseded() {
+        write(encoder.encode(`event: superseded\ndata: {}\n\n`));
       }
 
       // The publisher already encodes `{id, event}` JSON (Wave 1 publish-site
@@ -197,16 +208,18 @@ export async function GET(req: NextRequest) {
         }
       }, HEARTBEAT_MS);
 
+      let cleanedUp = false;
       connection = {
         tenantId,
         userId,
         openedAt: Date.now(),
         writeShutdown,
+        writeSuperseded,
         cleanup: async () => {
-          if (controllerClosed) {
-            // Ensure registries are still cleaned up exactly once even if
-            // the controller closed earlier (e.g. enqueue threw).
-          }
+          // Eviction, request abort and reader cancel can each drive cleanup;
+          // run it once so the counters and the subscriber are released once.
+          if (cleanedUp) return;
+          cleanedUp = true;
           controllerClosed = true;
           if (heartbeatInterval) {
             clearInterval(heartbeatInterval);

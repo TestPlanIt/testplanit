@@ -81,6 +81,12 @@ export interface UseVirtualizedInfiniteListOptions {
   boundToViewport?: boolean;
   /** When this value changes, the list scrolls to the top and re-measures. */
   resetKey?: unknown;
+  /**
+   * When this value changes, the viewport-bound height is measured again. Pass
+   * whatever moves the list's top edge without a window resize, such as a
+   * section above it folding or growing.
+   */
+  layoutKey?: unknown;
 }
 
 // useLayoutEffect warns when run during SSR; consumers are client components,
@@ -101,6 +107,7 @@ export function useVirtualizedInfiniteList({
   bottomMargin = 16,
   boundToViewport = true,
   resetKey,
+  layoutKey,
 }: UseVirtualizedInfiniteListOptions) {
   // The "a page actually landed" signal that releases the load-more guard and
   // re-attempts the viewport fill. Falls back to the rendered `count` for
@@ -129,9 +136,19 @@ export function useVirtualizedInfiniteList({
       setMaxHeight(Math.max(200, window.innerHeight - top - bottomMargin));
     };
     compute();
+    // A section above the list may leave the DOM only after this commit (a
+    // collapsible unmounts its content from its own layout effect), so
+    // measure once more before the next paint.
+    const frame =
+      typeof requestAnimationFrame === "function"
+        ? requestAnimationFrame(compute)
+        : null;
     window.addEventListener("resize", compute);
-    return () => window.removeEventListener("resize", compute);
-  }, [boundToViewport, scrollEl, bottomMargin]);
+    return () => {
+      if (frame != null) cancelAnimationFrame(frame);
+      window.removeEventListener("resize", compute);
+    };
+  }, [boundToViewport, scrollEl, bottomMargin, layoutKey]);
 
   const virtualizer = useVirtualizer<HTMLDivElement, HTMLDivElement>({
     count,

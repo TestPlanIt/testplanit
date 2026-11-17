@@ -4,6 +4,7 @@ import type {
   TestRunResultsWhereInput,
 } from "@db/input";
 import * as z from "zod/v4";
+import { dateBoundSchema, DATE_BOUND_HELP, parseDateBound } from "../../../dateBounds.js";
 import { zenstack } from "../../../api.js";
 import type { EnvConfig } from "../../../env.js";
 import { mapHttpErrorToToolResult } from "../../../errors.js";
@@ -34,7 +35,7 @@ export function registerRunResultsList(
     "testplanit_test_run_results_list",
     {
       description:
-        "List test run results across runs — BOTH manual results (TestRunResults, source \"TestRun\") AND automated results ingested from JUnit/TestNG/xUnit/NUnit/MSTest/Mocha/Cucumber reports (JUnitTestResult, source \"JUnit\"; automated runs — testRunType != REGULAR — store results ONLY there). Filters: runId, caseIds (RepositoryCases ids — pair with testplanit_cases_list({issueId}) to get the results for an issue's cases), executedById (user id, string; for JUnit rows this is the importer), statusId, from/to (executedAt date range, ISO 8601), source (\"TestRun\" | \"JUnit\" to restrict to one kind). Merged ordering: executedAt DESC then id DESC per source (latest first). Cursor is OPAQUE — pass back `nextCursor` verbatim (compound `tr:<id>|ju:<id>` string; bare numbers are accepted as legacy TestRunResults cursors). Each row carries `source`, denormalized status/executedBy, top-level repositoryCase + testRun, and (TestRun rows only) testRunCase. For detail call testplanit_test_run_results_get with the row id AND its `source`.",
+        "List test run results across runs — BOTH manual results (TestRunResults, source \"TestRun\") AND automated results ingested from JUnit/TestNG/xUnit/NUnit/MSTest/Mocha/Cucumber reports (JUnitTestResult, source \"JUnit\"; automated runs — testRunType != REGULAR — store results ONLY there). Filters: runId, caseIds (RepositoryCases ids — pair with testplanit_cases_list({issueId}) to get the results for an issue's cases), executedById (user id, string; for JUnit rows this is the importer), statusId, from/to (executedAt range; YYYY-MM-DD or an ISO 8601 timestamp — a date-only `to` covers that whole UTC day), source (\"TestRun\" | \"JUnit\" to restrict to one kind). Merged ordering: executedAt DESC then id DESC per source (latest first). Cursor is OPAQUE — pass back `nextCursor` verbatim (compound `tr:<id>|ju:<id>` string; bare numbers are accepted as legacy TestRunResults cursors). Each row carries `source`, denormalized status/executedBy, top-level repositoryCase + testRun, and (TestRun rows only) testRunCase. For detail call testplanit_test_run_results_get with the row id AND its `source`.",
       inputSchema: {
         runId: z.number().int().positive().optional(),
         caseIds: z
@@ -44,8 +45,8 @@ export function registerRunResultsList(
           .optional(),
         executedById: z.string().min(1).optional(),
         statusId: z.number().int().positive().optional(),
-        from: z.string().datetime({ offset: true }).optional(),
-        to: z.string().datetime({ offset: true }).optional(),
+        from: dateBoundSchema.optional(),
+        to: dateBoundSchema.optional(),
         source: z.enum(["TestRun", "JUnit"]).optional(),
         cursor: z
           .union([z.number().int().positive(), z.string().min(1)])
@@ -75,19 +76,19 @@ export function registerRunResultsList(
         const where: TestRunResultsWhereInput = { isDeleted: false };
         if (input.runId !== undefined) where.testRunId = input.runId;
         if (input.caseIds && input.caseIds.length > 0) {
-          // EXEC-06 back-half: nested relation filter via
+          // caseIds: nested relation filter via
           // `where.testRunCase.repositoryCaseId.in` — Prisma expands this to a
           // join + IN over RepositoryCases.id, scoped per-row by the host's
           // ZenStack @@allow policy. Cross-tenant rows can't leak through
-          // this filter (T-07-02 / T-07-04).
+          // this filter.
           where.testRunCase = { repositoryCaseId: { in: input.caseIds } };
         }
         if (input.executedById) where.executedById = input.executedById;
         if (input.statusId !== undefined) where.statusId = input.statusId;
         if (input.from || input.to) {
           where.executedAt = {
-            ...(input.from ? { gte: new Date(input.from) } : {}),
-            ...(input.to ? { lte: new Date(input.to) } : {}),
+            ...(input.from ? { gte: parseDateBound(input.from, "start") } : {}),
+            ...(input.to ? { lte: parseDateBound(input.to, "end") } : {}),
           };
         }
 
@@ -106,8 +107,8 @@ export function registerRunResultsList(
         if (input.statusId !== undefined) junitWhere.statusId = input.statusId;
         if (input.from || input.to) {
           junitWhere.executedAt = {
-            ...(input.from ? { gte: new Date(input.from) } : {}),
-            ...(input.to ? { lte: new Date(input.to) } : {}),
+            ...(input.from ? { gte: parseDateBound(input.from, "start") } : {}),
+            ...(input.to ? { lte: parseDateBound(input.to, "end") } : {}),
           };
         }
 
@@ -117,7 +118,7 @@ export function registerRunResultsList(
         const trBody: Record<string, unknown> = {
           where,
           include: RUN_RESULT_LIST_INCLUDE,
-          // BL-04 deterministic ordering — D7-02 latest-first (matches the
+          // Deterministic ordering, latest-first (matches the
           // (testRunCaseId, executedAt(sort: Desc)) schema index); id breaks
           // ties for results recorded in the same millisecond.
           orderBy: [{ executedAt: "desc" }, { id: "desc" }],

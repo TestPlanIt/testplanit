@@ -7,9 +7,17 @@
  * cores.
  */
 
-import { baseDb as db } from "@/lib/db";
+import { baseDb } from "@/lib/db";
+import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
+
+/**
+ * The client every helper reads through. Defaults to the web instance's own
+ * database; a shared multi-tenant worker must pass the job's tenant client.
+ */
+export type GenerationDb = typeof baseDb;
 import { IntegrationProvider, WorkflowScope } from "~/zenstack/models";
 import type { TemplateData } from "@/api/llm/generate-test-cases/shared";
+import type { ImportInput } from "@/lib/services/testCaseImport";
 
 /** Folder the panel drops generated cases into (created on first use). */
 export const GENERATED_FOLDER_NAME = "Generated from Jira";
@@ -29,8 +37,10 @@ export interface GenerationProject {
  */
 export async function listGenerationProjects(
   integrationId: number,
-  issueProjectKey?: string | null
+  issueProjectKey?: string | null,
+  client: GenerationDb = baseDb
 ): Promise<GenerationProject[]> {
+  const db = client;
   const projectIntegrations = await db.projectIntegration.findMany({
     where: {
       integrationId,
@@ -74,23 +84,38 @@ export interface TemplateOption {
   isDefault: boolean;
 }
 
-/** Templates assigned to the project (the wizard's template picker source). */
+/**
+ * Templates assigned to the project (the wizard's template picker source).
+ * `isDefault` marks the one the in-app wizard preselects for the project.
+ */
 export async function listProjectTemplates(
-  projectId: number
+  projectId: number,
+  client: GenerationDb = baseDb
 ): Promise<TemplateOption[]> {
-  const templates = await db.templates.findMany({
-    where: {
-      isDeleted: false,
-      isEnabled: true,
-      projects: { some: { projectId } },
-    },
-    select: { id: true, templateName: true, isDefault: true },
-    orderBy: { templateName: "asc" },
-  });
+  const db = client;
+  const [project, templates] = await Promise.all([
+    db.projects.findUnique({
+      where: { id: projectId },
+      select: { defaultTemplateId: true },
+    }),
+    db.templates.findMany({
+      where: {
+        isDeleted: false,
+        isEnabled: true,
+        projects: { some: { projectId } },
+      },
+      select: { id: true, templateName: true, isDefault: true },
+      orderBy: { templateName: "asc" },
+    }),
+  ]);
+  const defaultId = resolveDefaultTemplate(
+    templates,
+    project?.defaultTemplateId
+  ).template?.id;
   return templates.map((t) => ({
     id: t.id,
     name: t.templateName,
-    isDefault: t.isDefault,
+    isDefault: t.id === defaultId,
   }));
 }
 
@@ -107,8 +132,10 @@ export interface ProjectReadiness {
  * failing at save time.
  */
 export async function getProjectReadiness(
-  projectId: number
+  projectId: number,
+  client: GenerationDb = baseDb
 ): Promise<ProjectReadiness> {
+  const db = client;
   const [repository, defaultWorkflow, projectLlmCount, globalLlmCount] =
     await Promise.all([
       db.repositories.findFirst({
@@ -154,8 +181,10 @@ export async function getProjectReadiness(
  */
 export async function templateBelongsToProject(
   templateId: number,
-  projectId: number
+  projectId: number,
+  client: GenerationDb = baseDb
 ): Promise<boolean> {
+  const db = client;
   const assignment = await db.templateProjectAssignment.findUnique({
     where: { templateId_projectId: { templateId, projectId } },
     select: { templateId: true },
@@ -183,8 +212,10 @@ export interface FieldMapping {
  * template doesn't exist / isn't usable.
  */
 export async function loadTemplateData(
-  templateId: number
+  templateId: number,
+  client: GenerationDb = baseDb
 ): Promise<{ template: TemplateData; fieldMappings: FieldMapping[] } | null> {
+  const db = client;
   const template = await db.templates.findFirst({
     where: { id: templateId, isDeleted: false },
     select: {
@@ -274,8 +305,10 @@ export interface FolderOption {
 
 /** All folders in the project, for the panel's (hierarchical) folder picker. */
 export async function listProjectFolders(
-  projectId: number
+  projectId: number,
+  client: GenerationDb = baseDb
 ): Promise<FolderOption[]> {
+  const db = client;
   return db.repositoryFolders.findMany({
     where: { projectId, isDeleted: false },
     orderBy: [{ parentId: "asc" }, { order: "asc" }, { name: "asc" }],
@@ -291,8 +324,10 @@ export async function listProjectFolders(
  */
 export async function suggestFolderForIssue(
   projectId: number,
-  issue: { issueKey?: string | null; issueId?: string | null }
+  issue: { issueKey?: string | null; issueId?: string | null },
+  client: GenerationDb = baseDb
 ): Promise<number | null> {
+  const db = client;
   const issueKey = issue.issueKey || undefined;
   const issueId = issue.issueId || undefined;
   if (!issueKey && !issueId) return null;
@@ -322,6 +357,47 @@ export async function suggestFolderForIssue(
   return linkedCase?.folderId ?? null;
 }
 
+/** A generated case as a client or the generator hands it over. */
+export interface GeneratedCaseInput {
+  id: string;
+  name: string;
+  fieldValues?: Record<string, unknown>;
+  tags?: string[];
+}
+
+/**
+ * Generated cases as the importer takes them: the template's steps field,
+ * when the generator filled one, becomes the case's steps.
+ */
+export function toImportCases(
+  template: TemplateData,
+  cases: GeneratedCaseInput[]
+): ImportInput["testCases"] {
+  const stepsField = template.fields.find(
+    (f) =>
+      f.type.toLowerCase() === "steps" || f.name.toLowerCase().includes("step")
+  );
+  return cases.map((tc) => {
+    const rawSteps = stepsField
+      ? (tc.fieldValues?.[stepsField.name] as unknown)
+      : undefined;
+    const steps =
+      Array.isArray(rawSteps) && rawSteps.length > 0
+        ? rawSteps.map((s: any) => ({
+            step: s?.step,
+            expectedResult: s?.expectedResult,
+          }))
+        : undefined;
+    return {
+      id: tc.id,
+      name: tc.name,
+      fieldValues: (tc.fieldValues ?? {}) as Record<string, any>,
+      ...(tc.tags && tc.tags.length > 0 ? { tags: tc.tags } : {}),
+      ...(steps ? { steps } : {}),
+    };
+  });
+}
+
 export interface ImportTarget {
   projectName: string;
   repositoryId: number;
@@ -343,8 +419,10 @@ export interface ImportTarget {
 export async function resolveImportTarget(
   projectId: number,
   authorUserId: string,
-  options: { folderId?: number | null; newFolderName?: string | null } = {}
+  options: { folderId?: number | null; newFolderName?: string | null } = {},
+  client: GenerationDb = baseDb
 ): Promise<ImportTarget | null> {
+  const db = client;
   const project = await db.projects.findFirst({
     where: { id: projectId, isDeleted: false },
     select: { id: true, name: true },

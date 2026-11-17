@@ -12,11 +12,8 @@ import {
 } from "@/components/forms/MilestoneSelect";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
-import { MagicSelectButton } from "@/components/runs/MagicSelectButton";
-import {
-  ImpactButton,
-  type ImpactAcceptedInfo,
-} from "@/components/impact/ImpactButton";
+import type { ImpactAcceptedInfo } from "@/components/impact/ImpactDialog";
+import { CaseSelectionActions } from "@/components/runs/CaseSelectionActions";
 import { recordImpactAcceptance } from "@/components/impact/recordImpactAcceptance";
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
@@ -61,6 +58,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import * as React from "react";
+import { useContainerCompact } from "@/components/ui/action-bar";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -85,6 +83,7 @@ import { updateTestRunForecast } from "~/services/testRunService";
 import { IconName } from "~/types/globals";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import ProjectRepository from "../../repository/[projectId]/ProjectRepository";
+import { apiFetch } from "~/lib/basePath";
 
 interface WorkflowOption {
   value: string;
@@ -629,7 +628,7 @@ const TestCasesDialog = React.memo(
 
         setIsLoadingTestCasesForDrawer(true);
         try {
-          const response = await fetch(
+          const response = await apiFetch(
             `/api/projects/${projectId}/cases/fetch-many`,
             {
               method: "POST",
@@ -673,7 +672,7 @@ const TestCasesDialog = React.memo(
         }
         setIsLoadingForecast(true);
         try {
-          const response = await fetch("/api/repository-cases/forecast", {
+          const response = await apiFetch("/api/repository-cases/forecast", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -697,6 +696,11 @@ const TestCasesDialog = React.memo(
         void fetchForecast();
       }
     }, [selectedTestCases, open]);
+
+    // The selection sources show as icon buttons while the header has room
+    // for them and collapse to one menu when it does not. Measured on the
+    // header row, never on the buttons themselves — that would feed back.
+    const { ref: headerRef, compact: headerCompact } = useContainerCompact();
 
     // Map fetchedTestCases to the structure expected by SelectedTestCasesDrawer
     const _mappedTestCasesForDrawer = useMemo(() => {
@@ -735,9 +739,13 @@ const TestCasesDialog = React.memo(
         <DialogHeader className="p-6 pb-0 pe-4">
           <DialogTitle>{tRepository("cases.selectCases")}</DialogTitle>
           <DialogDescription asChild>
-            <div className="flex justify-between items-start text-muted-foreground">
+            <div
+              ref={headerRef}
+              className="flex justify-between items-start text-muted-foreground"
+            >
               <div className="flex items-center gap-4">
-                <MagicSelectButton
+                <CaseSelectionActions
+                  compact={headerCompact}
                   projectId={Number(projectId)}
                   testRunMetadata={{
                     name: form.getValues("name"),
@@ -745,11 +753,6 @@ const TestCasesDialog = React.memo(
                     docs: form.getValues("docs"),
                     linkedIssueIds: linkedIssueIds || [],
                   }}
-                  selectedTestCases={selectedTestCases}
-                  onSuggestionsAccepted={setSelectedTestCases}
-                />
-                <ImpactButton
-                  projectId={Number(projectId)}
                   selectedTestCases={selectedTestCases}
                   onSuggestionsAccepted={setSelectedTestCases}
                   onAnalysisAccepted={onImpactAccepted}
@@ -1559,7 +1562,7 @@ export default function AddTestRunModal({
           // but do NOT throw (other configs in the loop should still get
           // their fan-out attempt).
           try {
-            const fanOutRes = await fetch(
+            const fanOutRes = await apiFetch(
               `/api/test-runs/${newTestRun.id}/generate-iterations`,
               {
                 method: "POST",

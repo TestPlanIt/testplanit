@@ -94,7 +94,7 @@ describe("SyncService.upsertIssueFromExternal shared across projects", () => {
       makeIssueData({ id: "ext-shared" })
     );
 
-    expect(result).toEqual({ id: 42, created: false });
+    expect(result).toEqual({ id: 42, created: false, isRequirement: false });
     const call = mockIssueUpsert.mock.calls[0][0];
     expect(call.update).not.toHaveProperty("projectId");
     expect(call.create.projectId).toBe(7);
@@ -128,7 +128,7 @@ describe("SyncService.upsertIssueFromExternal shared across projects", () => {
       makeIssueData({ id: "ext-new" })
     );
 
-    expect(result).toEqual({ id: 555, created: true });
+    expect(result).toEqual({ id: 555, created: true, isRequirement: false });
     expect(mockIssueUpsert.mock.calls[0][0].create.projectId).toBe(7);
     expect(mockMembershipUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -148,7 +148,7 @@ describe("SyncService.upsertIssueFromExternal shared across projects", () => {
         7,
         makeIssueData({ id: "ext-shared" })
       )
-    ).resolves.toEqual({ id: 42, created: false });
+    ).resolves.toEqual({ id: 42, created: false, isRequirement: false });
     expect(mockMembershipUpsert).not.toHaveBeenCalled();
   });
 });

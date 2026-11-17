@@ -42,6 +42,7 @@ import {
 import { planJoin } from "~/lib/services/configurationGroups";
 import { Link } from "~/lib/navigation";
 import { schema } from "~/zenstack/schema";
+import { apiFetch } from "~/lib/basePath";
 
 export type ConfigurationGroupLinkModel = "testRuns" | "sessions";
 
@@ -208,7 +209,7 @@ export function ConfigurationGroupLinkField({
         take: pageSize,
       };
       const path = RPC_MODEL_PATH[model];
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/model/${path}/findMany?q=${encodeURIComponent(JSON.stringify(params))}`
       );
       if (!response.ok) {
@@ -219,7 +220,7 @@ export function ConfigurationGroupLinkField({
         ? (payload.data as CandidateOption[])
         : [];
 
-      const countResponse = await fetch(
+      const countResponse = await apiFetch(
         `/api/model/${path}/count?q=${encodeURIComponent(JSON.stringify({ where }))}`
       );
       let total = results.length;
@@ -237,7 +238,7 @@ export function ConfigurationGroupLinkField({
         )
       );
       if (groupIds.length > 0) {
-        const sizeResponse = await fetch(
+        const sizeResponse = await apiFetch(
           `/api/model/${path}/findMany?q=${encodeURIComponent(
             JSON.stringify({
               where: {

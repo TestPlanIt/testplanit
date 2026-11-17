@@ -5,6 +5,7 @@ import {
   createAutomationTrendsDimensionRegistry,
   createAutomationTrendsMetricRegistry,
 } from "~/utils/reportUtils";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
 const config = {
   reportType: "automation-trends",
@@ -14,10 +15,13 @@ const config = {
   createMetricRegistry: createAutomationTrendsMetricRegistry,
 };
 
-export async function GET(req: NextRequest) {
+async function reportGet(req: NextRequest) {
   return handleReportGET(req, config);
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   return handleAutomationTrendsPOST(req, false); // false = project-specific
 }
+
+export const GET = withReplicaRoute(reportGet);
+export const POST = withReplicaRoute(reportPost);

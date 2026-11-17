@@ -82,7 +82,13 @@ vi.mock("@tiptap/react", () => ({
       getAttributes: vi.fn(() => ({ href: "" })),
       getJSON: vi.fn(() => ({ type: "doc", content: [] })),
       setEditable: vi.fn(),
-      state: { doc: { content: { size: 0 } } },
+      on: vi.fn(),
+      off: vi.fn(),
+      state: {
+        doc: { content: { size: 0 } },
+        // findTable() destructures $from; depth 0 resolves to undefined.
+        selection: { empty: true, $from: { depth: 0 } },
+      },
       chain: vi.fn(() => ({
         focus: vi.fn(() => ({
           toggleBold: vi.fn(() => ({ run: vi.fn() })),
@@ -103,6 +109,8 @@ vi.mock("@tiptap/react", () => ({
     };
   },
   EditorContent: () => <div data-testid="editor-content" />,
+  useEditorState: ({ editor, selector }: any) =>
+    editor ? selector({ editor, transactionNumber: 0 }) : null,
 }));
 
 const PARAMS: ParameterChipMeta[] = [

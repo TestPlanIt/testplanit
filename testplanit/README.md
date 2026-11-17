@@ -23,7 +23,7 @@ This directory contains the TestPlanIt application: the Next.js app and API, the
 
 ### Quick Start
 
-You need Node.js 24, pnpm (run `corepack enable` to get the pinned version), and Docker. From the repository root:
+You need Node.js 24.15 or later, pnpm (run `corepack enable` to get the pinned version), and Docker. From the repository root:
 
 ```bash
 pnpm install

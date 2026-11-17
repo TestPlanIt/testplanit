@@ -50,10 +50,10 @@ function job(state: string, extra: Record<string, unknown> = {}) {
 function queue() {
   const client = { set: vi.fn().mockResolvedValue("OK") };
   return {
-    client: Promise.resolve(client),
+    getBackend: () => ({ client: Promise.resolve(client) }),
     _client: client,
-    getRepeatableJobs: vi.fn().mockResolvedValue([]),
-    removeRepeatableByKey: vi.fn().mockResolvedValue(undefined),
+    getJobScheduler: vi.fn().mockResolvedValue(undefined),
+    removeJobScheduler: vi.fn().mockResolvedValue(true),
   };
 }
 
@@ -101,13 +101,13 @@ describe("removeJob", () => {
 
   it("removes a repeatable job's schedule first and says so when the instance stays locked", async () => {
     const q = queue();
-    q.getRepeatableJobs.mockResolvedValue([{ key: "sweep" }]);
+    q.getJobScheduler.mockResolvedValue({ key: "sweep" });
     const j = job("active", { id: "repeat:sweep:1700000000" });
     j.remove.mockRejectedValue(new Error("locked"));
     await expect(
       removeJob(q as any, REPO_CACHE_QUEUE_NAME, j as any, true)
     ).rejects.toMatchObject({ scheduleRemoved: true });
-    expect(q.removeRepeatableByKey).toHaveBeenCalledWith("sweep");
+    expect(q.removeJobScheduler).toHaveBeenCalledWith("sweep");
   });
 
   it("rethrows a failure that is not the lock", async () => {

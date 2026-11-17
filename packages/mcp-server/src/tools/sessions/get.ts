@@ -53,7 +53,7 @@ export function registerSessionsGet(
           };
         }
 
-        // D7-12: detect overflow via the take:101 cap on the include shape.
+        // detect overflow via the take:101 cap on the include shape.
         // Trim the raw rows to the inline cap (100) BEFORE mapping so the
         // surfaced sessionResults array never exceeds the documented bound.
         const sessionResultsRaw = raw.sessionResults ?? [];

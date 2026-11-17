@@ -8,6 +8,13 @@ export function SearchHelpContent() {
   return (
     <div className="space-y-3 text-sm">
       <div>
+        <h3 className="font-semibold text-primary">{t("search.help.ids")}</h3>
+        <p className="text-muted-foreground">{t("search.help.idsDesc")}</p>
+        <code className="bg-muted px-1.5 py-0.5 rounded text-xs">
+          {"1234 OR 5678"}
+        </code>
+      </div>
+      <div>
         <h3 className="font-semibold text-primary">
           {t("search.help.exactPhrases")}
         </h3>

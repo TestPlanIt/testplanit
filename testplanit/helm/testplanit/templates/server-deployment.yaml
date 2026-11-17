@@ -93,8 +93,12 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.server.readinessProbe }}
+          {{- $probe := deepCopy . }}
+          {{- if and $.Values.basePath $probe.httpGet $probe.httpGet.path }}
+          {{- $_ := set $probe.httpGet "path" (printf "%s%s" $.Values.basePath $probe.httpGet.path) }}
+          {{- end }}
           readinessProbe:
-            {{- toYaml . | nindent 12 }}
+            {{- toYaml $probe | nindent 12 }}
           {{- end }}
           {{- with .Values.server.livenessProbe }}
           livenessProbe:

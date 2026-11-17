@@ -59,7 +59,6 @@ import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
 import { inboundAdapterForCodeRepository } from "~/lib/webhooks/codeChangeEvents";
 import { redactWebhookUrl } from "~/lib/webhooks/redaction";
 import {
-  ISSUE_SCOPE_HINT,
   ISSUE_SETUP_STEP_KEYS,
   adapterSlug,
   adapterTitleKey,
@@ -77,6 +76,8 @@ import {
   RepositoryWebhookCard,
   type RepositoryWebhookRow,
 } from "./repository-webhook-card";
+import { WebhookActionsSection } from "./webhook-actions-section";
+import { withBasePath } from "~/lib/basePath";
 
 interface WebhookConfigFormProps {
   projectId: number;
@@ -98,13 +99,7 @@ interface InboundConfig {
   lastFailureAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  subscribedEvents: string[];
   baseBranch: string | null;
-  autoExecuteEnabled: boolean;
-  autoExecuteTargetId: number | null;
-  autoExecuteRef: string | null;
-  autoExecuteInputs: unknown;
-  autoRunMinScore: number | null;
   codeRepositoryConfigId: number | null;
   codeRepositoryConfig: RepositoryWebhookRow["codeRepositoryConfig"] | null;
 }
@@ -167,13 +162,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
       lastFailureAt: true,
       createdAt: true,
       updatedAt: true,
-      subscribedEvents: true,
       baseBranch: true,
-      autoExecuteEnabled: true,
-      autoExecuteTargetId: true,
-      autoExecuteRef: true,
-      autoExecuteInputs: true,
-      autoRunMinScore: true,
       codeRepositoryConfigId: true,
       codeRepositoryConfig: {
         select: {
@@ -544,11 +533,10 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   function renderIssueCard(config: IssueConfig) {
     const slug = adapterSlug(config.adapterType);
     const titleKey = adapterTitleKey(config.adapterType);
-    const hint = ISSUE_SCOPE_HINT[config.adapterType];
     const isRevealedHere = revealed?.configId === config.id;
     const url = `${
       typeof window !== "undefined" ? window.location.origin : ""
-    }/api/webhooks/${config.token}`;
+    }${withBasePath(`/api/webhooks/${config.token}`)}`;
     const healthLabelKey: `healthBadge.${EndpointHealth}` = `healthBadge.${config.endpointHealth}`;
     return (
       <Card
@@ -599,20 +587,6 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {hint && (
-            <p className="text-xs text-muted-foreground">
-              {hint.rich
-                ? t.rich(hint.key as any, {
-                    code: (chunks) => (
-                      <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
-                        {chunks}
-                      </code>
-                    ),
-                  })
-                : t(hint.key as any)}
-            </p>
-          )}
-
           {isRevealedHere &&
             revealed &&
             renderRevealedBox(revealed, config.adapterType)}
@@ -690,6 +664,16 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             </div>
           )}
 
+          {!isRevealedHere && (
+            <WebhookActionsSection
+              projectId={projectId}
+              webhookConfigId={config.id}
+              source="tracker"
+              baseBranch={null}
+              integration={activeIntegration?.integration ?? null}
+            />
+          )}
+
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
@@ -762,13 +746,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             adapterType:
               config.adapterType as RepositoryWebhookRow["adapterType"],
             isActive: config.isActive,
-            subscribedEvents: config.subscribedEvents,
             baseBranch: config.baseBranch ?? null,
-            autoExecuteEnabled: config.autoExecuteEnabled,
-            autoExecuteTargetId: config.autoExecuteTargetId,
-            autoExecuteRef: config.autoExecuteRef,
-            autoExecuteInputs: config.autoExecuteInputs,
-            autoRunMinScore: config.autoRunMinScore ?? null,
             endpointHealth: config.endpointHealth,
             lastReceivedAt: config.lastReceivedAt,
             codeRepositoryConfig: config.codeRepositoryConfig,

@@ -1,3 +1,4 @@
+import { apiFetch } from "~/lib/basePath";
 /**
  * Client-side audit logging helpers.
  * These functions call the audit API endpoints to log events from the browser.
@@ -15,7 +16,7 @@ export async function logDataExport(params: {
   projectId?: number;
 }): Promise<void> {
   try {
-    const response = await fetch("/api/audit/export", {
+    const response = await apiFetch("/api/audit/export", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -188,3 +188,56 @@ describe("MilestoneSummary — paired issue count chips", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe("MilestoneSummary — meta slot", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  it("renders the slot on the counts line under the bar, never before the bar", async () => {
+    mockSummaryFetch(baseSummary());
+
+    renderWithQueryClient(
+      <MilestoneSummary
+        milestoneId={42}
+        projectId={7}
+        meta={<span data-testid="forecast-chip">4h</span>}
+      />
+    );
+
+    const bar = await screen.findByTestId("milestone-summary-bar");
+    const slot = screen.getByTestId("milestone-summary-meta");
+    expect(slot).toContainElement(screen.getByTestId("forecast-chip"));
+    // The bar comes first in document order, so the slot cannot shift its
+    // start; the slot sits beside the run count below it.
+    expect(
+      bar.compareDocumentPosition(slot) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(bar.contains(slot)).toBe(false);
+  });
+
+  it("leaves an empty wrapper when the slot renders nothing, so no stray separator text appears", async () => {
+    mockSummaryFetch(baseSummary());
+    const Empty = () => null;
+
+    renderWithQueryClient(
+      <MilestoneSummary milestoneId={42} projectId={7} meta={<Empty />} />
+    );
+
+    await screen.findByTestId("milestone-summary-bar");
+    const slot = screen.getByTestId("milestone-summary-meta");
+    expect(slot).toBeEmptyDOMElement();
+    expect(slot.className).toContain("empty:hidden");
+  });
+
+  it("renders no slot at all when none is passed", async () => {
+    mockSummaryFetch(baseSummary());
+
+    renderWithQueryClient(<MilestoneSummary milestoneId={42} projectId={7} />);
+
+    await screen.findByTestId("milestone-summary-bar");
+    expect(
+      screen.queryByTestId("milestone-summary-meta")
+    ).not.toBeInTheDocument();
+  });
+});

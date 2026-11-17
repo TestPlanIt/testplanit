@@ -36,6 +36,9 @@ vi.mock("@/lib/db", () => ({
     repositoryCaseIssue: {
       upsert: vi.fn(),
     },
+    failureSignatureIssue: {
+      upsert: vi.fn(),
+    },
   },
 }));
 
@@ -49,9 +52,29 @@ vi.mock("@/lib/integrations/editorMediaAttachments", () => ({
   resolveEditorMediaAttachments: vi.fn(),
 }));
 
+const mocks = vi.hoisted(() => ({
+  failureSignatureFindFirst: vi.fn(),
+}));
+
+vi.mock("~/lib/auth/utils", () => ({
+  getEnhancedDb: vi.fn(async () => ({
+    failureSignature: { findFirst: mocks.failureSignatureFindFirst },
+  })),
+}));
+
+vi.mock("~/lib/services/areaPermission", () => ({
+  isProjectAdminFor: vi.fn(),
+  userHasAreaPermission: vi.fn(),
+}));
+
 import { resolveEditorMediaAttachments } from "@/lib/integrations/editorMediaAttachments";
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { baseDb } from "@/lib/db";
+import { getEnhancedDb } from "~/lib/auth/utils";
+import {
+  isProjectAdminFor,
+  userHasAreaPermission,
+} from "~/lib/services/areaPermission";
 import { getServerSession } from "next-auth/next";
 
 import { POST } from "./route";
@@ -492,6 +515,212 @@ describe("POST /api/integrations/[id]/create-issue", () => {
       // The update branch refreshes the same columns.
       expect(upsertArg.update.name).toBe("PROJ-7");
       expect(upsertArg.update.externalKey).toBe("PROJ-7");
+    });
+  });
+
+  describe("Linking to a failure pattern", () => {
+    const patternProjectId = 12;
+    const linkWrite = {
+      where: { signatureId_issueId: { signatureId: 7, issueId: 99 } },
+      create: { signatureId: 7, issueId: 99 },
+      update: {},
+    };
+
+    beforeEach(() => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (baseDb.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
+      (baseDb.integration.findUnique as any).mockResolvedValue({
+        id: 1,
+        authType: "API_KEY",
+        status: "ACTIVE",
+      });
+      mocks.failureSignatureFindFirst.mockResolvedValue({
+        projectId: patternProjectId,
+      });
+      (isProjectAdminFor as any).mockResolvedValue(false);
+      (userHasAreaPermission as any).mockResolvedValue(false);
+      (baseDb.issue.upsert as any).mockResolvedValue({
+        id: 99,
+        externalId: "PROJ-1",
+        integrationId: 1,
+      });
+      (baseDb.failureSignatureIssue.upsert as any).mockResolvedValue({
+        signatureId: 7,
+        issueId: 99,
+      });
+    });
+
+    const expectNothingCreated = () => {
+      expect(mockAdapter.createIssue).not.toHaveBeenCalled();
+      expect(baseDb.issue.upsert).not.toHaveBeenCalled();
+      expect(baseDb.failureSignatureIssue.upsert).not.toHaveBeenCalled();
+    };
+
+    it.each(["abc", "2.5"])(
+      "returns 400 when failureSignatureId is not an integer (%s)",
+      async (failureSignatureId) => {
+        const response = await POST(
+          createRequest({
+            title: "Pattern Issue",
+            projectId: "PROJ",
+            failureSignatureId,
+          }),
+          params
+        );
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toBe("Invalid failure pattern id");
+        expectNothingCreated();
+      }
+    );
+
+    it("returns 404 when the pattern is not found or not visible to the user", async () => {
+      mocks.failureSignatureFindFirst.mockResolvedValue(null);
+
+      const response = await POST(
+        createRequest({
+          title: "Pattern Issue",
+          projectId: "PROJ",
+          failureSignatureId: "7",
+        }),
+        params
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(data.error).toBe("Failure pattern not found");
+      expect(getEnhancedDb).toHaveBeenCalledWith(mockSession);
+      expect(mocks.failureSignatureFindFirst).toHaveBeenCalledWith({
+        where: { id: 7 },
+        select: { projectId: true },
+      });
+      expectNothingCreated();
+    });
+
+    it("returns 400 when testplanitProjectId differs from the pattern's project", async () => {
+      (isProjectAdminFor as any).mockResolvedValue(true);
+
+      const response = await POST(
+        createRequest({
+          title: "Pattern Issue",
+          projectId: "PROJ",
+          testplanitProjectId: patternProjectId + 1,
+          failureSignatureId: "7",
+        }),
+        params
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toBe(
+        "The failure pattern belongs to a different project"
+      );
+      expectNothingCreated();
+    });
+
+    it("returns 403 when the user is neither project admin nor holds the FailurePatterns add/edit grant", async () => {
+      const response = await POST(
+        createRequest({
+          title: "Pattern Issue",
+          projectId: "PROJ",
+          testplanitProjectId: patternProjectId,
+          failureSignatureId: "7",
+        }),
+        params
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe(
+        "You do not have permission to link issues to this failure pattern"
+      );
+      expect(isProjectAdminFor).toHaveBeenCalledWith(
+        "user-1",
+        patternProjectId
+      );
+      expect(userHasAreaPermission).toHaveBeenCalledWith(
+        "user-1",
+        patternProjectId,
+        "FailurePatterns",
+        "canAddEdit"
+      );
+      expectNothingCreated();
+    });
+
+    it("links the created issue to the pattern for a project admin", async () => {
+      (isProjectAdminFor as any).mockResolvedValue(true);
+
+      const response = await POST(
+        createRequest({
+          title: "Pattern Issue",
+          projectId: "PROJ",
+          testplanitProjectId: patternProjectId,
+          failureSignatureId: "7",
+        }),
+        params
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.internalId).toBe(99);
+      expect(mockAdapter.createIssue).toHaveBeenCalledOnce();
+      expect(baseDb.issue.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ projectId: patternProjectId }),
+        })
+      );
+      expect(baseDb.failureSignatureIssue.upsert).toHaveBeenCalledWith(
+        linkWrite
+      );
+    });
+
+    it("links the created issue to the pattern for a user with the FailurePatterns grant", async () => {
+      (userHasAreaPermission as any).mockResolvedValue(true);
+
+      const response = await POST(
+        createRequest({
+          title: "Pattern Issue",
+          projectId: "PROJ",
+          testplanitProjectId: patternProjectId,
+          failureSignatureId: "7",
+        }),
+        params
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.internalId).toBe(99);
+      expect(userHasAreaPermission).toHaveBeenCalledWith(
+        "user-1",
+        patternProjectId,
+        "FailurePatterns",
+        "canAddEdit"
+      );
+      expect(mockAdapter.createIssue).toHaveBeenCalledOnce();
+      expect(baseDb.failureSignatureIssue.upsert).toHaveBeenCalledWith(
+        linkWrite
+      );
+    });
+
+    it("creates the Issue under the pattern's project when testplanitProjectId is omitted", async () => {
+      (isProjectAdminFor as any).mockResolvedValue(true);
+
+      const response = await POST(
+        createRequest({
+          title: "Pattern Issue",
+          projectId: "PROJ",
+          failureSignatureId: "7",
+        }),
+        params
+      );
+
+      expect(response.status).toBe(200);
+      const upsertArg = (baseDb.issue.upsert as any).mock.calls[0][0];
+      expect(upsertArg.create.projectId).toBe(patternProjectId);
+      expect(baseDb.failureSignatureIssue.upsert).toHaveBeenCalledWith(
+        linkWrite
+      );
     });
   });
 

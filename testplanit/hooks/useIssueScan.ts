@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 export interface IssueScanSnapshot {
   issueScanReport?: unknown;
@@ -79,7 +80,7 @@ export function useIssueScan({
       setIsScanning(true);
       setScanError(null);
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/code-repositories/${repositoryId}/scan-issues`,
           {
             method: "POST",
@@ -121,7 +122,7 @@ export function useIssueScan({
     }) => {
       setScanError(null);
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/code-repositories/${repositoryId}/scan-issues/cancel`,
           {
             method: "POST",

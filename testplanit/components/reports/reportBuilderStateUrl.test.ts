@@ -41,6 +41,33 @@ describe("buildReportBuilderStateConfig", () => {
     expect(config.dimensionFilters).toEqual({ testRun: [1, 2] });
   });
 
+  it("persists exclude modes only beside an active filter", () => {
+    const config = buildReportBuilderStateConfig({
+      dimensions,
+      metrics,
+      dimensionValueFilters: {
+        testRun: [{ id: 1 } as any],
+        status: [],
+      },
+      dimensionFilterModes: {
+        testRun: "exclude",
+        // No active filter for status, and milestone is not selected —
+        // neither persists.
+        status: "exclude",
+        milestone: "exclude",
+      },
+    });
+    expect(config.dimensionFilterModes).toEqual({ testRun: "exclude" });
+
+    const includeOnly = buildReportBuilderStateConfig({
+      dimensions,
+      metrics,
+      dimensionValueFilters: { testRun: [{ id: 1 } as any] },
+      dimensionFilterModes: { testRun: "include" },
+    });
+    expect(includeOnly.dimensionFilterModes).toBeUndefined();
+  });
+
   it("serializes the date range as ISO strings and omits an open end", () => {
     const from = new Date("2026-09-01T00:00:00Z");
     expect(

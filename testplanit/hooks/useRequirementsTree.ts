@@ -20,6 +20,7 @@ import type {
   RequirementSortColumn,
   RequirementTreeRow,
 } from "~/lib/services/requirementTree";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * The load-all/lazy boundary is deliberately NOT re-exported from here, and
@@ -188,7 +189,7 @@ const EMPTY_FACETS: RequirementFilterFacets = {
 async function fetchFacets(
   projectId: number
 ): Promise<RequirementFilterFacets> {
-  const res = await fetch(
+  const res = await apiFetch(
     `/api/projects/${projectId}/requirements/tree?facetsOnly=1`
   );
   if (!res.ok) {
@@ -202,7 +203,7 @@ async function fetchFacets(
 async function fetchTreeCount(
   projectId: number
 ): Promise<RequirementTreeCountResponse> {
-  const res = await fetch(
+  const res = await apiFetch(
     `/api/projects/${projectId}/requirements/tree?countOnly=1`
   );
   if (!res.ok) {
@@ -221,7 +222,7 @@ async function fetchRootsPage(
 ): Promise<RequirementRootsPageResponse> {
   // A scope too long for the query string asks for the same page by POST.
   if (!executionScopeFitsQuery(executionScope)) {
-    const res = await fetch(`/api/projects/${projectId}/requirements/tree`, {
+    const res = await apiFetch(`/api/projects/${projectId}/requirements/tree`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -253,7 +254,7 @@ async function fetchRootsPage(
     params.set("cursorValue", String(cursor.value));
     params.set("cursorId", String(cursor.id));
   }
-  const res = await fetch(
+  const res = await apiFetch(
     `/api/projects/${projectId}/requirements/tree?${params.toString()}`
   );
   if (!res.ok) {
@@ -268,7 +269,7 @@ async function fetchChildrenPage(
   projectId: number,
   parentId: number
 ): Promise<{ rows: RequirementTreeRow[] }> {
-  const res = await fetch(
+  const res = await apiFetch(
     `/api/projects/${projectId}/requirements/tree/${parentId}/children`
   );
   if (!res.ok) {
@@ -288,7 +289,7 @@ async function fetchMatches(
     sort: RequirementsTreeSort;
   }
 ): Promise<RequirementMatchPageResponse> {
-  const res = await fetch(`/api/projects/${projectId}/requirements/tree`, {
+  const res = await apiFetch(`/api/projects/${projectId}/requirements/tree`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

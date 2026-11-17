@@ -24,6 +24,7 @@ import { SectionHeader } from "@/components/ui/typography";
 import { ExtendedIssue, useIssueColumns } from "./columns";
 import { DeleteIssue } from "./DeleteIssue";
 import { EditIssue } from "./EditIssue";
+import { apiFetch } from "~/lib/basePath";
 
 const PAGE_SIZE = 50;
 
@@ -278,12 +279,12 @@ function IssueList() {
       try {
         // Fetch counts and projects in parallel
         const [countsResponse, projectsResponse] = await Promise.all([
-          fetch("/api/issues/counts", {
+          apiFetch("/api/issues/counts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ issueIds: newIds }),
           }),
-          fetch("/api/issues/projects", {
+          apiFetch("/api/issues/projects", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ issueIds: newIds }),

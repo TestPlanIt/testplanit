@@ -26,7 +26,7 @@ export function registerRunResultsGet(
       description:
         "Fetch a single test run result. Pass the `source` from the results_list row: \"TestRun\" (default — manual TestRunResults) or \"JUnit\" (automated results ingested from JUnit/TestNG/xUnit/… reports; automated runs store results ONLY there — the two id spaces are independent). TestRun detail inlines step-level results: stepText / expectedResultText (Markdown), status, notes, evidence (JSON as stored), attachments, linked issues, plus customFields (resultFieldValues denormalized) and the parent testRunCase summary. JUnit detail carries junitType (PASSED/FAILURE/ERROR/SKIPPED), message, content (stack trace), systemOut/systemErr, time/assertions/file/line, suite + repositoryCase + testRun, and attachments; JUnit steps are stored per-CASE (no per-result FK) so they are not inlined.",
       inputSchema: {
-        // T-07-04 IDOR mitigation: positive integer only; non-int / non-positive
+        // IDOR mitigation: positive integer only; non-int / non-positive
         // rejected at the zod boundary before zenstack is called. Host's
         // ZenStack @@allow policy is the row-level access boundary.
         resultId: z.number().int().positive(),
@@ -47,7 +47,7 @@ export function registerRunResultsGet(
           );
 
           if (!raw) {
-            // T-07-02 IDOR: policy-denied rows surface as not-found (same
+            // IDOR: policy-denied rows surface as not-found (same
             // contract as the TestRun branch below).
             return {
               isError: true as const,
@@ -73,17 +73,17 @@ export function registerRunResultsGet(
           {
             where: { id: input.resultId },
             // RUN_RESULT_DETAIL_INCLUDE (07-01) ships the full step-level
-            // shape: stepResults with stepStatus (R2), step text, attachments,
+            // shape: stepResults with stepStatus, step text, attachments,
             // issues, plus top-level resultFieldValues / attachments / issues.
             // The constant is `as const satisfies Prisma.TestRunResultsInclude`
-            // so a schema drift fails at typecheck (Phase 6 WR-09 invariant).
+            // so a schema drift fails at typecheck.
             include: RUN_RESULT_DETAIL_INCLUDE,
           },
           deps.env,
         );
 
         if (!raw) {
-          // T-07-02 IDOR: when the host's ZenStack @@allow policy denies the
+          // IDOR: when the host's ZenStack @@allow policy denies the
           // row, findUnique returns null. Surface as a not-found rather than
           // a 403 to avoid leaking row-existence to unauthorized callers.
           return {

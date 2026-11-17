@@ -26,6 +26,9 @@ export interface TenantConfig {
   elasticsearchNode?: string;
   elasticsearchIndex?: string;
   baseUrl?: string;
+  // Override AUDIT_LOG_RETENTION_DAYS / AUDIT_LOG_RETENTION_MODE for this tenant.
+  auditLogRetentionDays?: number | string;
+  auditLogRetentionMode?: string;
 }
 
 // Normalize a replica-URL value that may arrive as a JSON array (config file /
@@ -144,6 +147,8 @@ function loadTenantsFromFile(filePath: string): Map<string, TenantConfig> {
           elasticsearchNode: config.elasticsearchNode,
           elasticsearchIndex: config.elasticsearchIndex,
           baseUrl: config.baseUrl,
+          auditLogRetentionDays: config.auditLogRetentionDays,
+          auditLogRetentionMode: config.auditLogRetentionMode,
         });
       }
       console.log(
@@ -218,6 +223,8 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
           elasticsearchNode: config.elasticsearchNode,
           elasticsearchIndex: config.elasticsearchIndex,
           baseUrl: config.baseUrl,
+          auditLogRetentionDays: config.auditLogRetentionDays,
+          auditLogRetentionMode: config.auditLogRetentionMode,
         });
       }
       console.log(
@@ -246,6 +253,10 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
           elasticsearchIndex:
             process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
           baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`],
+          auditLogRetentionDays:
+            process.env[`TENANT_${match[1]}_AUDIT_LOG_RETENTION_DAYS`],
+          auditLogRetentionMode:
+            process.env[`TENANT_${match[1]}_AUDIT_LOG_RETENTION_MODE`],
         });
       }
     }

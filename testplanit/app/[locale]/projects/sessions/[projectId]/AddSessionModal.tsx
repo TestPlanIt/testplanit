@@ -3,6 +3,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
+import { DefaultTemplateBadge } from "@/components/DefaultTemplateBadge";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import {
   MilestoneSelect,
@@ -58,7 +59,6 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
-import { notifySessionAssignment } from "~/app/actions/session-notifications";
 import { searchConfigurations } from "~/app/actions/searchConfigurations";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
@@ -67,6 +67,8 @@ import { IconName } from "~/types/globals";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
+import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
+import { apiFetch } from "~/lib/basePath";
 
 interface ConfigurationOption {
   id: number;
@@ -124,6 +126,7 @@ export function AddSessionModal({
     },
     select: {
       name: true,
+      defaultTemplateId: true,
       projectIntegrations: {
         where: { isActive: true },
         include: { integration: true },
@@ -200,14 +203,15 @@ export function AddSessionModal({
     },
   });
 
-  // Fall back to the first available template / workflow when nothing is
+  // The template prefers the project's default over the system default. Both
+  // fall back to the first available template / workflow when nothing is
   // currently flagged as default. The seeded "Default Template" / "Draft"
   // workflow's `isDefault` flag can be flipped by the single-default
   // cascade when an admin (or a parallel E2E test) marks something else as
   // default — leaving `defaultTemplate` undefined makes the Create button
   // permanently disabled even though a perfectly usable template exists.
-  const defaultTemplate =
-    templates?.find((template) => template.isDefault) ?? templates?.[0];
+  const { template: defaultTemplate, source: defaultTemplateSource } =
+    resolveDefaultTemplate(templates, project?.defaultTemplateId);
   const defaultWorkflow =
     workflows?.find((workflow) => workflow.isDefault) ?? workflows?.[0];
 
@@ -785,7 +789,7 @@ export function AddSessionModal({
         if (duplicationPreset?.originalFieldValues?.length) {
           for (const fv of duplicationPreset.originalFieldValues) {
             try {
-              await fetch(`/api/model/sessionFieldValues`, {
+              await apiFetch(`/api/model/sessionFieldValues`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -800,11 +804,6 @@ export function AddSessionModal({
               // Non-critical: continue if field value copy fails
             }
           }
-        }
-
-        // Send notification if session was assigned during creation
-        if (data.assignedToId) {
-          await notifySessionAssignment(newSession.id, data.assignedToId, null);
         }
 
         createdSessions.push(newSession);
@@ -1076,6 +1075,13 @@ export function AddSessionModal({
                                       <div className="flex items-center gap-1">
                                         <LayoutList className="w-4 h-4" />
                                         {template.label}
+                                        {defaultTemplateSource &&
+                                          template.value ===
+                                            String(defaultTemplate?.id) && (
+                                            <DefaultTemplateBadge
+                                              source={defaultTemplateSource}
+                                            />
+                                          )}
                                       </div>
                                     </SelectItem>
                                   ))}
@@ -1087,7 +1093,7 @@ export function AddSessionModal({
                       </FormControl>
                       {sourceTemplateUnassigned && defaultTemplate && (
                         <p
-                          className="text-xs text-amber-600 dark:text-amber-400"
+                          className="text-xs text-amber-700 dark:text-amber-400"
                           data-testid="duplicate-template-unassigned-warning"
                         >
                           {t.rich(
@@ -1168,7 +1174,7 @@ export function AddSessionModal({
                       )}
                       {sourceStateUnassigned && defaultWorkflow && (
                         <p
-                          className="text-xs text-amber-600 dark:text-amber-400"
+                          className="text-xs text-amber-700 dark:text-amber-400"
                           data-testid="duplicate-state-unassigned-warning"
                         >
                           {t.rich(

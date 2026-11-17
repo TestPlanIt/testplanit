@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useCallback, useMemo, useState } from "react";
@@ -27,6 +28,7 @@ const EMPTY_FETCH_OPTIONS = async () => ({ results: [], total: 0 });
 import { Controller, UseFormReturn } from "react-hook-form";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { apiFetch } from "~/lib/basePath";
 import { isJiraSprintField, isJiraTeamField } from "./jira-field-types";
 
 interface JiraField {
@@ -77,10 +79,12 @@ function DescriptionField({
   return (
     <FormItem>
       <div className="flex items-center gap-2">
-        <FormLabel>
+        <FormLabel className="flex items-center">
           {field.name}
           {field.required && (
-            <span className="text-destructive ms-1">{"*"}</span>
+            <sup>
+              <Asterisk className="w-3 h-3 text-destructive" />
+            </sup>
           )}
         </FormLabel>
         {field.description && (
@@ -121,7 +125,7 @@ function useJiraUserSearch(integrationId: number, projectKey?: string) {
         if (projectKey) {
           params.append("projectKey", projectKey);
         }
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/integrations/${integrationId}/search-users?${params.toString()}`
         );
         if (!response.ok) throw new Error("Failed to search users");
@@ -169,10 +173,12 @@ function UserPickerField({
   return (
     <FormItem>
       <div className="flex items-center gap-2">
-        <FormLabel>
+        <FormLabel className="flex items-center">
           {field.name}
           {field.required && (
-            <span className="text-destructive ms-1">{"*"}</span>
+            <sup>
+              <Asterisk className="w-3 h-3 text-destructive" />
+            </sup>
           )}
         </FormLabel>
         {field.description && (
@@ -223,10 +229,12 @@ function MultiUserPickerField({
   return (
     <FormItem>
       <div className="flex items-center gap-2">
-        <FormLabel>
+        <FormLabel className="flex items-center">
           {field.name}
           {field.required && (
-            <span className="text-destructive ms-1">{"*"}</span>
+            <sup>
+              <Asterisk className="w-3 h-3 text-destructive" />
+            </sup>
           )}
         </FormLabel>
         {field.description && (
@@ -285,7 +293,7 @@ function SprintPickerField({
         const sprints = await queryClient.fetchQuery({
           queryKey: ["jira-create-issue-sprints", integrationId, projectKey],
           queryFn: async () => {
-            const response = await fetch(
+            const response = await apiFetch(
               `/api/integrations/${integrationId}/sprints?projectKey=${encodeURIComponent(projectKey)}`
             );
             if (!response.ok) throw new Error("Failed to fetch sprints");
@@ -316,10 +324,12 @@ function SprintPickerField({
   return (
     <FormItem>
       <div className="flex items-center gap-2">
-        <FormLabel>
+        <FormLabel className="flex items-center">
           {field.name}
           {field.required && (
-            <span className="text-destructive ms-1">{"*"}</span>
+            <sup>
+              <Asterisk className="w-3 h-3 text-destructive" />
+            </sup>
           )}
         </FormLabel>
         {field.description && (
@@ -384,9 +394,13 @@ function LabelsInput({
 
   return (
     <FormItem>
-      <FormLabel>
+      <FormLabel className="flex items-center">
         {field.name}
-        {field.required && <span className="text-destructive ms-1">{"*"}</span>}
+        {field.required && (
+          <sup>
+            <Asterisk className="w-3 h-3 text-destructive" />
+          </sup>
+        )}
       </FormLabel>
       <FormControl>
         <div className="space-y-2">
@@ -486,7 +500,7 @@ export function DynamicJiraField({
   const fetchLinkableIssues = useCallback(
     async (query: string) => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/integrations/${integrationId}/search-issues?query=${encodeURIComponent(query)}`
         );
         if (!response.ok) throw new Error("Failed to search issues");
@@ -516,10 +530,12 @@ export function DynamicJiraField({
       return (
         <FormItem>
           <div className="flex items-center gap-2">
-            <FormLabel>
+            <FormLabel className="flex items-center">
               {field.name}
               {field.required && (
-                <span className="text-destructive ms-1">{"*"}</span>
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               )}
             </FormLabel>
             {field.description && (
@@ -565,10 +581,12 @@ export function DynamicJiraField({
         render={({ field: formField }) => (
           <FormItem>
             <div className="flex items-center gap-2">
-              <FormLabel>
+              <FormLabel className="flex items-center">
                 {field.name}
                 {field.required && (
-                  <span className="text-destructive ms-1">{"*"}</span>
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
                 )}
               </FormLabel>
               {field.description && (
@@ -609,10 +627,12 @@ export function DynamicJiraField({
           render={({ field: formField }) => (
             <FormItem>
               <div className="flex items-center gap-2">
-                <FormLabel>
+                <FormLabel className="flex items-center">
                   {field.name}
                   {field.required && (
-                    <span className="text-destructive ms-1">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                 </FormLabel>
                 {field.description && (
@@ -711,10 +731,12 @@ export function DynamicJiraField({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>
+                    <FormLabel className="flex items-center">
                       {field.name}
                       {field.required && (
-                        <span className="text-destructive ms-1">{"*"}</span>
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                       )}
                     </FormLabel>
                     {field.allowedValues && field.allowedValues[0] && (
@@ -766,10 +788,12 @@ export function DynamicJiraField({
           name={field.key}
           render={({ field: formField }) => (
             <FormItem>
-              <FormLabel>
+              <FormLabel className="flex items-center">
                 {field.name}
                 {field.required && (
-                  <span className="text-destructive ms-1">{"*"}</span>
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
                 )}
               </FormLabel>
               <FormControl>
@@ -805,10 +829,12 @@ export function DynamicJiraField({
             render={({ field: _formField }) => (
               <FormItem>
                 <div className="flex items-center gap-2">
-                  <FormLabel>
+                  <FormLabel className="flex items-center">
                     {field.name}
                     {field.required && (
-                      <span className="text-destructive ms-1">{"*"}</span>
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                     )}
                   </FormLabel>
                   {field.description && (
@@ -856,10 +882,12 @@ export function DynamicJiraField({
         name={field.key}
         render={({ field: formField }) => (
           <FormItem>
-            <FormLabel>
+            <FormLabel className="flex items-center">
               {field.name}
               {field.required && (
-                <span className="text-destructive ms-1">{"*"}</span>
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               )}
             </FormLabel>
             <FormControl>

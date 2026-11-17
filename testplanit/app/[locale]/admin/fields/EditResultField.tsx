@@ -314,6 +314,7 @@ export function EditResultField({
             : undefined,
           isDeleted: false,
           deletedAt: null,
+          deletedById: null,
         }))
         .sort((a, b) => a.order - b.order);
 
@@ -370,6 +371,7 @@ export function EditResultField({
           order: prevOptions.length + 1,
           isDeleted: false,
           deletedAt: null,
+          deletedById: null,
         },
       ];
     });
@@ -604,9 +606,9 @@ export function EditResultField({
           isRestricted: data.isRestricted,
           defaultValue: data.defaultValue,
           isChecked: data.isChecked || false,
-          minValue: data.minValue || null,
-          maxValue: data.maxValue || null,
-          initialHeight: data.initialHeight || null,
+          minValue: data.minValue ?? null,
+          maxValue: data.maxValue ?? null,
+          initialHeight: data.initialHeight ?? null,
         },
       });
 

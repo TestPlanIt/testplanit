@@ -166,6 +166,11 @@ const SCOPED_FILES = [
   // assertion further down is the only thing that would catch someone
   // quietly deleting the spread from inside an otherwise-intact call.
   "app/api/report-builder/project-health/route.ts",
+  // Bulk case creation links the `issueIds` a caller passes (the Add Case
+  // form's defect picker, via the staged-cases list) and spreads
+  // DEFECT_SCOPE_WHERE plus projectId into its single issue findMany, so a
+  // requirement id or a foreign project's id fails that case.
+  "app/api/projects/[projectId]/cases/bulk-create/route.ts",
   // 25-08's load-all requirement list (26.2-05: rebuilt as a DataTable-based
   // tree-table, replacing the earlier react-arborist tree) spreads
   // REQUIREMENT_SCOPE_WHERE (the other half of this module's mirror pair,
@@ -212,6 +217,12 @@ const SCOPED_FILES = [
   // way, so it would still pass if the spread were dropped — the threshold
   // entry further down is the real guard.
   "lib/services/importIssueKeyResolution.ts",
+  // The alert evaluator's "issues opened from a run" metric counts the
+  // defects linked to a run's results; a requirement linked to a result
+  // (traceability) is not something that was opened from the run, so the
+  // single count call spreads DEFECT_SCOPE_WHERE. Its unit test mocks the
+  // count, so the occurrence floor further down is the guard.
+  "lib/services/alertEvaluation.ts",
   // 26-08's traceability matrix loader spreads REQUIREMENT_SCOPE_WHERE (the
   // other half of this module's mirror pair, not DEFECT_SCOPE_WHERE) into
   // its single findMany call reading requirement names and parents for
@@ -288,6 +299,10 @@ const EXEMPT_IDENTITY_LOOKUP_FILES = [
   "lib/repositoryCaseFacetCounts.ts",
   "lib/services/jira-link-service.ts",
   "lib/webhooks/services/applyInboundIssueUpdate.ts",
+  // The Draft cases webhook action resolves the one issue its job names by
+  // id, narrowed to issues the rule's project can see; a draft can be asked
+  // for on either row kind, so no role predicate applies.
+  "lib/webhooks/actions/draftCases.ts",
   "components/issues/DeferredIssueManager.tsx",
   "components/issues/ManageSimpleUrlIssues.tsx",
   "components/search/FacetedSearchFilters.tsx",
@@ -432,6 +447,11 @@ const EXEMPT_INGESTION_IMPORT_FILES = [
   // just narrow a picker.
   "lib/integrations/adapters/SimpleUrlAdapter.ts",
   "lib/services/testCaseImport.ts",
+  // The generation wizard's Stage action: the same id + project-scoped
+  // lookup of the seeded issue the importer makes (the seeded flows link
+  // requirements and defects alike), so the staged case carries the link
+  // the imported one would.
+  "lib/services/generatedCaseStaging.ts",
   "workers/testmoImport/issueImports.ts",
 ];
 
@@ -462,6 +482,15 @@ const EXEMPT_SEARCH_INDEX_FILES = [
   "scripts/reindexAllEntities.ts",
 ];
 
+// EXEMPT — reads a tracker's status vocabulary, not rows: the distinct
+// status names the project's synced issues carry, offered as suggestions for
+// a webhook action's status filter. Actions act on tracker issues of either
+// row kind (a "requirements only" filter narrows them later), so a
+// defect-only read would hide the statuses requirements use.
+const EXEMPT_TRACKER_VOCABULARY_FILES = [
+  "app/[locale]/projects/settings/[projectId]/webhooks/webhook-action-tracker-filter.tsx",
+];
+
 const ALL_ALLOWED_FILES = [
   ...SCOPED_FILES,
   ...ROLE_AWARE_BY_DESIGN_FILES,
@@ -472,6 +501,7 @@ const ALL_ALLOWED_FILES = [
   ...EXEMPT_REQUIREMENT_SCOPED_FILES,
   ...EXEMPT_CALLER_SCOPED_FILES,
   ...EXEMPT_SEARCH_INDEX_FILES,
+  ...EXEMPT_TRACKER_VOCABULARY_FILES,
 ];
 
 describe("Issue read-scope containment (HYG-01, structural)", () => {
@@ -610,6 +640,18 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
             "1 import + 2 uses (issue-creator distribution, issue-date series) — this route has no test file of its own, so this is the only guard against a silent regression",
         },
         {
+          file: "app/api/projects/[projectId]/cases/bulk-create/route.ts",
+          minimum: 2,
+          reason:
+            "1 import + 1 use in the issueIds existence check — the route's unit test mocks issue.findMany, so only this floor keeps the defect scope on the query",
+        },
+        {
+          file: "lib/services/alertEvaluation.ts",
+          minimum: 2,
+          reason:
+            "1 import + 1 use in the run-issue count behind the 'issues opened from a run' alert metric — its unit test mocks issue.count, so only this floor keeps the defect scope on the query",
+        },
+        {
           file: "components/issues/requirement-reference-search-dialog.tsx",
           minimum: 2,
           reason:
@@ -667,16 +709,29 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
       "isRequirement: issue.isRequirement"
     );
 
-    if (roleAssignments !== 2) {
+    // One shared document builder writes the role; a second literal would
+    // be a writer that can drift from it.
+    if (roleAssignments !== 1) {
       throw new Error(
         `${searchFile} writes the requirement role in ${roleAssignments} document ` +
-          "literal(s); expected exactly 2 (indexIssue and syncProjectIssuesToElasticsearch — " +
-          "the two-writer invariant made structural). A third writer, or only one of the two " +
-          "being updated, means the live index and the app's role filter can disagree — " +
-          "add the missing assignment, or investigate why a third writer exists."
+          "literal(s); expected exactly 1 (buildIssueDocument, shared by indexIssue and " +
+          "syncProjectIssuesToElasticsearch). A second literal means a writer bypasses the " +
+          "shared builder and the live index and the app's role filter can disagree — " +
+          "route it through buildIssueDocument, or investigate why a second writer exists."
       );
     }
-    expect(roleAssignments).toBe(2);
+    expect(roleAssignments).toBe(1);
+
+    // ...and both writers go through it: the definition plus two call sites.
+    const builderUses = countOccurrences(searchContent, "buildIssueDocument(");
+    if (builderUses !== 3) {
+      throw new Error(
+        `${searchFile} mentions buildIssueDocument( ${builderUses} time(s); expected exactly 3 ` +
+          "(its definition, the indexIssue call and the syncProjectIssuesToElasticsearch call). " +
+          "A writer that stopped calling it builds its own document and can drift."
+      );
+    }
+    expect(builderUses).toBe(3);
 
     // The bulk indexer's own source query must NOT carry the defect-scope
     // predicate: the index has to contain every row kind so the in-app

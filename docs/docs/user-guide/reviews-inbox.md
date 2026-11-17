@@ -23,7 +23,7 @@ Pending requests also appear at the top of **Your Assignments** on the [Dashboar
 The inbox has two tabs:
 
 - **Pending** — requests assigned to you (directly or via a role you hold) that are awaiting a decision. Sorted oldest first, so the most overdue is on top.
-- **Decided** — the decision history you're involved in: requests you decided **and** decided requests you originally submitted, most recent first. A **Decided by** column shows who made each decision, so requesters can follow the outcome of their own requests without visiting each entity.
+- **Decided** — the decision history you're involved in: requests you decided **and** decided requests you originally submitted, most recent first. A **Decided by** column shows who made each decision, so requesters can follow the outcome of their own requests without visiting each entity. An **Actions** column offers [Revert decision](#reverting-a-decision) where it's available.
 
 Searchable multi-select filters narrow the list: **Entity type**, **Project**, and **Requester** on both tabs, plus **Decided by** and **Status** (Approved / Changes requested / Rejected) on the Decided tab. Each dropdown only offers values that actually occur in the current tab's rows — no choice can filter the table down to nothing — and an empty selection means "all".
 
@@ -51,6 +51,14 @@ From a pending request (in the inbox or on the entity's own page):
 :::info
 A request can be decided only once. If someone else decides it first, or the requester cancels it, you'll be told it has already been decided. If your eligibility changed, the action is declined.
 :::
+
+## Reverting a decision
+
+On the **Decided** tab, **Revert decision** undoes a decision you recorded and puts the request back in your queue as pending — the requester doesn't need to submit a new one. If the decision was an approval that had already moved the entity, the entity returns to its previous state.
+
+The action appears only on rows you can still revert. Decisions can be reverted for a limited time after they're made (24 hours unless an administrator or the project has set a different limit); system administrators are not bound by that limit. A count beside the action shows how many times the request has been reverted before.
+
+Reverting is declined when a newer review request already exists for the entity, or when the entity has moved on since the approval. See [Reverting a decision](review-approvals.md#reverting-a-decision) for the full rules.
 
 ## Requesting a review
 

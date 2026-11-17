@@ -15,7 +15,9 @@ The `testplanit/.env.example` file in the repository carries the same variables 
 | Variable           | Default         | Description                                                                                                                                                                                                                                                     |
 | ------------------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DATABASE_URL`     | **required**    | PostgreSQL connection string, including `?schema=public`.                                                                                                                                                                                                       |
-| `NEXTAUTH_URL`     | **required**    | The public URL of the application. Also forms the OAuth callback URL that issue-tracker integrations register with their providers: `${NEXTAUTH_URL}/api/integrations/oauth/<provider>/callback`.                                                               |
+| `NEXTAUTH_URL`     | **required**    | The public URL of the application. Also forms the OAuth callback URL that issue-tracker integrations register with their providers: `${NEXTAUTH_URL}/api/integrations/oauth/<provider>/callback`. Under a path prefix it must end in `/api/auth`; see [Serving under a subpath](./subpath-deployment.md). |
+| `APP_URL`          | optional        | Public URL of the install including any path prefix (`https://example.com/testplanit`). The base for every link the server writes. Derived from `NEXTAUTH_URL` when unset. |
+| `BASE_PATH`        | build-time      | Path prefix the app is served under, e.g. `/testplanit`. A Docker build argument, not a runtime variable: it is compiled into the image. Empty = root. See [Serving under a subpath](./subpath-deployment.md). |
 | `NEXTAUTH_SECRET`  | **required**    | Session signing secret. Generate with `openssl rand -base64 32`.                                                                                                                                                                                                |
 | `ENCRYPTION_KEY`   | **required**    | Key for encrypting stored secrets such as integration credentials and two-factor seeds. Generate with `openssl rand -hex 32`. Changing it makes existing encrypted values unreadable.                                                                           |
 | `VALKEY_URL`       | **required**    | Valkey or Redis connection string, used for job queues, caches, rate limits, and real-time notifications.                                                                                                                                                       |
@@ -25,18 +27,18 @@ The `testplanit/.env.example` file in the repository carries the same variables 
 
 See [External Database Deployment](external-database-deployment.md) and [Horizontal Read Scaling](horizontal-read-scaling.md).
 
-| Variable                              | Default        | Description                                                                                                                                                                           |
-| ------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DIRECT_DATABASE_URL`                 | `DATABASE_URL` | A connection that bypasses a transaction-mode pooler such as pgbouncer. Schema sync, index creation, and audit-trigger setup use it. Required when `DATABASE_URL` points at a pooler. |
-| `DATABASE_POOL_MAX`                   | `20`           | Client-side connection pool size per process. One pool per replica; keep the total under the server's `max_connections`.                                                              |
-| `DATABASE_POOL_CONNECTION_TIMEOUT_MS` | `10000`        | How long a query waits for a free pool slot before failing. `0` waits without limit.                                                                                                  |
-| `DATABASE_POOL_IDLE_TIMEOUT_MS`       | `10000`        | How long an unused connection stays open before it is closed.                                                                                                                         |
-| `DATABASE_STATEMENT_TIMEOUT_MS`       | unset          | Server-side per-statement deadline. Set it on the web process only; workers run long statements legitimately.                                                                         |
-| `DATABASE_REPLICA_URLS`               | unset          | Comma-separated read-replica connection strings. Reads spread across them; writes and transactions stay on `DATABASE_URL`.                                                            |
-| `DATABASE_PRIMARY_STICKY_MS`          | `5000`         | After a write, how long a user's reads stay on the primary so they see their own changes. `0` disables.                                                                               |
-| `AUDIT_TRIGGER_BOOTSTRAP`             | on             | Set to `off` to skip installing the audit triggers at startup, for example when the database role cannot run DDL.                                                                     |
-| `AUDIT_TRIGGER_BOOTSTRAP_FATAL`       | unset          | Set to `1` to abort startup when the audit triggers cannot be installed. Recommended on the worker tier. The default logs the failure and continues.                                  |
-| `CREDENTIAL_ENCRYPTION_BOOTSTRAP`     | unset          | Set to `off` to skip the startup pass that encrypts code repository, issue integration, AI model and SSO provider credentials and outbound webhook URLs saved before they were encrypted at rest, and removes sign-in provider tokens stored by earlier versions.                             |
+| Variable                              | Default        | Description                                                                                                                                                                                                                                                       |
+| ------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DIRECT_DATABASE_URL`                 | `DATABASE_URL` | A connection that bypasses a transaction-mode pooler such as pgbouncer. Schema sync, index creation, and audit-trigger setup use it. Required when `DATABASE_URL` points at a pooler.                                                                             |
+| `DATABASE_POOL_MAX`                   | `20`           | Client-side connection pool size per process. One pool per replica; keep the total under the server's `max_connections`.                                                                                                                                          |
+| `DATABASE_POOL_CONNECTION_TIMEOUT_MS` | `10000`        | How long a query waits for a free pool slot before failing. `0` waits without limit.                                                                                                                                                                              |
+| `DATABASE_POOL_IDLE_TIMEOUT_MS`       | `10000`        | How long an unused connection stays open before it is closed.                                                                                                                                                                                                     |
+| `DATABASE_STATEMENT_TIMEOUT_MS`       | unset          | Server-side per-statement deadline. Set it on the web process only; workers run long statements legitimately.                                                                                                                                                     |
+| `DATABASE_REPLICA_URLS`               | unset          | Comma-separated read-replica connection strings. Reads spread across them; writes and transactions stay on `DATABASE_URL`.                                                                                                                                        |
+| `DATABASE_PRIMARY_STICKY_MS`          | `5000`         | After a write, how long a user's reads stay on the primary so they see their own changes. `0` disables.                                                                                                                                                           |
+| `AUDIT_TRIGGER_BOOTSTRAP`             | on             | Set to `off` to skip installing the audit triggers at startup, for example when the database role cannot run DDL.                                                                                                                                                 |
+| `AUDIT_TRIGGER_BOOTSTRAP_FATAL`       | unset          | Set to `1` to abort startup when the audit triggers cannot be installed. Recommended on the worker tier. The default logs the failure and continues.                                                                                                              |
+| `CREDENTIAL_ENCRYPTION_BOOTSTRAP`     | unset          | Set to `off` to skip the startup pass that encrypts code repository, issue integration, AI model and SSO provider credentials and outbound webhook URLs saved before they were encrypted at rest, and removes sign-in provider tokens stored by earlier versions. |
 
 ## Valkey and Job Queues
 
@@ -134,6 +136,18 @@ See [API Tokens](api-tokens.md).
 | `CRAWL_SCREENSHOTS`           | `false` | Set to `true` to capture a screenshot per page during URL-based test generation and offer it to vision-capable models. The official workers image enables this.                                            |
 | `CHROMIUM_EXECUTABLE_PATH`    | unset   | Chromium binary used for screenshots. The official workers image sets it.                                                                                                                                  |
 
+## Content Security Policy
+
+Every page is served with a `Content-Security-Policy` header that lets the browser run only the scripts the server emitted for that response. The policy is built per request, so no configuration is needed for the default install: the app's own origin, the storage endpoint the browser uploads to and downloads from (`AWS_PUBLIC_ENDPOINT_URL`, `AWS_ENDPOINT_URL`, or the bucket's own AWS hostname), the feedback survey in `FEEDBACK_SURVEY_URL`, and images and media from any web host are allowed.
+
+| Variable              | Default       | Description                                                                                                                                                                                                                                                                                                                 |
+| --------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CSP_MODE`            | `report-only` | `report-only` sends the policy as `Content-Security-Policy-Report-Only`: the browser reports what it would have blocked and blocks nothing. `enforce` blocks it. `off` sends no policy.                                                                                                                                       |
+| `CSP_ALLOWED_ORIGINS` | unset         | Extra origins pages may load from or connect to, separated by commas or spaces, such as a CDN in front of storage or a document viewer: `https://cdn.example.com https://viewer.example.com`. Added to the image, media, connection and frame sources.                                                                     |
+| `CSP_FRAME_ANCESTORS` | `'self'`      | Sites allowed to show the app inside a frame, as CSP source expressions: `'self' https://jira.example.com`. By default only the app itself can frame its pages.                                                                                                                                                             |
+
+Violations are posted by the browser to `/api/csp-report` and written to the application log as one `[csp] violation` line each, with the directive, the blocked URL and the page. Run in `report-only` mode first and watch the log while people use the instance; once it stays quiet, set `CSP_MODE=enforce`. A violation that names a host you expect means that host belongs in `CSP_ALLOWED_ORIGINS`.
+
 ## Real-Time Notifications
 
 See [SSE Notifications](sse-notifications.md).
@@ -141,7 +155,7 @@ See [SSE Notifications](sse-notifications.md).
 | Variable                    | Default | Description                                   |
 | --------------------------- | ------- | --------------------------------------------- |
 | `SSE_PER_TENANT_CAP`        | `1000`  | Open notification streams allowed per tenant. |
-| `SSE_PER_USER_CAP`          | `4`     | Open notification streams allowed per user.   |
+| `SSE_PER_USER_CAP`          | `10`    | Open notification streams allowed per user.   |
 | `SSE_ISSUES_PER_TENANT_CAP` | `1000`  | Open issue-sync streams allowed per tenant.   |
 | `SSE_ISSUES_PER_USER_CAP`   | `8`     | Open issue-sync streams allowed per user.     |
 
@@ -159,11 +173,15 @@ See [Background Processes](background-processes.md). Each variable sets how many
 | `ELASTICSEARCH_REINDEX_CONCURRENCY` | `2`     | Search reindex               |
 | `AUDIT_LOG_CONCURRENCY`             | `10`    | Audit log                    |
 | `BUDGET_ALERT_CONCURRENCY`          | `2`     | AI budget alerts             |
+| `ALERT_CONCURRENCY`                 | `2`     | Alerts                       |
+| `WEBHOOK_ACTIONS_CONCURRENCY`       | `2`     | Inbound webhook actions      |
 | `AUTO_TAG_CONCURRENCY`              | `3`     | Auto-tag                     |
 | `DERIVE_CASE_STEPS_CONCURRENCY`     | `2`     | Derive case steps            |
 | `WEBHOOK_DISPATCH_CONCURRENCY`      | `5`     | Webhook dispatch             |
 | `EXECUTION_DISPATCH_CONCURRENCY`    | `3`     | Automated execution dispatch |
 | `IMPACT_ANALYSIS_CONCURRENCY`       | `1`     | Impact Analysis              |
+| `FAILURE_TRIAGE_CONCURRENCY`        | `2`     | Failure triage               |
+| `RISK_SCORE_CONCURRENCY`            | `2`     | Risk scoring                 |
 
 The repo cache, copy/move, duplicate scan, Magic Select, and step scan workers always process one job at a time. The matching `*_CONCURRENCY` variables for them only change the value shown on the Job Queues page.
 
@@ -202,6 +220,16 @@ See [Import from Testmo](import-testmo.md). Chunk sizes are rows per batch write
 | `TESTMO_AUTOMATION_RUN_TEST_FIELD_CHUNK_SIZE` | `500`                  |
 | `TESTMO_AUTOMATION_RUN_TAG_CHUNK_SIZE`        | `500`                  |
 
+## Audit Log Retention
+
+See [Retention](user-guide/audit-logs.md#retention). In multi-tenant deployments, a tenant's `auditLogRetentionDays` and `auditLogRetentionMode` override the first two.
+
+| Variable                   | Default           | Description                                                                                                |
+| -------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------- |
+| `AUDIT_LOG_RETENTION_DAYS` | unset             | Keep this many days of audit log entries in the database. Unset, retention is off and every entry is kept. |
+| `AUDIT_LOG_RETENTION_MODE` | `archive`         | What happens to older entries: `archive` moves them to object storage, `delete` removes them permanently.  |
+| `AUDIT_LOG_ARCHIVE_BUCKET` | `AWS_BUCKET_NAME` | Bucket for archive files. Uses the same endpoint and credentials as file storage.                          |
+
 ## Parameterized Test Runs
 
 | Variable                      | Default | Description                                                       |
@@ -216,7 +244,7 @@ See [Live and Frozen Data](user-guide/share-links.md#live-and-frozen-data).
 
 | Variable                   | Default | Description                                                                                                   |
 | -------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
-| `REPORT_SNAPSHOT_MAX_ROWS` | `10000` | Most rows a frozen report keeps. A larger report can still be frozen after a warning, keeping the first rows. |
+| `REPORT_SNAPSHOT_MAX_ROWS` | `10000` | Most rows a frozen report keeps. A larger report can still be frozen after a warning, keeping the first rows. Also the most rows the Execution Log returns to a shared live link or an API request for every row. |
 
 ## Magic Select
 
@@ -237,58 +265,58 @@ See [Magic Select](user-guide/llm-magic-select.md).
 
 See [Test Impact Analysis](user-guide/impact.md).
 
-| Variable                                    | Default | Description                                                                                                                                                     |
-| ------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `IMPACT_DIFF_TOKEN_BUDGET`                  | `12000` | Tokens of diff sent to the model per analysis.                                                                                                                  |
-| `IMPACT_TRUNCATE_PATCH_CHARS`               | `4000`  | Characters of each file's patch kept in the prompt.                                                                                                             |
-| `IMPACT_MAX_PATCH_FILES`                    | `40`    | Files whose patch text is included; the rest are summarized by path.                                                                                            |
-| `IMPACT_MAX_DIFF_FILES`                     | `500`   | Most changed files read from the provider.                                                                                                                      |
-| `IMPACT_TRUNCATE_CASE_NAME`                 | `80`    | Characters of each case name sent to the model.                                                                                                                 |
-| `IMPACT_TRUNCATE_TEXT_LONG`                 | `100`   | Characters of each long text field sent to the model.                                                                                                           |
-| `IMPACT_TRUNCATE_OTHER_FIELD`               | `100`   | Characters of other fields sent to the model.                                                                                                                   |
-| `IMPACT_AI_FULL_REPO_THRESHOLD`             | `250`   | Case count up to which every case is an AI candidate.                                                                                                           |
-| `IMPACT_MAX_AI_CANDIDATES`                  | `150`   | Most cases the model ranks, strongest signal first. Cases a pin or another signal already settles are not sent.                                                 |
-| `IMPACT_AI_SAMPLE_SIZE`                     | `50`    | Most folder neighbours added under the cap in large repositories.                                                                                               |
-| `IMPACT_MIN_SEARCH_SCORE`                   | `5`     | Lowest keyword-search score kept.                                                                                                                               |
-| `IMPACT_SEARCH_RELATIVE_CUTOFF`             | `0.1`   | Keyword hits scoring under this fraction of the top hit are dropped (0 to 1).                                                                                   |
-| `IMPACT_MAX_SEARCH_RESULTS`                 | `500`   | Most keyword-search hits kept.                                                                                                                                  |
-| `IMPACT_BM25_SATURATION`                    | `20`    | Search score at which the keyword signal reaches its cap.                                                                                                       |
-| `IMPACT_MIN_SCORE`                          | `20`    | Lowest score a case needs to appear at all. Pinned cases always appear.                                                                                         |
-| `IMPACT_AFFECTED_THRESHOLD`                 | `50`    | Score at which a case moves from the related to the affected tier.                                                                                              |
-| `IMPACT_HISTORY_LOOKBACK_DAYS`              | `365`   | How far back earlier analyses count as history.                                                                                                                 |
-| `IMPACT_HISTORY_MAX_ANALYSES`               | `25`    | Most earlier analyses consulted.                                                                                                                                |
-| `IMPACT_MAX_ANCHOR_FETCHES`                 | `50`    | Pinned files fetched at the base commit to relocate line and symbol pins.                                                                                       |
-| `IMPACT_THINKING_BUDGET`                    | `1024`  | Thinking tokens allowed to models that support it.                                                                                                              |
-| `IMPACT_LINKED_EXPANSION`                   | `true`  | Also select cases linked to strongly selected cases.                                                                                                            |
-| `IMPACT_REUSE_HOURS`                        | `24`    | Reuse a completed analysis of the same commits within this window.                                                                                              |
-| `IMPACT_ISSUE_MAX_COMMIT_FETCHES`           | `25`    | Commits naming a ticket whose own file list is read per analysis.                                                                                               |
-| `IMPACT_ISSUE_SCAN_LOOKBACK_DAYS`           | `90`    | How far back the ticket scan reads commits on each cache refresh.                                                                                               |
-| `IMPACT_ISSUE_SCAN_MAX_COMMITS`             | `300`   | Most commits the ticket scan reads.                                                                                                                             |
-| `IMPACT_ISSUE_SCAN_MAX_COMMIT_FETCHES`      | `100`   | Ticket commits whose file list the scan reads per refresh.                                                                                                      |
-| `IMPACT_ISSUE_SCAN_MAX_FILES_PER_COMMIT`    | `50`    | A ticket commit touching more files than this is skipped.                                                                                                       |
-| `IMPACT_ISSUE_SCAN_FULL_MAX_COMMITS`        | `20000` | Commits a manual full-history ticket scan reads from the repository per run; running it again continues from where the last run stopped.                        |
-| `IMPACT_ISSUE_SCAN_FULL_MAX_COMMIT_FETCHES` | `2000`  | Matched commits whose file lists a full-history scan reads.                                                                                                     |
-| `IMPACT_ISSUE_IMPORT_MAX_LOOKUPS`           | `100`   | Tracker lookups a refresh-time ticket scan may make to import unknown tickets.                                                                                  |
-| `IMPACT_ISSUE_IMPORT_FULL_MAX_LOOKUPS`      | `5000`  | Tracker lookups a full-history ticket scan may make to import unknown tickets.                                                                                  |
-| `IMPACT_ISSUE_SCAN_SYMBOL_PINS`             | `true`  | Ticket scans read each commit's diff and pin the changed functions or classes; `false` pins whole files only (cheaper on providers without a server-side diff). |
-| `IMPACT_BUILD_PR_MAX_COMMITS`               | `100`   | Push auto-runs: newest commits of the range asked for the pull requests they were merged through, for the run's description.                                 |
-| `IMPACT_BUILD_BOT_COMMIT_PATTERN`           | `^Update version code to ` | Push auto-runs: commits whose first message line matches this regular expression are a build bot's and are left out of the run's description. Empty = none. |
+| Variable                                    | Default                    | Description                                                                                                                                                     |
+| ------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IMPACT_DIFF_TOKEN_BUDGET`                  | `12000`                    | Tokens of diff sent to the model per analysis.                                                                                                                  |
+| `IMPACT_TRUNCATE_PATCH_CHARS`               | `4000`                     | Characters of each file's patch kept in the prompt.                                                                                                             |
+| `IMPACT_MAX_PATCH_FILES`                    | `40`                       | Files whose patch text is included; the rest are summarized by path.                                                                                            |
+| `IMPACT_MAX_DIFF_FILES`                     | `500`                      | Most changed files read from the provider.                                                                                                                      |
+| `IMPACT_TRUNCATE_CASE_NAME`                 | `80`                       | Characters of each case name sent to the model.                                                                                                                 |
+| `IMPACT_TRUNCATE_TEXT_LONG`                 | `100`                      | Characters of each long text field sent to the model.                                                                                                           |
+| `IMPACT_TRUNCATE_OTHER_FIELD`               | `100`                      | Characters of other fields sent to the model.                                                                                                                   |
+| `IMPACT_AI_FULL_REPO_THRESHOLD`             | `250`                      | Case count up to which every case is an AI candidate.                                                                                                           |
+| `IMPACT_MAX_AI_CANDIDATES`                  | `150`                      | Most cases the model ranks, strongest signal first. Cases a pin or another signal already settles are not sent.                                                 |
+| `IMPACT_AI_SAMPLE_SIZE`                     | `50`                       | Most folder neighbours added under the cap in large repositories.                                                                                               |
+| `IMPACT_MIN_SEARCH_SCORE`                   | `5`                        | Lowest keyword-search score kept.                                                                                                                               |
+| `IMPACT_SEARCH_RELATIVE_CUTOFF`             | `0.1`                      | Keyword hits scoring under this fraction of the top hit are dropped (0 to 1).                                                                                   |
+| `IMPACT_MAX_SEARCH_RESULTS`                 | `500`                      | Most keyword-search hits kept.                                                                                                                                  |
+| `IMPACT_BM25_SATURATION`                    | `20`                       | Search score at which the keyword signal reaches its cap.                                                                                                       |
+| `IMPACT_MIN_SCORE`                          | `20`                       | Lowest score a case needs to appear at all. Pinned cases always appear.                                                                                         |
+| `IMPACT_AFFECTED_THRESHOLD`                 | `50`                       | Score at which a case moves from the related to the affected tier.                                                                                              |
+| `IMPACT_HISTORY_LOOKBACK_DAYS`              | `365`                      | How far back earlier analyses count as history.                                                                                                                 |
+| `IMPACT_HISTORY_MAX_ANALYSES`               | `25`                       | Most earlier analyses consulted.                                                                                                                                |
+| `IMPACT_MAX_ANCHOR_FETCHES`                 | `50`                       | Pinned files fetched at the base commit to relocate line and symbol pins.                                                                                       |
+| `IMPACT_THINKING_BUDGET`                    | `1024`                     | Thinking tokens allowed to models that support it.                                                                                                              |
+| `IMPACT_LINKED_EXPANSION`                   | `true`                     | Also select cases linked to strongly selected cases.                                                                                                            |
+| `IMPACT_REUSE_HOURS`                        | `24`                       | Reuse a completed analysis of the same commits within this window.                                                                                              |
+| `IMPACT_ISSUE_MAX_COMMIT_FETCHES`           | `25`                       | Commits naming a ticket whose own file list is read per analysis.                                                                                               |
+| `IMPACT_ISSUE_SCAN_LOOKBACK_DAYS`           | `90`                       | How far back the ticket scan reads commits on each cache refresh.                                                                                               |
+| `IMPACT_ISSUE_SCAN_MAX_COMMITS`             | `300`                      | Most commits the ticket scan reads.                                                                                                                             |
+| `IMPACT_ISSUE_SCAN_MAX_COMMIT_FETCHES`      | `100`                      | Ticket commits whose file list the scan reads per refresh.                                                                                                      |
+| `IMPACT_ISSUE_SCAN_MAX_FILES_PER_COMMIT`    | `50`                       | A ticket commit touching more files than this is skipped.                                                                                                       |
+| `IMPACT_ISSUE_SCAN_FULL_MAX_COMMITS`        | `20000`                    | Commits a manual full-history ticket scan reads from the repository per run; running it again continues from where the last run stopped.                        |
+| `IMPACT_ISSUE_SCAN_FULL_MAX_COMMIT_FETCHES` | `2000`                     | Matched commits whose file lists a full-history scan reads.                                                                                                     |
+| `IMPACT_ISSUE_IMPORT_MAX_LOOKUPS`           | `100`                      | Tracker lookups a refresh-time ticket scan may make to import unknown tickets.                                                                                  |
+| `IMPACT_ISSUE_IMPORT_FULL_MAX_LOOKUPS`      | `5000`                     | Tracker lookups a full-history ticket scan may make to import unknown tickets.                                                                                  |
+| `IMPACT_ISSUE_SCAN_SYMBOL_PINS`             | `true`                     | Ticket scans read each commit's diff and pin the changed functions or classes; `false` pins whole files only (cheaper on providers without a server-side diff). |
+| `IMPACT_BUILD_PR_MAX_COMMITS`               | `100`                      | Push auto-runs: newest commits of the range asked for the pull requests they were merged through, for the run's description.                                    |
+| `IMPACT_BUILD_BOT_COMMIT_PATTERN`           | `^Update version code to`  | Push auto-runs: commits whose first message line matches this regular expression are a build bot's and are left out of the run's description. Empty = none.     |
 
 ## Multi-Tenant Deployments
 
 See [Multi-Tenant Workers](multi-tenant-workers.md).
 
-| Variable                                             | Default                         | Description                                                                                                                                                                                               |
-| ---------------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MULTI_TENANT_MODE`                                  | `false`                         | Set to `true` to serve several tenants from one worker process, each with its own database.                                                                                                               |
-| `INSTANCE_TENANT_ID`                                 | `default`                       | Pins an application pod to one tenant.                                                                                                                                                                    |
-| `TENANT_CONFIG_FILE`                                 | `/config/tenants.json`          | JSON file of tenant configurations. Re-read when it changes.                                                                                                                                              |
-| `TENANT_CONFIGS`                                     | unset                           | JSON object of tenant configurations keyed by tenant id, with `databaseUrl`, `replicaUrls`, `elasticsearchNode`, `elasticsearchIndex`, and `baseUrl`. Overrides the file.                                 |
-| `TENANT_<ID>_DATABASE_URL`                           | unset                           | Per-tenant database, as an alternative to the file or JSON. Companions: `TENANT_<ID>_DATABASE_REPLICA_URLS`, `TENANT_<ID>_ELASTICSEARCH_NODE`, `TENANT_<ID>_ELASTICSEARCH_INDEX`, `TENANT_<ID>_BASE_URL`. |
-| `TENANT_SECRETS_NAMESPACE`                           | pod namespace                   | Kubernetes namespace holding per-tenant secrets.                                                                                                                                                          |
-| `TENANT_SECRET_NAME_TEMPLATE`                        | `tpi-{tenant}-env`              | Name of each tenant's Kubernetes secret; `{tenant}` is replaced by the tenant id.                                                                                                                         |
-| `TENANT_SECRETS_CACHE_TTL_MS`                        | `600000`                        | How long a tenant secret is cached before it is read again.                                                                                                                                               |
-| `KUBERNETES_SERVICE_HOST`, `KUBERNETES_SERVICE_PORT` | `kubernetes.default.svc`, `443` | API server used to read tenant secrets. Kubernetes sets these in every pod.                                                                                                                               |
+| Variable                                             | Default                         | Description                                                                                                                                                                                                                                                                               |
+| ---------------------------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MULTI_TENANT_MODE`                                  | `false`                         | Set to `true` to serve several tenants from one worker process, each with its own database.                                                                                                                                                                                               |
+| `INSTANCE_TENANT_ID`                                 | `default`                       | Pins an application pod to one tenant.                                                                                                                                                                                                                                                    |
+| `TENANT_CONFIG_FILE`                                 | `/config/tenants.json`          | JSON file of tenant configurations. Re-read when it changes.                                                                                                                                                                                                                              |
+| `TENANT_CONFIGS`                                     | unset                           | JSON object of tenant configurations keyed by tenant id, with `databaseUrl`, `replicaUrls`, `elasticsearchNode`, `elasticsearchIndex`, `baseUrl`, `auditLogRetentionDays`, and `auditLogRetentionMode`. Overrides the file.                                                               |
+| `TENANT_<ID>_DATABASE_URL`                           | unset                           | Per-tenant database, as an alternative to the file or JSON. Companions: `TENANT_<ID>_DATABASE_REPLICA_URLS`, `TENANT_<ID>_ELASTICSEARCH_NODE`, `TENANT_<ID>_ELASTICSEARCH_INDEX`, `TENANT_<ID>_BASE_URL`, `TENANT_<ID>_AUDIT_LOG_RETENTION_DAYS`, `TENANT_<ID>_AUDIT_LOG_RETENTION_MODE`. |
+| `TENANT_SECRETS_NAMESPACE`                           | pod namespace                   | Kubernetes namespace holding per-tenant secrets.                                                                                                                                                                                                                                          |
+| `TENANT_SECRET_NAME_TEMPLATE`                        | `tpi-{tenant}-env`              | Name of each tenant's Kubernetes secret; `{tenant}` is replaced by the tenant id.                                                                                                                                                                                                         |
+| `TENANT_SECRETS_CACHE_TTL_MS`                        | `600000`                        | How long a tenant secret is cached before it is read again.                                                                                                                                                                                                                               |
+| `KUBERNETES_SERVICE_HOST`, `KUBERNETES_SERVICE_PORT` | `kubernetes.default.svc`, `443` | API server used to read tenant secrets. Kubernetes sets these in every pod.                                                                                                                                                                                                               |
 
 ## Trial Instances
 
@@ -327,4 +355,123 @@ These are read while the application is built. The release pipeline sets the ver
 
 ## Docker Compose
 
-The `DOCKER_*_PORT` variables, `POSTGRES_*`, and resource limits are consumed by the compose files rather than the application. See [Docker Setup](docker-setup.md).
+The variables in this section are read by Docker Compose as it reads
+`docker-compose.prod.yml`, not by the application. Compose resolves them from
+your shell, from the default `.env` file beside the compose file, or from a file
+passed with `--env-file`. It does **not** read `.env.production`, which is a
+runtime `env_file`: a value placed only there leaves the default in effect, and
+Compose reports no error.
+
+| Variable                              | Default       | Description                                                                                          |
+| ------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------- |
+| `TESTPLANIT_VERSION`                  | `latest`      | Release tag for the `prod`, `workers`, and `db-init-prod` images, for example `1.1.12`.              |
+| `DOCKER_PROD_APP_PORT`                | `30000`       | Host port published for the application.                                                             |
+| `DOCKER_POSTGRES_PORT`                | `5432`        | Host port published for the bundled PostgreSQL (`with-postgres`).                                    |
+| `DOCKER_VALKEY_PORT`                  | `6379`        | Host port published for the bundled Valkey (`with-valkey`).                                          |
+| `DOCKER_ELASTICSEARCH_HTTP_PORT`      | `9200`        | Host port published for the bundled Elasticsearch HTTP API (`with-elasticsearch`).                   |
+| `DOCKER_ELASTICSEARCH_TRANSPORT_PORT` | `9300`        | Host port published for the Elasticsearch transport protocol (`with-elasticsearch`).                 |
+| `DOCKER_MINIO_API_PORT`               | `9000`        | Host port published for the bundled file storage S3 API (`with-minio`).                              |
+| `DOCKER_MINIO_CONSOLE_PORT`           | `9001`        | Host port published for the file storage console (`with-minio`).                                     |
+| `DOCKER_NGINX_HTTP_PORT`              | `80`          | Host port published for the bundled nginx (`with-minio`). Point your external reverse proxy here.    |
+| `PROD_DATABASE_POOL_MAX`              | `100`         | `DATABASE_POOL_MAX` for the application container. Overrides any value in `.env.production`.         |
+| `WORKERS_DATABASE_POOL_MAX`           | `60`          | `DATABASE_POOL_MAX` for the worker fleet. Overrides any value in `.env.production`.                  |
+| `WORKERS_MEMORY_LIMIT`                | `4G`          | Memory cap for the worker fleet.                                                                     |
+| `POSTGRES_CPU_LIMIT`                  | `2`           | CPU cap for the bundled PostgreSQL.                                                                  |
+| `POSTGRES_SHM_SIZE`                   | `256mb`       | Cap on the bundled PostgreSQL's `/dev/shm`, where parallel query workers put shared memory segments. |
+| `UPLOAD_MAX_MB`                       | `10`          | Per-file ceiling for attachments and inline document images. Takes effect on restart.                |
+| `SELF_HOSTED`                         | `true`        | Build argument. Turns off the Next.js image optimizer. Applies only to `up --build`.                 |
+| `BASE_DOMAIN`                         | `example.com` | Build argument, consulted only when `SELF_HOSTED` is `false`. Applies only to `up --build`.          |
+
+`SELF_HOSTED` and `BASE_DOMAIN` are baked into the image when it is built, so
+setting them has no effect while running the prebuilt
+`ghcr.io/testplanit/testplanit-selfhost` images. See
+[Build-Time Variables](#build-time-variables).
+
+### Setting compose variables
+
+Put them in a local `.env` beside the compose file. Compose loads that file
+automatically on every command, and it is not tracked by git:
+
+```bash
+# testplanit/.env
+TESTPLANIT_VERSION=1.1.12
+DOCKER_PROD_APP_PORT=8080
+POSTGRES_SHM_SIZE=1gb
+```
+
+Per-command alternatives:
+
+```bash
+# Inline, for one command
+WORKERS_MEMORY_LIMIT=20G docker compose -f docker-compose.prod.yml up -d
+
+# From a named file
+docker compose --env-file prod.vars -f docker-compose.prod.yml up -d
+```
+
+### Changing values the compose file does not expose
+
+Settings with no variable in the table above — an added volume, a changed
+healthcheck, extra PostgreSQL flags, another service — go in a second compose
+file that Compose merges over the first. Leave `docker-compose.prod.yml`
+unedited: it is tracked in git, and upgrading replaces it.
+
+```yaml
+# testplanit/docker-compose.custom.yml
+services:
+  postgres:
+    command:
+      - postgres
+      - -c
+      - max_connections=400
+```
+
+The repository ignores every `docker-compose.*.yml` file except the ones it
+ships, so a file named this way persists across upgrades and never appears in
+`git status`. Keep both parts of the name: a `.yaml` extension, or the shorter
+`compose.*` form, is **not** ignored and would show up as an untracked file.
+
+Pass both files, in this order, on every command:
+
+```bash
+docker compose -f docker-compose.prod.yml -f docker-compose.custom.yml \
+  --profile with-postgres up -d
+```
+
+Naming that file `docker-compose.override.yml` has no effect. Compose loads an
+override file automatically only when it discovers the compose file itself, and
+every command in these guides names `-f docker-compose.prod.yml` explicitly. To
+avoid repeating both flags, name the pair in `.env` and run `docker compose`
+with no `-f`:
+
+```bash
+# testplanit/.env
+COMPOSE_FILE=docker-compose.prod.yml:docker-compose.custom.yml
+```
+
+Run `docker compose` from `testplanit/` when you do this. The paths are relative,
+and without a `-f` flag Compose has no compose file from which to locate `.env`,
+so from any other directory it reports
+`no configuration file provided: not found`. The `-f` form above has no such
+restriction: it works from the repository root as
+`-f testplanit/docker-compose.prod.yml -f testplanit/docker-compose.custom.yml`.
+
+Confirm the merge took effect before starting the stack. `config` prints the
+combined result, so your change appears there if the file is being read:
+
+```bash
+docker compose -f docker-compose.prod.yml -f docker-compose.custom.yml config
+```
+
+Merging replaces single values, but it appends list entries. Repeating a `ports`
+or `volumes` entry therefore adds it alongside the original rather than
+replacing it, which leaves the original host port published as well. Change a
+published port with its `DOCKER_*_PORT` variable, or replace the whole list with
+the `!override` tag (Compose 2.24.4 or newer):
+
+```yaml
+services:
+  prod:
+    ports: !override
+      - '8080:3000'
+```

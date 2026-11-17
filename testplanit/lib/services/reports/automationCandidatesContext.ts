@@ -192,7 +192,7 @@ export async function buildAutomationCandidatesContext(
       // selection strategy AND is sent to the LLM as a regression-
       // frequency signal so the model can weight it in the ranking
       // even when a different selection strategy is used.
-      _count: { select: { testRuns: true } },
+      _count: { select: { testRunCases: true } },
       caseFieldValues: {
         select: {
           value: true,
@@ -292,7 +292,7 @@ export async function buildAutomationCandidatesContext(
         name: row.name,
         className: row.className,
         stepCount: row.steps.length,
-        executionCount: row._count.testRuns,
+        executionCount: row._count.testRunCases,
         // forecastManual is tester-derived and refines automatically as
         // runs accumulate; prefer it over the original `estimate`, which
         // is often stale after months in production.

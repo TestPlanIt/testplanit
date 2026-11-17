@@ -36,6 +36,7 @@ vi.mock("~/lib/navigation", () => ({
     replace: mockReplace,
   }),
   usePathname: () => "/",
+  Link: ({ children, href }: any) => <a href={href}>{children}</a>,
 }));
 
 const mockSearchParams = {

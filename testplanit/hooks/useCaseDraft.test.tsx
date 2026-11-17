@@ -659,6 +659,29 @@ describe("useCaseDraft clear", () => {
     expect(queryClient.getQueryState(CASE_DRAFT_QUERY_KEY)).toBeUndefined();
   });
 
+  it("leaves the staged-case list alone when it evicts its own read", async () => {
+    // My Staged Cases and the staged-elsewhere counts read this model with
+    // findMany. Evicting by the bare model prefix blanked that list on every
+    // Create or Stage from the Add Case dialog until its next refetch.
+    const stagedListKey = [
+      "zenstack",
+      "CaseDraft",
+      "findMany",
+      { where: { projectId: 1, isSaved: true } },
+    ];
+    const stagedRows = [{ id: "staged-1" }, { id: "staged-2" }];
+    queryClient.setQueryData(stagedListKey, stagedRows);
+    renderCaseDraft();
+
+    act(() => {
+      api.draft.clear();
+    });
+    await flush();
+
+    expect(queryClient.getQueryData(stagedListKey)).toEqual(stagedRows);
+    expect(queryClient.getQueryState(stagedListKey)).toBeDefined();
+  });
+
   it("survives a delete that fails", async () => {
     mockDeleteMany.mockRejectedValue(new Error("offline"));
     renderCaseDraft();

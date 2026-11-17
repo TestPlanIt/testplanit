@@ -147,6 +147,14 @@ export function SavedViewsMenu({
     requestAnimationFrame(() => triggerRef.current?.focus());
   }, []);
 
+  // Dialogs restore focus themselves in a deferred step, which can run after
+  // the animation frame above and move focus off the trigger again. Take over
+  // that step instead of racing it.
+  const focusTriggerOnClose = useCallback((event: Event) => {
+    event.preventDefault();
+    triggerRef.current?.focus();
+  }, []);
+
   const savableState = hasSavableRepositoryViewState({
     predicates,
     axis,
@@ -244,12 +252,11 @@ export function SavedViewsMenu({
       await deleteView(deleteTarget.id);
       toast.success(t("repository.savedViews.deleted"));
       setDeleteTarget(null);
-      returnFocusToTrigger();
     } catch (error) {
       console.error("Error deleting repository view:", error);
       toast.error(t("repository.savedViews.deleteFailed"));
     }
-  }, [deleteTarget, deleteView, t, returnFocusToTrigger]);
+  }, [deleteTarget, deleteView, t]);
 
   return (
     <>
@@ -390,11 +397,10 @@ export function SavedViewsMenu({
         onOpenChange={(next) => {
           if (!next) {
             setRenameTarget(null);
-            returnFocusToTrigger();
           }
         }}
       >
-        <DialogContent>
+        <DialogContent onCloseAutoFocus={focusTriggerOnClose}>
           <DialogHeader>
             <DialogTitle>{t("repository.savedViews.renameTitle")}</DialogTitle>
           </DialogHeader>
@@ -456,11 +462,10 @@ export function SavedViewsMenu({
         onOpenChange={(next) => {
           if (!next) {
             setDeleteTarget(null);
-            returnFocusToTrigger();
           }
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent onCloseAutoFocus={focusTriggerOnClose}>
           <AlertDialogHeader>
             <AlertDialogTitle>
               {t("repository.savedViews.deleteTitle")}

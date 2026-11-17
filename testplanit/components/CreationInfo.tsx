@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CalendarClock, User } from "lucide-react";
+import { CalendarClock, NotebookPen, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useRef, useState } from "react";
@@ -18,12 +18,15 @@ import { cn, type ClassValue } from "~/utils";
 export interface CreationInfoProps {
   userId?: string | null;
   createdAt?: Date | string | null;
+  /** When the record was staged before it was created, if it was. */
+  stagedAt?: Date | string | null;
   className?: ClassValue;
 }
 
 export const CreationInfo: React.FC<CreationInfoProps> = ({
   userId,
   createdAt,
+  stagedAt,
   className,
 }) => {
   const t = useTranslations();
@@ -61,6 +64,11 @@ export const CreationInfo: React.FC<CreationInfoProps> = ({
 
   const createdByLabel = t("common.fields.createdBy");
   const createdAtLabel = t("common.fields.createdAt");
+  const stagedAtLabel = t("common.fields.stagedAt");
+  const dateFormat =
+    (session?.user.preferences?.dateFormat || "MM-dd-yyyy") +
+    " " +
+    (session?.user.preferences?.timeFormat || "HH:mm");
 
   return (
     <div ref={setRootRef} className={cn("space-y-2 w-full", className)}>
@@ -104,11 +112,34 @@ export const CreationInfo: React.FC<CreationInfoProps> = ({
           <span className="truncate">
             <DateFormatter
               date={createdAt}
-              formatString={
-                (session?.user.preferences?.dateFormat || "MM-dd-yyyy") +
-                " " +
-                (session?.user.preferences?.timeFormat || "HH:mm")
-              }
+              formatString={dateFormat}
+              timezone={session?.user.preferences?.timezone}
+            />
+          </span>
+        </div>
+      )}
+      {stagedAt && (
+        <div
+          className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 w-full"
+          data-testid="creation-info-staged-at"
+        >
+          {narrow ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <NotebookPen
+                  className="h-4 w-4 shrink-0"
+                  aria-label={stagedAtLabel}
+                />
+              </TooltipTrigger>
+              <TooltipContent>{stagedAtLabel}</TooltipContent>
+            </Tooltip>
+          ) : (
+            <span className="shrink-0">{stagedAtLabel}:</span>
+          )}
+          <span className="truncate">
+            <DateFormatter
+              date={stagedAt}
+              formatString={dateFormat}
               timezone={session?.user.preferences?.timezone}
             />
           </span>

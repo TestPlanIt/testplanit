@@ -27,7 +27,7 @@ export function TagDiffDisplay({
           <Plus className="w-4 h-4" />
         </span>
       );
-      bgColor = "relative text-green-600 dark:text-green-400";
+      bgColor = "relative text-green-700 dark:text-green-400";
       paddingClass = "px-2 py-2";
       break;
     case "removed":

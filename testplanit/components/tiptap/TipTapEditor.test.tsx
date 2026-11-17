@@ -50,6 +50,13 @@ vi.mock("~/utils", () => ({
   cn: (...classes: string[]) => classes.filter(Boolean).join(" "),
 }));
 
+// The command itself is covered in lib/tiptap/clearFormatting.test.ts against a
+// real editor; here we only assert the toolbar button is wired to it.
+const mockClearFormatting = vi.fn();
+vi.mock("~/lib/tiptap/clearFormatting", () => ({
+  clearFormatting: (editor: unknown) => mockClearFormatting(editor),
+}));
+
 // Mock constants
 vi.mock("~/app/constants", () => ({
   emptyEditorContent: { type: "doc", content: [] },
@@ -90,10 +97,17 @@ describe("TipTapEditor", () => {
       getAttributes: vi.fn(() => ({ href: "" })),
       getJSON: vi.fn(() => ({ type: "doc", content: [] })),
       setEditable: vi.fn(),
+      // useEditorState subscribes to "transaction"/"update" to keep the
+      // toolbar's active states live.
+      on: vi.fn(),
+      off: vi.fn(),
       state: {
         doc: {
           content: { size: 0 },
         },
+        // findTable() destructures $from; depth 0 means "no ancestors", so it
+        // resolves to undefined instead of throwing.
+        selection: { empty: true, $from: { depth: 0 } },
       },
       chain: vi.fn(() => ({
         focus: vi.fn(() => ({
@@ -140,6 +154,8 @@ describe("TipTapEditor", () => {
     it("should return null when editor is not initialized", async () => {
       // Mock useEditor to return null
       vi.doMock("@tiptap/react", () => ({
+        useEditorState: ({ editor, selector }: any) =>
+          editor ? selector({ editor, transactionNumber: 0 }) : null,
         useEditor: () => null,
         EditorContent: ({ editor: _editor }: { editor: any }) =>
           _editor ? <div data-testid="editor-content">{"Editor"}</div> : null,
@@ -160,6 +176,8 @@ describe("TipTapEditor", () => {
     it("should render when editor is initialized", async () => {
       // Mock useEditor to return our mock editor
       vi.doMock("@tiptap/react", () => ({
+        useEditorState: ({ editor, selector }: any) =>
+          editor ? selector({ editor, transactionNumber: 0 }) : null,
         useEditor: () => mockEditor,
         EditorContent: ({ editor: _editor }: { editor: any }) => (
           <div data-testid="editor-content" contentEditable>
@@ -187,6 +205,8 @@ describe("TipTapEditor", () => {
     beforeEach(() => {
       editorOptions = undefined;
       vi.doMock("@tiptap/react", () => ({
+        useEditorState: ({ editor, selector }: any) =>
+          editor ? selector({ editor, transactionNumber: 0 }) : null,
         useEditor: (options: any) => {
           editorOptions = options;
           return mockEditor;
@@ -223,6 +243,8 @@ describe("TipTapEditor", () => {
     beforeEach(async () => {
       // Mock useEditor to return our mock editor for these tests
       vi.doMock("@tiptap/react", () => ({
+        useEditorState: ({ editor, selector }: any) =>
+          editor ? selector({ editor, transactionNumber: 0 }) : null,
         useEditor: () => mockEditor,
         EditorContent: ({ editor: _editor }: { editor: any }) => (
           <div data-testid="editor-content" contentEditable>
@@ -293,6 +315,8 @@ describe("TipTapEditor", () => {
   describe("Toolbar Functionality", () => {
     beforeEach(async () => {
       vi.doMock("@tiptap/react", () => ({
+        useEditorState: ({ editor, selector }: any) =>
+          editor ? selector({ editor, transactionNumber: 0 }) : null,
         useEditor: () => mockEditor,
         EditorContent: ({ editor: _editor }: { editor: any }) => (
           <div data-testid="editor-content" contentEditable>
@@ -329,6 +353,32 @@ describe("TipTapEditor", () => {
       expect(colorInput).toHaveValue("#ff0000");
     });
 
+    it("groups the toolbar buttons into button groups", async () => {
+      const TipTapEditorComponent = (await import("./TipTapEditor")).default;
+
+      const { container } = render(<TipTapEditorComponent {...defaultProps} />);
+
+      // Text formatting, block formatting, insert, history.
+      expect(screen.getAllByRole("group")).toHaveLength(4);
+
+      // The hidden file input is a real DOM child despite display:none, so
+      // inside a group it would claim :last-child and leave the upload button
+      // with a squared-off right edge.
+      const fileInput = container.querySelector('input[type="file"]');
+      expect(fileInput).toBeInTheDocument();
+      expect(fileInput?.closest('[data-slot="button-group"]')).toBeNull();
+    });
+
+    it("should clear formatting from the current selection", async () => {
+      const TipTapEditorComponent = (await import("./TipTapEditor")).default;
+
+      render(<TipTapEditorComponent {...defaultProps} />);
+
+      fireEvent.click(screen.getByTestId("tiptap-clear-formatting"));
+
+      expect(mockClearFormatting).toHaveBeenCalledWith(mockEditor);
+    });
+
     it("should handle button clicks without errors", async () => {
       const TipTapEditorComponent = (await import("./TipTapEditor")).default;
 
@@ -348,6 +398,8 @@ describe("TipTapEditor", () => {
   describe("File Upload", () => {
     beforeEach(async () => {
       vi.doMock("@tiptap/react", () => ({
+        useEditorState: ({ editor, selector }: any) =>
+          editor ? selector({ editor, transactionNumber: 0 }) : null,
         useEditor: () => mockEditor,
         EditorContent: ({ editor: _editor }: { editor: any }) => (
           <div data-testid="editor-content" contentEditable>
@@ -491,6 +543,8 @@ describe("TipTapEditor", () => {
   describe("Error Handling", () => {
     beforeEach(async () => {
       vi.doMock("@tiptap/react", () => ({
+        useEditorState: ({ editor, selector }: any) =>
+          editor ? selector({ editor, transactionNumber: 0 }) : null,
         useEditor: () => mockEditor,
         EditorContent: ({ editor: _editor }: { editor: any }) => (
           <div data-testid="editor-content">{"Editor"}</div>
@@ -530,6 +584,8 @@ describe("TipTapEditor", () => {
   describe("Accessibility", () => {
     beforeEach(async () => {
       vi.doMock("@tiptap/react", () => ({
+        useEditorState: ({ editor, selector }: any) =>
+          editor ? selector({ editor, transactionNumber: 0 }) : null,
         useEditor: () => mockEditor,
         EditorContent: ({ editor: _editor }: { editor: any }) => (
           <div data-testid="editor-content" contentEditable role="textbox">
@@ -583,6 +639,8 @@ describe("TipTapEditor", () => {
   describe("Component Lifecycle", () => {
     beforeEach(async () => {
       vi.doMock("@tiptap/react", () => ({
+        useEditorState: ({ editor, selector }: any) =>
+          editor ? selector({ editor, transactionNumber: 0 }) : null,
         useEditor: () => mockEditor,
         EditorContent: ({ editor: _editor }: { editor: any }) => (
           <div data-testid="editor-content">{"Editor"}</div>
@@ -622,6 +680,8 @@ describe("TipTapEditor", () => {
   describe("State Management", () => {
     beforeEach(async () => {
       vi.doMock("@tiptap/react", () => ({
+        useEditorState: ({ editor, selector }: any) =>
+          editor ? selector({ editor, transactionNumber: 0 }) : null,
         useEditor: () => mockEditor,
         EditorContent: ({ editor: _editor }: { editor: any }) => (
           <div data-testid="editor-content">{"Editor"}</div>

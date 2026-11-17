@@ -102,12 +102,16 @@ import { toCalendarDate } from "~/utils/calendarDate";
 import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
 import MilestoneItemCard from "../MilestoneItemCard";
-import { MilestoneSourceBadge } from "@/components/MilestoneSourceBadge";
+import {
+  resolveMilestoneProvider,
+  MilestoneSourceBadge,
+} from "@/components/MilestoneSourceBadge";
 import { IssuesCard, type IssuesCardHandle } from "./IssuesCard";
 import MilestoneFormControls from "./MilestoneFormControls";
 import { buildMilestoneUpdatePayload } from "./milestoneUpdatePayload";
 import { Loading } from "~/components/Loading";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
+import { apiFetch } from "~/lib/basePath";
 
 interface MilestoneForecastData {
   manualEstimate: number;
@@ -351,7 +355,12 @@ export default function MilestoneDetailsPage() {
       select: {
         externalProjectKey: true,
         externalProjectName: true,
-        projectIntegration: { select: { integrationId: true } },
+        projectIntegration: {
+          select: {
+            integrationId: true,
+            integration: { select: { provider: true } },
+          },
+        },
       },
     },
     {
@@ -370,7 +379,7 @@ export default function MilestoneDetailsPage() {
   const { data: descendantsData } = useQuery<{ descendantIds: number[] }>({
     queryKey: ["milestoneDescendants", milestoneId],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/milestones/${milestoneId}/descendants`
       );
       if (!response.ok) return { descendantIds: [] };
@@ -555,7 +564,7 @@ export default function MilestoneDetailsPage() {
         }
         const responses = await Promise.all(
           chunks.map(async (chunk) => {
-            const response = await fetch(
+            const response = await apiFetch(
               `/api/test-runs/summaries?testRunIds=${chunk.join(",")}`
             );
             if (!response.ok) {
@@ -586,7 +595,9 @@ export default function MilestoneDetailsPage() {
       if (!milestoneId) return;
       setIsLoadingForecast(true);
       try {
-        const response = await fetch(`/api/milestones/${milestoneId}/forecast`);
+        const response = await apiFetch(
+          `/api/milestones/${milestoneId}/forecast`
+        );
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
@@ -1409,6 +1420,10 @@ export default function MilestoneDetailsPage() {
                       isEditMode={isEditMode}
                       isSubmitting={isSubmitting}
                       milestone={milestone}
+                      provider={resolveMilestoneProvider(
+                        milestone,
+                        milestoneIntegrationProjects
+                      )}
                       projectId={projectId}
                       milestoneId={milestoneId}
                     />

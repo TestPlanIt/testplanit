@@ -44,23 +44,6 @@ export interface MergedPullRequest {
   url: string | null;
 }
 
-/** Which subscribed-event key an event falls under. */
-export const CODE_EVENT_PULL_REQUEST = "code:pull_request";
-/** A push to the base branch: compares the pushed commits. */
-export const CODE_EVENT_PUSH = "code:push";
-/** A push to any other branch: compares it against the base branch. */
-export const CODE_EVENT_BRANCH_PUSH = "code:branch_push";
-export const CODE_EVENT_KEYS = [
-  CODE_EVENT_PULL_REQUEST,
-  CODE_EVENT_PUSH,
-  CODE_EVENT_BRANCH_PUSH,
-] as const;
-/** Events a new repository webhook handles until told otherwise. */
-export const CODE_EVENT_DEFAULTS = [
-  CODE_EVENT_PULL_REQUEST,
-  CODE_EVENT_PUSH,
-] as const;
-
 /** Inbound adapter that verifies a code repository provider's webhooks. */
 const CODE_REPOSITORY_ADAPTERS: Record<string, AdapterType> = {
   GITHUB: "GITHUB",
@@ -75,9 +58,6 @@ export function inboundAdapterForCodeRepository(
 ): AdapterType | null {
   return provider ? (CODE_REPOSITORY_ADAPTERS[provider] ?? null) : null;
 }
-
-/** Events a repository webhook may act on, both on by default. */
-export const CODE_REPOSITORY_WEBHOOK_EVENTS = CODE_EVENT_KEYS;
 
 /**
  * Pull request number the Send test action uses. Providers number pull

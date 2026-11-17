@@ -9,17 +9,25 @@ import {
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { isValidReportBypass } from "~/lib/internalReportBypass";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
+import {
+  bucketDateIso,
+  isDateGrouping,
+  type DateGrouping,
+} from "~/lib/reports/dateGrouping";
 import { authOptions } from "~/server/auth";
+import { sortReportRows } from "~/utils/reportRowSort";
 
 // Type for Prisma client
 type Prisma = typeof baseDb;
 
 // Filters passed through to a metric's aggregate. Date bounds plus
-// per-dimension options (folder subtree roll-up) carried like dateGrouping.
+// per-dimension options: the folder subtree roll-up and the calendar period
+// a date dimension buckets into.
 interface DateFilters {
   startDate?: string;
   endDate?: string;
   folderIncludeDescendants?: boolean;
+  dateGrouping?: DateGrouping;
 }
 
 // Dimension value display result
@@ -261,10 +269,12 @@ export function cartesianProduct<T>(arrays: T[][]): T[][] {
 
 /**
  * Drops aggregated rows whose group key for a filtered dimension is not in
- * that dimension's selected-value list. Because report rows are grouped BY
- * the selected dimensions, filtering on group keys after aggregation is
- * equivalent to filtering the underlying records first — each group either
- * matches wholly or not at all, so averages and sums are unaffected.
+ * that dimension's selected-value list — or, for a dimension whose filter
+ * mode is "exclude", rows whose key IS in the list. Because report rows are
+ * grouped BY the selected dimensions, filtering on group keys after
+ * aggregation is equivalent to filtering the underlying records first — each
+ * group either matches wholly or not at all, so averages and sums are
+ * unaffected.
  *
  * `dimensionFilters` maps dimension id -> selected group-key ids. Dimension
  * ids not present in `dimensionConfigs` are ignored; a present-but-empty
@@ -275,7 +285,8 @@ export function cartesianProduct<T>(arrays: T[][]): T[][] {
 export function filterRowsByDimensionValues(
   rows: Record<string, unknown>[],
   dimensionConfigs: DimensionConfig[],
-  dimensionFilters?: Record<string, Array<string | number>>
+  dimensionFilters?: Record<string, Array<string | number>>,
+  dimensionFilterModes?: Record<string, string>
 ): Record<string, unknown>[] {
   if (!dimensionFilters) return rows;
 
@@ -285,10 +296,14 @@ export function filterRowsByDimensionValues(
       if (!selected) return null;
       return {
         groupBy: config.groupBy,
+        exclude: dimensionFilterModes?.[config.id] === "exclude",
         values: new Set(selected.map((v) => String(v))),
       };
     })
-    .filter((f): f is { groupBy: string; values: Set<string> } => f !== null);
+    .filter(
+      (f): f is { groupBy: string; exclude: boolean; values: Set<string> } =>
+        f !== null
+    );
 
   if (activeFilters.length === 0) return rows;
 
@@ -303,9 +318,12 @@ export function filterRowsByDimensionValues(
   };
 
   return rows.filter((row) =>
-    activeFilters.every((filter) =>
-      filter.values.has(normalizeKey(filter.groupBy, row[filter.groupBy]))
-    )
+    activeFilters.every((filter) => {
+      const matches = filter.values.has(
+        normalizeKey(filter.groupBy, row[filter.groupBy])
+      );
+      return filter.exclude ? !matches : matches;
+    })
   );
 }
 
@@ -452,12 +470,18 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       metrics,
       folderIncludeDescendants,
       dimensionFilters,
+      dimensionFilterModes,
       page = 1,
       pageSize,
       sortColumn,
       sortDirection,
     } = body;
     const { startDate, endDate } = resolveRequestDateRange(body);
+    // The date dimension's calendar period. Absent means daily, which is
+    // what every run before the option existed grouped by.
+    const dateGrouping: DateGrouping = isDateGrouping(body.dateGrouping)
+      ? body.dateGrouping
+      : "daily";
 
     // Validate with Zod schema
     const validation = reportRequestSchema.safeParse({
@@ -534,7 +558,9 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
         startDate,
         endDate,
         folderIncludeDescendants,
+        dateGrouping,
         dimensionFilters,
+        dimensionFilterModes,
         page,
         pageSize,
         sortColumn,
@@ -552,7 +578,9 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       startDate,
       endDate,
       folderIncludeDescendants,
+      dateGrouping,
       dimensionFilters,
+      dimensionFilterModes,
       page,
       pageSize,
       sortColumn,
@@ -615,7 +643,9 @@ async function handleCrossProjectAggregation({
   startDate,
   endDate,
   folderIncludeDescendants,
+  dateGrouping = "daily",
   dimensionFilters,
+  dimensionFilterModes,
   page = 1,
   pageSize,
   sortColumn,
@@ -628,7 +658,9 @@ async function handleCrossProjectAggregation({
   startDate?: string;
   endDate?: string;
   folderIncludeDescendants?: boolean;
+  dateGrouping?: DateGrouping;
   dimensionFilters?: Record<string, Array<string | number>>;
+  dimensionFilterModes?: Record<string, string>;
   page?: number;
   pageSize?: number | "All";
   sortColumn?: string;
@@ -661,7 +693,7 @@ async function handleCrossProjectAggregation({
             baseDb,
             undefined, // No projectId for cross-project
             groupBy,
-            { startDate, endDate, folderIncludeDescendants },
+            { startDate, endDate, folderIncludeDescendants, dateGrouping },
             dimensions
           )
         : Promise.resolve([])
@@ -678,7 +710,8 @@ async function handleCrossProjectAggregation({
     filterRowsByDimensionValues(
       rows as Record<string, unknown>[],
       dimensionConfigs,
-      resolvedDimensionFilters
+      resolvedDimensionFilters,
+      dimensionFilterModes
     )
   );
 
@@ -731,16 +764,12 @@ async function handleCrossProjectAggregation({
             if (!resultObj.executedAt) {
               return "unknown";
             }
-            const date = new Date(resultObj.executedAt as string);
-            date.setUTCHours(0, 0, 0, 0);
-            return date.toISOString();
+            return bucketDateIso(resultObj.executedAt as string, dateGrouping);
           } else if (config.groupBy === "createdAt") {
             if (!resultObj.createdAt) {
               return "unknown";
             }
-            const date = new Date(resultObj.createdAt as string);
-            date.setUTCHours(0, 0, 0, 0);
-            return date.toISOString();
+            return bucketDateIso(resultObj.createdAt as string, dateGrouping);
           }
           return String(resultObj[config.groupBy] ?? "unknown");
         })
@@ -758,22 +787,28 @@ async function handleCrossProjectAggregation({
             const lookup = dimensionLookups[dimIndex];
 
             if (config.groupBy === "executedAt") {
-              // Special handling for date dimension
+              // Date dimension: the row carries the period start
               if (!resultObj.executedAt) {
                 row[config.id] = { executedAt: null, name: "None" };
               } else {
-                const date = new Date(resultObj.executedAt as string);
-                date.setUTCHours(0, 0, 0, 0);
-                row[config.id] = { executedAt: date.toISOString() };
+                row[config.id] = {
+                  executedAt: bucketDateIso(
+                    resultObj.executedAt as string,
+                    dateGrouping
+                  ),
+                };
               }
             } else if (config.groupBy === "createdAt") {
-              // Special handling for date dimension with createdAt
+              // Date dimension keyed on creation: same, on createdAt
               if (!resultObj.createdAt) {
                 row[config.id] = { createdAt: null, name: "None" };
               } else {
-                const date = new Date(resultObj.createdAt as string);
-                date.setUTCHours(0, 0, 0, 0);
-                row[config.id] = { createdAt: date.toISOString() };
+                row[config.id] = {
+                  createdAt: bucketDateIso(
+                    resultObj.createdAt as string,
+                    dateGrouping
+                  ),
+                };
               }
             } else {
               const fullDimValue = lookup.get(String(dimValue));
@@ -833,90 +868,11 @@ async function handleCrossProjectAggregation({
 
   // Apply sorting if specified
   if (sortColumn && sortDirection) {
-    results.sort((a: ReportRow, b: ReportRow) => {
-      // Determine if sortColumn is a dimension or metric
-      let aVal, bVal;
-
-      // Check if it's a dimension
-      if (dimensions.includes(sortColumn)) {
-        const _dimData = a[sortColumn];
-        const _dimDataB = b[sortColumn];
-
-        // Handle different dimension types
-        if (sortColumn === "date") {
-          // Try both executedAt and createdAt fields
-          const dateA = a[sortColumn] as DimensionDisplayValue | undefined;
-          const dateB = b[sortColumn] as DimensionDisplayValue | undefined;
-          aVal = dateA?.executedAt || dateA?.createdAt;
-          bVal = dateB?.executedAt || dateB?.createdAt;
-        } else {
-          // For other dimensions, sort by name or id
-          const dimA = a[sortColumn] as DimensionDisplayValue | undefined;
-          const dimB = b[sortColumn] as DimensionDisplayValue | undefined;
-          aVal = dimA?.name || dimA?.id;
-          bVal = dimB?.name || dimB?.id;
-        }
-      } else {
-        // It's a metric - need to find the metric config by matching the backend ID
-        // The sortColumn is a backend metric ID (e.g., 'testResultCount')
-        // The metricConfigs have the label that's used as the key in the result object
-
-        // Try to find the metric config that matches the sortColumn
-        // This could be by id or by checking if the config represents this metric
-        const metricConfig = metricConfigs.find((mc: MetricConfig) => {
-          // Some metrics have different frontend IDs but backend labels
-          // Map common cases:
-          if (sortColumn === "testResultCount" && mc.id === "testResults")
-            return true;
-          if (sortColumn === "testRunCount" && mc.id === "testRunCount")
-            return true;
-          if (sortColumn === "testCaseCount" && mc.id === "testCaseCount")
-            return true;
-          if (sortColumn === "passRate" && mc.id === "passRate") return true;
-          if (sortColumn === "avgElapsed" && mc.id === "avgElapsedTime")
-            return true;
-          if (sortColumn === "sumElapsed" && mc.id === "totalElapsedTime")
-            return true;
-
-          // Also try direct ID match as fallback
-          return mc.id === sortColumn;
-        });
-
-        if (metricConfig) {
-          const metricLabel = metricConfig.label;
-          aVal = a[metricLabel];
-          bVal = b[metricLabel];
-        } else {
-          // Fallback: use the sortColumn directly as the key
-          aVal = a[sortColumn];
-          bVal = b[sortColumn];
-        }
-      }
-
-      // Handle null/undefined values
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
-
-      const multiplier = sortDirection === "asc" ? 1 : -1;
-
-      // Handle dates
-      if (
-        sortColumn === "date" ||
-        aVal instanceof Date ||
-        bVal instanceof Date
-      ) {
-        const aTime = new Date(aVal as string | number | Date).getTime();
-        const bTime = new Date(bVal as string | number | Date).getTime();
-        return (aTime - bTime) * multiplier;
-      }
-
-      // Handle numbers
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return (aVal - bVal) * multiplier;
-      }
-
-      // Handle strings
-      return String(aVal).localeCompare(String(bVal)) * multiplier;
+    sortReportRows(results, {
+      dimensions,
+      metricConfigs,
+      sortColumn,
+      sortDirection,
     });
   } else if (dimensions.includes("date")) {
     // Default sort by date if date dimension is used (for backward compatibility)
@@ -950,10 +906,16 @@ async function handleCrossProjectAggregation({
 
   return Response.json({
     results: paginatedResults,
-    allResults: results, // Full dataset for charts
+    // The full set for the chart, only when `results` is a page of it;
+    // under "All" the two are the same rows and readers fall back to
+    // `results`, so the payload is not sent twice.
+    ...(paginatedResults !== results ? { allResults: results } : {}),
     totalCount,
     page,
     pageSize: pageSize || totalCount,
+    // Echoed so the table, chart, CSV and shares label each date row by
+    // the period it covers.
+    ...(dimensions.includes("date") ? { dateGrouping } : {}),
   });
 }
 
@@ -966,7 +928,9 @@ async function handleProjectSpecificAggregation({
   startDate,
   endDate,
   folderIncludeDescendants,
+  dateGrouping = "daily",
   dimensionFilters,
+  dimensionFilterModes,
   page = 1,
   pageSize,
   sortColumn,
@@ -980,7 +944,9 @@ async function handleProjectSpecificAggregation({
   startDate?: string;
   endDate?: string;
   folderIncludeDescendants?: boolean;
+  dateGrouping?: DateGrouping;
   dimensionFilters?: Record<string, Array<string | number>>;
+  dimensionFilterModes?: Record<string, string>;
   page?: number;
   pageSize?: number | "All";
   sortColumn?: string;
@@ -1013,7 +979,7 @@ async function handleProjectSpecificAggregation({
             baseDb,
             projectId,
             groupBy,
-            { startDate, endDate, folderIncludeDescendants },
+            { startDate, endDate, folderIncludeDescendants, dateGrouping },
             dimensions
           )
         : Promise.resolve([])
@@ -1030,7 +996,8 @@ async function handleProjectSpecificAggregation({
     filterRowsByDimensionValues(
       rows as Record<string, unknown>[],
       dimensionConfigs,
-      resolvedDimensionFilters
+      resolvedDimensionFilters,
+      dimensionFilterModes
     )
   );
 
@@ -1083,16 +1050,12 @@ async function handleProjectSpecificAggregation({
             if (!resultObj.executedAt) {
               return "unknown";
             }
-            const date = new Date(resultObj.executedAt as string);
-            date.setUTCHours(0, 0, 0, 0);
-            return date.toISOString();
+            return bucketDateIso(resultObj.executedAt as string, dateGrouping);
           } else if (config.groupBy === "createdAt") {
             if (!resultObj.createdAt) {
               return "unknown";
             }
-            const date = new Date(resultObj.createdAt as string);
-            date.setUTCHours(0, 0, 0, 0);
-            return date.toISOString();
+            return bucketDateIso(resultObj.createdAt as string, dateGrouping);
           }
           return String(resultObj[config.groupBy] ?? "unknown");
         })
@@ -1110,22 +1073,28 @@ async function handleProjectSpecificAggregation({
             const lookup = dimensionLookups[dimIndex];
 
             if (config.groupBy === "executedAt") {
-              // Special handling for date dimension
+              // Date dimension: the row carries the period start
               if (!resultObj.executedAt) {
                 row[config.id] = { executedAt: null, name: "None" };
               } else {
-                const date = new Date(resultObj.executedAt as string);
-                date.setUTCHours(0, 0, 0, 0);
-                row[config.id] = { executedAt: date.toISOString() };
+                row[config.id] = {
+                  executedAt: bucketDateIso(
+                    resultObj.executedAt as string,
+                    dateGrouping
+                  ),
+                };
               }
             } else if (config.groupBy === "createdAt") {
-              // Special handling for date dimension with createdAt
+              // Date dimension keyed on creation: same, on createdAt
               if (!resultObj.createdAt) {
                 row[config.id] = { createdAt: null, name: "None" };
               } else {
-                const date = new Date(resultObj.createdAt as string);
-                date.setUTCHours(0, 0, 0, 0);
-                row[config.id] = { createdAt: date.toISOString() };
+                row[config.id] = {
+                  createdAt: bucketDateIso(
+                    resultObj.createdAt as string,
+                    dateGrouping
+                  ),
+                };
               }
             } else {
               const fullDimValue = lookup.get(String(dimValue));
@@ -1185,133 +1154,11 @@ async function handleProjectSpecificAggregation({
 
   // Apply sorting if specified
   if (sortColumn && sortDirection) {
-    results.sort((a: ReportRow, b: ReportRow) => {
-      // Determine if sortColumn is a dimension or metric
-      let aVal, bVal;
-
-      // Check if it's a dimension
-      if (dimensions.includes(sortColumn)) {
-        const _dimData = a[sortColumn];
-        const _dimDataB = b[sortColumn];
-
-        // Handle different dimension types
-        if (sortColumn === "date") {
-          // Try both executedAt and createdAt fields
-          const dateA = a[sortColumn] as DimensionDisplayValue | undefined;
-          const dateB = b[sortColumn] as DimensionDisplayValue | undefined;
-          aVal = dateA?.executedAt || dateA?.createdAt;
-          bVal = dateB?.executedAt || dateB?.createdAt;
-        } else {
-          // For other dimensions, sort by name or id
-          const dimA = a[sortColumn] as DimensionDisplayValue | undefined;
-          const dimB = b[sortColumn] as DimensionDisplayValue | undefined;
-          aVal = dimA?.name || dimA?.id;
-          bVal = dimB?.name || dimB?.id;
-        }
-      } else {
-        // It's a metric - need to find the metric config by matching the backend ID
-        // The sortColumn is a backend metric ID (e.g., 'testResultCount')
-        // The metricConfigs have the label that's used as the key in the result object
-
-        // Try to find the metric config that matches the sortColumn
-        // This could be by id or by checking if the config represents this metric
-        const metricConfig = metricConfigs.find((mc: MetricConfig) => {
-          // Some metrics have different frontend IDs but backend labels
-          // Map common cases:
-          if (sortColumn === "testResultCount" && mc.id === "testResults")
-            return true;
-          if (sortColumn === "testRunCount" && mc.id === "testRunCount")
-            return true;
-          if (sortColumn === "testCaseCount" && mc.id === "testCaseCount")
-            return true;
-          if (sortColumn === "passRate" && mc.id === "passRate") return true;
-          if (sortColumn === "avgElapsed" && mc.id === "avgElapsedTime")
-            return true;
-          if (sortColumn === "sumElapsed" && mc.id === "totalElapsedTime")
-            return true;
-
-          // Also try direct ID match as fallback
-          return mc.id === sortColumn;
-        });
-
-        if (metricConfig) {
-          const metricLabel = metricConfig.label;
-          aVal = a[metricLabel];
-          bVal = b[metricLabel];
-        } else {
-          // Fallback: use the sortColumn directly as the key
-          aVal = a[sortColumn];
-          bVal = b[sortColumn];
-        }
-      }
-
-      // Handle null/undefined values
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
-
-      const multiplier = sortDirection === "asc" ? 1 : -1;
-
-      // Handle dates
-      if (
-        sortColumn === "date" ||
-        aVal instanceof Date ||
-        bVal instanceof Date
-      ) {
-        const aTime = new Date(aVal as string | number | Date).getTime();
-        const bTime = new Date(bVal as string | number | Date).getTime();
-        return (aTime - bTime) * multiplier;
-      }
-
-      // Handle numbers with stable secondary sort by date
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        const numComparison = (aVal - bVal) * multiplier;
-
-        // If values are equal, use date as secondary sort for stable sorting
-        if (
-          numComparison === 0 &&
-          dimensions.includes("date") &&
-          sortColumn !== "date"
-        ) {
-          const dateA = a.date as DimensionDisplayValue | undefined;
-          const dateB = b.date as DimensionDisplayValue | undefined;
-          const dateAValue = dateA?.executedAt || dateA?.createdAt;
-          const dateBValue = dateB?.executedAt || dateB?.createdAt;
-
-          if (dateAValue && dateBValue) {
-            return (
-              new Date(dateAValue as string).getTime() -
-              new Date(dateBValue as string).getTime()
-            );
-          }
-        }
-
-        return numComparison;
-      }
-
-      // Handle strings
-      const stringComparison =
-        String(aVal).localeCompare(String(bVal)) * multiplier;
-
-      // If values are equal, use date as secondary sort for stable sorting
-      if (
-        stringComparison === 0 &&
-        dimensions.includes("date") &&
-        sortColumn !== "date"
-      ) {
-        const dateA = a.date as DimensionDisplayValue | undefined;
-        const dateB = b.date as DimensionDisplayValue | undefined;
-        const dateAValue = dateA?.executedAt || dateA?.createdAt;
-        const dateBValue = dateB?.executedAt || dateB?.createdAt;
-
-        if (dateAValue && dateBValue) {
-          return (
-            new Date(dateAValue as string).getTime() -
-            new Date(dateBValue as string).getTime()
-          );
-        }
-      }
-
-      return stringComparison;
+    sortReportRows(results, {
+      dimensions,
+      metricConfigs,
+      sortColumn,
+      sortDirection,
     });
   } else if (dimensions.includes("date") && !(sortColumn && sortDirection)) {
     // Default sort by date if date dimension is used (for backward compatibility)
@@ -1345,9 +1192,15 @@ async function handleProjectSpecificAggregation({
 
   return Response.json({
     results: paginatedResults,
-    allResults: results, // Full dataset for charts
+    // The full set for the chart, only when `results` is a page of it;
+    // under "All" the two are the same rows and readers fall back to
+    // `results`, so the payload is not sent twice.
+    ...(paginatedResults !== results ? { allResults: results } : {}),
     totalCount,
     page,
     pageSize: pageSize || totalCount,
+    // Echoed so the table, chart, CSV and shares label each date row by
+    // the period it covers.
+    ...(dimensions.includes("date") ? { dateGrouping } : {}),
   });
 }

@@ -28,6 +28,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "~/lib/navigation";
 import { SKIP_SENTINEL } from "~/lib/utils/datasetMapping";
+import { apiFetch } from "~/lib/basePath";
 
 export interface AssignSharedDatasetDialogProps {
   open: boolean;
@@ -290,7 +291,7 @@ export function AssignSharedDatasetDialog({
           filteredMapping[col] = value;
         }
       }
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/repository/cases/${caseId}/shared-dataset`,
         {
           method: "PUT",

@@ -3,11 +3,13 @@
 import { Separator } from "@/components/ui/separator";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { formatRequirementCellText } from "~/utils/issueDisplayText";
+import {
+  summarizeRequirementDebt,
+  type RequirementDebtSummary,
+} from "~/utils/requirementReportSummaries";
 import {
   REQUIREMENT_COVERAGE_CHART_COLORS,
   RequirementHierarchyBars,
-  type HierarchyGroup,
 } from "./RequirementCoverageOverview";
 
 /**
@@ -36,126 +38,26 @@ interface DebtRow {
 
 const DEBT_STATE_ORDER = ["UNCOVERED", "NOT_RUN"] as const;
 
-const TOP_HIERARCHY_LIMIT = 10;
-
-/**
- * Display heuristic ONLY (a stat tile, never a gate): statuses are
- * free-text per project/tracker, so "closed" has no canonical flag in the
- * data model. This set covers the standard closed-ish vocabulary of the
- * supported trackers; a project with its own vocabulary simply counts 0
- * here and loses nothing but the tile's insight.
- */
-const CLOSED_STATUS_HEURISTIC = new Set([
-  "closed",
-  "done",
-  "resolved",
-  "completed",
-  "complete",
-  "rejected",
-  "cancelled",
-  "canceled",
-  "won't do",
-  "wont do",
-  "wontfix",
-]);
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-export function RequirementDebtOverview({ rows }: { rows: DebtRow[] }) {
+export function RequirementDebtOverview({
+  rows,
+  summary: serverSummary,
+}: {
+  rows: DebtRow[];
+  /** The server's numbers over the whole set; when present, `rows` may
+   * be one page and the panel draws from this instead. */
+  summary?: RequirementDebtSummary | null;
+}) {
   const t = useTranslations("requirements.coverage");
   const tReports = useTranslations("reports.ui.requirementCoverage");
   const locale = useLocale();
 
+  // The arithmetic lives in utils/requirementReportSummaries (shared with
+  // the handler); this only attaches labels and colors.
   const { counts, hierarchyGroups, foldedCount, otherTotal, ageBuckets } =
-    useMemo(() => {
-      const counts = {
-        total: rows.length,
-        uncovered: 0,
-        notRun: 0,
-        onClosed: 0,
-      };
-      const groupsByRoot = new Map<string, HierarchyGroup>();
-      const now = Date.now();
-      // Half-open ranges checked in order: [0,30) [30,90) [90,180)
-      // [180,365) [365,∞) — an item exactly on a boundary lands in the
-      // HIGHER bucket.
-      const bucketDefs = [
-        { key: "ageUnder30", max: 30 },
-        { key: "age30to90", max: 90 },
-        { key: "age90to180", max: 180 },
-        { key: "age180to365", max: 365 },
-        { key: "ageOver365", max: Infinity },
-      ];
-      const ageCounts = bucketDefs.map(() => ({
-        UNCOVERED: 0,
-        NOT_RUN: 0,
-      })) as Array<Record<string, number>>;
-
-      for (const row of rows) {
-        const status =
-          row.coverageStatus === "NOT_RUN" ? "NOT_RUN" : "UNCOVERED";
-        if (status === "NOT_RUN") counts.notRun += 1;
-        else counts.uncovered += 1;
-
-        if (
-          CLOSED_STATUS_HEURISTIC.has(
-            (row.requirementStatus ?? "").trim().toLowerCase()
-          )
-        ) {
-          counts.onClosed += 1;
-        }
-
-        const root = row.requirementParentPath
-          ? row.requirementParentPath.split(" > ")[0]
-          : formatRequirementCellText(row);
-        let group = groupsByRoot.get(root);
-        if (!group) {
-          group = { label: root, counts: {}, total: 0 };
-          groupsByRoot.set(root, group);
-        }
-        const rootId =
-          row.requirementRootId ??
-          (!row.requirementParentPath ? row.requirementId : undefined);
-        if (group.requirementId == null && rootId != null) {
-          group.requirementId = rootId;
-        }
-        group.counts[status] = (group.counts[status] ?? 0) + 1;
-        group.total += 1;
-
-        const createdMs = row.requirementCreatedAt
-          ? Date.parse(row.requirementCreatedAt)
-          : NaN;
-        if (Number.isFinite(createdMs)) {
-          const ageDays = Math.max(0, (now - createdMs) / DAY_MS);
-          const bucket = bucketDefs.findIndex((def) => ageDays < def.max);
-          const target =
-            ageCounts[bucket === -1 ? bucketDefs.length - 1 : bucket];
-          target[status] = (target[status] ?? 0) + 1;
-        }
-      }
-
-      const ranked = [...groupsByRoot.values()].sort(
-        (a, b) => b.total - a.total || a.label.localeCompare(b.label)
-      );
-      const top = ranked.slice(0, TOP_HIERARCHY_LIMIT);
-      const folded = ranked.slice(TOP_HIERARCHY_LIMIT);
-      const otherTotal = folded.reduce((sum, group) => sum + group.total, 0);
-
-      const ageBuckets: HierarchyGroup[] = bucketDefs.map((def, index) => ({
-        label: def.key,
-        counts: ageCounts[index],
-        total:
-          (ageCounts[index].UNCOVERED ?? 0) + (ageCounts[index].NOT_RUN ?? 0),
-      }));
-
-      return {
-        counts,
-        hierarchyGroups: top,
-        foldedCount: folded.length,
-        otherTotal,
-        ageBuckets,
-      };
-    }, [rows]);
+    useMemo(
+      () => serverSummary ?? summarizeRequirementDebt(rows),
+      [serverSummary, rows]
+    );
 
   if (counts.total === 0) {
     return null;

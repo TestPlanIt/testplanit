@@ -11,6 +11,8 @@ export interface AutomatedResultMetricInput {
   time?: number | null;
   /** JUnit result type: PASSED | FAILURE | ERROR | SKIPPED. */
   resultType?: string | null;
+  /** The case is quarantined (failure triage): its failures are not failures. */
+  quarantined?: boolean;
 }
 
 export interface AutomatedRunMetrics {
@@ -20,7 +22,9 @@ export interface AutomatedRunMetrics {
   passedCount: number;
   failedCount: number;
   skippedCount: number;
-  /** Passed results as a percentage of all results (0-100), null when empty. */
+  /** Failures and errors of quarantined cases, kept out of failedCount and the pass rate. */
+  quarantinedCount: number;
+  /** Passed results as a percentage of all results except quarantined failures (0-100), null when empty. */
   passRate: number | null;
   /** Linear sum of individual test durations. */
   totalTime: number;
@@ -72,12 +76,14 @@ export function computeAutomatedRunMetrics({
   let passedCount = 0;
   let failedCount = 0;
   let skippedCount = 0;
+  let quarantinedCount = 0;
   const times: number[] = [];
   for (const result of results) {
     switch (result.resultType) {
       case "FAILURE":
       case "ERROR":
-        failedCount++;
+        if (result.quarantined) quarantinedCount++;
+        else failedCount++;
         break;
       case "SKIPPED":
         skippedCount++;
@@ -105,13 +111,15 @@ export function computeAutomatedRunMetrics({
     parallelism = totalTime / wallClockSeconds;
   }
 
+  const ratedCount = totalCount - quarantinedCount;
   return {
     totalCount,
     timedCount,
     passedCount,
     failedCount,
     skippedCount,
-    passRate: totalCount > 0 ? (passedCount / totalCount) * 100 : null,
+    quarantinedCount,
+    passRate: ratedCount > 0 ? (passedCount / ratedCount) * 100 : null,
     totalTime,
     wallClockSeconds,
     parallelism,

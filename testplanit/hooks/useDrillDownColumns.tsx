@@ -87,6 +87,7 @@ export function useDrillDownColumns({
       no: tCommon("no"),
       name: tCommon("name"),
       statusPending: tCommon("status.pending"),
+      statusUntested: tCommon("labels.untested"),
       key: tCommon("fields.key"),
       summary: tCommon("fields.summary"),
       progress: tCommon("fields.progress"),
@@ -272,9 +273,13 @@ export function useDrillDownColumns({
           cell: (info) => {
             const row = info.row.original as any;
             if (!row.status) {
+              // A completed run is locked, so a case with no status there can
+              // no longer be executed: it is Untested, not Pending.
               return (
                 <span className="text-muted-foreground">
-                  {translations.statusPending}
+                  {row.testRun?.isCompleted
+                    ? translations.statusUntested
+                    : translations.statusPending}
                 </span>
               );
             }
@@ -1061,13 +1066,19 @@ export function useDrillDownColumns({
       ];
     }
 
-    // Repository stats test case metrics (testCaseCount, automatedCount, manualCount, automationRate)
+    // Repository stats test case metrics (testCaseCount, automatedCount,
+    // manualCount, automationRate, the creation-window metrics, and the
+    // issue-tracking Linked Cases metric — all of which drill into cases)
     if (
       metricId === "testCaseCount" ||
       metricId === "createdCaseCount" ||
       metricId === "automatedCount" ||
       metricId === "manualCount" ||
-      metricId === "automationRate"
+      metricId === "automationRate" ||
+      metricId === "firstCaseCreated" ||
+      metricId === "lastCaseCreated" ||
+      metricId === "caseCreationSpan" ||
+      metricId === "linkedCaseCount"
     ) {
       const columns = [
         columnHelper.accessor((row: any) => row.name, {

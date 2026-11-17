@@ -11,6 +11,8 @@
  * translator) so this module stays pure and unit-testable.
  */
 
+import type { DateGrouping } from "~/lib/reports/dateGrouping";
+import { formatReportPeriodIso } from "~/utils/reportPeriodFormat";
 import { format } from "date-fns";
 import { ROOT_DIRECTORY } from "~/utils/codePinCoverageShared";
 import { formatRequirementCellText } from "~/utils/issueDisplayText";
@@ -38,6 +40,8 @@ export interface BuildReportCsvParams {
   consecutiveRuns?: number;
   /** Automation-trends projects (drives per-project columns). */
   projects?: Array<{ id: number; name: string }>;
+  /** Custom reports: the period each date row covers (default daily). */
+  dateGrouping?: DateGrouping;
   locale: string;
   t: Translate;
 }
@@ -247,6 +251,40 @@ function buildCodePinCoverage(p: BuildReportCsvParams): CsvRow[] {
     row[h.stale] = r.stalePinCount ?? 0;
     row[h.uncovered] = r.uncoveredFileCount ?? 0;
     row[h.analyses] = r.uncoveredAnalysisCount ?? 0;
+    return row;
+  });
+}
+
+function buildResultsTrend(p: BuildReportCsvParams): CsvRow[] {
+  const { rows, t } = p;
+  const h = {
+    project: t("common.fields.project"),
+    period: t("reports.ui.resultsTrend.period"),
+    partial: t("reports.ui.resultsTrend.inProgress"),
+    runs: t("common.fields.testRuns"),
+    results: t("common.results"),
+    passed: t("reports.metrics.passed"),
+    failed: t("reports.metrics.failed"),
+    skipped: t("reports.ui.resultsTrend.skipped"),
+    other: t("reports.ui.resultsTrend.other"),
+    passRate: t("common.fields.passRate"),
+    failRate: t("reports.ui.resultsTrend.failRate"),
+  };
+  return rows.map((r: any) => {
+    const row: CsvRow = {};
+    // The combined row has no project; it is labeled the way the table is.
+    row[h.project] =
+      r.project?.name ?? t("reports.ui.resultsTrend.chart.allProjects");
+    row[h.period] = r.periodStart ?? "";
+    row[h.partial] = r.partial ? t("common.yes") : t("common.no");
+    row[h.runs] = r.runs ?? 0;
+    row[h.results] = r.results ?? 0;
+    row[h.passed] = r.passed ?? 0;
+    row[h.failed] = r.failed ?? 0;
+    row[h.skipped] = r.skipped ?? 0;
+    row[h.other] = r.other ?? 0;
+    row[h.passRate] = r.passRate ?? "";
+    row[h.failRate] = r.failRate ?? "";
     return row;
   });
 }
@@ -511,15 +549,19 @@ function isTimeMetric(m: { value: string; label: string }): boolean {
   );
 }
 
-function dimensionValue(row: any, dimId: string): string {
+function dimensionValue(
+  row: any,
+  dimId: string,
+  dateGrouping: DateGrouping = "daily"
+): string {
   const v = row[dimId];
   if (v == null) return "";
   if (dimId === "date") {
     const d = typeof v === "object" ? (v.executedAt ?? v.createdAt ?? null) : v;
-    // The backend normalizes grouping dates to UTC midnight; the on-screen
-    // column reads UTC components. Use UTC here too, otherwise users behind
-    // UTC see every date shifted back a day.
-    return fmtDateUtc(d);
+    // The backend keys date rows by the UTC start of their period; the
+    // on-screen column reads UTC components. Use UTC here too, otherwise
+    // users behind UTC see every date shifted back a day.
+    return formatReportPeriodIso(d, dateGrouping);
   }
   if (typeof v === "object") {
     return v.name ?? v.title ?? v.templateName ?? v.email ?? "";
@@ -528,17 +570,21 @@ function dimensionValue(row: any, dimId: string): string {
 }
 
 function buildCustom(p: BuildReportCsvParams): CsvRow[] {
-  const { rows, dimensions = [], metrics = [], locale } = p;
+  const { rows, dimensions = [], metrics = [], locale, dateGrouping } = p;
   return rows.map((r: any) => {
     const row: CsvRow = {};
     for (const dim of dimensions) {
-      row[dim.label] = dimensionValue(r, dim.value);
+      row[dim.label] = dimensionValue(r, dim.value, dateGrouping);
     }
     for (const metric of metrics) {
       const raw = r[metricAccessor(metric)];
       const num = typeof raw === "number" ? raw : Number(raw);
       let value: string | number;
-      if (raw == null || isNaN(num)) {
+      if (metricUnit(metric.value) === "date") {
+        // Date metrics (First/Last Case Created, Last Active Date) carry an
+        // ISO timestamp, which the numeric branches would blank out.
+        value = typeof raw === "string" ? raw : "";
+      } else if (raw == null || isNaN(num)) {
         value = "";
       } else if (isRateMetric(metric)) {
         value = `${num.toFixed(1)}%`;
@@ -583,6 +629,8 @@ export function buildReportCsvRows(p: BuildReportCsvParams): CsvRow[] {
       return buildImpactAnalysis(p);
     case "code-pin-coverage":
       return buildCodePinCoverage(p);
+    case "results-trend":
+      return buildResultsTrend(p);
     case "requirement-coverage-gaps":
       return buildRequirementCoverageGaps(p);
     case "requirement-traceability":

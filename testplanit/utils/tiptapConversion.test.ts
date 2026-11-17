@@ -107,6 +107,15 @@ describe("ensureTipTapJSON", () => {
     expect(result.content![0].content![0].text).toBe("From string");
   });
 
+  it("converts HTML notes from older results into a document", () => {
+    // The shape that crashed the edit result modal: notes saved as HTML.
+    const result = ensureTipTapJSON("<p>Step 6 is failing.</p>");
+
+    expect(result.type).toBe("doc");
+    expect(result.content![0].type).toBe("paragraph");
+    expect(result.content![0].content![0].text).toBe("Step 6 is failing.");
+  });
+
   it("should handle null/undefined", () => {
     const resultNull = ensureTipTapJSON(null);
     const resultUndefined = ensureTipTapJSON(undefined);

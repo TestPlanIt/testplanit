@@ -2,7 +2,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn, type ClassValue } from "~/utils";
 import {
-  perceptualTextColor,
+  contrastingTextColor,
   statusSurfaceVars,
 } from "~/utils/contrastingTextColor";
 
@@ -39,7 +39,7 @@ const StatusDisplay: React.FC<StatusDisplayProps> = ({
         style={{
           ...statusSurfaceVars(color),
           backgroundColor: color,
-          color: perceptualTextColor(color),
+          color: contrastingTextColor(color),
         }}
       >
         {name}

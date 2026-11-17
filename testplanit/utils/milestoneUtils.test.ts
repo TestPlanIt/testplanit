@@ -267,6 +267,7 @@ const baseMockMilestone: Milestones = {
   isCompleted: false,
   isDeleted: false,
   deletedAt: null,
+  deletedById: null,
   startedAt: null,
   completedAt: null,
   createdAt: new Date("2024-01-01T00:00:00.000Z"),
@@ -292,6 +293,7 @@ const mockMilestoneType: MilestoneTypes & { icon: FieldIcon | null } = {
   isDefault: false,
   isDeleted: false,
   deletedAt: null,
+  deletedById: null,
 };
 
 // --- createColorMap Tests ---
@@ -365,6 +367,24 @@ describe("getStatusStyle", () => {
       badge: "#994000",
     });
   });
+
+  it("gives accessibledark the dark colours, not the light ones", () => {
+    // accessibledark paints a dark surface, so it takes the dark set. A
+    // `theme === "dark"` check sent it down the light branch and painted deep
+    // light-surface colours on a dark page.
+    expect(
+      getStatusStyle(STATUS_KEYS.STARTED, "accessibledark", testColorMap)
+    ).toEqual(getStatusStyle(STATUS_KEYS.STARTED, "dark", testColorMap));
+  });
+
+  it.each(["light", "orange", "green", "purple", "accessible"])(
+    "keeps the light colours for the %s theme",
+    (theme) => {
+      expect(getStatusStyle(STATUS_KEYS.STARTED, theme, testColorMap)).toEqual(
+        getStatusStyle(STATUS_KEYS.STARTED, "light", testColorMap)
+      );
+    }
+  );
 
   it("should throw error if status key is invalid", () => {
     const theme = "dark";

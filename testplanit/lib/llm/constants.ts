@@ -16,6 +16,7 @@ export const LLM_FEATURES = {
   AUTOMATION_CANDIDATES: "automation_candidates",
   DERIVE_CASE_STEPS: "derive_case_steps",
   IMPACT_ANALYSIS: "impact_analysis",
+  FAILURE_TRIAGE: "failure_triage",
 } as const;
 
 export type LlmFeature = (typeof LLM_FEATURES)[keyof typeof LLM_FEATURES];
@@ -44,63 +45,70 @@ export interface PromptVariable {
 }
 
 /**
+ * The template-driven variables of the test case generation prompt. The two
+ * Generate-from-URL features build their prompts the same way (the crawled
+ * page stands in for the issue), so they offer the same variables.
+ */
+const TEST_CASE_GENERATION_VARIABLES: PromptVariable[] = [
+  {
+    name: "EXAMPLE_STRUCTURE",
+    description: "JSON structure example based on template fields",
+  },
+  {
+    name: "REQUIRED_FIELDS_LIST",
+    description: "List of required template fields",
+  },
+  {
+    name: "OPTIONAL_FIELDS_LIST",
+    description: "List of optional template fields",
+  },
+  {
+    name: "EXCLUDED_FIELDS_LIST",
+    description:
+      "List of template fields the user deselected — instruct the model never to emit these",
+  },
+  {
+    name: "QUANTITY_GUIDANCE",
+    description:
+      "Quantity of test cases to generate (e.g. '4-6 test cases' or 'as many test cases as needed for comprehensive coverage')",
+  },
+  { name: "STEPS_INSTRUCTION", description: "Instructions for test steps" },
+  {
+    name: "PRIORITY_INSTRUCTION",
+    description: "Instructions for priority field values",
+  },
+  {
+    name: "TAG_INSTRUCTIONS",
+    description: "Instructions for auto-generating tags",
+  },
+  { name: "ISSUE_KEY", description: "Issue identifier (e.g. PROJ-123)" },
+  { name: "ISSUE_TITLE", description: "Issue title" },
+  { name: "ISSUE_DESCRIPTION", description: "Issue description text" },
+  { name: "ISSUE_STATUS", description: "Current issue status" },
+  { name: "ISSUE_PRIORITY", description: "Issue priority level" },
+  { name: "COMMENTS_SECTION", description: "Relevant issue comments" },
+  {
+    name: "LINKED_ISSUES_SECTION",
+    description: "Related linked issues with their bodies and comments",
+  },
+  {
+    name: "USER_NOTES_SECTION",
+    description: "Additional user-provided notes",
+  },
+  {
+    name: "EXISTING_CASES_SECTION",
+    description: "Existing test cases to avoid duplicating",
+  },
+];
+
+/**
  * The runtime variables available for substitution in each feature's prompts.
  * These are injected by the server before the LLM call and shown in the admin
  * prompt editor as an "Insert variable" picker.
  */
 export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
   [LLM_FEATURES.MARKDOWN_PARSING]: [],
-  [LLM_FEATURES.TEST_CASE_GENERATION]: [
-    {
-      name: "EXAMPLE_STRUCTURE",
-      description: "JSON structure example based on template fields",
-    },
-    {
-      name: "REQUIRED_FIELDS_LIST",
-      description: "List of required template fields",
-    },
-    {
-      name: "OPTIONAL_FIELDS_LIST",
-      description: "List of optional template fields",
-    },
-    {
-      name: "EXCLUDED_FIELDS_LIST",
-      description:
-        "List of template fields the user deselected — instruct the model never to emit these",
-    },
-    {
-      name: "QUANTITY_GUIDANCE",
-      description:
-        "Quantity of test cases to generate (e.g. '4-6 test cases' or 'as many test cases as needed for comprehensive coverage')",
-    },
-    { name: "STEPS_INSTRUCTION", description: "Instructions for test steps" },
-    {
-      name: "PRIORITY_INSTRUCTION",
-      description: "Instructions for priority field values",
-    },
-    {
-      name: "TAG_INSTRUCTIONS",
-      description: "Instructions for auto-generating tags",
-    },
-    { name: "ISSUE_KEY", description: "Issue identifier (e.g. PROJ-123)" },
-    { name: "ISSUE_TITLE", description: "Issue title" },
-    { name: "ISSUE_DESCRIPTION", description: "Issue description text" },
-    { name: "ISSUE_STATUS", description: "Current issue status" },
-    { name: "ISSUE_PRIORITY", description: "Issue priority level" },
-    { name: "COMMENTS_SECTION", description: "Relevant issue comments" },
-    {
-      name: "LINKED_ISSUES_SECTION",
-      description: "Related linked issues with their bodies and comments",
-    },
-    {
-      name: "USER_NOTES_SECTION",
-      description: "Additional user-provided notes",
-    },
-    {
-      name: "EXISTING_CASES_SECTION",
-      description: "Existing test cases to avoid duplicating",
-    },
-  ],
+  [LLM_FEATURES.TEST_CASE_GENERATION]: TEST_CASE_GENERATION_VARIABLES,
   [LLM_FEATURES.MAGIC_SELECT_CASES]: [],
   [LLM_FEATURES.EDITOR_ASSISTANT]: [],
   [LLM_FEATURES.LLM_TEST]: [],
@@ -130,8 +138,8 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
   ],
   [LLM_FEATURES.AUTO_TAG]: [],
   [LLM_FEATURES.DUPLICATE_DETECTION]: [],
-  [LLM_FEATURES.GENERATE_FROM_URL]: [],
-  [LLM_FEATURES.GENERATE_FROM_URL_APP]: [],
+  [LLM_FEATURES.GENERATE_FROM_URL]: TEST_CASE_GENERATION_VARIABLES,
+  [LLM_FEATURES.GENERATE_FROM_URL_APP]: TEST_CASE_GENERATION_VARIABLES,
   [LLM_FEATURES.AUTOMATION_CANDIDATES]: [
     {
       name: "PROJECT_NAME",
@@ -212,6 +220,61 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
         "Newline-delimited positional JSON rows: [id, name, folder?, tags[]?, fields?]",
     },
   ],
+  [LLM_FEATURES.FAILURE_TRIAGE]: [
+    {
+      name: "CLASSIFICATIONS",
+      description:
+        "The project's failure classification catalogue, one per line as 'name: description'",
+    },
+    {
+      name: "EXCEPTION_TYPE",
+      description: "Exception or assertion type shared by the cluster",
+    },
+    {
+      name: "FAILURE_MESSAGE",
+      description: "Failure message of the most recent occurrence",
+    },
+    {
+      name: "STACK_TRACE",
+      description:
+        "Stack trace / failure body of the most recent occurrence (truncated)",
+    },
+    {
+      name: "SYSTEM_ERR",
+      description:
+        "stderr captured with the most recent occurrence (truncated, may be empty)",
+    },
+    {
+      name: "OCCURRENCE_COUNT",
+      description: "How many results belong to the cluster",
+    },
+    {
+      name: "CASE_COUNT",
+      description: "How many distinct test cases failed this way",
+    },
+    {
+      name: "RUN_COUNT",
+      description: "How many test runs contain the cluster",
+    },
+    {
+      name: "FIRST_SEEN",
+      description: "When the cluster was first seen (ISO timestamp)",
+    },
+    {
+      name: "LAST_SEEN",
+      description: "When the cluster was last seen (ISO timestamp)",
+    },
+    {
+      name: "FLAKY_CANDIDATE",
+      description:
+        "yes/no: the affected cases flip between pass and fail in their recent history",
+    },
+    {
+      name: "AFFECTED_CASES",
+      description:
+        "Up to 10 affected case names with their recent pass/fail verdicts",
+    },
+  ],
 };
 
 /**
@@ -233,4 +296,5 @@ export const LLM_FEATURE_LABELS: Record<LlmFeature, string> = {
   [LLM_FEATURES.AUTOMATION_CANDIDATES]: "Automation Candidates Report",
   [LLM_FEATURES.DERIVE_CASE_STEPS]: "AI Step Derivation",
   [LLM_FEATURES.IMPACT_ANALYSIS]: "Impact: Affected Test Selection",
+  [LLM_FEATURES.FAILURE_TRIAGE]: "Failure Triage: Root Cause",
 };

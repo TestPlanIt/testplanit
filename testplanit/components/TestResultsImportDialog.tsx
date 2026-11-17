@@ -3,7 +3,6 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import DynamicIcon from "@/components/DynamicIcon";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,24 +31,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Asterisk, Star } from "lucide-react";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import { IconName } from "~/types/globals";
+import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
+import { DefaultTemplateBadge } from "./DefaultTemplateBadge";
 import { ConfigurationSelect } from "./forms/ConfigurationSelect";
 import { FolderSelect, transformFolders } from "./forms/FolderSelect";
 import { MilestoneSelect, transformMilestones } from "./forms/MilestoneSelect";
 import { ManageTags } from "./ManageTags";
 import UploadAttachments from "./UploadAttachments";
+import { apiFetch } from "~/lib/basePath";
 
 /**
  * Supported test result formats
@@ -169,7 +166,21 @@ export default function TestResultsImportDialog({
     },
   });
 
-  const defaultTemplate = templates?.find((template) => template.isDefault);
+  const { data: project } = useClientQueries(schema).projects.useFindUnique({
+    where: { id: projectId },
+    select: { defaultTemplateId: true },
+  });
+
+  // Only a configured default is preselected; the user picks otherwise. Held
+  // back until the project loads so its default isn't beaten by the system's.
+  const resolvedDefault = resolveDefaultTemplate(
+    templates,
+    project?.defaultTemplateId
+  );
+  const defaultTemplateSource = project ? resolvedDefault.source : null;
+  const defaultTemplate = defaultTemplateSource
+    ? resolvedDefault.template
+    : undefined;
   const defaultWorkflow = workflows?.find((workflow) => workflow.isDefault);
   const workflowsOptions =
     workflows?.map((workflow) => ({
@@ -270,7 +281,7 @@ export default function TestResultsImportDialog({
         formData.append("files", file)
       );
 
-      const response = await fetch("/api/test-results/import", {
+      const response = await apiFetch("/api/test-results/import", {
         method: "POST",
         body: formData,
       });
@@ -657,18 +668,12 @@ export default function TestResultsImportDialog({
                                   value={template.id.toString()}
                                 >
                                   {template.templateName}
-                                  {template.isDefault && (
-                                    <Tooltip>
-                                      <TooltipTrigger className="ms-1" asChild>
-                                        <Badge variant="secondary">
-                                          <Star className="h-3 w-3 fill-current" />
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        {tCommon("defaultOption")}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
+                                  {defaultTemplateSource &&
+                                    template.id === defaultTemplate?.id && (
+                                      <DefaultTemplateBadge
+                                        source={defaultTemplateSource}
+                                      />
+                                    )}
                                 </SelectItem>
                               ))}
                             </SelectGroup>

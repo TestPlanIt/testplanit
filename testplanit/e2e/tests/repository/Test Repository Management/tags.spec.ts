@@ -599,28 +599,24 @@ test.describe("Tags", () => {
       await tagsCheckbox.click();
     });
 
-    await test.step("Remove the tag chip and save", async () => {
+    await test.step("Pick the tag in Remove mode and save", async () => {
       const bulkEditModal = page.locator('[role="dialog"]');
 
-      // The tag should be shown as selected - remove it by clicking the remove button
-      // Wait for the tag to appear in the multiselect (it shows as a chip with an x)
-      const tagChip = bulkEditModal.locator(`text="${tagName}"`).first();
-      await expect(tagChip).toBeVisible({ timeout: 5000 });
+      // Tags opens in Add mode; switch to Remove
+      await bulkEditModal.locator('[id="tags-mode-remove"]').click();
 
-      // Click the remove button (X) on the tag chip - it's an SVG or element right after the tag text
-      // The x button in react-select has role="button" or is a sibling element
-      const tagRemoveButton = bulkEditModal
-        .locator(`.min-w-\\[200px\\]`)
-        .locator(`[class*="multiValue"]`)
-        .first()
-        .locator('svg, [role="button"]')
+      const tagSelectInput = bulkEditModal
+        .locator(".min-w-\\[200px\\] input")
         .first();
-      await tagRemoveButton.click();
+      await expect(tagSelectInput).toBeVisible({ timeout: 5000 });
+      await tagSelectInput.click();
+      await tagSelectInput.fill(tagName);
 
-      // Verify the tag was removed from the selector (tag text no longer visible in the field)
-      await expect(
-        bulkEditModal.locator(`.min-w-\\[200px\\]`).locator(`text="${tagName}"`)
-      ).not.toBeVisible({ timeout: 3000 });
+      const tagOption = page
+        .locator(`[role="option"]:has-text("${tagName}")`)
+        .first();
+      await expect(tagOption).toBeVisible({ timeout: 5000 });
+      await tagOption.click();
 
       // Click Save in the modal
       const saveButton = bulkEditModal
@@ -655,13 +651,13 @@ test.describe("Tags", () => {
 
     // Create a tag to assign
     const tagName = `AssignTag${uniqueId}`;
-    await api.createTag(tagName);
+    const tagId = await api.createTag(tagName);
 
     let folderId: number | undefined;
     let case1Id: number | undefined;
     let case2Id: number | undefined;
 
-    await test.step("Seed two test cases", async () => {
+    await test.step("Seed two test cases, one already tagged", async () => {
       // Create a folder and two test cases
       const folderName = `Bulk Assign Tags ${uniqueId}`;
       folderId = await api.createFolder(projectId, folderName);
@@ -675,6 +671,9 @@ test.describe("Tags", () => {
         folderId,
         `Assign 2 ${uniqueId}`
       );
+
+      // A mixed selection: the tag must still reach the case that lacks it
+      await api.addTagToTestCase(case1Id, tagId);
     });
 
     await test.step("Open the folder and select both test cases", async () => {

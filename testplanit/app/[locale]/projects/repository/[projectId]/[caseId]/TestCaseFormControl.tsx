@@ -15,14 +15,21 @@ import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import type { Attachments, Tags } from "~/zenstack/models";
-import { useTranslations } from "next-intl";
+import { RiskScoreCell } from "@/components/risk/RiskScoreCell";
+import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
+import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 interface TestCaseFormControlsProps {
@@ -48,6 +55,9 @@ interface TestCaseFormControlsProps {
   /** When true (narrow pane), the read-only Attachments section collapses to a
    * compact paperclip-count popover. Edit mode is unaffected. */
   compact?: boolean;
+  /** Project-level Risk Score switch. The read-only Risk Score item renders
+   * only when this is on and the case has actually been scored. */
+  riskScoringEnabled?: boolean;
 }
 
 const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
@@ -69,8 +79,10 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
   session,
   onAttachmentPendingChanges,
   compact = false,
+  riskScoringEnabled = false,
 }) => {
   const t = useTranslations();
+  const locale = useLocale();
 
   const testcaseTags: Tags[] = (testcase?.caseTags ?? []).map(
     (ct: any) => ct.tag
@@ -233,9 +245,24 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                 <div id="estimate-display" className="font-bold">
                   {t("common.fields.estimate")}
                 </div>
-                <div aria-labelledby="estimate-display">
-                  <DurationDisplay seconds={testcase.estimate} />
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      aria-labelledby="estimate-display"
+                      className="cursor-default w-fit"
+                    >
+                      <DurationDisplay seconds={testcase.estimate} />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t("common.labels.estimateEntered", {
+                      value: toHumanReadable(testcase.estimate, {
+                        isSeconds: true,
+                        locale,
+                      }),
+                    })}
+                  </TooltipContent>
+                </Tooltip>
                 <Separator
                   orientation="horizontal"
                   className="mt-2 bg-primary/30"
@@ -267,6 +294,24 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                       />
                     </div>
                   )}
+                <Separator
+                  orientation="horizontal"
+                  className="mt-2 bg-primary/30"
+                />
+              </li>
+            )}
+
+            {riskScoringEnabled && testcase?.riskScore != null && (
+              <li className="mb-2 me-6">
+                <div id="risk-score-display" className="font-bold">
+                  {t("risk.score")}
+                </div>
+                <div aria-labelledby="risk-score-display">
+                  <RiskScoreCell
+                    score={testcase.riskScore}
+                    reasons={testcase.riskReasons ?? null}
+                  />
+                </div>
                 <Separator
                   orientation="horizontal"
                   className="mt-2 bg-primary/30"
@@ -406,6 +451,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                   <CreationInfo
                     userId={testcase.creator?.id}
                     createdAt={testcase.createdAt}
+                    stagedAt={testcase.stagedAt}
                   />
                   <Separator
                     orientation="horizontal"

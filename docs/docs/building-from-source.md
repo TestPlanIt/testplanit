@@ -44,6 +44,20 @@ tag always points to the newest beta of that line (`:1.2-beta` and
 `:1.2-beta-workers`); a version tag pins one beta (`:1.2.0-beta.7` and
 `:1.2.0-beta.7-workers`).
 
+The npm packages have matching betas under the `beta` dist-tag, so a
+client that talks to a beta server can run the same line:
+
+```bash
+npm install @testplanit/mcp-server@beta
+npm install @testplanit/api@beta
+```
+
+The MCP server is the one to update: its beta follows the server's current
+model API, so a released MCP server can fail against a beta server and the
+beta MCP server needs a beta server. The Playwright and WebdriverIO
+reporters keep working against a beta server unchanged. Switch back to
+`latest` once the release ships.
+
 To build a beta yourself, check out its tag and follow
 [Build and run](#build-and-run).
 

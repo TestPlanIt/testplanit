@@ -1,6 +1,7 @@
 import { MessagesSquare, Webhook } from "lucide-react";
 import {
   siBitbucket,
+  siClickup,
   siGithub,
   siGitlab,
   siJira,
@@ -88,6 +89,14 @@ export function WebhookAdapterIcon({
       return (
         <div className={cn(baseClass, "bg-[#59A635] text-white")}>
           <MantisBTIcon className="h-5 w-5" />
+        </div>
+      );
+    case "CLICKUP":
+      return (
+        <div className={cn(baseClass, "bg-[#7B68EE] text-white")}>
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+            <path d={siClickup.path} />
+          </svg>
         </div>
       );
     case "SLACK":

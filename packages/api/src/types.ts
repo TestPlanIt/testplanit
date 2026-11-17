@@ -578,8 +578,8 @@ export interface CreateTestCasesOptions {
    */
   folderId: number;
   /**
-   * Template for the batch. Defaults to the template marked Default, else the
-   * project's first enabled template.
+   * Template for the batch. Defaults to the project's default template, then
+   * the template marked Default, else the project's first enabled template.
    */
   templateId?: number;
   /**
@@ -804,6 +804,11 @@ export interface CreateTestResultOptions {
    */
   notes?: string | Record<string, unknown>;
   evidence?: Record<string, unknown>;
+  /**
+   * Attempt number for this result. Leave it out: the server numbers each
+   * attempt per run case (and iteration), and replaces a number that is
+   * already taken with the next free one.
+   */
   attempt?: number;
 }
 

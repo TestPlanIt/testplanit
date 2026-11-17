@@ -3,7 +3,7 @@ import { mapHttpErrorToToolResult, type ToolErrorResult } from "./errors.js";
 import { TestPlanItHttpError } from "./http.js";
 
 describe("mapHttpErrorToToolResult", () => {
-  describe("READ_ONLY_TOKEN — T-05-01 mitigation", () => {
+  describe("READ_ONLY_TOKEN mitigation", () => {
     it("returns isError:true with a message naming mode:read and read-only", () => {
       const err = new TestPlanItHttpError("Read-only token", {
         statusCode: 403,
@@ -92,7 +92,7 @@ describe("mapHttpErrorToToolResult", () => {
     });
   });
 
-  describe("token redaction defense in depth (T-05-06 package side)", () => {
+  describe("token redaction defense in depth", () => {
     it("does not echo a raw tpi_ token if one accidentally appears in the error message", () => {
       // Defense-in-depth: even though http.ts already redacts before
       // constructing the error, the MCP layer must not echo a raw token
@@ -108,7 +108,7 @@ describe("mapHttpErrorToToolResult", () => {
       expect(result.content[0].text).not.toContain("tpi_supersecretvalue");
     });
 
-    it("WR-03: redacts tpi_* substrings on the unknown-code Request failed: <message> fallback", () => {
+    it("redacts tpi_* substrings on the unknown-code Request failed: <message> fallback", () => {
       const err = new TestPlanItHttpError(
         "upstream regression: tpi_supersecretvalue leaked",
         { statusCode: 500 },
@@ -131,7 +131,7 @@ describe("mapHttpErrorToToolResult", () => {
       );
     });
 
-    it("WR-03: redacts tpi_* substrings on the network/runtime Error fallback", () => {
+    it("redacts tpi_* substrings on the network/runtime Error fallback", () => {
       const err = new Error("ECONNREFUSED — token tpi_supersecretvalue rejected");
       const result = mapHttpErrorToToolResult(err);
       expect(result.content[0].text).not.toContain("tpi_supersecretvalue");

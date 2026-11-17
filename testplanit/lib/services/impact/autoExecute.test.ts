@@ -9,45 +9,37 @@ vi.mock("~/lib/execution/requestExecution", () => ({
 
 import { executeAutoRun } from "./autoExecute";
 
-function makeDb(hook: unknown, run: unknown = { createdById: "owner-1" }) {
+function makeDb(run: unknown = { createdById: "owner-1" }) {
   return {
-    webhookConfig: { findFirst: vi.fn().mockResolvedValue(hook) },
     testRuns: { findUnique: vi.fn().mockResolvedValue(run) },
-    webhookDelivery: { update: vi.fn().mockResolvedValue({}) },
   };
 }
 
-const configured = {
-  autoExecuteEnabled: true,
-  autoExecuteTargetId: 4,
-  autoExecuteRef: "release",
-  autoExecuteInputs: { browser: "chrome" },
-};
 const params = {
-  webhookConfigId: "whc-1",
+  autoExecute: { targetId: 4, ref: "release", inputs: { browser: "chrome" } },
   testRunId: 300,
   projectId: 3,
-  deliveryId: "del-1",
   tenantId: "t-1",
 };
 
 describe("executeAutoRun", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("requests execution on the saved target as the run's creator", async () => {
+  it("requests execution on the rule's target as the run's creator", async () => {
     mockRequestExecution.mockResolvedValue({
       ok: true,
       execution: { id: 55, status: "PENDING", selectionCount: 2 },
       queued: true,
     });
-    const db = makeDb(configured);
+    const db = makeDb();
 
     const result = await executeAutoRun(db as never, params);
 
     expect(result).toEqual({ requested: true, executionId: 55 });
-    expect(db.webhookConfig.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "whc-1", projectId: 3 } })
-    );
+    expect(db.testRuns.findUnique).toHaveBeenCalledWith({
+      where: { id: 300 },
+      select: { createdById: true },
+    });
     expect(mockRequestExecution).toHaveBeenCalledWith(
       expect.objectContaining({
         runId: 300,
@@ -68,56 +60,50 @@ describe("executeAutoRun", () => {
         }),
       })
     );
-    expect(db.webhookDelivery.update).not.toHaveBeenCalled();
   });
 
-  it("uses the target's default ref and no inputs when none are saved", async () => {
+  it("uses the target's default ref and no inputs when the rule sets none", async () => {
     mockRequestExecution.mockResolvedValue({
       ok: true,
       execution: { id: 56, status: "PENDING", selectionCount: 1 },
       queued: true,
     });
-    const db = makeDb({
-      ...configured,
-      autoExecuteRef: null,
-      autoExecuteInputs: {},
+
+    await executeAutoRun(makeDb() as never, {
+      ...params,
+      autoExecute: { targetId: 4, ref: "", inputs: {} },
     });
 
-    await executeAutoRun(db as never, params);
-
     const call = mockRequestExecution.mock.calls[0][0];
+    expect(call.targetId).toBe(4);
     expect(call.ref).toBeUndefined();
     expect(call.inputs).toBeUndefined();
   });
 
-  it.each([
-    ["no webhook", null],
-    ["auto-execute off", { ...configured, autoExecuteEnabled: false }],
-    ["no target chosen", { ...configured, autoExecuteTargetId: null }],
-  ])("requests nothing with %s", async (_label, hook) => {
-    const db = makeDb(hook);
-
-    const result = await executeAutoRun(db as never, params);
-
-    expect(result).toEqual({ requested: false, reason: "not_configured" });
-    expect(mockRequestExecution).not.toHaveBeenCalled();
-    expect(db.webhookDelivery.update).not.toHaveBeenCalled();
-  });
-
-  it("requests nothing for a run no webhook started", async () => {
-    const db = makeDb(configured);
-
-    const result = await executeAutoRun(db as never, {
-      ...params,
-      webhookConfigId: undefined,
+  it("passes a null tenant into the audit context when there is none", async () => {
+    mockRequestExecution.mockResolvedValue({
+      ok: true,
+      execution: { id: 57 },
+      queued: true,
     });
 
-    expect(result).toEqual({ requested: false, reason: "not_configured" });
-    expect(db.webhookConfig.findFirst).not.toHaveBeenCalled();
+    await executeAutoRun(makeDb() as never, {
+      ...params,
+      tenantId: undefined,
+    });
+
+    expect(mockRequestExecution.mock.calls[0][0].env.guc.tenantId).toBeNull();
+  });
+
+  it("requests nothing when the run is gone", async () => {
+    const result = await executeAutoRun(makeDb(null) as never, params);
+
+    expect(result).toEqual({ requested: false, code: "RUN_NOT_FOUND" });
+    expect(mockRequestExecution).not.toHaveBeenCalled();
   });
 
   it.each(["TARGET_NOT_FOUND", "TARGET_DISABLED", "NO_AUTOMATED_CASES"])(
-    "records %s on the delivery and requests nothing",
+    "returns %s when the request is refused",
     async (code) => {
       mockRequestExecution.mockResolvedValue({
         ok: false,
@@ -125,34 +111,20 @@ describe("executeAutoRun", () => {
         code,
         error: "nope",
       });
-      const db = makeDb(configured);
 
-      const result = await executeAutoRun(db as never, params);
+      const result = await executeAutoRun(makeDb() as never, params);
 
-      expect(result).toEqual({ requested: false, reason: "failed", code });
-      expect(db.webhookDelivery.update).toHaveBeenCalledWith({
-        where: { id: "del-1" },
-        data: { error: `execute:${code.toLowerCase()}` },
-      });
+      expect(result).toEqual({ requested: false, code });
     }
   );
 
-  it("records a thrown error on the delivery instead of throwing", async () => {
+  it("returns ERROR instead of throwing when the request throws", async () => {
     mockRequestExecution.mockRejectedValue(new Error("valkey down"));
-    const db = makeDb(configured);
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const result = await executeAutoRun(db as never, params);
+    const result = await executeAutoRun(makeDb() as never, params);
 
-    expect(result).toEqual({
-      requested: false,
-      reason: "failed",
-      code: "error",
-    });
-    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
-      where: { id: "del-1" },
-      data: { error: "execute:error" },
-    });
+    expect(result).toEqual({ requested: false, code: "ERROR" });
     spy.mockRestore();
   });
 });

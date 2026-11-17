@@ -105,10 +105,6 @@ vi.mock("~/app/actions/searchProjectMembers", () => ({
   searchProjectMembers: vi.fn(() => Promise.resolve({ items: [], total: 0 })),
 }));
 
-vi.mock("~/app/actions/test-run-notifications", () => ({
-  notifyTestCaseAssignment: vi.fn(() => Promise.resolve()),
-}));
-
 vi.mock("@/components/TestResultHistory", () => ({
   default: ({ caseId }: { caseId: number }) => (
     <div data-testid="test-result-history">History for case {caseId}</div>
@@ -242,7 +238,7 @@ const mockTestCase = {
   steps: [],
   caseTags: [],
   caseIssues: [],
-  testRuns: [],
+  testRunCases: [],
   source: "manual",
   automated: false,
 };
@@ -367,6 +363,53 @@ describe("TestRunCaseDetails", () => {
       name: /actions\.addResult/i,
     });
     expect(addResultBtn).toBeDisabled();
+  });
+
+  describe("dependency gate", () => {
+    const blockedState = {
+      blockedBy: [
+        { testRunCaseId: 100, repositoryCaseId: 41, name: "Create order" },
+      ],
+      notInRun: [],
+    };
+
+    it("shows the blocked notice with the prerequisite and disables Add Result", () => {
+      renderWithQueryClient(
+        <TestRunCaseDetails {...defaultProps} dependencyState={blockedState} />
+      );
+
+      const notice = screen.getByTestId("run-case-dependency-notice");
+      expect(notice).toBeInTheDocument();
+      expect(notice).toHaveTextContent("Create order");
+      expect(
+        screen.getByRole("button", { name: /actions\.addResult/i })
+      ).toBeDisabled();
+    });
+
+    it("warns about prerequisites outside the run without blocking", () => {
+      renderWithQueryClient(
+        <TestRunCaseDetails
+          {...defaultProps}
+          dependencyState={{
+            blockedBy: [],
+            notInRun: [{ repositoryCaseId: 77, name: "Elsewhere" }],
+          }}
+        />
+      );
+
+      const notice = screen.getByTestId("run-case-dependency-notice");
+      expect(notice).toHaveTextContent("Elsewhere");
+      expect(
+        screen.getByRole("button", { name: /actions\.addResult/i })
+      ).not.toBeDisabled();
+    });
+
+    it("renders no notice when the case has no dependency state", () => {
+      renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
+      expect(
+        screen.queryByTestId("run-case-dependency-notice")
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("renders navigation arrows (prev and next)", () => {

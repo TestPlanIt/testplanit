@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "~/lib/navigation";
+import { useUrlParamWriter } from "~/hooks/useUrlParamWriter";
 
 export type PageSizeOption = number | "All";
 
@@ -61,7 +61,7 @@ export function PaginationProvider({
   pageParam = "page",
   pageSizeParam = "pageSize",
 }: PaginationProviderProps) {
-  const router = useRouter();
+  const replaceUrlParams = useUrlParamWriter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
 
@@ -158,11 +158,24 @@ export function PaginationProvider({
     if (urlPage !== currentPage || urlSize !== pageSize) {
       lastSetValues.current = { page: currentPage, size: pageSize };
 
-      params.set(pageParam, currentPage.toString());
-      params.set(pageSizeParam, pageSize.toString());
-      router.replace(`?${params.toString()}`, { scroll: false });
+      // Through the shared writer: this fires on landing alongside the host
+      // page's own URL writes, and composing the navigation from this
+      // effect's `searchParams` snapshot would drop whichever of those is
+      // still in flight. The reads above stay on the snapshot — they are the
+      // reconciliation signal, not the value being written.
+      replaceUrlParams((query) => {
+        query.set(pageParam, currentPage.toString());
+        query.set(pageSizeParam, pageSize.toString());
+      });
     }
-  }, [currentPage, pageSize, router, searchParams, pageParam, pageSizeParam]);
+  }, [
+    currentPage,
+    pageSize,
+    replaceUrlParams,
+    searchParams,
+    pageParam,
+    pageSizeParam,
+  ]);
 
   const value = {
     currentPage,

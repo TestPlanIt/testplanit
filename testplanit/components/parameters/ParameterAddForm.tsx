@@ -19,6 +19,7 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { toast } from "sonner";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
+import { apiFetch } from "~/lib/basePath";
 
 export interface ParameterAddFormProps {
   caseId: number;
@@ -132,7 +133,7 @@ export function ParameterAddForm({
     setSubmitting(true);
     try {
       const body = buildPayload(values, caseId, existingCount);
-      const res = await fetch(`/api/repository/cases/${caseId}/parameters`, {
+      const res = await apiFetch(`/api/repository/cases/${caseId}/parameters`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

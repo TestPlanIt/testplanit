@@ -52,8 +52,19 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 
 // The wizard has its own suite; here it is a probe that records its props
 // and lets a test fire `onCreated`.
-vi.mock("./repository-webhook-auto-execute", () => ({
-  RepositoryWebhookAutoExecute: () => null,
+vi.mock("./webhook-actions-section", () => ({
+  WebhookActionsSection: (props: any) => (
+    <div
+      data-testid="webhook-actions-section"
+      data-webhook={props.webhookConfigId}
+      data-source={props.source}
+      data-integration={
+        props.integration
+          ? `${props.integration.id}:${props.integration.provider}`
+          : "none"
+      }
+    />
+  ),
 }));
 vi.mock("./inbound-webhook-wizard", () => ({
   InboundWebhookWizard: (props: any) => {
@@ -395,7 +406,6 @@ const repositoryConfig = {
   ...githubConfig,
   id: "cfg-repo",
   token: "whk_" + "d".repeat(64),
-  subscribedEvents: ["code:pull_request", "code:push"],
   baseBranch: null,
   codeRepositoryConfigId: 9,
   codeRepositoryConfig: {
@@ -517,7 +527,7 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     });
   });
 
-  it("Test 3a: a repository-bound webhook renders as a repository card with its event switches", () => {
+  it("Test 3a: a repository-bound webhook renders as a repository card with its rules", () => {
     setConfigs([jiraConfig, repositoryConfig]);
     mockFindManyConnections.mockReturnValue({
       data: [
@@ -533,9 +543,18 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     expect(screen.getByTestId("webhook-inbound-card-jira")).toBeInTheDocument();
     const repoCard = screen.getByTestId("webhook-inbound-card-repository-9");
     expect(repoCard).toHaveTextContent("acme/app");
-    expect(
-      within(repoCard).getByTestId("webhook-repository-event-pull-request")
-    ).toBeChecked();
+    const section = within(repoCard).getByTestId("webhook-actions-section");
+    expect(section).toHaveAttribute("data-webhook", "cfg-repo");
+    expect(section).toHaveAttribute("data-source", "repository");
+    const select = mockFindManyWebhookConfig.mock.calls.at(-1)![0].select;
+    for (const removed of [
+      "subscribedEvents",
+      "autoRunMinScore",
+      "autoExecuteEnabled",
+      "autoExecuteTargetId",
+    ]) {
+      expect(select).not.toHaveProperty(removed);
+    }
     expect(
       screen.queryByTestId("webhook-inbound-card-github")
     ).not.toBeInTheDocument();
@@ -544,6 +563,27 @@ describe("WebhookConfigForm (multi-adapter)", () => {
       id: 9,
       configured: true,
     });
+  });
+
+  it("Test 3b: an issue-tracker card lists its rules with the project's integration", () => {
+    setConfigs([jiraConfig]);
+    render(<WebhookConfigForm projectId={42} />);
+    const card = screen.getByTestId("webhook-inbound-card-jira");
+    const section = within(card).getByTestId("webhook-actions-section");
+    expect(section).toHaveAttribute("data-webhook", "cfg-jira");
+    expect(section).toHaveAttribute("data-source", "tracker");
+    expect(section).toHaveAttribute("data-integration", "1:JIRA");
+  });
+
+  it("Test 3c: an issue-tracker card without an active integration hands its rules none", () => {
+    setConfigs([jiraConfig]);
+    setActiveIntegrationProvider(null);
+    render(<WebhookConfigForm projectId={42} />);
+    const section = within(
+      screen.getByTestId("webhook-inbound-card-jira")
+    ).getByTestId("webhook-actions-section");
+    expect(section).toHaveAttribute("data-source", "tracker");
+    expect(section).toHaveAttribute("data-integration", "none");
   });
 
   // ─── Per-card render + per-card root testid scheme ───────────────────
@@ -589,12 +629,10 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     expect(screen.getByTestId("webhook-inbound-card-ado")).toBeInTheDocument();
   });
 
-  it("Test 11: GitHub scope hint is visible on the configured GitHub card", () => {
-    // Scope hint moved from the (now inline) create flow to the configured
-    // card so admins see the scoping rules after the webhook exists.
+  it("Test 11: the configured GitHub card leaves the scope hint to the wizard; its actions say what events do", () => {
     setConfigs([githubConfig]);
     render(<WebhookConfigForm projectId={42} />);
-    expect(screen.getByText("inboundGithubScopeHint")).toBeInTheDocument();
+    expect(screen.queryByText("inboundGithubScopeHint")).toBeNull();
   });
 
   // ─── Send-test ───────────────────────────────────────────────────────

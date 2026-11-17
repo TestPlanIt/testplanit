@@ -1,6 +1,6 @@
 {
   "name": "@testplanit/wdio-reporter",
-  "version": "1.1.0",
+  "version": "1.2.0-beta.0",
   "description": "WebdriverIO reporter for TestPlanIt - report test results directly to your TestPlanIt instance",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -51,19 +51,19 @@
     "tag": "latest"
   },
   "peerDependencies": {
-    "@wdio/reporter": "^8.0.0 || ^9.0.0",
-    "@wdio/types": "^8.0.0 || ^9.0.0"
+    "@wdio/reporter": "^8.0.0 || ^9.0.0 || ^10.0.0",
+    "@wdio/types": "^8.0.0 || ^9.0.0 || ^10.0.0"
   },
   "dependencies": {
     "@testplanit/api": "workspace:^"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
-    "@vitest/coverage-v8": "^4.1.11",
-    "@wdio/reporter": "^9.31.2",
-    "@wdio/types": "^9.31.2",
-    "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.11"
+    "@types/node": "^26.6.6",
+    "@vitest/coverage-v8": "^5.1.0",
+    "@wdio/reporter": "^10.2.0",
+    "@wdio/types": "^10.2.0",
+    "tsup": "^9.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0"
   }
 }

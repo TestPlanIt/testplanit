@@ -9,6 +9,7 @@ import { Compass } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
 import { cn } from "~/utils";
+import { apiFetch } from "~/lib/basePath";
 
 interface SessionsListProps {
   sessionIds?: number[];
@@ -124,7 +125,7 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
         },
       };
 
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/model/Sessions/findMany?q=${encodeURIComponent(JSON.stringify(params))}`
       );
 
@@ -142,7 +143,7 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
       const needsCount = query.trim().length > 0 || computedCount === undefined;
 
       if (needsCount) {
-        const countResponse = await fetch(
+        const countResponse = await apiFetch(
           `/api/model/Sessions/count?q=${encodeURIComponent(JSON.stringify({ where }))}`
         );
 

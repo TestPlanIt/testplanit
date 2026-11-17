@@ -1,3 +1,4 @@
+import { apiFetch } from "~/lib/basePath";
 /**
  * Client-side shape and serializers for the requirement coverage family's
  * execution scope (milestone/configuration — the hybrid opt-in frame; the
@@ -90,8 +91,8 @@ export function fetchWithExecutionScope(
   if (fitsQuery) appendExecutionScopeParams(params, scope);
   const query = params.toString();
   const url = query ? `${path}?${query}` : path;
-  if (fitsQuery) return fetch(url);
-  return fetch(url, {
+  if (fitsQuery) return apiFetch(url);
+  return apiFetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(executionScopeBodyFields(scope)),

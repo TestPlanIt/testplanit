@@ -1,5 +1,11 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import {
+  StepLayoutToggle,
+  stepLayoutClasses,
+} from "@/components/steps/StepLayoutToggle";
+import { useStepLayout } from "~/hooks/useStepLayout";
+import { cn } from "~/utils";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DateFormatter } from "@/components/DateFormatter";
 import { formatSeconds } from "@/components/DurationDisplay";
@@ -28,6 +34,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { PanelCollapseToggle } from "@/components/PanelCollapseToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,13 +90,14 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { EditResultModal } from "~/app/[locale]/projects/repository/[projectId]/EditResultModal";
 import FieldValueRenderer from "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
+import { usePanelCollapsed } from "~/hooks/usePanelCollapsed";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { resolveEffectiveWindowSeconds } from "~/lib/services/editWindow";
 import { Link, useRouter } from "~/lib/navigation";
 import { getDateFnsLocale } from "~/utils/locales";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
-import TipTapEditor from "./tiptap/TipTapEditor";
+import ReadOnlyRichText from "./tiptap/ReadOnlyRichText";
 
 // Define unified result types
 interface UnifiedTestResultBase {
@@ -442,6 +450,8 @@ const StepResultsDisplay = ({
   const locale = useLocale();
   const tRepository = useTranslations("repository"); // For repository level translations
 
+  const { layout: stepLayout, isSideBySide } = useStepLayout();
+
   if (!stepResults || stepResults.length === 0) {
     return null;
   }
@@ -450,9 +460,13 @@ const StepResultsDisplay = ({
   let stepCounter = 0; // Initialize step counter
 
   return (
-    <div className="px-4 py-2">
-      <div className="text-xs font-medium text-muted-foreground mb-2">
+    <div
+      className={cn("px-4 py-2", stepLayoutClasses.container)}
+      data-step-layout={stepLayout}
+    >
+      <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center justify-between">
         {tCommon("fields.steps")}
+        <StepLayoutToggle />
       </div>
       <div className="space-y-4">
         {stepResults.map((stepResult, index) => {
@@ -528,47 +542,67 @@ const StepResultsDisplay = ({
                 key={`result-${resultId}-step-${stepResult.id}-${index}`}
                 className="space-y-2 border rounded-lg p-4"
               >
-                <div className="flex items-center justify-between">
+                <div
+                  className={cn(
+                    "flex items-center justify-between",
+                    // Side by side, the header mirrors the two columns below
+                    // so the expected result label sits over its own box.
+                    isSideBySide && "@2xl:grid @2xl:grid-cols-2 @2xl:gap-2"
+                  )}
+                >
                   <div className="font-bold text-sm flex items-center gap-2">
                     <ListOrdered className="h-4 w-4 shrink-0" />
                     {tCommon("fields.step")} {stepCounter}
                   </div>
-                  <StatusDisplay
-                    variant="filled"
-                    name={stepResult.status.name}
-                    color={stepResult.status.color.value}
-                    className="shrink-0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="bg-muted/30 rounded-lg p-2">
-                    <TipTapEditor
-                      content={stepContent as object}
-                      readOnly={true}
-                      projectId={projectId ? String(projectId) : undefined}
-                      className="prose-sm"
+                  <div className="flex items-center justify-between min-w-0">
+                    {isSideBySide && (
+                      <div className="hidden @2xl:block text-xs text-muted-foreground ps-2">
+                        {tCommon("fields.expectedResult")}
+                      </div>
+                    )}
+                    <StatusDisplay
+                      variant="filled"
+                      name={stepResult.status.name}
+                      color={stepResult.status.color.value}
+                      className="shrink-0 ms-auto"
                     />
                   </div>
-                  <div className="bg-muted/30 rounded-lg p-2">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      {tCommon("fields.expectedResult")}
+                </div>
+                <div className="space-y-2">
+                  <div
+                    className={cn(
+                      "gap-2",
+                      stepLayoutClasses.pair(isSideBySide)
+                    )}
+                  >
+                    <div className="bg-muted/30 rounded-lg p-2 min-w-0">
+                      <ReadOnlyRichText
+                        content={stepContent as object}
+                        className="prose-sm"
+                      />
                     </div>
-                    <TipTapEditor
-                      content={expectedResultContent as object}
-                      readOnly={true}
-                      projectId={projectId ? String(projectId) : undefined}
-                      className="prose-sm"
-                    />
+                    <div className="bg-muted/30 rounded-lg p-2 min-w-0">
+                      <div
+                        className={cn(
+                          "text-xs text-muted-foreground mb-1",
+                          stepLayoutClasses.stackedOnly(isSideBySide)
+                        )}
+                      >
+                        {tCommon("fields.expectedResult")}
+                      </div>
+                      <ReadOnlyRichText
+                        content={expectedResultContent as object}
+                        className="prose-sm"
+                      />
+                    </div>
                   </div>
                   {stepResult.notes && !isTiptapEmpty(stepResult.notes) && (
                     <div className="bg-muted/30 rounded-lg p-2">
                       <div className="text-xs text-muted-foreground mb-1">
                         {tCommon("actions.resultDetails")}
                       </div>
-                      <TipTapEditor
+                      <ReadOnlyRichText
                         content={ensureTipTapJSON(stepResult.notes)}
-                        readOnly={true}
-                        projectId={projectId ? String(projectId) : undefined}
                         className="prose-sm"
                       />
                     </div>
@@ -705,10 +739,8 @@ const RenderSharedGroupInHistoryList: React.FC<{
                 <div className="text-xs text-muted-foreground mb-1">
                   {tCommon("actions.resultDetails")}
                 </div>
-                <TipTapEditor
+                <ReadOnlyRichText
                   content={ensureTipTapJSON(itemResult.notes)}
-                  readOnly={true}
-                  projectId={projectId ? String(projectId) : undefined}
                   className="prose-sm"
                 />
               </div>
@@ -743,12 +775,10 @@ const RenderSharedGroupInHistoryList: React.FC<{
 // the row is actually expanded and the eager history query stays row-slim.
 const ManualResultExpandedDetails = ({
   result,
-  projectId,
   activeProjectId,
   session,
 }: {
   result: ManualTestResult;
-  projectId?: number;
   activeProjectId: number;
   session: any;
 }) => {
@@ -924,10 +954,8 @@ const ManualResultExpandedDetails = ({
             {tCommon("actions.resultDetails")}
           </div>
           <div className="px-4">
-            <TipTapEditor
+            <ReadOnlyRichText
               content={ensureTipTapJSON(details.notes)}
-              readOnly={true}
-              projectId={projectId ? String(projectId) : undefined}
               className="h-auto"
             />
           </div>
@@ -1061,12 +1089,54 @@ const JUnitResultExpandedDetails = ({
   );
 };
 
-export default function TestResultHistory({
+/**
+ * The history's queries are the heaviest on the case page, so while the panel
+ * is collapsed only its header renders and none of them run.
+ */
+export default function TestResultHistory(props: TestResultHistoryProps) {
+  const tCases = useTranslations("repository.cases");
+  const { collapsed, toggle, hydrated } = usePanelCollapsed(
+    "test-result-history"
+  );
+  const collapseToggle = (
+    <PanelCollapseToggle
+      collapsed={collapsed}
+      onToggle={toggle}
+      testId="result-history-collapse-toggle"
+    />
+  );
+
+  if (hydrated && !collapsed) {
+    return (
+      <TestResultHistoryContent {...props} collapseToggle={collapseToggle} />
+    );
+  }
+
+  return (
+    <Card shadow="none">
+      <CardHeader className="flex flex-row items-center justify-between p-4">
+        <div>
+          <CardTitle className="flex items-center gap-1">
+            {collapseToggle}
+            <History className="w-5 h-5" />
+            {tCases("testResultHistory")}
+          </CardTitle>
+          <CardDescription>
+            {tCases("testResultHistoryDescription")}
+          </CardDescription>
+        </div>
+      </CardHeader>
+    </Card>
+  );
+}
+
+function TestResultHistoryContent({
   caseId,
   projectId,
   session,
   currentTestRunId,
-}: TestResultHistoryProps) {
+  collapseToggle,
+}: TestResultHistoryProps & { collapseToggle: React.ReactNode }) {
   const tCommon = useTranslations("common");
   const tCases = useTranslations("repository.cases");
   const tParams = useTranslations("parameters");
@@ -1158,8 +1228,7 @@ export default function TestResultHistory({
             where: { isDeleted: false },
             orderBy: { order: "asc" },
           },
-          testRuns: {
-            // These are TestRunCases records
+          testRunCases: {
             select: {
               id: true, // TestRunCases.id
               testRun: {
@@ -1169,6 +1238,7 @@ export default function TestResultHistory({
                   name: true,
                   milestone: { select: { name: true } },
                   isCompleted: true,
+                  completedAt: true,
                   isDeleted: true,
                   configurationGroupId: true,
                   configuration: { select: { id: true, name: true } },
@@ -1349,7 +1419,7 @@ export default function TestResultHistory({
     const allUnifiedResults: UnifiedTestResult[] = [];
 
     // 1. Process Manual Results from TestRunCases
-    fetchedTestCase.testRuns?.forEach((trc: any) => {
+    fetchedTestCase.testRunCases?.forEach((trc: any) => {
       trc.results?.forEach((res: any) => {
         allUnifiedResults.push({
           displayId: `manual-${res.id}`,
@@ -1430,7 +1500,7 @@ export default function TestResultHistory({
       }
       // If a JUnit result is explicitly linked to the same TestRun as a TRC, consider that TRC covered.
       if (r.sourceType === "junit" && r.associatedTestRun) {
-        const correspondingTrc = fetchedTestCase.testRuns?.find(
+        const correspondingTrc = fetchedTestCase.testRunCases?.find(
           (trcItem: any) => trcItem.testRun?.id === r.associatedTestRun?.id
         );
         if (correspondingTrc) {
@@ -1439,14 +1509,23 @@ export default function TestResultHistory({
       }
     });
 
-    fetchedTestCase.testRuns?.forEach((trc: any) => {
+    fetchedTestCase.testRunCases?.forEach((trc: any) => {
       if (!executedOrCoveredTrcIds.has(trc.id)) {
+        // A completed run is locked, so a case with no result there can
+        // never be executed: it is Untested, not Pending. Anchor it to the
+        // run's completion time so it sorts into the history chronologically.
+        const isRunCompleted = Boolean(trc.testRun?.isCompleted);
         allUnifiedResults.push({
           displayId: `pending-${trc.id}`, // Use TestRunCases.id for pending displayId
           sourceType: "pending",
-          executedAt: new Date(),
+          executedAt:
+            isRunCompleted && trc.testRun?.completedAt
+              ? new Date(trc.testRun.completedAt)
+              : new Date(),
           status: {
-            name: tCommon("status.pending"),
+            name: isRunCompleted
+              ? tCommon("labels.untested")
+              : tCommon("status.pending"),
             color: { value: "#B1B2B3" },
           },
           isPending: true,
@@ -1467,10 +1546,15 @@ export default function TestResultHistory({
       }
     });
 
-    // Sort results: pending first, then by executedAt descending
+    // Sort results: pending (open runs) first, then by executedAt descending.
+    // Untested rows from completed runs stay in chronological order.
+    const isOpenPending = (r: UnifiedTestResult) =>
+      r.isPending && !r.associatedTestRun?.isCompleted;
     return allUnifiedResults.sort((a, b) => {
-      if (a.isPending && !b.isPending) return -1;
-      if (!a.isPending && b.isPending) return 1;
+      const aPending = isOpenPending(a);
+      const bPending = isOpenPending(b);
+      if (aPending && !bPending) return -1;
+      if (!aPending && bPending) return 1;
       return (
         new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime()
       );
@@ -1500,6 +1584,7 @@ export default function TestResultHistory({
       <Card shadow="none">
         <CardHeader>
           <CardTitle className="flex items-center gap-1">
+            {collapseToggle}
             <History className="w-5 h-5" />
             {tCases("testResultHistory")}
           </CardTitle>
@@ -1547,6 +1632,7 @@ export default function TestResultHistory({
       <Card shadow="none">
         <CardHeader>
           <CardTitle className="flex items-center gap-1">
+            {collapseToggle}
             <History className="w-5 h-5" />
             {tCases("testResultHistory")}
           </CardTitle>
@@ -1657,6 +1743,7 @@ export default function TestResultHistory({
         >
           <div>
             <CardTitle className="flex items-center gap-1">
+              {collapseToggle}
               <History className="w-5 h-5" />
               {tCases("testResultHistory")}
             </CardTitle>
@@ -2034,7 +2121,6 @@ export default function TestResultHistory({
                     {result.sourceType === "manual" && (
                       <ManualResultExpandedDetails
                         result={result}
-                        projectId={projectId}
                         activeProjectId={activeProjectId}
                         session={session}
                       />
@@ -2066,6 +2152,7 @@ export default function TestResultHistory({
       >
         <div>
           <CardTitle className="flex items-center gap-1">
+            {collapseToggle}
             <History className="w-5 h-5" />
             {tCases("testResultHistory")}
           </CardTitle>

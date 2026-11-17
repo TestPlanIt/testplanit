@@ -26,7 +26,28 @@
  * own query shapes — any semantic change here must be mirrored there.
  */
 
+import { bucketDateIso, type DateGrouping } from "~/lib/reports/dateGrouping";
 import type { DbClient } from "~/lib/zenstack";
+
+/**
+ * Group keys for the Result Source dimension. Manual rows come from
+ * TestRunResults, automated rows from JUnitTestResult; rows that are not
+ * executions (runs, impact analyses) carry no source and group under "None".
+ */
+export const RESULT_SOURCE_MANUAL = "MANUAL";
+export const RESULT_SOURCE_AUTOMATED = "AUTOMATED";
+
+/**
+ * Tags manual result rows with their source so the Result Source dimension
+ * can group the union. Applied at fetch time — the source is a property of
+ * the table a row came from, not a column — and junit rows get theirs in
+ * fetchJunitResultRows.
+ */
+export function tagManualResultRows<T extends Record<string, any>>(
+  rows: T[]
+): Array<T & { resultSource: string }> {
+  return rows.map((row) => ({ ...row, resultSource: RESULT_SOURCE_MANUAL }));
+}
 
 /**
  * Where-clause for automated durations. Automated results live in
@@ -119,6 +140,8 @@ export async function fetchJunitResultRows(
 ) {
   const needsFolder = groupBy.includes("folderId");
   const needsTag = groupBy.includes("tagId");
+  const needsIssue = groupBy.includes("issueId");
+  const needsRootCause = groupBy.includes("rootCauseId");
   const junitResults = await db.jUnitTestResult.findMany({
     where: junitResultWhere(projectId, isProjectSpecific, filters, {
       ...opts,
@@ -134,7 +157,10 @@ export async function fetchJunitResultRows(
       ...(opts.includeStatusFlags
         ? { status: { select: { isSuccess: true } } }
         : {}),
-      ...(needsFolder || needsTag
+      ...(needsRootCause
+        ? { failureSignature: { select: { classificationId: true } } }
+        : {}),
+      ...(needsFolder || needsTag || needsIssue
         ? {
             repositoryCase: {
               select: {
@@ -144,6 +170,14 @@ export async function fetchJunitResultRows(
                       caseTags: {
                         where: { tag: { isDeleted: false } },
                         select: { tagId: true },
+                      },
+                    }
+                  : {}),
+                ...(needsIssue
+                  ? {
+                      caseIssues: {
+                        where: { issue: { isDeleted: false } },
+                        select: { issueId: true },
                       },
                     }
                   : {}),
@@ -172,6 +206,13 @@ export async function fetchJunitResultRows(
     executedById: r.createdById,
     statusId: r.statusId,
     elapsed: r.time,
+    resultSource: RESULT_SOURCE_AUTOMATED,
+    // Effective root cause of the result's failure pattern. Manual rows
+    // never carry one, and junit rows without a classified signature stay
+    // null — both land in the root-cause dimension's "None" group.
+    ...(needsRootCause
+      ? { rootCauseId: r.failureSignature?.classificationId ?? null }
+      : {}),
     ...(opts.includeStatusFlags ? { status: r.status } : {}),
     testRunId: r.testSuite.testRunId,
     testRun: r.testSuite.testRun,
@@ -316,15 +357,14 @@ export function groupEngagementRows(
   rows: any[],
   groupBy: string[],
   makeBucket: () => any,
-  accumulate: (bucket: any, row: any) => void
+  accumulate: (bucket: any, row: any) => void,
+  dateGrouping?: DateGrouping
 ) {
   const grouped = new Map<string, any>();
   const add = (row: any, groupId: number | null) => {
     const keyFor = (field: string) => {
       if (field === "executedAt") {
-        const date = new Date(row.executedAt);
-        date.setUTCHours(0, 0, 0, 0);
-        return date.toISOString();
+        return bucketDateIso(row.executedAt, dateGrouping);
       }
       if (field === "groupId") return groupId;
       return row[field];

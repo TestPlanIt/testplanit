@@ -25,6 +25,7 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 interface ChangePasswordModalProps {
   open: boolean;
@@ -38,7 +39,7 @@ export function ChangePasswordModal({
   const t = useTranslations("users.profile.changePasswordModal");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -50,7 +51,7 @@ export function ChangePasswordModal({
 
   useEffect(() => {
     if (!session?.user?.id) return;
-    fetch(`/api/users/${session.user.id}/password-policy`)
+    apiFetch(`/api/users/${session.user.id}/password-policy`)
       .then((res) => res.json())
       .then((data) => {
         if (data.policy) setPolicy(data.policy);
@@ -85,7 +86,7 @@ export function ChangePasswordModal({
     setIsLoading(true);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/users/${session.user.id}/change-password`,
         {
           method: "POST",
@@ -114,6 +115,11 @@ export function ChangePasswordModal({
           setErrors([result.error || tCommon("errors.somethingWentWrong")]);
         }
       } else {
+        // The route already re-issued this browser's cookie with the new
+        // passwordChangedAt, but NextAuth re-signs the cookie on every session
+        // fetch, so one in flight at that moment can overwrite it with the old
+        // claims. This update re-reads the DB and writes the fresh cookie last.
+        await updateSession();
         toast.success(t("success.passwordChanged"));
         onClose();
       }

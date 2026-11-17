@@ -26,6 +26,7 @@ import {
   resolveRequestDateRange,
 } from "~/lib/reports/dateRangePresets";
 import { formatDateRange } from "~/utils/dateFormat";
+import { apiFetch, withBasePath } from "~/lib/basePath";
 
 interface StaticReportViewerProps {
   shareData: any;
@@ -134,6 +135,7 @@ export function StaticReportViewer({
       dimensions: reportData?.dimensions ?? [],
       metrics: reportData?.metrics ?? [],
       projects: reportData?.projects ?? [],
+      dateGrouping: reportData?.dateGrouping || config?.dateGrouping,
       projectId,
     });
   }, [exportCsv, config, reportData, projectId]);
@@ -170,14 +172,14 @@ export function StaticReportViewer({
 
       // Call the share report API to fetch data
       const url = new URL(
-        `/api/share/${shareKey}/report`,
+        withBasePath(`/api/share/${shareKey}/report`),
         window.location.origin
       );
       if (token) {
         url.searchParams.set("token", token);
       }
 
-      const response = await fetch(url.toString());
+      const response = await apiFetch(url.toString());
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -316,6 +318,7 @@ export function StaticReportViewer({
         <ReportRenderer
           results={sortedResults}
           chartData={reportData.chartData || reportData.results}
+          chartSummary={reportData.chartSummary}
           showChartTotals={config.includeTotals === true}
           reportType={config.reportType}
           dimensions={reportData.dimensions || []}
@@ -329,12 +332,19 @@ export function StaticReportViewer({
           staleDaysThreshold={config.staleDaysThreshold}
           minExecutionsForRate={config.minExecutionsForRate}
           lookbackDays={config.lookbackDays}
-          dateGrouping={
-            reportData.dateGrouping || config.dateGrouping || "weekly"
-          }
+          dateGrouping={reportData.dateGrouping || config.dateGrouping}
           totalFlakyTests={reportData.totalFlakyTests}
           matrixAxes={reportData.matrixAxes}
           automationCandidatesSnapshot={reportData.automationCandidatesSnapshot}
+          resultsTrend={
+            reportData.periods && reportData.settings
+              ? {
+                  periods: reportData.periods,
+                  projects: reportData.projects || [],
+                  settings: reportData.settings,
+                }
+              : undefined
+          }
           loadedCount={sortedResults.length}
           totalCount={
             reportData.pagination?.totalCount || reportData.results?.length || 0

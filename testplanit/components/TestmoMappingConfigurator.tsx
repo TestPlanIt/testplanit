@@ -490,8 +490,11 @@ const DELETE_EXCLUDED_AREAS = new Set<ApplicationArea>([
   ApplicationArea.Documentation,
   ApplicationArea.TestCaseRestrictedFields,
   ApplicationArea.TestRunResultRestrictedFields,
+  ApplicationArea.AutomatedExecution,
+  ApplicationArea.FailurePatterns,
   ApplicationArea.SessionsRestrictedFields,
   ApplicationArea.Tags,
+  ApplicationArea.Alerts,
 ]);
 
 const CLOSE_ALLOWED_AREAS = new Set<ApplicationArea>([

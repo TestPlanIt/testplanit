@@ -164,7 +164,7 @@ describe("POST /api/repository/copy-move/cancel/[jobId]", () => {
     });
     const mockQueue = {
       getJob: vi.fn().mockResolvedValue(mockJob),
-      client: Promise.resolve(mockConnection),
+      getBackend: () => ({ client: Promise.resolve(mockConnection) }),
     };
     (getCopyMoveQueue as any).mockReturnValue(mockQueue);
 

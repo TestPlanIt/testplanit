@@ -107,14 +107,32 @@ describe("MilestoneSyncSettings", () => {
     expect(screen.getByText("title")).toBeInTheDocument();
   });
 
-  it("hides for a non-milestones-capable integration (GITHUB)", () => {
+  it("hides for a non-milestones-capable integration (GITLAB)", () => {
     const { container } = render(
+      <MilestoneSyncSettings
+        projectIntegration={makeProjectIntegration()}
+        integration={{ ...githubIntegration, provider: "GITLAB" }}
+      />
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("offers GitHub only the kinds it has: releases, no sprints", () => {
+    render(
       <MilestoneSyncSettings
         projectIntegration={makeProjectIntegration()}
         integration={githubIntegration}
       />
     );
-    expect(container).toBeEmptyDOMElement();
+
+    fireEvent.click(screen.getByRole("switch", { name: /enableLabel/i }));
+
+    expect(
+      screen.getByRole("checkbox", { name: /releasesLabel/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: /sprintsLabel/i })
+    ).toBeNull();
   });
 
   it("save button starts disabled, and toggling a setting alone does not persist", async () => {

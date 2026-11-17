@@ -205,7 +205,8 @@ export class TestPlanItClient {
       timeout?: number;
     }
   ): Promise<T> {
-    const url = new URL(path, this.baseUrl);
+    // Joined as strings: new URL(path, base) would drop a path prefix on base.
+    const url = new URL(`${this.baseUrl}${path}`);
 
     // Add query parameters
     if (options?.query) {
@@ -452,7 +453,8 @@ export class TestPlanItClient {
       timeout?: number;
     }
   ): Promise<T> {
-    const url = new URL(path, this.baseUrl);
+    // Joined as strings: new URL(path, base) would drop a path prefix on base.
+    const url = new URL(`${this.baseUrl}${path}`);
 
     if (options?.query) {
       for (const [key, value] of Object.entries(options.query)) {
@@ -1379,8 +1381,9 @@ export class TestPlanItClient {
    * failures are visible: each entry is `status: "success"` with a `caseId`, or
    * `status: "error"` with a message (e.g. a custom field not on the template).
    *
-   * `templateId` defaults to the template marked Default, else the project's
-   * first enabled template; resolve a specific one with
+   * `templateId` defaults to the project's default template, then the template
+   * marked Default, else the project's first enabled template; resolve a
+   * specific one with
    * {@link findTemplateByName}. `stateName` defaults to the CASES state marked
    * Default, else the first by order. Resolve `folderId` with
    * {@link findFolderByName} / {@link findOrCreateFolderPath}.
@@ -1895,8 +1898,10 @@ export class TestPlanItClient {
       testRun: { connect: { id: options.testRunId } },
       testRunCase: { connect: { id: options.testRunCaseId } },
       status: { connect: { id: options.statusId } },
-      attempt: options.attempt ?? 1,
     };
+    if (options.attempt !== undefined) {
+      data.attempt = options.attempt;
+    }
     if (options.elapsed !== undefined) {
       data.elapsed = options.elapsed;
     }
@@ -1960,7 +1965,7 @@ export class TestPlanItClient {
       }
     }
 
-    const url = new URL("/api/test-results/import", this.baseUrl);
+    const url = new URL(`${this.baseUrl}/api/test-results/import`);
 
     const response = await fetch(url.toString(), {
       method: "POST",

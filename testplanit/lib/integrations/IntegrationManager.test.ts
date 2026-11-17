@@ -115,7 +115,8 @@ describe("IntegrationManager", () => {
       expect(types).toContain("GITEA");
       expect(types).toContain("REDMINE");
       expect(types).toContain("MANTISBT");
-      expect(types).toHaveLength(8);
+      expect(types).toContain("CLICKUP");
+      expect(types).toHaveLength(9);
     });
   });
 
@@ -125,6 +126,7 @@ describe("IntegrationManager", () => {
       expect(manager.isTypeRegistered("GITHUB")).toBe(true);
       expect(manager.isTypeRegistered("AZURE_DEVOPS")).toBe(true);
       expect(manager.isTypeRegistered("SIMPLE_URL")).toBe(true);
+      expect(manager.isTypeRegistered("CLICKUP")).toBe(true);
     });
 
     it("should return false for unregistered types", () => {

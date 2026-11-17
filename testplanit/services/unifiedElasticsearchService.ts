@@ -152,6 +152,7 @@ export const ENTITY_MAPPINGS = {
       estimate: { type: "integer" as const },
       forecastManual: { type: "integer" as const },
       forecastAutomated: { type: "float" as const },
+      riskScore: { type: "float" as const },
       automated: { type: "boolean" as const },
       isArchived: { type: "boolean" as const },
       isDeleted: { type: "boolean" as const },
@@ -316,6 +317,9 @@ export const ENTITY_MAPPINGS = {
   },
   [SearchableEntityType.ISSUE]: {
     properties: {
+      // `projectId` holds every project the issue is visible in (an issue
+      // row is shared across the projects that import or link it); the
+      // integer mapping accepts the list as-is.
       ...baseMapping.properties,
       name: {
         type: "text" as const,
@@ -656,135 +660,4 @@ export function getIndicesForEntityTypes(
       : Object.values(SearchableEntityType);
 
   return types.map((type) => getEntityIndexName(type, tenantId));
-}
-
-/**
- * Build aggregations for faceted search
- */
-export function buildAggregations(
-  facets: string[],
-  entityTypes?: SearchableEntityType[]
-): Record<string, any> {
-  const aggs: Record<string, any> = {};
-
-  // Common facets
-  if (facets.includes("projects") || facets.includes("projectId")) {
-    aggs.projects = {
-      terms: {
-        field: "projectId",
-        size: 100,
-      },
-    };
-  }
-
-  if (facets.includes("states") || facets.includes("stateId")) {
-    aggs.states = {
-      terms: {
-        field: "stateId",
-        size: 50,
-      },
-    };
-  }
-
-  if (facets.includes("tags") || facets.includes("tagIds")) {
-    aggs.tags = {
-      terms: {
-        field: "tagIds",
-        size: 100,
-      },
-    };
-  }
-
-  if (facets.includes("creators") || facets.includes("creatorId")) {
-    aggs.creators = {
-      terms: {
-        field: "createdById.keyword",
-        size: 100,
-      },
-    };
-  }
-
-  // Entity-specific aggregations
-  if (
-    !entityTypes ||
-    entityTypes.includes(SearchableEntityType.REPOSITORY_CASE)
-  ) {
-    if (facets.includes("folders") || facets.includes("folderId")) {
-      aggs.folders = {
-        terms: {
-          field: "folderId",
-          size: 50,
-        },
-      };
-    }
-
-    if (facets.includes("templates") || facets.includes("templateId")) {
-      aggs.templates = {
-        terms: {
-          field: "templateId",
-          size: 50,
-        },
-      };
-    }
-
-    if (facets.includes("automated")) {
-      aggs.automated = {
-        terms: {
-          field: "automated",
-        },
-      };
-    }
-  }
-
-  if (!entityTypes || entityTypes.includes(SearchableEntityType.TEST_RUN)) {
-    if (
-      facets.includes("configurations") ||
-      facets.includes("configurationId")
-    ) {
-      aggs.configurations = {
-        terms: {
-          field: "configurationId",
-          size: 50,
-        },
-      };
-    }
-
-    if (facets.includes("milestones") || facets.includes("milestoneId")) {
-      aggs.milestones = {
-        terms: {
-          field: "milestoneId",
-          size: 50,
-        },
-      };
-    }
-
-    if (facets.includes("testRunType")) {
-      aggs.testRunType = {
-        terms: {
-          field: "testRunType",
-        },
-      };
-    }
-  }
-
-  if (!entityTypes || entityTypes.includes(SearchableEntityType.SESSION)) {
-    if (facets.includes("assignedTo") || facets.includes("assignedToId")) {
-      aggs.assignedTo = {
-        terms: {
-          field: "assignedToId.keyword",
-          size: 100,
-        },
-      };
-    }
-  }
-
-  // Entity type counts
-  aggs.entityTypes = {
-    terms: {
-      field: "_index",
-      size: 10,
-    },
-  };
-
-  return aggs;
 }

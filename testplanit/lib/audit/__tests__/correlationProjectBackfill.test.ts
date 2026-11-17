@@ -14,9 +14,17 @@
  * sound because an entity never moves between projects, unlike `entityName`,
  * which keeps its write-time snapshot. Batched one query per owning table.
  */
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it, vi } from "vitest";
 
-import { backfillProjectIds, type MaterializedRow } from "../correlation";
+import {
+  backfillProjectIds,
+  PROJECT_SCOPED_ROOT_TABLES,
+  type MaterializedRow,
+} from "../correlation";
 
 /** A materialized row with the fields the backfill reads; the rest are inert. */
 function row(over: Partial<MaterializedRow>): MaterializedRow {
@@ -227,4 +235,53 @@ describe("backfillProjectIds", () => {
     expect(rows.map((r) => r.projectId)).toEqual([null, null]);
     expect(queries).toHaveLength(0);
   });
+});
+
+describe("PROJECT_SCOPED_ROOT_TABLES parity with schema.zmodel", () => {
+  const schema = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), "../../../schema.zmodel"),
+    "utf8"
+  );
+
+  /** Model name -> its `id` scalar type and whether it declares `projectId Int`. */
+  function collectModels(): Map<
+    string,
+    { idType: string | null; hasProjectId: boolean }
+  > {
+    const models = new Map<
+      string,
+      { idType: string | null; hasProjectId: boolean }
+    >();
+    let current: string | null = null;
+    for (const line of schema.split("\n")) {
+      const modelMatch = line.match(/^model\s+(\w+)\s*\{/);
+      if (modelMatch) {
+        current = modelMatch[1];
+        models.set(current, { idType: null, hasProjectId: false });
+        continue;
+      }
+      if (line.startsWith("}")) {
+        current = null;
+        continue;
+      }
+      if (!current) continue;
+      const entry = models.get(current)!;
+      const idMatch = line.match(/^\s*id\s+(\w+)\b/);
+      if (idMatch) entry.idType = idMatch[1];
+      if (/^\s*projectId\s+Int\b/.test(line)) entry.hasProjectId = true;
+    }
+    return models;
+  }
+
+  const models = collectModels();
+
+  it.each(Object.entries(PROJECT_SCOPED_ROOT_TABLES))(
+    "%s declares projectId and an id matching its pk cast",
+    (table, pkType) => {
+      const model = models.get(table);
+      expect(model, `${table} is not a model`).toBeDefined();
+      expect(model!.hasProjectId, `${table} has no projectId Int`).toBe(true);
+      expect(model!.idType).toBe(pkType === "int" ? "Int" : "String");
+    }
+  );
 });

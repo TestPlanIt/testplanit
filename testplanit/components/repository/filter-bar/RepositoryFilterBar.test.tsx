@@ -1,5 +1,13 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { buildFilterDimensions } from "~/lib/repository/filterDimensions";
 import {
@@ -26,6 +34,8 @@ vi.mock("~/hooks/useSavedRepositoryViews", () => ({
     isMutating: false,
   }),
 }));
+
+import { useState } from "react";
 
 import { RepositoryFilterBar } from "./RepositoryFilterBar";
 
@@ -414,6 +424,176 @@ describe("RepositoryFilterBar cap feedback", () => {
       expect(
         screen.queryByTestId("saved-views-trigger")
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("typed-value filters", () => {
+    const riskRegistry = buildFilterDimensions({ includeRiskScore: true });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    /**
+     * The repository bar reads `predicates` back from the URL, so a commit
+     * lands a render later than any local state the bar sets alongside it,
+     * and each mutator is closed over the snapshot it was built with. A
+     * synchronous parent hides both effects.
+     */
+    function AsyncUrlHarness({
+      registry = riskRegistry,
+    }: {
+      registry?: ReturnType<typeof buildFilterDimensions>;
+    } = {}) {
+      const [predicates, setPredicates] = useState<FilterPredicate[]>([]);
+      const write = (next: FilterPredicate[]) => {
+        writes.push(next);
+        setTimeout(() => act(() => setPredicates(next)), 120);
+      };
+      return (
+        <RepositoryFilterBar
+          {...makeProps({
+            registry,
+            predicates,
+            onAdd: (next: FilterPredicate) => {
+              const i = predicates.findIndex(
+                (p) =>
+                  p.dimension === next.dimension && p.operator === next.operator
+              );
+              write(
+                i === -1
+                  ? [...predicates, next]
+                  : predicates.map((p, j) => (j === i ? next : p))
+              );
+            },
+            onUpdate: (
+              dimension: string,
+              operator: string,
+              next: FilterPredicate
+            ) => {
+              const i = predicates.findIndex(
+                (p) => p.dimension === dimension && p.operator === operator
+              );
+              if (i === -1) return; // the hook no-ops when the target is absent
+              write(predicates.map((p, j) => (j === i ? next : p)));
+            },
+            onRemove: (dimension: string, operator: string) =>
+              write(
+                predicates.filter(
+                  (p) => !(p.dimension === dimension && p.operator === operator)
+                )
+              ),
+          })}
+        />
+      );
+    }
+
+    let writes: FilterPredicate[][] = [];
+
+    const settle = async () => {
+      await act(async () => {
+        vi.advanceTimersByTime(600);
+      });
+    };
+
+    const openDraft = (optionTestId: string) => {
+      fireEvent.click(screen.getByTestId("filter-bar-add"));
+      fireEvent.click(screen.getByTestId(optionTestId));
+    };
+
+    const valueInput = (selector = 'input[type="number"]') =>
+      screen
+        .getByTestId("filter-chip-editor")
+        .querySelector(selector) as HTMLInputElement;
+
+    beforeEach(() => {
+      writes = [];
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+    });
+
+    it("does not apply a typed value while it is being entered", async () => {
+      render(<AsyncUrlHarness />);
+      openDraft("filter-dimension-option-riskScore");
+
+      const input = valueInput();
+      fireEvent.change(input, { target: { value: "1" } });
+      await settle();
+
+      expect(writes).toEqual([]);
+    });
+
+    it("keeps the same input focused across multi-digit entry", async () => {
+      render(<AsyncUrlHarness />);
+      openDraft("filter-dimension-option-riskScore");
+
+      const input = valueInput();
+      input.focus();
+      fireEvent.change(input, { target: { value: "1" } });
+      await settle();
+      fireEvent.change(input, { target: { value: "12" } });
+      await settle();
+
+      expect(valueInput()).toBe(input);
+      expect(document.activeElement).toBe(input);
+      expect(input.value).toBe("12");
+    });
+
+    it("applies the whole value as one write when confirmed", async () => {
+      render(<AsyncUrlHarness />);
+      openDraft("filter-dimension-option-riskScore");
+
+      const input = valueInput();
+      fireEvent.change(input, { target: { value: "1" } });
+      await settle();
+      fireEvent.change(input, { target: { value: "12" } });
+      await settle();
+      fireEvent.click(screen.getByTestId("filter-input-apply"));
+      await settle();
+
+      expect(writes).toEqual([
+        [{ dimension: "riskScore", operator: "eq", values: [12] }],
+      ]);
+      expect(
+        screen.getByTestId("filter-chip-riskScore-eq").textContent
+      ).toContain("12");
+    });
+
+    it("drops a half-typed entry that is abandoned", async () => {
+      render(<AsyncUrlHarness />);
+      openDraft("filter-dimension-option-riskScore");
+
+      const input = valueInput();
+      fireEvent.change(input, { target: { value: "12" } });
+      fireEvent.change(input, { target: { value: "" } });
+      await settle();
+      fireEvent.keyDown(document.body, { key: "Escape" });
+      await settle();
+
+      expect(writes).toEqual([]);
+    });
+
+    it("applies a confirmed text value in one write too", async () => {
+      const textRegistry = buildFilterDimensions({
+        dynamicFields: [{ fieldId: 9, type: "Text String" }],
+      });
+      render(<AsyncUrlHarness registry={textRegistry} />);
+      openDraft("filter-dimension-option-field_9");
+
+      const input = valueInput("input");
+      input.focus();
+      fireEvent.change(input, { target: { value: "l" } });
+      await settle();
+      expect(document.activeElement).toBe(input);
+      expect(writes).toEqual([]);
+
+      fireEvent.change(input, { target: { value: "login" } });
+      await settle();
+      fireEvent.click(screen.getByTestId("filter-input-apply"));
+      await settle();
+
+      expect(writes).toEqual([
+        [{ dimension: "field_9", operator: "contains", values: ["login"] }],
+      ]);
     });
   });
 });

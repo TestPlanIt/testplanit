@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { githubIssueStatus } from "~/lib/integrations/githubIssueStatus";
 import type { AdapterType } from "~/zenstack/models";
 import type {
   ParsedWebhookPayload,
@@ -29,9 +30,39 @@ interface GithubIssuesPayload {
     state?: string;
     state_reason?: string | null;
     title?: string;
+    /** Present when the comment belongs to a pull request. */
+    pull_request?: unknown;
+    milestone?: { number?: number } | null;
   };
+  /** On `milestone` events, and on `issues` milestoned/demilestoned. */
+  milestone?: { number?: number } | null;
   repository?: { full_name?: string };
 }
+
+/**
+ * GitHub's `milestone` event (created, edited, opened, closed, deleted) and
+ * the two `issues` actions that change a milestone's membership become a
+ * `milestone_<action>` event type, the shape the receiver route dispatches
+ * to milestone sync. Everything else keeps the raw header value.
+ */
+const MEMBERSHIP_ACTIONS = new Set(["milestoned", "demilestoned"]);
+
+function milestoneEventType(
+  headerEvent: string,
+  action: string | undefined
+): string | null {
+  if (headerEvent === "milestone" && action) return `milestone_${action}`;
+  if (headerEvent === "issues" && action && MEMBERSHIP_ACTIONS.has(action)) {
+    return `milestone_${action}`;
+  }
+  return null;
+}
+
+/**
+ * Events that carry the issue they concern. `issue_comment` is also sent for
+ * pull request comments, which the status extractor leaves alone.
+ */
+const ISSUE_EVENTS = new Set(["issues", "issue_comment"]);
 
 function constantTimeEqualHex(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -59,8 +90,8 @@ export const githubAdapter: WebhookAdapter = {
       return { valid: false, reason: "signature-mismatch" };
     }
 
-    const eventType = headers.get(EVENT_HEADER);
-    if (!eventType) return { valid: false, reason: "missing-required-field" };
+    const headerEvent = headers.get(EVENT_HEADER);
+    if (!headerEvent) return { valid: false, reason: "missing-required-field" };
 
     let parsed: GithubIssuesPayload;
     try {
@@ -69,14 +100,18 @@ export const githubAdapter: WebhookAdapter = {
       return { valid: false, reason: "unparseable-body" };
     }
 
+    const eventType =
+      milestoneEventType(headerEvent, parsed.action) ?? headerEvent;
+
     const repo = parsed.repository?.full_name;
     const num = parsed.issue?.number;
     const issueKey =
       typeof repo === "string" && typeof num === "number"
         ? `${repo}#${num}`
         : "";
-    const externalStatus =
-      typeof parsed.issue?.state === "string" ? parsed.issue.state : "";
+    const externalStatus = parsed.issue
+      ? (githubIssueStatus(parsed.issue) ?? "")
+      : "";
     const synthetic =
       repo === SYNTHETIC_REPO_FULL_NAME && num === SYNTHETIC_ISSUE_NUMBER;
 
@@ -99,14 +134,33 @@ export const githubAdapter: WebhookAdapter = {
     return {
       externalKey: `${repo}#${num}`,
       externalSystem: "GITHUB" satisfies AdapterType,
+      externalId: String(num),
     };
   },
 
   extractExternalStatus(payload, eventType) {
-    if (eventType !== "issues") return null;
+    if (!ISSUE_EVENTS.has(eventType)) return null;
     const raw = (payload as ParsedWebhookPayload).data ?? payload;
     const p = raw as GithubIssuesPayload;
-    const state = p.issue?.state;
-    return typeof state === "string" ? state : null;
+    if (!p.issue) return null;
+    if (eventType === "issue_comment" && p.issue.pull_request) return null;
+    return githubIssueStatus(p.issue);
+  },
+
+  extractMilestoneEventRef(payload, eventType) {
+    if (!eventType.startsWith("milestone_")) return null;
+    const raw = (payload as ParsedWebhookPayload).data ?? payload;
+    const p = raw as GithubIssuesPayload;
+    const repo = p.repository?.full_name;
+    // `milestone` events carry the milestone at the top level; so do the
+    // issues milestoned/demilestoned actions (the one added or removed).
+    const number = p.milestone?.number ?? p.issue?.milestone?.number;
+    if (typeof repo !== "string" || typeof number !== "number") return null;
+    return {
+      kind: "RELEASE",
+      externalId: `${repo}#${number}`,
+      externalProjectId: repo,
+      merge: false,
+    };
   },
 };

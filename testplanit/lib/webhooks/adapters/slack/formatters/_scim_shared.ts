@@ -1,5 +1,6 @@
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
 import { buildBody } from "./_shared";
+import { getAppUrl } from "~/lib/appUrl";
 
 /**
  * Shared helpers for SCIM lifecycle formatters. The SCIM events all run
@@ -29,7 +30,7 @@ interface SnapshotLike {
 
 /** Resolve the deployed app base URL. NEXTAUTH_URL is the codebase precedent. */
 function baseUrl(): string {
-  return process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  return getAppUrl();
 }
 
 /**

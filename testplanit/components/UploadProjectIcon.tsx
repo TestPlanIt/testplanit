@@ -105,8 +105,8 @@ export default function UploadProjectIcon({
         <CardDescription>{t("upload.description")}</CardDescription>
       </CardHeader>
       <CardContent
-        className={`flex flex-col items-center justify-center border-2 ${
-          isDragging ? " bg-accent" : "border-dashed border-primary/40"
+        className={`flex flex-col items-center justify-center border-2 border-dashed ${
+          isDragging ? "border-primary bg-primary/5" : "border-primary/40"
         } rounded-lg space-y-6 m-6`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

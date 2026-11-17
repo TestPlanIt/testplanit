@@ -23,7 +23,7 @@ export function registerSessionResultsGet(
       description:
         "Fetch a single session result by id. Returns the result with denormalized status, createdBy (the executor — sessions don't have a separate executor field), session summary, attachments, linked issues, and customFields (resultFieldValues denormalized to a flat name-keyed dict — same shape as caseFieldValues for read). NOTE: no step-level results — sessions are exploratory and don't have ordered steps. resultData is surfaced as Markdown (resultDataText).",
       inputSchema: {
-        // T-07-04 IDOR mitigation: positive integer only; non-int / non-positive
+        // IDOR mitigation: positive integer only; non-int / non-positive
         // values rejected at the zod boundary before zenstack is called. Host's
         // ZenStack @@allow policy is the per-row access boundary.
         resultId: z.number().int().positive(),
@@ -47,14 +47,14 @@ export function registerSessionResultsGet(
             //   - attachments (isDeleted:false), issues (isDeleted:false)
             //   - resultFieldValues with field.type.type + field.fieldOptions[].fieldOption
             // The constant is `as const satisfies Prisma.SessionResultsInclude`
-            // so a schema drift fails at typecheck (Phase 6 WR-09 invariant).
+            // so a schema drift fails at typecheck.
             include: SESSION_RESULT_DETAIL_INCLUDE,
           },
           deps.env,
         );
 
         if (!raw) {
-          // T-07-02 IDOR: when host @@allow denies the row, findUnique returns
+          // IDOR: when host @@allow denies the row, findUnique returns
           // null. Surface as not-found rather than 403 to avoid leaking row
           // existence to unauthorized callers.
           return {

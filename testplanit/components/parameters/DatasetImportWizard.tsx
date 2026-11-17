@@ -43,6 +43,7 @@ import {
   applySavedImportMapping,
   type ImportColumnMapping,
 } from "~/lib/schemas/savedImportMapping";
+import { apiFetch } from "~/lib/basePath";
 
 interface ParameterRecord {
   id: number;
@@ -198,7 +199,7 @@ export function DatasetImportWizard({
     if (errorRowCount > 0) return;
     setSubmitting(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/repository/cases/${caseId}/dataset/import-csv`,
         {
           method: "POST",

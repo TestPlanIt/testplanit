@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 type ScanState = "idle" | "active" | "complete" | "failed";
 
@@ -60,7 +62,7 @@ export function FindDuplicatesButton({
   const { data: pendingCount } = useQuery<number>({
     queryKey: ["duplicate-scan-pending-count", projectId],
     queryFn: async () => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/duplicate-scan/candidates?projectId=${projectId}&limit=10000`
       );
       if (!res.ok) return 0;
@@ -74,7 +76,7 @@ export function FindDuplicatesButton({
   const { data: refreshedCount } = useQuery<number>({
     queryKey: ["duplicate-scan-pending-count-refresh", projectId, scanState],
     queryFn: async () => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/duplicate-scan/candidates?projectId=${projectId}&limit=10000`
       );
       if (!res.ok) return 0;
@@ -90,7 +92,7 @@ export function FindDuplicatesButton({
   const { data: statusData } = useQuery<StatusData>({
     queryKey: ["duplicate-scan-status", scanJobId],
     queryFn: async () => {
-      const r = await fetch(`/api/duplicate-scan/status/${scanJobId}`);
+      const r = await apiFetch(`/api/duplicate-scan/status/${scanJobId}`);
       if (!r.ok) return { state: "unknown" };
       return r.json();
     },
@@ -123,7 +125,7 @@ export function FindDuplicatesButton({
   const handleScan = async () => {
     try {
       setScanState("active");
-      const res = await fetch("/api/duplicate-scan/submit", {
+      const res = await apiFetch("/api/duplicate-scan/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: parseInt(projectId) }),
@@ -151,7 +153,7 @@ export function FindDuplicatesButton({
   const handleCancel = async () => {
     if (!scanJobId) return;
     try {
-      await fetch(`/api/duplicate-scan/cancel/${scanJobId}`, {
+      await apiFetch(`/api/duplicate-scan/cancel/${scanJobId}`, {
         method: "POST",
       });
     } catch {
@@ -193,23 +195,11 @@ export function FindDuplicatesButton({
   }
 
   if (scanState === "complete") {
-    const resultsCount = refreshedCount ?? statusData?.result?.pairsFound ?? 0;
     return (
-      <div className="relative">
-        <Button
-          data-testid="view-duplicates-button"
-          variant={resultsCount > 0 ? "destructive" : "outline"}
-          asChild
-          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-        >
-          <Link href={`/projects/repository/${projectId}/duplicates`}>
-            <CopyCheck className="h-4 w-4 shrink-0" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-              {t("viewResults", { count: resultsCount })}
-            </span>
-          </Link>
-        </Button>
-      </div>
+      <ViewDuplicatesButton
+        projectId={projectId}
+        count={refreshedCount ?? statusData?.result?.pairsFound ?? 0}
+      />
     );
   }
 
@@ -219,7 +209,7 @@ export function FindDuplicatesButton({
         data-testid="retry-scan-button"
         variant="outline"
         onClick={handleScan}
-        className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
+        className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
       >
         <CopyCheck className="h-4 w-4 shrink-0" />
         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
@@ -231,20 +221,7 @@ export function FindDuplicatesButton({
 
   // idle — link to results if pending duplicates exist, otherwise scan button
   if (badgeCount > 0) {
-    return (
-      <Button
-        variant="destructive"
-        asChild
-        className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-      >
-        <Link href={`/projects/repository/${projectId}/duplicates`}>
-          <CopyCheck className="h-4 w-4 shrink-0" />
-          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-            {t("viewResults", { count: badgeCount })}
-          </span>
-        </Link>
-      </Button>
-    );
+    return <ViewDuplicatesButton projectId={projectId} count={badgeCount} />;
   }
 
   return (
@@ -259,6 +236,38 @@ export function FindDuplicatesButton({
       <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
         {t("findDuplicates")}
       </span>
+    </Button>
+  );
+}
+
+interface ViewDuplicatesButtonProps {
+  projectId: string;
+  count: number;
+}
+
+function ViewDuplicatesButton({ projectId, count }: ViewDuplicatesButtonProps) {
+  const t = useTranslations("repository.duplicates");
+
+  return (
+    <Button
+      data-testid="view-duplicates-button"
+      variant="outline"
+      asChild
+      className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+    >
+      <Link href={`/projects/repository/${projectId}/duplicates`}>
+        <span className="flex items-center gap-2">
+          <CopyCheck className="h-4 w-4 shrink-0" />
+          {count > 0 && (
+            <Badge variant="secondary" className="tabular-nums">
+              {count}
+            </Badge>
+          )}
+        </span>
+        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+          {t("viewDuplicates")}
+        </span>
+      </Link>
     </Button>
   );
 }

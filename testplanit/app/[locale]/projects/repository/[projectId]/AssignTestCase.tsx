@@ -18,10 +18,6 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
-import {
-  notifyBulkTestCaseAssignment,
-  notifyTestCaseAssignment,
-} from "~/app/actions/test-run-notifications";
 import { ExtendedCases } from "./columns";
 
 interface AssignTestCaseModalProps {
@@ -91,19 +87,8 @@ export function AssignTestCaseModal({
             })
           );
 
+        // The server notifies the assignee.
         await Promise.all(updatePromises);
-
-        // Send notification for bulk assignment
-        if (selectedUserId) {
-          const testRunCaseIds = selectedCases
-            .filter((c) => c.testRunCaseId)
-            .map((c) => c.testRunCaseId!);
-          await notifyBulkTestCaseAssignment(
-            testRunCaseIds,
-            selectedUserId,
-            projectId
-          );
-        }
 
         toast.success(
           selectedUserId
@@ -121,6 +106,7 @@ export function AssignTestCaseModal({
           return;
         }
 
+        // The server notifies the new assignee.
         await updateTestRunCase({
           where: {
             id: testRunCaseId,
@@ -129,15 +115,6 @@ export function AssignTestCaseModal({
             assignedToId: selectedUserId,
           },
         });
-
-        // Send notification for single assignment
-        if (selectedUserId && selectedUserId !== currentAssigneeId) {
-          await notifyTestCaseAssignment(
-            testRunCaseId,
-            selectedUserId,
-            currentAssigneeId
-          );
-        }
 
         toast.success(
           selectedUserId

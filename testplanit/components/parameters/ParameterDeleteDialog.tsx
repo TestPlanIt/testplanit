@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 export interface ParameterDeleteDialogProps {
   open: boolean;
@@ -48,7 +49,7 @@ export function ParameterDeleteDialog({
     if (!open) return;
     let cancelled = false;
     setCounts(null);
-    fetch(
+    apiFetch(
       `/api/repository/cases/${caseId}/parameters/${paramId}/scan-references`
     )
       .then((r) => r.json())
@@ -72,7 +73,7 @@ export function ParameterDeleteDialog({
   const handleConfirm = async () => {
     setSubmitting(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/repository/cases/${caseId}/parameters/${paramId}`,
         { method: "DELETE" }
       );

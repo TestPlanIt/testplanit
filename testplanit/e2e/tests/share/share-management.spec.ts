@@ -205,7 +205,7 @@ test.describe("Share Management", () => {
     });
   });
 
-  test("Revoke a share link", async ({ api, page, context }) => {
+  test("Revoke a share link", async ({ api, page, context, baseURL }) => {
     const timestamp = Date.now();
     const projectId = await api.createProject(`Revoke Test ${timestamp}`);
 
@@ -266,7 +266,7 @@ test.describe("Share Management", () => {
     expect(updatedShareData?.isRevoked).toBe(true);
 
     // Try to access the revoked share in incognito
-    const shareUrl = `http://localhost:3002/share/${shareKey}`;
+    const shareUrl = `${baseURL}/share/${shareKey}`;
     const incognitoContext = await context.browser()!.newContext({
       storageState: { cookies: [], origins: [] },
     });
@@ -380,7 +380,7 @@ test.describe("Share Management", () => {
     // The actual copy action is tested in the public-share.spec.ts file
   });
 
-  test("View share access logs", async ({ api, page, context }) => {
+  test("View share access logs", async ({ api, page, context, baseURL }) => {
     const timestamp = Date.now();
     const projectId = await api.createProject(`Access Logs Test ${timestamp}`);
 
@@ -404,7 +404,7 @@ test.describe("Share Management", () => {
     }
 
     // Access the share to create an access log
-    const shareUrl = `http://localhost:3002/share/${shareKey}`;
+    const shareUrl = `${baseURL}/share/${shareKey}`;
     const incognitoContext = await context.browser()!.newContext({
       storageState: { cookies: [], origins: [] },
     });

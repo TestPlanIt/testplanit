@@ -39,6 +39,11 @@ interface MilestoneIconAndNameProps {
    * ancestor the `@`-variant never matches and the icon would stay hidden.
    */
   collapsibleIcon?: boolean;
+  /**
+   * Icon size: `md` (24px, default) for milestone lists and headers, `sm`
+   * (16px) to sit level with case and run names in a compact table row.
+   */
+  size?: "sm" | "md";
 }
 
 export const MilestoneIconAndName: React.FC<MilestoneIconAndNameProps> = ({
@@ -46,7 +51,9 @@ export const MilestoneIconAndName: React.FC<MilestoneIconAndNameProps> = ({
   projectId,
   showSourceIcon = true,
   collapsibleIcon = false,
+  size = "md",
 }) => {
+  const iconSize = size === "sm" ? "w-4 h-4" : "w-6 h-6";
   // Determine the appropriate link based on whether projectId is provided
   const href = projectId
     ? `/projects/milestones/${projectId}/${milestone.id}`
@@ -68,8 +75,8 @@ export const MilestoneIconAndName: React.FC<MilestoneIconAndNameProps> = ({
           }
           className={
             collapsibleIcon
-              ? "w-6 h-6 shrink-0 hidden @xl:block"
-              : "w-6 h-6 shrink-0"
+              ? `${iconSize} shrink-0 hidden @xl:block`
+              : `${iconSize} shrink-0`
           }
         />
         <span className="truncate">{milestone.name}</span>

@@ -70,6 +70,7 @@ import { MemberIssuesOverflowPanel } from "./MemberIssuesOverflowPanel";
 import type { MemberCoverageResponse } from "~/app/api/milestones/[milestoneId]/members/coverage/route";
 import { aggregateMilestoneReadiness } from "./milestoneReadiness";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { apiFetch } from "~/lib/basePath";
 
 const MEMBER_ISSUES_COLLAPSED_KEY = "tpi.milestone.memberIssues.collapsed";
 
@@ -196,7 +197,7 @@ export function MemberIssuesTable({
   } = useQuery<MemberCoverageResponse>({
     queryKey: ["milestoneMemberCoverage", milestoneId],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/milestones/${milestoneId}/members/coverage`
       );
       if (!response.ok) {
@@ -227,7 +228,7 @@ export function MemberIssuesTable({
     ],
     enabled: memberIssueIdsForCounts.length > 0,
     queryFn: async () => {
-      const response = await fetch("/api/issues/counts", {
+      const response = await apiFetch("/api/issues/counts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -471,7 +472,7 @@ export function MemberIssuesTable({
           caseIssues: { some: { issueId: { in: sortedSelectedIds } } },
         },
       };
-      const resp = await fetch(
+      const resp = await apiFetch(
         `/api/model/repositoryCases/count?q=${encodeURIComponent(JSON.stringify(q))}`,
         { credentials: "include" }
       );
@@ -492,7 +493,7 @@ export function MemberIssuesTable({
         const params = new URLSearchParams({
           q: JSON.stringify({ where, select }),
         });
-        const resp = await fetch(
+        const resp = await apiFetch(
           `/api/model/repositoryCases/findMany?${params.toString()}`,
           { credentials: "include" }
         );
@@ -529,7 +530,7 @@ export function MemberIssuesTable({
           select: { excludeNotStartedFromRuns: true },
         }),
       });
-      const settingsResp = await fetch(
+      const settingsResp = await apiFetch(
         `/api/model/projects/findFirst?${settingsParams.toString()}`,
         { credentials: "include" }
       );

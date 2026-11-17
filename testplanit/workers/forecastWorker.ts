@@ -18,6 +18,7 @@ import {
   JOB_SWEEP_ABANDONED_RUNS,
   JOB_SWEEP_REPORT_BUILDER_STATES,
   JOB_UPDATE_ALL_CASES,
+  JOB_UPDATE_RUN_FORECAST,
   JOB_UPDATE_SINGLE_CASE,
 } from "../lib/queueNames";
 import {
@@ -46,6 +47,10 @@ import {
 // Define expected job data structures with multi-tenant support
 interface UpdateSingleCaseJobData extends MultiTenantJobData {
   repositoryCaseId: number;
+}
+
+interface UpdateRunForecastJobData extends MultiTenantJobData {
+  testRunId: number;
 }
 
 interface _UpdateAllCasesJobData extends MultiTenantJobData {
@@ -277,6 +282,21 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           throw error; // Re-throw to mark job as failed
         }
         break;
+
+      case JOB_UPDATE_RUN_FORECAST: {
+        const runData = job.data as UpdateRunForecastJobData;
+        if (!runData || typeof runData.testRunId !== "number") {
+          throw new Error(
+            `Invalid data for job ${job.id}: testRunId missing or not a number.`
+          );
+        }
+        await updateTestRunForecast(runData.testRunId, { dbClient: db });
+        successCount = 1;
+        console.log(
+          `Job ${job.id} completed: Updated forecast for run ${runData.testRunId}`
+        );
+        break;
+      }
 
       case JOB_UPDATE_ALL_CASES:
         console.log(`Job ${job.id}: Starting update for all active cases.`);
@@ -1030,15 +1050,27 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           const cutoff = new Date(
             Date.now() - CASE_DRAFT_RETENTION_DAYS * 24 * 60 * 60 * 1000
           );
-          // Deleted outright rather than soft-deleted: a draft is scratch
+          // Auto-saved recovery copies are deleted outright: they are scratch
           // space, never a record of anything, and a tombstoned one would
           // still trip the unique (userId, draftKey) index on the next edit.
+          // Only the ones untouched for the window age out.
           const { count } = await db.caseDraft.deleteMany({
-            where: { updatedAt: { lt: cutoff } },
+            where: { updatedAt: { lt: cutoff }, isSaved: false },
           });
-          successCount = count;
+          // A staged case the author deleted is a tombstone (isDeleted, no
+          // caseId) and ages out the same way. One that became a case keeps
+          // its caseId and is kept: it records when the case was staged.
+          const { count: discarded } = await db.caseDraft.deleteMany({
+            where: {
+              isSaved: true,
+              isDeleted: true,
+              caseId: null,
+              deletedAt: { lt: cutoff },
+            },
+          });
+          successCount = count + discarded;
           console.log(
-            `Job ${job.id} completed: purged ${count} case draft(s) untouched since ${cutoff.toISOString()}.`
+            `Job ${job.id} completed: purged ${count} case draft(s) untouched since ${cutoff.toISOString()} and ${discarded} discarded staged case(s).`
           );
         } catch (error) {
           console.error(`Job ${job.id}: Error purging case drafts`, error);

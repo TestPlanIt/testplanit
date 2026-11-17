@@ -207,7 +207,7 @@ export function CommentItem({
                   {canDelete && (
                     <DropdownMenuItem
                       onClick={handleDeleteClick}
-                      className="text-destructive focus:text-destructive"
+                      className="text-destructive focus:text-destructive-text"
                     >
                       <Trash className="me-2 h-4 w-4" />
                       {t("common.actions.delete")}

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthenticationService } from "~/lib/integrations/AuthenticationService";
 import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
 import { authOptions } from "~/server/auth";
+import { absoluteAppUrl } from "~/lib/appUrl";
 
 export async function GET(
   request: NextRequest,
@@ -15,9 +16,8 @@ export async function GET(
   // unreachable — the user lands on a connection error right after a
   // successful authorization. NEXTAUTH_URL is the public origin; fall back to
   // the request origin only if it's somehow unset.
-  const baseUrl = process.env.NEXTAUTH_URL || new URL(request.url).origin;
   const redirectTo = (path: string) =>
-    NextResponse.redirect(new URL(path, baseUrl));
+    NextResponse.redirect(absoluteAppUrl(path));
 
   try {
     // Check if user is authenticated
@@ -156,7 +156,7 @@ export async function GET(
     // us (returnUrl stored with the OAuth state), else the admin integrations
     // page the legacy flows launch from.
     if (returnUrl) {
-      const target = new URL(returnUrl, baseUrl);
+      const target = new URL(absoluteAppUrl(returnUrl));
       target.searchParams.set("success", "connected");
       return NextResponse.redirect(target);
     }

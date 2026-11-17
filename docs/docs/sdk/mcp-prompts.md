@@ -110,7 +110,7 @@ List the automated test cases in our `playwright-suite` repository.
 
 **Tool calls (2):**
 
-1. `testplanit_code_repositories_list({ projectId: <P> })` → resolves repository ids; credentials are never returned. Note: this lists repositories that hold TestPlanIt's automated test code, not application code.
+1. `testplanit_code_repositories_list({ projectId: <P>, purpose: "QUICKSCRIPT" })` → resolves repository ids; credentials are never returned. `QUICKSCRIPT` bindings hold the project's automated test code; `IMPACT` bindings point at application code, so leave the filter off only when you want both.
 2. `testplanit_cases_list({ projectId: <P>, repositoryId: <id from step 1>, automated: true })` → cases imported from that test repo, with `lastUpdatedAt` + `latestResult` inline.
 
 ## "What manual cases cover this automated test?"
@@ -121,7 +121,7 @@ Show me the manual test cases linked to automated test case #7.
 
 **Tool calls (1):**
 
-1. `testplanit_repository_case_links_list({ caseId: 7 })` → each row's `otherCase` carries the counterpart denormalized; optional `linkType` filter (e.g., `SAME_TEST_DIFFERENT_SOURCE`).
+1. `testplanit_repository_case_links_list({ caseId: 7 })` → each row's `otherCase` carries the counterpart denormalized; optional `linkType` filter (`SAME_TEST_DIFFERENT_SOURCE`, `DEPENDS_ON` or `DUPLICATED_FROM`).
 
 **What comes back:** a list of links each with `otherCase: { id, name, source, automated }` so the agent can describe the manual side-by-side coverage.
 
@@ -196,7 +196,7 @@ Create these 20 test cases in project Acme under the "Checkout" folder using the
 
 1. (Optional) `testplanit_templates_list({ projectId: <P> })` → lists the project's enabled templates, each with the case fields it defines. The agent picks the right `templateId` and sees which custom fields (e.g. `Priority`) that template accepts.
 2. (Optional) `testplanit_folders_list({ projectId: <P> })` → resolves the "Checkout" folder id.
-3. `testplanit_cases_create_many({ projectId: <P>, folderId: <id>, templateId: <id>, cases: [ { name, steps, tags, customFields }, ... ] })` → creates all of them in one call. Each case may override `folderId`/`stateName`; `templateId` defaults to the template marked Default (or the project's first enabled template when the Default one isn't assigned) when omitted.
+3. `testplanit_cases_create_many({ projectId: <P>, folderId: <id>, templateId: <id>, cases: [ { name, steps, tags, customFields }, ... ] })` → creates all of them in one call. Each case may override `folderId`/`stateName`; `templateId` defaults to the project's default template, then the template marked Default (or the project's first enabled template when the Default one isn't assigned) when omitted.
 
 **What comes back:** a per-case results array so partial failures are visible — each entry is either a success (with the new `caseId`) or an error (with a message). A custom field that isn't part of the chosen template is reported as a per-case error rather than silently dropped.
 

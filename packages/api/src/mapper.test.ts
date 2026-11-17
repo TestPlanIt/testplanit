@@ -73,7 +73,7 @@ describe('automationStepsToCaseSteps', () => {
     ]);
   });
 
-  it('splits a Playwright action with a nested expect child into step + expectedResult (D-09)', () => {
+  it('splits a Playwright action with a nested expect child into step + expectedResult', () => {
     const input: AutomationStep[] = [
       { title: 'Navigate to product page', kind: 'action' },
       { title: 'Add item to cart', kind: 'action' },
@@ -90,11 +90,11 @@ describe('automationStepsToCaseSteps', () => {
     ]);
   });
 
-  it('returns [] for empty / low-structure input (D-14)', () => {
+  it('returns [] for empty / low-structure input', () => {
     expect(automationStepsToCaseSteps([])).toEqual([]);
   });
 
-  it('handles large flat input in a single linear pass without recursion (DoS bound T-01-01)', () => {
+  it('handles large flat input in a single linear pass without recursion (DoS bound)', () => {
     const input: AutomationStep[] = Array.from({ length: 5000 }, (_, i) => ({
       title: `action ${i}`,
       kind: 'action' as const,
@@ -106,7 +106,7 @@ describe('automationStepsToCaseSteps', () => {
   });
 });
 
-describe('deriveCaseStepsIfFresh (CORE-01 never-overwrite guard)', () => {
+describe('deriveCaseStepsIfFresh', () => {
   const fixture: AutomationStep[] = [
     { title: 'I am logged in', kind: 'precondition' },
     { title: 'I add an item to the cart', kind: 'action' },

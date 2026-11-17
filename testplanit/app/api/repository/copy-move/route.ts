@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
+import { findProjectDefaultTemplateId } from "~/lib/defaultTemplate";
 import { getCopyMoveQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
 import {
@@ -213,7 +214,11 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             { status: 400 }
           );
         }
-        resolvedTargetTemplateId = targetTemplateAssignments[0].templateId;
+        resolvedTargetTemplateId =
+          (await findProjectDefaultTemplateId(
+            enhancedDb as any,
+            body.targetProjectId
+          )) ?? targetTemplateAssignments[0].templateId;
       }
     }
 

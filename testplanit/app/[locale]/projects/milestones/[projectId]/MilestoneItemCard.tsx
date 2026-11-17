@@ -35,6 +35,10 @@ import type { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import React from "react";
 import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
+import {
   ColorMap,
   getStatus,
   hasCalendarDates,
@@ -129,6 +133,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
               <CalendarDisplay
                 date={endDate}
                 showYear={milestone.isCompleted}
+                dateOnly={hasCalendarDates(milestone)}
               />
             </div>
           ) : null
@@ -190,8 +195,13 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
         ]}
         state={
           <Badge
-            style={{ backgroundColor: badge }}
-            className="text-foreground border-2 border-secondary-foreground text-sm whitespace-nowrap"
+            data-status-surface
+            style={{
+              ...statusSurfaceVars(badge),
+              backgroundColor: badge,
+              color: contrastingTextColor(badge),
+            }}
+            className="border-2 border-secondary-foreground text-sm whitespace-nowrap"
           >
             {t(`statusLabels.${status}` as any)}
           </Badge>
@@ -263,7 +273,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                   />
                   <DropdownMenuItem
                     onSelect={() => onOpenDeleteModal(milestone)}
-                    className="text-destructive hover:text-destructive-foreground"
+                    className="text-destructive focus:text-destructive-text"
                   >
                     <div className="flex items-center">
                       <Trash className="w-5 h-5 me-2" />
@@ -275,17 +285,15 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
             </DropdownMenu>
           )
         }
-        chips={[
-          {
-            key: "forecast",
-            // Two short durations, and the only place the milestone's
-            // outstanding effort appears in a list — it stays at every width.
-            tier: "base",
-            content: <MilestoneForecastChips milestoneId={milestone.id} />,
-          },
-        ]}
         progress={
-          <MilestoneSummary milestoneId={milestone.id} projectId={projectId} />
+          <MilestoneSummary
+            milestoneId={milestone.id}
+            projectId={projectId}
+            // The remaining-effort forecast rides the counts line under the
+            // bar rather than a leading chip, which would push the bar's
+            // start to the right of the row.
+            meta={<MilestoneForecastChips milestoneId={milestone.id} />}
+          />
         }
         noteBelowName
         noteTier="base"

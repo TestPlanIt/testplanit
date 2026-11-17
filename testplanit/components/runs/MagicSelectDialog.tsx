@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { apiFetch } from "~/lib/basePath";
 
 interface MagicSelectDialogProps {
   open: boolean;
@@ -128,7 +129,7 @@ export function MagicSelectDialog({
     }));
 
     try {
-      const response = await fetch("/api/llm/magic-select-cases", {
+      const response = await apiFetch("/api/llm/magic-select-cases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -188,18 +189,21 @@ export function MagicSelectDialog({
 
     try {
       // Phase 1: Submit job
-      const submitResponse = await fetch("/api/llm/magic-select-cases/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId,
-          testRunMetadata,
-          clarification: clarification || undefined,
-          excludeCaseIds:
-            currentSelection.length > 0 ? currentSelection : undefined,
-        }),
-        signal: controller.signal,
-      });
+      const submitResponse = await apiFetch(
+        "/api/llm/magic-select-cases/submit",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            projectId,
+            testRunMetadata,
+            clarification: clarification || undefined,
+            excludeCaseIds:
+              currentSelection.length > 0 ? currentSelection : undefined,
+          }),
+          signal: controller.signal,
+        }
+      );
 
       const submitData = await submitResponse.json();
 
@@ -223,7 +227,7 @@ export function MagicSelectDialog({
         await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
         attempts++;
 
-        const statusResponse = await fetch(
+        const statusResponse = await apiFetch(
           `/api/llm/magic-select-cases/status/${jobId}`,
           { signal: controller.signal }
         );
@@ -331,7 +335,7 @@ export function MagicSelectDialog({
         }
         // Cancel the background job if one is active
         if (state.jobId && state.status === "loading") {
-          fetch(`/api/llm/magic-select-cases/cancel/${state.jobId}`, {
+          apiFetch(`/api/llm/magic-select-cases/cancel/${state.jobId}`, {
             method: "POST",
           }).catch(() => {
             // Best-effort cancel — ignore errors

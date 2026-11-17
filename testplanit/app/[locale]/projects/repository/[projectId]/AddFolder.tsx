@@ -197,7 +197,7 @@ export function AddFolder({
                           data-testid="remove-parent-folder-button"
                           aria-label={t("repository.removeParentFolder")}
                         >
-                          <CircleX className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                          <CircleX className="h-4 w-4 text-muted-foreground hover:text-destructive-text" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>

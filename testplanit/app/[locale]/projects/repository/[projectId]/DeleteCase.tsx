@@ -20,7 +20,7 @@ import { useEffect, useState } from "react";
 interface DeleteModalTestCase {
   id: number;
   name: string;
-  testRuns?: Array<{
+  testRunCases?: Array<{
     testRun: {
       isDeleted: boolean;
       isCompleted: boolean;
@@ -59,10 +59,10 @@ export function DeleteCaseModal({
     if (
       open &&
       testcase &&
-      testcase.testRuns &&
-      Array.isArray(testcase.testRuns)
+      testcase.testRunCases &&
+      Array.isArray(testcase.testRunCases)
     ) {
-      const currentActiveRuns = testcase.testRuns.filter((trCase) => {
+      const currentActiveRuns = testcase.testRunCases.filter((trCase) => {
         const testRun = trCase.testRun as {
           id: number;
           isDeleted: boolean;

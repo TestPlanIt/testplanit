@@ -57,6 +57,7 @@ const noopActions = {
   onRequestChanges: vi.fn(),
   onReject: vi.fn(),
   onCancel: vi.fn(),
+  onRevert: vi.fn(),
   onNudged: vi.fn(),
 };
 
@@ -83,6 +84,14 @@ function row(overrides: Partial<InboxTableRow> = {}): InboxTableRow {
   } as unknown as InboxTableRow;
 }
 
+// The viewer is reached directly, or through any of `viewerRoleIds` — the
+// shape the per-project assignee scope resolves to for a single project.
+const assigneeOf =
+  (viewerRoleIds: number[]) =>
+  (r: { assigneeUserId: string | null; assigneeRoleId: number | null }) =>
+    r.assigneeUserId === VIEWER_ID ||
+    (r.assigneeRoleId !== null && viewerRoleIds.includes(r.assigneeRoleId));
+
 function pendingColumns(viewerRoleIds: number[] = []) {
   const { result } = renderHook(() =>
     useColumns({
@@ -90,7 +99,9 @@ function pendingColumns(viewerRoleIds: number[] = []) {
       view: "pending",
       actions: noopActions,
       viewerUserId: VIEWER_ID,
-      viewerRoleIds,
+      viewerIsAdmin: false,
+      systemRevertWindowSeconds: null,
+      isAssignee: assigneeOf(viewerRoleIds),
       caseById: new Map(),
       testRunById: new Map(),
       sessionById: new Map(),
@@ -243,7 +254,9 @@ describe("reviews inbox columns — Assignee column", () => {
         t,
         view: "decided",
         viewerUserId: VIEWER_ID,
-        viewerRoleIds: [],
+        viewerIsAdmin: false,
+        systemRevertWindowSeconds: null,
+        isAssignee: assigneeOf([]),
         caseById: new Map(),
         testRunById: new Map(),
         sessionById: new Map(),
@@ -273,5 +286,155 @@ describe("reviews inbox columns — Assignee column", () => {
     expect(screen.getByTestId("role-assignee-chip")).toHaveTextContent(
       "QA Lead"
     );
+  });
+});
+
+describe("reviews inbox columns — Decided tab revert action", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function decidedColumns(
+    opts: {
+      viewerIsAdmin?: boolean;
+      systemRevertWindowSeconds?: number | null;
+    } = {}
+  ) {
+    const { result } = renderHook(() =>
+      useColumns({
+        t,
+        view: "decided",
+        actions: noopActions,
+        viewerUserId: VIEWER_ID,
+        viewerIsAdmin: opts.viewerIsAdmin ?? false,
+        systemRevertWindowSeconds: opts.systemRevertWindowSeconds ?? null,
+        isAssignee: assigneeOf([]),
+        caseById: new Map(),
+        testRunById: new Map(),
+        sessionById: new Map(),
+      })
+    );
+    return result.current as ColumnDef<InboxTableRow>[];
+  }
+
+  /** A row the viewer decided `minutesAgo` ago. */
+  function decidedRow(
+    status: string,
+    minutesAgo: number,
+    overrides: Partial<InboxTableRow> = {}
+  ): InboxTableRow {
+    return row({
+      status: status as never,
+      decidedByUserId: VIEWER_ID,
+      decidedAt: new Date(Date.now() - minutesAgo * 60_000),
+      revertCount: 0,
+      ...overrides,
+    } as Partial<InboxTableRow>);
+  }
+
+  it("carries the revert action in the Decided status cell, not on Pending", () => {
+    // The action shares the status cell rather than owning a column — a second
+    // right-pinned column cost more width than one icon earned.
+    expect(decidedColumns().some((c) => c.id === "revert")).toBe(false);
+    expect(decidedColumns().some((c) => c.id === "status")).toBe(true);
+
+    renderCell(decidedColumns(), "status", decidedRow("REJECTED", 5));
+    expect(
+      screen.getByTestId("reviews-inbox-row-revert-actions")
+    ).toBeInTheDocument();
+
+    // Pending's tail column is the action set, and it has no revert control.
+    expect(pendingColumns().some((c) => c.id === "status")).toBe(false);
+  });
+
+  // Every recorded outcome is revertable, approvals included — the server
+  // decides whether the entity can still be rolled back.
+  it.each(["REJECTED", "CHANGES_REQUESTED", "APPROVED"])(
+    "offers revert on a fresh %s the viewer decided",
+    (status) => {
+      renderCell(decidedColumns(), "status", decidedRow(status, 5));
+      expect(screen.getByTestId("reviews-inbox-revert-rr-1")).toBeTruthy();
+    }
+  );
+
+  it.each(["PENDING", "CANCELLED"])(
+    "does not offer revert on a %s row — nothing was decided",
+    (status) => {
+      renderCell(decidedColumns(), "status", decidedRow(status, 5));
+      expect(screen.queryByTestId("reviews-inbox-revert-rr-1")).toBeNull();
+    }
+  );
+
+  it("does not offer revert on a decision someone else made", () => {
+    renderCell(
+      decidedColumns(),
+      "status",
+      decidedRow("REJECTED", 5, { decidedByUserId: "user-someone-else" })
+    );
+    expect(screen.queryByTestId("reviews-inbox-revert-rr-1")).toBeNull();
+  });
+
+  it("hides revert once the default 24h window has passed", () => {
+    renderCell(decidedColumns(), "status", decidedRow("REJECTED", 25 * 60));
+    expect(screen.queryByTestId("reviews-inbox-revert-rr-1")).toBeNull();
+  });
+
+  it("still offers revert to a system admin on a year-old decision", () => {
+    renderCell(
+      decidedColumns({ viewerIsAdmin: true }),
+      "status",
+      decidedRow("REJECTED", 365 * 24 * 60, {
+        decidedByUserId: "user-someone-else",
+      })
+    );
+    expect(screen.getByTestId("reviews-inbox-revert-rr-1")).toBeTruthy();
+  });
+
+  it("hides revert when the system policy disables it", () => {
+    renderCell(
+      decidedColumns({ systemRevertWindowSeconds: 0 }),
+      "status",
+      decidedRow("REJECTED", 5)
+    );
+    expect(screen.queryByTestId("reviews-inbox-revert-rr-1")).toBeNull();
+  });
+
+  it("honours a tighter project override", () => {
+    renderCell(
+      decidedColumns(),
+      "status",
+      decidedRow("REJECTED", 30, {
+        project: {
+          id: 5,
+          name: "Apollo",
+          iconUrl: null,
+          revertDecisionDurationSeconds: 600,
+        },
+      } as Partial<InboxTableRow>)
+    );
+    expect(screen.queryByTestId("reviews-inbox-revert-rr-1")).toBeNull();
+  });
+
+  it("fires onRevert for the row when clicked", () => {
+    renderCell(decidedColumns(), "status", decidedRow("REJECTED", 5));
+    screen.getByTestId("reviews-inbox-revert-rr-1").click();
+    expect(noopActions.onRevert).toHaveBeenCalledTimes(1);
+    expect((noopActions.onRevert.mock.calls[0][0] as InboxTableRow).id).toBe(
+      "rr-1"
+    );
+  });
+
+  it("shows the prior-revert count only once it is non-zero", () => {
+    renderCell(decidedColumns(), "status", decidedRow("REJECTED", 5));
+    expect(screen.queryByTestId("reviews-inbox-revert-count-rr-1")).toBeNull();
+
+    renderCell(
+      decidedColumns(),
+      "status",
+      decidedRow("REJECTED", 5, { revertCount: 2 } as Partial<InboxTableRow>)
+    );
+    expect(
+      screen.getByTestId("reviews-inbox-revert-count-rr-1").textContent
+    ).toContain("2");
   });
 });

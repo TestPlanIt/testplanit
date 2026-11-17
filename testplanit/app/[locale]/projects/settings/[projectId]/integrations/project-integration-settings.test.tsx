@@ -589,7 +589,7 @@ describe("ProjectIntegrationSettings", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders Requirement Types but not Milestone Sync for GITHUB (label-mode requirement classification, no milestone sync)", () => {
+  it("renders both Requirement Types and Milestone Sync for GITHUB (label-mode requirement classification, repository milestones)", () => {
     const githubProps = {
       ...defaultProps,
       integration: { ...defaultProps.integration, provider: "GITHUB" },
@@ -597,9 +597,7 @@ describe("ProjectIntegrationSettings", () => {
 
     render(<ProjectIntegrationSettings {...githubProps} />);
 
-    expect(
-      screen.queryByTestId("milestone-sync-section")
-    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("milestone-sync-section")).toBeInTheDocument();
     expect(
       screen.getByTestId("requirements-config-section")
     ).toBeInTheDocument();

@@ -98,7 +98,7 @@ describe("buildCasesWhere", () => {
       env,
     );
     expect(where.junitResults).toEqual({ none: {} });
-    expect(where.testRuns).toEqual({ none: { results: { some: {} } } });
+    expect(where.testRunCases).toEqual({ none: { results: { some: {} } } });
     expect(where.AND).toEqual([
       { junitResults: { none: {} } },
       {

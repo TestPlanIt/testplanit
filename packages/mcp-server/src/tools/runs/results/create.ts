@@ -4,7 +4,6 @@ import type {
   StatusWhereInput,
   TemplateResultAssignmentSelect,
   TestRunCasesSelect,
-  TestRunResultsWhereInput,
 } from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../../api.js";
@@ -38,7 +37,6 @@ async function submitResult(
     statusId: number;
     notes: unknown;
     elapsed: number | null;
-    attempt: number;
     testRunCaseVersion: number;
     iterationId?: number;
     issueIds?: number[];
@@ -354,24 +352,6 @@ export function registerRunResultsCreate(
           serverFieldValues = resolved;
         }
 
-        // Auto-increment attempt: count existing non-deleted results.
-        const existingCount = await zenstack<number>(
-          "testRunResults",
-          "count",
-          {
-            where: {
-              testRunCaseId: input.testRunCaseId,
-              isDeleted: false,
-              // Attempts count per data row for a data-driven case.
-              ...(input.iterationId != null
-                ? { iterationId: input.iterationId }
-                : {}),
-            } satisfies TestRunResultsWhereInput,
-          },
-          deps.env
-        );
-        const attempt = (existingCount ?? 0) + 1;
-
         // The web UI sends the project's first In Progress run state, so the
         // run leaves its initial state with its first result.
         const inProgress = await zenstack<{ id: number } | null>(
@@ -398,7 +378,7 @@ export function registerRunResultsCreate(
             statusId: statuses[0].id,
             notes: plainTextToProseMirrorDoc(input.notes),
             elapsed: input.elapsed ?? null,
-            attempt,
+            // The server numbers the attempt per run case (and iteration).
             testRunCaseVersion: runCase.repositoryCase.currentVersion,
             ...(input.iterationId != null
               ? { iterationId: input.iterationId }

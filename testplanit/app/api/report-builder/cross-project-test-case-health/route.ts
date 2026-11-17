@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { handleTestCaseHealthPOST } from "~/utils/testCaseHealthUtils";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
-export async function GET() {
+async function reportGet() {
   // Return empty dimensions/metrics since this is a specialized report
   return Response.json({
     dimensions: [],
@@ -9,6 +10,9 @@ export async function GET() {
   });
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   return handleTestCaseHealthPOST(req, true); // true = cross-project
 }
+
+export const GET = withReplicaRoute(reportGet);
+export const POST = withReplicaRoute(reportPost);

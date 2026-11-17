@@ -25,6 +25,10 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
+import {
+  QUARANTINED_COLOR,
+  QUARANTINED_RESULT_TYPE,
+} from "~/lib/services/testRunSummary-shared";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
@@ -32,11 +36,15 @@ import { Link } from "~/lib/navigation";
 import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
 import { cn } from "~/utils";
 import { wallClockSecondsBetween } from "~/utils/automatedRunMetrics";
-import { statusSurfaceVars } from "~/utils/contrastingTextColor";
+import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import { sortSummaryItems } from "~/utils/summarySort";
 import { computeStatusBarSegmentWidths } from "~/utils/statusBarSegmentWidths";
+import { apiFetch } from "~/lib/basePath";
 
 interface TestRunCasesSummaryProps {
   testRunId: number;
@@ -89,7 +97,7 @@ export function TestRunCasesSummary({
     queryFn: async () => {
       if (!isMultiConfig) {
         // Single test run - use existing endpoint with case details for color bar
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/test-runs/${testRunId}/summary?includeCaseDetails=true`
         );
         if (!response.ok) {
@@ -101,7 +109,7 @@ export function TestRunCasesSummary({
       // Multi-config - fetch all and aggregate
       const summaries = await Promise.all(
         effectiveTestRunIds.map(async (id) => {
-          const response = await fetch(
+          const response = await apiFetch(
             `/api/test-runs/${id}/summary?includeCaseDetails=true`
           );
           if (!response.ok) {
@@ -194,7 +202,13 @@ export function TestRunCasesSummary({
 
       // Aggregate status counts
       summary.statusCounts.forEach((sc) => {
-        const key = `${sc.statusId}-${sc.statusName}`;
+        // Unexecuted cases of every configuration share one bucket even when
+        // some configurations are completed (Untested) and others open
+        // (Pending); the label is resolved from the aggregate below.
+        const key =
+          sc.statusId === null && !sc.resultType
+            ? "unexecuted"
+            : `${sc.statusId}-${sc.statusName}`;
         const existing = statusCountMap.get(key);
         if (existing) {
           existing.count += sc.count;
@@ -225,6 +239,7 @@ export function TestRunCasesSummary({
 
     return {
       testRunType: summaries[0].testRunType,
+      isCompleted: summaries.every((summary) => summary.isCompleted === true),
       totalCases,
       statusCounts,
       completionRate,
@@ -276,7 +291,7 @@ export function TestRunCasesSummary({
   if (!summaryData) {
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
-        <div className="flex items-center gap-1 text-muted-foreground text-xs">
+        <div className="flex items-center gap-1 text-foreground text-xs">
           <HelpCircle className="w-4 h-4" />
           <span>{tCommon("labels.noResults")}</span>
         </div>
@@ -285,6 +300,16 @@ export function TestRunCasesSummary({
   }
 
   const isJUnitRun = isAutomatedTestRunType(summaryData.testRunType);
+
+  // A case with no status has never been executed. While the run is open it
+  // is Pending; once the run is completed it is locked, so it is Untested.
+  const unexecutedLabel = tCommon(
+    summaryData.isCompleted ? "labels.untested" : "status.pending"
+  );
+  const isUnexecutedCount = (status: {
+    statusId: number | null;
+    resultType?: string;
+  }) => status.statusId === null && !status.resultType;
 
   // If there are no cases, show a default message
   if (summaryData.totalCases === 0) {
@@ -313,6 +338,9 @@ export function TestRunCasesSummary({
               style={{
                 ...statusSurfaceVars(firstStatus?.color?.value || "#B1B2B3"),
                 backgroundColor: firstStatus?.color?.value || "#B1B2B3",
+                color: contrastingTextColor(
+                  firstStatus?.color?.value || "#B1B2B3"
+                ),
               }}
             >
               <div className="font-semibold text-sm">
@@ -325,7 +353,7 @@ export function TestRunCasesSummary({
           </Tooltip>
         </div>
 
-        <div className="flex items-center gap-1 text-muted-foreground text-xs">
+        <div className="flex items-center gap-1 text-foreground text-xs">
           <HelpCircle className="w-4 h-4" />
           <span>{tCommon("labels.noResults")}</span>
         </div>
@@ -335,7 +363,15 @@ export function TestRunCasesSummary({
 
   // Handle JUnit test run display
   if (isJUnitRun && summaryData.junitSummary) {
-    const { resultSegments } = summaryData.junitSummary;
+    // Failures of quarantined cases arrive as their own segment with a
+    // fixed English name; show it in the viewer's language.
+    const quarantinedLabel = tGlobal("triage.quarantine.label");
+    const resultSegments = summaryData.junitSummary.resultSegments.map(
+      (segment) =>
+        segment.resultType === QUARANTINED_RESULT_TYPE
+          ? { ...segment, statusName: quarantinedLabel }
+          : segment
+    );
     const totalItems = summaryData.totalCases;
     const totalTestCount = resultSegments.reduce(
       (sum, result) => sum + result.count,
@@ -344,7 +380,16 @@ export function TestRunCasesSummary({
 
     // Generate summary text from status counts
     const summaryText = summaryData.statusCounts
-      .map((status) => `${status.count} ${status.statusName}`)
+      .map(
+        (status) =>
+          `${status.count} ${
+            status.resultType === QUARANTINED_RESULT_TYPE
+              ? quarantinedLabel
+              : isUnexecutedCount(status)
+                ? unexecutedLabel
+                : status.statusName
+          }`
+      )
       .join(", ");
 
     const totalElapsedDisplay =
@@ -419,11 +464,12 @@ export function TestRunCasesSummary({
                   />
                 </TooltipTrigger>
                 <TooltipContent
-                  className="border-0 text-muted px-3 py-2"
+                  className="border-0 px-3 py-2"
                   data-status-surface
                   style={{
                     ...statusSurfaceVars(result.statusColor),
                     backgroundColor: result.statusColor,
+                    color: contrastingTextColor(result.statusColor),
                   }}
                 >
                   <div className="flex items-center gap-1 font-semibold text-sm">
@@ -569,9 +615,19 @@ export function TestRunCasesSummary({
     summaryData.totalElapsed > 0
   );
 
-  // Generate summary text from status counts
+  // Generate summary text from status counts (the Quarantined bucket from
+  // failure triage carries a fixed English name; show it translated).
   const summaryText = summaryData.statusCounts
-    .map((status) => `${status.count} ${status.statusName}`)
+    .map(
+      (status) =>
+        `${status.count} ${
+          status.resultType === QUARANTINED_RESULT_TYPE
+            ? tGlobal("triage.quarantine.label")
+            : isUnexecutedCount(status)
+              ? unexecutedLabel
+              : status.statusName
+        }`
+    )
     .join(", ");
 
   // Calculate total elapsed time text
@@ -601,10 +657,18 @@ export function TestRunCasesSummary({
         data-testid="test-run-cases-status-bar"
       >
         {sortedCaseDetails.map((item, index) => {
-          const color =
-            item.statusId !== null
+          // A quarantined case's failure (failure triage) is drawn as its
+          // own bucket, matching the counts above.
+          const color = item.quarantined
+            ? QUARANTINED_COLOR
+            : item.statusId !== null
               ? item.colorValue
               : (firstStatus?.color?.value ?? item.colorValue);
+          const segmentStatusName = item.quarantined
+            ? tGlobal("triage.quarantine.label")
+            : item.statusId === null
+              ? unexecutedLabel
+              : item.statusName;
 
           const segmentWidth = segmentWidths[index];
 
@@ -626,16 +690,17 @@ export function TestRunCasesSummary({
                 />
               </TooltipTrigger>
               <TooltipContent
-                className="border-0 text-muted px-3 py-2"
+                className="border-0 px-3 py-2"
                 data-status-surface
                 style={{
                   ...statusSurfaceVars(color),
                   backgroundColor: color,
+                  color: contrastingTextColor(color),
                 }}
               >
                 <div className="flex items-center gap-1 font-semibold text-sm">
                   <div className="rounded-full bg-muted w-2 h-2" />
-                  {item.statusName || tCommon("labels.untested")}
+                  {segmentStatusName || tCommon("labels.untested")}
                 </div>
                 <div className="text-xs opacity-90 mt-1">
                   <div className="flex items-center gap-1">
@@ -686,20 +751,19 @@ export function TestRunCasesSummary({
                   <div className="text-xs opacity-90 mt-1">
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {tCommon("status.pending")}
+                      {unexecutedLabel}
                     </div>
                     <div className="flex items-center gap-1 mt-1">
                       {item.estimate && item.estimate > 0 && (
                         <>
                           <CalendarClock className="h-3 w-3" />
                           <span>
-                            {`${tCommon("fields.totalEstimate")}: ${toHumanReadable(
-                              item.estimate,
-                              {
+                            {tCommon("labels.estimateFromCases", {
+                              value: toHumanReadable(item.estimate, {
                                 isSeconds: true,
                                 locale,
-                              }
-                            )}`}
+                              }),
+                            })}
                           </span>
                         </>
                       )}
@@ -755,7 +819,9 @@ export function TestRunCasesSummary({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                {`${tCommon("fields.totalEstimate")}: ${totalEstimateText}`}
+                {tCommon("labels.estimateFromCases", {
+                  value: totalEstimateText,
+                })}
               </TooltipContent>
             </Tooltip>
           ) : (

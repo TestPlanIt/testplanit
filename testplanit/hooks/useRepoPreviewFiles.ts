@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { apiFetch } from "~/lib/basePath";
 
 export interface RepoPreviewFile {
   path: string;
@@ -68,7 +69,7 @@ export function useRepoPreviewFiles({
     setPreviewProgress(null);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/code-repositories/${repositoryId}/preview-files`,
         {
           method: "POST",

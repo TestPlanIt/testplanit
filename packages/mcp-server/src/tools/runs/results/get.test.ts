@@ -28,7 +28,7 @@ function makeRawStepResult(id: number, overrides: Record<string, unknown> = {}) 
   return {
     id,
     statusId: 1,
-    // R2 / Pitfall 2: relation field is `stepStatus` (NOT `status`)
+    // relation field is `stepStatus` (NOT `status`)
     stepStatus: { id: 1, name: "Passed" },
     notes: null,
     evidence: null,
@@ -150,7 +150,7 @@ describe("registerRunResultsGet", () => {
     expect(first).toHaveProperty("issues");
   });
 
-  it("R2 / Pitfall 2: step result `status` derived from raw.stepStatus relation", async () => {
+  it("step result `status` derived from raw.stepStatus relation", async () => {
     mockZenstack.mockResolvedValueOnce(
       makeRawDetail({
         stepResults: [
@@ -210,9 +210,9 @@ describe("registerRunResultsGet", () => {
     expect(sr[0].expectedResultText).toBe("Login form appears");
   });
 
-  // ── D7-08: evidence pass-through (top-level + step-level) ────────────────
+  // ── evidence pass-through (top-level + step-level) ────────────────
 
-  it("D7-08: top-level evidence passes through as-is (object preserved)", async () => {
+  it("top-level evidence passes through as-is (object preserved)", async () => {
     const evidence = {
       url: "https://x",
       screenshots: ["a.png", "b.png"],
@@ -228,7 +228,7 @@ describe("registerRunResultsGet", () => {
     expect(data.evidence).toEqual(evidence);
   });
 
-  it("D7-08: step-level evidence passes through as-is (array preserved)", async () => {
+  it("step-level evidence passes through as-is (array preserved)", async () => {
     const evidence = ["row1", "row2", { nested: true }];
     mockZenstack.mockResolvedValueOnce(
       makeRawDetail({
@@ -245,7 +245,7 @@ describe("registerRunResultsGet", () => {
     expect(sr[0].evidence).toEqual(evidence);
   });
 
-  it("D7-08: primitive evidence passes through as-is (string preserved)", async () => {
+  it("primitive evidence passes through as-is (string preserved)", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawDetail({ evidence: "simple-blob" }));
     const { client } = await setupClient();
     const result = await client.callTool({
@@ -418,7 +418,7 @@ describe("registerRunResultsGet", () => {
 
   // ── Include shape sent to zenstack ───────────────────────────────────────
 
-  it("include shape on stepResults select carries `stepStatus` (NOT `status`) — R2 invariant in the wire shape", async () => {
+  it("include shape on stepResults select carries `stepStatus` (NOT `status`) in the wire shape", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawDetail());
     const { client } = await setupClient();
     await client.callTool({

@@ -1,6 +1,7 @@
 import { expect, test } from "../../fixtures";
 import type { Page } from "@playwright/test";
 import { RepositoryPage } from "../../page-objects/repository/repository.page";
+import { withE2EBasePath } from "../../fixtures/basePath";
 
 /**
  * Repository navigation & browser-history coverage.
@@ -133,9 +134,12 @@ test.describe("Repository — navigation & history", () => {
       // clicking #test-cases-link in the project menu because the menu
       // link occasionally races overlay dismissal under load — the bug
       // we're testing is independent of how the user got to /repository.
-      await page.evaluate((id: number) => {
-        window.location.href = `/en-US/projects/repository/${id}`;
-      }, projectId);
+      await page.evaluate(
+        (href: string) => {
+          window.location.href = href;
+        },
+        withE2EBasePath(`/en-US/projects/repository/${projectId}`)
+      );
 
       await page.waitForURL(/\/projects\/repository\/\d+/);
       await page.waitForURL(/[?&]node=\d+/, { timeout: 10000 });
@@ -191,9 +195,12 @@ test.describe("Repository — navigation & history", () => {
     });
 
     await test.step("Navigate to the repository page", async () => {
-      await page.evaluate((id: number) => {
-        window.location.href = `/en-US/projects/repository/${id}`;
-      }, projectId);
+      await page.evaluate(
+        (href: string) => {
+          window.location.href = href;
+        },
+        withE2EBasePath(`/en-US/projects/repository/${projectId}`)
+      );
       await page.waitForURL(/\/projects\/repository\/\d+/);
       await page.waitForURL(/[?&]node=\d+/, { timeout: 10000 });
       await page.waitForLoadState("networkidle");

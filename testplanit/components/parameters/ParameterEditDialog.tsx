@@ -27,6 +27,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 export interface ParameterEditDialogProps {
   open: boolean;
@@ -132,7 +133,7 @@ export function ParameterEditDialog({
     setSubmitting(true);
     try {
       const body = buildPatchPayload(values);
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/repository/cases/${caseId}/parameters/${parameter.id}`,
         {
           method: "PATCH",

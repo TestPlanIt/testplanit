@@ -29,11 +29,16 @@ vi.mock("~/lib/db", () => ({
     workflows: { findFirst: vi.fn() },
     repositoryCases: { findFirst: vi.fn() },
     tags: { findMany: vi.fn() },
+    issue: { findMany: vi.fn() },
   },
 }));
 
 vi.mock("~/lib/services/jira-panel-generation", () => ({
   loadTemplateData: vi.fn(),
+}));
+
+vi.mock("~/lib/defaultTemplate", () => ({
+  findProjectDefaultTemplateId: vi.fn(),
 }));
 
 vi.mock("~/lib/services/tagResolution", () => ({
@@ -70,6 +75,7 @@ import {
 } from "~/lib/api-token-auth";
 import { enrichFromApiAuth } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
+import { findProjectDefaultTemplateId } from "~/lib/defaultTemplate";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
 import {
   IssueKeyResolutionError,
@@ -125,8 +131,9 @@ beforeEach(() => {
     id: 1,
     name: "Test Project",
   });
-  // Default template resolution (no explicit templateId → default lookup).
   (baseDb.templates.findFirst as any).mockResolvedValue({ id: 22 });
+  // Default template resolution (no explicit templateId → default lookup).
+  (findProjectDefaultTemplateId as any).mockResolvedValue(22);
   (userCanAddEditArea as any).mockResolvedValue(true);
   (loadTemplateData as any).mockResolvedValue({
     template: { id: 22, name: "Default", fields: [] },
@@ -158,6 +165,9 @@ beforeEach(() => {
     where.id.in.filter((id: number) => id !== 999).map((id: number) => ({ id }))
   );
   (resolveIssueKeys as any).mockResolvedValue(new Map());
+  (baseDb.issue.findMany as any).mockImplementation(async ({ where }: any) =>
+    where.id.in.filter((id: number) => id !== 999).map((id: number) => ({ id }))
+  );
   importerEchoSuccess();
 });
 
@@ -284,7 +294,7 @@ describe("Bulk Create API Route", () => {
     });
 
     it("returns 422 when no default template is assigned", async () => {
-      (baseDb.templates.findFirst as any).mockResolvedValue(null);
+      (findProjectDefaultTemplateId as any).mockResolvedValue(null);
 
       const [req, ctx] = createRequest({
         folderId: 12,
@@ -310,18 +320,17 @@ describe("Bulk Create API Route", () => {
       );
     });
 
-    it("prefers the template marked Default when templateId is omitted", async () => {
+    it("uses the project's default template when templateId is omitted", async () => {
+      (findProjectDefaultTemplateId as any).mockResolvedValue(31);
       const [req, ctx] = createRequest({
         folderId: 12,
         cases: [{ name: "A" }],
       });
       await POST(req, ctx);
 
-      expect(baseDb.templates.findFirst).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: [{ isDefault: "desc" }, { id: "asc" }],
-        })
-      );
+      expect(findProjectDefaultTemplateId).toHaveBeenCalledWith(baseDb, 1);
+      expect(baseDb.templates.findFirst).not.toHaveBeenCalled();
+      expect(loadTemplateData).toHaveBeenCalledWith(31);
     });
   });
 
@@ -493,7 +502,7 @@ describe("Bulk Create API Route", () => {
       expect(imported.map((c: any) => c.name)).toEqual(["B"]);
     });
 
-    it("groups cases by (folderId, stateName) — one importer call per group", async () => {
+    it("groups consecutive cases by (folderId, stateName) so entry order survives", async () => {
       (baseDb.repositoryFolders.findFirst as any).mockImplementation(
         async ({ where }: any) => ({
           id: where.id,
@@ -507,7 +516,7 @@ describe("Bulk Create API Route", () => {
         cases: [
           { name: "A" }, // → folder 12
           { name: "B", folderId: 77 }, // → folder 77
-          { name: "C" }, // → folder 12
+          { name: "C" }, // → folder 12 again: a new run, not merged with A
         ],
       });
       const res = await POST(req, ctx);
@@ -515,10 +524,68 @@ describe("Bulk Create API Route", () => {
 
       expect(res.status).toBe(200);
       expect(data.importedCount).toBe(3);
-      // Two distinct folder groups → two importer transactions.
-      expect(persistGeneratedTestCases).toHaveBeenCalledTimes(2);
+      // Three runs → three importer transactions, each in input order, so
+      // C is written after B and keeps its place in the folder.
+      expect(persistGeneratedTestCases).toHaveBeenCalledTimes(3);
+      const callNames = (persistGeneratedTestCases as any).mock.calls.map(
+        (c: any) => c[0].testCases.map((tc: any) => tc.name)
+      );
+      expect(callNames).toEqual([["A"], ["B"], ["C"]]);
       // Every input case is represented in the results, in input order.
       expect(data.results.map((r: any) => r.name)).toEqual(["A", "B", "C"]);
+    });
+
+    it("merges adjacent cases that share a folder and state into one transaction", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [
+          { name: "A" },
+          { name: "B" },
+          { name: "C", stateName: "Ready" },
+        ],
+      });
+      const res = await POST(req, ctx);
+      expect(res.status).toBe(200);
+      expect(persistGeneratedTestCases).toHaveBeenCalledTimes(2);
+      const first = (persistGeneratedTestCases as any).mock.calls[0][0];
+      expect(first.testCases.map((tc: any) => tc.name)).toEqual(["A", "B"]);
+    });
+
+    it("passes automated and estimate through to the importer", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A", automated: true, estimate: 5400 }, { name: "B" }],
+      });
+      const res = await POST(req, ctx);
+      expect(res.status).toBe(200);
+      const input = (persistGeneratedTestCases as any).mock.calls[0][0];
+      expect(input.testCases[0]).toMatchObject({
+        automated: true,
+        estimate: 5400,
+      });
+      expect(input.testCases[1]).not.toHaveProperty("automated");
+      expect(input.testCases[1]).not.toHaveProperty("estimate");
+    });
+
+    it("hands the actor's access to the importer so admins keep a gated state", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        stateName: "Done",
+        cases: [{ name: "A" }],
+      });
+      const res = await POST(req, ctx);
+      expect(res.status).toBe(200);
+      const author = (persistGeneratedTestCases as any).mock.calls[0][1];
+      expect(author.access).toBe("ADMIN");
+    });
+
+    it("rejects a negative or fractional estimate", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A", estimate: -1 }],
+      });
+      const res = await POST(req, ctx);
+      expect(res.status).toBe(400);
     });
   });
 
@@ -735,6 +802,25 @@ describe("Bulk Create API Route", () => {
       await POST(req, ctx);
 
       expect((resolveIssueKeys as any).mock.calls[0][0].integrationId).toBe(9);
+    });
+
+    it("links issue ids of this project and fails a case citing a foreign one", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [
+          { name: "A", issueIds: [5, 6] },
+          { name: "B", issueIds: [999] },
+        ],
+      });
+      const res = await POST(req, ctx);
+      const data = await res.json();
+      expect(res.status).toBe(200);
+      expect(data.results[0].status).toBe("success");
+      expect(data.results[1].status).toBe("error");
+      expect(data.results[1].error).toContain("999");
+      const input = (persistGeneratedTestCases as any).mock.calls[0][0];
+      expect(input.testCases[0].issueIds).toEqual([5, 6]);
+      expect(resolveIssueKeys).not.toHaveBeenCalled();
     });
 
     it("does not reach for the tracker when no case cites an issue", async () => {

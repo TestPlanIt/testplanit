@@ -3,11 +3,15 @@ import {
   handleFlakyTestsOptionsGET,
   handleFlakyTestsPOST,
 } from "~/utils/flakyTestsUtils";
+import { withReplicaRoute } from "~/lib/db/replicaRoute";
 
-export async function GET(req: NextRequest) {
+async function reportGet(req: NextRequest) {
   return handleFlakyTestsOptionsGET(req, true);
 }
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   return handleFlakyTestsPOST(req, true);
 }
+
+export const GET = withReplicaRoute(reportGet);
+export const POST = withReplicaRoute(reportPost);

@@ -1,4 +1,5 @@
 import AutomatedRunMetrics from "@/components/AutomatedRunMetrics";
+import { QUARANTINED_COLOR } from "~/lib/services/testRunSummary-shared";
 import CollapsibleSummarySection from "@/components/CollapsibleSummarySection";
 import JUnitDurationHistogram from "@/components/dataVisualizations/JUnitDurationHistogram";
 import JUnitExecutionTimeline from "@/components/dataVisualizations/JUnitExecutionTimeline";
@@ -41,6 +42,8 @@ interface JunitChartsPanelProps {
   onFlakyTileClick?: () => void;
   /** Wired to the metrics card's Retries tile — applies the table filter. */
   onRetriesTileClick?: () => void;
+  /** Wired to the metrics card's Quarantined tile — applies the table filter. */
+  onQuarantinedTileClick?: () => void;
 }
 
 const fallbackColor = (type: string | null | undefined) =>
@@ -68,6 +71,7 @@ export default function JunitChartsPanel({
   forecastSeconds,
   onFlakyTileClick,
   onRetriesTileClick,
+  onQuarantinedTileClick,
 }: JunitChartsPanelProps) {
   const params = useParams();
   const router = useRouter();
@@ -96,6 +100,7 @@ export default function JunitChartsPanel({
             automated: true,
             isDeleted: true,
             hasParameters: true,
+            quarantine: { select: { id: true } },
           },
         },
         testSuite: { select: { name: true } },
@@ -116,6 +121,7 @@ export default function JunitChartsPanel({
         automated: result.repositoryCase?.automated || false,
         isDeleted: result.repositoryCase?.isDeleted || false,
         hasParameters: result.repositoryCase?.hasParameters || false,
+        quarantined: !!result.repositoryCase?.quarantine,
         suiteName: result.testSuite?.name,
         time: result.time,
         executedAt: result.executedAt || undefined,
@@ -135,20 +141,26 @@ export default function JunitChartsPanel({
       { id: string | number; name: string; color: string; value: number }
     > = {};
     for (const row of chartRows) {
-      const statusName = row.resultStatus;
+      // Failures of quarantined cases (failure triage) form their own slice.
+      const isQuarantinedFailure =
+        row.quarantined &&
+        (row.resultType === "FAILURE" || row.resultType === "ERROR");
+      const statusName = isQuarantinedFailure
+        ? t("triage.quarantine.label")
+        : row.resultStatus;
       if (!statusName) continue;
       if (!statusMap[statusName]) {
         statusMap[statusName] = {
           id: statusName,
           name: statusName,
-          color: row.resultColor,
+          color: isQuarantinedFailure ? QUARANTINED_COLOR : row.resultColor,
           value: 0,
         };
       }
       statusMap[statusName].value++;
     }
     return Object.values(statusMap);
-  }, [chartRows]);
+  }, [chartRows, t]);
 
   const timelineRows = useMemo(
     () =>
@@ -246,6 +258,7 @@ export default function JunitChartsPanel({
           results={chartRows}
           onFlakyClick={onFlakyTileClick}
           onRetriesClick={onRetriesTileClick}
+          onQuarantinedClick={onQuarantinedTileClick}
         />
         {/* Charts carousel */}
         <div

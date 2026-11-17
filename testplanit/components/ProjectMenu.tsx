@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ApplicationArea } from "~/zenstack/models";
 import {
+  Gauge,
   BookText as DocumentationIcon,
   Bug as IssuesIcon,
   ChartNoAxesCombined,
@@ -42,6 +43,7 @@ import {
   SquareStack,
   Tags as TagsIcon,
   Webhook,
+  Fingerprint,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -161,11 +163,12 @@ export default function ProjectsMenu({
   const { data: project } = useClientQueries(schema).projects.useFindUnique(
     {
       where: { id: Number(projectId) },
-      select: { requirementsEnabled: true },
+      select: { requirementsEnabled: true, failureTriageEnabled: true },
     },
     { enabled: Boolean(projectId) && !isNaN(Number(projectId)) }
   );
   const requirementsEnabled = project?.requirementsEnabled === true;
+  const failureTriageEnabled = project?.failureTriageEnabled === true;
 
   // Permission check for Shared Steps
   const safeProjectId = projectId ? String(projectId) : "";
@@ -292,6 +295,17 @@ export default function ProjectsMenu({
       id: "project-issues-link",
       section: "management",
     },
+    ...(failureTriageEnabled
+      ? [
+          {
+            icon: Fingerprint,
+            label: tCommon("pageTitles.triage"),
+            path: "triage",
+            id: "project-triage-link",
+            section: "management" as MenuSection,
+          },
+        ]
+      : []),
     ...(canSeeReports
       ? [
           {
@@ -364,6 +378,20 @@ export default function ProjectsMenu({
             label: tCommon("pageTitles.automation"),
             path: "settings/automation",
             id: "settings-automation-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: Fingerprint,
+            label: tCommon("pageTitles.triage"),
+            path: "settings/triage",
+            id: "settings-triage-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: Gauge,
+            label: tCommon("pageTitles.riskScoring"),
+            path: "settings/risk",
+            id: "settings-risk-link",
             section: "settings" as MenuSection,
           },
           {

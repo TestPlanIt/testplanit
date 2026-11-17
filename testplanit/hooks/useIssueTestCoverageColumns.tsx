@@ -461,7 +461,7 @@ export function useIssueTestCoverageSummaryColumns(
 
           const getPassRateColor = (r: number) => {
             if (r >= 90) return "text-success";
-            if (r >= 70) return "text-yellow-600 dark:text-yellow-400";
+            if (r >= 70) return "text-yellow-700 dark:text-yellow-400";
             if (r >= 50) return "text-orange-600 dark:text-orange-400";
             return "text-destructive";
           };

@@ -25,7 +25,15 @@ function makeDb(reusable: unknown = null) {
   };
 }
 function makeQueue() {
-  return { add: vi.fn().mockResolvedValue({}) };
+  return { add: vi.fn().mockResolvedValue({}), getJob: vi.fn() };
+}
+
+/** A job already holding the id a new analysis would claim. */
+function makeExistingJob(state: string) {
+  return {
+    getState: vi.fn().mockResolvedValue(state),
+    remove: vi.fn().mockResolvedValue(undefined),
+  };
 }
 const input = {
   projectId: 3,
@@ -86,6 +94,26 @@ describe("startImpactAnalysis", () => {
     });
   });
 
+  it("clears a finished job holding the id it needs, but never a live one", async () => {
+    const db = makeDb();
+    const queue = makeQueue();
+    const finished = makeExistingJob("completed");
+    queue.getJob.mockResolvedValue(finished);
+
+    expect(await startImpactAnalysis(db, loaded, queue, input)).toMatchObject({
+      ok: true,
+      jobId: "impact-77",
+    });
+    expect(queue.getJob).toHaveBeenCalledWith("impact-77");
+    expect(finished.remove).toHaveBeenCalled();
+    expect(queue.add).toHaveBeenCalled();
+
+    const live = makeExistingJob("active");
+    queue.getJob.mockResolvedValue(live);
+    await startImpactAnalysis(makeDb(), loaded, queue, input);
+    expect(live.remove).not.toHaveBeenCalled();
+  });
+
   it("reuses a recent completed analysis of the same pair unless forced", async () => {
     const db = makeDb({ id: 12, jobId: "impact-12" });
     const queue = makeQueue();
@@ -101,6 +129,78 @@ describe("startImpactAnalysis", () => {
 
     await startImpactAnalysis(db, loaded, queue, { ...input, force: true });
     expect(db.impactAnalysis.create).toHaveBeenCalled();
+  });
+
+  it("enqueues a compose job for a webhook that reused a completed analysis", async () => {
+    const db = makeDb({ id: 12, jobId: "impact-12" });
+    const queue = makeQueue();
+    const autoRun = {
+      trigger: "push",
+      label: "main a…b",
+      deliveryId: "del-1",
+      webhookConfigId: "whc-1",
+      actions: [{ actionId: "act-1" }],
+    };
+
+    const result = await startImpactAnalysis(db, loaded, queue, {
+      ...input,
+      autoRun,
+      tenantId: "t1",
+    });
+
+    expect(result).toMatchObject({ ok: true, analysisId: 12, reused: true });
+    expect(queue.add).toHaveBeenCalledTimes(1);
+    expect(queue.add).toHaveBeenCalledWith(
+      "compose",
+      {
+        analysisId: 12,
+        projectId: 3,
+        configId: 9,
+        baseSha: SHA_A,
+        headSha: SHA_B,
+        userId: "user-1",
+        tenantId: "t1",
+        autoRun,
+      },
+      { jobId: "impact-compose-12-del-1" }
+    );
+    expect(db.impactAnalysis.create).not.toHaveBeenCalled();
+  });
+
+  it("still reports the reuse when the compose job fails to enqueue", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const queue = makeQueue();
+    queue.add.mockRejectedValue(new Error("redis down"));
+
+    const result = await startImpactAnalysis(
+      makeDb({ id: 12, jobId: "impact-12" }),
+      loaded,
+      queue,
+      { ...input, autoRun: { trigger: "push", label: "x", deliveryId: "d" } }
+    );
+
+    expect(result).toMatchObject({ ok: true, analysisId: 12, reused: true });
+    spy.mockRestore();
+  });
+
+  it("enqueues nothing on reuse without a webhook's auto-run or without a queue", async () => {
+    const queue = makeQueue();
+    await startImpactAnalysis(
+      makeDb({ id: 12, jobId: "impact-12" }),
+      loaded,
+      queue,
+      input
+    );
+    expect(queue.add).not.toHaveBeenCalled();
+
+    expect(
+      await startImpactAnalysis(
+        makeDb({ id: 12, jobId: "impact-12" }),
+        loaded,
+        null,
+        { ...input, autoRun: { trigger: "push", label: "x" } }
+      )
+    ).toMatchObject({ ok: true, reused: true });
   });
 
   it("keys reuse on the connection's exclude rows", async () => {

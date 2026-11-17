@@ -3,6 +3,7 @@ import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
 import { baseDb } from "@/lib/db";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -10,12 +11,14 @@ import { authOptions } from "~/server/auth";
 import {
   buildExpandSystemPrompt,
   buildExpandUserPrompt,
+  fetchExistingCasesContext,
   parseAndValidateTestCases,
   type GenerationContext,
   type IssueData,
   type TemplateData,
   type TestCaseOutline,
 } from "../shared";
+import { makeRelatedCaseFinder } from "../related-cases";
 import {
   classifyLlmStreamError,
   type LlmStreamErrorCode,
@@ -27,6 +30,10 @@ import {
   type ContextImage,
 } from "~/lib/llm/context-images";
 import { readContextImages } from "~/lib/llm/context-image-stash";
+
+/** Token budget for the style exemplars folded into each expand prompt. */
+const EXPAND_EXEMPLAR_TOKEN_BUDGET = 1500;
+const EXPAND_EXEMPLAR_MAX_CASES = 3;
 
 function formatError(err: unknown): string {
   if (!(err instanceof Error)) return "AI generation failed";
@@ -213,10 +220,32 @@ export async function POST(req: NextRequest) {
           systemPromptBase,
           includeParameters === true
         );
+        // A few full cases as style exemplars: the folder's own first, then
+        // content-matched cases from elsewhere in the project. This is the
+        // phase that writes the steps, so it is where the project's step
+        // granularity has to be visible.
+        const exemplars = await fetchExistingCasesContext(
+          baseDb,
+          projectId,
+          {
+            folderId: context.folderContext,
+            related: {
+              find: makeRelatedCaseFinder(baseDb),
+              title: `${issue.title} ${outline.title}`,
+              description: issue.description,
+              notes: context.userNotes,
+              templateId: template.id,
+              tenantId: getCurrentTenantId(),
+            },
+          },
+          EXPAND_EXEMPLAR_TOKEN_BUDGET,
+          "full",
+          { maxCases: EXPAND_EXEMPLAR_MAX_CASES }
+        );
         const userPrompt = buildExpandUserPrompt(
           issue,
           outline,
-          context,
+          { ...context, existingTestCases: exemplars },
           userPromptBase
         );
 

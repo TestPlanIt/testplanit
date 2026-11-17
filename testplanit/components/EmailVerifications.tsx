@@ -3,6 +3,7 @@
 import { randomBytes } from "crypto";
 import nodemailer, { type Transporter } from "nodemailer";
 import { db } from "~/server/db";
+import { getAppUrl } from "~/lib/appUrl";
 
 const generateEmailVerificationToken = () => randomBytes(32).toString("hex");
 
@@ -22,7 +23,7 @@ const sendVerificationEmail = async (email: string, token: string) => {
     subject: "TestPlanIt Email Verification",
     html: `
       <div>Click the link below to verify your email:</div>
-      <a href="${process.env.NEXTAUTH_URL}/verify-email?email=${encodeURIComponent(email)}&token=${token}">Verify Email</a>
+      <a href="${getAppUrl()}/verify-email?email=${encodeURIComponent(email)}&token=${token}">Verify Email</a>
       <div>This link will expire in 24 hours.</div>
     `,
   };

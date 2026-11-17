@@ -95,6 +95,7 @@ export default function ProjectIntegrationsPage() {
             "REDMINE",
             "MANTISBT",
             "SIMPLE_URL",
+            "CLICKUP",
           ],
         },
       },
@@ -116,6 +117,7 @@ export default function ProjectIntegrationsPage() {
         "REDMINE",
         "MANTISBT",
         "SIMPLE_URL",
+        "CLICKUP",
       ].includes(pi.integration.provider)
   );
 

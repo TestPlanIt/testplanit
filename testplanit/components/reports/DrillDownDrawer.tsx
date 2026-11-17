@@ -18,6 +18,7 @@ import {
 import { Circle, Dot, Download, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import LoadingSpinner from "~/components/LoadingSpinner";
+import { formatReportPeriod } from "~/utils/reportPeriodFormat";
 import { DataTable } from "~/components/tables/DataTable";
 import { useDrillDownColumns } from "~/hooks/useDrillDownColumns";
 import { useDrillDownExport } from "~/hooks/useDrillDownExport";
@@ -55,16 +56,24 @@ interface DrillDownDrawerProps {
 /**
  * Format dimension filters into a readable summary
  */
-function formatDimensionSummary(context: DrillDownContext, t: any): string {
+function formatDimensionSummary(
+  context: DrillDownContext,
+  t: any,
+  locale: string
+): string {
   const parts: string[] = [];
 
   if (context.dimensions.user?.name) {
     parts.push(context.dimensions.user.name);
   }
 
-  if (context.dimensions.date?.executedAt) {
-    const date = new Date(context.dimensions.date.executedAt);
-    parts.push(date.toLocaleDateString());
+  // A date row covers the period the report grouped by, not just its day.
+  const dateValue =
+    context.dimensions.date?.executedAt ?? context.dimensions.date?.createdAt;
+  if (typeof dateValue === "string") {
+    parts.push(
+      formatReportPeriod(dateValue, context.dateGrouping ?? "daily", locale)
+    );
   }
 
   if (context.dimensions.status?.name) {
@@ -85,6 +94,18 @@ function formatDimensionSummary(context: DrillDownContext, t: any): string {
 
   if (context.dimensions.configuration?.name) {
     parts.push(context.dimensions.configuration.name);
+  }
+
+  if (context.dimensions.issue?.name) {
+    parts.push(context.dimensions.issue.name);
+  }
+
+  if (context.dimensions.resultSource?.name) {
+    parts.push(context.dimensions.resultSource.name);
+  }
+
+  if (context.dimensions.rootCause?.name) {
+    parts.push(context.dimensions.rootCause.name);
   }
 
   if (context.dimensions.project?.name) {
@@ -129,7 +150,7 @@ export function DrillDownDrawer({
 
   if (!context) return null;
 
-  const dimensionSummary = formatDimensionSummary(context, tReports);
+  const dimensionSummary = formatDimensionSummary(context, tReports, locale);
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>

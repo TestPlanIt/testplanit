@@ -11,6 +11,9 @@
 export type TestRunSummaryData = {
   testRunType: string;
   workflowType?: "NOT_STARTED" | "IN_PROGRESS" | "DONE" | null;
+  /** Whether the run is completed. A completed run is locked, so a case
+   *  with no result in it is Untested rather than Pending. */
+  isCompleted?: boolean;
   /** For automated runs: newest imported suite/result write, falling back to
    *  the run's creation (ISO string). The runs-page Automation card uses it
    *  to stop the "importing" spinner on runs that have gone quiet. Only the
@@ -33,6 +36,9 @@ export type TestRunSummaryData = {
     isCompleted?: boolean;
     isSuccess?: boolean;
     isFailure?: boolean;
+    /** Automated runs: the JUnit result type behind the row, or
+     *  QUARANTINED for failures of quarantined cases. */
+    resultType?: string;
   }>;
   completionRate: number;
   totalElapsed: number;
@@ -64,6 +70,8 @@ export type TestRunSummaryData = {
     totalFailures: number;
     totalErrors: number;
     totalSkipped: number;
+    /** Failures and errors of quarantined cases; not in totalFailures/totalErrors. */
+    totalQuarantined: number;
     totalTime: number;
     resultSegments: Array<{
       id: string;
@@ -90,6 +98,8 @@ export type TestRunSummaryData = {
     isPending: boolean;
     resultCount?: number;
     statusOrder?: number | null;
+    /** The case is quarantined and its status is a failure (failure triage). */
+    quarantined?: boolean;
   }>;
   /**
    * Per-case iteration counts (INT-03 / D-04). Only set on the
@@ -120,6 +130,16 @@ export interface PerCaseIterationCounts {
     skipped: number;
     notRun: number;
   };
+}
+
+/**
+ * English fallback name for a run-case that has no status (never executed).
+ * While the run is open the case is still Pending; once the run is completed
+ * it is locked and the case is Untested. The in-app UI re-labels these rows
+ * in the viewer's language; webhook and panel payloads use this text as is.
+ */
+export function unexecutedStatusName(isCompleted: boolean | null | undefined) {
+  return isCompleted ? "Untested" : "Pending";
 }
 
 /**
@@ -189,4 +209,33 @@ export function latestIso(
   if (!a) return b ?? null;
   if (!b) return a;
   return a > b ? a : b;
+}
+
+/**
+ * Failures of quarantined cases surface as their own segment on automated
+ * run summaries (failure triage). The client translates the name by
+ * resultType; the stored name is the English fallback like "PASSED".
+ */
+export const QUARANTINED_RESULT_TYPE = "QUARANTINED";
+export const QUARANTINED_STATUS_NAME = "Quarantined";
+export const QUARANTINED_COLOR = "rgb(168, 85, 247)";
+
+export const JUNIT_SEGMENT_ORDER: Record<string, number> = {
+  ERROR: 0,
+  FAILURE: 1,
+  [QUARANTINED_RESULT_TYPE]: 2,
+  SKIPPED: 3,
+  PASSED: 4,
+};
+
+export function junitFallbackColor(type: string | null): string {
+  switch (type) {
+    case "FAILURE":
+    case "ERROR":
+      return "rgb(239, 68, 68)";
+    case "SKIPPED":
+      return "rgb(161, 161, 170)";
+    default:
+      return "rgb(34, 197, 94)";
+  }
 }

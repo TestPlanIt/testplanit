@@ -21,6 +21,10 @@ import {
   WEBHOOK_DISPATCH_QUEUE_NAME,
   EXECUTION_DISPATCH_QUEUE_NAME,
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
+  ALERT_QUEUE_NAME,
+  WEBHOOK_ACTIONS_QUEUE_NAME,
+  FAILURE_TRIAGE_QUEUE_NAME,
+  RISK_SCORE_QUEUE_NAME,
 } from "./queueNames";
 import valkeyConnection from "./valkey";
 import { BULLMQ_PREFIX } from "./bullPrefix";
@@ -48,6 +52,10 @@ export {
   WEBHOOK_DISPATCH_QUEUE_NAME,
   EXECUTION_DISPATCH_QUEUE_NAME,
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
+  ALERT_QUEUE_NAME,
+  WEBHOOK_ACTIONS_QUEUE_NAME,
+  FAILURE_TRIAGE_QUEUE_NAME,
+  RISK_SCORE_QUEUE_NAME,
 };
 
 const STANDARD_RETRY: JobsOptions = {
@@ -80,6 +88,8 @@ let _auditLogQueue: Queue | null = null;
 let _budgetAlertQueue: Queue | null = null;
 let _autoTagQueue: Queue | null = null;
 let _deriveCaseStepsQueue: Queue | null = null;
+let _failureTriageQueue: Queue | null = null;
+let _riskScoreQueue: Queue | null = null;
 let _repoCacheQueue: Queue | null = null;
 let _copyMoveQueue: Queue | null = null;
 let _duplicateScanQueue: Queue | null = null;
@@ -90,6 +100,8 @@ let _generateFromUrlQueue: Queue | null = null;
 let _iterationGenerationQueue: Queue | null = null;
 let _webhookDispatchQueue: Queue | null = null;
 let _scimAccessRecomputeQueue: Queue | null = null;
+let _alertQueue: Queue | null = null;
+let _webhookActionsQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -718,6 +730,115 @@ export function getExecutionDispatchQueue(): Queue | null {
   return _executionDispatchQueue;
 }
 
+/**
+ * Threshold-trigger evaluation queue (#651). Jobs are enqueued from the
+ * result/run side-effect hooks and the scheduler; the alert worker
+ * evaluates rules and notifies subscribers.
+ */
+export function getAlertQueue(): Queue | null {
+  if (_alertQueue) return _alertQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${ALERT_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  _alertQueue = new Queue(ALERT_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...STANDARD_RETRY },
+  });
+
+  console.log(`Queue "${ALERT_QUEUE_NAME}" initialized.`);
+
+  _alertQueue.on("error", (error) => {
+    console.error(`Queue ${ALERT_QUEUE_NAME} error:`, error);
+  });
+
+  return _alertQueue;
+}
+
+/**
+ * Inbound webhook actions queue: the receiver enqueues an issue-tracker
+ * delivery's rules here; the webhook-actions worker runs them.
+ */
+export function getWebhookActionsQueue(): Queue | null {
+  if (_webhookActionsQueue) return _webhookActionsQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${WEBHOOK_ACTIONS_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  _webhookActionsQueue = new Queue(WEBHOOK_ACTIONS_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...STANDARD_RETRY },
+  });
+
+  console.log(`Queue "${WEBHOOK_ACTIONS_QUEUE_NAME}" initialized.`);
+
+  _webhookActionsQueue.on("error", (error) => {
+    console.error(`Queue ${WEBHOOK_ACTIONS_QUEUE_NAME} error:`, error);
+  });
+
+  return _webhookActionsQueue;
+}
+
+export function getFailureTriageQueue(): Queue | null {
+  if (_failureTriageQueue) return _failureTriageQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${FAILURE_TRIAGE_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  // attempts: 1 — triage is re-run by the next result burst anyway, and a
+  // retry would re-attempt the LLM calls that already cost tokens.
+  _failureTriageQueue = new Queue(FAILURE_TRIAGE_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...NO_RETRY_LIGHT_RETENTION },
+  });
+
+  console.log(`Queue "${FAILURE_TRIAGE_QUEUE_NAME}" initialized.`);
+
+  _failureTriageQueue.on("error", (error) => {
+    console.error(`Queue ${FAILURE_TRIAGE_QUEUE_NAME} error:`, error);
+  });
+
+  return _failureTriageQueue;
+}
+
+export function getRiskScoreQueue(): Queue | null {
+  if (_riskScoreQueue) return _riskScoreQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${RISK_SCORE_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  // attempts: 1 — a lost recompute is healed by the next result burst or the
+  // nightly sweep, so retrying only doubles the scoring work.
+  _riskScoreQueue = new Queue(RISK_SCORE_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...NO_RETRY_LIGHT_RETENTION },
+  });
+
+  console.log(`Queue "${RISK_SCORE_QUEUE_NAME}" initialized.`);
+
+  _riskScoreQueue.on("error", (error) => {
+    console.error(`Queue ${RISK_SCORE_QUEUE_NAME} error:`, error);
+  });
+
+  return _riskScoreQueue;
+}
+
 export function getAllQueues() {
   return {
     forecastQueue: getForecastQueue(),
@@ -741,5 +862,9 @@ export function getAllQueues() {
     webhookDispatchQueue: getWebhookDispatchQueue(),
     executionDispatchQueue: getExecutionDispatchQueue(),
     scimAccessRecomputeQueue: getScimAccessRecomputeQueue(),
+    alertQueue: getAlertQueue(),
+    webhookActionsQueue: getWebhookActionsQueue(),
+    failureTriageQueue: getFailureTriageQueue(),
+    riskScoreQueue: getRiskScoreQueue(),
   };
 }

@@ -51,9 +51,11 @@ let mockProjectData:
       id: number;
       reviewWorkflowEnabled: boolean;
       requireResultFlipJustification?: boolean;
+      enforceCaseDependencies?: boolean;
       editResultsDurationSeconds?: number | null;
       abandonedRunIdleMinutes?: number | null;
       abandonedRunStateId?: number | null;
+      defaultTemplateId?: number | null;
     }
   | undefined = {
   id: 42,
@@ -128,6 +130,16 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
   }),
 }));
 
+vi.mock("./DefaultTemplateCard", () => ({
+  DefaultTemplateCard: ({
+    defaultTemplateId,
+  }: {
+    defaultTemplateId: number | null | undefined;
+  }) => (
+    <div data-testid="default-template-card">{String(defaultTemplateId)}</div>
+  ),
+}));
+
 import AdvancedPage from "./page";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -156,6 +168,16 @@ describe("AdvancedPage (per-project advanced settings)", () => {
     render(<AdvancedPage />);
     expect(screen.getByTestId("advanced-settings-page")).toBeInTheDocument();
     expect(mockNotFound).not.toHaveBeenCalled();
+  });
+
+  it("(dt) passes the project's default template to the default template card", () => {
+    mockProjectData = {
+      id: 42,
+      reviewWorkflowEnabled: true,
+      defaultTemplateId: 7,
+    };
+    render(<AdvancedPage />);
+    expect(screen.getByTestId("default-template-card")).toHaveTextContent("7");
   });
 
   it("(b) PROJECTADMIN sees the Advanced page", () => {
@@ -215,6 +237,37 @@ describe("AdvancedPage (per-project advanced settings)", () => {
       expect(mockMutateAsync).toHaveBeenCalledWith({
         where: { id: 42 },
         data: { reviewWorkflowEnabled: false },
+      });
+    });
+  });
+
+  it("(cd1) case-dependencies switch reflects the current value", () => {
+    mockProjectData = {
+      id: 42,
+      reviewWorkflowEnabled: false,
+      enforceCaseDependencies: true,
+    };
+    render(<AdvancedPage />);
+    expect(screen.getByTestId("case-dependencies-toggle")).toHaveAttribute(
+      "data-state",
+      "checked"
+    );
+  });
+
+  it("(cd2) toggling case dependencies calls mutateAsync with the new value", async () => {
+    mockProjectData = {
+      id: 42,
+      reviewWorkflowEnabled: false,
+      enforceCaseDependencies: false,
+    };
+    render(<AdvancedPage />);
+
+    fireEvent.click(screen.getByTestId("case-dependencies-toggle"));
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        where: { id: 42 },
+        data: { enforceCaseDependencies: true },
       });
     });
   });

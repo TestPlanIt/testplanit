@@ -27,10 +27,18 @@ import {
   type RollupStatus,
 } from "~/lib/services/iterationRollup";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
+import { evaluateRunReadiness } from "~/lib/services/runReadyCheck";
+import {
+  assertDependencyGateOpen,
+  findUnblockedDependants,
+  type UnblockedDependant,
+} from "~/lib/services/dependencyGate";
+import { notifyUnblockedDependants } from "~/lib/services/dependencyHandoff";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { emitIterationResultRecorded } from "~/lib/webhooks/event-emitters/iterationEvents";
 import {
   isAlreadyPendingError,
+  isDependencyGateError,
   isNotFoundError,
   isReviewGateError,
   ReviewGateError,
@@ -46,7 +54,9 @@ const submitResultSchema = z.object({
   notes: z.unknown().optional(),
   evidence: z.unknown().optional(),
   elapsed: z.number().int().nonnegative().nullable().optional(),
-  attempt: z.number().int().positive(),
+  // Optional: the server numbers the attempt when it is missing or already
+  // taken for the run case (and iteration).
+  attempt: z.number().int().positive().optional(),
   testRunCaseVersion: z.number().int().positive(),
   issueIds: z.array(z.number().int().positive()).optional(),
   // Count of issues the client is linking at the step / shared-step level for
@@ -216,8 +226,12 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         id: true,
         assignedToId: true,
         repositoryCaseId: true,
+        // Pre-write state: isSuccess so the handoff below fires only on a
+        // not-passed → passed transition; isCompleted so the run-progress
+        // check fires only when this result moves the run to 100%.
+        status: { select: { isSuccess: true, isCompleted: true } },
         repositoryCase: {
-          select: { automated: true, templateId: true },
+          select: { automated: true, templateId: true, name: true },
         },
         testRun: {
           select: {
@@ -229,6 +243,8 @@ export const POST = withAuditContext(async (req: NextRequest) => {
             isCompleted: true,
             project: {
               select: {
+                name: true,
+                enforceCaseDependencies: true,
                 createdBy: true,
                 defaultAccessType: true,
                 requireResultFlipJustification: true,
@@ -505,6 +521,20 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     const txOutcome = await auditedTransaction(async (tx) => {
       let auditPayload: AuditPayload | null = null;
+
+      // Dependency gate (opt-in per project). Inside the transaction and
+      // before the result row exists, so a blocked case never gets a result
+      // and the prerequisites' status is read under the same snapshot as the
+      // write — the same preflight position as the review gate below.
+      const enforceDependencies =
+        runCase.testRun.project.enforceCaseDependencies === true;
+      if (enforceDependencies) {
+        await assertDependencyGateOpen(tx, {
+          testRunId: input.testRunId,
+          repositoryCaseId: runCase.repositoryCaseId,
+        });
+      }
+
       const createdResult = await tx.testRunResults.create({
         data: {
           testRunId: input.testRunId,
@@ -518,7 +548,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
           evidence: evidenceInput,
           elapsed: input.elapsed ?? null,
           executedById: user.id,
-          attempt: input.attempt,
+          ...(input.attempt !== undefined ? { attempt: input.attempt } : {}),
           testRunCaseVersion: input.testRunCaseVersion,
           issues:
             input.issueIds && input.issueIds.length > 0
@@ -806,10 +836,32 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         }
       }
 
-      return { createdResult, auditPayload };
+      // Handoff: when this result moves the case from not-passed to passed,
+      // the dependants in this run whose prerequisites are now all passed
+      // have their gate opened. Resolved here so it sees the status just
+      // written; delivered after commit.
+      let unblockedDependants: UnblockedDependant[] = [];
+      if (enforceDependencies && runCase.status?.isSuccess !== true) {
+        const now = await tx.testRunCases.findUnique({
+          where: { id: input.testRunCaseId },
+          select: { status: { select: { isSuccess: true } } },
+        });
+        if (now?.status?.isSuccess === true) {
+          unblockedDependants = await findUnblockedDependants(tx, {
+            testRunId: input.testRunId,
+            repositoryCaseId: runCase.repositoryCaseId,
+          });
+        }
+      }
+
+      return { createdResult, auditPayload, unblockedDependants };
     });
 
-    const { createdResult: result, auditPayload } = txOutcome;
+    const {
+      createdResult: result,
+      auditPayload,
+      unblockedDependants,
+    } = txOutcome;
 
     // Post-commit audit emission. Best-effort — never block the response
     // on the audit pipeline (matches the captureAuditEvent contract; the
@@ -845,8 +897,66 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       );
     }
 
-    return NextResponse.json({ result });
+    // Handoff notifications — post-commit and best-effort, like the audit
+    // emission above: the result is already recorded, and a notification
+    // hiccup must not fail the response.
+    if (unblockedDependants.length > 0) {
+      void notifyUnblockedDependants({
+        dependants: unblockedDependants,
+        actorUserId: user.id,
+        testRunId: input.testRunId,
+        testRunName: runCase.testRun.name,
+        projectId: runCase.testRun.projectId,
+        projectName: runCase.testRun.project.name,
+        prerequisiteCaseName: runCase.repositoryCase.name,
+      });
+    }
+
+    // Did this result move the run from <100% to 100% of its outstanding
+    // work? `evaluateRunReadiness` is the shared predicate: a case-level
+    // count alone calls a parameterized case finished after its FIRST
+    // iteration, because `computeWorstOfStatus` ignores iterations that have
+    // no status and rolls the run-case up to Passed. An iteration submission
+    // therefore always has to ask, because its run-case is already
+    // "completed" from that rollup and the prior-status guard — which keeps
+    // re-recording a finished case from prompting again — would otherwise
+    // suppress the prompt for every iteration after the first. Read after
+    // commit so a concurrent bulk submission sees its siblings' writes (the
+    // client dedupes a double fire). Best-effort: the result is already
+    // written, so a failure here must not fail the response.
+    let allCasesJustCompleted = false;
+    if (input.iterationId != null || runCase.status?.isCompleted !== true) {
+      try {
+        const readiness = await evaluateRunReadiness(
+          baseDb as never,
+          input.testRunId
+        );
+        allCasesJustCompleted = readiness.isReady;
+      } catch (err) {
+        console.error(
+          `Run progress check failed after result for run ${input.testRunId}:`,
+          err
+        );
+      }
+    }
+
+    return NextResponse.json({
+      result,
+      runProgress: { allCasesJustCompleted },
+    });
   } catch (error) {
+    if (isDependencyGateError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            "This test case is blocked until its prerequisites in this run have passed",
+          code: error.code,
+          blockedBy: error.blockedBy,
+        },
+        { status: 409 }
+      );
+    }
+
     if (error instanceof IterationNotFoundError) {
       return NextResponse.json(
         { error: "Iteration not found", code: "ITERATION_NOT_FOUND" },

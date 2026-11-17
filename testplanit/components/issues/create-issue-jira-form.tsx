@@ -32,6 +32,7 @@ import {
   jiraDefaultFormValue,
   jiraIdRef,
 } from "./jira-field-types";
+import { apiFetch } from "~/lib/basePath";
 
 interface JiraField {
   key: string;
@@ -71,6 +72,8 @@ interface CreateIssueJiraFormProps {
   /** @deprecated Use projectIntegrationId — kept for backward compat */
   issueTypeId?: string;
   onIssueCreated?: (issue: any) => void;
+  /** Link the created issue to this failure signature (server-side, idempotent). */
+  failureSignatureId?: number;
   defaultValues?: {
     title?: string;
     /**
@@ -88,12 +91,13 @@ interface CreateIssueJiraFormProps {
 export function CreateIssueJiraForm({
   open,
   onOpenChange,
-  projectId: _projectId,
+  projectId,
   integrationId,
   projectIntegrationId,
   projectKey: _legacyProjectKey,
   issueTypeId: _legacyIssueTypeId,
   onIssueCreated,
+  failureSignatureId,
   defaultValues,
 }: CreateIssueJiraFormProps) {
   const t = useTranslations();
@@ -173,7 +177,7 @@ export function CreateIssueJiraForm({
 
       setIssueTypesLoading(true);
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/integrations/${integrationId}/issue-types?projectKey=${selectedProjectKey}`
         );
 
@@ -214,7 +218,7 @@ export function CreateIssueJiraForm({
       setError(null);
 
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/integrations/${integrationId}/issue-type-fields?projectKey=${selectedProjectKey}&issueTypeId=${selectedIssueType}`
         );
 
@@ -379,6 +383,11 @@ export function CreateIssueJiraForm({
         title: data.summary,
         description: data.description, // This will be TipTap JSON, adapter will convert to ADF
         customFields: {} as Record<string, any>,
+        // Internal TestPlanIt project for the stored issue
+        testplanitProjectId: projectId,
+        ...(failureSignatureId
+          ? { failureSignatureId: String(failureSignatureId) }
+          : {}),
       };
 
       // Add other fields
@@ -421,7 +430,7 @@ export function CreateIssueJiraForm({
         }
       });
 
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/integrations/${integrationId}/create-issue`,
         {
           method: "POST",

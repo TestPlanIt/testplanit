@@ -262,6 +262,71 @@ The exported CSV includes all filtered audit log entries with the following colu
 Audit log exports are themselves logged as `DATA_EXPORTED` events for accountability.
 :::
 
+## Retention
+
+Audit log entries stay in the database indefinitely by default. To keep only a recent window, set `AUDIT_LOG_RETENTION_DAYS` on the workers. Once a day, entries older than that many days leave the database, and with it the audit log viewer and CSV export. `AUDIT_LOG_RETENTION_MODE` decides what happens to them:
+
+- **`archive`** (default) moves them into object storage.
+- **`delete`** removes them permanently. Nothing is kept.
+
+Each run records an event: `AUDIT_LOG_ARCHIVED` or `AUDIT_LOG_PURGED`, with the number of entries removed.
+
+In multi-tenant deployments, set `auditLogRetentionDays` and `auditLogRetentionMode` in a tenant's configuration to give it its own window and mode. A tenant without them uses the global settings. See [Environment Variables](../environment-variables.md#audit-log-retention).
+
+:::warning
+Export anything you need from the viewer before turning retention on. In `delete` mode, removed entries cannot be recovered.
+:::
+
+### Archive files
+
+- Files are gzipped [NDJSON](https://github.com/ndjson/ndjson-spec), one audit log entry per line with every column, grouped by calendar month (UTC) and holding up to 25,000 entries each.
+- Each file is read back and its SHA-256 checked before any entry is deleted from the database.
+- Files go to `AUDIT_LOG_ARCHIVE_BUCKET`, or to the file storage bucket when it is unset, under `audit-log-archive/YYYY/MM/` (`audit-log-archive/<tenant>/YYYY/MM/` in multi-tenant deployments). A dedicated bucket lets you apply S3 Object Lock or a lifecycle rule that moves older files to a colder storage class.
+
+If archiving is on and no bucket is configured, nothing is removed.
+
+### Downloading archives
+
+Archives are available through the API to administrators, using a browser session or an administrator's [API token](../api-tokens.md).
+
+List the archives, oldest first. `from` and `to` (ISO 8601) keep only archives whose entries fall in that range; `skip` and `take` (up to 1,000, default 100) page through them:
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  "https://testplanit.example.com/api/admin/audit-logs/archives?from=2025-01-01&to=2025-12-31"
+```
+
+```json
+{
+  "retention": { "days": 365, "mode": "archive" },
+  "total": 12,
+  "skip": 0,
+  "take": 100,
+  "archives": [
+    {
+      "id": 1,
+      "periodStart": "2025-01-01T00:00:00.000Z",
+      "firstTimestamp": "2025-01-01T00:04:00.123Z",
+      "lastTimestamp": "2025-01-31T23:56:00.123Z",
+      "rowCount": 11159,
+      "byteSize": 190846,
+      "sha256": "01a63728b6e318a4036af10665d3ca3fb981f06abb8670d1fe51aa806197d865",
+      "createdAt": "2026-01-31T02:00:00.000Z"
+    }
+  ]
+}
+```
+
+Download one archive by its `id`. The response carries `X-Archive-SHA256` and `X-Archive-Row-Count` headers for checking the file:
+
+```bash
+curl -OJ -H "Authorization: Bearer $TOKEN" \
+  "https://testplanit.example.com/api/admin/audit-logs/archives/1"
+gunzip -c 20250101T000400123Z-*.ndjson.gz | head -1
+```
+
+Each download is recorded as a `DATA_EXPORTED` event.
+
 ## Technical Details
 
 ### Asynchronous Processing

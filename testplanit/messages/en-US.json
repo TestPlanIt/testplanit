@@ -8,6 +8,7 @@
       "editAction": "Edit ({count})",
       "completeAction": "Complete ({count})",
       "deleteAction": "Delete ({count})",
+      "restoreAction": "Restore ({count})",
       "editTitle": "Bulk Edit ({count})",
       "applyToCount": "Changes apply to {count, plural, one {# item} other {# items}}.",
       "tagsAdditiveHint": "Selected tags are added to each item; existing tags are kept.",
@@ -126,6 +127,8 @@
       "exportingPdf": "Exporting...",
       "change": "Change",
       "viewAll": "View All",
+      "viewSystemOutput": "View logs",
+      "viewSystemError": "View error",
       "undo": "Undo",
       "undoDelete": "Undo delete",
       "automated": {
@@ -338,6 +341,7 @@
       "milestoneTypes": "Milestone Types",
       "milestones": "Milestones",
       "createdAt": "Created At",
+      "stagedAt": "Staged At",
       "completedOn": "Completed On",
       "variants": "Variants",
       "emailVerified": "Email Verified",
@@ -503,6 +507,7 @@
       "complete": {
         "title": "Complete Test Run",
         "description": "Are you sure you want to complete this test run?",
+        "allCasesCompletedDescription": "Every test case in this run now has a result. Would you like to complete this test run?",
         "warning": "Once completed, the test run will not be able to be modified.",
         "completing": "Completing...",
         "apple": {
@@ -577,6 +582,7 @@
       "addFieldTo": "Add a field to {section}",
       "selectTemplates": "Select templates",
       "selectUsers": "Select users",
+      "selectGroups": "Select groups",
       "selectOption": "Select an option",
       "date": "Select a date",
       "selectEncoding": "Select encoding...",
@@ -694,6 +700,8 @@
       "failedToDeleteRepository": "Failed to delete repository",
       "permissionDenied": "You do not have permission to access this page.",
       "resultSubmitPermissionDenied": "You can’t submit results for this case. Ask a project admin to assign it to you.",
+      "dependenciesNotPassed": "Blocked by dependencies",
+      "dependenciesNotPassedDescription": "This test case can't be executed until {count, plural, =0 {the cases it depends on have} one {the case it depends on has} other {all # cases it depends on have}} passed in this run.",
       "justificationRequired": "Justification required",
       "justificationRequiredDescription": "Flipping a completed result to a different outcome requires Result Details explaining the change.",
       "requiredFieldMissing": "A required result field is missing a value.",
@@ -736,7 +744,10 @@
       "adminSamlConfig": "Admin - SAML Configuration",
       "apiDocumentation": "API Documentation",
       "sharedContent": "Shared Content",
-      "impact": "Impact Analysis"
+      "impact": "Impact Analysis",
+      "alerts": "Notifications & Alerts",
+      "triage": "Failure Patterns",
+      "riskScoring": "Risk Scoring"
     },
     "aria": {
       "userMenu": "User menu",
@@ -824,6 +835,9 @@
       "viewTestRunDetails": "View test run details",
       "sortByStatus": "Group by status",
       "sortByDate": "Sort by date",
+      "estimateFromCases": "Estimated time remaining: {value} (from the estimates entered on the cases)",
+      "estimateEntered": "Estimate: {value} (entered on the case)",
+      "forecastFromHistory": "Forecast: {value} (from past execution times)",
       "testRuns": "{count, plural, =0 {No Test Runs} =1 {1 Test Run} other {# Test Runs}}",
       "sessions": "{count, plural, =0 {No Sessions} =1 {1 Session} other {# Sessions}}",
       "issues": "{count, plural, =0 {No Issues} =1 {1 Issue} other {# Issues}}",
@@ -868,8 +882,7 @@
     "for": "for",
     "and": "and",
     "branding": {
-      "logoAlt": "TestPlanIt Logo",
-      "tagline": "Test everything under the sun"
+      "logoAlt": "TestPlanIt Logo"
     },
     "table": {
       "columns": {
@@ -1239,6 +1252,7 @@
       "accessDenied": "Access denied. Your account may be inactive or you don't have permission to sign in.",
       "configuration": "There is a problem with the server configuration.",
       "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "sessionEnded": "Your session has expired. Please sign in again.",
       "invalid2FACode": "Invalid verification code. Please try again.",
       "twoFactorTokenRequired": "Token is required",
       "verificationCodeRequired": "Verification code is required"
@@ -1575,6 +1589,9 @@
           },
           "mantisbt": {
             "description": "Connect to a self-hosted MantisBT instance for issue tracking."
+          },
+          "clickup": {
+            "description": "Connect to ClickUp for task tracking and project management."
           }
         }
       },
@@ -1657,7 +1674,8 @@
           "scimGroupMemberAdded": "Members added",
           "scimGroupMemberRemoved": "Members removed",
           "scimGroupDeleted": "Group deleted",
-          "scimGroupMemberAddedSummary": "Members added (bulk-sync summary)"
+          "scimGroupMemberAddedSummary": "Members added (bulk-sync summary)",
+          "triggered": "Triggered"
         },
         "iterationResultHelp": "Fires every time an iteration result is recorded — pass, fail, skip, or any other status. Use sparingly on long automation runs (one event per iteration).",
         "events": {
@@ -1732,13 +1750,13 @@
         "inboundChooserGitea": "Gitea",
         "inboundJiraTitle": "Jira inbound webhook",
         "inboundGithubTitle": "GitHub inbound webhook",
-        "inboundGithubScopeHint": "GitHub <code>issues</code> events update linked TestPlanIt issues. Pull request and issue comment events are accepted but do not update issues yet.",
+        "inboundGithubScopeHint": "GitHub <code>issues</code> events update linked TestPlanIt issues, including closing as not planned, and <code>issue_comment</code> events refresh them. Pull request events are accepted but do not update issues.",
         "inboundGitlabTitle": "GitLab inbound webhook",
         "inboundGitlabScopeHint": "GitLab <code>Issue Hook</code> events update linked TestPlanIt issues. Other event types are accepted but do not update issues.",
         "inboundGiteaTitle": "Gitea inbound webhook",
         "inboundGiteaScopeHint": "Gitea <code>issues</code> events update linked TestPlanIt issues. Other event types are accepted but do not update issues.",
         "inboundAdoTitle": "Azure DevOps inbound webhook",
-        "inboundAdoScopeHint": "Azure DevOps <code>workitem.updated</code> events update linked TestPlanIt issues. Other events are accepted but do not update issues.",
+        "inboundAdoScopeHint": "Azure DevOps <code>workitem.created</code> and <code>workitem.updated</code> events update linked TestPlanIt issues. Other events are accepted but do not update issues.",
         "inboundAdoUsername": "Username",
         "inboundAdoUsernamePlaceholder": "service-account",
         "inboundAdoUsernameHelp": "Configured on the Azure DevOps Service Hook side. TestPlanIt verifies it via HTTP Basic Auth.",
@@ -1752,10 +1770,10 @@
         "setupStepsGithubStep1": "In your GitHub repository, go to Settings → Webhooks → Add webhook.",
         "setupStepsGithubStep2": "Paste the URL below into the Payload URL field. Set Content type to application/json.",
         "setupStepsGithubStep3": "Paste the secret below into the Secret field.",
-        "setupStepsGithubStep4": "Choose \"Let me select individual events\" and check \"Issues\".",
+        "setupStepsGithubStep4": "Choose \"Let me select individual events\" and check \"Issues\" and \"Issue comments\".",
         "setupStepsGithubStep5": "Click \"Add webhook\". Use \"Send test webhook\" below to verify the pipeline.",
         "setupStepsAdoStep1": "In your Azure DevOps project, go to Project settings → Service hooks → Create subscription.",
-        "setupStepsAdoStep2": "Choose \"Web Hooks\" as the service. Set Trigger to \"Work item updated\".",
+        "setupStepsAdoStep2": "Choose \"Web Hooks\" as the service. Set Trigger to \"Work item created\", then repeat these steps for a second subscription with \"Work item updated\".",
         "setupStepsAdoStep3": "Set Resource details to send = All so System.State is included.",
         "setupStepsAdoStep4": "Paste the URL below into the URL field. Set Basic authentication username and password to the values you entered above.",
         "setupStepsAdoStep5": "Save the subscription. Use \"Send test webhook\" below to verify the pipeline.",
@@ -1847,6 +1865,53 @@
         "setupStepsMantisbtStep2": "In the plugin configuration, choose the issue created and issue updated events.",
         "setupStepsMantisbtStep3": "Paste the URL above as the webhook target and save.",
         "setupStepsMantisbtStep4": "Create or update an issue in MantisBT; the linked issue’s status will sync here.",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "ClickUp inbound webhook",
+        "inboundClickupScopeHint": "ClickUp <code>taskCreated</code> and <code>taskStatusUpdated</code> events update linked TestPlanIt issues. Other task events are accepted but do not update issues.",
+        "inboundClickupRegisterHint": "ClickUp has no webhook settings page: webhooks are created through its API, and ClickUp chooses the signing secret. Leave the secret blank and TestPlanIt registers this webhook in ClickUp for the linked List using your ClickUp authorization.",
+        "inboundClickupSecret": "Webhook secret (optional)",
+        "inboundClickupSecretHelp": "Only needed if you created the webhook yourself with ClickUp's Create Webhook API: paste the secret ClickUp returned. Stored encrypted at rest.",
+        "setupStepsClickupStep1": "If you left the secret blank, TestPlanIt has already registered this webhook with ClickUp for the linked List — there is nothing to configure in ClickUp.",
+        "setupStepsClickupStep2": "If you registered the webhook yourself through ClickUp's Create Webhook API, make sure its endpoint is the URL below and subscribe it to the taskCreated and taskStatusUpdated events.",
+        "setupStepsClickupStep3": "Use \"Send test webhook\" below to verify the pipeline. Rotating the secret registers a fresh webhook in ClickUp.",
+        "actions": {
+          "description": "What TestPlanIt does when this webhook receives an event. Actions run in the order listed.",
+          "empty": "No actions. Events are recorded, but nothing happens.",
+          "addTitle": "Add action",
+          "editTitle": "Edit action",
+          "dialogDescription": "Choose the event that triggers this action and what it does.",
+          "trigger": {
+            "ISSUE_EVENT": "Any issue event",
+            "ISSUE_STATUS_ENTERED": "Issue status changes"
+          },
+          "triggerHelp": {
+            "ISSUE_EVENT": "Any event the tracker sends about an issue.",
+            "ISSUE_CREATED": "An issue TestPlanIt hasn't seen before.",
+            "ISSUE_STATUS_ENTERED": "An issue moves into one of the chosen statuses."
+          },
+          "outcome": {
+            "cases_drafted": "Test cases drafted",
+            "draft_queued": "Drafting test cases",
+            "has_cases": "Issue already has test cases",
+            "no_llm": "No active AI model",
+            "no_template": "No template",
+            "no_target": "No repository or default state",
+            "draft_failed": "Drafting failed",
+            "already_composed": "Run already created for this change",
+            "execute_failed": "Execution not requested"
+          },
+          "dragToReorder": "Drag to reorder",
+          "requirementsOnly": "Requirements only",
+          "requirementsOnlyHelp": "Only issues the project classifies as requirements.",
+          "includeChildIssues": "Include child issues",
+          "includeChildIssuesHelp": "Also take the test cases linked to the issue's child issues.",
+          "caseFilter": "Test case filters",
+          "caseFilterHelp": "Only the test cases matching every filter go in the run. Leave empty to take every test case the action selects.",
+          "notifyHelp": "Who is told when the drafts are ready to review. Each person's notification preferences still apply.",
+          "draftFolderNote": "Test cases drafted automatically by the {webhook} webhook.",
+          "draftFolderNoteCases": "Drafted by the System user; each case is linked to the issue it was drafted from.",
+          "viewFolder": "View folder"
+        },
         "codeRepos": {
           "empty": "No repositories are connected for Impact Analysis. <link>Connect one</link> first.",
           "unsupported": "{provider} repositories cannot send webhooks to TestPlanIt.",
@@ -1885,7 +1950,8 @@
           "sourceRepositoryHelp": "Start an Impact analysis and compose a test run when a pull request is opened or commits are pushed.",
           "noRepositoryAvailable": "Every connected repository already has a webhook or cannot send webhooks.",
           "repositoryPlaceholder": "Choose a repository"
-        }
+        },
+        "outboundSubsAlerts": "Alerts"
       },
       "aiModels": {
         "description": "Configure AI models for intelligent test case generation and analysis",
@@ -2131,6 +2197,16 @@
       },
       "advanced": {
         "description": "Per-project toggles for opinionated features. New toggles will appear here as they are introduced.",
+        "sections": {
+          "general": "General",
+          "generalDescription": "The project's identity and defaults: the code used in record keys, the template new test cases and sessions start with, and whether the project has a Requirements area.",
+          "reviews": "Reviews",
+          "reviewsDescription": "How Review & Approval applies to this project: whether transitions that require review are gated by an approved request, and how long a reviewer has to undo a decision.",
+          "runs": "Test runs",
+          "runsDescription": "What may go into a test run and how runs are kept tidy: excluding draft cases, locking a run's composition once execution starts, gating cases on their dependencies, and closing automated runs that stopped reporting.",
+          "results": "Results",
+          "resultsDescription": "Governance for recorded results: a justification when a result flips, a linked issue on failures, and how long a result stays editable in place."
+        },
         "recordKey": {
           "label": "Project code",
           "description": "A short code used in cosmetic record keys like {example}. 2–10 uppercase letters, no digits. Leave blank to show plain numeric IDs.",
@@ -2141,6 +2217,11 @@
           "taken": "That code is already used by another project. Choose a different one.",
           "savedToast": "Project code saved.",
           "saveError": "Could not save the project code. It may already be used by another project."
+        },
+        "defaultTemplate": {
+          "description": "New test cases and sessions in this project start with this template.",
+          "unavailableTitle": "Default template unavailable",
+          "unavailableDescription": "{name} is disabled, deleted, or no longer assigned to this project, so new test cases and sessions use the system default template instead. Choose another default template or restore this one."
         },
         "reviewWorkflow": {
           "label": "Enable review workflow",
@@ -2189,6 +2270,13 @@
           "disabledToast": "Test Runs will no longer auto-lock their composition",
           "saveError": "Failed to update the composition auto-lock setting"
         },
+        "caseDependencies": {
+          "label": "Enforce test case dependencies in test runs",
+          "description": "When enabled, a test case in a run is blocked until every case it depends on (a \"Depends on\" link) has passed in that same run. Blocked cases are marked in the run and results for them are refused. When the last dependency passes, the case's assignee is notified that it is ready. Dependencies that aren't in the run don't block.",
+          "enabledToast": "Test case dependencies will be enforced in test runs",
+          "disabledToast": "Test case dependencies will no longer be enforced",
+          "saveError": "Failed to update the dependency enforcement setting"
+        },
         "editWindow": {
           "label": "Result edit window",
           "description": "How long after a result is recorded it can still be edited in place. After the window closes, corrections require a new attempt. System administrators can always edit.",
@@ -2223,6 +2311,23 @@
           "save": "Save cleanup settings",
           "savedToast": "Abandoned automation cleanup updated for this project",
           "saveError": "Failed to update abandoned automation cleanup"
+        },
+        "revertWindow": {
+          "label": "Reverting review decisions",
+          "description": "How long a reviewer has to undo their own decision on this project. System admins are not bound by this limit.",
+          "systemLockedTitle": "Reverting is disabled system-wide",
+          "systemLockedDescription": "An administrator has turned off reverting review decisions for every project. This setting cannot be changed here.",
+          "modeInheritMinutes": "Inherit system default ({minutes, plural, one {# minute} other {# minutes}})",
+          "modeDisable": "Disable reverting for this project",
+          "modeCustom": "Custom window",
+          "minutesBefore": "Limit",
+          "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+          "minutesAriaLabel": "Minutes a decision stays revertable",
+          "systemMaxHint": "System maximum: {minutes} minutes",
+          "invalidMinutes": "Enter a number of minutes greater than zero",
+          "save": "Save revert limit",
+          "savedToast": "Revert limit saved.",
+          "saveError": "Could not save the revert limit. Try again in a moment."
         }
       },
       "impact": {
@@ -2527,17 +2632,17 @@
       "overdue": "Milestone \"{name}\" was due on {dueDate}"
     },
     "import": {
-      "importTitle": "Import from Jira",
-      "importDescription": "Select the Jira Fix Versions and Sprints to sync as TestPlanIt Milestones.",
+      "importTitle": "Import from {provider}",
+      "importDescription": "Select the {provider} milestones to sync as TestPlanIt Milestones.",
       "showClosed": "Show closed",
       "alreadyLinked": "Already linked",
       "selectedCount": "{count, plural, one {# selected} other {# selected}}",
       "confirmSelection": "Import Selected",
       "confirmSelectionCount": "{count, plural, one {Import # Milestone} other {Import # Milestones}}",
       "empty": "No milestones found",
-      "previewFailed": "Failed to load milestones from Jira",
+      "previewFailed": "Failed to load milestones from {provider}",
       "importFailed": "Failed to import selected milestones",
-      "requestTimedOut": "Jira took too long to respond and the request timed out. This usually means the linked Jira projects have a large number of versions or boards. Try again, and keep \"Show closed\" turned off to narrow the request.",
+      "requestTimedOut": "{provider} took too long to respond and the request timed out. This usually means the linked {provider} projects have a large number of versions or boards. Try again, and keep \"Show closed\" turned off to narrow the request.",
       "serviceUnavailable": "The server is temporarily unavailable. Please try again in a moment.",
       "unexpectedResponse": "Unexpected response from the server (HTTP {status}). Please try again, and contact your administrator if this keeps happening.",
       "importStarted": "Import started",
@@ -2545,15 +2650,16 @@
       "kindSprint": "Sprint",
       "searchPlaceholder": "Search releases and sprints...",
       "emptyFiltered": "No milestones match your filters.",
-      "partialWarning": "Some Jira projects could not be fetched:",
-      "importing": "Importing {count, plural, one {# milestone} other {# milestones}} from Jira…",
-      "completed": "Imported {count, plural, one {# milestone} other {# milestones}} from Jira",
+      "partialWarning": "Some {provider} projects could not be fetched:",
+      "importing": "Importing {count, plural, one {# milestone} other {# milestones}} from {provider}…",
+      "completed": "Imported {count, plural, one {# milestone} other {# milestones}} from {provider}",
       "stillRunning": "The import is still running in the background — milestones will appear when it finishes."
     },
     "sync": {
-      "managedByJira": "Managed by Jira",
+      "managedByJira": "Managed by {provider}",
       "lastSynced": "Last synced {time}",
       "providerJira": "Jira",
+      "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Sync now",
       "unlinkMenuItem": "Unlink from {provider}",
@@ -2853,7 +2959,9 @@
         "detailsDisplayMode": {
           "docked": "Docked panel",
           "newWindow": "New window"
-        }
+        },
+        "notificationsLabel": "Notifications",
+        "notificationsMoved": "Manage Notifications & Alerts"
       },
       "assignments": {
         "title": "Assignments",
@@ -2886,11 +2994,109 @@
           "label": "Notification Mode",
           "useGlobal": "Use Global Settings"
         },
-        "options": {
-          "title": "Additional Options",
-          "email": {
-            "label": "Email Notifications",
-            "description": "Receive notifications via email"
+        "typeSection": {
+          "title": "What to notify me about",
+          "description": "Every kind of notification is on by default. Switch off the ones you do not want. The notification mode above still decides how you are reached.",
+          "modeNoneNote": "Nothing is delivered while your notification mode is None. Your choices here apply as soon as you pick another mode.",
+          "locked": "Always on",
+          "resetToDefaults": "Reset to defaults",
+          "adminOnly": "Sent to administrators"
+        },
+        "groups": {
+          "assignments": "Assignments",
+          "comments": "Comments",
+          "reviews": "Reviews",
+          "runsAndMilestones": "Runs and milestones",
+          "sharing": "Sharing",
+          "aiAndJobs": "AI and jobs",
+          "integrations": "Integrations",
+          "system": "System",
+          "administration": "Administration"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "Work assigned to me",
+            "description": "A test run case is assigned to you, singly or in bulk."
+          },
+          "SESSION_ASSIGNED": {
+            "label": "Session assigned to me",
+            "description": "A session is created with you as its assignee, or reassigned to you."
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "Assigned case unblocked",
+            "description": "A test case assigned to you in a run becomes executable because the cases it depends on have passed."
+          },
+          "COMMENT_MENTION": {
+            "label": "Mentions in comments",
+            "description": "Someone @-mentions you in a comment on a case, run, session, milestone or review."
+          },
+          "REVIEW_REQUESTED": {
+            "label": "Review requested",
+            "description": "A review is requested from you or from a role you hold."
+          },
+          "REVIEW_APPROVED": {
+            "label": "Review approved",
+            "description": "A reviewer approves your request."
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "Changes requested",
+            "description": "A reviewer asks for changes on your request."
+          },
+          "REVIEW_REJECTED": {
+            "label": "Review rejected",
+            "description": "A reviewer rejects your request."
+          },
+          "REVIEW_CANCELLED": {
+            "label": "Review cancelled",
+            "description": "A request you were asked to review is cancelled, or the item under review is deleted."
+          },
+          "REVIEW_REMINDER": {
+            "label": "Review reminders",
+            "description": "A review you owe is older than the reminder threshold, or the requester nudges you."
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "Test run ready to complete",
+            "description": "Every case in a run you can complete has a result."
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "Milestone due reminders",
+            "description": "A milestone you are involved in is due soon or overdue."
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "Share link viewed",
+            "description": "Someone opens a share link you created with notify-on-view enabled."
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "AI steps derived",
+            "description": "An AI step-derivation job you started has written steps."
+          },
+          "CASES_DRAFTED": {
+            "label": "AI-drafted test cases",
+            "description": "A webhook action drafted test cases for an issue and named you as a reviewer."
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "Integration needs re-authorization",
+            "description": "Your connection to an integration expired or was revoked and must be reconnected."
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "Admin announcements",
+            "description": "An administrator sends a system notification to every user."
+          },
+          "WHATS_NEW": {
+            "label": "What's New after an upgrade",
+            "description": "A summary of new features on your first visit after TestPlanIt is upgraded."
+          },
+          "USER_REGISTERED": {
+            "label": "New user registrations",
+            "description": "A new user signs up through the form, SSO or SAML."
+          },
+          "ALERT_TRIGGERED": {
+            "label": "Alerts",
+            "description": "An alert you are subscribed to fires because a testing metric crossed the line it watches."
+          },
+          "REVIEW_DECISION_REVERTED": {
+            "label": "Review decision reverted",
+            "description": "A reviewer undoes a decision on a request you made, putting it back in their queue."
           }
         },
         "success": {
@@ -2913,7 +3119,7 @@
           "newPasswordTooShort": "New password does not meet the security requirements."
         },
         "success": {
-          "passwordChanged": "Password changed successfully."
+          "passwordChanged": "Password changed successfully. Other devices and browsers have been signed out."
         }
       },
       "auditLog": {
@@ -2928,6 +3134,27 @@
         "allTypes": "All Types",
         "noMatchingEntries": "No entries match the selected filters.",
         "showing": "{loaded} of {total} entries"
+      },
+      "trash": {
+        "description": "Deleted items that can still be restored from here.",
+        "empty": "Nothing in your trash. Items you delete can be restored here for {days, plural, one {# day} other {# days}}.",
+        "disabled": "Self-service restore is turned off. Ask an administrator to restore deleted items from Admin > Trash.",
+        "timeLeftColumn": "Time left",
+        "timeLeft": "{days, plural, =0 {Less than a day} one {# day} other {# days}}",
+        "confirmDescription": "\"{name}\" will be restored to {project}, together with anything that was deleted with it.",
+        "bulkConfirmDescription": "Each of the {count} selected items will be restored to its project, together with anything that was deleted with it.",
+        "restored": "\"{name}\" restored.",
+        "restoreFailed": "Could not restore \"{name}\": {message}",
+        "bulkResult": "{restored, plural, one {# item} other {# items}} restored, {failed} failed.",
+        "failure": {
+          "parent_deleted": "its folder or parent is still deleted — restore that first",
+          "name_conflict": "an item with the same name already exists",
+          "expired": "the restore window has passed",
+          "forbidden": "you no longer have permission in that project",
+          "disabled": "self-service restore is turned off",
+          "not_owner": "only the person who deleted it can restore it",
+          "not_found": "it is no longer in the trash"
+        }
       },
       "myComments": {
         "title": "My Comments",
@@ -3015,7 +3242,8 @@
       "orange": "Orange",
       "accessible": "Accessible",
       "accessibledark": "Accessible (Dark)"
-    }
+    },
+    "myAlerts": "Notifications & Alerts"
   },
   "repository": {
     "version": {
@@ -3088,7 +3316,12 @@
       "noStepsInSelectedGroup": "The selected group has no steps.",
       "sharedGroupSuffix": "(Shared Steps)",
       "unnamedSharedGroup": "Unnamed Shared Steps",
-      "noStepsInSelectedSharedGroup": "The selected shared group has no steps."
+      "noStepsInSelectedSharedGroup": "The selected shared group has no steps.",
+      "layout": {
+        "label": "Step layout",
+        "stacked": "Stacked",
+        "sideBySide": "Side by side"
+      }
     },
     "testCase": {
       "toggleAutomated": "Toggle automated testing",
@@ -3137,6 +3370,13 @@
       "modifierHintMac": "Hold ⇧ to move or ⌥ to copy while dragging to skip this menu.",
       "modifierHintWin": "Hold Shift to move or Ctrl to copy while dragging to skip this menu.",
       "dropZoneReorder": "Drop to reorder",
+      "dropZoneReorderBlockedSort": "Remove the sort to reorder cases within this folder",
+      "dropZoneReorderBlockedSortMac": "Remove the sort to reorder — hold ⌥ to copy into this folder",
+      "dropZoneReorderBlockedSortWin": "Remove the sort to reorder — hold Ctrl to copy into this folder",
+      "dropZoneReorderBlockedSearch": "Clear the search to reorder cases within this folder",
+      "dropZoneReorderBlockedSearchMac": "Clear the search to reorder — hold ⌥ to copy into this folder",
+      "dropZoneReorderBlockedSearchWin": "Clear the search to reorder — hold Ctrl to copy into this folder",
+      "dropZoneCopyHere": "Drop to copy into this folder",
       "dropZoneFolder": "Drop on a folder to nest, or between folders to reorder",
       "dropZoneTreeMac": "Drop on a folder — hold ⇧ to move, ⌥ to copy",
       "dropZoneTreeWin": "Drop on a folder — hold Shift to move, Ctrl to copy",
@@ -3493,7 +3733,7 @@
     },
     "duplicates": {
       "findDuplicates": "Find Duplicates",
-      "viewResults": "View {count, plural, one {# Result} other {# Results}}",
+      "viewDuplicates": "View Duplicates",
       "retryScan": "Retry Scan",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Enhancing results with AI...",
@@ -3577,8 +3817,8 @@
         "description": "Choose whether to generate test cases from an issue or a requirements document.",
         "folderContextTip": "Existing test cases from \"{folderName}\" and its parent/child folders will be used as context to avoid duplicates. Make sure you have selected the correct folder before proceeding.",
         "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
-        "folderContextEmptyTitle": "No existing test cases to use as context",
-        "folderContextEmpty": "\"{folderName}\" and its parent/child folders have no test cases, so the AI has no examples of your project's style or existing coverage. For better results, start the generator from the folder where these test cases belong, next to related cases.",
+        "folderContextEmptyTitle": "No test cases in this folder yet",
+        "folderContextEmpty": "\"{folderName}\" and its parent/child folders have no test cases. The AI will look for related test cases elsewhere in this project to learn your style and avoid duplicates. For the best results, start the generator from the folder where these test cases belong.",
         "currentFolder": "current folder",
         "fromIssue": "From Issue",
         "fromDocument": "From Document",
@@ -3665,6 +3905,8 @@
       "generatingLegacy": "Generating test cases with AI...",
       "expandProgress": "{done, number} of {total, number} generated",
       "import": "{count, plural, =0 {Import Test Cases} =1 {Import 1 Test Case} other {Import # Test Cases}}",
+      "stage": "{count, plural, =0 {Stage Test Cases} =1 {Stage 1 Test Case} other {Stage # Test Cases}}",
+      "stageDescription": "Staged test cases are private to you. Review them in My Staged Cases and create them from there; nothing is added to the repository until you do.",
       "importing": "{count, plural, =0 {Importing Test Cases...} =1 {Importing 1 Test Case...} other {Importing # Test Cases...}}",
       "externalSystem": "External System",
       "autoGenerateTags": "Automatically generate tags for test cases",
@@ -3678,7 +3920,8 @@
       "datasetMoreRows": "...and {count, plural, one {# more row} other {# more rows}}",
       "parameterChipSensitive": "sensitive",
       "success": {
-        "imported": "{count, plural, =1 {Successfully imported 1 test case} other {Successfully imported # test cases}}"
+        "imported": "{count, plural, =1 {Successfully imported 1 test case} other {Successfully imported # test cases}}",
+        "staged": "{count, plural, =1 {Staged 1 test case} other {Staged # test cases}}"
       },
       "importData": {
         "issueDescription": "External issue linked from test case generation",
@@ -3687,6 +3930,7 @@
       "errors": {
         "generateFailed": "Failed to generate test cases. Please try again.",
         "importFailed": "Failed to import test cases. Please try again.",
+        "stageFailed": "Failed to stage test cases. Please try again.",
         "noTestCasesGenerated": "No test cases were generated. Please try again with different inputs.",
         "jobNoLongerAvailable": "This generation is no longer available. Start a new one from the Generate Test Cases wizard.",
         "noAiModel": "No AI model is configured for this project. Please configure an AI model in project settings.",
@@ -3695,6 +3939,7 @@
         "noTemplateSelected": "Please select a template for the test cases.",
         "noFieldsSelected": "Please select at least one field to generate content for.",
         "noTestCasesSelectedForImport": "Please select at least one test case to import.",
+        "noTestCasesSelectedForStage": "Please select at least one test case to stage.",
         "templateRequired": "Template selection is required. Please go back and select a template.",
         "repositoryNotFound": "Project repository not found. Please contact your administrator.",
         "workflowNotConfigured": "Project workflow not configured. Please verify project settings.",
@@ -3776,7 +4021,9 @@
         "description": "{count, plural, =1 {You have 1 test case with unsaved edits.} other {You have # test cases with unsaved edits.}}",
         "warning": "If you proceed without saving, your changes will be lost.",
         "saveAllAndImport": "Save All & Import",
-        "discardAndImport": "Discard Edits & Import"
+        "discardAndImport": "Discard Edits & Import",
+        "saveAllAndStage": "Save All & Stage",
+        "discardAndStage": "Discard Edits & Stage"
       },
       "linkedIssuesDroppedTitle": "Some linked issues were not included",
       "linkedIssuesDropped": "{count, plural, =1 {# linked issue was dropped} other {# linked issues were dropped}} due to token budget: {keys}.",
@@ -3791,6 +4038,38 @@
         "skippedSummary": "{count, plural, =1 {# image} other {# images}} skipped (too large or unsupported): {names}",
         "includeUrlScreenshots": "Include page screenshots when available"
       }
+    },
+    "savedDrafts": {
+      "title": "My Staged Cases",
+      "description": "Test cases you wrote and staged instead of creating. Only you can see them. Open one to review it, or create several at once.",
+      "empty": "You have no staged test cases in this project.",
+      "saveDraft": "Stage Case",
+      "saveTitle": "Name the test case",
+      "renameTitle": "Rename test case",
+      "saveDescription": "A staged test case is listed under its name. Only you can see it; nothing is added to the repository until you create it.",
+      "saved": "Test case staged",
+      "saveFailed": "The test case could not be staged",
+      "renamed": "Staged case renamed",
+      "deleted": "Staged case deleted",
+      "deleteFailed": "The staged case could not be deleted",
+      "deleteTitle": "Delete this staged case?",
+      "deleteDescription": "\"{name}\" will be deleted. It was never created, so nothing else changes.",
+      "folderDeleted": "Folder deleted",
+      "folderFallback": "The staged case's folder was deleted; the case will be created in \"{folder}\".",
+      "selectFolderFirst": "Select a folder before opening this staged case.",
+      "problemCount": "{count, plural, one {{count} problem} other {{count} problems}}",
+      "updated": "Updated {age}",
+      "createSelected": "{count, plural, =0 {Create selected} other {Create {count} selected}}",
+      "createdToast": "{count, plural, one {{count} test case created} other {{count} test cases created}}",
+      "failedToast": "{count, plural, one {{count} staged case could not be created} other {{count} staged cases could not be created}}",
+      "problemFolder": "The folder was deleted. Open the staged case to pick a folder.",
+      "problemTemplate": "The template is no longer assigned to this project. Open the staged case to pick one.",
+      "problemState": "The state no longer exists. Open the staged case to pick one.",
+      "problemField": "{field}: {message}",
+      "notCreated": "Not created: {message}",
+      "openToFix": "Open the staged case to fix it.",
+      "elsewhereTitle": "You also have staged cases in",
+      "elsewhereCount": "{count, plural, one {{count} staged case} other {{count} staged cases}}"
     },
     "filterBar": {
       "addFilter": "Add Filter",
@@ -4020,7 +4299,10 @@
       "filterAllEntityTypes": "All entity types",
       "filterEntityTypeCase": "Test cases",
       "filterEntityTypeRun": "Test runs",
-      "filterAllProjects": "All projects"
+      "filterAllProjects": "All projects",
+      "actionRevert": "Revert decision",
+      "revertedBadge": "Reverted",
+      "revertedBadgeTooltip": "{count, plural, one {Reverted once before} other {Reverted # times before}}"
     },
     "requester": {
       "openButton": "Request review",
@@ -4081,6 +4363,23 @@
       "alreadyDecidedError": "This review has already been decided.",
       "decideError": "Could not record your decision. Try again in a moment.",
       "panelSummary": "Review request from {requesterName}: transition to {targetStateName}"
+    },
+    "revert": {
+      "confirm": "Revert decision",
+      "description": "This review goes back to awaiting your decision, and the requester is notified. The comment you left stays in the thread.",
+      "descriptionApproved": "This review goes back to awaiting your decision and the item returns to its previous state. The requester is notified.",
+      "error": "Could not revert the decision. Try again in a moment.",
+      "errorEntityMoved": "This item has moved on since the approval, so the approval can no longer be undone.",
+      "errorForbidden": "Only the reviewer who made this decision can revert it.",
+      "errorNotRevertable": "This decision can no longer be reverted.",
+      "errorSuperseded": "A newer review request already exists for this item, so this decision can no longer be reverted.",
+      "errorWindowExpired": "The time limit for reverting this decision has passed.",
+      "success": "Decision reverted. The review is awaiting your decision again.",
+      "title": "Revert your decision?",
+      "titleOther": "Revert this decision?",
+      "descriptionOther": "This review goes back to awaiting a decision, and the requester is notified. The reviewer's comment stays in the thread.",
+      "descriptionOtherApproved": "This review goes back to awaiting a decision and the item returns to its previous state. The requester is notified.",
+      "successOther": "Decision reverted. The review is awaiting a decision again."
     }
   },
   "runs": {
@@ -4102,6 +4401,13 @@
       "lockError": "Failed to lock the run composition",
       "unlockError": "Failed to unlock the run composition",
       "addBlocked": "This run's composition is locked, so test cases can't be added. Unlock it first to change the case set."
+    },
+    "dependencies": {
+      "blocked": "Blocked",
+      "blockedBy": "Blocked until {count, plural, one {this case passes} other {these cases pass}} in this run:",
+      "blockedNotice": "This test case can't be executed until {count, plural, one {the case it depends on has} other {all # cases it depends on have}} passed in this run.",
+      "notInRun": "{count, plural, one {# case this one depends on is} other {# cases this one depends on are}} not in this run and won't block execution:",
+      "unblocked": "All cases this one depends on have passed in this run."
     },
     "distribute": {
       "title": "Distribute assignments",
@@ -4307,7 +4613,7 @@
     },
     "junitFilters": {
       "retried": "Retried",
-      "clear": "Clear filters"
+      "clear": "Clear all filters"
     },
     "impact": {
       "title": "Impact",
@@ -4380,9 +4686,12 @@
         "selectedOf": "Selected {selected, number} of {total, number} affected test cases",
         "thresholdHint": "Tests that scored {threshold, number} or higher start selected and shown; lower the minimum score to see the rest. Every test shows why it was selected.",
         "shownCount": "Showing {shown, number} of {total, number}",
-        "minScore": "Minimum score",
+        "scoreColumn": "Impact Score",
+        "minScore": "Minimum impact score",
         "selectShown": "Select shown ({count, number})",
         "deselectShown": "Deselect shown ({count, number})",
+        "hiddenSelected": "{count, plural, one {# selected test case is hidden by your filters} other {# selected test cases are hidden by your filters}}.",
+        "deselectHidden": "Deselect hidden",
         "noneShown": "No tests match the filters.",
         "reasons": "Why",
         "tierPinned": "Pinned",
@@ -4391,8 +4700,6 @@
         "tierPinnedTooltip": "A Code Pin on this case intersects the change. Pinned cases always rank first.",
         "tierAffectedTooltip": "The other signals put this case at or above the affected threshold of {threshold, number}.",
         "tierRelatedTooltip": "Linked to a strongly affected case, or its signals scored below {threshold, number}.",
-        "showDetails": "Show reasons",
-        "hideDetails": "Hide reasons",
         "excluded": "{count, plural, one {# case already in the run was skipped} other {# cases already in the run were skipped}}"
       },
       "noAffected": {
@@ -4465,12 +4772,30 @@
       },
       "repositoryPlaceholder": "Select a repository...",
       "chooseRepository": "Choose which of the project's connected repositories holds the changes to analyze."
+    },
+    "risk": {
+      "prioritizeByRisk": "Prioritize by risk",
+      "title": "Prioritize by risk",
+      "description": "The cases that most deserve a run, highest risk first by default. Cases already in this run are left out.",
+      "minimumScore": "Minimum risk score",
+      "showing": "{shown, plural, one {# case loaded} other {# cases loaded}} of {total, plural, one {# match} other {# matches}}",
+      "loadedSelected": "{shown, plural, =2 {Both loaded cases are selected} one {The loaded case is selected} other {All # loaded cases are selected}}.",
+      "selectAllMatches": "{total, plural, =2 {Select both matches} one {Select the only match} other {Select all # matches}}",
+      "allMatchesSelected": "{total, plural, =2 {Both matches are selected} one {The only match is selected} other {All # matches are selected}}.",
+      "noneMatch": "No scored cases at or above this score.",
+      "caseColumn": "Test case",
+      "scoreColumn": "Risk score",
+      "addCases": "{count, plural, =0 {Add cases} one {Add # case} other {Add # cases}}"
+    },
+    "caseSelection": {
+      "menuLabel": "Ways to pick test cases"
     }
   },
   "admin": {
     "menu": {
       "header": "Main",
       "fields": "Fields",
+      "rootCauses": "Root Causes",
       "appConfig": "Application Configuration",
       "recordKeys": "Record Keys",
       "imports": "Data Imports",
@@ -4851,6 +5176,8 @@
       "sections": {
         "providers": {
           "title": "Sign-in Providers",
+          "addSaml": "Add SAML Provider",
+          "samlBadge": "SAML",
           "description": "Configure how users can sign in to your application"
         }
       },
@@ -4892,6 +5219,7 @@
         "samlSettings": {
           "title": "SAML Settings",
           "description": "Configure your SAML identity provider settings",
+          "providerNameDescription": "Shown on the sign-in button, so give each SAML provider a name your users will recognize.",
           "ssoUrl": "SSO URL (Entry Point)",
           "entityId": "Entity ID (Issuer)",
           "certificate": "X.509 Certificate",
@@ -4932,6 +5260,7 @@
         "enabled": "Provider enabled",
         "disabled": "Provider disabled",
         "updateFailed": "Failed to update provider",
+        "providerNameExists": "A provider with this name already exists",
         "configUpdated": "SAML configuration updated",
         "configCreated": "SAML configuration created",
         "configSaveFailed": "Failed to save SAML configuration",
@@ -5038,7 +5367,7 @@
           },
           "redirectUri": "/api/auth/callback/saml",
           "validation": {
-            "allRequired": "Entry Point, Issuer, Certificate, and Callback URL are required"
+            "allRequired": "Name, Entry Point, Issuer, Certificate, and Callback URL are required"
           }
         },
         "disableEmailVerification": {
@@ -5210,6 +5539,7 @@
       "confirmSetAsDefault": "Set as default template",
       "confirmSetAsDefaultDescription": "Are you sure you want to set this template as the default?",
       "confirmSetAsDefaultProjects": "This template will be added to all projects.",
+      "projectDefaultWarning": "{count, plural, one {This project uses this template as its default. Its new test cases and sessions will use the system default template instead.} other {These projects use this template as their default. Their new test cases and sessions will use the system default template instead.}}",
       "add": {
         "button": "Add Template",
         "title": "Add New Template",
@@ -5393,6 +5723,7 @@
       "scimProvisionerBadge": "SCIM Provisioner",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Managed by SCIM. Manage from the SCIM admin page.",
+      "systemUserTooltip": "Built-in user for work TestPlanIt does automatically, such as webhook actions. It can't sign in or be edited.",
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Yes",
       "scimUserLockedTitle": "User is managed by SCIM",
@@ -5645,7 +5976,19 @@
         "thresholdUnit": "{count, plural, one {day} other {days}}",
         "thresholdHelp": "How many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
         "thresholdUpdateSuccess": "Review reminder settings updated.",
-        "thresholdUpdateError": "Failed to update reminder settings. Try again in a moment."
+        "thresholdUpdateError": "Failed to update reminder settings. Try again in a moment.",
+        "revertPolicy": {
+          "label": "Reverting review decisions",
+          "modeAria": "Revert policy mode",
+          "modeNone": "Projects decide ({hours}h by default)",
+          "modeDisabled": "Reverting disabled everywhere",
+          "modeMax": "Allow reverting for up to",
+          "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+          "minutesAriaLabel": "Maximum minutes a decision stays revertable",
+          "invalidMinutes": "Enter a number of minutes greater than zero",
+          "savedToast": "Revert policy saved.",
+          "saveError": "Could not save the revert policy. Try again in a moment."
+        }
       },
       "projectReviewToggleList": {
         "toggleAria": "Toggle review workflow for {name}",
@@ -5658,7 +6001,8 @@
       },
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "The review workflow feature is disabled at the system level. Toggle a project's Advanced settings or set TESTPLANIT_REVIEW_FEATURE_ENABLED to re-enable.",
-        "requiresReviewDefaultDisabled": "The default workflow state cannot require review — new entities land here and have no prior state to gate."
+        "requiresReviewDefaultDisabled": "The default workflow state cannot require review — new entities land here and have no prior state to gate.",
+        "requiresReviewLabel": "Requires review"
       },
       "add": {
         "button": "Add Workflow",
@@ -5972,6 +6316,30 @@
         "confirmMessage": "Are you sure you want to delete the {name} Milestone Type?"
       }
     },
+    "rootCauses": {
+      "description": "The root causes Failure Patterns assigns to grouped failures. The AI picks from this list using each description.",
+      "filterPlaceholder": "Filter root causes...",
+      "reordered": "Root causes reordered",
+      "descriptionPlaceholder": "When does this root cause apply? The AI uses this text to decide.",
+      "columns": {
+        "signatures": "Patterns"
+      },
+      "add": {
+        "button": "Add Root Cause",
+        "title": "Add Root Cause"
+      },
+      "edit": {
+        "title": "Edit Root Cause"
+      },
+      "errors": {
+        "nameExists": "A root cause with this name already exists"
+      },
+      "delete": {
+        "confirmMessage": "Are you sure you want to delete the {name} root cause?",
+        "inUse": "{count, plural, one {# failure pattern uses it.} other {# failure patterns use it.}}",
+        "moveLabel": "{count, plural, one {Move the pattern to} other {Move the # patterns to}}"
+      }
+    },
     "issue_config": {
       "link_title": "Link Issue Tracker",
       "link_description": "Configure the base URL for manually linked issues. When linking an issue using only an External ID, this Base URL will be prepended to create the full link.",
@@ -6063,7 +6431,8 @@
         "stepSequenceMatchCases": "Step Sequence Match Cases",
         "testRunCases": "Test Run Cases",
         "testRunCaseDataSetSnapshots": "Test Run Dataset Snapshots",
-        "testRunCaseIterations": "Test Run Iterations"
+        "testRunCaseIterations": "Test Run Iterations",
+        "alertRules": "Alerts"
       },
       "table": {
         "title": "Deleted {itemType}",
@@ -6075,7 +6444,11 @@
         "purgeConfirmationMessage": "Are you sure you want to permanently delete this row from the {itemType} table? This action cannot be undone and might remove associated data."
       },
       "filterTypesPlaceholder": "Filter item types...",
-      "summary": "{count, plural, =0 {Trash is empty} one {# item in trash} other {# items in trash}}"
+      "summary": "{count, plural, =0 {Trash is empty} one {# item in trash} other {# items in trash}}",
+      "userWindow": {
+        "label": "Self-service restore window",
+        "invalid": "Enter a whole number of days (0 turns it off)."
+      }
     },
     "notifications": {
       "title": "Notification Administration",
@@ -6218,6 +6591,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "Connect to a self-hosted MantisBT instance for issue tracking"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "Connect to ClickUp for task tracking and project management"
         }
       },
       "filterPlaceholder": "Filter integrations...",
@@ -6328,7 +6705,13 @@
         "mantisBTApiKeyHelp": "Create one under your MantisBT account settings → API Tokens",
         "mantisBTUrl": "MantisBT URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "The base URL of your MantisBT instance"
+        "mantisBTUrlHelp": "The base URL of your MantisBT instance",
+        "clickupTeamId": "ClickUp Team (Workspace) ID",
+        "clickupTeamIdPlaceholder": "e.g. 9013456789",
+        "clickupTeamIdHelp": "Found in the ClickUp URL after app.clickup.com/",
+        "clickupListId": "Default ClickUp List ID",
+        "clickupListIdPlaceholder": "e.g. 901234567",
+        "clickupListIdHelp": "The List tasks are created in by default; can be overridden per issue"
       },
       "authType": {
         "api_key": "API Key",
@@ -6404,7 +6787,6 @@
         "defaultModelPlaceholder": "gpt-4o, claude-3-5-sonnet-20241022, etc.",
         "defaultModelDescription": "The model to use by default",
         "maxTokensPerRequest": "Max Tokens Per Request",
-        "maxRequestsPerMinute": "Max Requests Per Minute",
         "costPerInputToken": "Cost Per 1M Input Tokens ($)",
         "costPerOutputToken": "Cost Per 1M Output Tokens ($)",
         "monthlyBudget": "Monthly Budget ($)",
@@ -6548,7 +6930,8 @@
         "generate_from_url_app": "Generate Test Cases from URL (Application Testing)",
         "automation_candidates": "Automation Candidates Report",
         "derive_case_steps": "AI Step Derivation",
-        "impact_analysis": "Impact: Affected Test Selection"
+        "impact_analysis": "Impact: Affected Test Selection",
+        "failure_triage": "Failure Patterns: Root Cause"
       }
     },
     "elasticsearch": {
@@ -6625,6 +7008,7 @@
         "audit-logs": "Audit Logs",
         "budget-alerts": "Budget Alerts",
         "auto-tag": "AI Auto-Tag",
+        "failure-triage": "Failure Patterns",
         "repo-cache": "Repository Cache",
         "copy-move": "Copy & Move",
         "duplicate-scan": "Duplicate Scan",
@@ -6783,7 +7167,8 @@
         "markRead": "Mark as read",
         "markUnread": "Mark as unread",
         "markAllRead": "Mark all as read",
-        "deleteAll": "Delete all"
+        "deleteAll": "Delete all",
+        "manageAlerts": "Manage Notifications & Alerts"
       },
       "success": {
         "deleted": "Notification deleted",
@@ -6827,19 +7212,10 @@
         "shareLinkAccessedMessage": "{viewer} viewed your shared report: \"{shareTitle}\"",
         "viewedYourSharedLink": "viewed your shared link",
         "viewedAt": "Viewed at",
-        "budgetDisclaimer": "Budget limits are informational only and do not prevent usage.",
-        "llmBudgetExceededTitle": "LLM Budget Exceeded",
-        "llmBudgetThresholdTitle": "LLM Budget {threshold}% Used",
-        "llmBudgetExceededMessage": "{providerName} has exceeded its monthly budget: {spend} spent of {budget} budget.",
-        "llmBudgetThresholdMessage": "{providerName} has used {threshold}% of its monthly budget: {spend} of {budget}.",
         "userRegisteredTitle": "New User Registration",
         "userRegisteredMessageSso": "{userName} ({userEmail}) has registered via SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) has registered via the registration form",
         "viewUserList": "View user list",
-        "reviewGeneratedCases": "Review generated test cases",
-        "generateFromUrlCompleteTitle": "Pages crawled successfully",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# page} other {# pages}} crawled from {url} in project \"{projectName}\". Click to review and generate test cases.",
-        "generateFromUrlFailedTitle": "URL crawl failed",
         "reviewRequestedTitle": "Review requested",
         "reviewApprovedTitle": "Review approved",
         "reviewChangesRequestedTitle": "Changes requested",
@@ -6869,18 +7245,81 @@
         "reviewCancelledEmailMessage": "{actorName} cancelled the review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewReminderTitle": "Review still pending",
         "reviewReminderAction": "is still waiting on your review of",
-        "reviewReminderEmailMessage": "Reminder: {actorName}'s review request on {entityLabel} \"{entityName}\" in project \"{projectName}\" has been pending for {hoursPending} hours.",
-        "reviewReminderHoursPending": "Pending for {hoursPending, plural, one {# hour} other {# hours}}",
+        "reviewReminderEmailMessage": "Reminder: {actorName}'s review request on {entityLabel} \"{entityName}\" in project \"{projectName}\" has been pending for {pendingFor}.",
+        "reviewReminderHoursPending": "Pending for {pendingFor}",
         "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
         "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
         "aiStepsDerivedReviewLink": "Review test run",
+        "casesDraftedTitle": "AI-Drafted Test Cases Ready",
+        "casesDraftedMessage": "{count, plural, one {# test case was} other {# test cases were}} drafted for {issueKey} — review for accuracy.",
+        "casesDraftedReviewLink": "Review in {folderName}",
         "integrationAuthExpiredTitle": "Integration Connection Expired",
         "integrationAuthExpiredMessage": "Your connection to \"{integrationName}\" has expired. Reconnect to resume issue syncing.",
         "integrationAuthExpiredReconnect": "Reconnect",
         "runReadyToCompleteTitle": "Test Run Ready to Complete",
         "runReadyToCompleteExecuted": "{count, plural, one {# case has} =2 {Both cases have} other {All # cases have}} been executed.",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# case has} =2 {Both cases have} other {All # cases have}} been executed in test run \"{testRunName}\" (project \"{projectName}\"). The run is ready to be marked completed.",
-        "runReadyToCompleteReason": "You are receiving this because you can complete test runs in this project."
+        "runReadyToCompleteReason": "You are receiving this because you can complete test runs in this project.",
+        "runCaseUnblockedTitle": "Test Case Ready to Execute",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} passed, so this case assigned to you is no longer blocked:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" in test run \"{testRunName}\" (project \"{projectName}\") is no longer blocked: \"{prerequisiteName}\" passed. It is assigned to you and ready to execute.",
+        "runCaseUnblockedReason": "You are receiving this because the test case is assigned to you.",
+        "inTestRun": "in test run",
+        "alertTriggeredTitle": "Alert fired",
+        "alertTriggeredRule": "Rule: {ruleName}",
+        "alertTriggeredEmailMessage": "Alert \"{ruleName}\" fired for {subjectLabel} \"{subjectName}\" in project \"{projectName}\": {detail}",
+        "alertTriggeredEmailMessageSystem": "Alert \"{ruleName}\" fired for {subjectLabel} \"{subjectName}\": {detail}",
+        "alertTriggeredReason": "You are receiving this because you are subscribed to this alert.",
+        "alertSubject": {
+          "CASE": "test case",
+          "RUN": "test run",
+          "MILESTONE": "milestone",
+          "SESSION": "session",
+          "PROJECT": "project",
+          "WEBHOOK": "webhook",
+          "LLM_INTEGRATION": "AI model integration",
+          "CODE_REPOSITORY": "repository connection",
+          "INTEGRATION": "integration",
+          "QUEUE": "queue",
+          "SYSTEM": "installation"
+        },
+        "alertMetric": {
+          "RESULT_DURATION_DEVIATION": "The result took {elapsed}, {deviation}% away from the baseline of {baseline} (more than {threshold}% allowed).",
+          "CASE_REGRESSED": "The case failed after passing {passedBefore, plural, one {its last result} other {its last # results}}.",
+          "CASE_RECOVERED": "The case passed after failing {failedBefore, plural, one {its last result} other {its last # results}}.",
+          "RUN_DURATION_DEVIATION": "The run took {elapsed}, {deviation}% away from the baseline of {baseline} (more than {threshold}% allowed).",
+          "RUN_NOT_PROGRESSING": "The run has had no new result for {idleHours, plural, one {# hour} other {# hours}} (threshold {threshold}).",
+          "AUTOMATED_EXECUTION_FAILED": "The automated execution on {target} ended with {status}{error, select, other {: {error}}}",
+          "RUN_UNTESTED_SHARE": "{untestedPercent}% of the run's cases have no result with {daysRemaining, plural, one {# day} other {# days}} before its milestone is due (threshold {threshold}%).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# issue is} other {# issues are}} linked to the run's results (threshold {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# failure pattern appeared} other {# failure patterns appeared}} for the first time in the run (threshold {threshold}).",
+          "SESSION_OVERRUN": "The session took {elapsed} against an estimate of {estimate}, {overrun}% over (more than {threshold}% allowed).",
+          "REQUIREMENT_COVERAGE_BELOW": "{covered} of {total} requirements ({coverage}%) {basis, select, PASSING {have a passing latest result} other {are linked to a test case}} (threshold {threshold}%).",
+          "STALE_CASES": "{stale, plural, one {# case has} other {# cases have}} had no result in {days, plural, one {# day} other {# days}} (threshold {threshold}).",
+          "AUTOMATION_SHARE_BELOW": "{automated} of {total} cases ({automatedPercent}%) are automated (threshold {threshold}%).",
+          "WEBHOOK_FAILURE_RATE": "{failed} of the last {sampleCount} deliveries failed ({failureRate}%, threshold {threshold}%).",
+          "CONSECUTIVE_FAILURES": "The case has failed {streak, plural, one {# time} other {# times}} in a row (threshold {threshold}).",
+          "CASE_FLAKY": "The outcome flipped {flips, plural, one {# time} other {# times}} across the last {sampleCount} results (threshold {threshold}).",
+          "RUN_PASS_RATE_BELOW": "The pass rate is {passRate}% across {sampleCount} results (threshold {threshold}%).",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# result has} other {# results have}} failed (threshold {threshold}).",
+          "MILESTONE_BEHIND": "The milestone is {completion}% complete with {daysRemaining, plural, one {# day} other {# days}} remaining (threshold {threshold}%).",
+          "MILESTONE_OVERDUE": "The milestone is {daysOverdue, plural, one {# day} other {# days}} past its due date.",
+          "LLM_BUDGET_USED": "Spend for the billing period is {spend} of the {budget} monthly budget ({percent}%, threshold {threshold}%).",
+          "LLM_ERROR_RATE": "{failed} of the last {sampleCount} requests failed ({failureRate}%, threshold {threshold}%).",
+          "LLM_RATE_LIMITED": "The provider rate-limited {blocked, plural, one {# request} other {# requests}} in the last {hours, plural, one {# hour} other {# hours}} (threshold {threshold}).",
+          "CODE_REPOSITORY_CACHE_FAILING": "The repository cache has been failing for {hours, plural, one {# hour} other {# hours}} (threshold {threshold}){error, select, other {: {error}}}",
+          "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# user needs} other {# users need}} to re-authorize the integration (threshold {threshold}).",
+          "QUEUE_FAILED_JOBS": "{failed, plural, one {# job has} other {# jobs have}} failed in the queue (threshold {threshold}).",
+          "QUEUE_BACKLOG": "The oldest of {waiting, plural, one {# waiting job} other {# waiting jobs}} has waited {minutes, plural, one {# minute} other {# minutes}} (threshold {threshold}).",
+          "AUDIT_BACKLOG": "The oldest unprocessed audit change is {minutes, plural, one {# minute} other {# minutes}} old (threshold {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# account is} other {# accounts are}} locked after failed sign-ins (threshold {threshold}).",
+          "NO_AUTOMATED_RESULTS": "No automated result has arrived for {hours, plural, one {# hour} other {# hours}} (threshold {threshold})."
+        },
+        "reviewDecisionRevertedAction": "reverted their decision on",
+        "reviewDecisionRevertedEmailMessage": "{actorName} reverted their decision on {entityLabel} \"{entityName}\" in project \"{projectName}\" — it is awaiting review again.",
+        "reviewDecisionRevertedTitle": "Review decision reverted",
+        "reviewDecisionRevertedActionOther": "reverted {deciderName}'s decision on",
+        "reviewDecisionRevertedEmailMessageOther": "{actorName} reverted {deciderName}'s decision on {entityLabel} \"{entityName}\" in project \"{projectName}\" — it is awaiting review again."
       }
     },
     "issues": {
@@ -7029,6 +7468,9 @@
     "issueType": "Issue Type",
     "selectIssueType": "Select issue type",
     "noIssueTypes": "No issue types available",
+    "assignees": "Assignees",
+    "selectAssignees": "Select assignees",
+    "assigneesLimit": "Up to {max} assignees",
     "priorityUrgent": "Urgent",
     "additionalFields": "Additional Fields",
     "createIssueInJira": "Create Issue in Jira",
@@ -7451,6 +7893,7 @@
       "TestRunResults": "Test Run Results",
       "TestRunResultRestrictedFields": "Test Run Result Restricted Fields",
       "AutomatedExecution": "Automated Execution",
+      "FailurePatterns": "Failure Patterns",
       "Sessions": "Sessions",
       "SessionsRestrictedFields": "Sessions Restricted Fields",
       "ClosedSessions": "Closed Sessions",
@@ -7459,7 +7902,8 @@
       "SharedSteps": "Shared Steps",
       "Issues": "Issues",
       "Reporting": "Reporting",
-      "Settings": "Project Settings"
+      "Settings": "Project Administration",
+      "Alerts": "Alerts"
     },
     "WorkflowType": {
       "NOT_STARTED": "Not Started",
@@ -7493,6 +7937,11 @@
     "alreadyLinked": "This case is already linked.",
     "cannotLinkSelf": "Cannot link a case to itself.",
     "circularLink": "Circular link detected.",
+    "dependsOn": "Depends on",
+    "blocks": "Blocks",
+    "dependsOnOption": "Depends on — this case requires the selected case to pass first",
+    "blocksOption": "Blocks — the selected case requires this case to pass first",
+    "dependencyHint": "With dependency enforcement on, a case in a test run can't be executed until the cases it depends on have passed in that run.",
     "failedToCreate": "Failed to create link.",
     "confirmRemoveLink": "Are you sure you want to remove this link?",
     "DEPENDS_ON": "Dependency",
@@ -7512,6 +7961,9 @@
     "businessHours": "{hours, number, ::.0} business hours"
   },
   "help": {
+    "webhookAction": {
+      "labels": "## Labels\nThe tags the issue carries in your tracker. The action only takes an issue that has at least one of these; leave it empty to take issues whatever their labels.\n\n- Jira, GitHub, GitLab and Gitea: the issue's labels\n- Azure DevOps, ClickUp and MantisBT: the issue's tags\n- Redmine: the issue's category\n- Matching ignores upper and lower case"
+    },
     "auditLogs": "## Audit Logs\nView system-wide audit trail for security and compliance tracking",
     "statuses": "## Statuses\nManage the statuses testers assign when recording a test result, such as Passed, Failed, and Blocked.",
     "configurations": "## Configurations\nConfigurations are a combination of categories and variants used to define a test environment. For example, OS/Browser, Test Server, Language, etc.",
@@ -7543,7 +7995,7 @@
     "projectAiModels": "## AI Models\nChoose the AI model and prompt configuration this project uses for its AI-assisted features, such as test-case generation and auto-tagging.",
     "projectQuickScript": "## QuickScript\nConnect a code repository so this project can generate test cases from your automated test files, choosing which branch and paths to include.",
     "projectParameters": "## Test Case Parameters\nConfigure this project's data-driven testing — JUnit iteration property names for imported results and reusable data sets for parameterized cases.",
-    "projectAdvanced": "## Advanced\nAdvanced settings for this project — the record ID prefix, result review workflow, automatic issue creation on failure, and the result edit window.",
+    "projectAdvanced": "## Advanced\nPer-project settings, grouped into General, Reviews, Test runs and Results. Open a setting's ? for what it does. Switches save as soon as they change; the project code and the time-window settings save with their own Save button.",
     "projectShares": "## Manage Shares\nShareable links to this project's reports, each with its own access level — public, sign-in required, or password protected. Revoking a link cuts off its access.",
     "projectAccess": "## Access\nEvery user who can open this project and the role that decides what they may do here. A user's role comes from their own project access setting, a group they belong to, or the project's default access, in that order. System administrators and project administrators have full access regardless of role. Access is changed by an administrator under Administration › Projects › Edit Project.",
     "groups": "## Groups\nGroups let you assign project access and roles to many users at once. Add members directly, or map a group from your identity provider.",
@@ -7584,6 +8036,7 @@
     "elasticsearchReindex": "## Reindex Data\nRebuild search indices for improved search performance.",
     "queues": "## Background Job Queues\nMonitor and manage background job processing queues.",
     "trash": "## Trash\nRestore or permanently purge soft-deleted records across the system.",
+    "userTrashWindow": "## Self-service restore window\nHow many days users can restore items they deleted themselves, from the **Trash** section of their profile. Set it to **0** to turn self-service restore off. Items that fall outside the window simply stop appearing in the user's Trash — nothing is purged, and administrators can still restore or purge anything here.",
     "systemWebhooks": "## System Webhooks\nOutbound webhook destinations for system-level events that aren't tied to a single project — currently the SCIM 2.0 user and group lifecycle events. Configure inbound and project-scoped outbound webhooks from the project settings page instead.",
     "workflows": "## Workflows\nManage the workflow states for test cases, test runs, and sessions.",
     "workflowReviews": "## Review Workflow\nEnforce reviews by gating workflow transitions until approval is granted. When enabled, projects may opt in or out individually via their Advanced settings. Disable to prevent workflow approval gates.",
@@ -7643,7 +8096,7 @@
       "documentation": "## Documentation\nAdditional details, references, and supporting materials.\n\n- Technical specifications\n- Design documents\n- External references\n- Meeting notes and decisions",
       "automaticCompletion": "## Auto-Complete on Due Date\nAutomatically marks this milestone as completed when its due date is reached.\n\n- Milestone will be completed at the scheduled time on the due date\n- Useful for time-boxed milestones that should close regardless of completion status\n- Can be overridden by manually completing the milestone before the due date\n- Requires a due date to be set",
       "notifyDaysBefore": "## Notify Days Before Due Date\nSend notifications to assigned team members when the milestone due date is approaching.\n\n- Toggle on to enable notifications, off to disable\n- Enter the number of days before the due date to start sending reminders\n- Notifications are sent to users assigned to test runs and sessions within this milestone\n- Overdue milestones will continue to send reminders until completed",
-      "managedByJira": "## Managed by Jira\nThis milestone's name, dates, and status are managed by Jira. Make changes there to update them here."
+      "managedByJira": "## Managed by the tracker\nThis milestone's name, dates, and status are managed by the issue tracker it was imported from. Make changes there to update them here."
     },
     "session": {
       "name": "## Session Name\nA clear, descriptive name that identifies the purpose of your testing session.\n\n- Should be unique and meaningful\n- Helps team members understand what is being tested\n- Used in reports and tracking",
@@ -7695,7 +8148,7 @@
       "name": "## Role Name\nA clear, concise, descriptive name or keyword(s) that is used across all projects.\n\n- Helps team members quickly find related test cases, test runs and sessions.",
       "isDefault": "## Default Role\nIndicates whether this role is the default for your project.\n\n- Default role is pre-selected for new users\n- Can be changed at any time",
       "permissions": {
-        "canAddEdit": "## Add/Edit\nIndicates whether this role can add and edit the related application area.\n\n- **Automated Execution** grants the right to start, retry, and cancel automated executions on a CI provider. Recording the results still needs **Test Run Results** Add/Edit, and starting one from the repository also needs **Test Runs** Add/Edit because it creates or extends a run.",
+        "canAddEdit": "## Add/Edit\nIndicates whether this role can add and edit the related application area.\n\n- **Automated Execution** grants the right to start, retry, and cancel automated executions on a CI provider. Recording the results still needs **Test Run Results** Add/Edit, and starting one from the repository also needs **Test Runs** Add/Edit because it creates or extends a run.\n- **Failure Patterns** grants the right to set or clear a failure pattern's root cause or ask the AI for one, resolve, ignore or reopen it, edit its notes, link and unlink issues, and quarantine or release its test cases. Anyone with access to the project can see its failure patterns; project administrators manage the Failure Patterns settings.\n- **Alerts** grants the right to create alerts in the project and to edit, pause and delete the ones you created. Project administrators manage every alert and other users' subscriptions; anyone can follow or leave an alert.",
         "canDelete": "## Delete\nIndicates whether this role can delete the related application area.",
         "canClose": "## Close\nIndicates whether this role can close the related application area.",
         "canApprove": "## Approve\nIndicates whether this role can approve review requests for the related application area. Applies only to Test Case Repository, Test Runs, and Sessions.",
@@ -7726,10 +8179,9 @@
       "maxTokensPerRequest": "## Max Tokens Per Request\nThe **hard ceiling on _output_ tokens** the model may generate in a single response.\n\n- Limits the length of the model's **reply** — not how much context you send it\n- Requests that ask for more than this are **rejected before reaching the model**\n- Set it to your model's real maximum output — e.g. `128000` for Claude Opus/Sonnet, `64000` for Claude Haiku, `65536` for Gemini, `16384` for GPT-4o\n- Too low → AI features fail or produce truncated output",
       "defaultMaxTokens": "## Default Max Tokens\nThe **_output_ length** requests on this AI model ask for, bounded by _Max Tokens Per Request_.\n\n- **Test Case Generation** (every source, including the Jira issue panel), **Markdown Test Case Parsing**, **Editor Writing Assistant**, and **Smart Test Case Selection** always use this value — their Prompt Config _Max Output Tokens_ is not applied\n- **Export Code Generation**, **AI Tag Suggestions**, **AI Step Derivation**, and the **Automation Candidates Report** use their own _Max Output Tokens_ from **Admin → Prompt Config** instead\n- Models that think before answering (e.g. Claude Opus 5) spend part of this budget on reasoning — leave room for the reply\n- It does **not** control how much repository code QuickScript sends the model — that budget is derived automatically from the model's context window\n- Keep it ≤ _Max Tokens Per Request_",
       "repoContextBudget": "## Repository Context Budget\nHow much of your connected repository's code QuickScript feeds the model when generating a script.\n\n- **Set automatically** from the selected model's input context window — there's nothing to configure here\n- Larger-context models (Claude, Gemini, DeepSeek) get more; small local models get a safe amount that won't overflow\n- More context grounds the script in your real page objects and fixtures — it does not change how long the generated script is",
-      "maxRequestsPerMinute": "## Max Requests Per Minute\nLimits how many API calls can be made to this provider per minute.\n\n- Set to match your provider plan's rate limit\n- Excess requests are queued, not rejected\n- Check your provider's documentation for your plan's limit",
       "costPerInputToken": "## Cost Per 1M Input Tokens (USD)\nThe cost in USD per **million** input (prompt) tokens sent to the model.\n\n- Used for cost tracking and budget alerts\n- Filled in automatically when your provider reports model pricing (LiteLLM, OpenRouter, Together AI) — applied when you select a model or run Test Connection\n- Otherwise, find it on your provider's pricing page\n- Example: `0.15` = $0.15 per million input tokens",
       "costPerOutputToken": "## Cost Per 1M Output Tokens (USD)\nThe cost in USD per **million** output (completion) tokens generated by the model.\n\n- Usually higher than the input token cost\n- Used for cost tracking and budget alerts\n- Filled in automatically when your provider reports model pricing (LiteLLM, OpenRouter, Together AI) — applied when you select a model or run Test Connection\n- Otherwise, find it on your provider's pricing page\n- Example: `0.60` = $0.60 per million output tokens",
-      "monthlyBudget": "## Monthly Budget (USD)\nAn optional spending target for this integration.\n\n- Set to `0` to disable budget tracking\n- Budget is **informational only** — it does not block LLM usage\n- You'll receive notifications at 80%, 90%, and 100% of the budget\n- Costs are calculated using the per-token rates above",
+      "monthlyBudget": "## Monthly Budget (USD)\nAn optional spending target for this integration.\n\n- Set to `0` to disable budget tracking\n- Budget is **informational only** — it does not block LLM usage\n- An alert with the **AI budget used** metric (System, on the Notifications & Alerts page) notifies its subscribers when spend reaches the share you set; saving this form or resetting spend lets it fire again in the same period\n- Costs are calculated using the per-token rates above",
       "billingPeriodStartDay": "## Billing Period Start Day\nThe day of month (1–31) when your billing period starts.\n\n- Default `1` aligns with the calendar month\n- Set to `15` for a 15th-to-15th cycle (e.g., to match your provider invoice date)\n- Values `29–31` automatically clamp to the last day of shorter months (Feb in non-leap years, etc.)\n- Affects the **Monthly Budget** spend window and the **Reset Spend** action",
       "defaultTemperature": "## Default Temperature\nControls the randomness of model responses (0–2).\n\n- **0:** Deterministic — identical output for the same input\n- **0.3:** Focused — recommended for test generation and code output\n- **1+:** Creative — more varied responses\n- Individual features can override this in Prompt Config",
       "timeout": "## Request Timeout (ms)\nHow long to wait for a response before the request is cancelled.\n\n- Value is in milliseconds (e.g. `30000` = 30 seconds)\n- Streaming requests (e.g. code export preview) ignore this timeout\n- Increase for slow or large models\n- Range: 5,000 – 600,000 ms",
@@ -7758,6 +8210,8 @@
       "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
       "mantisBTApiKey": "## MantisBT API Token\nYour personal REST API token.\n\n- Create one under your MantisBT account settings → API Tokens\n- Scoped to your user’s permissions; use a service account for shared integrations",
       "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
+      "clickupTeamId": "## ClickUp Team (Workspace) ID\nThe numeric ID of the ClickUp Team (also called Workspace) tasks belong to.\n\n- Found in the ClickUp URL: app.clickup.com/{teamId}/...\n- Required to browse Spaces/Folders/Lists when picking a project",
+      "clickupListId": "## Default ClickUp List ID\nThe List new tasks are created in by default.\n\n- Found in the ClickUp URL, or via the List's \"Copy link\" option\n- Optional — a specific List can be chosen per issue instead",
       "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
     },
     "config": {
@@ -7847,8 +8301,8 @@
       "state": "## State\nIndicate the current Workflow State of these test cases.",
       "estimate": "## Estimate\nThe manually entered estimated time to complete each of these test case.",
       "automated": "## Automated\nIndicates whether these test cases are automated or not.",
-      "tags": "## Tags\nApply relevant tags to categorize and filter these test cases.",
-      "issues": "## Issues\nLink any related issues (bugs, tasks, etc.) to these test cases."
+      "tags": "## Tags\nApply relevant tags to categorize and filter these test cases.\n\n- **Add** adds the selected tags to every test case and keeps the tags they already have.\n- **Remove** removes the selected tags from every test case that has them.\n- **Replace All** leaves every test case with exactly the selected tags.",
+      "issues": "## Issues\nLink any related issues (bugs, tasks, etc.) to these test cases.\n\n- **Add** links the selected issues to every test case and keeps the issues already linked.\n- **Remove** unlinks the selected issues from every test case that has them.\n- **Replace All** leaves every test case linked to exactly the selected issues."
     },
     "caseField": {
       "displayName": "## Display Name\nThis is the human-readable name for the field that will be shown to users in forms and views. Make it clear and descriptive.",
@@ -7913,6 +8367,10 @@
       "lastActiveDate": "## Last Active Date\nMost recent date of activity.",
       "averageAge": "## Average Age\nAverage age of items in days.",
       "issueCount": "## Issue Count\nTotal number of issues tracked.",
+      "linkedCaseCount": "## Linked Cases\nNumber of distinct test cases linked to the group's issues. A case linked to several issues in the same group counts once.",
+      "firstCaseCreated": "## First Case Created\nWhen the earliest test case in this group was created.",
+      "lastCaseCreated": "## Last Case Created\nWhen the latest test case in this group was created.",
+      "caseCreationSpan": "## Case Creation Span\nDays between the group's earliest and latest test case creation — how long the group's cases took to write.",
       "milestoneCount": "## Milestone Count\nTotal number of milestones.",
       "milestoneCompletionRate": "## Milestone Completion Rate\nPercentage of milestones completed.",
       "averageMilestoneDuration": "## Average Milestone Duration\nAverage duration of milestones in days.",
@@ -7929,6 +8387,9 @@
       "selectionPrecision": "## Selection Precision (%)\nOf the cases that Impact analyses selected and that were then executed, the share that failed. Empty when nothing selected has run."
     },
     "reportDimensions": {
+      "issue": "## Issue Dimension\nGroups by the issues linked to the test case. A case linked to several issues counts in each; cases with no linked issues fall into None.",
+      "resultSource": "## Result Source Dimension\nGroups executions by where they came from: results entered in the app (Manual) or imported automated results such as JUnit (Automated).",
+      "rootCause": "## Root Cause Dimension\nGroups automated results by the root cause of their failure pattern — a person's classification when one was made, otherwise the AI's. Manual results, passing results and unclassified failures fall into None.",
       "user": "## User Dimension\nGroups results by the user who executed the tests or is assigned to the items.",
       "status": "## Status Dimension\nGroups results by test execution status (e.g., Passed, Failed, Blocked).",
       "project": "## Project Dimension\nGroups results by project for cross-project analysis.",
@@ -7961,7 +8422,7 @@
       "dimensions": "## Dimensions\nSelect the dimensions you want to analyze in your report. Dimensions are attributes that categorize your data, such as Date, User, Status, etc. You can drag to reorder them.",
       "metrics": "## Metrics\nSelect the metrics you want to measure in your report. Metrics are quantitative measurements derived from your data, such as Test Results Count, Pass Rate, Average Elapsed Time, etc. You can drag to reorder them.",
       "dateRange": "## Date Range\nFilter your report data by a specific time period. Choose a preset such as 'Last 7 days', 'Last month' or 'Last N days', or pick a custom start and end date on the calendar.\n\nA preset stays relative: a saved report or live share link works the dates out again each time it opens, in your timezone. Custom dates stay fixed. This filter applies to the relevant date field for each report type (e.g., execution date for test results, creation date for test cases).",
-      "dimensionFilters": "## Filters\nNarrow the report to specific values of each selected dimension. Leave a filter empty to include all values for that dimension. Date dimensions are filtered with the date range picker instead."
+      "dimensionFilters": "## Filters\nNarrow the report to specific values of each selected dimension. Leave a filter empty to include all values for that dimension. Switch a filter to Exclude to keep everything except the picked values — useful for saved reports that should keep covering new values automatically. Date dimensions are filtered with the date range picker instead."
     },
     "codeRepository": {
       "name": "## Repository Name\nA friendly display name for this repository connection.\n\n- Used to identify it in project code context settings.\n- Does not need to match the repository name on the provider.",
@@ -8254,7 +8715,15 @@
     "projectSessionsFilters": "## Filtering sessions\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **My Sessions** — only sessions you take part in: you created the session, or it is assigned to you.",
     "projectImpact": "## Impact\nConnect the repository of the application under test so this project can run test impact analysis: pick two commits to see which test cases the changes affect, and pin test cases to the code they cover.",
     "pathPatterns": "## Path Patterns\nEach row combines a base **path** with a glob **pattern**. Rows add up: a file is included when any row matches it.\n\n- `src` + `**/*` — everything under `src`\n- blank or `.` + `**/*` — every file in the repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` files except tests\n\n### Exclude\nTick **Exclude** on a row to remove its files even when another row includes them. Exclusions apply to the file picker and cache, and for Impact to the changed files of an analysis, so a file that changes on almost every pull request stops pulling in unrelated test cases. At least one row must stay unticked.\n\n- blank + `**/CHANGELOG*` — every changelog, at any depth\n- `app` + `build.gradle.kts` — a build file that only bumps the version",
-    "projectAutomation": "## Automated Execution\nExecution targets tell TestPlanIt where to execute this project's automated cases: a GitHub Actions workflow, a GitLab CI pipeline, or a signed webhook for any other system. When a run is executed, TestPlanIt starts the job with the run id and a plan URL; the job reads the plan, runs the matching tests, and reports results back with a reporter or the CLI pinned to that run. Targets can be disabled without being deleted."
+    "projectAutomation": "## Automated Execution\nExecution targets tell TestPlanIt where to execute this project's automated cases: a GitHub Actions workflow, a GitLab CI pipeline, or a signed webhook for any other system. When a run is executed, TestPlanIt starts the job with the run id and a plan URL; the job reads the plan, runs the matching tests, and reports results back with a reporter or the CLI pinned to that run. Targets can be disabled without being deleted.",
+    "userAlerts": "## Notifications & Alerts\n**Notification Preferences** decide how you are reached (in-app, email, digest) and which notification types you receive at all.\n\n**Alerts** watch a testing metric and notify their subscribers when it crosses a line, for example a result that takes 50% longer than the case's usual duration, a case that fails three times in a row, a run whose pass rate drops under 90%, or a milestone that is behind with days to go. The list shows every alert in your projects; the **Notify me** switch follows or leaves one. **Add Alert** creates your own in any project where your role has **Alerts** Add/Edit; project administrators manage every alert in their project and other people's subscriptions. An alert fires at most once per subject within its cooldown and stays silent until it has enough results.",
+    "projectTriage": "## Failure Patterns\nAutomated failures that share the same exception, message and top stack frames are grouped into one **failure pattern**. Each pattern shows how often it happened, which test cases and runs it touched, and the AI's read on its root cause (product bug, test bug, environment or flaky by default). Resolve or ignore a pattern once it is handled; it reopens by itself if the failure comes back.",
+    "projectTriageSettings": "## Failure Patterns settings\nGrouping runs on every automated result that arrives and costs nothing. AI root cause suggestion uses the AI model assigned to the **Failure Patterns: Root Cause** feature on the AI Models page; turn it off here to keep grouping without any AI calls. **Analyze existing results** groups every automated failure already recorded in this project.",
+    "projectQuarantine": "## Quarantined test cases\nA quarantined test case keeps running and recording results, but its failures are left out of run pass/fail and shown as a separate count. Quarantine a case from a failure pattern while the cause is being fixed. The quarantine lifts by itself once the case has passed the number of times in a row set in the Failure Patterns settings, unless it was marked to be released by hand; release it here or from the pattern at any time.",
+    "rootCauses": "## Root Causes\nThe root causes Failure Patterns assigns to grouped failures, by AI or by hand. Each has a description the AI reads to decide when it applies. Rename, recolour or reorder them, add your own, or delete the ones you do not use; deleting one leaves its patterns without a root cause.",
+    "rootCauseDescription": "## Description\nThe AI reads this description to decide when the root cause applies to a failure pattern, so describe the evidence that points to it.",
+    "projectRiskSettings": "## Risk Scoring settings\nEvery test case gets a 0-100 risk score from its failure history, flakiness, staleness, linked requirement criticality and linked defects — deterministic, no AI calls. Scores refresh after results arrive and in a nightly sweep. **Component weights** set how much each signal counts, relative to the others; zero removes a component. **Recalculate all scores** rescores the whole project now instead of waiting for the nightly sweep.",
+    "reviewRevert": "## Reverting Review Decisions\nHow long a reviewer has to undo a decision they recorded, measured from when they decided. Reverting returns the request to the reviewer's queue; if an approval had already moved the item forward, the item goes back to where it was. System administrators are not bound by this limit and can revert a decision of any age. Projects may shorten the limit in their Advanced settings, but never extend it."
   },
   "reports": {
     "ui": {
@@ -8322,12 +8791,16 @@
           "unit": "Period",
           "days": "Last {count, plural, one {# day} other {# days}}",
           "weeks": "Last {count, plural, one {# week} other {# weeks}}",
-          "months": "Last {count, plural, one {# month} other {# months}}"
+          "months": "Last {count, plural, one {# month} other {# months}}",
+          "calendarWeeks": "Last {count, plural, one {# calendar week} other {# calendar weeks}}",
+          "calendarMonths": "Last {count, plural, one {# calendar month} other {# calendar months}}"
         },
         "rollingUnits": {
           "days": "days",
           "weeks": "weeks",
-          "months": "months"
+          "months": "months",
+          "calendarWeeks": "calendar weeks (from week start)",
+          "calendarMonths": "calendar months (from the 1st)"
         }
       },
       "dateGrouping": {
@@ -8388,7 +8861,7 @@
           "description": "Issue creation, resolution, and impact analysis"
         },
         "automationTrends": {
-          "label": "Automation Trends",
+          "label": "Automated Test Cases Trend",
           "description": "Track automation progress week-over-week by priority"
         },
         "flakyTests": {
@@ -8434,6 +8907,10 @@
         "codePinCoverage": {
           "label": "Code Pin Coverage",
           "description": "Where Code Pins are, by repository and directory, and where recent changes went uncovered"
+        },
+        "resultsTrend": {
+          "label": "Test Result Failure Rate Trend",
+          "description": "Pass and fail rates of test results over time, and whether the failure rate is getting better or worse"
         }
       },
       "flakyTests": {
@@ -8753,7 +9230,7 @@
           "description": "Token usage, cost, and reliability of LLM features across projects"
         },
         "automationTrends": {
-          "label": "Cross-Project Automation Trends",
+          "label": "Cross-Project Automated Test Cases Trend",
           "description": "Track automation progress week-over-week by priority across projects"
         },
         "flakyTests": {
@@ -8787,6 +9264,10 @@
         "codePinCoverage": {
           "label": "Cross-Project Code Pin Coverage",
           "description": "Code Pin coverage across every project with Impact Analysis enabled"
+        },
+        "resultsTrend": {
+          "label": "Cross-Project Test Result Failure Rate Trend",
+          "description": "Pass and fail rates of test results over time by project, and whether the failure rate is getting better or worse"
         }
       },
       "folderDescendants": {
@@ -8800,7 +9281,11 @@
       },
       "groupedTotal": "Total of the {count, plural, one {# row} other {# rows}} in this group",
       "dimensionFilters": {
-        "allValues": "All values"
+        "allValues": "All values",
+        "noValues": "Nothing excluded",
+        "modeLabel": "Filter mode",
+        "include": "Include",
+        "exclude": "Exclude"
       },
       "impactAnalysis": {
         "lookbackDaysHelp": "Analyses started within this many days. All time reads every analysis the project keeps.",
@@ -8851,6 +9336,79 @@
         "chart": {
           "byDirectory": "Pins and uncovered files by directory"
         }
+      },
+      "resultsTrend": {
+        "period": "Period",
+        "runSource": "Result types",
+        "runSources": {
+          "automated": "Automated",
+          "manual": "Manual"
+        },
+        "showPassRate": "Show pass rate",
+        "showPassRateHelp": "Draw the pass rate on the chart's right-hand axis, with its own fitted trend, and add it to the headline figures. Off by default: the report is about the failure rate.",
+        "showFailRate": "Show fail rate",
+        "showFailRateHelp": "Draw the fail rate on the chart's right-hand axis, with its fitted trend, and show it in the headline figures. On by default.",
+        "showCounts": "Show result totals",
+        "showCountsHelp": "Draw the passed, failed, skipped and other totals as stacked bars on the chart beside the rates. Off by default: the report is about the rates.",
+        "countSkipped": "Count skipped results in rates",
+        "countSkippedHelp": "Skipped results are left out of the pass and fail rate denominator unless this is on. Other statuses always stay in.",
+        "includeAborted": "Include aborted runs",
+        "includeAbortedHelp": "Runs sitting in the project's abandoned-run state are counted unless this is off.",
+        "latestAttemptOnly": "Latest attempt only",
+        "latestAttemptOnlyHelp": "Count one result per case per run, its latest attempt, instead of every imported attempt.",
+        "failRate": "Fail rate",
+        "skipped": "Skipped",
+        "other": "Other",
+        "inProgress": "in progress",
+        "verdict": {
+          "better": "Failure rate is getting better",
+          "worse": "Failure rate is getting worse",
+          "steady": "Failure rate is holding steady",
+          "notEnough": "Not enough complete periods to call a trend yet.",
+          "notEnoughDetail": "The trend needs at least two complete periods with results.",
+          "detail": "The trend line runs from {start} to {end}, a change of {change} points over {count} complete {grouping, select, daily {days} weekly {weeks} monthly {months} quarterly {quarters} other {years}}."
+        },
+        "stats": {
+          "lastComplete": "Last complete period ({period}), compared with the average of the complete periods before it.",
+          "results": "Results executed",
+          "runs": "Runs",
+          "deltaPoints": "{change} pts vs. the previous {count, plural, one {# period} other {# periods}}",
+          "deltaPercent": "{change}% vs. the previous {count, plural, one {# period} other {# periods}}",
+          "noBaseline": "Nothing earlier to compare against"
+        },
+        "chart": {
+          "allProjects": "All selected projects",
+          "period": "{grouping, select, weekly {Week of {date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {Week of {period}} other {{period}}} (in progress)",
+          "rateTrend": "{rate} trend"
+        },
+        "heatmap": {
+          "title": "Fail rate by project and period",
+          "help": "Each cell is the project's fail rate for the period; shading reaches full intensity at 35%. The trend column is the change in the fitted fail-rate line over the complete periods. * marks the period in progress.",
+          "trend": "Trend"
+        },
+        "trend": {
+          "points": "{change} pts"
+        },
+        "detail": {
+          "title": "Results and rates by period"
+        },
+        "method": {
+          "title": "How this is counted",
+          "runSource": {
+            "automated": "Automated runs only: every run type except manual, with their imported results. A run belongs to the period it was created in.",
+            "manual": "Manual runs only, with the results recorded on them. A run belongs to the period it was created in.",
+            "both": "Every run: automated runs with their imported results and manual runs with the results recorded on them. A run belongs to the period it was created in."
+          },
+          "periods": "{grouping, select, daily {Days} weekly {Weeks (starting Monday)} monthly {Months} quarterly {Quarters} other {Years}} are cut in {timezone}. The current one is in progress and is left out of the trend and the headline figures.",
+          "everyAttempt": "A retried test counts once per attempt.",
+          "latestAttempt": "Only the latest attempt of each case in a run is counted.",
+          "skippedExcluded": "Skipped results (a status that is completed without a pass or a failure) are left out of the pass and fail rates; other statuses stay in.",
+          "skippedCounted": "Skipped results are counted in the pass and fail rates.",
+          "abortedIncluded": "Runs in the abandoned-run state are included.",
+          "abortedExcluded": "Runs in the abandoned-run state are left out.",
+          "trend": "The trend is a straight line fitted to the fail rate over complete periods with results. A change of more than one point either way calls it better or worse."
+        }
       }
     },
     "errors": {
@@ -8881,6 +9439,9 @@
       "issueType": "Issue Type",
       "issueTracker": "Issue Tracker",
       "issueStatus": "Issue Status",
+      "issue": "Issue",
+      "resultSource": "Result Source",
+      "rootCause": "Root Cause",
       "tag": "Tag",
       "feature": "Feature",
       "model": "Model",
@@ -8918,6 +9479,10 @@
       "averageElapsed": "Average Time per Execution",
       "lastActiveDate": "Last Active Date",
       "issueCount": "Issue Count",
+      "linkedCaseCount": "Linked Cases",
+      "firstCaseCreated": "First Case Created",
+      "lastCaseCreated": "Last Case Created",
+      "caseCreationSpan": "Case Creation Span (days)",
       "averageAge": "Average Age (days)",
       "sessionCount": "Session Count",
       "activeSessions": "Active Sessions",
@@ -9395,9 +9960,12 @@
       "exists": "Exists",
       "not_exists": "Does not exist"
     },
+    "recordMatches": "{count, plural, one {# record matched by ID} other {# records matched by ID}}",
     "help": {
       "exactPhrases": "Exact Phrases",
       "exactPhrasesDesc": "Wrap terms in quotes to match exact phrases:",
+      "ids": "IDs",
+      "idsDesc": "Enter an ID, with or without #, to find a record directly. Separate several with OR, commas, or spaces to find them all:",
       "proximity": "Proximity Search",
       "proximityDesc": "words within N positions of each other",
       "booleanOperators": "Boolean Operators",
@@ -9970,5 +10538,660 @@
     "update": "Update with current mapping",
     "updateConfirm": "“{name}” will be updated with the current column mapping and settings.",
     "savePrompt": "Save this column mapping for next time?"
+  },
+  "alerts": {
+    "title": "Alerts",
+    "description": "Alerts you follow across your projects, and the alerts in those projects you could follow.",
+    "addRule": "Add Alert",
+    "editRule": "Edit Alert",
+    "deleteRule": "Delete Alert",
+    "deleteConfirm": "Delete the alert \"{name}\"? Its subscribers stop receiving notifications and it can be restored from the trash.",
+    "pauseTitle": "Pause this alert for everyone?",
+    "pauseConfirm": "\"{name}\" stops firing for {count, plural, =0 {everyone} one {its only subscriber} =2 {both of its subscribers} other {all # of its subscribers}}, not just you, until someone enables it again. To stop your own notifications only, turn off Notify me instead.",
+    "columns": {
+      "name": "Rule",
+      "condition": "Condition",
+      "scope": "Scope",
+      "subscribers": "Subscribers",
+      "lastFired": "Last fired",
+      "enabled": "Enabled",
+      "notifyMe": "Notify me",
+      "actions": "Actions",
+      "project": "Project"
+    },
+    "neverFired": "Never",
+    "systemScope": "System",
+    "systemSubjects": {
+      "audit": "Audit log",
+      "lockouts": "User accounts",
+      "automated-results": "Automated results"
+    },
+    "paused": "Paused",
+    "filters": {
+      "label": "Filter alerts",
+      "on": "On",
+      "off": "Off"
+    },
+    "history": "History",
+    "subscribers": "Subscribers",
+    "subscriberCount": "{count, plural, =0 {No subscribers} one {# subscriber} other {# subscribers}}",
+    "toasts": {
+      "created": "Rule created.",
+      "updated": "Rule updated.",
+      "deleted": "Rule deleted.",
+      "enabled": "Rule enabled.",
+      "disabled": "Rule paused.",
+      "subscribed": "You will be notified when this rule fires.",
+      "unsubscribed": "You will no longer be notified by this rule.",
+      "subscriberAdded": "{name} subscribed.",
+      "subscriberRemoved": "{name} unsubscribed.",
+      "saveError": "Could not save the rule.",
+      "subscriptionError": "Could not update the subscription."
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Checkout flow slowdowns",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional note for other subscribers",
+      "metric": "Metric",
+      "metricLocked": "The metric cannot be changed after the alert is created. Create a new alert instead.",
+      "condition": "Condition",
+      "scope": "Scope",
+      "scopeType": "Watch",
+      "scopeFolder": "Folder",
+      "scopeTag": "Tag",
+      "scopeCase": "Test case",
+      "scopeMilestone": "Milestone",
+      "scopeRunName": "Run name contains",
+      "scopeRunNamePlaceholder": "e.g. Nightly",
+      "scopePickFolder": "Select a folder",
+      "scopePickTag": "Select a tag",
+      "scopePickCase": "Select a test case",
+      "scopePickMilestone": "Select a milestone",
+      "scopeWebhook": "Webhook",
+      "scopePickWebhook": "Select a webhook",
+      "scopeLlmIntegration": "Integration",
+      "scopePickLlmIntegration": "Select an integration",
+      "scopeCodeRepository": "Repository connection",
+      "scopePickCodeRepository": "Select a repository connection",
+      "scopeIntegration": "Integration",
+      "scopePickIntegration": "Select an integration",
+      "scopeQueue": "Queue",
+      "scopePickQueue": "Select a queue",
+      "systemScope": "System",
+      "systemScopeHelp": "A system alert watches something administered for the whole installation, such as an AI model budget. Only administrators see it.",
+      "coverageBasis": "Count as covered",
+      "coverageBasisOptions": {
+        "LINKED": "Linked to at least one test case",
+        "PASSING": "Latest result passed"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "Baseline window (runs)",
+        "WEBHOOK_FAILURE_RATE": "Last deliveries",
+        "LLM_ERROR_RATE": "Last requests"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "Minimum runs",
+        "WEBHOOK_FAILURE_RATE": "Minimum deliveries",
+        "LLM_ERROR_RATE": "Minimum requests"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "Days before the milestone is due",
+        "STALE_CASES": "Days without a result",
+        "LLM_RATE_LIMITED": "Within the last (hours)"
+      },
+      "scopeCaseSearch": "Search by name or ID",
+      "direction": "Direction",
+      "baselineType": "Baseline",
+      "baselineWindow": "Baseline window (results)",
+      "minSamples": "Minimum results",
+      "resultSource": "Results to watch",
+      "evaluateOn": "Evaluate",
+      "daysRemaining": "Days remaining",
+      "cooldown": "Cooldown (minutes)",
+      "cooldownHelp": "After the rule fires for a subject, it stays silent for that subject this long. 0 disables the cooldown.",
+      "emitWebhook": "Send an alert.triggered webhook event",
+      "emitWebhookHelp": "Outbound webhooks subscribed to Alerts receive the same payload, so Slack or other tools can post it.",
+      "enabled": "Enabled",
+      "audience": "Audience",
+      "audienceHelp": "Who is notified when the alert fires. You are added by default to alerts you create; anyone can leave or re-join.",
+      "audienceHelpSystem": "Who is notified when the alert fires. Only administrators can be in the audience of a system alert; you are added by default.",
+      "searchMembers": "Search project members",
+      "you": "you",
+      "cannotManageSubscribers": "You can subscribe or unsubscribe yourself. Subscribing other members needs project administration rights.",
+      "validation": {
+        "nameRequired": "Enter a name.",
+        "scopeRequired": "Choose what the rule watches.",
+        "runNameRequired": "Enter part of a run name.",
+        "percentRange": "Enter a percentage between {min} and {max}.",
+        "countRange": "Enter a whole number between {min} and {max}.",
+        "windowRange": "Enter a window between {min} and {max} results.",
+        "minSamplesRange": "Enter a value between {min} and {max}.",
+        "minSamplesWindow": "Minimum results cannot exceed the baseline window.",
+        "cooldownRange": "Enter minutes between {min} and {max}.",
+        "daysRange": "Enter days between {min} and {max}.",
+        "windowBelowMinSamples": "Baseline window cannot be smaller than minimum results."
+      },
+      "project": "Project",
+      "projectPlaceholder": "Select a project",
+      "projectHelp": "Only projects where your role may create alerts are listed.",
+      "dialogDescription": "Watch one testing metric and notify the audience when it crosses the line you set.",
+      "metricSearch": "Search metrics",
+      "metricNoMatch": "No metric matches.",
+      "checkedDaily": "Checked daily",
+      "checkedHourly": "Checked hourly",
+      "needsProject": "Select a project first.",
+      "followAlert": "Notify me",
+      "leaveAlert": "Stop notifying me",
+      "delivery": "Delivery",
+      "thresholdLabels": {
+        "RESULT_DURATION_DEVIATION": "Deviation (%)",
+        "CASE_REGRESSED": "Threshold",
+        "CONSECUTIVE_FAILURES": "Failures in a row",
+        "CASE_FLAKY": "Flips",
+        "RUN_PASS_RATE_BELOW": "Pass rate under (%)",
+        "RUN_FAILURE_COUNT": "Failed results, more than",
+        "RUN_DURATION_DEVIATION": "Deviation (%)",
+        "RUN_NOT_PROGRESSING": "Idle for more than (hours)",
+        "AUTOMATED_EXECUTION_FAILED": "Threshold",
+        "RUN_UNTESTED_SHARE": "Untested cases over (%)",
+        "RUN_ISSUES_OPENED": "Linked issues, more than",
+        "NEW_FAILURE_SIGNATURES": "New failure patterns, more than",
+        "SESSION_OVERRUN": "Over the estimate by more than (%)",
+        "MILESTONE_BEHIND": "Completion under (%)",
+        "MILESTONE_OVERDUE": "Threshold",
+        "REQUIREMENT_COVERAGE_BELOW": "Coverage under (%)",
+        "STALE_CASES": "Stale cases, more than",
+        "AUTOMATION_SHARE_BELOW": "Automated share under (%)",
+        "WEBHOOK_FAILURE_RATE": "Failure rate over (%)",
+        "LLM_BUDGET_USED": "Budget used (%)",
+        "LLM_ERROR_RATE": "Failed requests over (%)",
+        "LLM_RATE_LIMITED": "Rate-limited requests, at least",
+        "CODE_REPOSITORY_CACHE_FAILING": "Failing for at least (hours)",
+        "INTEGRATION_REAUTH_NEEDED": "Users needing re-authorization, at least",
+        "QUEUE_FAILED_JOBS": "Failed jobs, more than",
+        "QUEUE_BACKLOG": "Oldest waiting job older than (minutes)",
+        "AUDIT_BACKLOG": "Oldest unprocessed change older than (minutes)",
+        "ACCOUNT_LOCKOUTS": "Locked accounts, at least",
+        "NO_AUTOMATED_RESULTS": "No automated results for (hours)"
+      }
+    },
+    "direction": {
+      "ABOVE": "Above (slower)",
+      "BELOW": "Below (faster)",
+      "EITHER": "Above or below"
+    },
+    "baseline": {
+      "MEAN": "Mean",
+      "MEDIAN": "Median"
+    },
+    "resultSource": {
+      "MANUAL": "Manual results",
+      "AUTOMATED": "Automated results",
+      "BOTH": "Manual and automated"
+    },
+    "evaluateOn": {
+      "RUN_COMPLETION": "When the run completes",
+      "AS_RESULTS_ARRIVE": "As results arrive"
+    },
+    "scopeType": {
+      "PROJECT": "Whole project",
+      "FOLDER": "Cases in a folder",
+      "TAG": "Cases with a tag",
+      "CASE": "One test case",
+      "RUN_NAME": "Runs whose name contains",
+      "MILESTONE": "One milestone",
+      "WEBHOOK": "One webhook"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "All sessions",
+      "TAG": "Sessions with a tag"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "All outbound webhooks",
+      "WEBHOOK": "One webhook"
+    },
+    "scopeTypeLlm": {
+      "PROJECT": "All AI model integrations",
+      "LLM_INTEGRATION": "One integration"
+    },
+    "scopeTypeCodeRepositories": {
+      "PROJECT": "All repository connections",
+      "CODE_REPOSITORY": "One repository connection"
+    },
+    "scopeTypeIntegrations": {
+      "PROJECT": "All integrations",
+      "INTEGRATION": "One integration"
+    },
+    "scopeTypeQueues": {
+      "PROJECT": "All queues",
+      "QUEUE": "One queue"
+    },
+    "scopeTypeSystem": {
+      "PROJECT": "Whole installation"
+    },
+    "scopeTypeRuns": {
+      "PROJECT": "All runs",
+      "TAG": "Runs with a tag",
+      "RUN_NAME": "Runs whose name contains"
+    },
+    "scopeTypeMilestones": {
+      "PROJECT": "All milestones",
+      "MILESTONE": "One milestone"
+    },
+    "scopeDisplay": {
+      "PROJECT": "Whole project",
+      "FOLDER": "Folder: {name}",
+      "TAG": "Tag: {name}",
+      "CASE": "Case: {name}",
+      "RUN_NAME": "Runs containing \"{text}\"",
+      "MILESTONE": "Milestone: {name}",
+      "WEBHOOK": "Webhook: {name}",
+      "LLM_INTEGRATION": "Integration: {name}",
+      "ALL_LLM_INTEGRATIONS": "All AI model integrations",
+      "CODE_REPOSITORY": "Repository: {name}",
+      "ALL_CODE_REPOSITORIES": "All repository connections",
+      "INTEGRATION": "Integration: {name}",
+      "ALL_INTEGRATIONS": "All integrations",
+      "QUEUE": "Queue: {name}",
+      "ALL_QUEUES": "All queues",
+      "WHOLE_INSTALLATION": "Whole installation",
+      "missing": "(removed)"
+    },
+    "subjectType": {
+      "CASE": "Test case",
+      "RUN": "Test run",
+      "MILESTONE": "Milestone",
+      "SESSION": "Session",
+      "PROJECT": "Project",
+      "WEBHOOK": "Webhook"
+    },
+    "metrics": {
+      "RESULT_DURATION_DEVIATION": {
+        "label": "Result duration deviates from baseline",
+        "description": "A result takes much longer or shorter than the case's recent results. Results without an elapsed time are ignored.",
+        "summary": "A result's duration is more than {threshold}% {direction, select, ABOVE {above} BELOW {below} other {above or below}} the {baseline, select, MEAN {mean} other {median}} of the case's last {window} results, after at least {minSamples} results"
+      },
+      "CASE_REGRESSED": {
+        "label": "Case regressed",
+        "description": "A case that passed its recent results now fails. Catches a fresh failure on a stable case.",
+        "summary": "A case fails after passing its last {window} results"
+      },
+      "CASE_RECOVERED": {
+        "label": "Case recovered",
+        "description": "A case passes after failing every one of its last results.",
+        "summary": "A case passes after failing its last {window, plural, one {# result} other {# results}}"
+      },
+      "CONSECUTIVE_FAILURES": {
+        "label": "Consecutive failures",
+        "description": "A case fails a given number of times in a row.",
+        "summary": "A case fails {threshold, plural, one {# time} other {# times}} in a row"
+      },
+      "CASE_FLAKY": {
+        "label": "Case became flaky",
+        "description": "A case flips between pass and fail repeatedly within its recent results. Uses the same inputs as the Flaky Tests report.",
+        "summary": "A case flips between pass and fail at least {threshold, plural, one {# time} other {# times}} across its last {window} results"
+      },
+      "RUN_PASS_RATE_BELOW": {
+        "label": "Run pass rate below threshold",
+        "description": "A run's pass rate, counted over results with a pass or fail verdict, drops under a percentage.",
+        "summary": "A run's pass rate is under {threshold}% once at least {minSamples} results have a verdict, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluated as results arrive} other {evaluated when the run completes}}"
+      },
+      "RUN_FAILURE_COUNT": {
+        "label": "Run failure count",
+        "description": "A run has more than a given number of failed results.",
+        "summary": "A run has more than {threshold, plural, one {# failed result} other {# failed results}}, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluated as results arrive} other {evaluated when the run completes}}"
+      },
+      "RUN_DURATION_DEVIATION": {
+        "label": "Run duration deviates from baseline",
+        "description": "A completed run's total duration deviates from the runs its scope groups together (same tag or name fragment).",
+        "summary": "A completed run's duration is more than {threshold}% {direction, select, ABOVE {above} BELOW {below} other {above or below}} the {baseline, select, MEAN {mean} other {median}} of the last {window} runs, after at least {minSamples} runs"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "Run not progressing",
+        "description": "An open run has had no new result for a given number of hours. Checked hourly.",
+        "summary": "An open run has had no new result for more than {threshold, plural, one {# hour} other {# hours}}"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "Automated execution failed",
+        "description": "An automated execution of a run fails, cannot be dispatched, or times out.",
+        "summary": "An automated execution fails, cannot be dispatched, or times out"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "Run untested share",
+        "description": "Too many of a run's cases still have no result with few days left before its milestone is due. Checked daily.",
+        "summary": "More than {threshold}% of a run's cases have no result with {days, plural, one {# day} other {# days}} or fewer before its milestone is due"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "Issues opened from a run",
+        "description": "More than a given number of issues are linked to a run's results.",
+        "summary": "More than {threshold, plural, one {# issue is} other {# issues are}} linked to a run's results, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluated as results arrive} other {evaluated when the run completes}}"
+      },
+      "NEW_FAILURE_SIGNATURES": {
+        "label": "New failure patterns in a run",
+        "description": "A run introduces failure patterns the project had not seen before. Needs Failure Patterns enabled for the project.",
+        "summary": "More than {threshold, plural, one {# failure pattern appears} other {# failure patterns appear}} for the first time in a run, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluated as results arrive} other {evaluated when the run completes}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "Session overran its estimate",
+        "description": "A completed session's elapsed time exceeds its estimate by a percentage.",
+        "summary": "A completed session's elapsed time is more than {threshold}% over its estimate"
+      },
+      "MILESTONE_BEHIND": {
+        "label": "Milestone completion behind",
+        "description": "A milestone's run cases are not completed enough with few days left before its due date. Checked daily.",
+        "summary": "A milestone is under {threshold}% complete with {days, plural, one {# day} other {# days}} or fewer remaining"
+      },
+      "MILESTONE_OVERDUE": {
+        "label": "Milestone overdue",
+        "description": "A milestone's due date has passed and it is not completed. Checked daily.",
+        "summary": "A milestone passes its due date without being completed"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "Requirement coverage below threshold",
+        "description": "Fewer than a given share of the project's requirements count as covered. Checked daily.",
+        "summary": "Fewer than {threshold}% of requirements {basis, select, PASSING {have a passing latest result} other {are linked to at least one test case}}"
+      },
+      "STALE_CASES": {
+        "label": "Stale cases",
+        "description": "More than a given number of cases have gone without a result for a number of days. Checked daily.",
+        "summary": "More than {threshold, plural, one {# case has} other {# cases have}} had no result in {days, plural, one {# day} other {# days}}"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "Automation share below threshold",
+        "description": "Fewer than a given share of the cases in scope are automated. Checked daily.",
+        "summary": "Fewer than {threshold}% of cases are automated"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "Webhook failure rate",
+        "description": "Too many of an outbound webhook's recent deliveries failed. Checked hourly.",
+        "summary": "More than {threshold}% of an outbound webhook's last {window} deliveries failed, after at least {minSamples} deliveries"
+      },
+      "LLM_BUDGET_USED": {
+        "label": "AI budget used",
+        "description": "An AI model integration's spend for its billing period reaches a share of its monthly budget. Fires once per period for each integration.",
+        "summary": "Spend reaches {threshold}% of the integration's monthly budget"
+      },
+      "LLM_ERROR_RATE": {
+        "label": "AI request error rate",
+        "description": "Too many of an AI model integration's recent requests failed.",
+        "summary": "More than {threshold}% of the integration's last {window} requests failed, after at least {minSamples} requests"
+      },
+      "LLM_RATE_LIMITED": {
+        "label": "AI provider rate limiting",
+        "description": "The provider throttled an AI model integration's requests repeatedly.",
+        "summary": "The provider rate-limited at least {threshold, plural, one {# request} other {# requests}} within {days, plural, one {# hour} other {# hours}}"
+      },
+      "CODE_REPOSITORY_CACHE_FAILING": {
+        "label": "Repository cache failing",
+        "description": "A code repository connection has not refreshed its cache successfully for a while. Checked hourly.",
+        "summary": "A repository connection's cache has been failing for at least {threshold, plural, one {# hour} other {# hours}}"
+      },
+      "INTEGRATION_REAUTH_NEEDED": {
+        "label": "Integration re-authorization needed",
+        "description": "Many users have lost their connection to an integration and need to re-authorize. Checked daily.",
+        "summary": "At least {threshold, plural, one {# user needs} other {# users need}} to re-authorize an integration"
+      },
+      "QUEUE_FAILED_JOBS": {
+        "label": "Queue failed jobs",
+        "description": "A background queue holds too many failed jobs. Checked hourly.",
+        "summary": "More than {threshold, plural, one {# job has} other {# jobs have}} failed in a queue"
+      },
+      "QUEUE_BACKLOG": {
+        "label": "Queue backlog",
+        "description": "A background queue's oldest waiting job has waited too long, the sign of a stopped worker. Checked hourly.",
+        "summary": "A queue's oldest waiting job is older than {threshold, plural, one {# minute} other {# minutes}}"
+      },
+      "AUDIT_BACKLOG": {
+        "label": "Audit log backlog",
+        "description": "Captured changes are not being written to the audit log, the sign of a stopped audit worker. Checked hourly.",
+        "summary": "The oldest unprocessed audit change is older than {threshold, plural, one {# minute} other {# minutes}}"
+      },
+      "ACCOUNT_LOCKOUTS": {
+        "label": "Account lockouts",
+        "description": "Several accounts are locked after failed sign-ins at once, a sign of credential stuffing. Checked hourly.",
+        "summary": "At least {threshold, plural, one {# account is} other {# accounts are}} locked after failed sign-ins"
+      },
+      "NO_AUTOMATED_RESULTS": {
+        "label": "No automated results",
+        "description": "No automated test result has arrived from any pipeline for a while. Checked daily.",
+        "summary": "No automated result has arrived for {threshold, plural, one {# hour} other {# hours}}"
+      }
+    },
+    "sourceSummary": "Results: {source, select, MANUAL {manual} AUTOMATED {automated} other {manual and automated}}",
+    "historyDialog": {
+      "title": "History: {name}",
+      "empty": "This rule has not fired yet.",
+      "columns": {
+        "firedAt": "Fired",
+        "subject": "Subject",
+        "observed": "Observed",
+        "threshold": "Threshold",
+        "notified": "Notified"
+      },
+      "webhookSent": "Webhook sent"
+    },
+    "descriptionFor": "Alerts {name} follows, and the other alerts in their projects.",
+    "empty": "There are no alerts in your projects yet.",
+    "emptyCanCreate": "There are no alerts in your projects yet. Add one to get started.",
+    "pageDescription": "How you are notified, what you are told about, and the alerts you follow.",
+    "pageDescriptionFor": "How {name} is notified and the alerts they follow.",
+    "pageTabs": {
+      "alerts": "Alerts",
+      "notifications": "Notifications"
+    },
+    "metricGroups": {
+      "CASE": "Test case results",
+      "RUN": "Test runs",
+      "SESSION": "Sessions",
+      "MILESTONE": "Milestones",
+      "PROJECT": "Project health",
+      "WEBHOOK": "Webhooks",
+      "LLM_INTEGRATION": "AI models",
+      "CODE_REPOSITORY": "Code repositories",
+      "INTEGRATION": "Integrations",
+      "QUEUE": "Background queues",
+      "SYSTEM": "Installation"
+    }
+  },
+  "triage": {
+    "status": {
+      "OPEN": "Open",
+      "RESOLVED": "Resolved",
+      "IGNORED": "Ignored"
+    },
+    "unclassified": "No root cause",
+    "source": {
+      "AI": "Root cause suggested by AI",
+      "labelAI": "AI",
+      "labelMANUAL": "Manual"
+    },
+    "columns": {
+      "classification": "Root cause",
+      "occurrences": "Occurrences",
+      "firstSeen": "First seen",
+      "lastSeen": "Last seen",
+      "classifiedBy": "Set by"
+    },
+    "filters": {
+      "searchPlaceholder": "Search failure patterns...",
+      "flakyOnly": "Flaky candidates",
+      "sourceAll": "Set by anyone",
+      "sourceAi": "Set by AI",
+      "sourceManual": "Set by hand",
+      "sourceNone": "Not set"
+    },
+    "actions": {
+      "resolve": "Resolve",
+      "ignore": "Ignore",
+      "classify": "Suggest root cause with AI",
+      "setClassification": "Set root cause"
+    },
+    "detail": {
+      "exceptionType": "Exception type",
+      "normalizedMessage": "Normalized message",
+      "frames": "Top stack frames",
+      "sampleTrace": "Latest failure",
+      "affectedCases": "{count, plural, one {# affected test case} other {# affected test cases}}",
+      "recentOccurrences": "{count, plural, one {# recent occurrence} other {# recent occurrences}}",
+      "rationale": "Rationale",
+      "suggestedIssueTitle": "Suggested issue title",
+      "nextStep": "Suggested next step",
+      "noAi": "No AI suggestion yet.",
+      "noDetails": "This failure carried no message or stack trace, so it is grouped by test case.",
+      "notesPlaceholder": "Notes for the team...",
+      "lastRun": "Last run",
+      "aiSuggestion": "AI suggestion",
+      "unlinkConfirmDescription": "This removes the issue from this failure pattern. The issue itself is kept and can be linked again later.",
+      "signatureLabel": "Failure pattern",
+      "affectedCasesLabel": "Affected test cases"
+    },
+    "flakyCandidate": "Flaky candidate",
+    "flakyCandidateHint": "The affected test cases flip between pass and fail in their recent history.",
+    "knownIssue": "Known issue",
+    "notGrouped": "{count, plural, one {# failure not grouped yet} other {# failures not grouped yet}}",
+    "runPanel": {
+      "title": "Failure patterns",
+      "inRun": "{count, plural, one {# in this run} other {# in this run}}",
+      "hint": "Click a pattern to filter the results below.",
+      "open": "View pattern",
+      "inRunColumn": "In this run",
+      "selectedClusters": "{count, plural, one {# pattern selected} other {# patterns selected}}",
+      "clearSelected": "Clear the selected patterns"
+    },
+    "toasts": {
+      "updated": "Failure pattern updated",
+      "updateFailed": "Could not update the failure pattern",
+      "classifyQueued": "AI root cause suggestion requested",
+      "noAiModel": "No AI model is configured for this feature",
+      "issueLinked": "Issue linked"
+    },
+    "empty": {
+      "title": "No failure patterns yet",
+      "description": "Failure patterns appear here as automated results with failures arrive. To group failures already recorded in this project, use Analyze existing results in the Failure Patterns settings."
+    },
+    "settings": {
+      "description": "Group automated failures into patterns and let AI suggest their root cause.",
+      "enableLabel": "Enable Failure Patterns",
+      "enableDescription": "Group every automated failure in this project by exception, message and stack frames as results arrive.",
+      "autoClassifyLabel": "Suggest root causes with AI",
+      "autoClassifyDescription": "Ask the project's AI model to pick a root cause for each new failure pattern from the Root Causes catalogue. Needs an AI model assigned to the Failure Patterns: Root Cause feature.",
+      "backfillLabel": "Analyze existing results",
+      "backfillDescription": "Group every automated failure already recorded in this project. Runs in the background.",
+      "backfillStarted": "Analysis started",
+      "backfillRunning": "Analyzing... {processed, plural, one {# failure grouped} other {# failures grouped}}",
+      "backfillDone": "Analysis complete",
+      "backfillFailed": "Analysis failed",
+      "backfillQueueUnavailable": "Background job queue is not available",
+      "enabledToast": "Failure Patterns enabled",
+      "disabledToast": "Failure Patterns disabled",
+      "autoClassifyOnToast": "AI root cause suggestions enabled",
+      "autoClassifyOffToast": "AI root cause suggestions disabled",
+      "autoReleaseLabel": "Release quarantine automatically after",
+      "autoReleasePassesLabel": "consecutive passes",
+      "autoReleaseDescription": "A quarantined test case is released once it has passed this many times in a row since it was quarantined. Skipped results are ignored. A quarantine marked \"keep until released by hand\" stays.",
+      "autoReleaseOnToast": "Automatic release enabled",
+      "autoReleaseOffToast": "Automatic release disabled",
+      "autoReleasePassesSaved": "{count, plural, one {Quarantine is released after # consecutive pass} other {Quarantine is released after # consecutive passes}}",
+      "autoReleasePassesInvalid": "Enter a number of passes between 1 and 100",
+      "openTriage": "Open Failure Patterns"
+    },
+    "quarantine": {
+      "label": "Quarantined",
+      "title": "Quarantined test cases",
+      "hint": "Failures of a quarantined test case are left out of run pass/fail and counted separately. The test case keeps running and recording results.",
+      "metricHint": "Failures of quarantined test cases in this run. They do not count against the pass rate.",
+      "action": "Quarantine",
+      "actionAll": "Quarantine affected test cases",
+      "release": "Release",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "Why is this test case quarantined? (optional)",
+      "keepLabel": "Keep quarantined until released by hand",
+      "keepHint": "Skips the project's automatic release after consecutive passes.",
+      "dialogTitle": "{count, plural, one {Quarantine # test case} other {Quarantine # test cases}}",
+      "releaseConfirmTitle": "Release from quarantine?",
+      "releaseConfirmDescription": "The test case's failures count against run pass/fail again.",
+      "quarantinedToast": "{count, plural, one {# test case quarantined} other {# test cases quarantined}}",
+      "releasedToast": "Test case released from quarantine",
+      "failedToast": "Could not update the quarantine",
+      "listButton": "{count, plural, =0 {Quarantined test cases} one {# quarantined test case} other {# quarantined test cases}}",
+      "columns": {
+        "signature": "Failure pattern",
+        "by": "Quarantined by",
+        "since": "Since",
+        "releasePolicy": "Release"
+      },
+      "releaseAuto": "{count, plural, one {Automatic after # consecutive pass} other {Automatic after # consecutive passes}}",
+      "releaseManual": "By hand",
+      "empty": "No test cases are quarantined in this project."
+    }
+  },
+  "risk": {
+    "score": "Risk Score",
+    "notScored": "Not scored yet",
+    "breakdown": {
+      "title": "Why this score",
+      "pointsOfWeight": "{points} pts · weight {weight}",
+      "components": {
+        "failureHistory": "Failure history",
+        "flakiness": "Flakiness",
+        "staleness": "Staleness",
+        "criticality": "Criticality",
+        "defects": "Linked defects"
+      },
+      "lastExecuted": "Last executed",
+      "neverExecuted": "Never executed",
+      "verdicts": "{failed} of {sampled, plural, one {# recent automated result} other {# recent automated results}} failed",
+      "flips": "{flips, plural, one {# pass/fail flip} other {# pass/fail flips}}",
+      "requirements": "{count, plural, one {# linked requirement} other {# linked requirements}} · top priority {priority}",
+      "suspect": "{count, plural, one {# requirement changed} other {# requirements changed}} since the last run",
+      "defects": "{count, plural, one {# linked defect} other {# linked defects}} · top priority {priority}",
+      "caseCriticality": "Case criticality: {value}",
+      "noPriority": "unspecified",
+      "quarantined": "Quarantined"
+    },
+    "settings": {
+      "description": "Every test case gets a 0-100 risk score from its failure history, flakiness, staleness, linked requirement criticality and linked defects. Scores refresh after results arrive and in a nightly sweep, and power the repository's Risk Score column and filter.",
+      "enableLabel": "Maintain risk scores",
+      "enableDescription": "When off, existing scores stay but stop updating and the Risk Score filter disappears.",
+      "enabledToast": "Risk scoring enabled",
+      "disabledToast": "Risk scoring disabled",
+      "weightsTitle": "Component weights",
+      "weightsDescription": "How much each signal counts, relative to the others. The score normalizes by the total, so weights do not need to add up to 100. Zero removes a component.",
+      "components": {
+        "failureHistory": "Failure history",
+        "flakiness": "Flakiness",
+        "staleness": "Staleness",
+        "criticality": "Criticality",
+        "defects": "Linked defects"
+      },
+      "weightsSaved": "Weights saved",
+      "weightsInvalid": "Weights must be numbers between 0 and {max}",
+      "weightsReset": "Weights reset to defaults",
+      "resetDefaults": "Reset to defaults",
+      "usingDefaults": "Using system defaults",
+      "criticalityFieldTitle": "Case criticality field",
+      "criticalityFieldDescription": "An optional dropdown case field that feeds each case's own criticality. Options count by their order: the top option 100, the bottom 10, evenly spaced — names never matter.",
+      "criticalityFieldNone": "None",
+      "criticalityFieldSaved": "Criticality field saved",
+      "criticalityFieldCleared": "Criticality field cleared",
+      "criticalityFieldOptions": "Option weights, by order:",
+      "issuePrioritiesTitle": "Issue priorities",
+      "issuePrioritiesDescription": "Requirements and defects carry a priority from your tracker, as free text. Map the names your project actually uses to a 0-100 weight. Unmapped names count as neutral (50). Nothing is built in — this is your vocabulary, not ours.",
+      "issuePrioritiesEmpty": "No linked requirements or defects with priorities yet.",
+      "issuePrioritiesCount": "{count, plural, one {# linked issue} other {# linked issues}}",
+      "issuePrioritiesUnused": "not in use",
+      "issuePrioritiesSaved": "Issue priorities saved",
+      "issuePrioritiesInvalid": "Weights must be numbers between 0 and 100",
+      "backfillLabel": "Recalculate all scores",
+      "backfillDescription": "Rescore every test case in the project now instead of waiting for the nightly sweep.",
+      "backfillStarted": "Recalculation started",
+      "backfillRunning": "Recalculating… {processed, plural, one {# case scored} other {# cases scored}}",
+      "backfillDone": "Recalculation finished",
+      "backfillFailed": "Recalculation failed",
+      "backfillAlreadyRunning": "A recalculation was already running — run Recalculate all scores again once it finishes so every case reflects the new weights",
+      "backfillQueueUnavailable": "The background job queue is not available",
+      "openRepository": "Open Repository"
+    }
   }
 }

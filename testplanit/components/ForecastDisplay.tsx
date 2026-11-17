@@ -55,11 +55,12 @@ export const ForecastDisplay: React.FC<ForecastDisplayProps> = ({
       </TooltipTrigger>
       <TooltipContent>
         <div className="flex items-center gap-1">
-          {tCommon("fields.forecast")}:{" "}
-          {toHumanReadable(seconds, {
-            isSeconds: true,
-            locale,
-            round,
+          {tCommon("labels.forecastFromHistory", {
+            value: toHumanReadable(seconds, {
+              isSeconds: true,
+              locale,
+              round,
+            }),
           })}
         </div>
       </TooltipContent>

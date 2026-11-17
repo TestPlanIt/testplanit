@@ -87,7 +87,7 @@ rather than set by hand, and a push with no releasable commits publishes nothing
 
 ## Pre-releases from a release branch
 
-A release branch such as `release/v1.1` carries package changes that need the
+A release branch such as `release/v1.2` carries package changes that need the
 unreleased app, so they cannot go to `latest`. They publish under the `beta`
 dist-tag instead; users opt in with `npm i @testplanit/mcp-server@beta` while
 `@latest` keeps resolving to the released line.
@@ -96,9 +96,9 @@ Pre-releases are not Changesets-managed (keep writing changesets — `main`
 consumes them at graduation). To cut one:
 
 1. On the release branch, set the package's version to an explicit
-   pre-release on the app's line, e.g. `"version": "1.1.0-beta.1"` in
+   pre-release on the app's line, e.g. `"version": "1.2.0-beta.1"` in
    `packages/mcp-server/package.json`.
-2. Commit it as `chore(mcp-server): 1.1.0-beta.1` and push the branch.
+2. Commit it as `chore(mcp-server): 1.2.0-beta.1` and push the branch.
 
 The Package Release workflow runs on the push and executes
 `.github/scripts/packages-publish-prerelease.mjs`, which publishes only the

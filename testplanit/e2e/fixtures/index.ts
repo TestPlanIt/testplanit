@@ -10,6 +10,12 @@ import {
   createTrackedResources,
   type TrackedResources,
 } from "./api.fixture";
+import {
+  patchBrowser,
+  patchContext,
+  patchPage,
+  patchRequestContext,
+} from "./basePath";
 
 /**
  * Stub every always-on SSE stream with HTTP 204 so each EventSource stops
@@ -82,9 +88,27 @@ export interface WorkerCleanup {
  * Extended test with custom fixtures
  */
 export const test = base.extend<TestFixtures, WorkerFixtures>({
+  // Path-prefixed installs (E2E_BASE_PATH): route every context, page and
+  // API request context through ./basePath so root-relative URLs land under
+  // the prefix. No-ops in the normal run.
+  browser: [
+    async ({ browser }, use) => {
+      await use(patchBrowser(browser));
+    },
+    { scope: "worker" },
+  ],
+  context: async ({ context }, use) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    await use(patchContext(context));
+  },
+  request: async ({ request }, use) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    await use(patchRequestContext(request));
+  },
   // Auto-apply the SSE stubs to the fixture's `page`. See stubLiveStreams
   // above for rationale. Manually-created contexts must call it themselves.
   page: async ({ page }, use, testInfo) => {
+    patchPage(page);
     await stubLiveStreams(page);
 
     // Diagnostic capture (opt-in via DIAG_E2E=on): surface problems that never

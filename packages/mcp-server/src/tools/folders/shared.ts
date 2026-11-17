@@ -65,7 +65,7 @@ export interface FolderDetailChild {
 
 /**
  * Fetch a single folder with breadcrumb + children + cases summary.
- * Reused by create.ts and update.ts to return CASE-07-shaped responses
+ * Reused by create.ts and update.ts to return folders_get-shaped responses
  * after a write.
  *
  * `includeRecursiveCounts` (folders_get passes true) adds whole-subtree

@@ -24,6 +24,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedTags, useColumns } from "./columns";
+import { apiFetch } from "~/lib/basePath";
 
 export default function ProjectTagListPage() {
   return <TagList />;
@@ -97,7 +98,7 @@ function TagList() {
   const { data: allTags, isLoading: isLoadingTags } = useQuery({
     queryKey: ["projectTagList", projectIdNumber],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/tags/project-list?projectId=${projectIdNumber}`
       );
       if (!response.ok) {

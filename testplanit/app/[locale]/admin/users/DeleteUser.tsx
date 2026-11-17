@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
 import { TriangleAlert } from "lucide-react";
+import { apiFetch } from "~/lib/basePath";
 
 interface DeleteUserProps {
   user: User;
@@ -39,7 +40,7 @@ export function DeleteUser({ user, open, onClose }: DeleteUserProps) {
     try {
       // Use dedicated update API endpoint instead of ZenStack
       // (ZenStack 2.21+ has issues with nested update operations)
-      const response = await fetch(`/api/users/${user.id}`, {
+      const response = await apiFetch(`/api/users/${user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isDeleted: true }),

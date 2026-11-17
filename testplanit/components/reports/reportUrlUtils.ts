@@ -34,6 +34,7 @@ export const LEGACY_REPORT_SELECTION_URL_KEYS = [
   "startDate",
   "endDate",
   "dimensionFilters",
+  "dimensionFilterModes",
 ] as const;
 
 /** Removes every selection-carrying key (state id and legacy params). */
@@ -64,6 +65,8 @@ export interface BuildReportBuilderStateConfigInput {
     string,
     Array<{ id: string | number }> | undefined
   >;
+  /** Include/exclude per dimension id; persisted only beside an active filter. */
+  dimensionFilterModes?: Record<string, "include" | "exclude">;
 }
 
 /**
@@ -77,6 +80,7 @@ export function buildReportBuilderStateConfig({
   metrics,
   dateRange,
   dimensionValueFilters,
+  dimensionFilterModes,
 }: BuildReportBuilderStateConfigInput): ReportBuilderStateConfig {
   const config: ReportBuilderStateConfig = {
     dimensions: dimensions.map((d) => d.value),
@@ -92,13 +96,20 @@ export function buildReportBuilderStateConfig({
 
   const selectedDimensionIds = new Set(config.dimensions);
   const dimensionFilters: Record<string, Array<string | number>> = {};
+  const activeModes: Record<string, "include" | "exclude"> = {};
   for (const [dimId, values] of Object.entries(dimensionValueFilters)) {
     if (!values || values.length === 0) continue;
     if (!selectedDimensionIds.has(dimId)) continue;
     dimensionFilters[dimId] = values.map((v) => v.id);
+    if (dimensionFilterModes?.[dimId] === "exclude") {
+      activeModes[dimId] = "exclude";
+    }
   }
   if (Object.keys(dimensionFilters).length > 0) {
     config.dimensionFilters = dimensionFilters;
+  }
+  if (Object.keys(activeModes).length > 0) {
+    config.dimensionFilterModes = activeModes;
   }
 
   return config;
@@ -139,7 +150,34 @@ export function parseLegacyReportUrlParams(
   }
   const dimensionFilters = parseLegacyDimensionFilters(dimensionFiltersParam);
   if (dimensionFilters) config.dimensionFilters = dimensionFilters;
+  const dimensionFilterModes = parseLegacyDimensionFilterModes(
+    params.get("dimensionFilterModes")
+  );
+  if (dimensionFilterModes) config.dimensionFilterModes = dimensionFilterModes;
   return config;
+}
+
+/**
+ * `dimensionFilterModes` fallback param: JSON `{ dimId: "exclude" }`.
+ * Malformed input yields null (ignored; every filter keeps include).
+ */
+function parseLegacyDimensionFilterModes(
+  raw: string | null
+): Record<string, "include" | "exclude"> | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+    const out: Record<string, "include" | "exclude"> = {};
+    for (const [dimId, mode] of Object.entries(parsed)) {
+      if (mode === "include" || mode === "exclude") out[dimId] = mode;
+    }
+    return Object.keys(out).length > 0 ? out : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -201,6 +239,14 @@ export function applyLegacyReportUrlParams(
     params.set("dimensionFilters", JSON.stringify(config.dimensionFilters));
   } else {
     params.delete("dimensionFilters");
+  }
+  if (config.dimensionFilterModes) {
+    params.set(
+      "dimensionFilterModes",
+      JSON.stringify(config.dimensionFilterModes)
+    );
+  } else {
+    params.delete("dimensionFilterModes");
   }
 }
 
@@ -399,4 +445,43 @@ export function resolveSyncedReportType({
   }
 
   return { nextReportType: null, clearPending: false };
+}
+
+export interface HasNavigatedAwayFromRunInput {
+  /** `tab` the run was started on. */
+  runTab: string | null;
+  /** Report type the run was started for. */
+  runReportType: string;
+  /** `tab` in the live address bar. */
+  liveTab: string | null;
+  /** `reportType` in the live address bar. */
+  liveReportType: string | null;
+  /** Tab a not-yet-landed navigation is heading toward, or null. */
+  pendingTab: string | null;
+  /** Report type a not-yet-landed navigation is heading toward, or null. */
+  pendingReportType: string | null;
+}
+
+/**
+ * True when the user has left the tab or report a run was started on, so the
+ * run must not write its params to the URL.
+ *
+ * The address bar alone is not enough: router.replace is asynchronous, so for
+ * a moment after a tab click the address bar still shows the tab the run
+ * belongs to. The pending markers cover that moment.
+ */
+export function hasNavigatedAwayFromRun({
+  runTab,
+  runReportType,
+  liveTab,
+  liveReportType,
+  pendingTab,
+  pendingReportType,
+}: HasNavigatedAwayFromRunInput): boolean {
+  if (pendingTab !== null && pendingTab !== runTab) return true;
+  if (pendingReportType !== null && pendingReportType !== runReportType) {
+    return true;
+  }
+  if (liveTab !== null && liveTab !== runTab) return true;
+  return liveReportType !== null && liveReportType !== runReportType;
 }

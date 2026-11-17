@@ -14,6 +14,7 @@
  * place and the two directions cannot drift apart.
  */
 
+import { DATE_GROUPINGS, type DateGrouping } from "~/lib/reports/dateGrouping";
 import type { DateRange } from "react-day-picker";
 import {
   REPORT_STATE_CONFIG_KEYS,
@@ -25,6 +26,12 @@ import {
   type RelativeDateRange,
 } from "~/lib/reports/dateRangePresets";
 import { MAX_EXECUTION_SCOPE_IDS } from "~/utils/requirementExecutionScope";
+import {
+  DEFAULT_TREND_RUN_SOURCE,
+  TREND_ATTEMPT_MODES,
+  TREND_RUN_SOURCES,
+  type TrendAttemptMode,
+} from "~/utils/resultsTrendShared";
 
 /** Matches ReportBuilder's local getBaseReportType (cross-project variants). */
 function baseReportType(reportType: string): string {
@@ -162,8 +169,7 @@ interface ReadableSearchParams {
   get(name: string): string | null;
 }
 
-export type DateGroupingValue =
-  "daily" | "weekly" | "monthly" | "quarterly" | "annually";
+export type DateGroupingValue = DateGrouping;
 export type RequirementCoverageStateValue =
   "PASSED" | "FAILED" | "NOT_RUN" | "UNCOVERED";
 
@@ -197,6 +203,13 @@ export interface PerTypeReportUrlState {
   folderIncludeSubfolders: boolean;
   /** Custom reports: draw the chart's total line across every series. */
   includeTotals: boolean;
+  /** Results trend: the counting rules and which rates the charts show. */
+  trendShowPassRate: boolean;
+  trendShowFailRate: boolean;
+  trendShowCounts: boolean;
+  trendCountSkipped: boolean;
+  trendIncludeAborted: boolean;
+  trendAttemptMode: TrendAttemptMode;
   /** The Filters menu's selections: menu key -> selected values. */
   filterValues: Record<string, Array<string | number>>;
 }
@@ -220,9 +233,16 @@ export const PER_TYPE_REPORT_PARAM_DEFAULTS: PerTypeReportUrlState = {
   baselineSnapshotId: null,
   compareSnapshotId: null,
   includeUnchanged: false,
-  dateGrouping: "weekly",
+  // The trend reports override this to weekly (see parsePerTypeReportParams).
+  dateGrouping: "daily",
   folderIncludeSubfolders: true,
   includeTotals: false,
+  trendShowPassRate: false,
+  trendShowFailRate: true,
+  trendShowCounts: false,
+  trendCountSkipped: false,
+  trendIncludeAborted: true,
+  trendAttemptMode: "all",
   filterValues: {},
 };
 
@@ -245,13 +265,7 @@ const IMPACT_OUTCOME_FILTER_VALUES = [
   "no_run",
 ] as const;
 const PIN_COVERAGE_FILTER_VALUES = ["gaps", "pinned"] as const;
-const DATE_GROUPING_VALUES: readonly DateGroupingValue[] = [
-  "daily",
-  "weekly",
-  "monthly",
-  "quarterly",
-  "annually",
-];
+const DATE_GROUPING_VALUES: readonly DateGroupingValue[] = DATE_GROUPINGS;
 const REQUIREMENT_COVERAGE_STATE_VALUES: readonly RequirementCoverageStateValue[] =
   ["PASSED", "FAILED", "NOT_RUN", "UNCOVERED"];
 
@@ -403,6 +417,17 @@ export function parsePerTypeReportParams(
   // dimension-and-metric report can plot a date axis.
   state.includeTotals = booleanParam(params, "includeTotals", false);
 
+  // The date dimension's calendar period. The two trend reports open
+  // weekly; the custom reports open daily, which is how they always grouped.
+  state.dateGrouping = enumParam(
+    params,
+    "dateGrouping",
+    DATE_GROUPING_VALUES,
+    base === "automation-trends" || base === "results-trend"
+      ? "weekly"
+      : "daily"
+  );
+
   // The case-based reports' Folders filter.
   if (
     base === "flaky-tests" ||
@@ -507,6 +532,56 @@ export function parsePerTypeReportParams(
     );
   }
 
+  if (base === "results-trend") {
+    // The run body's runSource is the Result types filter: one type picked
+    // narrows the report, "both" (or nothing) is the unfiltered menu.
+    const runSource = enumParam(
+      params,
+      "runSource",
+      TREND_RUN_SOURCES,
+      DEFAULT_TREND_RUN_SOURCE
+    );
+    if (runSource !== "both") {
+      setMenuValues(filterValues, "resultType", [runSource]);
+    }
+    state.trendShowPassRate = booleanParam(
+      params,
+      "showPassRate",
+      state.trendShowPassRate
+    );
+    state.trendShowFailRate = booleanParam(
+      params,
+      "showFailRate",
+      state.trendShowFailRate
+    );
+    state.trendShowCounts = booleanParam(
+      params,
+      "showCounts",
+      state.trendShowCounts
+    );
+    state.trendCountSkipped = booleanParam(
+      params,
+      "countSkipped",
+      state.trendCountSkipped
+    );
+    state.trendIncludeAborted = booleanParam(
+      params,
+      "includeAborted",
+      state.trendIncludeAborted
+    );
+    state.trendAttemptMode = enumParam(
+      params,
+      "attemptMode",
+      TREND_ATTEMPT_MODES,
+      state.trendAttemptMode
+    );
+    setMenuValues(
+      filterValues,
+      "projects",
+      idListParam(params, "projectIds", MAX_FILTER_MENU_IDS)
+    );
+  }
+
   if (
     base === "requirement-coverage-gaps" ||
     base === "requirement-traceability" ||
@@ -563,12 +638,6 @@ export function parsePerTypeReportParams(
   }
 
   if (base === "automation-trends") {
-    state.dateGrouping = enumParam(
-      params,
-      "dateGrouping",
-      DATE_GROUPING_VALUES,
-      state.dateGrouping
-    );
     Object.assign(
       filterValues,
       filterMenuValues(params, [

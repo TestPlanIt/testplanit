@@ -35,6 +35,9 @@ export const env = createEnv({
       process.env.VERCEL ? z.string() : z.url()
     ),
     ELASTICSEARCH_NODE: z.url().optional(),
+    // Public base of the install, prefix included (https://host/testplanit).
+    // Optional: lib/appUrl.ts derives it from NEXTAUTH_URL when unset.
+    APP_URL: z.url().optional(),
   },
 
   /**
@@ -58,6 +61,7 @@ export const env = createEnv({
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     ELASTICSEARCH_NODE: process.env.ELASTICSEARCH_NODE,
+    APP_URL: process.env.APP_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

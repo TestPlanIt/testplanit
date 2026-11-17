@@ -29,7 +29,6 @@ describe("IssueAdapter contract: milestones capability", () => {
       name: "AzureDevOpsAdapter",
       instance: new AzureDevOpsAdapter(baseConfig),
     },
-    { name: "GitHubAdapter", instance: new GitHubAdapter(baseConfig) },
     { name: "GitLabAdapter", instance: new GitLabAdapter(baseConfig) },
     { name: "GiteaAdapter", instance: new GiteaAdapter(baseConfig) },
     { name: "MantisBTAdapter", instance: new MantisBTAdapter(baseConfig) },
@@ -47,6 +46,16 @@ describe("IssueAdapter contract: milestones capability", () => {
       expect((instance as any).getExternalMilestones).toBeUndefined();
     }
   );
+
+  it("GitHubAdapter declares release milestones with webhooks and implements both methods", () => {
+    const adapter = new GitHubAdapter(baseConfig);
+    expect(adapter.getCapabilities().milestones).toEqual({
+      kinds: ["RELEASE"],
+      webhooks: true,
+    });
+    expect(typeof adapter.getExternalMilestones).toBe("function");
+    expect(typeof adapter.getMilestoneIssues).toBe("function");
+  });
 
   it("JiraAdapter declares the milestones capability with both kinds", () => {
     const adapter = new JiraAdapter(baseConfig);
@@ -84,8 +93,8 @@ describe("IssueAdapter contract: milestones capability", () => {
   it("covers exactly the 8 concrete adapters known to implement getCapabilities", () => {
     // Guards against a new adapter landing without declaring `milestones`
     // (research warns this list can silently grow). If this fails, a new
-    // adapter file exists — add it to nonMilestoneAdapters (or the Jira
-    // assertions above) and update this count.
-    expect(nonMilestoneAdapters.length + 1).toBe(8);
+    // adapter file exists — add it to nonMilestoneAdapters (or the Jira /
+    // GitHub assertions above) and update this count.
+    expect(nonMilestoneAdapters.length + 2).toBe(8);
   });
 });

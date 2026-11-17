@@ -1,3 +1,4 @@
+import { providerDisplayName } from "~/lib/integrations/providerDisplayName";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
@@ -29,7 +30,8 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Cloud, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { TrackerGlyph } from "@/components/MilestoneSourceBadge";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -45,6 +47,10 @@ import {
   getStatusStyle,
 } from "~/utils/milestoneUtils";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
+import {
+  contrastingTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
 
 interface MilestoneFormControlsProps {
   isEditMode: boolean;
@@ -52,6 +58,8 @@ interface MilestoneFormControlsProps {
   milestone: any;
   projectId: string;
   milestoneId: string;
+  /** Provider enum of the tracker a synced milestone came from. */
+  provider?: string;
 }
 
 export default function MilestoneFormControls({
@@ -60,7 +68,9 @@ export default function MilestoneFormControls({
   milestone,
   projectId,
   milestoneId,
+  provider = "JIRA",
 }: MilestoneFormControlsProps) {
+  const providerName = providerDisplayName(provider);
   const { control, watch, setValue } = useFormContext();
   const completedAt = watch("completedAt");
   const enableNotifications = watch("enableNotifications");
@@ -183,7 +193,9 @@ export default function MilestoneFormControls({
               which is positioned for a taller title+description alert) so they
               stay vertically centered. */}
           <div className="flex items-center">
-            <Cloud className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="flex shrink-0 items-center">
+              <TrackerGlyph provider={provider} className="h-4 w-4" />
+            </span>
             <AlertTitle className="mb-0 ms-2 flex items-center">
               {jiraUrl ? (
                 <a
@@ -191,13 +203,15 @@ export default function MilestoneFormControls({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 hover:underline"
-                  title={tCommon("ui.issues.openInJira")}
+                  title={tCommon("ui.issues.openInExternalSystem", {
+                    provider: providerName,
+                  })}
                 >
-                  {t("sync.managedByJira")}
+                  {t("sync.managedByJira", { provider: providerName })}
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               ) : (
-                t("sync.managedByJira")
+                t("sync.managedByJira", { provider: providerName })
               )}
               <HelpPopover helpKey="milestone.managedByJira" />
             </AlertTitle>
@@ -330,14 +344,20 @@ export default function MilestoneFormControls({
         colorMap && (
           <div className="space-y-2">
             <Badge
-              style={{
-                backgroundColor: getStatusStyle(
+              data-status-surface
+              style={(() => {
+                const badge = getStatusStyle(
                   getStatus(milestone),
                   resolvedTheme || "light",
                   colorMap
-                ).badge,
-              }}
-              className="text-secondary-background border-2 border-secondary-foreground text-sm"
+                ).badge;
+                return {
+                  ...statusSurfaceVars(badge),
+                  backgroundColor: badge,
+                  color: contrastingTextColor(badge),
+                };
+              })()}
+              className="border-2 border-secondary-foreground text-sm"
             >
               {t(`statusLabels.${getStatus(milestone)}` as any)}
             </Badge>

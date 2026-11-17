@@ -1,9 +1,11 @@
 "use client";
 
+import { CopyChip } from "@/components/CopyChip";
 import { useDebounce } from "@/components/Debounce";
 import DynamicIcon from "@/components/DynamicIcon";
 import { EntityTypeSelector } from "@/components/EntityTypeSelector";
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { RecordId } from "@/components/RecordId";
 import { CustomFieldDisplay } from "@/components/search/CustomFieldDisplay";
 import { FacetedSearchFilters } from "@/components/search/FacetedSearchFilters";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
@@ -14,6 +16,7 @@ import {
   sanitizeSearchHighlight,
   searchHighlightText,
 } from "~/utils/searchHighlight";
+import { RECORD_TYPES, type RecordType } from "~/lib/recordKey";
 import {
   BadgeList,
   DateDisplay,
@@ -31,6 +34,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -53,6 +61,7 @@ import {
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { BulkEditModal } from "@/projects/repository/[projectId]/BulkEditModal";
 import {
+  ChevronDown,
   ExternalLink as ExternalLinkIcon,
   Filter,
   Folder,
@@ -73,6 +82,7 @@ import {
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { useSearchState } from "~/lib/contexts/SearchStateContext";
 import { type SavedSearchCriteria } from "~/lib/schemas/savedSearch";
+import { searchHitProjectId } from "~/lib/searchHitProject";
 import { IconName } from "~/types/globals";
 import {
   SearchableEntityType,
@@ -83,6 +93,7 @@ import {
 } from "~/types/search";
 import { cn } from "~/utils";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { apiFetch } from "~/lib/basePath";
 
 interface UnifiedSearchProps {
   // Context overrides
@@ -137,6 +148,9 @@ export function UnifiedSearch({
   // Rendered as normal result cards above the text-search results.
   const recordKeyHits = useRecordKeyHits(query);
   const hasRecordKeyHits = recordKeyHits.length > 0;
+  // The direct-lookup cards sit above the list; they can be folded away so a
+  // long id list never crowds the results out of view.
+  const [recordMatchesOpen, setRecordMatchesOpen] = useState(true);
   const [filters, setFilters] = useState<UnifiedSearchFilters>(
     searchState?.filters || initialFilters || searchContext.defaultFilters
   );
@@ -291,7 +305,7 @@ export function UnifiedSearch({
           ],
         };
 
-        const response = await fetch("/api/search", {
+        const response = await apiFetch("/api/search", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -660,6 +674,24 @@ export function UnifiedSearch({
   const hasMore =
     loadedHits.length < totalForTab && !loadMoreError && !reachedEnd;
 
+  // A record already shown as a direct-lookup card above the list is left out
+  // of the list, so an id search never shows the same record twice.
+  const recordKeyCardKeys = useMemo(
+    () => new Set(recordKeyHits.map((h) => `${h.entityType}-${h.id}`)),
+    [recordKeyHits]
+  );
+  const visibleHits = useMemo(
+    () =>
+      recordKeyCardKeys.size === 0
+        ? loadedHits
+        : loadedHits.filter(
+            (h) => !recordKeyCardKeys.has(`${h.entityType}-${h.id}`)
+          ),
+    [loadedHits, recordKeyCardKeys]
+  );
+  const hiddenDuplicates = loadedHits.length - visibleHits.length;
+  const visibleTotalForTab = Math.max(totalForTab - hiddenDuplicates, 0);
+
   // Fetch the next page and append it. The cursor is the highest page loaded
   // for the current tab/query. Guard on `hasMore` so a stray trigger can't
   // fetch past the end of the result set.
@@ -681,7 +713,7 @@ export function UnifiedSearch({
     measureElement,
     maxHeight,
   } = useVirtualizedInfiniteList({
-    count: loadedHits.length,
+    count: visibleHits.length,
     estimateSize: 140,
     overscan: 6,
     hasMore,
@@ -690,6 +722,8 @@ export function UnifiedSearch({
     // Leave room for the fixed bulk-action toolbar so the last rows stay clear.
     bottomMargin: selectedCaseRows.size > 0 ? 96 : 16,
     resetKey: `${searchTrigger}:${selectedTab}`,
+    // The direct-lookup section above the list folds and grows with the query
+    layoutKey: `${recordMatchesOpen}:${recordKeyHits.length}`,
   });
 
   // Virtualized, infinite-scrolling list of the accumulated hits for the
@@ -704,7 +738,7 @@ export function UnifiedSearch({
     >
       <div className="relative w-full" style={{ height: totalSize }}>
         {virtualItems.map((vItem) => {
-          const hit = loadedHits[vItem.index];
+          const hit = visibleHits[vItem.index];
           if (!hit) return null;
           return (
             <div
@@ -854,10 +888,10 @@ export function UnifiedSearch({
           </Tabs>
         )}
 
-        {totalForTab > 0 && (
-          <div className="mt-4 text-sm text-muted-foreground">
-            {t("common.pagination.showing")} {loadedHits.length}{" "}
-            {t("common.of")} {totalForTab} {t("common.results")}
+        {visibleTotalForTab > 0 && (
+          <div className="mt-4 text-end text-sm text-muted-foreground">
+            {t("common.pagination.showing")} {visibleHits.length}{" "}
+            {t("common.of")} {visibleTotalForTab} {t("common.results")}
           </div>
         )}
 
@@ -1047,17 +1081,43 @@ export function UnifiedSearch({
         )}
 
         {hasRecordKeyHits && (
-          <div className="mb-2 flex flex-col gap-2">
-            {recordKeyHits.map((hit) => (
-              <SearchResultCard
-                key={`${hit.entityType}-${hit.id}`}
-                hit={hit}
-                href={getResultHref?.(hit) ?? undefined}
-                onClick={() => onResultClick?.(hit)}
-                searchQuery={query}
-              />
-            ))}
-          </div>
+          <Collapsible
+            open={recordMatchesOpen}
+            onOpenChange={setRecordMatchesOpen}
+            className="mb-2"
+          >
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+                data-testid="record-matches-toggle"
+              >
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 shrink-0 transition-transform",
+                    !recordMatchesOpen && "-rotate-90"
+                  )}
+                />
+                {t("search.recordMatches", { count: recordKeyHits.length })}
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div
+                className="flex max-h-72 flex-col gap-2 overflow-y-auto pe-1"
+                data-testid="record-matches-list"
+              >
+                {recordKeyHits.map((hit) => (
+                  <SearchResultCard
+                    key={`${hit.entityType}-${hit.id}`}
+                    hit={hit}
+                    href={getResultHref?.(hit) ?? undefined}
+                    onClick={() => onResultClick?.(hit)}
+                    searchQuery={query}
+                  />
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         {!isInitialLoading && !error && results && (
@@ -1178,6 +1238,43 @@ export function UnifiedSearch({
 }
 
 // Individual search result card component
+/** The record type behind each searchable entity that has a record key. */
+const ENTITY_RECORD_TYPES: Partial<Record<SearchableEntityType, RecordType>> = {
+  [SearchableEntityType.REPOSITORY_CASE]: RECORD_TYPES.TEST_CASE,
+  [SearchableEntityType.TEST_RUN]: RECORD_TYPES.TEST_RUN,
+  [SearchableEntityType.SESSION]: RECORD_TYPES.SESSION,
+  [SearchableEntityType.MILESTONE]: RECORD_TYPES.MILESTONE,
+  [SearchableEntityType.SHARED_STEP]: RECORD_TYPES.SHARED_STEPS,
+  [SearchableEntityType.ISSUE]: RECORD_TYPES.ISSUE,
+};
+
+/**
+ * A result's copyable identifier: the project-prefixed key when record keys
+ * are on and the entity has one, otherwise its bare numeric id.
+ */
+function SearchResultId({ hit }: { hit: SearchHit }) {
+  const id = Number(hit.id);
+  const type = ENTITY_RECORD_TYPES[hit.entityType];
+  const className = "ms-2 shrink-0 whitespace-nowrap";
+  if (!type || !Number.isFinite(id)) {
+    return (
+      <CopyChip
+        value={String(hit.id)}
+        className={className}
+        testId="record-id"
+      />
+    );
+  }
+  return (
+    <RecordId
+      type={type}
+      id={id}
+      projectId={searchHitProjectId(hit.source)}
+      className={className}
+    />
+  );
+}
+
 function SearchResultCard({
   hit,
   href,
@@ -1583,13 +1680,14 @@ function SearchResultCard({
           <>
             <MetadataList
               items={[
-                hit.source.projectName && hit.source.projectId && (
-                  <ProjectNameDisplay
-                    projectName={hit.source.projectName}
-                    projectId={hit.source.projectId}
-                    iconUrl={hit.source.projectIconUrl}
-                  />
-                ),
+                hit.source.projectName &&
+                  searchHitProjectId(hit.source) != null && (
+                    <ProjectNameDisplay
+                      projectName={hit.source.projectName}
+                      projectId={searchHitProjectId(hit.source)!}
+                      iconUrl={hit.source.projectIconUrl}
+                    />
+                  ),
                 hit.source.issueSystem && (
                   <MetadataItem>{hit.source.issueSystem}</MetadataItem>
                 ),
@@ -1765,6 +1863,15 @@ function SearchResultCard({
               )}
             </h4>
             <div className="flex shrink-0 items-start">
+              <SearchResultId hit={hit} />
+              <Badge variant="outline" className="ms-2 shrink-0">
+                {getEntityLabel(hit.entityType)}
+              </Badge>
+              {hit.source.isDeleted && (
+                <Badge variant="destructive" className="ms-2 shrink-0">
+                  {t("common.status.deleted")}
+                </Badge>
+              )}
               {href && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1787,14 +1894,6 @@ function SearchResultCard({
                     {t("autoTag.entityDetail.openInNewTab")}
                   </TooltipContent>
                 </Tooltip>
-              )}
-              <Badge variant="outline" className="ms-2 shrink-0">
-                {getEntityLabel(hit.entityType)}
-              </Badge>
-              {hit.source.isDeleted && (
-                <Badge variant="destructive" className="ms-2 shrink-0">
-                  {t("common.status.deleted")}
-                </Badge>
               )}
             </div>
           </div>

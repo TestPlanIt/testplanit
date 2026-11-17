@@ -1,6 +1,7 @@
 import { DateFormatter } from "@/components/DateFormatter";
 import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
+import ReadOnlyRichText from "@/components/tiptap/ReadOnlyRichText";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Input } from "@/components/ui/input";
 import {
@@ -58,6 +59,8 @@ interface FieldValueRendererProps {
   projectId?: number;
   onSharedStepCreated?: () => void;
   stepsForDisplay?: DisplayStep[];
+  /** The surface renders the step layout toggle beside its own field label. */
+  hideStepLayoutToggle?: boolean;
   explicitFieldNameForSteps?: string;
   parameters?: ParameterChipMeta[];
   onOpenParametersSheet?: () => void;
@@ -77,6 +80,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
   errors,
   previousFieldValue,
   isRunMode = false,
+  hideStepLayoutToggle = false,
   canEditRestricted = true,
   projectId,
   onSharedStepCreated,
@@ -147,7 +151,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
           </div>
           <div className="relative p-1 rounded">
             <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
-            <span className="relative text-green-600 dark:text-green-400 flex space-x-1 items-center">
+            <span className="relative text-green-700 dark:text-green-400 flex space-x-1 items-center">
               <div>
                 <Plus className="w-4 h-4" />
               </div>
@@ -439,7 +443,11 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                 className="mx-1"
                 type="number"
                 value={value ?? ""}
-                onChange={(e) => onChange(Number(e.target.value))}
+                onChange={(e) =>
+                  onChange(
+                    e.target.value === "" ? null : Number(e.target.value)
+                  )
+                }
                 disabled={isSubmitting}
               />
             )}
@@ -539,14 +547,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               // console.warn("Error parsing JSON in diff view:", error);
               content = ensureTipTapJSON(val);
             }
-            return (
-              <TipTapEditor
-                content={content}
-                projectId={projectId?.toString()}
-                readOnly
-                className="h-auto"
-              />
-            );
+            return <ReadOnlyRichText content={content} className="h-auto" />;
           })
         ) : (
           (() => {
@@ -559,14 +560,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               // console.warn("Error parsing JSON in view mode:", error);
               content = ensureTipTapJSON(fieldValue);
             }
-            return (
-              <TipTapEditor
-                content={content}
-                projectId={projectId?.toString()}
-                readOnly
-                className="h-auto"
-              />
-            );
+            return <ReadOnlyRichText content={content} className="h-auto" />;
           })()
         );
       case "Steps":
@@ -589,6 +583,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               steps={stepsForDisplay || fieldValue || []}
               projectId={projectId}
               parameters={parameters}
+              hideLayoutToggle={hideStepLayoutToggle}
             />
           );
         } else {

@@ -47,11 +47,12 @@ import { WizardStepIndicator } from "@/components/ui/WizardStepIndicator";
 import {
   AlertCircle,
   AlertTriangle,
+  Asterisk,
   ChevronLeft,
   ChevronRight,
-  Star,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { cn } from "~/utils";
 import { useParams } from "next/navigation";
 import Papa from "papaparse";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -71,6 +72,8 @@ import {
   type AppliedImportMapping,
 } from "~/lib/schemas/savedImportMapping";
 import { parseStepsCell } from "~/lib/utils/parseExportedSteps";
+import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
+import { DefaultTemplateBadge } from "@/components/DefaultTemplateBadge";
 import {
   convertMarkdownCasesToImportData,
   parseMarkdownTestCases,
@@ -78,6 +81,7 @@ import {
 } from "~/utils/markdownTestCaseParser";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { generateHTMLFallback } from "~/utils/tiptapToHtml";
+import { apiFetch } from "~/lib/basePath";
 
 interface ImportCasesWizardProps {
   onImportComplete?: () => void;
@@ -274,7 +278,21 @@ export function ImportCasesWizard({
     },
   });
 
-  const defaultTemplate = templates?.find((template) => template.isDefault);
+  const { data: project } = useClientQueries(schema).projects.useFindUnique({
+    where: { id: projectId },
+    select: { defaultTemplateId: true },
+  });
+
+  // Only a configured default is preselected; the user picks otherwise. Held
+  // back until the project loads so its default isn't beaten by the system's.
+  const resolvedDefault = resolveDefaultTemplate(
+    templates,
+    project?.defaultTemplateId
+  );
+  const defaultTemplateSource = project ? resolvedDefault.source : null;
+  const defaultTemplate = defaultTemplateSource
+    ? resolvedDefault.template
+    : undefined;
 
   const { data: folders } = useClientQueries(
     schema
@@ -377,7 +395,7 @@ export function ImportCasesWizard({
             }
           }
 
-          const res = await fetch("/api/duplicate-scan/check-new", {
+          const res = await apiFetch("/api/duplicate-scan/check-new", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ projectId: Number(projectId), name, tags }),
@@ -707,11 +725,14 @@ export function ImportCasesWizard({
       // Try LLM-assisted parsing if user opted in
       if (useAiParsing && hasLlmIntegration) {
         try {
-          const response = await fetch("/api/llm/parse-markdown-test-cases", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ projectId, markdown: text }),
-          });
+          const response = await apiFetch(
+            "/api/llm/parse-markdown-test-cases",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ projectId, markdown: text }),
+            }
+          );
 
           if (response.ok) {
             const data = await response.json();
@@ -916,7 +937,7 @@ export function ImportCasesWizard({
     setImportWarnings([]);
 
     try {
-      const response = await fetch(`/api/repository/import`, {
+      const response = await apiFetch(`/api/repository/import`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1062,9 +1083,13 @@ export function ImportCasesWizard({
     error?: string;
   }) => (
     <div>
-      <Label className={error ? "text-destructive" : ""}>
+      <Label className={cn("flex items-center", error && "text-destructive")}>
         {children}
-        {required && <span className="text-destructive ms-1">{"*"}</span>}
+        {required && (
+          <sup>
+            <Asterisk className="w-3 h-3 text-destructive" />
+          </sup>
+        )}
       </Label>
       {error && <p className="text-destructive text-sm mt-1">{error}</p>}
     </div>
@@ -1277,16 +1302,10 @@ export function ImportCasesWizard({
             {templates?.map((template) => (
               <SelectItem key={template.id} value={template.id.toString()}>
                 {template.templateName}
-                {template.isDefault && (
-                  <Tooltip>
-                    <TooltipTrigger className="ms-1" asChild>
-                      <Badge variant="secondary">
-                        <Star className="h-3 w-3 fill-current" />
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>{tCommon("defaultOption")}</TooltipContent>
-                  </Tooltip>
-                )}
+                {defaultTemplateSource &&
+                  template.id === defaultTemplate?.id && (
+                    <DefaultTemplateBadge source={defaultTemplateSource} />
+                  )}
               </SelectItem>
             ))}
           </SelectContent>
@@ -1357,6 +1376,21 @@ export function ImportCasesWizard({
             {t("importWizard.page2.requiredFieldsWarning", {
               count: getUnmappedRequiredFields().length,
             })}
+            <ul
+              className="mt-1 list-disc ps-5"
+              data-testid="import-unmapped-required-fields"
+            >
+              {getUnmappedRequiredFields().map((field) => (
+                <li key={field.id}>
+                  <span className="flex items-center">
+                    {field.displayName}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </AlertDescription>
         </Alert>
       )}
@@ -1398,9 +1432,9 @@ export function ImportCasesWizard({
                           <span className="flex items-center">
                             {field.displayName}
                             {field.isRequired && (
-                              <Badge variant="secondary" className="ms-2">
-                                {tCommon("fields.required")}
-                              </Badge>
+                              <sup>
+                                <Asterisk className="w-3 h-3 text-destructive" />
+                              </sup>
                             )}
                           </span>
                           {field.description && (
@@ -2012,7 +2046,9 @@ export function ImportCasesWizard({
           {currentPage < 4 ? (
             <Button
               onClick={handleNextPage}
-              disabled={isParsingMarkdown}
+              disabled={
+                isParsingMarkdown || (currentPage === 2 && !canProceedToPage3())
+              }
               data-testid="next-button"
             >
               {tCommon("actions.next")}

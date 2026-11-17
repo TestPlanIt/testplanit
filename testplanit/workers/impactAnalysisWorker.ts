@@ -22,14 +22,16 @@ import {
 } from "../lib/services/impact/diffSummary";
 import { getCommitFilePaths } from "../lib/services/impact/commitFiles";
 import { getFileAtCommit } from "../lib/services/impact/fileAtCommit";
-import { impactCancelKey } from "../lib/services/impact/jobKeys";
+import {
+  IMPACT_COMPOSE_JOB,
+  impactCancelKey,
+} from "../lib/services/impact/jobKeys";
 import { planAiCandidates } from "../lib/services/impact/aiCandidates";
 import { runAiLayer } from "../lib/services/impact/layers/aiLayer";
 import { runHistoryLayer } from "../lib/services/impact/layers/historyLayer";
-import { executeAutoRun } from "../lib/services/impact/autoExecute";
 import { excludeGlobsOf } from "../lib/integrations/repoPathPatterns";
 import { createExcludedPathMatcher } from "../lib/services/impact/excludedPaths";
-import { createRunFromAnalysis } from "../lib/services/impact/autoRun";
+import { runAnalysisActions } from "../lib/services/impact/autoRun";
 import {
   botCommitMatcher,
   collectBuildPullRequests,
@@ -120,7 +122,30 @@ export const processor = async (
   );
   validateMultiTenantJobData(job.data);
 
-  const redis = await worker!.client;
+  if (job.name === IMPACT_COMPOSE_JOB) {
+    // A webhook reused an analysis that was already complete: only its
+    // rules' runs are left to compose.
+    if (job.data.autoRun) {
+      await runAnalysisActions(
+        getDbClientForJob(job.data) as any,
+        analysisId,
+        projectId,
+        job.data.autoRun,
+        job.data.tenantId
+      );
+    }
+    return {
+      analysisId,
+      status: "complete",
+      caseCount: 0,
+      pinnedCount: 0,
+      affectedCount: 0,
+      uncoveredCount: 0,
+      warnings: [],
+    };
+  }
+
+  const redis = await worker!.getBackend().client;
   const cancelKey = impactCancelKey(String(job.id));
   const isCancelled = async () => Boolean(await redis.get(cancelKey));
   const assertNotCancelled = async () => {
@@ -661,26 +686,18 @@ export const processor = async (
     };
     await saveResult(db, analysisId, result);
     if (job.data.autoRun) {
-      // A webhook started this analysis: compose the run it asked for, then
-      // request its automated execution when the webhook says to. A failure
-      // here is logged on the delivery, never on the analysis, which is
-      // complete and reviewable either way.
+      // A webhook started this analysis: perform the Create test run rules
+      // that matched it. Failures land on the delivery and the rule's log,
+      // never on the analysis, which is complete and reviewable either way.
       try {
-        const run = await createRunFromAnalysis(
+        await runAnalysisActions(
           db,
           analysisId,
+          projectId,
           job.data.autoRun,
+          job.data.tenantId,
           buildChanges
         );
-        if (run.created) {
-          await executeAutoRun(db, {
-            webhookConfigId: job.data.autoRun.webhookConfigId,
-            testRunId: run.testRunId,
-            projectId,
-            deliveryId: job.data.autoRun.deliveryId,
-            tenantId: job.data.tenantId,
-          });
-        }
       } catch (error) {
         console.error(
           `[impact] auto-run for analysis ${analysisId} failed:`,

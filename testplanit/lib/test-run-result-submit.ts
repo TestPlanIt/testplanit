@@ -1,4 +1,5 @@
 import { operationIdRef } from "~/lib/zenstackFetcher";
+import { apiFetch } from "~/lib/basePath";
 
 export interface SubmitTestRunResultInput {
   testRunId: number;
@@ -36,11 +37,34 @@ export interface SubmitTestRunResultResponse {
   result: {
     id: number;
   };
+  runProgress?: {
+    /** This result moved the run from <100% to 100% completed cases. */
+    allCasesJustCompleted: boolean;
+  };
+}
+
+/**
+ * Window event raised when a submitted result moves its run to 100%
+ * completed cases. The run detail page listens and offers to complete the
+ * run; results are recorded from several components (case details, the
+ * Add Result modal, iteration panels), so the single submit helper is the
+ * one place that knows.
+ */
+export const TEST_RUN_ALL_CASES_COMPLETED_EVENT = "testRunAllCasesCompleted";
+
+export interface TestRunAllCasesCompletedDetail {
+  testRunId: number;
 }
 
 export type SubmitResultError = Error & {
   status?: number;
   code?: string;
+  /** `DEPENDENCIES_NOT_PASSED` only: the prerequisites keeping the case blocked. */
+  blockedBy?: Array<{
+    testRunCaseId: number;
+    repositoryCaseId: number;
+    name: string | null;
+  }>;
 };
 
 export function isPermissionDeniedSubmitResultError(
@@ -98,6 +122,20 @@ export function isIssueRequiredOnFailureSubmitResultError(
 }
 
 /**
+ * True when the server refused the result because the project enforces test
+ * case dependencies and a case this one depends on has not passed in the run.
+ */
+export function isDependenciesNotPassedSubmitResultError(
+  error: unknown
+): error is SubmitResultError {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  return (error as SubmitResultError).code === "DEPENDENCIES_NOT_PASSED";
+}
+
+/**
  * True when an edit was rejected because the result's in-place edit window
  * has closed (a correction must be a new attempt instead).
  */
@@ -147,7 +185,7 @@ export async function editTestRunResult(
   if (operationIdRef.current) {
     editHeaders["X-Operation-Id"] = operationIdRef.current;
   }
-  const response = await fetch("/api/test-runs/edit-result", {
+  const response = await apiFetch("/api/test-runs/edit-result", {
     method: "POST",
     headers: editHeaders,
     body: JSON.stringify(input),
@@ -184,7 +222,7 @@ export async function deleteTestRunResult(resultId: number): Promise<void> {
   if (operationIdRef.current) {
     headers["X-Operation-Id"] = operationIdRef.current;
   }
-  const response = await fetch("/api/test-runs/delete-result", {
+  const response = await apiFetch("/api/test-runs/delete-result", {
     method: "POST",
     headers,
     body: JSON.stringify({ resultId }),
@@ -217,7 +255,7 @@ export async function submitTestRunResult(
   if (operationIdRef.current) {
     headers["X-Operation-Id"] = operationIdRef.current;
   }
-  const response = await fetch("/api/test-runs/submit-result", {
+  const response = await apiFetch("/api/test-runs/submit-result", {
     method: "POST",
     headers,
     body: JSON.stringify(input),
@@ -226,7 +264,9 @@ export async function submitTestRunResult(
   const payload = (await response.json().catch(() => null)) as {
     error?: string;
     code?: string;
+    blockedBy?: SubmitResultError["blockedBy"];
     result?: SubmitTestRunResultResponse["result"];
+    runProgress?: SubmitTestRunResultResponse["runProgress"];
   } | null;
 
   if (!response.ok || !payload?.result) {
@@ -235,7 +275,20 @@ export async function submitTestRunResult(
     ) as SubmitResultError;
     error.status = response.status;
     error.code = payload?.code;
+    error.blockedBy = payload?.blockedBy;
     throw error;
+  }
+
+  if (
+    payload.runProgress?.allCasesJustCompleted &&
+    typeof window !== "undefined"
+  ) {
+    window.dispatchEvent(
+      new CustomEvent<TestRunAllCasesCompletedDetail>(
+        TEST_RUN_ALL_CASES_COMPLETED_EVENT,
+        { detail: { testRunId: input.testRunId } }
+      )
+    );
   }
 
   return payload.result;

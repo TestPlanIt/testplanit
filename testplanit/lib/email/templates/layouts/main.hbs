@@ -36,21 +36,11 @@
         text-align: center;
         border-bottom: 3px solid #8559e9;
       }
-      .email-header .logo-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
-      }
       .email-header img {
+        display: inline-block;
         height: 40px;
         width: auto;
-      }
-      .email-header h1 {
-        margin: 0;
-        font-size: 28px;
-        font-weight: 600;
-        color: #8559e9;
+        border: 0;
       }
       .email-body {
         padding: 40px;
@@ -235,10 +225,12 @@
   <body>
     <div class="email-wrapper">
       <div class="email-header">
-        <div class="logo-container">
-          <img src="{{appUrl}}/tpi_logo_square.png" alt="TestPlanIt Logo" />
-          <h1>TestPlanIt</h1>
-        </div>
+        <img
+          src="{{appUrl}}/tpi_logo_email.png"
+          width="232"
+          height="40"
+          alt="TestPlanIt"
+        />
       </div>
 
       <div class="email-body">

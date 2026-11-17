@@ -226,9 +226,9 @@ export default class TestPlanItReporter extends WDIOReporter {
 
   /**
    * Decide whether to write a Cucumber scenario's captured steps to its case,
-   * and write them via the shared mapper. No-op for non-Cucumber frameworks
-   * (D-09). Writes on fresh create when captureSteps is on (D-04), or replaces
-   * existing steps when overwriteSteps is on (D-05).
+   * and write them via the shared mapper. No-op for non-Cucumber frameworks.
+   * Writes on fresh create when captureSteps is on, or replaces
+   * existing steps when overwriteSteps is on.
    */
   private async writeScenarioSteps(
     testCaseId: number,
@@ -309,8 +309,8 @@ export default class TestPlanItReporter extends WDIOReporter {
    * Write derived case Steps for a case (ported from the Playwright reporter).
    * Dedups in-flight writes per case id; when `replace` is set, soft-deletes
    * existing steps first and SKIPS the create if the delete fails (never-clobber
-   * guard, CORE-01). Passes `CaseStepRow[]` directly to `createSteps` so the
-   * mapper's `expectedResult` is preserved (D-06).
+   * guard). Passes `CaseStepRow[]` directly to `createSteps` so the
+   * mapper's `expectedResult` is preserved.
    */
   private writeCaseSteps(
     testCaseId: number,
@@ -992,7 +992,7 @@ export default class TestPlanItReporter extends WDIOReporter {
 
     // Step capture only applies to @wdio/cucumber-framework. Emit a one-time
     // notice if captureSteps is on but the detected framework can't provide
-    // steps (Mocha/Jasmine have no native step structure — D-10).
+    // steps (Mocha/Jasmine have no native step structure).
     if (
       this.detectedFramework &&
       this.detectedFramework !== 'cucumber' &&
@@ -1016,7 +1016,7 @@ export default class TestPlanItReporter extends WDIOReporter {
     }
 
     // Cucumber: a scenario is a suite with type 'scenario'. Begin accumulating
-    // its steps; the case + its Steps are emitted once at onSuiteEnd (D-01/D-12).
+    // its steps; the case + its Steps are emitted once at onSuiteEnd.
     if ((suite as unknown as { type?: string }).type === 'scenario' && this.detectedFramework === 'cucumber') {
       this.currentScenarioUid = suite.uid;
       this.pendingScenarioSteps.set(suite.uid, []);
@@ -1036,7 +1036,7 @@ export default class TestPlanItReporter extends WDIOReporter {
 
   onSuiteEnd(suite: SuiteStats): void {
     // Cucumber: close the scenario — emit ONE reportResult for the whole
-    // scenario carrying the accumulated step titles (D-01/D-12).
+    // scenario carrying the accumulated step titles.
     if (
       (suite as unknown as { type?: string }).type === 'scenario' &&
       this.detectedFramework === 'cucumber' &&
@@ -1227,7 +1227,7 @@ export default class TestPlanItReporter extends WDIOReporter {
   private handleTestEnd(test: TestStats, status: 'passed' | 'failed' | 'skipped'): void {
     // Cucumber: each Gherkin step fires as a test. Accumulate the step title
     // under the open scenario and SUPPRESS per-step reporting — the scenario's
-    // single case + Steps are emitted at onSuiteEnd (D-01/D-12).
+    // single case + Steps are emitted at onSuiteEnd.
     if (this.detectedFramework === 'cucumber' && this.currentScenarioUid !== null) {
       this.pendingScenarioSteps.get(this.currentScenarioUid)?.push(test.title);
       if (this.currentScenarioPlan) {
@@ -1370,7 +1370,7 @@ export default class TestPlanItReporter extends WDIOReporter {
         // never throws).
         await this.ensureLinkedCaseAutomated(repositoryCaseId);
         // Explicitly-linked Cucumber case ([123]): the case pre-exists, so only
-        // overwriteSteps replaces its steps (never on a plain re-run — D-05).
+        // overwriteSteps replaces its steps (never on a plain re-run).
         if (this.reporterOptions.overwriteSteps) {
           await this.writeScenarioSteps(caseIds[0], 'found', result);
         }
@@ -1391,7 +1391,7 @@ export default class TestPlanItReporter extends WDIOReporter {
           this.state.stats.testCasesFound++;
           this.log('DEBUG: Attaching to case matched by custom field:', repositoryCaseId);
           // The matched case pre-exists, so only overwriteSteps replaces its
-          // steps (mirrors the explicit case-ID 'found' path — D-05).
+          // steps (mirrors the explicit case-ID 'found' path).
           if (this.reporterOptions.overwriteSteps) {
             await this.writeScenarioSteps(matchedId, 'found', result);
           }
@@ -1481,7 +1481,7 @@ export default class TestPlanItReporter extends WDIOReporter {
           this.log(`${action === 'found' ? 'Found' : action === 'created' ? 'Created' : 'Moved'} test case:`, testCase.id, testCase.name, 'in folder:', folderId);
 
           // Cucumber: write the scenario's Given/When/Then as case Steps
-          // (D-04 on create / D-05 overwrite). No-op for non-Cucumber (D-09).
+          // (on create, or with overwriteSteps). No-op for non-Cucumber.
           await this.writeScenarioSteps(testCase.id, action, result);
           // Non-Cucumber: collect for opt-in LLM derivation (self-gated).
           this.collectForLlmDerivation(testCase.id, action, result);

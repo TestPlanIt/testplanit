@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, Eye, EyeOff, Loader2, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { apiFetch } from "~/lib/basePath";
 
 interface PasswordDialogProps {
   shareKey: string;
@@ -50,11 +51,14 @@ export function PasswordDialog({
     setError(null);
 
     try {
-      const response = await fetch(`/api/share/${shareKey}/password-verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
+      const response = await apiFetch(
+        `/api/share/${shareKey}/password-verify`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password }),
+        }
+      );
 
       const data = await response.json();
 

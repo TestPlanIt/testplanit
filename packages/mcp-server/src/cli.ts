@@ -42,7 +42,7 @@ export const defaultRunDeps: RunDeps = {
  * Bad env or bad token exits with code 1 BEFORE any transport connect.
  * All diagnostics go through `errLog` (defaults to `console.error`); raw
  * token values are NEVER logged — only the redacted `tpi_xxxx` prefix
- * appears in error messages (T-05-06).
+ * appears in error messages.
  */
 export async function runServer(deps: RunDeps = defaultRunDeps): Promise<void> {
   let env: EnvConfig;

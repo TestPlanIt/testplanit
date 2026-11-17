@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 const MIGRATION_SQL_PATH = join(
   process.cwd(),
-  "migrations/20260821180000_add_effective_case_status_view/migration.sql"
+  "migrations/20261019194100_effective_case_status_quarantine/migration.sql"
 );
 
 /**

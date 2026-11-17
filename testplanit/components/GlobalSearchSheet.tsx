@@ -17,6 +17,7 @@ import { UnifiedSearch } from "@/components/UnifiedSearch";
 import { HelpCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { searchHitProjectId } from "~/lib/searchHitProject";
 import { SearchableEntityType, SearchHit } from "~/types/search";
 import { isAdmin } from "~/utils/permissions";
 
@@ -51,7 +52,7 @@ export function GlobalSearchSheet({ isOpen, onClose }: GlobalSearchSheetProps) {
         return `/projects/overview/${hit.id}`;
       case SearchableEntityType.ISSUE:
         // For issues, we'll navigate without the issueId parameter and handle it differently
-        return `/projects/issues/${hit.source.projectId}?issueId=${hit.id}`;
+        return `/projects/issues/${searchHitProjectId(hit.source)}?issueId=${hit.id}`;
       case SearchableEntityType.MILESTONE:
         return `/projects/milestones/${hit.source.projectId}/${hit.id}`;
       default:

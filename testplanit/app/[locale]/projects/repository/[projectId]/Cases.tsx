@@ -1,5 +1,6 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { useRunDependencyState } from "~/hooks/useRunDependencyState";
 import AddTestRunModal from "@/[locale]/projects/runs/[projectId]/AddTestRunModal";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { Button } from "@/components/ui/button";
@@ -90,6 +91,8 @@ import { toast } from "sonner";
 import { fetchAllCasesForExport as fetchAllCasesAction } from "~/app/actions/exportActions";
 import { TFunction, useExportData } from "~/hooks/useExportData";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useDragTargetKind } from "~/hooks/useDragTargetKind";
+import { useDragModifier } from "~/hooks/useDragModifier";
 import {
   useRepositoryCasesInvalidation,
   useRepositoryCasesQuery,
@@ -97,7 +100,8 @@ import {
 import type { PostFetchFilter } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { usePagination } from "~/lib/contexts/PaginationContext";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import { usePathname, useRouter } from "~/lib/navigation";
+import { useRouter } from "~/lib/navigation";
+import { useUrlParamWriter } from "~/hooks/useUrlParamWriter";
 import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
 import { useLatestTestResults } from "~/hooks/useLatestTestResults";
 import { useCaseIdsByLatestStatus } from "~/hooks/useCaseIdsByLatestStatus";
@@ -112,12 +116,13 @@ import {
 } from "~/lib/execution/selection";
 import { BulkEditModal } from "./BulkEditModal";
 import { CopyMoveDialog } from "@/components/copy-move/CopyMoveDialog";
-import { ExtendedCases, getColumns } from "./columns";
+import { ExtendedCases, getColumns, SelectedCaseCountContext } from "./columns";
 import { DeleteCaseModal } from "./DeleteCase";
 import { ExportModal, ExportOptions } from "./ExportModal";
 import { QuickScriptModal } from "./QuickScriptModal";
 import { RunAutomatedCaseDialog } from "@/components/cases/RunAutomatedCaseButton";
 import { useExecutionTargetChoices } from "@/components/runs/ExecuteAutomationButton";
+import { apiFetch } from "~/lib/basePath";
 
 type PageSizeOption = number | "All";
 
@@ -288,6 +293,8 @@ const REPOSITORY_CASE_LIST_SELECT = {
   estimate: true,
   forecastManual: true,
   forecastAutomated: true,
+  riskScore: true,
+  riskReasons: true,
   order: true,
   createdAt: true,
   creatorId: true,
@@ -304,7 +311,7 @@ const REPOSITORY_CASE_LIST_SELECT = {
   steps: CASE_STEPS_SELECT,
   caseTags: CASE_TAGS_SELECT,
   caseIssues: CASE_ISSUES_SELECT,
-  testRuns: {
+  testRunCases: {
     select: {
       id: true,
       testRun: {
@@ -408,6 +415,8 @@ const TEST_RUN_CASE_LIST_SELECT = {
       estimate: true,
       forecastManual: true,
       forecastAutomated: true,
+      riskScore: true,
+      riskReasons: true,
       order: true,
       createdAt: true,
       creatorId: true,
@@ -424,7 +433,7 @@ const TEST_RUN_CASE_LIST_SELECT = {
       steps: CASE_STEPS_SELECT,
       caseTags: CASE_TAGS_SELECT,
       caseIssues: CASE_ISSUES_SELECT,
-      testRuns: {
+      testRunCases: {
         select: {
           id: true,
           testRun: {
@@ -623,7 +632,7 @@ export default function Cases({
 
   const { data: session, status } = useSession();
   const router = useRouter();
-  const pathname = usePathname();
+  const replaceUrlParams = useUrlParamWriter();
   const searchParams = useSearchParams();
   const params = useParams();
   const projectIdParam = params.projectId;
@@ -830,6 +839,7 @@ export default function Cases({
       select: {
         quickScriptEnabled: true,
         excludeNotStartedFromRuns: true,
+        enforceCaseDependencies: true,
       },
     },
     { enabled: isValidProjectId }
@@ -837,6 +847,15 @@ export default function Cases({
   const quickScriptEnabled = projectSettings?.quickScriptEnabled ?? false;
   const excludeNotStartedFromRuns =
     projectSettings?.excludeNotStartedFromRuns ?? false;
+
+  // Run mode: which cases are blocked by an unpassed dependency in this run.
+  // Fetched only when the project enforces dependencies; each row carries its
+  // own state so the status cell can badge it and refuse to open the result
+  // form (the server refuses the result anyway — this keeps the two agreeing).
+  const runDependencyState = useRunDependencyState(
+    isRunMode ? runId : null,
+    projectSettings?.enforceCaseDependencies === true
+  );
 
   // Check if project has an active LLM integration (for auto-tag)
   const { data: projectLlmIntegrations } = useClientQueries(
@@ -1002,13 +1021,14 @@ export default function Cases({
       hasAutoSelectedRef.current = true;
       const firstFolder = projectFolders[0];
 
-      // Navigate to the first folder by updating the URL
-      const currentSearchParams = new URLSearchParams(searchParams.toString());
-      currentSearchParams.set("node", firstFolder.id.toString());
-      currentSearchParams.set("view", "folders");
-
-      const newUrl = `${pathname}?${currentSearchParams.toString()}`;
-      router.replace(newUrl);
+      // Navigate to the first folder by updating the URL. Through the shared
+      // writer: this runs on landing, when the page's other writers are also
+      // in flight, and composing from this effect's `searchParams` snapshot
+      // would drop whichever of them has not committed yet.
+      replaceUrlParams((query) => {
+        query.set("node", firstFolder.id.toString());
+        query.set("view", "folders");
+      });
 
       // Dispatch a custom event to notify the tree component
       // Use a small timeout to ensure the URL change propagates
@@ -1029,15 +1049,7 @@ export default function Cases({
         }
       }, 100);
     }
-  }, [
-    viewType,
-    folderId,
-    projectFolders,
-    isFoldersLoading,
-    router,
-    pathname,
-    searchParams,
-  ]);
+  }, [viewType, folderId, projectFolders, isFoldersLoading, replaceUrlParams]);
 
   // Add effect to listen for modal state changes
   useEffect(() => {
@@ -1301,7 +1313,7 @@ export default function Cases({
       } else if (column === "linkedCases") {
         return { repositoryCase: { linksFrom: { _count: direction } } };
       } else if (column === "testRuns") {
-        return { repositoryCase: { testRuns: { _count: direction } } };
+        return { repositoryCase: { testRunCases: { _count: direction } } };
       } else if (column === "comments") {
         return { repositoryCase: { comments: { _count: direction } } };
       } else if (column === "attachments") {
@@ -1319,6 +1331,17 @@ export default function Cases({
         return { repositoryCase: { caseIssues: { _count: direction } } };
       } else if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
         return { repositoryCase: { [column]: direction } };
+      }
+      // Risk score: sparse until the first recompute; blanks pinned last.
+      if (column === "riskScore") {
+        return [
+          {
+            repositoryCase: {
+              riskScore: { sort: direction, nulls: "last" as const },
+            },
+          },
+          { order: "asc" as const },
+        ];
       }
       // Estimate/Forecast: sparse columns, blanks pinned last in both
       // directions; the run order breaks ties so pages stay stable.
@@ -1371,7 +1394,7 @@ export default function Cases({
         return { linksFrom: { _count: direction } };
       }
       if (column === "testRuns") {
-        return { testRuns: { _count: direction } };
+        return { testRunCases: { _count: direction } };
       }
       if (column === "comments") {
         return { comments: { _count: direction } };
@@ -1411,6 +1434,14 @@ export default function Cases({
 
       if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
         return { [column]: direction };
+      }
+      // Risk score: sparse until the first recompute; blanks pinned last in
+      // both directions, repository order breaks ties.
+      if (column === "riskScore") {
+        return [
+          { riskScore: { sort: direction, nulls: "last" as const } },
+          { order: "asc" as const },
+        ];
       }
       // Estimate/Forecast: sparse columns, blanks pinned last in both
       // directions; the repository order breaks ties so pages stay stable.
@@ -1857,6 +1888,7 @@ export default function Cases({
         // Phase 3 — surface the iteration count so the status cell can
         // detect parameterized cases and render read-only.
         totalIterations: (trc as { totalIterations?: number }).totalIterations,
+        dependencyState: runDependencyState.get(trc.repositoryCaseId),
       }));
     }
     // Not in isRunMode. Use 'data' directly (already server-side paginated and filtered).
@@ -1881,7 +1913,14 @@ export default function Cases({
       return mapped;
     }
     return [];
-  }, [isRunMode, testRunCasesData, data, optimisticReorder, sortedPageIds]);
+  }, [
+    isRunMode,
+    testRunCasesData,
+    data,
+    optimisticReorder,
+    sortedPageIds,
+    runDependencyState,
+  ]);
 
   // Bulk-fetch PENDING ReviewRequests for the visible page (D-06; one round
   // trip per page render — never per-row, per RESEARCH §"Pitfall 6").
@@ -2104,6 +2143,60 @@ export default function Cases({
   const isMultiConfigMode =
     isRunMode && selectedRunIds && selectedRunIds.length > 1;
 
+  // Dragging a case has two destinations, gated separately so a sort does not
+  // hide the whole feature:
+  //  - back into the list, to reorder — only in the default `order` sort and
+  //    outside a search, because rows in any other order would compute `order`
+  //    values from the wrong neighbours and corrupt the persisted order.
+  //    Filter chips narrow the set without changing its order, so they do not
+  //    block it. Disabled in multi-config mode (ordering a merged view of
+  //    multiple runs is undefined) and when the run's composition is locked.
+  //  - onto a folder in the tree, to copy or move — any sort or search, but
+  //    only in the folder view (the tree is the drop target) and outside runs
+  //    (the run tree refuses case drops).
+  const canDragCases =
+    !isSelectionMode &&
+    !isCompleted &&
+    !compositionLocked &&
+    !isMultiConfigMode &&
+    ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit));
+  const canReorderCases = canDragCases && isDefaultSort && !searchActive;
+  const canDragCasesToFolders =
+    canDragCases && !isRunMode && viewType === "folders";
+  const showDragHandles = canReorderCases || canDragCasesToFolders;
+
+  // Tell the list drop zone why it refuses drops while rows are still
+  // draggable, so it can say what to undo. A search wins over a sort: clearing
+  // the sort alone would leave the list in relevance order.
+  const reorderBlockedReason =
+    showDragHandles && !canReorderCases
+      ? searchActive
+        ? "search"
+        : "sort"
+      : null;
+  const {
+    isDraggingCase,
+    setReorderBlockedReason,
+    setCanCopyIntoCurrentFolder,
+  } = useDragTargetKind();
+  useEffect(() => {
+    setReorderBlockedReason(reorderBlockedReason);
+    return () => setReorderBlockedReason(null);
+  }, [reorderBlockedReason, setReorderBlockedReason]);
+
+  // With the copy modifier held, a drop on the list copies the dragged cases
+  // into the folder it shows — under any sort, since a copy lands at the end
+  // and never touches `order`. Rows refuse drops meanwhile so the outer copy
+  // target (ProjectRepository) is the one that fires.
+  const canCopyIntoCurrentFolder =
+    canDragCasesToFolders && folderId != null && folderId > 0;
+  useEffect(() => {
+    setCanCopyIntoCurrentFolder(canCopyIntoCurrentFolder);
+    return () => setCanCopyIntoCurrentFolder(false);
+  }, [canCopyIntoCurrentFolder, setCanCopyIntoCurrentFolder]);
+  const { copyHeld } = useDragModifier(isDraggingCase);
+  const copyIntoFolderActive = copyHeld && canCopyIntoCurrentFolder;
+
   // Handle selection changes
   const _handleSelectAll = useCallback(() => {
     if (!isSelectionMode || !onSelectionChange || !cases) return;
@@ -2293,7 +2386,7 @@ export default function Cases({
   );
 
   // Handle checkbox click with shift-click support
-  const handleCheckboxClick = useCallback(
+  const handleCheckboxClickImpl = useCallback(
     (rowIndex: number, event: React.MouseEvent) => {
       const MappedCases = cases ?? [];
 
@@ -2375,7 +2468,7 @@ export default function Cases({
   );
 
   // Handle select all checkbox click with shift support
-  const handleSelectAllClick = useCallback(
+  const handleSelectAllClickImpl = useCallback(
     (event: React.MouseEvent) => {
       const MappedCases = cases ?? [];
 
@@ -2486,6 +2579,36 @@ export default function Cases({
     ]
   );
 
+  // The columns get the selection handlers through a ref (and the selected
+  // count through SelectedCaseCountContext). Both change on every click, and a
+  // rebuilt `columns` remounts every cell of every row (TanStack renders
+  // `columnDef.cell` as the component type) — on a large run that is seconds of
+  // main-thread work per click, and it closes any status dropdown or row menu
+  // open at the time.
+  const checkboxHandlersRef = useRef({
+    handleCheckboxClickImpl,
+    handleSelectAllClickImpl,
+  });
+  useEffect(() => {
+    checkboxHandlersRef.current = {
+      handleCheckboxClickImpl,
+      handleSelectAllClickImpl,
+    };
+  }, [handleCheckboxClickImpl, handleSelectAllClickImpl]);
+  const handleCheckboxClick = useCallback(
+    (rowIndex: number, event: React.MouseEvent) =>
+      checkboxHandlersRef.current.handleCheckboxClickImpl(rowIndex, event),
+    []
+  );
+  const handleSelectAllClick = useCallback(
+    (event: React.MouseEvent) =>
+      checkboxHandlersRef.current.handleSelectAllClickImpl(event),
+    []
+  );
+  const selectedCaseCount = isSelectionMode
+    ? selectedTestCases.length
+    : selectedCaseIdsForBulkEdit.length;
+
   // Extract stable primitives from session to avoid column remounts when session object changes
   const dateFormat = session?.user?.preferences?.dateFormat;
   const timezone = session?.user?.preferences?.timezone;
@@ -2519,6 +2642,9 @@ export default function Cases({
     }
   }, [copyMoveFolderId, copyMoveFolderName]);
 
+  // The checkbox handlers read a ref, but only when a checkbox is clicked —
+  // never while rendering.
+  // eslint-disable-next-line react-hooks/refs
   const columns: CustomColumnDef<ExtendedCases>[] = useMemo(() => {
     const built = getColumns(
       userPreferencesForColumns,
@@ -2544,6 +2670,7 @@ export default function Cases({
         runOrder: t("repository.columns.runOrder"),
         issues: t("common.fields.issues"),
         forecast: t("common.fields.forecast"),
+        riskScore: t("risk.score"),
         id: t("common.fields.id"),
         linkedCases: t("repository.fields.linkedCases"),
         versions: t("common.fields.version"),
@@ -2580,19 +2707,8 @@ export default function Cases({
       selectedRunIds && selectedRunIds.length > 1,
       // Pass totalItems for shift+click tooltip
       totalItems,
-      // Pass selectedCount for determining if all are selected
-      isSelectionMode
-        ? selectedTestCases.length
-        : selectedCaseIdsForBulkEdit.length,
-      // Pass enableReorder to show/hide grip handle
-      // Disabled in multi-config mode: ordering a merged view of multiple runs is undefined.
-      // Disabled when the run's composition is locked: reordering is frozen.
-      isDefaultSort &&
-        !isSelectionMode &&
-        !isCompleted &&
-        !compositionLocked &&
-        !isMultiConfigMode &&
-        ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit)),
+      // Grip handle: shown whenever rows can be dragged, to reorder or to a folder
+      showDragHandles,
       // QuickScript per-row action
       quickScriptEnabled,
       canAddEdit,
@@ -2685,15 +2801,13 @@ export default function Cases({
     canDelete,
     canAddEditRun,
     canAddEdit,
-    isDefaultSort,
+    showDragHandles,
     sortConfig,
     handleCheckboxClick,
     handleSelectAllClick,
     testRunData?.configuration,
     selectedRunIds,
     totalItems,
-    selectedTestCases.length,
-    selectedCaseIdsForBulkEdit.length,
     quickScriptEnabled,
     handleCopyMove,
     showCopyMove,
@@ -2703,8 +2817,6 @@ export default function Cases({
     renderLatestResults,
     excludeNotStartedFromRuns,
     handleDeleteCase,
-    compositionLocked,
-    isMultiConfigMode,
   ]);
 
   // Create lightweight column metadata for ColumnSelection component
@@ -3011,7 +3123,7 @@ export default function Cases({
             select: { id: true },
           }),
         });
-        const resp = await fetch(
+        const resp = await apiFetch(
           `/api/model/repositoryCases/findMany?${params.toString()}`,
           { credentials: "include" }
         );
@@ -3408,7 +3520,7 @@ export default function Cases({
 
           // Default content: DataTable with data
           return (
-            <>
+            <SelectedCaseCountContext.Provider value={selectedCaseCount}>
               <DataTable
                 key={`${folderId}-${viewType}-${predicatesKey}-datatable`}
                 columns={columns}
@@ -3422,21 +3534,8 @@ export default function Cases({
                 onSortColumn={isCompleted ? undefined : handleSortColumn}
                 onHideColumn={(columnId) => columnHideRef.current?.(columnId)}
                 sortConfig={isCompleted ? undefined : sortConfig}
-                enableReorder={
-                  isDefaultSort &&
-                  // Rows sit in relevance order during a search, so a drag
-                  // would compute `order` values from relevance-ordered
-                  // neighbours and corrupt the persisted case order. Filter
-                  // chips do NOT disable reordering (parity with the pre-chip
-                  // ViewSelector filters) — they narrow the set without
-                  // changing its order.
-                  !searchActive &&
-                  !isSelectionMode &&
-                  !isCompleted &&
-                  !compositionLocked &&
-                  !isMultiConfigMode &&
-                  ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit))
-                }
+                enableReorder={canReorderCases && !copyIntoFolderActive}
+                enableDrag={showDragHandles}
                 onReorder={handleReorder}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={handleColumnVisibilityChange}
@@ -3446,7 +3545,7 @@ export default function Cases({
                 onRowSelectionChange={handleTableRowSelectionChange}
                 selectedItemsForDrag={selectedItemsForDrag}
               />
-            </>
+            </SelectedCaseCountContext.Provider>
           );
         })()}
         {/* Render the inline add-case row once, outside the loading/empty/

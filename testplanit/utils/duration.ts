@@ -49,6 +49,26 @@ export function toHumanReadable(
 }
 
 /**
+ * Format a duration given in whole hours as its single largest unit, rounded
+ * down ("145 days", "14 hours"). Weeks and months are skipped so a reader can
+ * still relate the figure to the threshold it was measured against in hours.
+ * @param hours - The number of hours.
+ * @param locale - The locale to use for formatting (e.g., "en", "es").
+ */
+export function formatHoursAsRelativeDuration(
+  hours: number,
+  locale = "en"
+): string {
+  return toHumanReadable(Math.max(0, hours) * 3_600_000, {
+    locale,
+    largest: 1,
+    round: false,
+    maxDecimalPoints: 0,
+    units: ["d", "h"],
+  });
+}
+
+/**
  * Calculate the number of business hours between two dates, considering:
  * - 8-hour workday (9 AM to 5 PM)
  * - Weekdays only (Monday to Friday)

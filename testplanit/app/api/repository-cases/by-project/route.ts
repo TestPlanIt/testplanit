@@ -222,7 +222,7 @@ export async function POST(request: Request) {
             },
           },
         },
-        testRuns: {
+        testRunCases: {
           select: {
             testRun: {
               select: {
@@ -248,12 +248,14 @@ export async function POST(request: Request) {
         templateFieldIds.has(cfv.fieldId)
       );
 
-      const { caseTags, ...rest } = testCase;
+      const { caseTags, testRunCases, ...rest } = testCase;
 
       return {
         ...rest,
         caseFieldValues: filteredFieldValues,
         tags: caseTags.map((ct) => ct.tag),
+        // Response keeps its pre-rename key; the relation is now testRunCases.
+        testRuns: testRunCases,
       };
     });
 

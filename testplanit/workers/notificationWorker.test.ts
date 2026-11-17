@@ -96,7 +96,6 @@ describe("NotificationWorker", () => {
 
       mockDb.userPreferences.findUnique.mockResolvedValue({
         notificationMode: "IN_APP_EMAIL_IMMEDIATE",
-        emailNotifications: true,
       });
       mockDb.appConfig.findUnique.mockResolvedValue({
         value: { defaultMode: "IN_APP" },
@@ -205,6 +204,95 @@ describe("NotificationWorker", () => {
       );
 
       consoleLogSpy.mockRestore();
+    });
+
+    it("skips a type the user has muted and queues no email", async () => {
+      const jobData = {
+        userId: "user-123",
+        type: "MILESTONE_DUE_REMINDER",
+        title: "Milestone due",
+        message: "Due tomorrow",
+      };
+
+      mockDb.userPreferences.findUnique.mockResolvedValue({
+        notificationMode: "IN_APP_EMAIL_IMMEDIATE",
+        mutedNotificationTypes: ["MILESTONE_DUE_REMINDER"],
+      });
+      mockDb.appConfig.findUnique.mockResolvedValue({
+        value: { defaultMode: "IN_APP" },
+      });
+
+      const consoleLogSpy = vi
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+
+      const { processor } = await import("./notificationWorker");
+
+      await processor({
+        id: "job-123",
+        name: "create-notification",
+        data: jobData,
+      } as Job);
+
+      expect(mockDb.notification.create).not.toHaveBeenCalled();
+      expect(mockEmailQueue.add).not.toHaveBeenCalled();
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        "Skipping notification for user user-123 - MILESTONE_DUE_REMINDER muted in preferences"
+      );
+
+      consoleLogSpy.mockRestore();
+    });
+
+    it("still delivers the types outside the muted set", async () => {
+      const jobData = {
+        userId: "user-123",
+        type: "REVIEW_REQUESTED",
+        title: "Review requested",
+        message: "Please review",
+      };
+
+      mockDb.userPreferences.findUnique.mockResolvedValue({
+        notificationMode: "IN_APP",
+        mutedNotificationTypes: ["MILESTONE_DUE_REMINDER"],
+      });
+      mockDb.appConfig.findUnique.mockResolvedValue(null);
+      mockDb.notification.create.mockResolvedValue({ id: "notif-1" });
+
+      const { processor } = await import("./notificationWorker");
+
+      await processor({
+        id: "job-123",
+        name: "create-notification",
+        data: jobData,
+      } as Job);
+
+      expect(mockDb.notification.create).toHaveBeenCalledTimes(1);
+    });
+
+    it("delivers a locked type even when a stale value sits in the muted set", async () => {
+      const jobData = {
+        userId: "user-123",
+        type: "INTEGRATION_AUTH_EXPIRED",
+        title: "Reconnect",
+        message: "Token expired",
+      };
+
+      mockDb.userPreferences.findUnique.mockResolvedValue({
+        notificationMode: "IN_APP",
+        mutedNotificationTypes: ["INTEGRATION_AUTH_EXPIRED"],
+      });
+      mockDb.appConfig.findUnique.mockResolvedValue(null);
+      mockDb.notification.create.mockResolvedValue({ id: "notif-1" });
+
+      const { processor } = await import("./notificationWorker");
+
+      await processor({
+        id: "job-123",
+        name: "create-notification",
+        data: jobData,
+      } as Job);
+
+      expect(mockDb.notification.create).toHaveBeenCalledTimes(1);
     });
 
     it("should handle notification creation errors", async () => {

@@ -283,6 +283,62 @@ describe("session callback - placement invariants", () => {
     });
   });
 
+  it("C3: a token with NO passwordChangedAt is signed out once the DB has one (first-ever change)", async () => {
+    // Nothing stamps passwordChangedAt at account creation, so every session
+    // opened before a user's first password change carries null. That null
+    // must count as "older than the change", or those sessions survive it.
+    const result = await invoke({
+      cachedUser: {
+        name: "U",
+        access: "USER",
+        image: null,
+        emailVerified: null,
+        authMethod: "INTERNAL",
+        preferences: null,
+      },
+      freshUserPasswordChangedAt: new Date("2026-06-01T00:00:00Z"),
+      tokenPasswordChangedAt: null,
+    });
+
+    expect(result).toEqual({});
+    expect(updateAuditContextMock).not.toHaveBeenCalled();
+  });
+
+  it("C4: null on both sides (never changed) does NOT sign out", async () => {
+    const result = await invoke({
+      cachedUser: {
+        name: "U",
+        access: "USER",
+        image: null,
+        emailVerified: null,
+        authMethod: "INTERNAL",
+        preferences: null,
+      },
+      freshUserPasswordChangedAt: null,
+      tokenPasswordChangedAt: null,
+    });
+
+    expect(result).not.toEqual({});
+    expect(updateAuditContextMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("C5: a token stamped at or after the DB value stays signed in", async () => {
+    const result = await invoke({
+      cachedUser: {
+        name: "U",
+        access: "USER",
+        image: null,
+        emailVerified: null,
+        authMethod: "INTERNAL",
+        preferences: null,
+      },
+      freshUserPasswordChangedAt: new Date("2026-06-01T00:00:00Z"),
+      tokenPasswordChangedAt: "2026-06-01T00:00:00.000Z",
+    });
+
+    expect(result).not.toEqual({});
+  });
+
   it("C2: both mid-session guards cost exactly one query, not two", async () => {
     // The regression this locks down: 14.0M calls apiece at 8/s, together 16% of
     // all database queries on the instance, because these were two findUnique

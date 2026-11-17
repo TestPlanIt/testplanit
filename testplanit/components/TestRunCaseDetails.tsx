@@ -1,5 +1,10 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import {
+  StepLayoutToggle,
+  stepLayoutClasses,
+} from "@/components/steps/StepLayoutToggle";
+import { cn } from "~/utils";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DurationDisplay } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
@@ -40,26 +45,33 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  CloudSunRain,
   Bot,
   Combine,
+  ExternalLink,
   LayoutTemplate,
+  Loader2,
+  Lock,
   Plus,
   SquarePen,
   SquareStack,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
-import React, { useCallback, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { toHumanReadable } from "~/utils/duration";
+import React, { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
-import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useTestRunCaseDetail } from "~/hooks/useTestRunCaseDetail";
 import {
+  isBlockedByDependencies,
+  type CaseDependencyState,
+} from "~/utils/caseDependencies";
+import {
   isIssueRequiredOnFailureSubmitResultError,
+  isDependenciesNotPassedSubmitResultError,
   isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
@@ -67,7 +79,9 @@ import {
 import { IconName } from "~/types/globals";
 import { ForecastDisplay } from "./ForecastDisplay";
 import LinkedCasesPanel from "./LinkedCasesPanel";
+import { Link } from "~/lib/navigation";
 import { Badge } from "./ui/badge";
+import { invalidateAfterResultSubmit } from "~/lib/test-run-result-invalidation";
 
 interface TestRunCaseDetailsProps {
   caseId: number;
@@ -90,6 +104,11 @@ interface TestRunCaseDetailsProps {
   }>;
   isTransitioning?: boolean;
   isCompleted?: boolean;
+  /**
+   * Dependency gate state for this run case (only when the project enforces
+   * dependencies). A blocked case shows why and takes no result.
+   */
+  dependencyState?: CaseDependencyState;
   /**
    * Phase 3 — iteration-aware step text substitution. When set, the inner
    * step renderer receives the iteration's effective parameter values so
@@ -129,6 +148,7 @@ export function TestRunCaseDetails({
   testRunCasesData,
   isTransitioning = false,
   isCompleted = false,
+  dependencyState,
   stepParameters,
   activeIterationId,
   activeIterationLabel,
@@ -136,6 +156,7 @@ export function TestRunCaseDetails({
 }: TestRunCaseDetailsProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
@@ -165,12 +186,15 @@ export function TestRunCaseDetails({
   // missing linked issue, so it shows the issue-required error on open.
   const [issueErrorOnOpen, setIssueErrorOnOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Switching the sheet to the editor renders every field editor of the case
+  // at once, which blocks the main thread for seconds on a long case. As a
+  // transition that render happens in the background while this sheet stays
+  // painted, and the button shows it is pending.
+  const [isOpeningEditor, startOpeningEditor] = useTransition();
   const [_showAssignModal, _setShowAssignModal] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
-  const invalidateAfterSubmit = async () => {
-    // submitTestRunResult uses a raw fetch call, so we manually invalidate caches.
-    await queryClient.invalidateQueries();
-  };
+  // submitTestRunResult uses a raw fetch call, so nothing invalidates for it.
+  const invalidateAfterSubmit = () => invalidateAfterResultSubmit(queryClient);
 
   // Fetch permissions
   const {
@@ -456,9 +480,6 @@ export function TestRunCaseDetails({
       });
       await invalidateAfterSubmit();
 
-      // --- Trigger forecast update for this case ---
-      void fetch(`/api/forecast/update?caseId=${caseId}`);
-
       toast.success(tCommon("actions.resultAdded"), {
         description: tCommon("actions.resultAddedDescription"),
       });
@@ -493,6 +514,12 @@ export function TestRunCaseDetails({
         setSelectedStatusId(successStatus.id.toString());
         setFlipErrorOnOpen(true);
         setShowAddResultModal(true);
+      } else if (isDependenciesNotPassedSubmitResultError(error)) {
+        toast.error(tCommon("errors.dependenciesNotPassed"), {
+          description: tCommon("errors.dependenciesNotPassedDescription", {
+            count: error.blockedBy?.length ?? 0,
+          }),
+        });
       } else {
         toast.error(tCommon("errors.error"), {
           description: tCommon("errors.somethingWentWrong"),
@@ -503,12 +530,14 @@ export function TestRunCaseDetails({
     }
   };
 
+  const isBlockedByDependency = isBlockedByDependencies(dependencyState);
   const isDisabled =
     isSubmitting ||
     isLoading ||
     isLoadingPermissions ||
     isTransitioning ||
     isCompleted ||
+    isBlockedByDependency ||
     !canAddEditResults;
   const isNavigationDisabled =
     isSubmitting || isLoading || isLoadingPermissions || isTransitioning;
@@ -545,10 +574,9 @@ export function TestRunCaseDetails({
     setIsAssigning(true);
 
     try {
-      const previousAssigneeId =
-        testcase?.testRuns?.[0]?.assignedTo?.id || null;
       const userId = user?.id || null;
 
+      // The server notifies the new assignee.
       await updateTestRunCase({
         where: {
           id: testRunCaseId,
@@ -557,15 +585,6 @@ export function TestRunCaseDetails({
           assignedToId: userId,
         },
       });
-
-      // Send notification for the assignment
-      if (userId && userId !== previousAssigneeId) {
-        await notifyTestCaseAssignment(
-          testRunCaseId,
-          userId,
-          previousAssigneeId
-        );
-      }
 
       toast.success(
         userId ? tCommon("success.assigned") : tCommon("success.unassigned")
@@ -590,6 +609,68 @@ export function TestRunCaseDetails({
           </div>
         </div>
       )}
+      {dependencyState &&
+        (isBlockedByDependency || dependencyState.notInRun.length > 0) && (
+          <div
+            className="mx-4 mt-2 rounded-md border px-3 py-2 text-sm space-y-2"
+            data-testid="run-case-dependency-notice"
+          >
+            {isBlockedByDependency && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 font-medium">
+                  <Lock className="h-4 w-4 shrink-0" />
+                  <span>
+                    {tGlobal("runs.dependencies.blockedNotice", {
+                      count: dependencyState.blockedBy.length,
+                    })}
+                  </span>
+                </div>
+                <p className="text-muted-foreground">
+                  {tGlobal("runs.dependencies.blockedBy", {
+                    count: dependencyState.blockedBy.length,
+                  })}
+                </p>
+                <ul className="list-disc ps-5">
+                  {dependencyState.blockedBy.map((prerequisite) => (
+                    <li key={prerequisite.testRunCaseId}>
+                      <CaseDisplay
+                        id={prerequisite.repositoryCaseId}
+                        name={
+                          prerequisite.name ??
+                          `#${prerequisite.repositoryCaseId}`
+                        }
+                        projectId={projectId}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {dependencyState.notInRun.length > 0 && (
+              <div className="space-y-1 text-muted-foreground">
+                <p>
+                  {tGlobal("runs.dependencies.notInRun", {
+                    count: dependencyState.notInRun.length,
+                  })}
+                </p>
+                <ul className="list-disc ps-5">
+                  {dependencyState.notInRun.map((prerequisite) => (
+                    <li key={prerequisite.repositoryCaseId}>
+                      <CaseDisplay
+                        id={prerequisite.repositoryCaseId}
+                        name={
+                          prerequisite.name ??
+                          `#${prerequisite.repositoryCaseId}`
+                        }
+                        projectId={projectId}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       <div className="sticky top-0 z-20 flex justify-between items-center gap-2 bg-primary p-4">
         <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
           {testRunId && canAddEditResults && (
@@ -737,6 +818,20 @@ export function TestRunCaseDetails({
                                   setSelectedStatusId(status.id.toString());
                                   setIssueErrorOnOpen(true);
                                   setShowAddResultModal(true);
+                                } else if (
+                                  isDependenciesNotPassedSubmitResultError(
+                                    error
+                                  )
+                                ) {
+                                  toast.error(
+                                    tCommon("errors.dependenciesNotPassed"),
+                                    {
+                                      description: tCommon(
+                                        "errors.dependenciesNotPassedDescription",
+                                        { count: error.blockedBy?.length ?? 0 }
+                                      ),
+                                    }
+                                  );
                                 } else {
                                   toast.error(tCommon("errors.error"), {
                                     description: tCommon(
@@ -771,10 +866,10 @@ export function TestRunCaseDetails({
               <div className="min-w-[200px] max-w-[300px]">
                 <AsyncCombobox
                   value={
-                    testcase?.testRuns?.[0]?.assignedTo
+                    testcase?.testRunCases?.[0]?.assignedTo
                       ? {
-                          id: testcase.testRuns[0].assignedTo.id,
-                          name: testcase.testRuns[0].assignedTo.name,
+                          id: testcase.testRunCases[0].assignedTo.id,
+                          name: testcase.testRunCases[0].assignedTo.name,
                           email: null,
                           image: null,
                         }
@@ -800,6 +895,29 @@ export function TestRunCaseDetails({
         {/* --- Previous/Next Buttons --- */}
         <TooltipProvider>
           <div className="flex items-center gap-2 shrink-0 me-8">
+            {/* The repository case in a new tab, so the run keeps its place. */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  data-testid="run-case-view-in-repository"
+                >
+                  <Link
+                    href={`/projects/repository/${projectId}/${testcase.id}`}
+                    target="_blank"
+                    aria-label={tCommon("actions.viewInRepository")}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {tCommon("actions.viewInRepository")}
+              </TooltipContent>
+            </Tooltip>
             {onEditCase && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -807,11 +925,17 @@ export function TestRunCaseDetails({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={onEditCase}
+                    onClick={() => startOpeningEditor(() => onEditCase())}
+                    disabled={isOpeningEditor}
+                    aria-busy={isOpeningEditor}
                     aria-label={tCommon("actions.editTestCase")}
                     data-testid="run-case-edit-case"
                   >
-                    <SquarePen className="h-4 w-4" />
+                    {isOpeningEditor ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <SquarePen className="h-4 w-4" />
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -875,15 +999,17 @@ export function TestRunCaseDetails({
           <CaseDisplay
             id={testcase.id}
             name={testcase.name}
+            projectId={projectId}
+            linkTarget="_blank"
             size="large"
             source={testcase.source}
             automated={testcase.automated}
             hasParameters={testcase.hasParameters}
           />
-          {testcase.testRuns?.[0]?.testRun?.configuration && (
+          {testcase.testRunCases?.[0]?.testRun?.configuration && (
             <Badge className="flex items-center gap-1 text-sm mt-1 w-fit">
               <Combine className="w-4 h-4 shrink-0" />
-              <span>{testcase.testRuns[0].testRun.configuration.name}</span>
+              <span>{testcase.testRunCases[0].testRun.configuration.name}</span>
             </Badge>
           )}
           {currentStatus && automatedStatus && (
@@ -1016,18 +1142,34 @@ export function TestRunCaseDetails({
                   <span className="font-semibold text-sm">
                     {tCommon("fields.estimate")}:
                   </span>
-                  <span className="text-muted-foreground text-sm flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    <DurationDisplay seconds={testcase.estimate} />
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-muted-foreground text-sm flex items-center gap-1 cursor-default">
+                        <Clock className="w-4 h-4" />
+                        <DurationDisplay seconds={testcase.estimate} />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {tCommon("labels.estimateEntered", {
+                        value: toHumanReadable(testcase.estimate, {
+                          isSeconds: true,
+                          locale,
+                        }),
+                      })}
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               )}
-              {testcase.forecastManual && (
+              {/* One Forecast line carrying whichever of the manual and
+                  automated figures exist; each display renders nothing for a
+                  missing value, and its tooltip names the source. */}
+              {((testcase.forecastManual ?? 0) > 0 ||
+                (testcase.forecastAutomated ?? 0) > 0) && (
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm">
                     {tCommon("fields.forecast")}:
                   </span>
-                  <span className="text-muted-foreground text-sm flex items-center gap-1  ">
+                  <span className="text-muted-foreground text-sm flex items-center gap-1">
                     <ForecastDisplay
                       seconds={testcase.forecastManual}
                       type="manual"
@@ -1035,19 +1177,6 @@ export function TestRunCaseDetails({
                     <ForecastDisplay
                       seconds={testcase.forecastAutomated}
                       type="automated"
-                    />
-                  </span>
-                </div>
-              )}
-              {testcase.forecastAutomated && (
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm">
-                    {tCommon("fields.forecast")}:
-                  </span>
-                  <span className="text-muted-foreground text-sm flex items-center gap-1  ">
-                    <CloudSunRain className="w-4 h-4" />
-                    <DurationDisplay
-                      seconds={testcase.forecastAutomated}
                       round={false}
                     />
                   </span>
@@ -1126,10 +1255,16 @@ export function TestRunCaseDetails({
                   return null;
                 }
 
+                const isStepsField = field.caseField.type.type === "Steps";
+
                 return (
-                  <div key={field.caseField.id} className="">
-                    <div className="font-medium text-sm text-primary border-b mb-1 border-muted-foreground/50">
+                  <div
+                    key={field.caseField.id}
+                    className={cn(isStepsField && stepLayoutClasses.container)}
+                  >
+                    <div className="flex items-end justify-between font-medium text-sm text-primary border-b mb-1 border-muted-foreground/50">
                       {field.caseField.displayName}
+                      {isStepsField && <StepLayoutToggle className="mb-0.5" />}
                     </div>
                     <FieldValueRenderer
                       fieldValue={fieldValue}
@@ -1147,6 +1282,7 @@ export function TestRunCaseDetails({
                       isRunMode={true}
                       stepsForDisplay={testcase.steps}
                       parameters={stepParameters}
+                      hideStepLayoutToggle={isStepsField}
                     />
                   </div>
                 );
@@ -1204,7 +1340,7 @@ export function TestRunCaseDetails({
           flipJustificationError={flipErrorOnOpen}
           issueOnFailureError={issueErrorOnOpen}
           steps={testcase.steps}
-          configuration={testcase.testRuns?.[0]?.testRun?.configuration}
+          configuration={testcase.testRunCases?.[0]?.testRun?.configuration}
           iterationId={activeIterationId}
           iterationLabel={activeIterationLabel}
           parameters={stepParameters}

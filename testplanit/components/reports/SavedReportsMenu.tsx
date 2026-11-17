@@ -45,6 +45,7 @@ import {
   useSavedReports,
   type SavedReport,
 } from "~/hooks/useSavedReports";
+import { withBasePath } from "~/lib/basePath";
 
 interface SavedReportsMenuProps {
   /** The page's project; null on the cross-project reports page. */
@@ -72,10 +73,16 @@ export function SavedReportsMenu({ projectId }: SavedReportsMenuProps) {
     if (report.frozen) {
       // The frozen viewer is a standalone page; keep the reports page open.
       // Opened synchronously so the popup is not blocked.
-      window.open(savedReportHref(report), "_blank", "noopener,noreferrer");
+      window.open(
+        withBasePath(savedReportHref(report)),
+        "_blank",
+        "noopener,noreferrer"
+      );
     } else {
       // A full load: ReportBuilder hydrates its state from the URL on mount.
-      window.location.assign(await resolveSavedReportHref(report));
+      window.location.assign(
+        withBasePath(await resolveSavedReportHref(report))
+      );
     }
   };
 

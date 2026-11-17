@@ -30,7 +30,14 @@ import UploadAttachments, {
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { Attachments } from "~/zenstack/models";
-import { Bug, CircleCheckBig, Clock, Paperclip, Save } from "lucide-react";
+import {
+  Asterisk,
+  Bug,
+  CircleCheckBig,
+  Clock,
+  Paperclip,
+  Save,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
@@ -722,7 +729,9 @@ export function SessionResultForm({
                 <FormLabel className="flex items-center gap-1">
                   {displayName}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                 </FormLabel>
                 {hint && (
@@ -752,7 +761,9 @@ export function SessionResultForm({
                 <FormLabel className="flex items-center gap-1">
                   {displayName}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                 </FormLabel>
                 {hint && (
@@ -789,7 +800,9 @@ export function SessionResultForm({
                 <FormLabel className="flex items-center gap-1">
                   {displayName}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                 </FormLabel>
                 {hint && (
@@ -852,7 +865,9 @@ export function SessionResultForm({
                   <FormLabel className="flex items-center gap-1">
                     {displayName}
                     {isRequired && (
-                      <span className="text-destructive">{"*"}</span>
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                     )}
                   </FormLabel>
                   {hint && (
@@ -890,7 +905,9 @@ export function SessionResultForm({
                 <FormLabel className="flex items-center gap-1">
                   {`${displayName} (${fieldType})`}
                   {isRequired && (
-                    <span className="text-destructive">{"*"}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   )}
                 </FormLabel>
                 {hint && (

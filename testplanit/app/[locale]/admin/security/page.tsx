@@ -23,6 +23,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 export default function SecurityAdminPage() {
   const { data: session } = useSession();
@@ -159,7 +160,7 @@ export default function SecurityAdminPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch("/api/admin/registration-settings", {
+      const response = await apiFetch("/api/admin/registration-settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -190,7 +191,7 @@ export default function SecurityAdminPage() {
   const handleForceAll = async () => {
     setIsForcing(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         "/api/admin/users/bulk-force-change-password",
         { method: "POST" }
       );

@@ -11,6 +11,7 @@ import {
   Sun,
   SunMoon,
   User,
+  BellRing,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -34,6 +35,8 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { apiFetch, withBasePath } from "~/lib/basePath";
+import { clientCookie } from "~/lib/auth/cookieScope";
 
 export function UserDropdownMenu() {
   const router = useRouter();
@@ -58,7 +61,7 @@ export function UserDropdownMenu() {
 
     try {
       // Call our comprehensive logout endpoint first
-      const response = await fetch("/api/auth/logout", {
+      const response = await apiFetch("/api/auth/logout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,7 +118,7 @@ export function UserDropdownMenu() {
         }
 
         // Use window.location for immediate navigation to prevent React hooks issues
-        window.location.href = "/signin";
+        window.location.href = withBasePath("/signin");
       } else {
         throw new Error(data.error || "Logout failed");
       }
@@ -123,11 +126,11 @@ export function UserDropdownMenu() {
       console.error("Logout error:", error);
       // Fallback to NextAuth signOut on any error
       try {
-        await signOut({ redirect: true, callbackUrl: "/signin" });
+        await signOut({ redirect: true, callbackUrl: withBasePath("/signin") });
       } catch (fallbackError) {
         console.error("Fallback signOut also failed:", fallbackError);
         // Final fallback - manual navigation
-        window.location.href = "/signin";
+        window.location.href = withBasePath("/signin");
       }
     }
   }
@@ -196,7 +199,7 @@ export function UserDropdownMenu() {
     try {
       // Use dedicated update API endpoint instead of ZenStack
       // (ZenStack 2.21+ has issues with nested update operations)
-      const response = await fetch(`/api/users/${session.user.id}`, {
+      const response = await apiFetch(`/api/users/${session.user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -230,7 +233,7 @@ export function UserDropdownMenu() {
     try {
       // Use dedicated update API endpoint instead of ZenStack
       // (ZenStack 2.21+ has issues with nested update operations)
-      const response = await fetch(`/api/users/${session.user.id}`, {
+      const response = await apiFetch(`/api/users/${session.user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -246,7 +249,9 @@ export function UserDropdownMenu() {
       }
 
       const urlLocale = newLocale.replace("_", "-");
-      document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+      document.cookie = clientCookie("NEXT_LOCALE", urlLocale, [
+        "max-age=31536000",
+      ]);
       window.location.reload();
     } catch (error) {
       console.error("Failed to update locale:", error);
@@ -319,6 +324,15 @@ export function UserDropdownMenu() {
             <User className="h-4 w-4 me-2" />
             {t("viewProfile")}
           </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              router.push("/users/profile/" + session?.user?.id + "/alerts")
+            }
+            data-testid="user-menu-alerts"
+          >
+            <BellRing className="h-4 w-4 me-2" />
+            {t("myAlerts")}
+          </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger data-testid="theme-submenu-trigger">
               <Sun className="h-4 w-4 me-2" />
@@ -353,8 +367,8 @@ export function UserDropdownMenu() {
                 )}
                 {renderThemeOption(
                   "Purple",
-                  <Circle className="h-4 w-4 fill-purple-500" />,
-                  "text-purple-500"
+                  <Circle className="h-4 w-4 fill-[#8559E9]" />,
+                  "text-[#8559E9]"
                 )}
                 {renderThemeOption(
                   "Accessible",

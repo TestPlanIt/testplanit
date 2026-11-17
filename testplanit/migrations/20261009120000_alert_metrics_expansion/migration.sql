@@ -1,0 +1,27 @@
+-- Alerts (#651, round 2): eleven more metrics, three more subject kinds, a
+-- webhook scope, a coverage basis and a string subject key.
+
+ALTER TYPE "AlertMetric" ADD VALUE 'CASE_RECOVERED';
+ALTER TYPE "AlertMetric" ADD VALUE 'RUN_DURATION_DEVIATION';
+ALTER TYPE "AlertMetric" ADD VALUE 'RUN_NOT_PROGRESSING';
+ALTER TYPE "AlertMetric" ADD VALUE 'AUTOMATED_EXECUTION_FAILED';
+ALTER TYPE "AlertMetric" ADD VALUE 'RUN_UNTESTED_SHARE';
+ALTER TYPE "AlertMetric" ADD VALUE 'RUN_ISSUES_OPENED';
+ALTER TYPE "AlertMetric" ADD VALUE 'SESSION_OVERRUN';
+ALTER TYPE "AlertMetric" ADD VALUE 'REQUIREMENT_COVERAGE_BELOW';
+ALTER TYPE "AlertMetric" ADD VALUE 'STALE_CASES';
+ALTER TYPE "AlertMetric" ADD VALUE 'AUTOMATION_SHARE_BELOW';
+ALTER TYPE "AlertMetric" ADD VALUE 'WEBHOOK_FAILURE_RATE';
+
+ALTER TYPE "AlertScopeType" ADD VALUE 'WEBHOOK';
+
+ALTER TYPE "AlertSubjectType" ADD VALUE 'SESSION';
+ALTER TYPE "AlertSubjectType" ADD VALUE 'PROJECT';
+ALTER TYPE "AlertSubjectType" ADD VALUE 'WEBHOOK';
+
+-- CreateEnum
+CREATE TYPE "AlertCoverageBasis" AS ENUM ('LINKED', 'PASSING');
+
+ALTER TABLE "AlertRule" ADD COLUMN "coverageBasis" "AlertCoverageBasis" NOT NULL DEFAULT 'LINKED';
+
+ALTER TABLE "AlertEvent" ADD COLUMN "subjectRef" TEXT;

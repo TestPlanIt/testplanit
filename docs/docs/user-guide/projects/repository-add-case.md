@@ -23,7 +23,7 @@ The Add Case dialog uses a resizable two-panel layout:
 ## Header Controls
 
 - **Title**: "Add Test Case".
-- **Template Selector**: A dropdown menu to select the [Template](../templates-fields.md) for this test case. Changing the template dynamically updates the fields available in the left panel.
+- **Template Selector**: A dropdown menu to select the [Template](../templates-fields.md) for this test case. The project's [default template](settings/advanced.md#default-template) is preselected and marked with a star. Changing the template dynamically updates the fields available in the left panel.
 - **Parent Folder**: Displays the name of the folder the case will be added to.
 
 ## Left Panel Fields
@@ -38,7 +38,7 @@ The Add Case dialog uses a resizable two-panel layout:
   - Date pickers
   - Number/Integer fields
   - Link fields
-  - **Steps**: A dedicated field for defining the test steps, including Action and Expected Result for each step.
+  - **Steps**: A dedicated field for defining the test steps, including Action and Expected Result for each step. The layout icon above the steps puts the two editors side by side instead of one above the other; the choice is saved to your profile and shared with the case details and run execution views.
 
 ## Right Panel Fields
 
@@ -50,6 +50,7 @@ The Add Case dialog uses a resizable two-panel layout:
 ## Actions
 
 - **Cancel**: Closes the dialog and discards the test case you were writing.
+- **Stage Case**: Keeps the case privately under a name, without creating it, and closes the dialog. Reopen it later from **My Staged Cases** on the repository page, or create several staged cases at once; see [Staged Test Cases](./staged-test-cases.md).
 - **Create**: Validates the input fields and creates the new test case in the selected folder. It also creates the initial version (Version 1) of the test case.
 
 ## Auto-Save
@@ -85,7 +86,7 @@ When the combined context (your issue + its linked issues + all their comments) 
 ### Key Features
 
 - **Smart Field Population**: AI automatically fills template fields with contextually relevant content
-- **Context Awareness**: Considers existing test cases in the folder to avoid duplication
+- **Context Awareness**: Considers existing test cases in the folder to avoid duplication, and related test cases from elsewhere in the project to match your style
 - **Flexible Quantity**: Generate from single test cases to comprehensive test suites
 - **Auto-tagging**: Automatically generates and assigns relevant tags
 - **Test Steps Generation**: Creates detailed action/expected result pairs

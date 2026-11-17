@@ -2,7 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { Badge } from "@/components/ui/badge";
+import StatusDisplay from "@/components/StatusDisplay";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -457,16 +457,14 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                                   />
                                 </FormControl>
                                 <FormLabel className="font-normal flex items-center">
-                                  <Badge
-                                    style={{
-                                      backgroundColor:
-                                        status.colorValue ||
-                                        DEFAULT_UNTESTED_COLOR,
-                                    }}
-                                    className="text-primary-foreground"
-                                  >
-                                    {status.name}
-                                  </Badge>
+                                  <StatusDisplay
+                                    name={status.name}
+                                    color={
+                                      status.colorValue ||
+                                      DEFAULT_UNTESTED_COLOR
+                                    }
+                                    variant="filled"
+                                  />
                                   <span className="ms-1.5 text-muted-foreground">
                                     {`(${status.count} ${tCommon("plural.case", { count: status.count })})`}
                                   </span>

@@ -92,10 +92,10 @@ export default function UploadAvatar({ onUpload }: UploadAvatarProps) {
         </CardDescription>
       </CardHeader>
       <CardContent
-        className={`flex flex-col items-center justify-center border-2 ${
+        className={`flex flex-col items-center justify-center border-2 border-dashed ${
           isDragging
-            ? " bg-accent dark:bg-primary"
-            : "border-dashed border-zinc-200 dark:border-zinc-800"
+            ? "border-primary bg-primary/5"
+            : "border-zinc-200 dark:border-zinc-800"
         } rounded-lg p-10 space-y-6`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

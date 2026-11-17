@@ -1,4 +1,8 @@
 import {
+  BOOLEAN_VALUE_LABEL_KEYS,
+  CHECKBOX_VALUE_LABEL_KEYS,
+} from "~/lib/repository/filterDimensionLabels";
+import {
   ASSIGNED_TO_UNASSIGNED_SENTINEL,
   STATUS_UNTESTED_SENTINEL,
   type FilterDimension,
@@ -71,14 +75,13 @@ const UNTESTED_COLOR = "#B1B2B3";
 function booleanOptions(
   entries: Array<{ value: boolean; count: number }> | undefined,
   t: (key: string) => string,
-  trueKey: string,
-  falseKey: string
+  keys: { true: string; false: string }
 ): FilterValueOption[] {
   const countFor = (value: boolean) =>
     entries?.find((entry) => entry.value === value)?.count;
   return [
-    { id: 1, name: t(trueKey), count: countFor(true) },
-    { id: 0, name: t(falseKey), count: countFor(false) },
+    { id: 1, name: t(keys.true), count: countFor(true) },
+    { id: 0, name: t(keys.false), count: countFor(false) },
   ];
 }
 
@@ -103,36 +106,31 @@ export function getDimensionValueOptions(
       return booleanOptions(
         viewOptions?.automated,
         t,
-        "common.fields.automated",
-        "common.fields.notAutomated"
+        BOOLEAN_VALUE_LABEL_KEYS.automated
       );
     case "parameterized":
       return booleanOptions(
         viewOptions?.parameterized,
         t,
-        "common.fields.parameterized",
-        "common.fields.notParameterized"
+        BOOLEAN_VALUE_LABEL_KEYS.parameterized
       );
     case "attachments":
       return booleanOptions(
         viewOptions?.attachments,
         t,
-        "common.fields.hasAttachments",
-        "common.fields.noAttachments"
+        BOOLEAN_VALUE_LABEL_KEYS.attachments
       );
     case "inReview":
       return booleanOptions(
         viewOptions?.inReview,
         t,
-        "common.fields.inReview",
-        "common.fields.notInReview"
+        BOOLEAN_VALUE_LABEL_KEYS.inReview
       );
     case "codePins":
       return booleanOptions(
         viewOptions?.codePins,
         t,
-        "common.fields.hasCodePins",
-        "common.fields.noCodePins"
+        BOOLEAN_VALUE_LABEL_KEYS.codePins
       );
     case "tags":
       // The tags/issues payloads ship "any"/"none" pseudo-rows for the
@@ -180,12 +178,12 @@ export function getDimensionValueOptions(
     return [
       {
         id: 1,
-        name: t("common.fields.checked"),
+        name: t(CHECKBOX_VALUE_LABEL_KEYS.true),
         count: field.counts?.hasValue,
       },
       {
         id: 0,
-        name: t("repository.fields.unchecked"),
+        name: t(CHECKBOX_VALUE_LABEL_KEYS.false),
         count: field.counts?.noValue,
       },
     ];

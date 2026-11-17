@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "~/lib/basePath";
 
 export interface UseRequirementSubtreeCountArgs {
   projectId: number;
@@ -46,7 +47,7 @@ export function useRequirementSubtreeCount({
     queryKey: ["requirementSubtreeCount", projectId, requirementId],
     enabled: enabled && requirementId !== null,
     queryFn: async () => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/projects/${projectId}/requirements/${requirementId}/descendant-count`
       );
       if (!res.ok) {

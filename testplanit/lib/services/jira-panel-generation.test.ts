@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { mockDb } = vi.hoisted(() => ({
   mockDb: {
     projectIntegration: { findMany: vi.fn() },
-    templates: { findFirst: vi.fn() },
+    projects: { findUnique: vi.fn() },
+    templates: { findFirst: vi.fn(), findMany: vi.fn() },
     templateProjectAssignment: { findUnique: vi.fn() },
   },
 }));
@@ -12,6 +13,7 @@ vi.mock("@/lib/db", () => ({ baseDb: mockDb }));
 
 import {
   listGenerationProjects,
+  listProjectTemplates,
   loadTemplateData,
   templateBelongsToProject,
 } from "./jira-panel-generation";
@@ -126,6 +128,36 @@ describe("jira-panel-generation", () => {
     it("returns null when the template doesn't exist", async () => {
       mockDb.templates.findFirst.mockResolvedValue(null);
       expect(await loadTemplateData(999)).toBeNull();
+    });
+  });
+
+  describe("listProjectTemplates", () => {
+    const templates = [
+      { id: 1, templateName: "Alpha", isDefault: false },
+      { id: 2, templateName: "Beta", isDefault: true },
+    ];
+
+    it("flags the project's default template as the default", async () => {
+      mockDb.projects.findUnique.mockResolvedValue({ defaultTemplateId: 1 });
+      mockDb.templates.findMany.mockResolvedValue(templates);
+
+      const result = await listProjectTemplates(5);
+
+      expect(result).toEqual([
+        { id: 1, name: "Alpha", isDefault: true },
+        { id: 2, name: "Beta", isDefault: false },
+      ]);
+    });
+
+    it("flags the system default when the project has none", async () => {
+      mockDb.projects.findUnique.mockResolvedValue({ defaultTemplateId: null });
+      mockDb.templates.findMany.mockResolvedValue(templates);
+
+      const result = await listProjectTemplates(5);
+
+      expect(result.filter((t) => t.isDefault)).toEqual([
+        { id: 2, name: "Beta", isDefault: true },
+      ]);
     });
   });
 

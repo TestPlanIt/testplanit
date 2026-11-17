@@ -108,6 +108,11 @@ const TestCaseInputSchema = z.object({
   versionIssues: z.array(VersionIssueSchema).optional(),
   parameters: z.array(InlineParameterSchema).optional(),
   datasetRows: z.array(InlineDatasetRowSchema).optional(),
+  // The author's staged case (CaseDraft id) this case is created from. The
+  // case records when it was staged and the staged case is retired in the
+  // same transaction; a staged case that is not the author's live one fails
+  // this case rather than creating it twice.
+  stagedDraftId: z.string().optional(),
 });
 
 export const ImportInputSchema = z.object({
@@ -191,6 +196,12 @@ export interface ImportAuthor {
   userName: string;
   /** False when the author may not set restricted fields (strict mode). */
   canEditRestrictedFields?: boolean;
+  /**
+   * The author's system access. A system admin creates a case directly in
+   * a review-gated state, as the editors let them pick one; anyone else is
+   * remapped to the last state before the gate.
+   */
+  access?: string | null;
 }
 
 function convertStepToTipTap(value: any) {
@@ -487,7 +498,8 @@ export async function persistGeneratedTestCases(
           tx,
           data.projectId,
           WorkflowScope.CASES,
-          data.stateId
+          data.stateId,
+          author.access
         )) ?? data.stateId;
       let effectiveStateName = data.stateName;
       if (effectiveStateId !== data.stateId) {
@@ -531,6 +543,26 @@ export async function persistGeneratedTestCases(
               ? [{ id: sharedIssue.id }]
               : [];
 
+          // The staged case this one comes from, looked up as the author's
+          // own live staged case so a stale or foreign id cannot create a
+          // second copy of a case that already exists.
+          const stagedDraft = testCase.stagedDraftId
+            ? await tx.caseDraft.findFirst({
+                where: {
+                  id: testCase.stagedDraftId,
+                  userId,
+                  isSaved: true,
+                  isDeleted: false,
+                },
+                select: { id: true, createdAt: true },
+              })
+            : null;
+          if (testCase.stagedDraftId && !stagedDraft) {
+            throw new Error(
+              "The staged case no longer exists; it may already have been created."
+            );
+          }
+
           // 1. Create the repository case. The (projectId, name, className,
           // source) unique index never fires here: className is null, and
           // Postgres treats nulls as distinct.
@@ -550,9 +582,25 @@ export async function persistGeneratedTestCases(
               automated: testCase.automated ?? false,
               estimate: testCase.estimate,
               currentVersion: 1,
+              ...(stagedDraft ? { stagedAt: stagedDraft.createdAt } : {}),
             },
             select: { id: true },
           });
+
+          // Retire the staged case, pointing it at the case it became. Inside
+          // the savepoint, so a case that fails further down leaves its
+          // staged case in the list.
+          if (stagedDraft) {
+            await tx.caseDraft.update({
+              where: { id: stagedDraft.id },
+              data: {
+                isDeleted: true,
+                deletedAt: new Date(),
+                deletedById: userId,
+                caseId: newCase.id,
+              },
+            });
+          }
 
           // Link tags/issues through the explicit join models. The implicit
           // m2m `connect` syntax was replaced by RepositoryCaseTag /

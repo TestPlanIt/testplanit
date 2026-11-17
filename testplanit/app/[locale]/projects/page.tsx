@@ -17,6 +17,7 @@ import { NoProjectsCard } from "@/components/NoProjectsCard";
 import { ProjectCard } from "@/components/ProjectCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Boxes } from "lucide-react";
+import { apiFetch } from "~/lib/basePath";
 
 const Projects = () => {
   const { data: session, status: sessionStatus } = useSession();
@@ -104,7 +105,7 @@ const Projects = () => {
       setIsLoadingIssueCounts(true);
       try {
         const projectIds = processedProjectsData.map((p) => p.id);
-        const response = await fetch("/api/projects/issue-counts", {
+        const response = await apiFetch("/api/projects/issue-counts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ projectIds }),

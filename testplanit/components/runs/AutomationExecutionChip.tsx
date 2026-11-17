@@ -34,6 +34,7 @@ import { ACTIVE_EXECUTION_STATUSES } from "~/lib/execution/types";
 import type { TestRunExecutionRow } from "~/hooks/useTestRunExecutions";
 import { AutomationExecutionsSheet } from "./AutomationExecutionsSheet";
 import { ExecutionInputsList, useExecutionInputs } from "./ExecutionInputsList";
+import { apiFetch } from "~/lib/basePath";
 
 export function executionBadgeVariant(
   status: string
@@ -106,7 +107,7 @@ export function AutomationExecutionChip({
   const handleCancel = async () => {
     setCancelling(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/test-runs/${runId}/executions/${latest.id}/cancel`,
         { method: "POST" }
       );

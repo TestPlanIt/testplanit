@@ -31,6 +31,8 @@ docker compose -f docker-compose.prod.yml $PROFILES up -d   # pending migrations
 The compose files use the `latest` release by default. To pin a version, set
 `TESTPLANIT_VERSION` (for example `1.1.12`) in your shell, the default `.env`, or
 `--env-file`, and change it when you want to upgrade.
+The other variables the compose files read are listed under
+[Docker Compose variables](environment-variables.md#docker-compose).
 
 :::note Which image to use
 

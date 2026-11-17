@@ -48,6 +48,39 @@ import {
   type FolderReader,
 } from "~/lib/folderParentGuard";
 import {
+  assertValidMilestoneParent,
+  type MilestoneReader,
+} from "~/lib/milestoneParentGuard";
+import {
+  assignResultAttempts,
+  type AttemptReader,
+} from "~/lib/resultAttemptNumbering";
+import {
+  applyRunCaseEligibility,
+  type EligibilityClient,
+} from "~/lib/runCaseEligibilityGuard";
+import {
+  prepareRunCaseRestore,
+  type RunCaseRestoreClient,
+} from "~/lib/runCaseRestoreReset";
+import {
+  prepareRunCaseAssignment,
+  type AssigneeReader,
+} from "~/lib/runCaseAssignmentHook";
+import {
+  notifyRunCaseAssignment,
+  notifySessionAssignment,
+  type AssignmentActor,
+} from "~/lib/services/assignmentNotifications";
+import {
+  enqueueCaseForecastUpdate,
+  enqueueRunForecastUpdate,
+} from "~/lib/services/forecastEnqueue";
+import {
+  assertValidCaseLink,
+  type CaseLinkReader,
+} from "~/lib/caseLinkCycleGuard";
+import {
   assertRestrictedFieldWrite,
   type RestrictedFieldReader,
 } from "~/lib/restrictedFieldGuard";
@@ -117,6 +150,13 @@ import {
 } from "~/lib/services/auditLog";
 import { invalidateApiTokenCache } from "~/lib/api-token-cache";
 import { enqueueRunReadyCheck } from "~/lib/services/runReadyCheck";
+import {
+  enqueueAlertJUnitResultEvaluation,
+  enqueueAlertResultEvaluation,
+  enqueueAlertRunEvaluation,
+  enqueueAlertSessionEvaluation,
+  projectHasActiveAlertRules,
+} from "~/lib/services/alertEnqueue";
 import { snapshotAutomatedFlip } from "~/lib/services/caseAutomatedVersioning";
 
 // Models whose standalone hooked-client writes set the app.audit_context GUC so
@@ -144,7 +184,10 @@ export const GUC_MODELS = new Set<string>([
   "Comment",
   "SharedStepGroup",
   "WebhookConfig",
+  "WebhookAction",
   "ImpactAnalysis",
+  "FailureSignature",
+  "CaseQuarantine",
   // Admin-config catalog — CDC-only, no semantic (captureAuditEvent /
   // auditSystemConfigChange) coverage for general edits, so no double-logging.
   "Workflows",
@@ -157,6 +200,7 @@ export const GUC_MODELS = new Set<string>([
   "CaseExportTemplate",
   "Roles",
   "MilestoneTypes",
+  "FailureClassification",
   "ConfigCategories",
   "ConfigVariants",
   "Configurations",
@@ -208,6 +252,27 @@ export const GUC_MODELS = new Set<string>([
   "GroupAssignment",
   "RolePermission",
 ]);
+
+// Every soft-deletable model also gets the GUC, regardless of GUC_MODELS: the
+// tpl_stamp_deleted_at_* trigger reads the actor out of it to fill
+// `deletedById` on the isDeleted flip, which is what lets a user see and
+// restore their own deletes (user Trash). Derived from the schema so a new
+// soft-deletable model is covered without a registry edit.
+export const SOFT_DELETE_MODELS = new Set<string>(
+  Object.values(
+    schema.models as unknown as Record<
+      string,
+      { name: string; fields: Record<string, unknown> }
+    >
+  )
+    .filter((model) => model.fields.isDeleted && model.fields.deletedAt)
+    .map((model) => model.name)
+);
+
+/** Models whose standalone hooked-client writes set the audit GUC. */
+export function needsAuditGuc(model: string): boolean {
+  return GUC_MODELS.has(model) || SOFT_DELETE_MODELS.has(model);
+}
 
 // Models that need their before-image for an update/delete diff or emit.
 const BEFORE_IMAGE_MODELS = new Set<string>([
@@ -522,6 +587,13 @@ export async function encryptCredentialsOnWrite<
   }
 }
 
+/** Who is making the assignment, from the request's audit context. */
+function assignmentActor(): AssignmentActor | null {
+  const ctx = getAuditContext();
+  if (!ctx?.userId) return null;
+  return { id: ctx.userId, name: ctx.userName };
+}
+
 export const sideEffectsPlugin = definePlugin(schema, {
   id: "testplanit-side-effects",
 
@@ -576,6 +648,33 @@ export const sideEffectsPlugin = definePlugin(schema, {
       );
     }
 
+    if (model === "Milestones") {
+      await assertValidMilestoneParent(
+        model,
+        operation,
+        args,
+        client.$unuseAll() as unknown as MilestoneReader
+      );
+    }
+
+    if (model === "RepositoryCaseLink") {
+      await assertValidCaseLink(
+        model,
+        operation,
+        args,
+        client.$unuseAll() as unknown as CaseLinkReader
+      );
+    }
+
+    if (model === "TestRunResults") {
+      await assignResultAttempts(
+        model,
+        operation,
+        args,
+        client.$unuseAll() as unknown as AttemptReader
+      );
+    }
+
     if (model === "TestRuns") {
       await assertRunNotReopened(
         model,
@@ -596,418 +695,889 @@ export const sideEffectsPlugin = definePlugin(schema, {
         data.completedAt = new Date();
       }
     }
-    return proceed(args as never);
+
+    // Run membership: keep Not Started cases out where the project says so,
+    // bring restored cases back untested, and tell new assignees. All three
+    // used to live in the browser, so API clients skipped them.
+    let afterRestore: (() => Promise<void>) | null = null;
+    let pendingAssignment: Awaited<
+      ReturnType<typeof prepareRunCaseAssignment>
+    > = null;
+    if (model === "TestRunCases" || model === "TestRuns") {
+      const raw = client.$unuseAll();
+      await applyRunCaseEligibility(
+        model,
+        operation,
+        args,
+        raw as unknown as EligibilityClient
+      );
+      afterRestore = await prepareRunCaseRestore(
+        model,
+        operation,
+        args,
+        raw as unknown as RunCaseRestoreClient
+      );
+      pendingAssignment = await prepareRunCaseAssignment(
+        model,
+        operation,
+        args,
+        raw as unknown as AssigneeReader
+      );
+    }
+
+    const result = await proceed(args as never);
+
+    if (afterRestore) {
+      // Bookkeeping on rows the write just restored; never fails the write.
+      await afterRestore().catch((error) =>
+        console.error("[runCaseRestore] iteration restore failed:", error)
+      );
+    }
+    if (pendingAssignment) {
+      const actor = assignmentActor();
+      if (actor) {
+        void notifyRunCaseAssignment(client.$unuseAll() as any, {
+          ...pendingAssignment,
+          actor,
+        }).catch((error) =>
+          console.error("[assignment] notification failed:", error)
+        );
+      }
+    }
+    return result;
   },
 
   onEntityMutation: {
-    runAfterMutationWithinTransaction: true,
+    $all: {
+      runAfterMutationWithinTransaction: true,
 
-    beforeEntityMutation: async ({
-      model,
-      client,
-      loadBeforeMutationEntities,
-    }) => {
-      // Set the audit-context GUC inside the mutation's transaction so the CDC
-      // trigger attributes the originating actor. Skip when an audited
-      // transaction already set it (auditTxStore is populated).
-      if (GUC_MODELS.has(model) && !auditTxStore.getStore()) {
-        await injectAuditGuc(client as unknown as TxClient);
-      }
-      // Capture the before-image inside the mutation's transaction for
-      // update/delete diffs and emits.
-      if (BEFORE_IMAGE_MODELS.has(model)) {
-        await loadBeforeMutationEntities();
-      }
-    },
+      beforeEntityMutation: async ({
+        model,
+        client,
+        loadBeforeMutationEntities,
+      }) => {
+        // Set the audit-context GUC inside the mutation's transaction so the CDC
+        // trigger attributes the originating actor. Skip when an audited
+        // transaction already set it (auditTxStore is populated).
+        if (needsAuditGuc(model) && !auditTxStore.getStore()) {
+          await injectAuditGuc(client as unknown as TxClient);
+        }
+        // Capture the before-image inside the mutation's transaction for
+        // update/delete diffs and emits.
+        if (BEFORE_IMAGE_MODELS.has(model)) {
+          await loadBeforeMutationEntities();
+        }
+      },
 
-    afterEntityMutation: async ({
-      model,
-      action,
-      client,
-      loadAfterMutationEntities,
-      beforeMutationEntities,
-    }) => {
-      const tx = client as unknown as TxClient;
+      afterEntityMutation: async ({
+        model,
+        action,
+        client,
+        loadAfterMutationEntities,
+        beforeMutationEntities,
+      }) => {
+        const tx = client as unknown as TxClient;
 
-      const after = ((await loadAfterMutationEntities()) ?? []) as any[];
+        const after = ((await loadAfterMutationEntities()) ?? []) as any[];
 
-      const before = (beforeMutationEntities ?? []) as any[];
+        const before = (beforeMutationEntities ?? []) as any[];
 
-      switch (model) {
-        case "RepositoryCases": {
-          if (action === "delete") {
-            for (const old of before) {
-              if (!old?.id) continue;
-              await emitCaseDeleted(old, tx);
+        switch (model) {
+          case "RepositoryCases": {
+            if (action === "delete") {
+              for (const old of before) {
+                if (!old?.id) continue;
+                await emitCaseDeleted(old, tx);
+              }
+              await cancelReviewsForHardDeleted(tx, "RepositoryCases", before);
+              break;
             }
-            await cancelReviewsForHardDeleted(tx, "RepositoryCases", before);
-            break;
-          }
-          for (let i = 0; i < after.length; i++) {
-            const row = after[i];
-            const old = before[i] ?? null;
-            if (!row?.id) continue;
-            if (row.projectId != null) {
-              if (old) await emitCaseUpdated(old, row, tx);
-              else await emitCaseCreated(row, tx);
-            }
-            // Per-project "exclude draft cases from runs": when the case state
-            // transitions to a NOT_STARTED workflow and the project flag is on,
-            // soft-delete the case's unexecuted entries in open runs. In-tx so
-            // it commits-or-rolls-back with the state change.
-            if (old && row.stateId !== old.stateId && row.projectId != null) {
-              const project = await tx.projects.findUnique({
-                where: { id: row.projectId },
-                select: { excludeNotStartedFromRuns: true },
-              });
-              if (project?.excludeNotStartedFromRuns) {
-                const newState = await tx.workflows.findUnique({
-                  where: { id: row.stateId },
-                  select: { workflowType: true },
+            for (let i = 0; i < after.length; i++) {
+              const row = after[i];
+              const old = before[i] ?? null;
+              if (!row?.id) continue;
+              if (row.projectId != null) {
+                if (old) await emitCaseUpdated(old, row, tx);
+                else await emitCaseCreated(row, tx);
+              }
+              // Per-project "exclude draft cases from runs": when the case state
+              // transitions to a NOT_STARTED workflow and the project flag is on,
+              // soft-delete the case's unexecuted entries in open runs. In-tx so
+              // it commits-or-rolls-back with the state change.
+              if (old && row.stateId !== old.stateId && row.projectId != null) {
+                const project = await tx.projects.findUnique({
+                  where: { id: row.projectId },
+                  select: { excludeNotStartedFromRuns: true },
                 });
-                if (newState?.workflowType === WorkflowType.NOT_STARTED) {
-                  // Which runs lose a case, read before the update so the
-                  // rows are still matchable. Dropping the last unexecuted
-                  // case can make a run fully executed, and mutations issued
-                  // from inside a hook do not re-enter the plugin, so the
-                  // TestRunCases case below will not see this one.
-                  const affected = await tx.testRunCases.findMany({
-                    where: {
-                      repositoryCaseId: row.id,
-                      isDeleted: false,
-                      testRun: { isCompleted: false },
-                      results: { none: {} },
-                    },
-                    select: { testRunId: true },
+                if (project?.excludeNotStartedFromRuns) {
+                  const newState = await tx.workflows.findUnique({
+                    where: { id: row.stateId },
+                    select: { workflowType: true },
                   });
-                  await tx.testRunCases.updateMany({
-                    where: {
-                      repositoryCaseId: row.id,
-                      isDeleted: false,
-                      testRun: { isCompleted: false },
-                      results: { none: {} },
-                    },
-                    data: { isDeleted: true },
-                  });
-                  if (affected.length > 0) {
-                    const { getCurrentTenantId } =
-                      await import("~/lib/multiTenantDb");
-                    const tenantId = getCurrentTenantId();
-                    for (const runId of new Set(
-                      affected.map((c) => c.testRunId)
-                    )) {
-                      void enqueueRunReadyCheck(runId, tenantId);
+                  if (newState?.workflowType === WorkflowType.NOT_STARTED) {
+                    // Which runs lose a case, read before the update so the
+                    // rows are still matchable. Dropping the last unexecuted
+                    // case can make a run fully executed, and mutations issued
+                    // from inside a hook do not re-enter the plugin, so the
+                    // TestRunCases case below will not see this one.
+                    const affected = await tx.testRunCases.findMany({
+                      where: {
+                        repositoryCaseId: row.id,
+                        isDeleted: false,
+                        testRun: { isCompleted: false },
+                        results: { none: {} },
+                      },
+                      select: { testRunId: true },
+                    });
+                    await tx.testRunCases.updateMany({
+                      where: {
+                        repositoryCaseId: row.id,
+                        isDeleted: false,
+                        testRun: { isCompleted: false },
+                        results: { none: {} },
+                      },
+                      data: { isDeleted: true },
+                    });
+                    if (affected.length > 0) {
+                      const { getCurrentTenantId } =
+                        await import("~/lib/multiTenantDb");
+                      const tenantId = getCurrentTenantId();
+                      for (const runId of new Set(
+                        affected.map((c) => c.testRunId)
+                      )) {
+                        void enqueueRunReadyCheck(runId, tenantId);
+                      }
                     }
                   }
                 }
               }
             }
-          }
-          await cancelReviewsForSoftDeleted(
-            tx,
-            "RepositoryCases",
-            before,
-            after
-          );
-          await snapshotAutomatedFlips(client, before, after);
-          break;
-        }
-
-        case "TestRuns": {
-          if (action === "delete") {
-            await cancelReviewsForHardDeleted(tx, "TestRuns", before);
+            await cancelReviewsForSoftDeleted(
+              tx,
+              "RepositoryCases",
+              before,
+              after
+            );
+            await snapshotAutomatedFlips(client, before, after);
             break;
           }
-          for (let i = 0; i < after.length; i++) {
-            const row = after[i];
-            const old = before[i] ?? null;
-            if (!row?.id) continue;
-            if (row.projectId != null) {
-              if (old) await emitTestRunUpdateEvents(old, row, tx);
-              // A duplicate carries the source run id — emit the richer
-              // test_run.duplicated event instead of the generic .created.
-              else if (row.duplicatedFromId != null)
-                await emitTestRunDuplicated(row.id, row.duplicatedFromId, tx, {
-                  projectId: row.projectId,
-                });
-              else await emitTestRunCreated(row, tx);
+
+          case "TestRuns": {
+            if (action === "delete") {
+              await cancelReviewsForHardDeleted(tx, "TestRuns", before);
+              break;
             }
-            // Execution-start auto-lock: when a run TRANSITIONS into an
-            // IN_PROGRESS state and the project opts in, freeze its case
-            // composition (add/remove/reorder) while execution continues.
-            // lockedBy is left null = automatic; reversible in-app by the
-            // creator / a Project Admin. In-tx so it commits with the state
-            // change. Only fires on an update that changes stateId (execution
-            // "start" is a transition, not a create), and skips when already
-            // locked — which also breaks the recursion from the nested update
-            // below (it changes only lock fields, so it re-enters here with the
-            // stateId unchanged and short-circuits).
-            if (
-              old != null &&
-              row.compositionLockedAt == null &&
-              row.projectId != null &&
-              row.stateId !== old.stateId
-            ) {
-              const newState = await tx.workflows.findUnique({
-                where: { id: row.stateId },
-                select: { workflowType: true },
-              });
-              if (newState?.workflowType === WorkflowType.IN_PROGRESS) {
-                const project = await tx.projects.findUnique({
-                  where: { id: row.projectId },
-                  select: { autoLockCompositionOnInProgress: true },
-                });
-                if (project?.autoLockCompositionOnInProgress) {
-                  // Raw UPDATE, not tx.testRuns.update: when the triggering
-                  // mutation arrived through the policy client (every
-                  // /api/model call), `tx` carries the policy layer and the
-                  // field-level @deny('update', true) on compositionLockedAt
-                  // rejects the nested write — failing the user's own state
-                  // change with a 422. Raw SQL is the same sanctioned bypass
-                  // the audit-context GUC uses (PolicyPlugin is constructed
-                  // with dangerouslyAllowRawSql for exactly these internal,
-                  // parameterized statements), stays inside the transaction,
-                  // and still fires the DB-level CDC triggers.
-                  await tx.$executeRaw`UPDATE "TestRuns" SET "compositionLockedAt" = NOW() WHERE "id" = ${row.id}`;
-                }
-              }
-            }
-          }
-          await cancelReviewsForSoftDeleted(tx, "TestRuns", before, after);
-          break;
-        }
-
-        case "Sessions": {
-          if (action === "delete") {
-            await cancelReviewsForHardDeleted(tx, "Sessions", before);
-            break;
-          }
-          for (let i = 0; i < after.length; i++) {
-            const row = after[i];
-            const old = before[i] ?? null;
-            if (!row?.id) continue;
-            if (row.projectId != null) {
-              if (old) await emitSessionUpdateEvents(old, row, tx);
-              // A duplicate carries the source session id — emit the richer
-              // session.duplicated event instead of the generic .created.
-              else if (row.duplicatedFromId != null)
-                await emitSessionDuplicated(row.id, row.duplicatedFromId, tx, {
-                  projectId: row.projectId,
-                });
-              else await emitSessionCreated(row, tx);
-            }
-          }
-          await cancelReviewsForSoftDeleted(tx, "Sessions", before, after);
-          break;
-        }
-
-        case "Issue": {
-          if (action === "delete") {
-            for (const old of before) {
-              if (old?.id) await emitIssueDeleted(old, tx);
-            }
-            break;
-          }
-          for (let i = 0; i < after.length; i++) {
-            const row = after[i];
-            const old = before[i] ?? null;
-            if (!row?.id) continue;
-            // No projectId gate here — the emitter resolves the full set of
-            // target projects (home ∪ linked-entity projects) and no-ops when
-            // there is nothing to fan out to. Integration-only issues with a
-            // null home project still reach subscribers in the projects their
-            // linked entities live in.
-            if (old) await emitIssueUpdated(old, row, tx);
-            else await emitIssueCreated(row, tx);
-          }
-          break;
-        }
-
-        case "JUnitTestSuite": {
-          // First automated write into a manual run promotes it to HYBRID so
-          // the run page and summaries show both result trees.
-          if (action !== "create") break;
-          for (const row of after) {
-            if (row?.id && row.testRunId != null) {
-              await promoteRunToHybrid(tx as never, row.testRunId);
-              // Reporters write suites through the RPC, never the import
-              // route, so this is where a dispatched execution learns that
-              // its results have started arriving.
-              await markExecutionResultsReceived(tx as never, row.testRunId);
-            }
-          }
-          break;
-        }
-
-        case "JUnitTestResult": {
-          if (action !== "create") break;
-          for (const row of after) {
-            if (row?.id && row.testSuiteId != null) {
-              // Reporter-SDK results never touch TestRunCases.statusId; on a
-              // manual (REGULAR/HYBRID) run the manual UI, progress bar and
-              // ready-to-complete check all read that column, so mirror the
-              // result onto it here (same write the import route makes).
-              await projectJUnitResultOntoRunCase(tx as never, {
-                testSuiteId: row.testSuiteId,
-                repositoryCaseId: row.repositoryCaseId ?? null,
-                statusId: row.statusId ?? null,
-              });
-              await emitJUnitResultAdded(row, tx);
-            }
-          }
-          break;
-        }
-
-        case "TestRunResults": {
-          if (action !== "create") break;
-          for (const row of after) {
-            if (row?.id && row.testRunId != null)
-              await emitTestRunResultAdded(row, tx);
-          }
-          break;
-        }
-
-        case "SessionResults": {
-          if (action !== "create") break;
-          for (const row of after) {
-            if (row?.id && row.sessionId != null)
-              await emitSessionResultAdded(row, tx);
-          }
-          break;
-        }
-
-        // Semantic config-change audit. The RPC route shim emits the canonical
-        // row and suppresses these to avoid a duplicate; they still fire for
-        // non-RPC writes (workers, custom routes, direct client).
-        case "SsoProvider": {
-          if (isEntityAuditSuppressed()) break;
-          if (action === "delete") {
-            for (const old of before)
-              if (old?.id) await auditSsoConfigChange("DELETE", old);
-          } else {
-            for (const row of after) {
-              if (!row?.id) continue;
-              await auditSsoConfigChange(
-                action === "create" ? "CREATE" : "UPDATE",
-                row
-              );
-            }
-          }
-          break;
-        }
-
-        case "AppConfig": {
-          if (isEntityAuditSuppressed()) break;
-          if (action === "delete") {
-            for (const old of before)
-              if (old?.key)
-                await auditSystemConfigChange(old.key, old.value, null);
-          } else {
             for (let i = 0; i < after.length; i++) {
               const row = after[i];
               const old = before[i] ?? null;
-              if (!row?.key) continue;
-              await auditSystemConfigChange(row.key, old?.value, row.value);
-            }
-          }
-          break;
-        }
-
-        // API-token writes: audit revocation/deletion (gated, the RPC shim emits
-        // the canonical row) and always evict the short-TTL auth cache.
-        case "ApiToken": {
-          if (action === "delete") {
-            for (const old of before) {
-              if (!old?.id) continue;
-              if (!isEntityAuditSuppressed()) {
-                await captureAuditEvent({
-                  action: "API_KEY_DELETED",
-                  entityType: "ApiToken",
-                  entityId: old.id,
-                  entityName: old.name,
-                  metadata: {
-                    tokenPrefix: old.tokenPrefix,
-                    tokenOwnerId: old.userId,
-                  },
-                });
+              if (!row?.id) continue;
+              if (row.projectId != null) {
+                if (old) await emitTestRunUpdateEvents(old, row, tx);
+                // Alerts (#651): run metrics that wait for
+                // completion are evaluated when the run first completes.
+                if (
+                  old &&
+                  row.isCompleted === true &&
+                  old.isCompleted !== true &&
+                  typeof tx.alertRule?.count === "function"
+                ) {
+                  if (await projectHasActiveAlertRules(tx, row.projectId)) {
+                    const { getCurrentTenantId } =
+                      await import("~/lib/multiTenantDb");
+                    void enqueueAlertRunEvaluation({
+                      runId: row.id,
+                      projectId: row.projectId,
+                      trigger: "completion",
+                      tenantId: getCurrentTenantId(),
+                    });
+                  }
+                }
+                // A duplicate carries the source run id — emit the richer
+                // test_run.duplicated event instead of the generic .created.
+                else if (row.duplicatedFromId != null)
+                  await emitTestRunDuplicated(
+                    row.id,
+                    row.duplicatedFromId,
+                    tx,
+                    {
+                      projectId: row.projectId,
+                    }
+                  );
+                else await emitTestRunCreated(row, tx);
               }
-              if (old.token)
-                invalidateApiTokenCache(old.token).catch((error: unknown) =>
-                  console.error("Failed to invalidate API token cache:", error)
-                );
+              // Execution-start auto-lock: when a run TRANSITIONS into an
+              // IN_PROGRESS state and the project opts in, freeze its case
+              // composition (add/remove/reorder) while execution continues.
+              // lockedBy is left null = automatic; reversible in-app by the
+              // creator / a Project Admin. In-tx so it commits with the state
+              // change. Only fires on an update that changes stateId (execution
+              // "start" is a transition, not a create), and skips when already
+              // locked — which also breaks the recursion from the nested update
+              // below (it changes only lock fields, so it re-enters here with the
+              // stateId unchanged and short-circuits).
+              if (
+                old != null &&
+                row.compositionLockedAt == null &&
+                row.projectId != null &&
+                row.stateId !== old.stateId
+              ) {
+                const newState = await tx.workflows.findUnique({
+                  where: { id: row.stateId },
+                  select: { workflowType: true },
+                });
+                if (newState?.workflowType === WorkflowType.IN_PROGRESS) {
+                  const project = await tx.projects.findUnique({
+                    where: { id: row.projectId },
+                    select: { autoLockCompositionOnInProgress: true },
+                  });
+                  if (project?.autoLockCompositionOnInProgress) {
+                    // Raw UPDATE, not tx.testRuns.update: when the triggering
+                    // mutation arrived through the policy client (every
+                    // /api/model call), `tx` carries the policy layer and the
+                    // field-level @deny('update', true) on compositionLockedAt
+                    // rejects the nested write — failing the user's own state
+                    // change with a 422. Raw SQL is the same sanctioned bypass
+                    // the audit-context GUC uses (PolicyPlugin is constructed
+                    // with dangerouslyAllowRawSql for exactly these internal,
+                    // parameterized statements), stays inside the transaction,
+                    // and still fires the DB-level CDC triggers.
+                    await tx.$executeRaw`UPDATE "TestRuns" SET "compositionLockedAt" = NOW() WHERE "id" = ${row.id}`;
+                  }
+                }
+              }
             }
+            await cancelReviewsForSoftDeleted(tx, "TestRuns", before, after);
             break;
           }
-          if (action === "update") {
+
+          case "Sessions": {
+            if (action === "delete") {
+              await cancelReviewsForHardDeleted(tx, "Sessions", before);
+              break;
+            }
             for (let i = 0; i < after.length; i++) {
               const row = after[i];
               const old = before[i] ?? null;
               if (!row?.id) continue;
               if (
-                old &&
-                old.isActive === true &&
-                row.isActive === false &&
-                !isEntityAuditSuppressed()
+                typeof row.assignedToId === "string" &&
+                row.assignedToId &&
+                row.assignedToId !== old?.assignedToId
               ) {
-                await captureAuditEvent({
-                  action: "API_KEY_REVOKED",
-                  entityType: "ApiToken",
-                  entityId: row.id,
-                  entityName: row.name,
-                  metadata: {
-                    tokenPrefix: row.tokenPrefix,
-                    tokenOwnerId: row.userId,
-                  },
-                });
+                const actor = assignmentActor();
+                if (actor) {
+                  void notifySessionAssignment(tx as any, {
+                    sessionId: row.id,
+                    assignedToId: row.assignedToId,
+                    actor,
+                  }).catch((error) =>
+                    console.error("[assignment] notification failed:", error)
+                  );
+                }
               }
-              const token = old?.token ?? row.token;
-              if (token)
-                invalidateApiTokenCache(token).catch((error: unknown) =>
-                  console.error("Failed to invalidate API token cache:", error)
+              if (row.projectId != null) {
+                if (old) await emitSessionUpdateEvents(old, row, tx);
+                // Alerts: the session overrun metric is evaluated when a
+                // session first completes.
+                if (
+                  old &&
+                  row.isCompleted === true &&
+                  old.isCompleted !== true &&
+                  typeof tx.alertRule?.count === "function"
+                ) {
+                  if (await projectHasActiveAlertRules(tx, row.projectId)) {
+                    const { getCurrentTenantId } =
+                      await import("~/lib/multiTenantDb");
+                    void enqueueAlertSessionEvaluation({
+                      sessionId: row.id,
+                      projectId: row.projectId,
+                      tenantId: getCurrentTenantId(),
+                    });
+                  }
+                }
+                // A duplicate carries the source session id — emit the richer
+                // session.duplicated event instead of the generic .created.
+                else if (row.duplicatedFromId != null)
+                  await emitSessionDuplicated(
+                    row.id,
+                    row.duplicatedFromId,
+                    tx,
+                    {
+                      projectId: row.projectId,
+                    }
+                  );
+                else await emitSessionCreated(row, tx);
+              }
+            }
+            await cancelReviewsForSoftDeleted(tx, "Sessions", before, after);
+            break;
+          }
+
+          case "Issue": {
+            if (action === "delete") {
+              for (const old of before) {
+                if (old?.id) await emitIssueDeleted(old, tx);
+              }
+              break;
+            }
+            for (let i = 0; i < after.length; i++) {
+              const row = after[i];
+              const old = before[i] ?? null;
+              if (!row?.id) continue;
+              // No projectId gate here — the emitter resolves the full set of
+              // target projects (home ∪ linked-entity projects) and no-ops when
+              // there is nothing to fan out to. Integration-only issues with a
+              // null home project still reach subscribers in the projects their
+              // linked entities live in.
+              if (old) await emitIssueUpdated(old, row, tx);
+              else await emitIssueCreated(row, tx);
+            }
+            break;
+          }
+
+          case "JUnitTestSuite": {
+            // First automated write into a manual run promotes it to HYBRID so
+            // the run page and summaries show both result trees.
+            if (action !== "create") break;
+            for (const row of after) {
+              if (row?.id && row.testRunId != null) {
+                await promoteRunToHybrid(tx as never, row.testRunId);
+                // Reporters write suites through the RPC, never the import
+                // route, so this is where a dispatched execution learns that
+                // its results have started arriving.
+                await markExecutionResultsReceived(tx as never, row.testRunId);
+              }
+            }
+            break;
+          }
+
+          case "JUnitTestResult": {
+            if (action !== "create") break;
+            for (const row of after) {
+              if (row?.id && row.testSuiteId != null) {
+                // Reporter-SDK results never touch TestRunCases.statusId; on a
+                // manual (REGULAR/HYBRID) run the manual UI, progress bar and
+                // ready-to-complete check all read that column, so mirror the
+                // result onto it here (same write the import route makes).
+                await projectJUnitResultOntoRunCase(tx as never, {
+                  testSuiteId: row.testSuiteId,
+                  repositoryCaseId: row.repositoryCaseId ?? null,
+                  statusId: row.statusId ?? null,
+                });
+                await emitJUnitResultAdded(row, tx);
+              }
+            }
+            await enqueueAlertEvaluationsForJUnitResults(tx, after).catch(
+              (error) =>
+                console.error(
+                  "[alerts] automated result enqueue failed:",
+                  error
+                )
+            );
+            await enqueueFailureTriageForJUnitResults(tx, after).catch(
+              (error) =>
+                console.error("[failure-triage] enqueue failed:", error)
+            );
+            await enqueueRiskScoreForJUnitResults(tx, after).catch((error) =>
+              console.error("[risk-score] enqueue failed:", error)
+            );
+            break;
+          }
+
+          case "TestRunResults": {
+            if (action !== "create") break;
+            for (const row of after) {
+              if (row?.id && row.testRunId != null)
+                await emitTestRunResultAdded(row, tx);
+            }
+            // A recorded elapsed time feeds the case's forecast (and, through
+            // it, every run holding the case) — what the web UI's result dialog
+            // asked for from the browser.
+            const timedCaseIds = new Set<number>();
+            for (const row of after) {
+              if (row?.elapsed == null || typeof row.testRunCaseId !== "number")
+                continue;
+              const runCase = await tx.testRunCases.findUnique({
+                where: { id: row.testRunCaseId },
+                select: { repositoryCaseId: true },
+              });
+              if (runCase) timedCaseIds.add(runCase.repositoryCaseId);
+            }
+            if (timedCaseIds.size > 0) {
+              const { getCurrentTenantId } =
+                await import("~/lib/multiTenantDb");
+              const tenantId = getCurrentTenantId();
+              for (const caseId of timedCaseIds) {
+                void enqueueCaseForecastUpdate(caseId, tenantId);
+              }
+            }
+            await enqueueAlertEvaluationsForResults(tx, after).catch((error) =>
+              console.error("[alerts] result enqueue failed:", error)
+            );
+            await enqueueRiskScoreForTestRunResults(tx, after).catch((error) =>
+              console.error("[risk-score] enqueue failed:", error)
+            );
+            break;
+          }
+
+          case "SessionResults": {
+            if (action !== "create") break;
+            for (const row of after) {
+              if (row?.id && row.sessionId != null)
+                await emitSessionResultAdded(row, tx);
+            }
+            break;
+          }
+
+          // Semantic config-change audit. The RPC route shim emits the canonical
+          // row and suppresses these to avoid a duplicate; they still fire for
+          // non-RPC writes (workers, custom routes, direct client).
+          case "SsoProvider": {
+            if (isEntityAuditSuppressed()) break;
+            if (action === "delete") {
+              for (const old of before)
+                if (old?.id) await auditSsoConfigChange("DELETE", old);
+            } else {
+              for (const row of after) {
+                if (!row?.id) continue;
+                await auditSsoConfigChange(
+                  action === "create" ? "CREATE" : "UPDATE",
+                  row
                 );
+              }
             }
+            break;
           }
-          break;
-        }
 
-        // Every path that can change how much of a run is left to execute
-        // writes a TestRunCases row in the same transaction — recording a
-        // result, editing one, deleting one, bulk-skipping, fanning out
-        // iterations, adding or removing cases. Hooking this one model is
-        // therefore the single seam that catches a run both filling up and
-        // emptying again, which is what lets the notification re-arm.
-        //
-        // Iterations need no case of their own: every iteration status write
-        // is paired with a case write inside the same transaction.
-        //
-        // Only run ids are collected here. The predicate itself runs in a
-        // debounced worker job, so a bulk import writing thousands of rows
-        // costs one enqueue per run rather than a pair of COUNTs per row.
-        case "TestRunCases": {
-          // Hard deletes arrive with neither `after` nor a before-image
-          // (TestRunCases is deliberately not in BEFORE_IMAGE_MODELS — a
-          // before-load on the hottest table in the app is not worth it).
-          // The only hard-delete callers re-create the row immediately
-          // afterwards, which re-enqueues.
-          const runIds = new Set<number>();
-          for (const row of after) {
-            if (typeof row?.testRunId === "number") runIds.add(row.testRunId);
-          }
-          if (runIds.size > 0) {
-            const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
-            const tenantId = getCurrentTenantId();
-            for (const runId of runIds) {
-              // Detached: this hook body runs inside the writer's transaction
-              // and must never hold it open or fail it.
-              void enqueueRunReadyCheck(runId, tenantId);
+          case "AppConfig": {
+            if (isEntityAuditSuppressed()) break;
+            if (action === "delete") {
+              for (const old of before)
+                if (old?.key)
+                  await auditSystemConfigChange(old.key, old.value, null);
+            } else {
+              for (let i = 0; i < after.length; i++) {
+                const row = after[i];
+                const old = before[i] ?? null;
+                if (!row?.key) continue;
+                await auditSystemConfigChange(row.key, old?.value, row.value);
+              }
             }
+            break;
           }
-          break;
-        }
 
-        default:
-          break;
-      }
+          // API-token writes: audit revocation/deletion (gated, the RPC shim emits
+          // the canonical row) and always evict the short-TTL auth cache.
+          case "ApiToken": {
+            if (action === "delete") {
+              for (const old of before) {
+                if (!old?.id) continue;
+                if (!isEntityAuditSuppressed()) {
+                  await captureAuditEvent({
+                    action: "API_KEY_DELETED",
+                    entityType: "ApiToken",
+                    entityId: old.id,
+                    entityName: old.name,
+                    metadata: {
+                      tokenPrefix: old.tokenPrefix,
+                      tokenOwnerId: old.userId,
+                    },
+                  });
+                }
+                if (old.token)
+                  invalidateApiTokenCache(old.token).catch((error: unknown) =>
+                    console.error(
+                      "Failed to invalidate API token cache:",
+                      error
+                    )
+                  );
+              }
+              break;
+            }
+            if (action === "update") {
+              for (let i = 0; i < after.length; i++) {
+                const row = after[i];
+                const old = before[i] ?? null;
+                if (!row?.id) continue;
+                if (
+                  old &&
+                  old.isActive === true &&
+                  row.isActive === false &&
+                  !isEntityAuditSuppressed()
+                ) {
+                  await captureAuditEvent({
+                    action: "API_KEY_REVOKED",
+                    entityType: "ApiToken",
+                    entityId: row.id,
+                    entityName: row.name,
+                    metadata: {
+                      tokenPrefix: row.tokenPrefix,
+                      tokenOwnerId: row.userId,
+                    },
+                  });
+                }
+                const token = old?.token ?? row.token;
+                if (token)
+                  invalidateApiTokenCache(token).catch((error: unknown) =>
+                    console.error(
+                      "Failed to invalidate API token cache:",
+                      error
+                    )
+                  );
+              }
+            }
+            break;
+          }
+
+          // Every path that can change how much of a run is left to execute
+          // writes a TestRunCases row in the same transaction — recording a
+          // result, editing one, deleting one, bulk-skipping, fanning out
+          // iterations, adding or removing cases. Hooking this one model is
+          // therefore the single seam that catches a run both filling up and
+          // emptying again, which is what lets the notification re-arm.
+          //
+          // Iterations need no case of their own: every iteration status write
+          // is paired with a case write inside the same transaction.
+          //
+          // Only run ids are collected here. The predicate itself runs in a
+          // debounced worker job, so a bulk import writing thousands of rows
+          // costs one enqueue per run rather than a pair of COUNTs per row.
+          case "TestRunCases": {
+            // Hard deletes arrive with neither `after` nor a before-image
+            // (TestRunCases is deliberately not in BEFORE_IMAGE_MODELS — a
+            // before-load on the hottest table in the app is not worth it).
+            // The only hard-delete callers re-create the row immediately
+            // afterwards, which re-enqueues.
+            const runIds = new Set<number>();
+            for (const row of after) {
+              if (typeof row?.testRunId === "number") runIds.add(row.testRunId);
+            }
+            if (runIds.size > 0) {
+              const { getCurrentTenantId } =
+                await import("~/lib/multiTenantDb");
+              const tenantId = getCurrentTenantId();
+              for (const runId of runIds) {
+                // Detached: this hook body runs inside the writer's transaction
+                // and must never hold it open or fail it.
+                void enqueueRunReadyCheck(runId, tenantId);
+                // The run's forecast sums its live cases; any membership change
+                // moves it.
+                void enqueueRunForecastUpdate(runId, tenantId);
+              }
+            }
+            // Cases created already assigned (a duplicated run that copies
+            // assignments, an API client): the assignee is told, as for an
+            // assignment made later. Updates are handled in onQuery, where
+            // the previous assignee can still be read.
+            if (action === "create") {
+              const byAssignee = new Map<string, number[]>();
+              for (const row of after) {
+                if (typeof row?.assignedToId === "string" && row.assignedToId) {
+                  byAssignee.set(row.assignedToId, [
+                    ...(byAssignee.get(row.assignedToId) ?? []),
+                    row.id,
+                  ]);
+                }
+              }
+              const actor = byAssignee.size > 0 ? assignmentActor() : null;
+              if (actor) {
+                for (const [assignedToId, testRunCaseIds] of byAssignee) {
+                  void notifyRunCaseAssignment(tx as any, {
+                    testRunCaseIds,
+                    assignedToId,
+                    actor,
+                  }).catch((error) =>
+                    console.error("[assignment] notification failed:", error)
+                  );
+                }
+              }
+            }
+            break;
+          }
+
+          case "RepositoryCaseLink": {
+            // Linked cases share a forecast group; a link change moves both
+            // ends' forecasts (the browser used to ask for this).
+            const linkedCaseIds = new Set<number>();
+            for (const row of [...before, ...after]) {
+              if (typeof row?.caseAId === "number")
+                linkedCaseIds.add(row.caseAId);
+              if (typeof row?.caseBId === "number")
+                linkedCaseIds.add(row.caseBId);
+            }
+            if (linkedCaseIds.size > 0) {
+              const { getCurrentTenantId } =
+                await import("~/lib/multiTenantDb");
+              const tenantId = getCurrentTenantId();
+              for (const caseId of linkedCaseIds) {
+                void enqueueCaseForecastUpdate(caseId, tenantId);
+              }
+            }
+            break;
+          }
+
+          default:
+            break;
+        }
+      },
     },
   },
 });
+
+/**
+ * Alerts (#651): hand each new manual result, and its run, to
+ * the evaluation worker. One indexed count per project gates the enqueue so
+ * projects without rules pay nothing; the enqueues are detached because this
+ * runs inside the writer's transaction. Results from a CI import share one
+ * run, so the run job is deduplicated by the enqueue helper.
+ */
+async function enqueueAlertEvaluationsForResults(
+  tx: TxClient,
+  rows: any[]
+): Promise<void> {
+  const created = rows.filter((row) => row?.id && row.testRunId != null);
+  if (created.length === 0 || typeof tx.alertRule?.count !== "function") {
+    return;
+  }
+  const runIds = [...new Set(created.map((row) => Number(row.testRunId)))];
+  const runs = await tx.testRuns.findMany({
+    where: { id: { in: runIds } },
+    select: { id: true, projectId: true },
+  });
+  const projectByRun = new Map(runs.map((r) => [r.id, r.projectId]));
+  const activeByProject = new Map<number, boolean>();
+  const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+  const tenantId = getCurrentTenantId();
+  const runJobs = new Set<number>();
+  for (const row of created) {
+    const projectId = projectByRun.get(Number(row.testRunId));
+    if (projectId == null) continue;
+    let active = activeByProject.get(projectId);
+    if (active === undefined) {
+      active = await projectHasActiveAlertRules(tx, projectId);
+      activeByProject.set(projectId, active);
+    }
+    if (!active) continue;
+    void enqueueAlertResultEvaluation({
+      resultId: Number(row.id),
+      projectId,
+      tenantId,
+    });
+    if (!runJobs.has(Number(row.testRunId))) {
+      runJobs.add(Number(row.testRunId));
+      void enqueueAlertRunEvaluation({
+        runId: Number(row.testRunId),
+        projectId,
+        trigger: "result",
+        tenantId,
+      });
+    }
+  }
+}
+
+/** Same as above for reporter (JUnit) results, which reach the run via their suite. */
+/**
+ * Failure triage: one debounced per-run job per result burst, so the worker
+ * groups a run's FAILURE/ERROR rows after they have all landed. Gated on the
+ * project flag so a project that turned triage off costs nothing here.
+ */
+async function enqueueFailureTriageForJUnitResults(
+  tx: TxClient,
+  rows: any[]
+): Promise<void> {
+  if (typeof tx.jUnitTestSuite?.findMany !== "function") return;
+  const valid = rows.filter((row) => row?.id && row.testSuiteId != null);
+  const failed = valid.filter(
+    (row) => row.type === "FAILURE" || row.type === "ERROR"
+  );
+  let relevant = failed;
+  if (failed.length === 0) {
+    // A passing burst matters only to quarantined cases, whose quarantine
+    // lifts after enough consecutive passes.
+    const caseIds = [
+      ...new Set(
+        valid
+          .map((row) => Number(row.repositoryCaseId))
+          .filter((id) => Number.isInteger(id))
+      ),
+    ];
+    if (
+      caseIds.length === 0 ||
+      typeof tx.caseQuarantine?.findMany !== "function"
+    ) {
+      return;
+    }
+    const quarantined = await tx.caseQuarantine.findMany({
+      where: { caseId: { in: caseIds } },
+      select: { caseId: true },
+    });
+    if (quarantined.length === 0) return;
+    const quarantinedIds = new Set(quarantined.map((q) => q.caseId));
+    relevant = valid.filter((row) =>
+      quarantinedIds.has(Number(row.repositoryCaseId))
+    );
+    if (relevant.length === 0) return;
+  }
+  const suiteIds = [...new Set(relevant.map((row) => Number(row.testSuiteId)))];
+  const suites = await tx.jUnitTestSuite.findMany({
+    where: { id: { in: suiteIds } },
+    select: {
+      id: true,
+      testRun: {
+        select: {
+          id: true,
+          projectId: true,
+          project: { select: { failureTriageEnabled: true } },
+        },
+      },
+    },
+  });
+  const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+  const { enqueueFailureTriageForRun } =
+    await import("~/lib/services/triage/enqueue");
+  const tenantId = getCurrentTenantId();
+  const seenRuns = new Set<number>();
+  for (const suite of suites) {
+    const run = suite.testRun as {
+      id: number;
+      projectId: number;
+      project: { failureTriageEnabled: boolean } | null;
+    };
+    if (!run?.project?.failureTriageEnabled || seenRuns.has(run.id)) continue;
+    seenRuns.add(run.id);
+    void enqueueFailureTriageForRun({
+      testRunId: run.id,
+      projectId: run.projectId,
+      tenantId,
+    });
+  }
+}
+
+/**
+ * Every automated verdict moves a case's failure, flakiness and staleness
+ * signals, so each affected run gets one debounced risk recompute. Gated on
+ * the per-project flag so a project with risk scoring off costs one select.
+ */
+async function enqueueRiskScoreForJUnitResults(
+  tx: TxClient,
+  rows: any[]
+): Promise<void> {
+  if (typeof tx.jUnitTestSuite?.findMany !== "function") return;
+  const valid = rows.filter((row) => row?.id && row.testSuiteId != null);
+  if (valid.length === 0) return;
+  const suiteIds = [...new Set(valid.map((row) => Number(row.testSuiteId)))];
+  const suites = await tx.jUnitTestSuite.findMany({
+    where: { id: { in: suiteIds } },
+    select: {
+      id: true,
+      testRun: {
+        select: {
+          id: true,
+          projectId: true,
+          project: { select: { riskScoringEnabled: true } },
+        },
+      },
+    },
+  });
+  const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+  const { enqueueRiskScoreForRun } =
+    await import("~/lib/services/risk/enqueue");
+  const tenantId = getCurrentTenantId();
+  const seenRuns = new Set<number>();
+  for (const suite of suites) {
+    const run = suite.testRun as {
+      id: number;
+      projectId: number;
+      project: { riskScoringEnabled: boolean } | null;
+    };
+    if (!run?.project?.riskScoringEnabled || seenRuns.has(run.id)) continue;
+    seenRuns.add(run.id);
+    void enqueueRiskScoreForRun({
+      testRunId: run.id,
+      projectId: run.projectId,
+      tenantId,
+    });
+  }
+}
+
+/** Manual results carry their run directly; same per-run debounce as above. */
+async function enqueueRiskScoreForTestRunResults(
+  tx: TxClient,
+  rows: any[]
+): Promise<void> {
+  if (typeof tx.testRuns?.findMany !== "function") return;
+  const runIds = [
+    ...new Set(
+      rows
+        .filter((row) => row?.id && row.testRunId != null)
+        .map((row) => Number(row.testRunId))
+    ),
+  ];
+  if (runIds.length === 0) return;
+  const runs = await tx.testRuns.findMany({
+    where: { id: { in: runIds } },
+    select: {
+      id: true,
+      projectId: true,
+      project: { select: { riskScoringEnabled: true } },
+    },
+  });
+  const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+  const { enqueueRiskScoreForRun } =
+    await import("~/lib/services/risk/enqueue");
+  const tenantId = getCurrentTenantId();
+  for (const run of runs) {
+    if (!run.project?.riskScoringEnabled) continue;
+    void enqueueRiskScoreForRun({
+      testRunId: run.id,
+      projectId: run.projectId,
+      tenantId,
+    });
+  }
+}
+
+async function enqueueAlertEvaluationsForJUnitResults(
+  tx: TxClient,
+  rows: any[]
+): Promise<void> {
+  const created = rows.filter((row) => row?.id && row.testSuiteId != null);
+  if (created.length === 0 || typeof tx.alertRule?.count !== "function") {
+    return;
+  }
+  const suiteIds = [...new Set(created.map((row) => Number(row.testSuiteId)))];
+  const suites = await tx.jUnitTestSuite.findMany({
+    where: { id: { in: suiteIds } },
+    select: { id: true, testRun: { select: { id: true, projectId: true } } },
+  });
+  const runBySuite = new Map(
+    suites.map((s) => [s.id, s.testRun as { id: number; projectId: number }])
+  );
+  const activeByProject = new Map<number, boolean>();
+  const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+  const tenantId = getCurrentTenantId();
+  const runJobs = new Set<number>();
+  for (const row of created) {
+    const run = runBySuite.get(Number(row.testSuiteId));
+    if (!run) continue;
+    let active = activeByProject.get(run.projectId);
+    if (active === undefined) {
+      active = await projectHasActiveAlertRules(tx, run.projectId);
+      activeByProject.set(run.projectId, active);
+    }
+    if (!active) continue;
+    void enqueueAlertJUnitResultEvaluation({
+      junitResultId: Number(row.id),
+      projectId: run.projectId,
+      tenantId,
+    });
+    if (!runJobs.has(run.id)) {
+      runJobs.add(run.id);
+      void enqueueAlertRunEvaluation({
+        runId: run.id,
+        projectId: run.projectId,
+        trigger: "result",
+        tenantId,
+      });
+    }
+  }
+}

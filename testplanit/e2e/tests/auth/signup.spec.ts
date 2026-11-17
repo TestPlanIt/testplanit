@@ -44,7 +44,10 @@ test.describe("User Signup", () => {
       // After signup, user is auto-signed in and redirected away from /signup.
       // If email verification is required (email server configured), redirects to /verify-email.
       // If email verification is NOT required, redirects to home page /.
-      await page.waitForURL(/\/en-US\/(verify-email|$|\?)/, { timeout: 15000 });
+      // Signup hashes the password and signs in before it redirects, which
+      // can take longer than a plain navigation while the suite runs in
+      // parallel.
+      await page.waitForURL(/\/en-US\/(verify-email|$|\?)/, { timeout: 30000 });
       expect(page.url()).not.toContain("/signup");
     });
   });

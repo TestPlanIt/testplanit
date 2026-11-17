@@ -20,6 +20,11 @@ import {
   isOutcomeFlip,
 } from "~/lib/services/resultGuards";
 import { syncRunCaseStatusAfterResultEdit } from "~/lib/services/runCaseStatusSync";
+import {
+  findUnblockedDependants,
+  type UnblockedDependant,
+} from "~/lib/services/dependencyGate";
+import { notifyUnblockedDependants } from "~/lib/services/dependencyHandoff";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { isNotFoundError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
@@ -136,15 +141,22 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         testRunCase: {
           select: {
             assignedToId: true,
-            repositoryCase: { select: { templateId: true } },
+            repositoryCaseId: true,
+            // Pre-edit pass state: the dependency handoff fires only on a
+            // not-passed → passed transition.
+            status: { select: { isSuccess: true } },
+            repositoryCase: { select: { templateId: true, name: true } },
             testRun: {
               select: {
+                id: true,
                 name: true,
                 createdById: true,
                 projectId: true,
                 isCompleted: true,
                 project: {
                   select: {
+                    name: true,
+                    enforceCaseDependencies: true,
                     createdBy: true,
                     defaultAccessType: true,
                     requireResultFlipJustification: true,
@@ -381,61 +393,96 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       subjectProjectId: existing.testRunCase.testRun.projectId,
     });
 
-    const result = await auditedTransaction(async (tx) => {
-      const updated = await tx.testRunResults.update({
-        where: { id: input.resultId },
-        data: {
-          statusId: input.statusId,
-          notes: notesInput,
-          evidence: evidenceInput,
-          elapsed: input.elapsed ?? null,
-          editedById: user.id,
-          editedAt: new Date(),
-          ...(input.testRunCaseVersion !== undefined
-            ? { testRunCaseVersion: input.testRunCaseVersion }
-            : {}),
-          ...(input.issueIds !== undefined
-            ? { issues: { set: input.issueIds.map((id) => ({ id })) } }
-            : {}),
-        },
-      });
+    const { updated: result, unblockedDependants } = await auditedTransaction(
+      async (tx) => {
+        const updated = await tx.testRunResults.update({
+          where: { id: input.resultId },
+          data: {
+            statusId: input.statusId,
+            notes: notesInput,
+            evidence: evidenceInput,
+            elapsed: input.elapsed ?? null,
+            editedById: user.id,
+            editedAt: new Date(),
+            ...(input.testRunCaseVersion !== undefined
+              ? { testRunCaseVersion: input.testRunCaseVersion }
+              : {}),
+            ...(input.issueIds !== undefined
+              ? { issues: { set: input.issueIds.map((id) => ({ id })) } }
+              : {}),
+          },
+        });
 
-      // Upsert custom field values: update rows that already exist on this
-      // result, create the rest. Values arrive already client-encoded.
-      for (const fv of input.fieldValues ?? []) {
-        const value = (fv.value ?? JsonNull) as JsonValue;
-        const existingId = existingFieldValueByFieldId.get(fv.fieldId);
-        if (existingId !== undefined) {
-          await tx.resultFieldValues.update({
-            where: { id: existingId },
-            data: { value },
-          });
-        } else {
-          await tx.resultFieldValues.create({
-            data: {
-              fieldId: fv.fieldId,
-              value,
-              testRunResultsId: input.resultId,
-            },
-          });
+        // Upsert custom field values: update rows that already exist on this
+        // result, create the rest. Values arrive already client-encoded.
+        for (const fv of input.fieldValues ?? []) {
+          const value = (fv.value ?? JsonNull) as JsonValue;
+          const existingId = existingFieldValueByFieldId.get(fv.fieldId);
+          if (existingId !== undefined) {
+            await tx.resultFieldValues.update({
+              where: { id: existingId },
+              data: { value },
+            });
+          } else {
+            await tx.resultFieldValues.create({
+              data: {
+                fieldId: fv.fieldId,
+                value,
+                testRunResultsId: input.resultId,
+              },
+            });
+          }
         }
+
+        // Re-derive the owning run-case's denormalized status from the edited
+        // result. Everything run-level (donut counts, the per-case status chip,
+        // exports) reads `TestRunCases.statusId`, which `submit-result` writes on
+        // every submission; without this an edit updated only the result row, so
+        // the Test Result History showed the new outcome while the run kept
+        // reporting the old one. In-tx so status and result commit together.
+        await syncRunCaseStatusAfterResultEdit(tx, {
+          testRunCaseId: existing.testRunCaseId,
+          resultId: input.resultId,
+          iterationId: existing.iterationId,
+          statusId: input.statusId,
+        });
+
+        // Dependency handoff (opt-in per project): an edit that moves the
+        // case from not-passed to passed opens its dependants' gates exactly
+        // like a new result would. The reverse edit re-blocks them on read;
+        // nothing to do here.
+        let unblockedDependants: UnblockedDependant[] = [];
+        if (
+          project.enforceCaseDependencies === true &&
+          existing.testRunCase.status?.isSuccess !== true
+        ) {
+          const now = await tx.testRunCases.findUnique({
+            where: { id: existing.testRunCaseId },
+            select: { status: { select: { isSuccess: true } } },
+          });
+          if (now?.status?.isSuccess === true) {
+            unblockedDependants = await findUnblockedDependants(tx, {
+              testRunId: existing.testRunCase.testRun.id,
+              repositoryCaseId: existing.testRunCase.repositoryCaseId,
+            });
+          }
+        }
+
+        return { updated, unblockedDependants };
       }
+    );
 
-      // Re-derive the owning run-case's denormalized status from the edited
-      // result. Everything run-level (donut counts, the per-case status chip,
-      // exports) reads `TestRunCases.statusId`, which `submit-result` writes on
-      // every submission; without this an edit updated only the result row, so
-      // the Test Result History showed the new outcome while the run kept
-      // reporting the old one. In-tx so status and result commit together.
-      await syncRunCaseStatusAfterResultEdit(tx, {
-        testRunCaseId: existing.testRunCaseId,
-        resultId: input.resultId,
-        iterationId: existing.iterationId,
-        statusId: input.statusId,
+    if (unblockedDependants.length > 0) {
+      void notifyUnblockedDependants({
+        dependants: unblockedDependants,
+        actorUserId: user.id,
+        testRunId: existing.testRunCase.testRun.id,
+        testRunName: existing.testRunCase.testRun.name,
+        projectId: existing.testRunCase.testRun.projectId,
+        projectName: project.name,
+        prerequisiteCaseName: existing.testRunCase.repositoryCase.name,
       });
-
-      return updated;
-    });
+    }
 
     // The result UPDATE is audited by the shared TestRunResults $extends hook
     // (lib/baseDb.ts), which scopes and names the row from its parents. The

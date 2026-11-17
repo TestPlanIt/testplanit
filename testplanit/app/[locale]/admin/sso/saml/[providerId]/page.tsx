@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
+import { withBasePath } from "~/lib/basePath";
 
 // Get all Access enum values dynamically with their translation keys
 const AccessLevels = [
@@ -72,10 +74,16 @@ export default function SAMLConfigurationPage() {
     where: { providerId: providerId },
   });
 
+  const { mutateAsync: updateProvider } =
+    useClientQueries(schema).ssoProvider.useUpdate();
   const { mutateAsync: createSamlConfig } =
     useClientQueries(schema).samlConfiguration.useCreate();
   const { mutateAsync: updateSamlConfig } =
     useClientQueries(schema).samlConfiguration.useUpdate();
+
+  // The provider name labels the button on the sign-in page, so with several
+  // SAML providers it has to be editable here.
+  const [providerName, setProviderName] = useState("");
 
   const [formData, setFormData] = useState<SamlFormData>({
     entryPoint: "",
@@ -96,6 +104,12 @@ export default function SAMLConfigurationPage() {
       groups: "groups",
     },
   });
+
+  useEffect(() => {
+    if (provider) {
+      setProviderName(provider.name);
+    }
+  }, [provider]);
 
   useEffect(() => {
     if (samlConfig) {
@@ -123,7 +137,7 @@ export default function SAMLConfigurationPage() {
       // Set default callback URL
       setFormData((prev) => ({
         ...prev,
-        callbackUrl: `${window.location.origin}/api/auth/callback/saml`,
+        callbackUrl: `${window.location.origin}${withBasePath("/api/auth/callback/saml")}`,
       }));
     }
   }, [samlConfig]);
@@ -155,8 +169,37 @@ export default function SAMLConfigurationPage() {
   }
 
   const handleSave = async () => {
+    if (
+      !providerName.trim() ||
+      !formData.entryPoint ||
+      !formData.issuer ||
+      !formData.cert ||
+      !formData.callbackUrl
+    ) {
+      toast.error(t("admin.sso.dialogs.saml.validation.allRequired"));
+      return;
+    }
+
     try {
       setIsSaving(true);
+
+      // Rename first: SsoProvider.name is unique, so a clash must stop the
+      // save before the configuration is written.
+      if (providerName.trim() !== provider.name) {
+        try {
+          await updateProvider({
+            where: { id: providerId },
+            data: { name: providerName.trim() },
+          });
+        } catch (error) {
+          if (isUniqueConstraintError(error)) {
+            toast.error(t("admin.sso.messages.providerNameExists"));
+          } else {
+            toast.error(t("admin.sso.messages.configSaveFailed"));
+          }
+          return;
+        }
+      }
 
       const data = {
         entryPoint: formData.entryPoint,
@@ -210,7 +253,9 @@ export default function SAMLConfigurationPage() {
           {t("admin.sso.samlConfiguration.title")}
         </h1>
         <p className="text-muted-foreground mt-2">
-          {`Configure SAML settings for ${provider.name}`}
+          {t("admin.sso.samlConfiguration.description", {
+            name: provider.name,
+          })}
         </p>
       </div>
 
@@ -225,6 +270,21 @@ export default function SAMLConfigurationPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="providerName">{t("common.name")}</Label>
+              <Input
+                id="providerName"
+                value={providerName}
+                onChange={(e) => setProviderName(e.target.value)}
+                placeholder="Okta"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                {t(
+                  "admin.sso.samlConfiguration.samlSettings.providerNameDescription"
+                )}
+              </p>
+            </div>
+
             <div>
               <Label htmlFor="entryPoint">
                 {t("admin.sso.samlConfiguration.samlSettings.ssoUrl")}
@@ -342,6 +402,21 @@ export default function SAMLConfigurationPage() {
                   "admin.sso.samlConfiguration.samlSettings.wantAuthnResponseSignedDescription"
                 )}
               </p>
+            </div>
+
+            <div className="text-sm text-muted-foreground border-t pt-4">
+              <p>{t("admin.sso.dialogs.saml.instructions.title")}</p>
+              <ol className="list-decimal ms-4 space-y-1">
+                <li>{t("admin.sso.dialogs.saml.instructions.step1")}</li>
+                <li>{t("admin.sso.dialogs.saml.instructions.step2")}</li>
+                <li>{t("admin.sso.dialogs.saml.instructions.step3")}</li>
+                <li>
+                  {t("admin.sso.dialogs.saml.instructions.step4")}{" "}
+                  <code className="bg-muted px-1 rounded">
+                    {formData.callbackUrl}
+                  </code>
+                </li>
+              </ol>
             </div>
           </CardContent>
         </Card>

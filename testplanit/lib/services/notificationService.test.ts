@@ -128,6 +128,164 @@ describe("NotificationService", () => {
     });
   });
 
+  describe("createAlertTriggeredNotification", () => {
+    it("queues one ALERT_TRIGGERED notification per subscriber with the full payload", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-threshold" } as any);
+
+      await NotificationService.createAlertTriggeredNotification({
+        targetUserIds: ["u1", "u2"],
+        eventId: 101,
+        ruleId: 4,
+        ruleName: "Slow checkout",
+        metric: "RESULT_DURATION_DEVIATION",
+        projectId: 7,
+        projectName: "Shop",
+        subjectType: "CASE",
+        subjectId: 9,
+        subjectName: "Checkout",
+        observedValue: 81.25,
+        baselineValue: 11,
+        thresholdValue: 50,
+        testRunId: 42,
+        details: { elapsed: 20 },
+        tenantId: "acme",
+      });
+
+      expect(mockQueue.add).toHaveBeenCalledTimes(2);
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          userId: "u2",
+          type: NotificationType.ALERT_TRIGGERED,
+          title: "Alert fired: Slow checkout",
+          relatedEntityId: "101",
+          relatedEntityType: "AlertEvent",
+          tenantId: "acme",
+          data: {
+            eventId: 101,
+            ruleId: 4,
+            ruleName: "Slow checkout",
+            metric: "RESULT_DURATION_DEVIATION",
+            projectId: 7,
+            projectName: "Shop",
+            subjectType: "CASE",
+            subjectId: 9,
+            subjectRef: null,
+            subjectName: "Checkout",
+            observedValue: 81.25,
+            baselineValue: 11,
+            thresholdValue: 50,
+            testRunId: 42,
+            details: { elapsed: 20 },
+          },
+        }),
+        expect.anything()
+      );
+    });
+
+    it("does nothing with no recipients", async () => {
+      await NotificationService.createAlertTriggeredNotification({
+        targetUserIds: [],
+        eventId: 1,
+        ruleId: 1,
+        ruleName: "r",
+        metric: "MILESTONE_OVERDUE",
+        projectId: 1,
+        projectName: "p",
+        subjectType: "MILESTONE",
+        subjectId: 1,
+        subjectName: "m",
+        observedValue: 1,
+        baselineValue: null,
+        thresholdValue: 0,
+      });
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("createCasesDraftedNotification", () => {
+    it("queues a CASES_DRAFTED notification pointing at the folder", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-drafted" } as any);
+
+      await NotificationService.createCasesDraftedNotification({
+        userId: "rev",
+        projectId: 3,
+        projectName: "Telco",
+        folderId: 55,
+        folderName: "Drafted from issues",
+        issueId: 100,
+        issueKey: "DEMO-42",
+        issueTitle: "Checkout totals",
+        caseCount: 2,
+      });
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          userId: "rev",
+          type: NotificationType.CASES_DRAFTED,
+          title: "AI-drafted test cases ready for review",
+          message:
+            '2 test cases drafted for DEMO-42 "Checkout totals" in project "Telco" — review them in "Drafted from issues".',
+          relatedEntityId: "55",
+          relatedEntityType: "RepositoryFolder",
+          data: {
+            projectId: 3,
+            projectName: "Telco",
+            folderId: 55,
+            folderName: "Drafted from issues",
+            issueId: 100,
+            issueKey: "DEMO-42",
+            issueTitle: "Checkout totals",
+            caseCount: 2,
+          },
+        }),
+        expect.anything()
+      );
+    });
+  });
+
+  describe("createRunCaseUnblockedNotification", () => {
+    it("queues a RUN_CASE_UNBLOCKED notification pointing at the case in its run", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-unblocked" } as any);
+
+      await NotificationService.createRunCaseUnblockedNotification({
+        userId: "prov",
+        testRunId: 50,
+        testRunName: "Order to billing",
+        projectId: 3,
+        projectName: "Telco",
+        testRunCaseId: 20,
+        testCaseId: 2,
+        testCaseName: "Verify provisioning",
+        prerequisiteCaseName: "Create order",
+        unblockedById: "crm",
+      });
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          userId: "prov",
+          type: NotificationType.RUN_CASE_UNBLOCKED,
+          relatedEntityId: "20",
+          relatedEntityType: "TestRunCase",
+          data: {
+            testRunId: 50,
+            testRunName: "Order to billing",
+            projectId: 3,
+            projectName: "Telco",
+            testRunCaseId: 20,
+            testCaseId: 2,
+            testCaseName: "Verify provisioning",
+            prerequisiteCaseName: "Create order",
+            unblockedById: "crm",
+          },
+        }),
+        expect.anything()
+      );
+    });
+  });
+
   describe("createWorkAssignmentNotification", () => {
     it("should create a notification for test run case assignment", async () => {
       const mockJobId = "job-456";
@@ -979,7 +1137,7 @@ describe("NotificationService", () => {
         expect(payload.message).toContain(label);
         expect(payload.message).toContain('"Login flow"');
         expect(payload.message).toContain('"Project X"');
-        expect(payload.message).toContain("36h pending");
+        expect(payload.message).toContain("pending for 1 day");
       }
     );
 

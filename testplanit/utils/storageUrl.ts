@@ -1,3 +1,4 @@
+import { withBasePath } from "~/lib/basePath";
 /**
  * Converts MinIO/S3 storage URLs to proxy URLs for hosted instances.
  *
@@ -43,7 +44,7 @@ export function getStorageUrl(
 
     // Return proxy URL
     // This will be relative to the current domain (e.g., subdomain.testplanit.com)
-    return `/api/storage/${objectKey}`;
+    return withBasePath(`/api/storage/${objectKey}`);
   } catch (error) {
     console.error("Failed to convert storage URL:", error);
     return minioUrl; // Fallback to original URL
@@ -85,7 +86,7 @@ export function getStorageUrlClient(
         objectKey = bucketMatch[1];
       }
 
-      return `/api/storage/${objectKey}`;
+      return withBasePath(`/api/storage/${objectKey}`);
     } catch (error) {
       console.error("Failed to convert storage URL:", error);
       return minioUrl;

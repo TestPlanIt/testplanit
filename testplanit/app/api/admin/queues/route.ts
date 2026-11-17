@@ -68,6 +68,10 @@ export async function GET(request: NextRequest) {
       "iteration-generation": 1,
       "webhook-dispatch": 5,
       "scim-access-recompute": 1,
+      alerts: 2,
+      "webhook-actions": 2,
+      "failure-triage": 2,
+      "risk-score": 2,
     };
 
     // Get configured concurrency from environment (or use defaults)
@@ -157,6 +161,25 @@ export async function GET(request: NextRequest) {
         10
       ),
       "scim-access-recompute": defaultConcurrency["scim-access-recompute"],
+      alerts: parseInt(
+        process.env.ALERT_CONCURRENCY || String(defaultConcurrency["alerts"]),
+        10
+      ),
+      "webhook-actions": parseInt(
+        process.env.WEBHOOK_ACTIONS_CONCURRENCY ||
+          String(defaultConcurrency["webhook-actions"]),
+        10
+      ),
+      "failure-triage": parseInt(
+        process.env.FAILURE_TRIAGE_CONCURRENCY ||
+          String(defaultConcurrency["failure-triage"]),
+        10
+      ),
+      "risk-score": parseInt(
+        process.env.RISK_SCORE_CONCURRENCY ||
+          String(defaultConcurrency["risk-score"]),
+        10
+      ),
     };
 
     // Build the display list dynamically from EVERY registered queue rather
@@ -205,14 +228,13 @@ export async function GET(request: NextRequest) {
           let counts;
           if (multiTenant) {
             // Get all jobs and filter by tenantId
-            const [waiting, active, completed, failed, delayed, paused] =
+            const [waiting, active, completed, failed, delayed] =
               await Promise.all([
                 queue.getJobs(["waiting"], 0, 1000),
                 queue.getJobs(["active"], 0, 1000),
                 queue.getJobs(["completed"], 0, 1000),
                 queue.getJobs(["failed"], 0, 1000),
                 queue.getJobs(["delayed"], 0, 1000),
-                queue.getJobs(["paused"], 0, 1000),
               ]);
 
             // Filter jobs by tenantId (strip null entries from getJobs)
@@ -227,7 +249,6 @@ export async function GET(request: NextRequest) {
               completed: filterByTenant(completed),
               failed: filterByTenant(failed),
               delayed: filterByTenant(delayed),
-              paused: filterByTenant(paused),
             };
           } else {
             // Single-tenant mode: use standard counts

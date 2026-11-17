@@ -24,7 +24,6 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { z } from "zod/v4";
-import { notifySessionAssignment } from "~/app/actions/session-notifications";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -1519,6 +1518,10 @@ export default function SessionPage() {
 
   // Update onSubmit function
   const onSubmit = async (data: FormValues) => {
+    // The form wraps the whole page, so a submit can reach it from the results
+    // area while the session itself is not being edited.
+    if (!isEditMode) return;
+
     // Strict-transitive review-gate preflight. The live inline error
     // rendered under the state Select reads off the same `transitionGate`,
     // so we DON'T also `setError` here — that double-renders the message
@@ -1576,16 +1579,16 @@ export default function SessionPage() {
           ...(groupChanged
             ? configurationGroupUpdateData(data.configurationGroupId)
             : {}),
+          // A lone `set` per relation: ZenStack applies `connect` before
+          // `set`, so `set: []` beside a `connect` clears the relation.
           attachments: {
-            set: [], // Clear existing attachments
-            connect:
+            set:
               transformedData.attachments?.map((attachment) => ({
                 id: attachment.id,
               })) || [],
           },
           tags: {
-            set: [],
-            connect: selectedTags.map((tagId) => ({
+            set: selectedTags.map((tagId) => ({
               id: tagId,
             })),
           },
@@ -1716,15 +1719,6 @@ export default function SessionPage() {
       const params = new URLSearchParams(searchParams);
       params.delete("edit");
       router.replace(`?${params.toString()}`);
-
-      // Send notification if assignment changed
-      if (transformedData.assignedToId !== sessionData?.assignedToId) {
-        await notifySessionAssignment(
-          Number(sessionId),
-          transformedData.assignedToId ?? null,
-          sessionData?.assignedToId ?? null
-        );
-      }
     } catch (err: any) {
       console.error("Submit error:", err);
       form.setError("root", {

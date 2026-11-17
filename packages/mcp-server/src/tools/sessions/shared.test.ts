@@ -44,7 +44,7 @@ describe("mapSessionRow", () => {
     tags: [{ id: 9, name: "exploratory" }],
   };
 
-  it("D7-12: enumerates exactly the documented keys; mission/note routed through extractProseMirrorText", () => {
+  it("enumerates exactly the documented keys; mission/note routed through extractProseMirrorText", () => {
     const result = mapSessionRow(baseRaw);
     expect(Object.keys(result).sort()).toEqual(
       [
@@ -128,7 +128,7 @@ describe("mapSessionDetail", () => {
     ],
   };
 
-  it("D7-12: sessionResults inlined up to take limit; truncated flag forwarded", () => {
+  it("sessionResults inlined up to take limit; truncated flag forwarded", () => {
     const five = Array.from({ length: 5 }, (_, i) => ({
       id: i,
       createdAt: "2026-01-01T00:00:00Z",

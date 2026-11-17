@@ -36,8 +36,6 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -54,7 +52,6 @@ import {
   DetailsDisplayMode,
   ItemsPerPage,
   Locale,
-  NotificationMode,
   Theme,
   TimeFormat,
 } from "~/zenstack/models";
@@ -69,6 +66,7 @@ import {
   SunMoon,
   UserLock,
   X,
+  BellRing,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -78,14 +76,17 @@ import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { UserAssignments } from "~/components/users/UserAssignments";
 import { UserAuditLog } from "~/components/users/UserAuditLog";
+import { UserTrash } from "~/components/users/UserTrash";
 import { SCIM_SCHEMAS } from "~/lib/scim/constants";
 import { languageNames } from "~/i18n/navigation";
-import { useRouter } from "~/lib/navigation";
+import { Link, useRouter } from "~/lib/navigation";
 import { ApiTokenSettings } from "./ApiTokenSettings";
 import { ChangePasswordModal } from "./ChangePasswordModal";
 import { EditAvatar } from "./EditAvatar";
 import { RemoveAvatar } from "./RemoveAvatar";
 import { TwoFactorSettings } from "./TwoFactorSettings";
+import { apiFetch } from "~/lib/basePath";
+import { clientCookie } from "~/lib/auth/cookieScope";
 
 interface UserProfileProps {
   params: Promise<{ userId: string }>;
@@ -167,14 +168,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const tCommon = useTranslations("common");
   const tEdit = useTranslations("users.profile.edit");
   const tDirectory = useTranslations("users.profile.directory");
-  const tNotifications = useTranslations("users.profile.notifications");
-  const tNotificationModes = useTranslations("admin.notifications.defaultMode");
   const tUserMenu = useTranslations("userMenu");
-  const { data: globalSettings } = useClientQueries(
-    schema
-  ).appConfig.useFindUnique({
-    where: { key: "notificationSettings" },
-  });
 
   const { data: user, refetch: refetchUser } = useClientQueries(
     schema
@@ -261,7 +255,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
     dateFormat: z.nativeEnum(DateFormat),
     timeFormat: z.nativeEnum(TimeFormat),
     timezone: z.string().min(1, { message: tEdit("timezoneRequired") }),
-    notificationMode: z.nativeEnum(NotificationMode),
     detailsDisplayMode: z.nativeEnum(DetailsDisplayMode),
   });
 
@@ -293,8 +286,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
         user?.userPreferences?.timezone ??
         session?.user?.preferences?.timezone ??
         "Etc/UTC",
-      notificationMode:
-        user?.userPreferences?.notificationMode ?? NotificationMode.USE_GLOBAL,
       detailsDisplayMode:
         user?.userPreferences?.detailsDisplayMode ?? DetailsDisplayMode.DOCKED,
     }),
@@ -356,15 +347,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
           dateFormat: data.dateFormat,
           timeFormat: data.timeFormat,
           timezone: data.timezone,
-          notificationMode: data.notificationMode,
           detailsDisplayMode: data.detailsDisplayMode,
-          emailNotifications:
-            data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
-            data.notificationMode === "IN_APP_EMAIL_DAILY",
-          inAppNotifications:
-            data.notificationMode === "IN_APP" ||
-            data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
-            data.notificationMode === "IN_APP_EMAIL_DAILY",
         },
       };
 
@@ -392,7 +375,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
       // Use dedicated update API endpoint instead of ZenStack
       // (ZenStack 2.21+ has issues with nested update operations)
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await apiFetch(`/api/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateData),
@@ -408,7 +391,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
       // If locale changed, update cookie and reload the page
       if (localeChanged) {
         const urlLocale = data.locale.replace("_", "-");
-        document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+        document.cookie = clientCookie("NEXT_LOCALE", urlLocale, [
+          "max-age=31536000",
+        ]);
         window.location.reload();
         return; // Exit early since page will reload
       }
@@ -457,38 +442,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
       ? t("preferences.detailsDisplayMode.newWindow")
       : t("preferences.detailsDisplayMode.docked");
 
-  const getNotificationModeLabel = (mode: NotificationMode) => {
-    switch (mode) {
-      case "USE_GLOBAL":
-        return tNotifications("mode.useGlobal");
-      case "NONE":
-        return tCommon("access.none");
-      case "IN_APP":
-        return tNotificationModes("inApp");
-      case "IN_APP_EMAIL_IMMEDIATE":
-        return tNotificationModes("inAppEmailImmediate");
-      case "IN_APP_EMAIL_DAILY":
-        return tNotificationModes("inAppEmailDaily");
-      default:
-        return mode;
-    }
-  };
-
-  const getGlobalModeLabel = (mode: string | undefined) => {
-    switch (mode) {
-      case "NONE":
-        return tCommon("access.none");
-      case "IN_APP":
-        return tNotificationModes("inApp");
-      case "IN_APP_EMAIL_IMMEDIATE":
-        return tNotificationModes("inAppEmailImmediate");
-      case "IN_APP_EMAIL_DAILY":
-        return tNotificationModes("inAppEmailDaily");
-      default:
-        return mode ?? "";
-    }
-  };
-
   const getLocaleLabel = (locale: Locale) =>
     languageNames[locale.replace("_", "-")] ?? locale;
 
@@ -505,7 +458,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
       case "Orange":
         return <Circle className="h-4 w-4 fill-orange-500" />;
       case "Purple":
-        return <Circle className="h-4 w-4 fill-purple-500" />;
+        return <Circle className="h-4 w-4 fill-[#8559E9]" />;
       case "Accessible":
         return <Accessibility className="h-4 w-4 text-blue-700" />;
       default:
@@ -526,7 +479,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
       case "Orange":
         return "text-orange-500";
       case "Purple":
-        return "text-purple-500";
+        return "text-[#8559E9]";
       case "Accessible":
         return "text-blue-700";
       default:
@@ -1176,27 +1129,16 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
                                       <div className="flex items-center justify-between">
                                         <span className="text-sm">
-                                          {tCommon("fields.notificationMode")}
+                                          {t("preferences.notificationsLabel")}
                                         </span>
-                                        <div className="flex items-center gap-1">
-                                          <Badge variant="secondary">
-                                            {getNotificationModeLabel(
-                                              user.userPreferences
-                                                .notificationMode
-                                            )}
-                                          </Badge>
-                                          {user.userPreferences
-                                            .notificationMode ===
-                                            "USE_GLOBAL" &&
-                                            globalSettings?.value && (
-                                              <span className="text-xs text-primary/60 font-semibold">
-                                                {`(${getGlobalModeLabel(
-                                                  (globalSettings.value as any)
-                                                    .defaultMode
-                                                )})`}
-                                              </span>
-                                            )}
-                                        </div>
+                                        <Link
+                                          href={`/users/profile/${user.id}/alerts`}
+                                          className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1"
+                                          data-testid="profile-preferences-alerts-link"
+                                        >
+                                          <BellRing className="h-3.5 w-3.5" />
+                                          {t("preferences.notificationsMoved")}
+                                        </Link>
                                       </div>
                                     </div>
                                   </div>
@@ -1561,105 +1503,17 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                         </FormItem>
                                       )}
                                     />
-
-                                    {/* Notification Preferences - Full Width */}
-                                    <FormField
-                                      control={form.control}
-                                      name="notificationMode"
-                                      render={({ field }) => (
-                                        <FormItem className="space-y-3 sm:col-span-2">
-                                          <FormLabel className="flex items-center">
-                                            {tNotifications("mode.label")}
-                                            <HelpPopover helpKey="user.notificationMode" />
-                                          </FormLabel>
-                                          <FormControl>
-                                            <RadioGroup
-                                              onValueChange={field.onChange}
-                                              value={field.value}
-                                              className="grid grid-cols-1 md:grid-cols-2 gap-3"
-                                            >
-                                              <div className="flex items-center space-x-3">
-                                                <RadioGroupItem
-                                                  value="USE_GLOBAL"
-                                                  id="use-global"
-                                                />
-                                                <Label
-                                                  htmlFor="use-global"
-                                                  className="font-normal"
-                                                >
-                                                  {tNotifications(
-                                                    "mode.useGlobal"
-                                                  )}
-                                                  {globalSettings?.value && (
-                                                    <span className="text-sm text-primary/60 font-semibold ms-1">
-                                                      {`(${getGlobalModeLabel(
-                                                        (
-                                                          globalSettings.value as any
-                                                        ).defaultMode
-                                                      )})`}
-                                                    </span>
-                                                  )}
-                                                </Label>
-                                              </div>
-                                              <div className="flex items-center space-x-3">
-                                                <RadioGroupItem
-                                                  value="NONE"
-                                                  id="none"
-                                                />
-                                                <Label
-                                                  htmlFor="none"
-                                                  className="font-normal"
-                                                >
-                                                  {tCommon("access.none")}
-                                                </Label>
-                                              </div>
-                                              <div className="flex items-center space-x-3">
-                                                <RadioGroupItem
-                                                  value="IN_APP"
-                                                  id="in-app"
-                                                />
-                                                <Label
-                                                  htmlFor="in-app"
-                                                  className="font-normal"
-                                                >
-                                                  {tNotificationModes("inApp")}
-                                                </Label>
-                                              </div>
-                                              <div className="flex items-center space-x-3">
-                                                <RadioGroupItem
-                                                  value="IN_APP_EMAIL_IMMEDIATE"
-                                                  id="in-app-email-immediate"
-                                                />
-                                                <Label
-                                                  htmlFor="in-app-email-immediate"
-                                                  className="font-normal"
-                                                >
-                                                  {tNotificationModes(
-                                                    "inAppEmailImmediate"
-                                                  )}
-                                                </Label>
-                                              </div>
-                                              <div className="flex items-center space-x-3 md:col-start-1">
-                                                <RadioGroupItem
-                                                  value="IN_APP_EMAIL_DAILY"
-                                                  id="in-app-email-daily"
-                                                />
-                                                <Label
-                                                  htmlFor="in-app-email-daily"
-                                                  className="font-normal"
-                                                >
-                                                  {tNotificationModes(
-                                                    "inAppEmailDaily"
-                                                  )}
-                                                </Label>
-                                              </div>
-                                            </RadioGroup>
-                                          </FormControl>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
                                   </div>
+                                  <p className="px-4 pt-4 text-sm text-muted-foreground">
+                                    {t("preferences.notificationsLabel")}
+                                    {": "}
+                                    <Link
+                                      href={`/users/profile/${user.id}/alerts`}
+                                      className="font-medium text-primary hover:underline"
+                                    >
+                                      {t("preferences.notificationsMoved")}
+                                    </Link>
+                                  </p>
                                 </Form>
                               )}
                             </AccordionContent>
@@ -1769,6 +1623,27 @@ const UserProfile: React.FC<UserProfileProps> = ({
                             </div>
                           </AccordionContent>
                         </AccordionItem>
+
+                        {/* Trash — own profile or admin only: what this user
+                            deleted and can still restore themselves */}
+                        {canViewPrivateInfo && (
+                          <AccordionItem
+                            value="trash"
+                            data-testid="profile-section-trash"
+                          >
+                            <AccordionTrigger
+                              className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline"
+                              data-testid="profile-trash-trigger"
+                            >
+                              {tGlobal("admin.menu.trash")}
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="px-4">
+                                <UserTrash userId={userId} />
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        )}
 
                         {/* Audit Log — own profile or admin only */}
                         {(isOwnProfile || isAdmin) && (

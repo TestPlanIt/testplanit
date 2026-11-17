@@ -721,7 +721,11 @@ test.describe("User Update Operations", () => {
       }
     });
 
-    test("API endpoint enforces authorization", async ({ browser, api }) => {
+    test("API endpoint enforces authorization", async ({
+      browser,
+      api,
+      baseURL,
+    }) => {
       // Create a test user
       const testEmail = `auth-test-${Date.now()}@example.com`;
       const testUser = await api.createUser({
@@ -741,7 +745,7 @@ test.describe("User Update Operations", () => {
 
           // Try to update a user without authentication
           const response = await unauthenticatedRequest.patch(
-            `http://localhost:3002/api/users/${testUser.data.id}`,
+            `${baseURL}/api/users/${testUser.data.id}`,
             {
               headers: {
                 "Content-Type": "application/json",

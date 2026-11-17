@@ -1,5 +1,7 @@
 "use client";
 
+import { milestoneKindsFor } from "~/lib/integrations/milestoneSyncProviders";
+import { providerDisplayName } from "~/lib/integrations/providerDisplayName";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -22,6 +24,7 @@ import { AlertCircle, Loader2, PackageOpen, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "~/lib/basePath";
 
 interface ExternalMilestone {
   id: string;
@@ -60,6 +63,8 @@ async function readJsonBody(res: Response): Promise<any> {
 interface ImportMilestonesDialogProps {
   integrationId: number;
   projectId: number;
+  /** Tracker provider enum value; names the tracker in copy and decides which kinds to offer. */
+  provider?: string;
   /** IntegrationProject.id — the project<->tracker mapping. */
   projectMappingId: string;
   open: boolean;
@@ -73,12 +78,15 @@ export function ImportMilestonesDialog({
   integrationId,
   projectId,
   projectMappingId,
+  provider = "JIRA",
   open,
   onOpenChange,
   onStarted,
 }: ImportMilestonesDialogProps) {
   const t = useTranslations("milestones.import");
   const tCommon = useTranslations("common");
+  const providerName = providerDisplayName(provider);
+  const offersSprints = milestoneKindsFor(provider).includes("ITERATION");
 
   // Turn a failed response into something a user can act on. A JSON `error`
   // from our own route is always the best message; without one we're looking
@@ -87,12 +95,12 @@ export function ImportMilestonesDialog({
     (res: Response, data: any): string => {
       if (data?.error) return data.error;
       if (res.status === 504 || res.status === 502 || res.status === 408) {
-        return t("requestTimedOut");
+        return t("requestTimedOut", { provider: providerName });
       }
       if (res.status === 503) return t("serviceUnavailable");
       return t("unexpectedResponse", { status: res.status });
     },
-    [t]
+    [t, providerName]
   );
 
   const [items, setItems] = useState<ExternalMilestone[]>([]);
@@ -153,7 +161,7 @@ export function ImportMilestonesDialog({
           // kinds the project has enabled in its milestone-sync settings.
           ...(kind ? { kind } : {}),
         });
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/integrations/${integrationId}/milestone-sync/preview?${params.toString()}`
         );
         const data = await readJsonBody(res);
@@ -175,13 +183,13 @@ export function ImportMilestonesDialog({
         );
         setWarnings(Array.isArray(data.warnings) ? data.warnings : []);
       } catch (e: any) {
-        setError(e?.message || t("previewFailed"));
+        setError(e?.message || t("previewFailed", { provider: providerName }));
         setItems([]);
       } finally {
         setIsLoading(false);
       }
     },
-    [integrationId, projectMappingId, t, describeHttpFailure]
+    [integrationId, projectMappingId, t, describeHttpFailure, providerName]
   );
 
   // Reset + fetch each time the dialog opens.
@@ -272,7 +280,7 @@ export function ImportMilestonesDialog({
     setIsImporting(true);
     setError(null);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/integrations/${integrationId}/milestone-sync/import`,
         {
           method: "POST",
@@ -303,8 +311,12 @@ export function ImportMilestonesDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{t("importTitle")}</DialogTitle>
-          <DialogDescription>{t("importDescription")}</DialogDescription>
+          <DialogTitle>
+            {t("importTitle", { provider: providerName })}
+          </DialogTitle>
+          <DialogDescription>
+            {t("importDescription", { provider: providerName })}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="relative">
@@ -337,14 +349,16 @@ export function ImportMilestonesDialog({
           >
             {t("kindRelease")}
           </Badge>
-          <Badge
-            variant={kindFilter === "ITERATION" ? "default" : "outline"}
-            className="cursor-pointer"
-            data-testid="import-milestones-kind-sprint"
-            onClick={() => handleKindFilterChange("ITERATION")}
-          >
-            {t("kindSprint")}
-          </Badge>
+          {offersSprints && (
+            <Badge
+              variant={kindFilter === "ITERATION" ? "default" : "outline"}
+              className="cursor-pointer"
+              data-testid="import-milestones-kind-sprint"
+              onClick={() => handleKindFilterChange("ITERATION")}
+            >
+              {t("kindSprint")}
+            </Badge>
+          )}
         </div>
 
         {showProjectMeta && (
@@ -415,7 +429,8 @@ export function ImportMilestonesDialog({
           <Alert data-testid="import-milestones-warnings">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              {t("partialWarning")} {warnings.join("; ")}
+              {t("partialWarning", { provider: providerName })}{" "}
+              {warnings.join("; ")}
             </AlertDescription>
           </Alert>
         )}

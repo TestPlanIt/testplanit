@@ -24,6 +24,7 @@ import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
+import { apiFetch } from "~/lib/basePath";
 
 interface SelectedTestCasesDrawerProps {
   selectedTestCases: number[];
@@ -104,7 +105,7 @@ export function SelectedTestCasesDrawer({
         const skip = (currentPage - 1) * effectivePageSize;
         const take = effectivePageSize;
 
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/projects/${projectId}/cases/fetch-many`,
           {
             method: "POST",
@@ -228,7 +229,7 @@ export function SelectedTestCasesDrawer({
               type="button"
               variant="ghost"
               size="icon"
-              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive-text"
               aria-label={t("common.actions.remove")}
               onClick={() => {
                 onSelectionChange(

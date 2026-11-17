@@ -2,6 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
+import { apiFetch } from "~/lib/basePath";
 
 interface LinkUnlinkResponseBody {
   error?: string;
@@ -17,7 +18,7 @@ async function postJson(
   body: unknown,
   fallbackMessage: string
 ): Promise<void> {
-  const res = await fetch(url, {
+  const res = await apiFetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

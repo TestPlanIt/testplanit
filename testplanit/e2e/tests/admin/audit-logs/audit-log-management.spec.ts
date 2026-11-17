@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import Papa from "papaparse";
+import type { Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
 
 /**
@@ -273,13 +276,25 @@ test.describe("Audit Log Management - CSV Export", () => {
     // Data exists — export button should be enabled
     await expect(exportButton).not.toBeDisabled();
 
-    // The export uses a programmatic download via blob URL (not a download event)
-    // It creates an anchor element, sets href to blob URL, and clicks it.
-    // Verify the button click completes without error and the page stays intact.
-    await exportButton.click();
+    const { text, rows } = await exportAuditLogCsv(page);
 
-    // Wait for the export to complete (isExporting state resets)
-    await page.waitForLoadState("networkidle");
+    // Excel needs the UTF-8 byte order mark to read non-ASCII names.
+    expect(text.charCodeAt(0)).toBe(0xfeff);
+
+    // Header row plus at least the rows the table showed, all with the same
+    // eleven columns the export defines.
+    const [header, ...dataLines] = rows;
+    expect(header).toHaveLength(11);
+    expect(dataLines.length).toBeGreaterThanOrEqual(1);
+    for (const line of dataLines) {
+      expect(line).toHaveLength(11);
+    }
+
+    // No cell may reach a spreadsheet as a live formula.
+    const formulaCells = dataLines
+      .flat()
+      .filter((cell) => /^[=+\-@\t\r]/.test(cell));
+    expect(formulaCells).toEqual([]);
 
     // Verify the button is no longer in "exporting" state (text resets)
     await expect(exportButton).not.toContainText(/exporting/i, {
@@ -289,4 +304,54 @@ test.describe("Audit Log Management - CSV Export", () => {
     // Page should still be functional after export
     await expect(page.getByTestId("audit-logs-page-title")).toBeVisible();
   });
+
+  test("Exported CSV neutralises an entity name that starts a formula", async ({
+    page,
+    api,
+  }) => {
+    const tagName = `=E2E_FORMULA_${Date.now()}`;
+    await api.createTag(tagName);
+
+    await page.goto("/en-US/admin/audit-logs");
+    await page.waitForLoadState("networkidle");
+
+    const searchInput = page.getByPlaceholder(/filter|search/i).first();
+    await expect(searchInput).toBeVisible({ timeout: 10000 });
+    await searchInput.fill(tagName);
+
+    // The audit row is written asynchronously, so reload until it is listed.
+    const dataRows = page.locator('[data-testid^="audit-log-row-"]');
+    await expect(async () => {
+      await page.reload();
+      await page.waitForLoadState("networkidle");
+      await page
+        .getByPlaceholder(/filter|search/i)
+        .first()
+        .fill(tagName);
+      await expect(dataRows.first()).toBeVisible({ timeout: 4000 });
+    }).toPass({ timeout: 45000 });
+
+    const { rows } = await exportAuditLogCsv(page);
+    const cells = rows.slice(1).flat();
+
+    expect(cells).toContain(`'${tagName}`);
+    expect(cells).not.toContain(tagName);
+  });
 });
+
+async function exportAuditLogCsv(page: Page) {
+  const exportButton = page.getByRole("button", { name: /export csv/i });
+  await expect(exportButton).toBeEnabled({ timeout: 10000 });
+
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    exportButton.click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/^audit-logs-export-.*\.csv$/);
+
+  const text = await readFile(await download.path(), "utf8");
+  const rows = Papa.parse<string[]>(text.replace(/^\uFEFF/, ""), {
+    skipEmptyLines: true,
+  }).data;
+  return { text, rows };
+}

@@ -577,51 +577,6 @@ export class LlmManager {
     return await adapter.getAvailableModels();
   }
 
-  async checkRateLimit(
-    llmIntegrationId: number,
-    userId: string
-  ): Promise<boolean> {
-    const rateLimit = await this.db.llmRateLimit.findFirst({
-      where: {
-        llmIntegrationId,
-        scope: "user",
-        scopeId: userId,
-        isActive: true,
-      },
-    });
-
-    if (!rateLimit) {
-      return true;
-    }
-
-    // Check if the current window is still valid
-    const now = new Date();
-    const windowEnd = new Date(
-      rateLimit.windowStart.getTime() + rateLimit.windowSize * 1000
-    );
-
-    if (now > windowEnd) {
-      // Window expired, reset counters
-      await this.db.llmRateLimit.update({
-        where: { id: rateLimit.id },
-        data: {
-          currentRequests: 0,
-          currentTokens: 0,
-          windowStart: now,
-        },
-      });
-      return true;
-    }
-
-    if (rateLimit.currentRequests >= rateLimit.maxRequests) {
-      if (rateLimit.blockOnExceed) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   private async trackUsage(
     llmIntegrationId: number,
     request: LlmRequest,
@@ -657,26 +612,7 @@ export class LlmManager {
       },
     });
 
-    await this.updateRateLimit(llmIntegrationId, request.userId);
-
-    // Fire-and-forget budget check — never blocks LLM response (CHCK-01, CHCK-03)
-    if (config.monthlyBudget && Number(config.monthlyBudget) > 0) {
-      try {
-        const { getBudgetAlertQueue } = await import("~/lib/queues");
-        const { BUDGET_ALERT_JOB_CHECK } = await import("~/lib/queueNames");
-        const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
-        getBudgetAlertQueue()
-          ?.add(BUDGET_ALERT_JOB_CHECK, {
-            llmIntegrationId,
-            tenantId: this.tenantId ?? getCurrentTenantId(),
-          })
-          .catch((err: unknown) => {
-            console.error("[BudgetAlert] Failed to enqueue budget check:", err);
-          });
-      } catch (err) {
-        console.error("[BudgetAlert] Failed to enqueue budget check:", err);
-      }
-    }
+    this.enqueueAlertCheck(llmIntegrationId);
   }
 
   private async trackStreamUsage(
@@ -715,26 +651,28 @@ export class LlmManager {
       },
     });
 
-    await this.updateRateLimit(llmIntegrationId, request.userId);
+    this.enqueueAlertCheck(llmIntegrationId);
+  }
 
-    // Fire-and-forget budget check — never blocks LLM response (CHCK-01, CHCK-03)
-    if (config.monthlyBudget && Number(config.monthlyBudget) > 0) {
+  /**
+   * Fire-and-forget: the AI alert rules (budget, error rate, provider rate
+   * limiting) are evaluated by the budget-alert worker after every recorded
+   * usage or failure. Never blocks the LLM response (CHCK-01, CHCK-03).
+   */
+  private enqueueAlertCheck(llmIntegrationId: number): void {
+    void (async () => {
       try {
         const { getBudgetAlertQueue } = await import("~/lib/queues");
         const { BUDGET_ALERT_JOB_CHECK } = await import("~/lib/queueNames");
         const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
-        getBudgetAlertQueue()
-          ?.add(BUDGET_ALERT_JOB_CHECK, {
-            llmIntegrationId,
-            tenantId: this.tenantId ?? getCurrentTenantId(),
-          })
-          .catch((err: unknown) => {
-            console.error("[BudgetAlert] Failed to enqueue budget check:", err);
-          });
+        await getBudgetAlertQueue()?.add(BUDGET_ALERT_JOB_CHECK, {
+          llmIntegrationId,
+          tenantId: this.tenantId ?? getCurrentTenantId(),
+        });
       } catch (err) {
-        console.error("[BudgetAlert] Failed to enqueue budget check:", err);
+        console.error("[BudgetAlert] Failed to enqueue alert check:", err);
       }
-    }
+    })();
   }
 
   private async trackError(
@@ -760,38 +698,7 @@ export class LlmManager {
         error: error.message || "Unknown error",
       },
     });
-  }
-
-  private async updateRateLimit(
-    llmIntegrationId: number,
-    userId: string
-  ): Promise<void> {
-    const now = new Date();
-
-    await this.db.llmRateLimit.upsert({
-      where: {
-        scope_scopeId_feature: {
-          scope: "user",
-          scopeId: userId,
-          feature: `llm_integration_${llmIntegrationId}`,
-        },
-      },
-      update: {
-        currentRequests: {
-          increment: 1,
-        },
-      },
-      create: {
-        scope: "user",
-        scopeId: userId,
-        feature: `llm_integration_${llmIntegrationId}`,
-        windowType: "sliding",
-        windowSize: 60,
-        maxRequests: 60,
-        currentRequests: 1,
-        windowStart: now,
-      },
-    });
+    this.enqueueAlertCheck(llmIntegrationId);
   }
 
   clearCache(llmIntegrationId?: number): void {

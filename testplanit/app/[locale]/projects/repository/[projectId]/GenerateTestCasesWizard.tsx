@@ -58,6 +58,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { DefaultTemplateBadge } from "@/components/DefaultTemplateBadge";
 import { ApplicationArea } from "~/zenstack/models";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -76,19 +77,21 @@ import {
   Info,
   ListChecks,
   Loader2,
+  NotebookPen,
   RefreshCw,
   Search,
   Settings,
   Sparkles,
   SquarePen,
-  Star,
   Tag,
   X,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import {
+  type BaseSyntheticEvent,
   type MutableRefObject,
   memo,
   useCallback,
@@ -101,7 +104,10 @@ import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFolderStats } from "~/lib/useFolderStats";
+import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
+import { stageGeneratedTestCases } from "~/app/actions/stageGeneratedTestCases";
+import { invalidateStagedCaseQueries } from "~/hooks/useSavedCaseDrafts";
 import {
   convertHtmlToTipTapJSON,
   ensureTipTapJSON,
@@ -125,6 +131,7 @@ import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { sanitizeName } from "~/utils";
 import type { LinkedIssueRef } from "~/lib/integrations/adapters/IssueAdapter";
 import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
+import { apiFetch } from "~/lib/basePath";
 
 interface ExternalIssue {
   id: string;
@@ -518,6 +525,17 @@ const stepTitles = [
   "generateTestCases.steps.reviewGenerated",
 ];
 
+/**
+ * A card's save, callable from outside the card. Resolves to the saved case,
+ * or null when the form did not validate and the card stays in edit mode.
+ * The finish actions take the resolved cases directly rather than waiting
+ * for state: a callback captured before the save landed would read the
+ * pre-edit cases.
+ */
+type SaveEditedTestCase = (
+  event?: BaseSyntheticEvent
+) => Promise<GeneratedTestCase | null>;
+
 interface GeneratedTestCaseCardProps {
   testCase: GeneratedTestCase;
   template: any;
@@ -535,7 +553,7 @@ interface GeneratedTestCaseCardProps {
   session: any;
   projectId: number;
   index: number;
-  formSubmitHandlersRef: MutableRefObject<Map<string, () => void>>;
+  formSubmitHandlersRef: MutableRefObject<Map<string, SaveEditedTestCase>>;
   folderLabel?: string;
   /** INT-06: parser warnings scoped to this case index. */
   caseWarnings?: Array<{ caseIndex: number; message: string }>;
@@ -809,7 +827,16 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
     wasEditingRef.current = isEditing;
   }, [isEditing, defaultValues, reset]);
 
-  const handleSave = handleSubmit((data) => {
+  const handleSave: SaveEditedTestCase = async (event) => {
+    let saved: GeneratedTestCase | null = null;
+    await handleSubmit((data) => {
+      saved = applyEdits(data);
+      onSave(saved);
+    })(event);
+    return saved;
+  };
+
+  const applyEdits = (data: Record<string, any>): GeneratedTestCase => {
     const updatedFieldValues: Record<string, any> = {
       ...testCase.fieldValues,
     };
@@ -847,8 +874,8 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
       steps: updatedSteps,
     };
 
-    onSave(nextTestCase);
-  });
+    return nextTestCase;
+  };
 
   const handleCancel = () => {
     reset(defaultValues);
@@ -897,6 +924,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
         isShared: step?.isShared ?? Boolean(step?.sharedStepGroupId),
         isDeleted: step?.isDeleted ?? false,
         deletedAt: step?.deletedAt ?? null,
+        deletedById: step?.deletedById ?? null,
         testCaseId: typeof step?.testCaseId === "number" ? step.testCaseId : 0,
       };
     });
@@ -1131,7 +1159,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
         className="border rounded-lg p-4 border-primary/30 bg-primary/5 animate-pulse"
       >
         <div className="flex items-start gap-3">
-          <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-background text-sm font-medium text-primary/60">
+          <div className="flex h-7 w-7 -mt-0.5 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-background text-sm font-medium text-primary">
             <Loader2 className="w-4 h-4 animate-spin" />
           </div>
           <div className="flex-1 space-y-2">
@@ -1188,7 +1216,7 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                       {stepPreviewText(step.step)}
                     </div>
                     {step.expectedResult && (
-                      <div className="text-muted-foreground/70">
+                      <div className="text-muted-foreground/80">
                         {"Expected: "}
                         {stepPreviewText(step.expectedResult)}
                       </div>
@@ -1402,6 +1430,7 @@ export function GenerateTestCasesWizard({
   const projectId = Number(params.projectId);
   const searchParams = useSearchParams();
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
 
   const [currentStep, setCurrentStep] = useState(WizardStep.SELECT_ISSUE);
   const [selectedIssue, setSelectedIssue] = useState<ExternalIssue | null>(
@@ -1573,7 +1602,7 @@ export function GenerateTestCasesWizard({
   const fetchRecentUrlJobs = useCallback(async () => {
     setRecentUrlJobsLoading(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/llm/generate-from-url/jobs?projectId=${projectId}&limit=5`
       );
       if (res.ok) {
@@ -1613,7 +1642,7 @@ export function GenerateTestCasesWizard({
       selectedIssue.externalKey ||
       String(selectedIssue.id);
     const ctrl = new AbortController();
-    fetch(
+    apiFetch(
       `/api/integrations/linked-issues?projectId=${projectId}&issueKey=${encodeURIComponent(issueKey)}`,
       { signal: ctrl.signal }
     )
@@ -1644,7 +1673,7 @@ export function GenerateTestCasesWizard({
       selectedIssue.externalKey ||
       String(selectedIssue.id);
     const ctrl = new AbortController();
-    fetch("/api/llm/generate-test-cases/context-images", {
+    apiFetch("/api/llm/generate-test-cases/context-images", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1726,7 +1755,7 @@ export function GenerateTestCasesWizard({
     // Vision capability for the notice — reuses the listing route without an
     // issue key (attachments skipped server-side).
     const ctrl = new AbortController();
-    fetch("/api/llm/generate-test-cases/context-images", {
+    apiFetch("/api/llm/generate-test-cases/context-images", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ projectId, visionOnly: true }),
@@ -1743,6 +1772,15 @@ export function GenerateTestCasesWizard({
   const [isImporting, setIsImporting] = useState(false);
   const [showImportLoader, setShowImportLoader] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
+  // Staging writes the selected cases as the user's staged cases instead of
+  // creating them; it holds the wizard the way an import does.
+  const [isStaging, setIsStaging] = useState(false);
+  const isFinishing = isImporting || isStaging;
+  // Which finish action the unsaved-edits dialog resumes once the user has
+  // chosen to save or discard the open edits.
+  const [pendingFinishAction, setPendingFinishAction] = useState<
+    "import" | "stage"
+  >("import");
 
   // Delay showing the import loader to avoid flashing for fast imports
   useEffect(() => {
@@ -1772,7 +1810,9 @@ export function GenerateTestCasesWizard({
   const llmErrorTranslationKey = "generateTestCases.errors.llm";
 
   // Store refs to form submit handlers for all test cases in edit mode
-  const formSubmitHandlersRef = useRef<Map<string, () => void>>(new Map());
+  const formSubmitHandlersRef = useRef<Map<string, SaveEditedTestCase>>(
+    new Map()
+  );
 
   // Fetch project data
   const { data: project } = useClientQueries(schema).projects.useFindFirst({
@@ -1973,13 +2013,14 @@ export function GenerateTestCasesWizard({
     }
   }, [project]);
 
+  const { template: defaultTemplate, source: defaultTemplateSource } =
+    resolveDefaultTemplate(templates, project?.defaultTemplateId);
+
   useEffect(() => {
-    if (templates && templates.length > 0) {
-      const defaultTemplate =
-        templates.find((t) => t.isDefault) || templates[0];
+    if (defaultTemplate) {
       setSelectedTemplateId(defaultTemplate.id);
     }
-  }, [templates]);
+  }, [defaultTemplate]);
 
   // Auto-select the template's default fields when the user changes template
   // in the wizard flow: fields the admin marked generateDefaultEnabled, plus
@@ -2107,7 +2148,7 @@ export function GenerateTestCasesWizard({
     if (!urlJobId) return;
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/llm/generate-from-url/status/${urlJobId}`
         );
         const data = await res.json();
@@ -2185,7 +2226,7 @@ export function GenerateTestCasesWizard({
   // Cancel active URL job when user switches away from URL tab
   useEffect(() => {
     if (sourceType !== "url" && urlJobId) {
-      fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
+      apiFetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
         method: "POST",
       }).catch(() => {});
       setUrlJobId(null);
@@ -2209,7 +2250,9 @@ export function GenerateTestCasesWizard({
       setOpen(true);
 
       try {
-        const res = await fetch(`/api/llm/generate-from-url/status/${jobId}`);
+        const res = await apiFetch(
+          `/api/llm/generate-from-url/status/${jobId}`
+        );
         const data = await res.json();
 
         // Check for previously generated test cases (saved after SSE streaming)
@@ -2481,15 +2524,15 @@ export function GenerateTestCasesWizard({
 
   const handleStepSelect = useCallback(
     (step: WizardStep) => {
-      // Prevent navigation during import
-      if (isImporting) {
+      // Prevent navigation during import or staging
+      if (isFinishing) {
         return;
       }
       if (step <= maxUnlockedStep) {
         setCurrentStep(step);
       }
     },
-    [maxUnlockedStep, isImporting]
+    [maxUnlockedStep, isFinishing]
   );
 
   const goNext = useCallback(() => {
@@ -2583,9 +2626,7 @@ export function GenerateTestCasesWizard({
     setUrlJobId(null);
     setUrlJobProgress(null);
     setUrlRobotsSkipped(0);
-    setSelectedTemplateId(
-      templates?.find((t) => t.isDefault)?.id || templates?.[0]?.id || null
-    );
+    setSelectedTemplateId(defaultTemplate?.id ?? null);
     // Released, not set to the default id — that id is usually unchanged, and
     // the auto-select-all effect must repopulate the cleared selection.
     seededFieldsTemplateIdRef.current = null;
@@ -2625,6 +2666,8 @@ export function GenerateTestCasesWizard({
         return "Redmine";
       case "MANTISBT":
         return "MantisBT";
+      case "CLICKUP":
+        return "ClickUp";
       case "SIMPLE_URL":
         return externalSystem;
       default:
@@ -2728,7 +2771,7 @@ export function GenerateTestCasesWizard({
           });
         }
 
-        const response = await fetch("/api/llm/generate-test-cases/stream", {
+        const response = await apiFetch("/api/llm/generate-test-cases/stream", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -2912,7 +2955,7 @@ export function GenerateTestCasesWizard({
 
         // Save after each page so closing the wizard preserves completed pages
         if (finalizedCases.length > 0 && lastCrawlJobIdRef.current) {
-          fetch(
+          apiFetch(
             `/api/llm/generate-from-url/status/${lastCrawlJobIdRef.current}`,
             {
               method: "PUT",
@@ -2936,7 +2979,7 @@ export function GenerateTestCasesWizard({
       }
       // Save whatever was completed before the abort/error
       if (finalizedCases.length > 0 && lastCrawlJobIdRef.current) {
-        fetch(
+        apiFetch(
           `/api/llm/generate-from-url/status/${lastCrawlJobIdRef.current}`,
           {
             method: "PUT",
@@ -3023,7 +3066,7 @@ export function GenerateTestCasesWizard({
       }
       // Cancel any existing URL job before submitting a new one
       if (urlJobId) {
-        fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
+        apiFetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
           method: "POST",
         }).catch(() => {});
         setUrlJobId(null);
@@ -3032,7 +3075,7 @@ export function GenerateTestCasesWizard({
       }
       setUrlValidationError(null);
       try {
-        const submitRes = await fetch("/api/llm/generate-from-url/submit", {
+        const submitRes = await apiFetch("/api/llm/generate-from-url/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -3144,61 +3187,64 @@ export function GenerateTestCasesWizard({
 
       // Phase 1: Get test case titles from the outline endpoint
       setGeneratingStatus("calling_ai");
-      const outlineRes = await fetch("/api/llm/generate-test-cases/outline", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId,
-          issue: issueData,
-          context: contextPayload,
-          quantity,
-          // Enrich real synced issues with their comments + one-hop linked
-          // issues. The document flow (issue.key = a document id) never maps to
-          // a tracker issue; a seeded MANUAL milestone issue has no source
-          // integration — both stay un-enriched.
-          enrichFromIssue:
-            sourceType === "issue" &&
-            (!seedIssue || Boolean(seedIssue.integrationId)),
-          // For a seeded synced issue, enrich via its own source integration;
-          // the repository search flow omits it and the server falls back to
-          // the project's first active integration.
-          ...(seedIssue?.integrationId
-            ? { integrationId: seedIssue.integrationId }
-            : {}),
-          ...(issueRefPayload ? { issueRef: issueRefPayload } : {}),
-          // outline endpoint accepts-but-ignores includeParameters — kept for
-          // uniform wizard plumbing.
-          includeParameters,
-          // Selected context images (opaque selectors — the server
-          // re-derives candidates from its own sources and intersects;
-          // bytes never travel through the client). Issue mode sends
-          // attachment ids; document mode sends editor srcs + the doc they
-          // must come from.
-          ...(sourceType === "issue" &&
-          contextImageOptions.some((o) => o.checked)
-            ? {
-                contextImages: {
-                  attachmentIds: contextImageOptions
-                    .filter((o) => o.checked)
-                    .map((o) => o.id),
-                },
-              }
-            : {}),
-          ...(sourceType === "document" &&
-          documentRequirements?.doc &&
-          contextImageOptions.some((o) => o.checked)
-            ? {
-                documentDoc: documentRequirements.doc,
-                contextImages: {
-                  editorSrcs: contextImageOptions
-                    .filter((o) => o.checked)
-                    .map((o) => o.id),
-                },
-              }
-            : {}),
-        }),
-        signal: abortController.signal,
-      });
+      const outlineRes = await apiFetch(
+        "/api/llm/generate-test-cases/outline",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            projectId,
+            issue: issueData,
+            context: contextPayload,
+            quantity,
+            // Enrich real synced issues with their comments + one-hop linked
+            // issues. The document flow (issue.key = a document id) never maps to
+            // a tracker issue; a seeded MANUAL milestone issue has no source
+            // integration — both stay un-enriched.
+            enrichFromIssue:
+              sourceType === "issue" &&
+              (!seedIssue || Boolean(seedIssue.integrationId)),
+            // For a seeded synced issue, enrich via its own source integration;
+            // the repository search flow omits it and the server falls back to
+            // the project's first active integration.
+            ...(seedIssue?.integrationId
+              ? { integrationId: seedIssue.integrationId }
+              : {}),
+            ...(issueRefPayload ? { issueRef: issueRefPayload } : {}),
+            // outline endpoint accepts-but-ignores includeParameters — kept for
+            // uniform wizard plumbing.
+            includeParameters,
+            // Selected context images (opaque selectors — the server
+            // re-derives candidates from its own sources and intersects;
+            // bytes never travel through the client). Issue mode sends
+            // attachment ids; document mode sends editor srcs + the doc they
+            // must come from.
+            ...(sourceType === "issue" &&
+            contextImageOptions.some((o) => o.checked)
+              ? {
+                  contextImages: {
+                    attachmentIds: contextImageOptions
+                      .filter((o) => o.checked)
+                      .map((o) => o.id),
+                  },
+                }
+              : {}),
+            ...(sourceType === "document" &&
+            documentRequirements?.doc &&
+            contextImageOptions.some((o) => o.checked)
+              ? {
+                  documentDoc: documentRequirements.doc,
+                  contextImages: {
+                    editorSrcs: contextImageOptions
+                      .filter((o) => o.checked)
+                      .map((o) => o.id),
+                  },
+                }
+              : {}),
+          }),
+          signal: abortController.signal,
+        }
+      );
 
       if (!outlineRes.ok) {
         const errData = await outlineRes.json().catch(() => ({}));
@@ -3548,7 +3594,7 @@ export function GenerateTestCasesWizard({
     expandAbortControllersRef.current.clear();
     // Cancel URL crawl background job if still running
     if (urlJobId) {
-      fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
+      apiFetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
         method: "POST",
       }).catch(() => {});
       setUrlJobId(null);
@@ -3582,7 +3628,7 @@ export function GenerateTestCasesWizard({
     });
 
     try {
-      const expandRes = await fetch("/api/llm/generate-test-cases/expand", {
+      const expandRes = await apiFetch("/api/llm/generate-test-cases/expand", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3729,7 +3775,169 @@ export function GenerateTestCasesWizard({
     setShowErrorDetails(false);
   };
 
-  const importSelectedTestCases = async () => {
+  /**
+   * The template fields the generated values are written to, scoped to the
+   * user's selection: the import and the stage action write a value for
+   * every fieldValues key that has a mapping, so leaving a field unmapped is
+   * what keeps a volunteered value from being persisted.
+   */
+  const selectedFieldMappingsFor = (
+    selectedTemplate: NonNullable<typeof templates>[number]
+  ) =>
+    selectedTemplate.caseFields
+      .filter((cf) => selectedFieldIds.has(cf.caseFieldId))
+      .filter(
+        (cf) =>
+          cf.caseField.displayName !== "Steps" &&
+          !cf.caseField.displayName.toLowerCase().includes("steps")
+      )
+      .map((cf) => ({
+        fieldName: cf.caseField.displayName,
+        caseFieldId: cf.caseFieldId,
+        fieldType: cf.caseField.type.type,
+        fieldOptions: cf.caseField.fieldOptions?.map((fo: any) => ({
+          id: fo.fieldOption.id,
+          name: fo.fieldOption.name,
+        })),
+      }));
+
+  /**
+   * The external issue the cases link back to. The repository search flow
+   * upserts an external issue to link against; the seeded (milestone) flow
+   * links to the EXISTING internal issue by id instead (via linkIssueId), so
+   * it gets nothing here.
+   */
+  const sourceIssueLink = () => {
+    if (sourceType !== "issue" || !selectedIssue || seedIssue) return undefined;
+    const issueKey = selectedIssue.key || selectedIssue.externalKey;
+    const integrationId = project?.projectIntegrations?.[0]?.integrationId;
+    if (!integrationId || !issueKey) return undefined;
+    return {
+      externalId: selectedIssue.id || issueKey || "",
+      integrationId,
+      issueKey,
+      title: selectedIssue.title,
+      description: t("generateTestCases.importData.issueDescription"),
+      externalUrl: selectedIssue.url || selectedIssue.externalUrl,
+    };
+  };
+
+  // Staged cases live in a folder. The seeded flows open the wizard with no
+  // folder (their cases land in a per-issue folder created on import), so
+  // they import only.
+  const canStage = folderId > 0 && !seedIssue;
+
+  /**
+   * Stage the selected cases as the user's staged cases, to review and
+   * create later from My Staged Cases, instead of creating them now.
+   */
+  const stageSelectedTestCases = async (
+    savedEdits?: Map<string, GeneratedTestCase>
+  ) => {
+    if (selectedTestCases.size === 0) {
+      toast.error(t("generateTestCases.errors.noTestCasesSelectedForStage"));
+      return;
+    }
+
+    if (!selectedTemplateId) {
+      toast.error(t("generateTestCases.errors.templateRequired"));
+      return;
+    }
+
+    if (!defaultWorkflow?.id) {
+      toast.error(t("generateTestCases.errors.workflowNotConfigured"));
+      return;
+    }
+
+    if (!session?.user?.id) {
+      toast.error(t("generateTestCases.errors.authenticationError"));
+      return;
+    }
+
+    if (!canStage) return;
+
+    setIsStaging(true);
+    try {
+      const selectedTemplate = templates?.find(
+        (t) => t.id === selectedTemplateId
+      );
+      if (!selectedTemplate) {
+        throw new Error("Selected template not found");
+      }
+
+      const testCasesToStage = generatedTestCases
+        .map((tc) => savedEdits?.get(tc.id) ?? tc)
+        .filter((tc) => selectedTestCases.has(tc.id));
+
+      const result = await stageGeneratedTestCases({
+        projectId,
+        folderId,
+        templateId: selectedTemplateId,
+        stateId: defaultWorkflow.id,
+        autoGenerateTags,
+        testCases: testCasesToStage.map((tc) => {
+          const steps = getTestCaseSteps(tc, selectedTemplate.caseFields);
+          return {
+            id: tc.id,
+            name: tc.name,
+            steps:
+              steps.length > 0
+                ? steps.map((s: any) => ({
+                    step: s.step,
+                    expectedResult: s.expectedResult,
+                  }))
+                : undefined,
+            fieldValues: tc.fieldValues,
+            tags: tc.tags,
+          };
+        }),
+        fieldMappings: selectedFieldMappingsFor(selectedTemplate),
+        issue: sourceIssueLink(),
+      });
+
+      if (result.status === "error") {
+        throw new Error(
+          result.message || t("generateTestCases.errors.stageFailed")
+        );
+      }
+
+      for (const err of result.errors) {
+        toast.error(err);
+      }
+
+      toast.success(
+        t("generateTestCases.success.staged", { count: result.stagedCount })
+      );
+
+      // The staged cases were written by a server action, past the hooks'
+      // own invalidation, so My Staged Cases has to be told to re-read.
+      invalidateStagedCaseQueries(queryClient);
+
+      // Clean up Redis crawled pages so the notification link can't
+      // re-trigger generation
+      if (lastCrawlJobIdRef.current) {
+        apiFetch(
+          `/api/llm/generate-from-url/status/${lastCrawlJobIdRef.current}`,
+          {
+            method: "DELETE",
+          }
+        ).catch(() => {});
+        lastCrawlJobIdRef.current = null;
+      }
+
+      setOpen(false);
+      resetWizard();
+    } catch (error) {
+      console.error("Error staging test cases:", error);
+      toast.error(t("generateTestCases.errors.stageFailed"));
+    } finally {
+      setIsStaging(false);
+    }
+  };
+
+  const importSelectedTestCases = async (
+    savedEdits?: Map<string, GeneratedTestCase>
+  ) => {
     if (selectedTestCases.size === 0) {
       toast.error(t("generateTestCases.errors.noTestCasesSelectedForImport"));
       return;
@@ -3758,9 +3966,9 @@ export function GenerateTestCasesWizard({
     setIsImporting(true);
     setImportProgress(0);
     try {
-      const testCasesToImport = generatedTestCases.filter((tc) =>
-        selectedTestCases.has(tc.id)
-      );
+      const testCasesToImport = generatedTestCases
+        .map((tc) => savedEdits?.get(tc.id) ?? tc)
+        .filter((tc) => selectedTestCases.has(tc.id));
 
       const selectedTemplate = templates?.find(
         (t) => t.id === selectedTemplateId
@@ -3774,55 +3982,8 @@ export function GenerateTestCasesWizard({
         maxOrder = maxOrderData[0].order || 0;
       }
 
-      // Scoped to the user's selection: the import writes a value for every
-      // fieldValues key that has a mapping, so leaving a field unmapped is what
-      // keeps a volunteered value from being persisted.
-      const fieldMappings = selectedTemplate.caseFields
-        .filter((cf) => selectedFieldIds.has(cf.caseFieldId))
-        .filter(
-          (cf) =>
-            cf.caseField.displayName !== "Steps" &&
-            !cf.caseField.displayName.toLowerCase().includes("steps")
-        )
-        .map((cf) => ({
-          fieldName: cf.caseField.displayName,
-          caseFieldId: cf.caseFieldId,
-          fieldType: cf.caseField.type.type,
-          fieldOptions: cf.caseField.fieldOptions?.map((fo: any) => ({
-            id: fo.fieldOption.id,
-            name: fo.fieldOption.name,
-          })),
-        }));
-
-      // Build issue data if applicable
-      let issue:
-        | {
-            externalId: string;
-            integrationId: number;
-            issueKey: string;
-            title: string;
-            description?: string;
-            externalUrl?: string;
-          }
-        | undefined;
-
-      // The repository search flow upserts an external issue to link against.
-      // The seeded (milestone) flow links to the EXISTING internal issue by id
-      // instead (via linkIssueId below), so skip the external upsert here.
-      if (sourceType === "issue" && selectedIssue && !seedIssue) {
-        const issueKey = selectedIssue.key || selectedIssue.externalKey;
-        const integrationId = project?.projectIntegrations?.[0]?.integrationId;
-        if (integrationId && issueKey) {
-          issue = {
-            externalId: selectedIssue.id || issueKey || "",
-            integrationId,
-            issueKey,
-            title: selectedIssue.title,
-            description: t("generateTestCases.importData.issueDescription"),
-            externalUrl: selectedIssue.url || selectedIssue.externalUrl,
-          };
-        }
-      }
+      const fieldMappings = selectedFieldMappingsFor(selectedTemplate);
+      const issue = sourceIssueLink();
 
       const result = await importGeneratedTestCases({
         projectId,
@@ -3893,7 +4054,7 @@ export function GenerateTestCasesWizard({
 
       // Clean up Redis crawled pages so notification link can't re-trigger generation
       if (lastCrawlJobIdRef.current) {
-        fetch(
+        apiFetch(
           `/api/llm/generate-from-url/status/${lastCrawlJobIdRef.current}`,
           {
             method: "DELETE",
@@ -4006,39 +4167,66 @@ export function GenerateTestCasesWizard({
   };
 
   // Save all test cases that are currently in edit mode
-  const saveAllEditedTestCases = () => {
-    formSubmitHandlersRef.current.forEach((submitHandler) => {
-      submitHandler();
-    });
+  /**
+   * Save every card in edit mode and return the saved cases by id. A card
+   * whose form fails validation stays in edit mode and is left out, so the
+   * finish action uses its last saved content.
+   */
+  const saveAllEditedTestCases = async (): Promise<
+    Map<string, GeneratedTestCase>
+  > => {
+    const saved = await Promise.all(
+      [...formSubmitHandlersRef.current.values()].map((submit) => submit())
+    );
+    const byId = new Map<string, GeneratedTestCase>();
+    for (const testCase of saved) {
+      if (testCase) byId.set(testCase.id, testCase);
+    }
+    return byId;
   };
 
-  // Handle import with unsaved edits check
-  const handleImportClick = () => {
-    if (editingTestCaseIds.size > 0) {
-      // There are unsaved edits, show dialog
-      setShowUnsavedEditsDialog(true);
+  const runFinishAction = (
+    action: "import" | "stage",
+    savedEdits?: Map<string, GeneratedTestCase>
+  ) => {
+    if (action === "stage") {
+      void stageSelectedTestCases(savedEdits);
     } else {
-      // No unsaved edits, proceed with import
-      void importSelectedTestCases();
+      void importSelectedTestCases(savedEdits);
     }
   };
 
-  // Handle save all and import
-  const handleSaveAllAndImport = () => {
-    saveAllEditedTestCases();
-    setShowUnsavedEditsDialog(false);
-    // Wait a tick for state updates to complete
-    setTimeout(() => {
-      void importSelectedTestCases();
-    }, 100);
+  // Finish (import or stage) with an unsaved-edits check
+  const handleFinishClick = (action: "import" | "stage") => {
+    if (editingTestCaseIds.size > 0) {
+      // There are unsaved edits, show dialog
+      setPendingFinishAction(action);
+      setShowUnsavedEditsDialog(true);
+    } else {
+      // No unsaved edits, proceed
+      runFinishAction(action);
+    }
   };
 
-  // Handle discard and import
-  const handleDiscardAndImport = () => {
+  const handleImportClick = () => handleFinishClick("import");
+  const handleStageClick = () => handleFinishClick("stage");
+
+  // Handle save all and finish
+  const handleSaveAllAndFinish = async () => {
+    setShowUnsavedEditsDialog(false);
+    // The saved cases are handed to the finish action directly: this
+    // callback's closure predates the saves, so it cannot read them from
+    // state, and no delay makes a stale closure fresh.
+    const savedEdits = await saveAllEditedTestCases();
+    runFinishAction(pendingFinishAction, savedEdits);
+  };
+
+  // Handle discard and finish
+  const handleDiscardAndFinish = () => {
     // Stop editing all test cases without saving
     setEditingTestCaseIds(new Set());
     setShowUnsavedEditsDialog(false);
-    void importSelectedTestCases();
+    runFinishAction(pendingFinishAction);
   };
 
   const canProceed = () => {
@@ -4092,8 +4280,8 @@ export function GenerateTestCasesWizard({
                 at import), so the tip is hidden there. */}
             {!isSeeded &&
               (folderContextCaseCount === 0 ? (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertTriangle className="h-4 w-4" />
+                <Alert className="mt-2">
+                  <Info className="h-4 w-4" />
                   <AlertTitle>
                     {t(
                       "generateTestCases.selectSource.folderContextEmptyTitle"
@@ -4142,7 +4330,7 @@ export function GenerateTestCasesWizard({
                 activeStep={currentStep}
                 maxUnlockedStep={maxUnlockedStep}
                 onStepSelect={handleStepSelect}
-                isImporting={isImporting}
+                isImporting={isFinishing}
               />
             </div>
           )}
@@ -5097,18 +5285,12 @@ export function GenerateTestCasesWizard({
                               >
                                 <div className="flex items-center justify-between w-full gap-2">
                                   <span>{template.templateName}</span>
-                                  {template.isDefault && (
-                                    <Tooltip>
-                                      <TooltipTrigger className="ms-1" asChild>
-                                        <Badge variant="secondary">
-                                          <Star className="h-3 w-3 fill-current" />
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        {tCommon("defaultOption")}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
+                                  {defaultTemplateSource &&
+                                    template.id === defaultTemplate?.id && (
+                                      <DefaultTemplateBadge
+                                        source={defaultTemplateSource}
+                                      />
+                                    )}
                                 </div>
                               </SelectItem>
                             ))}
@@ -5875,7 +6057,7 @@ export function GenerateTestCasesWizard({
                   <Button
                     variant="outline"
                     onClick={handleBack}
-                    disabled={isImporting}
+                    disabled={isFinishing}
                   >
                     <ChevronLeft className="w-4 h-4 " />
                     {tCommon("actions.back")}
@@ -5910,23 +6092,52 @@ export function GenerateTestCasesWizard({
                 onClick={() => {
                   // Cancel any active URL generation job before closing
                   if (urlJobId) {
-                    fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
+                    apiFetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
                       method: "POST",
                     }).catch(() => {});
                   }
                   setOpen(false);
                   resetWizard();
                 }}
-                disabled={isImporting}
+                disabled={isFinishing}
               >
                 {tCommon("cancel")}
               </Button>
+
+              {isLastStep && canStage && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      onClick={handleStageClick}
+                      disabled={
+                        selectedTestCases.size === 0 ||
+                        isFinishing ||
+                        isGenerating
+                      }
+                      data-testid="generate-stage-button"
+                    >
+                      {isStaging ? (
+                        <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      ) : (
+                        <NotebookPen className="w-4 h-4" />
+                      )}
+                      {t("generateTestCases.stage", {
+                        count: selectedTestCases.size,
+                      })}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    {t("generateTestCases.stageDescription")}
+                  </TooltipContent>
+                </Tooltip>
+              )}
 
               {isLastStep ? (
                 <Button
                   onClick={handleImportClick}
                   disabled={
-                    selectedTestCases.size === 0 || isImporting || isGenerating
+                    selectedTestCases.size === 0 || isFinishing || isGenerating
                   }
                 >
                   {isImporting ? (
@@ -6035,11 +6246,15 @@ export function GenerateTestCasesWizard({
             >
               {tCommon("cancel")}
             </Button>
-            <Button variant="outline" onClick={handleDiscardAndImport}>
-              {t("generateTestCases.unsavedEdits.discardAndImport")}
+            <Button variant="outline" onClick={handleDiscardAndFinish}>
+              {pendingFinishAction === "stage"
+                ? t("generateTestCases.unsavedEdits.discardAndStage")
+                : t("generateTestCases.unsavedEdits.discardAndImport")}
             </Button>
-            <Button onClick={handleSaveAllAndImport}>
-              {t("generateTestCases.unsavedEdits.saveAllAndImport")}
+            <Button onClick={handleSaveAllAndFinish}>
+              {pendingFinishAction === "stage"
+                ? t("generateTestCases.unsavedEdits.saveAllAndStage")
+                : t("generateTestCases.unsavedEdits.saveAllAndImport")}
             </Button>
           </div>
         </DialogContent>
@@ -6067,7 +6282,7 @@ export function GenerateTestCasesWizard({
               className="bg-destructive text-destructive-foreground"
               onClick={() => {
                 if (jobToRemove) {
-                  fetch(`/api/llm/generate-from-url/status/${jobToRemove}`, {
+                  apiFetch(`/api/llm/generate-from-url/status/${jobToRemove}`, {
                     method: "DELETE",
                   }).catch(() => {});
                   setRecentUrlJobs((prev) =>
