@@ -699,4 +699,76 @@ describe("FieldValueRenderer", () => {
       ).toBeInTheDocument();
     });
   });
+
+  describe("accessible names in edit mode", () => {
+    const named = (fieldId: number, fieldType: string, displayName: string) => {
+      const template = makeTemplate(fieldId, fieldType);
+      (template.caseFields[0].caseField as any).displayName = displayName;
+      return template;
+    };
+
+    it("names a text input after its field and takes the caller's id", () => {
+      render(
+        <FieldValueRenderer
+          {...defaultProps}
+          fieldValue="Edit Value"
+          fieldType="Text String"
+          template={named(1, "Text String", "Reference")}
+          fieldId={1}
+          isEditMode={true}
+          controlId="case-field-1"
+        />
+      );
+
+      const input = screen.getByRole("textbox", { name: "Reference" });
+      expect(input).toHaveAttribute("id", "case-field-1");
+    });
+
+    it("names a number input after its field", () => {
+      render(
+        <FieldValueRenderer
+          {...defaultProps}
+          fieldValue={3}
+          fieldType="Integer"
+          template={named(2, "Integer", "Retries")}
+          fieldId={2}
+          isEditMode={true}
+        />
+      );
+
+      expect(
+        screen.getByRole("spinbutton", { name: "Retries" })
+      ).toBeInTheDocument();
+    });
+
+    it("names a checkbox field's switch, editable or read-only", () => {
+      const { unmount } = render(
+        <FieldValueRenderer
+          {...defaultProps}
+          fieldValue={true}
+          fieldType="Checkbox"
+          template={named(8, "Checkbox", "Needs data")}
+          fieldId={8}
+          isEditMode={true}
+        />
+      );
+      expect(
+        screen.getByRole("switch", { name: "Needs data" })
+      ).toBeInTheDocument();
+      unmount();
+
+      render(
+        <FieldValueRenderer
+          {...defaultProps}
+          fieldValue={true}
+          fieldType="Checkbox"
+          template={named(8, "Checkbox", "Needs data")}
+          fieldId={8}
+        />
+      );
+      expect(
+        screen.getByRole("switch", { name: "Needs data" })
+      ).toBeInTheDocument();
+    });
+  });
 });

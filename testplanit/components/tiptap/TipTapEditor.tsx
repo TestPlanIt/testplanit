@@ -797,6 +797,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         <div className="sticky bottom-0 z-10 flex w-full items-center gap-2 overflow-x-auto border-t bg-muted p-1.5 px-0.5 whitespace-nowrap sm:relative sm:border-b">
           <input
             title={t("setColor")}
+            aria-label={t("setColor")}
             className="h-8 w-4 min-w-4"
             type="color"
             value={color}

@@ -130,7 +130,9 @@ import {
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { sanitizeName } from "~/utils";
 import type { LinkedIssueRef } from "~/lib/integrations/adapters/IssueAdapter";
-import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
+import FieldValueRenderer, {
+  hasLabelableControl,
+} from "./[caseId]/FieldValueRenderer";
 import { apiFetch } from "~/lib/basePath";
 
 interface ExternalIssue {
@@ -973,14 +975,23 @@ export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
             explicitFieldNameForSteps:
               fieldType === "Steps" ? fieldId : undefined,
           } as const;
+          const controlId =
+            isEdit && hasLabelableControl(fieldType)
+              ? `generated-${testCase.id}-field-${fieldId}`
+              : undefined;
 
           return (
             <div key={`field-${field.caseField.id}`} className="space-y-2">
               <div className="border-b border-muted-foreground/50 pb-1 text-sm font-medium text-primary">
-                {displayName}
+                {controlId ? (
+                  <label htmlFor={controlId}>{displayName}</label>
+                ) : (
+                  displayName
+                )}
               </div>
               <FieldValueRenderer
                 {...commonProps}
+                controlId={controlId}
                 isEditMode={isEdit}
                 isSubmitting={false}
                 control={control}

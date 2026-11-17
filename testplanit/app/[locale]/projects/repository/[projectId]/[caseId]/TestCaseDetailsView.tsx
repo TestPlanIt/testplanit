@@ -153,7 +153,7 @@ import { ExtendedCases } from "../columns";
 import { DeleteCaseModal } from "../DeleteCase";
 import { QuickScriptModal } from "../QuickScriptModal";
 import { FolderNode } from "../TreeView";
-import FieldValueRenderer from "./FieldValueRenderer";
+import FieldValueRenderer, { hasLabelableControl } from "./FieldValueRenderer";
 import { StepsDisplay } from "./StepsDisplay";
 import { type LinkAttachmentInput } from "@/components/UploadAttachments";
 import TestCaseFormControls from "./TestCaseFormControl";
@@ -2965,6 +2965,11 @@ export function TestCaseDetailsView({
                           : isTiptapEmpty(fieldValue);
                         const isEditableStepsField = isStepsField && canAddEdit;
                         if (isEditMode && !isEnabledField(field)) return null;
+                        const fieldControlId =
+                          isEditMode &&
+                          hasLabelableControl(field.caseField.type.type)
+                            ? `case-field-${field.caseField.id}`
+                            : undefined;
                         if (
                           !isEditMode &&
                           isFieldEmpty &&
@@ -2984,7 +2989,13 @@ export function TestCaseDetailsView({
                           >
                             {field.caseField.type.type !== "Steps" && (
                               <div className="flex items-center font-bold">
-                                {field.caseField.displayName}
+                                {fieldControlId ? (
+                                  <label htmlFor={fieldControlId}>
+                                    {field.caseField.displayName}
+                                  </label>
+                                ) : (
+                                  field.caseField.displayName
+                                )}
                                 {isEditMode && field.caseField.isRequired && (
                                   <sup>
                                     <Asterisk className="h-3 w-3 text-destructive" />
@@ -3022,6 +3033,7 @@ export function TestCaseDetailsView({
                             <FieldValueRenderer
                               fieldValue={fieldValue}
                               fieldType={field.caseField.type.type}
+                              controlId={fieldControlId}
                               caseId={caseId?.toString() || ""}
                               projectId={Number(projectIdParam)}
                               stepsForDisplay={

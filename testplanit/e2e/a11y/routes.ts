@@ -279,7 +279,17 @@ export const routes: A11yRoute[] = [
     needs: ["projectId", "caseId"],
     sanity: APP_SHELL,
     settleMs: 1500,
-    interactions: ["menu"],
+    // The edit form comes last: Escape does not leave it, so nothing after it
+    // would start from the page as loaded.
+    interactions: [
+      "menu",
+      {
+        state: "edit-form",
+        steps: [{ click: '[data-testid="edit-test-case-button"]' }],
+        opens:
+          '[data-testid^="field-value-"] :is(input, [role="combobox"], [contenteditable="true"])',
+      },
+    ],
   },
   {
     name: "case-detail-2",

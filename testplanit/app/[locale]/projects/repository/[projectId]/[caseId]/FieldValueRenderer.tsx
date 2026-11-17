@@ -64,7 +64,23 @@ interface FieldValueRendererProps {
   explicitFieldNameForSteps?: string;
   parameters?: ParameterChipMeta[];
   onOpenParametersSheet?: () => void;
+  /** Id for the edit control, so the surface's own label can point at it. */
+  controlId?: string;
 }
+
+const LABELABLE_FIELD_TYPES = new Set([
+  "Text String",
+  "Link",
+  "Number",
+  "Integer",
+  "Dropdown",
+  "Multi-Select",
+  "Checkbox",
+]);
+
+/** Whether a field type's edit control can be the target of a `<label>`. */
+export const hasLabelableControl = (fieldType: string) =>
+  LABELABLE_FIELD_TYPES.has(fieldType);
 
 const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
   fieldValue,
@@ -88,6 +104,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
   explicitFieldNameForSteps,
   parameters,
   onOpenParametersSheet,
+  controlId,
 }) => {
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
@@ -284,6 +301,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                       ),
                     }))}
                   isMulti
+                  inputId={controlId}
                   aria-label={fieldLabel}
                   isDisabled={isSubmitting}
                   styles={customStyles}
@@ -331,7 +349,11 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                 value={value ? value.toString() : ""}
                 disabled={isSubmitting}
               >
-                <SelectTrigger className="mx-1 w-fit" aria-label={fieldLabel}>
+                <SelectTrigger
+                  id={controlId}
+                  className="mx-1 w-fit"
+                  aria-label={fieldLabel}
+                >
                   <SelectValue
                     placeholder={t("common.placeholders.selectOption")}
                   />
@@ -379,6 +401,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                 checked={value}
                 onCheckedChange={onChange}
                 disabled={isSubmitting}
+                id={controlId}
                 aria-label={fieldLabel}
               />
             )}
@@ -442,6 +465,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               <Input
                 className="mx-1"
                 type="url"
+                id={controlId}
                 aria-label={fieldLabel}
                 value={value ?? ""}
                 onChange={onChange}
@@ -465,6 +489,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               <Input
                 className="mx-1"
                 type="number"
+                id={controlId}
                 aria-label={fieldLabel}
                 value={value ?? ""}
                 onChange={(e) =>
@@ -490,6 +515,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
             render={({ field: { onChange, value } }) => (
               <Input
                 className="mx-1"
+                id={controlId}
                 aria-label={fieldLabel}
                 value={value ?? ""}
                 onChange={onChange}
