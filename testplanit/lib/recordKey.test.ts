@@ -30,6 +30,26 @@ describe("splitRecordQueryTerms", () => {
     ]);
   });
 
+  it("treats OR as a separator only between two terms", () => {
+    expect(splitRecordQueryTerms("or 12")).toEqual(["or", "12"]);
+    expect(splitRecordQueryTerms("12 or")).toEqual(["12", "or"]);
+    expect(splitRecordQueryTerms("12,or,34")).toEqual(["12", "or", "34"]);
+    expect(splitRecordQueryTerms("12 orange 34")).toEqual([
+      "12",
+      "orange",
+      "34",
+    ]);
+  });
+
+  it("stays fast on a long run of whitespace", () => {
+    const started = performance.now();
+    expect(splitRecordQueryTerms(`12${" ".repeat(200_000)}x`)).toEqual([
+      "12",
+      "x",
+    ]);
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
+
   it("returns nothing for an empty query", () => {
     expect(splitRecordQueryTerms("")).toEqual([]);
     expect(splitRecordQueryTerms("   ")).toEqual([]);
