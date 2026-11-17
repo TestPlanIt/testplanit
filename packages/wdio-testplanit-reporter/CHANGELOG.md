@@ -1,5 +1,19 @@
 # @testplanit/wdio-reporter
 
+## 1.2.0
+
+### Minor Changes
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`33825b1`](https://github.com/TestPlanIt/testplanit/commit/33825b14eb6d11a2931abac755eb628d9384ff17) Thanks [@therealbrad](https://github.com/therealbrad)! - Support WebdriverIO 10
+
+  The reporter now accepts `@wdio/reporter` and `@wdio/types` 10 as peer
+  dependencies alongside 8 and 9.
+
+### Patch Changes
+
+- Updated dependencies [[`2f18355`](https://github.com/TestPlanIt/testplanit/commit/2f183550820fa7b89f917cc3f4660c5ca342659a), [`7cc11b3`](https://github.com/TestPlanIt/testplanit/commit/7cc11b3c0993ab353fb15f1363be4de022ae811a), [`c80ee95`](https://github.com/TestPlanIt/testplanit/commit/c80ee95e171445f912cbee1d95fe23333fdab159), [`c1d735a`](https://github.com/TestPlanIt/testplanit/commit/c1d735a8b7a7ed282f072b423c20f767056ace39)]:
+  - @testplanit/api@1.2.0
+
 ## 1.1.0
 
 ### Patch Changes
