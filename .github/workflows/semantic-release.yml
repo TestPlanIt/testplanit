@@ -2,11 +2,11 @@ name: Semantic Release
 
 on:
   push:
-    # `main` cuts stable releases. `release/v1.2` is a semantic-release
+    # `main` cuts stable releases. `release/v1.3` is a semantic-release
     # prerelease branch (see testplanit/.releaserc.json): every push of
-    # application code cuts the next `v1.2.0-beta.N`, so nobody hand-tags or
+    # application code cuts the next `v1.3.0-beta.N`, so nobody hand-tags or
     # bumps package.json for a beta.
-    branches: [main, release/v1.2]
+    branches: [main, release/v1.3]
     # Only run when the main application code changes — not for docs, packages, or CLI
     paths:
       - 'testplanit/**'

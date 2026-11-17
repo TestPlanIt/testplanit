@@ -43,7 +43,7 @@ Don't report vulnerabilities in public issues, discussions, or pull requests. Us
 
 Search the [existing issues](https://github.com/testplanit/testplanit/issues) first. If there's no match, open a new one with the [bug report template](https://github.com/testplanit/testplanit/issues/new?template=bug_report.md). The most useful reports include:
 
-- the TestPlanIt version (for a beta, the full tag, such as `v1.2.0-beta.7`)
+- the TestPlanIt version (for a beta, the full tag, such as `v1.3.0-beta.1`)
 - exact steps to reproduce
 - what you expected and what happened instead
 - browser console or server log output

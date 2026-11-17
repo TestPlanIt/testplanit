@@ -7,7 +7,7 @@ Security fixes ship as patch releases of the latest stable minor version. They'r
 | Version                                                      | Supported          |
 | ------------------------------------------------------------ | ------------------ |
 | Latest stable minor (currently 1.2.x)                        | :white_check_mark: |
-| Current beta line (the 1.3 betas, once the first one ships)  | :white_check_mark: |
+| Current beta line (the 1.3 betas)                            | :white_check_mark: |
 | Older minor versions                                         | :x:                |
 
 Older minor versions don't receive fixes. Upgrade to the latest release to get them.

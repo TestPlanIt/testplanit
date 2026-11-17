@@ -34,7 +34,7 @@ Steps to reproduce the behavior:
 
 - OS: [e.g., Windows 11, macOS 13.0, Ubuntu 22.04]
 - Browser: [e.g., Chrome 119, Firefox 120, Safari 17]
-- TestPlanIt Version: [e.g., 1.1.12 or 1.2.0-beta.7]
+- TestPlanIt Version: [e.g., 1.2.0 or 1.3.0-beta.1]
 - Deployment: [e.g., Docker Compose, Helm, from source, testplanit.com]
 
 ### Mobile (if applicable)

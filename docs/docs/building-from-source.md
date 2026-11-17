@@ -22,7 +22,7 @@ building is a single command. Build from source when you want to:
 
 Betas of the next release come from the current release branch
 (`release/vX.Y`). Each one is published as a GitHub **pre-release**, such as
-`v1.2.0-beta.7`, **and** as self-host images, so you don't need to build a beta
+`v1.3.0-beta.1`, **and** as self-host images, so you don't need to build a beta
 to try it. The [Releases page](https://github.com/TestPlanIt/testplanit/releases)
 lists every version; pre-releases are marked **Pre-release**.
 
@@ -32,17 +32,17 @@ then set `TESTPLANIT_VERSION` to the same version:
 ```bash
 git clone https://github.com/TestPlanIt/testplanit.git
 cd testplanit
-git checkout v1.2.0-beta.7
-TESTPLANIT_VERSION=1.2.0-beta.7 docker compose -f testplanit/docker-compose.prod.yml \
+git checkout v1.3.0-beta.1
+TESTPLANIT_VERSION=1.3.0-beta.1 docker compose -f testplanit/docker-compose.prod.yml \
   --profile with-postgres --profile with-valkey \
   --profile with-elasticsearch --profile with-minio \
   up -d
 ```
 
 With Helm or `docker run`, use the image tags directly. A floating `X.Y-beta`
-tag always points to the newest beta of that line (`:1.2-beta` and
-`:1.2-beta-workers`); a version tag pins one beta (`:1.2.0-beta.7` and
-`:1.2.0-beta.7-workers`).
+tag always points to the newest beta of that line (`:1.3-beta` and
+`:1.3-beta-workers`); a version tag pins one beta (`:1.3.0-beta.1` and
+`:1.3.0-beta.1-workers`).
 
 The npm packages have matching betas under the `beta` dist-tag, so a
 client that talks to a beta server can run the same line:
@@ -154,4 +154,4 @@ it starts, so upgrading is a rebuild and restart. A database created by a
 ## Feedback
 
 Hit a problem on a beta? [Open an issue](https://github.com/TestPlanIt/testplanit/issues/new)
-and put the exact beta version (for example, `v1.2.0-beta.7`) in the title.
+and put the exact beta version (for example, `v1.3.0-beta.1`) in the title.

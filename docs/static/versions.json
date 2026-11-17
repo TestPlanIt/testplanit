@@ -1,6 +1,11 @@
 {
   "versions": [
     {
+      "line": "1.3",
+      "url": "https://docs-v1-3.testplanit.com",
+      "status": "beta"
+    },
+    {
       "line": "1.2",
       "url": "https://docs.testplanit.com",
       "status": "stable"
