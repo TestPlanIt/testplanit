@@ -1,5 +1,102 @@
 # @testplanit/mcp-server
 
+## 1.2.0
+
+### Patch Changes
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`5db9fbe`](https://github.com/TestPlanIt/testplanit/commit/5db9fbe7079c35b7481f82b893ec481d22896a16) Thanks [@therealbrad](https://github.com/therealbrad)! - `cases_list` and `cases_get` read the renamed `testRunCases` relation
+
+  TestPlanIt renamed `RepositoryCases.testRuns` to `testRunCases`: the rows are
+  TestRunCases join records, but the old name read as a link to TestRuns. The
+  case tools now send the new name in their includes and in the
+  `hasNeverExecuted` filter, so they require a server carrying the rename.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`deccd17`](https://github.com/TestPlanIt/testplanit/commit/deccd178efed28a9b894209e8570db80c67e0d74) Thanks [@therealbrad](https://github.com/therealbrad)! - `cases_update` can clear a custom field, and clearing rich text works
+
+  Passing `null` for a custom field (or `""` for a non-text field) removes the
+  stored value, as Add Case stores nothing for an empty field; a required field
+  refuses. Passing `null` for a session mission, a milestone note or a step's
+  expected result used to fail with a 422; the host now stores the empty
+  document the web editors store, so a clear succeeds everywhere. Replacing a
+  case's steps now creates the new steps before retiring the old ones, so a
+  rejected step leaves the case's steps intact instead of half-replaced.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`bbc783b`](https://github.com/TestPlanIt/testplanit/commit/bbc783bc861c4de291ae56c4b930fc529f9a0f4b) Thanks [@therealbrad](https://github.com/therealbrad)! - `code_repositories_list` describes every repository binding a project holds
+
+  A project can bind one repository per purpose (QuickScript test code and
+  impact-analysis application code), so the tool no longer claims one row per
+  project; each row now carries its `purpose`, and an optional `purpose` filter
+  picks one side. The settings allow-list now matches what each provider's
+  adapter stores, so GitLab (`projectPath`) and Bitbucket (`workspace`,
+  `repoSlug`) rows no longer come back with empty settings and a null `url`,
+  and GitHub Enterprise Server rows derive their web url from the stored API
+  root. `cases_get` reuses the same derivation for its inline `codeRepository`.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`bec2cb4`](https://github.com/TestPlanIt/testplanit/commit/bec2cb46d388a27d1d461987ec44fb640141916d) Thanks [@therealbrad](https://github.com/therealbrad)! - Date filters accept a calendar day
+
+  Every `from` / `to` / `updatedAfter` / `updatedBefore` / `automatedResultSince`
+  / `noAutomatedResultSince` filter now takes `YYYY-MM-DD` as well as a full
+  ISO 8601 timestamp. A date-only start bound begins at the start of that UTC
+  day and a date-only end bound runs through the end of it, the way the web
+  app's report and audit-log date ranges read a day; previously a bare date
+  failed validation and a timestamp at midnight excluded the named day.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`95918ab`](https://github.com/TestPlanIt/testplanit/commit/95918abcd1494d2075ec316e39e8e07cd5c825ca) Thanks [@therealbrad](https://github.com/therealbrad)! - `repository_case_links_list` accepts `linkType: "DUPLICATED_FROM"`
+
+  The provenance link a within-project copy records (`DUPLICATED_FROM`) was
+  missing from the tool's `linkType` filter, although unfiltered listings
+  already returned it. The accepted values are now derived from the schema's
+  enum, so a new link type cannot be left out again.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`8358ce0`](https://github.com/TestPlanIt/testplanit/commit/8358ce0dc9fc074d38ca57d14c3d48f5c7ad8eb0) Thanks [@therealbrad](https://github.com/therealbrad)! - `milestones_update` completes a milestone the way the app does
+
+  Completing used to overwrite the planned due date with the current time and
+  touch nothing else. It now goes through the app's completion: the due date
+  (or a given `completedAt`) becomes the completion date, child milestones
+  complete with it, and its active runs and sessions complete only with the
+  new `completeTestRuns` / `completeSessions` flags, subject to the caller's
+  close permissions and the review gate. `startedAt` and `completedAt` are
+  accepted on create and update as calendar days, starting keeps a planned
+  start date, reopening is refused while the parent milestone is completed,
+  and a parent in another project or a cycle is refused server-side.
+  Milestones synced from an external tracker refuse changes to their
+  tracker-owned fields instead of failing the whole update.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`7cc11b3`](https://github.com/TestPlanIt/testplanit/commit/7cc11b3c0993ab353fb15f1363be4de022ae811a) Thanks [@therealbrad](https://github.com/therealbrad)! - Cases and sessions created without a `templateId` now use the project's default template when the project sets one, then the template marked Default.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`66421d1`](https://github.com/TestPlanIt/testplanit/commit/66421d1c9b29b52da3b2e1d0aab403af3efe5a13) Thanks [@therealbrad](https://github.com/therealbrad)! - `reviews_list` scopes role assignments per project
+
+  Requests assigned to a role were matched against every role the caller held
+  in any project, so the list showed rows the caller could not decide and
+  missed rows a group-provisioned role entitled them to. The tool now reads
+  the caller's assignee scope from the server, which resolves the role they
+  hold in each project and the entity types that role may approve — the same
+  rule the decide route applies. The web app's inbox and badges use the same
+  scope.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`066d5f5`](https://github.com/TestPlanIt/testplanit/commit/066d5f56222f3521624389a0be8e12663b19120a) Thanks [@therealbrad](https://github.com/therealbrad)! - `runs_create` and `runs_cases_add` honour the project's Not Started rule
+
+  Projects that keep Not Started cases out of runs enforced that only in the
+  browser; the tools added such cases anyway. The server now leaves them out
+  of every run write, and both tools report the ones left out as
+  `skippedNotStartedCaseIds`. Restoring a removed case now also brings it back
+  untested for every client, and a run case or session assigned through the
+  API notifies its assignee like an assignment made in the app.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`c80ee95`](https://github.com/TestPlanIt/testplanit/commit/c80ee95e171445f912cbee1d95fe23333fdab159) Thanks [@therealbrad](https://github.com/therealbrad)! - Result attempt numbers are assigned by the server
+
+  The MCP server counted a run case's live results to number the next
+  attempt, so a removed result's number was reused; the web UI's quick status
+  buttons always sent 1 and `@testplanit/api` defaulted to 1. The server now
+  numbers every new result per run case (and iteration): a missing number, or
+  one an existing result already carries, becomes the next free one. The MCP
+  tool no longer sends an attempt and the API client only sends one you give
+  it.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`1bc3090`](https://github.com/TestPlanIt/testplanit/commit/1bc3090699630fe26abb5c8d60fa833cbb8305fb) Thanks [@therealbrad](https://github.com/therealbrad)! - `testplanit_templates_list` marks the project's own default template with `isProjectDefault`, next to `isDefault` for the system default.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`c1d735a`](https://github.com/TestPlanIt/testplanit/commit/c1d735a8b7a7ed282f072b423c20f767056ace39) Thanks [@therealbrad](https://github.com/therealbrad)! - Join API paths onto the configured base URL as strings, so an instance served under a path prefix (for example `https://example.com/testplanit`) is reached when its full URL is given as the base URL. Previously the prefix was dropped from every request.
+
 ## 1.1.1
 
 ### Patch Changes

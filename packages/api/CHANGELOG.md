@@ -1,5 +1,31 @@
 # @testplanit/api
 
+## 1.2.0
+
+### Patch Changes
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`2f18355`](https://github.com/TestPlanIt/testplanit/commit/2f183550820fa7b89f917cc3f4660c5ca342659a) Thanks [@therealbrad](https://github.com/therealbrad)! - README matches the client
+
+  `elapsed` is documented in seconds (the README still said milliseconds),
+  result `notes` as plain text, and `createTestCase` no longer shows a
+  `repositoryId` the client does not take. The bulk `createTestCases` call and
+  the folder, template, tag, step, lookup, automation-plan and JUnit helpers
+  are now listed, with examples in the API client guide.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`7cc11b3`](https://github.com/TestPlanIt/testplanit/commit/7cc11b3c0993ab353fb15f1363be4de022ae811a) Thanks [@therealbrad](https://github.com/therealbrad)! - Cases and sessions created without a `templateId` now use the project's default template when the project sets one, then the template marked Default.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`c80ee95`](https://github.com/TestPlanIt/testplanit/commit/c80ee95e171445f912cbee1d95fe23333fdab159) Thanks [@therealbrad](https://github.com/therealbrad)! - Result attempt numbers are assigned by the server
+
+  The MCP server counted a run case's live results to number the next
+  attempt, so a removed result's number was reused; the web UI's quick status
+  buttons always sent 1 and `@testplanit/api` defaulted to 1. The server now
+  numbers every new result per run case (and iteration): a missing number, or
+  one an existing result already carries, becomes the next free one. The MCP
+  tool no longer sends an attempt and the API client only sends one you give
+  it.
+
+- [#738](https://github.com/TestPlanIt/testplanit/pull/738) [`c1d735a`](https://github.com/TestPlanIt/testplanit/commit/c1d735a8b7a7ed282f072b423c20f767056ace39) Thanks [@therealbrad](https://github.com/therealbrad)! - Join API paths onto the configured base URL as strings, so an instance served under a path prefix (for example `https://example.com/testplanit`) is reached when its full URL is given as the base URL. Previously the prefix was dropped from every request.
+
 ## 1.1.0
 
 ### Minor Changes
