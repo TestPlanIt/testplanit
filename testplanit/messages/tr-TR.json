@@ -724,6 +724,7 @@
       "twoFactorSetup": "İki Faktörlü Kurulum",
       "verifyEmail": "E-postayı Doğrula",
       "trialExpired": "Deneme Süresi Sona Erdi",
+      "instanceSuspended": "Örnek Askıya Alındı",
       "linkSsoAccount": "SSO Hesabını Bağla",
       "userProfile": "Kullanıcı Profili",
       "tagDetails": "Etiket Detayları",
@@ -10293,6 +10294,14 @@
     "nextSteps": "TestPlanIt'i kullanmaya devam etmek ve test verilerinize erişmek için yükseltin.",
     "pricingPlans": "Fiyatlandırma Planları",
     "dataRetention": "Test verileriniz güvenli bir şekilde saklanmaktadır ve hesabınızı yükselttiğinizde erişilebilir olacaktır."
+  },
+  "InstanceSuspended": {
+    "title": "Bu örnek duraklatılmış",
+    "description": "Bu TestPlanIt örneği için abonelik ödenmemiş veya süresi dolmuş olduğundan erişim askıya alınmıştır.",
+    "nextSteps": "Bu örneği yönetiyorsanız, açık faturayı ödeyin veya faturalama portalında bir plan başlatın ve erişim birkaç dakika içinde otomatik olarak geri yüklenir. Diğerleri: lütfen örnek yöneticinize başvurun.",
+    "billingPortal": "Faturalama portalını aç",
+    "contactUs": "TestPlanIt ile iletişime geçin",
+    "dataRetention": "Projeleriniz, test durumlarınız ve sonuçlarınız tam olarak oldukları gibi tutulur. Bir örnek duraklatılırken hiçbir şey silinmez."
   },
   "parameters": {
     "configureButtonEmpty": "Parametreleri yapılandırın",

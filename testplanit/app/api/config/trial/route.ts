@@ -9,6 +9,9 @@ import { resolveTrialContact } from "~/lib/trialContact";
 export async function GET() {
   const isTrialInstance = process.env.IS_TRIAL_INSTANCE === "true";
   const trialEndDate = process.env.TRIAL_END_DATE || null;
+  // Set by the control plane for non-payment / ended subscription; proxy.ts
+  // already redirects every page to /trial-expired?reason=suspended.
+  const isSuspended = process.env.INSTANCE_SUSPENDED === "true";
   const websiteUrl =
     process.env.NEXT_PUBLIC_WEBSITE_URL || "https://testplanit.com";
   // An email address or a link (for example a contact form).
@@ -17,6 +20,7 @@ export async function GET() {
 
   return NextResponse.json({
     isTrialInstance,
+    isSuspended,
     trialEndDate,
     websiteUrl,
     contact,

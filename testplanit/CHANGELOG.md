@@ -1,3 +1,10 @@
+## [1.2.0-beta.50](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.49...v1.2.0-beta.50) (2026-11-16)
+
+### Bug Fixes
+
+* **notifications:** keep notification rows inside the panel width ([dd52244](https://github.com/TestPlanIt/testplanit/commit/dd52244675fcc3db3cff6f2a4fd15340da66766b))
+* **repository:** keep test case edits when the case refetches mid-edit ([d1ca4cd](https://github.com/TestPlanIt/testplanit/commit/d1ca4cdda4ae7a0ff074d4a0fdbd11492c6adc48))
+
 ## [1.2.0-beta.49](https://github.com/TestPlanIt/testplanit/compare/v1.2.0-beta.48...v1.2.0-beta.49) (2026-11-13)
 
 ### Features
@@ -1456,6 +1463,94 @@
 * **tables:** upgrade @tanstack/react-table to v9 ([fe92f30](https://github.com/TestPlanIt/testplanit/commit/fe92f300805320b0d35ab0684e2d54e0c4a7ccab))
 * **users:** load the user lists on scroll and resolve accessible projects in batches ([2e93685](https://github.com/TestPlanIt/testplanit/commit/2e936857eaf8533bf3d16da5c682d18e6d542718))
 * **workflows:** stop eager-fetching every project assignment in admin table ([6262e30](https://github.com/TestPlanIt/testplanit/commit/6262e30bb42c96a3e953736aa70360a8c5d92764))
+
+## [1.1.22](https://github.com/TestPlanIt/testplanit/compare/v1.1.21...v1.1.22) (2026-11-13)
+
+### Bug Fixes
+
+* **jira:** harden the Jira integration for Server and Data Center ([#737](https://github.com/TestPlanIt/testplanit/issues/737)) ([8e2fb99](https://github.com/TestPlanIt/testplanit/commit/8e2fb99fcb2c8b29656a4007ae100ded84a572c1))
+
+## [1.1.21](https://github.com/TestPlanIt/testplanit/compare/v1.1.20...v1.1.21) (2026-11-09)
+
+### Bug Fixes
+
+* **hosted:** suspend an instance through the existing expiry gate ([329a651](https://github.com/TestPlanIt/testplanit/commit/329a651664f14966fad1ae61d88c1958c36a418b))
+* **trial:** let the trial contact be an email address or a link ([#735](https://github.com/TestPlanIt/testplanit/issues/735)) ([7319ab7](https://github.com/TestPlanIt/testplanit/commit/7319ab7ee2a9bd943e831c55fd30be1e42de2931))
+
+## [1.1.20](https://github.com/TestPlanIt/testplanit/compare/v1.1.19...v1.1.20) (2026-11-08)
+
+### Bug Fixes
+
+* **security:** stop search highlights rendering user-written markup ([#733](https://github.com/TestPlanIt/testplanit/issues/733)) ([539f0c5](https://github.com/TestPlanIt/testplanit/commit/539f0c598e7a0362ae0d7b1ac82ef74514a3d8c7))
+
+## [1.1.19](https://github.com/TestPlanIt/testplanit/compare/v1.1.18...v1.1.19) (2026-11-05)
+
+### Bug Fixes
+
+* **integrations:** read every page of provider project and comment lists ([#731](https://github.com/TestPlanIt/testplanit/issues/731)) ([f8b3cd1](https://github.com/TestPlanIt/testplanit/commit/f8b3cd1fe02df00fb5185ad9fd53f91ab2afa16c)), closes [#730](https://github.com/TestPlanIt/testplanit/issues/730)
+
+## [1.1.18](https://github.com/TestPlanIt/testplanit/compare/v1.1.17...v1.1.18) (2026-11-04)
+
+### Bug Fixes
+
+* **deps:** keep happy-dom a runtime dependency ([#725](https://github.com/TestPlanIt/testplanit/issues/725)) ([264aa1b](https://github.com/TestPlanIt/testplanit/commit/264aa1b6e3e60c4ff3825be2b2ec5023b32c34a5))
+* **workers:** reconcile report-builder sweep schedulers and retry jobs for not-yet-configured tenants ([#728](https://github.com/TestPlanIt/testplanit/issues/728)) ([07a7fca](https://github.com/TestPlanIt/testplanit/commit/07a7fca93312704a16b196c332c3f33b3bc9c8b3))
+
+## [1.1.17](https://github.com/TestPlanIt/testplanit/compare/v1.1.16...v1.1.17) (2026-10-28)
+
+### Bug Fixes
+
+* **sso:** stop the SAML dialog resetting what it cannot edit ([#724](https://github.com/TestPlanIt/testplanit/issues/724)) ([acf0ebf](https://github.com/TestPlanIt/testplanit/commit/acf0ebf1ae1f85703687c98c64e1e9e95c045d8b))
+
+## [1.1.16](https://github.com/TestPlanIt/testplanit/compare/v1.1.15...v1.1.16) (2026-10-26)
+
+### Bug Fixes
+
+* **ui:** keep saves working on a plain-HTTP self-host ([#720](https://github.com/TestPlanIt/testplanit/issues/720)) ([c70ab53](https://github.com/TestPlanIt/testplanit/commit/c70ab53e21c4d6f62d444e75d065e7a3dc85cc9f)), closes [#719](https://github.com/TestPlanIt/testplanit/issues/719)
+
+## [1.1.15](https://github.com/TestPlanIt/testplanit/compare/v1.1.14...v1.1.15) (2026-10-25)
+
+### Bug Fixes
+
+* **auth:** refresh the session display name from the user record ([#716](https://github.com/TestPlanIt/testplanit/issues/716)) ([e727729](https://github.com/TestPlanIt/testplanit/commit/e727729098e19a61accccea9f72e724b346fe97f))
+* **deps:** resolve 8 open Dependabot alerts ([#710](https://github.com/TestPlanIt/testplanit/issues/710)) ([ef6c406](https://github.com/TestPlanIt/testplanit/commit/ef6c4068651e2e95a9e02ced094d01102f4dfa4b))
+
+## [1.1.14](https://github.com/TestPlanIt/testplanit/compare/v1.1.13...v1.1.14) (2026-10-21)
+
+### Bug Fixes
+
+* **repository:** keep case data across template switches and draft restores; credit copied cases to the copier ([#709](https://github.com/TestPlanIt/testplanit/issues/709)) ([d316772](https://github.com/TestPlanIt/testplanit/commit/d31677292aa0f25663d20b06b39c3c646ebfbbae)), closes [#708](https://github.com/TestPlanIt/testplanit/issues/708)
+
+## [1.1.13](https://github.com/TestPlanIt/testplanit/compare/v1.1.12...v1.1.13) (2026-10-20)
+
+### Bug Fixes
+
+* **docker:** run the prebuilt self-host images in Docker Compose ([#705](https://github.com/TestPlanIt/testplanit/issues/705)) ([9f3415d](https://github.com/TestPlanIt/testplanit/commit/9f3415d20839fa841c9e4c7659ed99383aec6868))
+
+## [1.1.12](https://github.com/TestPlanIt/testplanit/compare/v1.1.11...v1.1.12) (2026-10-16)
+
+### Enhancements
+
+* **execution:** CI jobs report their build URL and push auto-runs list the build's pull requests ([#702](https://github.com/TestPlanIt/testplanit/issues/702)) ([f914199](https://github.com/TestPlanIt/testplanit/commit/f91419922c5ce67c60a5ea856fd2e35a90136f26))
+
+## [1.1.11](https://github.com/TestPlanIt/testplanit/compare/v1.1.10...v1.1.11) (2026-10-16)
+
+### Bug Fixes
+
+* **runs:** fill summary bar segments to full width ([#701](https://github.com/TestPlanIt/testplanit/issues/701)) ([54499dd](https://github.com/TestPlanIt/testplanit/commit/54499ddc82c305b493586c8c74d2d343e798e5f8))
+
+## [1.1.10](https://github.com/TestPlanIt/testplanit/compare/v1.1.9...v1.1.10) (2026-10-16)
+
+### Bug Fixes
+
+* **i18n:** show line breaks in 11 Spanish help texts ([#700](https://github.com/TestPlanIt/testplanit/issues/700)) ([ea42913](https://github.com/TestPlanIt/testplanit/commit/ea429138a0b1ee96290bd82e7f26bde6561dfc88))
+
+## [1.1.9](https://github.com/TestPlanIt/testplanit/compare/v1.1.8...v1.1.9) (2026-10-16)
+
+### Bug Fixes
+
+* **a11y:** name table header menus and profile links from their visible text ([#699](https://github.com/TestPlanIt/testplanit/issues/699)) ([bbda532](https://github.com/TestPlanIt/testplanit/commit/bbda532af6eb9d342f826dec4b2b4f1931b9a127)), closes [#698](https://github.com/TestPlanIt/testplanit/issues/698)
+* **deps:** resolve 18 of 21 open Dependabot alerts ([#698](https://github.com/TestPlanIt/testplanit/issues/698)) ([a70654f](https://github.com/TestPlanIt/testplanit/commit/a70654f10b25a3aba9ff4f10dc89978b4562f6bc))
 
 ## [1.1.8](https://github.com/TestPlanIt/testplanit/compare/v1.1.7...v1.1.8) (2026-10-15)
 

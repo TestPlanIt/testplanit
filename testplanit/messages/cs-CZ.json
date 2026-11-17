@@ -724,6 +724,7 @@
       "twoFactorSetup": "Nastavení dvoufaktorového ověření",
       "verifyEmail": "Ověřit email",
       "trialExpired": "Zkušební doba vypršela",
+      "instanceSuspended": "Instance pozastavena",
       "linkSsoAccount": "Propojit SSO účet",
       "userProfile": "Uživatelský profil",
       "tagDetails": "Podrobnosti štítku",
@@ -10293,6 +10294,14 @@
     "nextSteps": "Upgradujte, abyste pokračovali v používání TestPlanIt a měli přístup ke svým testovacím datům.",
     "pricingPlans": "Cenové plány",
     "dataRetention": "Vaše testovací data jsou bezpečně uložena a budou k dispozici po upgradu účtu."
+  },
+  "InstanceSuspended": {
+    "title": "Tato instance je pozastavena",
+    "description": "Přístup byl pozastaven, protože předplatné pro tuto instanci TestPlanIt není zaplaceno nebo skončilo.",
+    "nextSteps": "Pokud tuto instanci spravujete, zaplaťte otevřenou fakturu nebo spusťte plán na portálu fakturace a přístup bude automaticky obnoven během několika minut. Všichni ostatní: kontaktujte správce své instance.",
+    "billingPortal": "Otevřít portál fakturace",
+    "contactUs": "Kontaktujte TestPlanIt",
+    "dataRetention": "Vaše projekty, testovací případy a výsledky jsou zachovány přesně tak, jak byly. Během pozastavení instance se neodstraní nic."
   },
   "parameters": {
     "configureButtonEmpty": "Konfigurovat parametry",
