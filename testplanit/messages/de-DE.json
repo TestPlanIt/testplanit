@@ -6441,7 +6441,7 @@
       "storage": {
         "tab": "Speicher",
         "neverScanned": "Der Speicher wurde noch nicht gescannt. Ein Scan vergleicht die Dateien im Speicher mit der Datenbank, um nicht verwendete Dateien und Anhänge zu finden, deren Datei fehlt.",
-        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "summary": "{objects, plural, one {# Datei} other {# Dateien}} im Speicher ({size}). {orphans, plural, =0 {Keine sind verwaist.} one {# ist verwaist ({orphanSize}).} other {# sind verwaist ({orphanSize}).}}",
         "missingFiles": "{count, plural, one {# Anhang hat keine Datei im konfigurierten Speicher.} other {# Anhänge haben keine Datei im konfigurierten Speicher.}}",
         "allFolders": "Alle Ordner",
         "status": {
@@ -6449,7 +6449,7 @@
           "REFERENCED": "In Verwendung"
         },
         "loadedSelected": "{shown, plural, one {Die geladene Datei ist ausgewählt} other {Alle # geladenen Dateien sind ausgewählt}}.",
-        "confirmDelete": "{count, plural, =0 {None of the selected files can be deleted.} one {Delete this file ({size}) from storage? This cannot be undone.} other {Delete # files ({size}) from storage? This cannot be undone.}}",
+        "confirmDelete": "{count, plural, =0 {Keine der ausgewählten Dateien kann gelöscht werden.} one {Diese Datei ({size}) aus dem Speicher löschen? Dies kann nicht rückgängig gemacht werden.} other {# Dateien ({size}) aus dem Speicher löschen? Dies kann nicht rückgängig gemacht werden.}}",
         "skipped": "{count, plural, one {# ausgewählte Datei wird in Ruhe gelassen, da sie in Verwendung ist.} other {# ausgewählte Dateien werden in Ruhe gelassen, da sie in Verwendung sind.}}",
         "deleted": "{count, plural, one {# Datei aus dem Speicher gelöscht} other {# Dateien aus dem Speicher gelöscht}}"
       },
@@ -8286,6 +8286,8 @@
       "authType": "## Authentifizierungstyp\nWählen Sie die Authentifizierungsmethode für den externen Dienst.\n\n- **API-Schlüssel:** Einfache Authentifizierung mit E-Mail-Adresse und API-Token\n- **OAuth 2.0:** Sichere Authentifizierung über den OAuth-Flow\n- **Persönliches Zugriffstoken:** Direkte tokenbasierte Authentifizierung",
       "email": "## E-Mail-Adresse\nIhre E-Mail-Adresse für den externen Dienst.\n\n- Wird für die API-Schlüsselauthentifizierung verwendet\n- Muss mit dem Konto übereinstimmen, das das API-Token generiert hat\n- Erforderlich für Jira Cloud; lassen Sie das Feld leer für Jira Server / Data Center",
       "apiToken": "## API-Token\nGenerieren Sie einen API-Token in Ihren Kontoeinstellungen beim externen Dienst.\n\n- Normalerweise zu finden unter Kontoeinstellungen → Sicherheit → API-Tokens\n- Gewährleistet sicheren Zugriff, ohne Ihr Passwort preiszugeben\n- Kann bei Bedarf widerrufen und neu generiert werden",
+      "username": "## Benutzername\nDer Benutzername Ihres Jira Server / Data Center-Kontos für die Standardauthentifizierung.\n\n- Wird zusammen mit dem Passwort verwendet\n- Lassen Sie dies leer für Jira Cloud\n- Lassen Sie dies leer, wenn Sie sich mit einem Personal Access Token authentifizieren",
+      "password": "## Passwort\nDas Passwort Ihres Jira Server / Data Center-Kontos für die Standardauthentifizierung.\n\n- Wird zusammen mit dem Benutzernamen verwendet\n- Lassen Sie dies leer für Jira Cloud\n- Lassen Sie dies leer, wenn Sie sich mit einem Personal Access Token authentifizieren",
       "jiraUrl": "## Jira-URL\nDie Basis-URL Ihrer Jira-Instanz.\n\n- Jira Cloud: https://your-site.atlassian.net\n- Jira Server / Data Center: die Adresse, von der es bereitgestellt wird, einschließlich aller Kontextpfade (z. B. https://jira.example.com/jira)\n- Fügen Sie nicht /browse oder andere Seitenpfade hinzu\n- Muss von diesem Server aus erreichbar sein",
       "clientId": "## OAuth-Client-ID\nDie Client-ID aus Ihrer OAuth-Anwendungskonfiguration.\n\n- Erstellt in der Entwicklerkonsole des externen Dienstes.\n- Wird verwendet, um Ihre Anwendung während des OAuth-Ablaufs zu identifizieren.\n- Kann sicher in Konfigurationsdateien weitergegeben werden.",
       "clientSecret": "## OAuth-Clientgeheimnis\nDas Clientgeheimnis aus Ihrer OAuth-Anwendungskonfiguration.\n\n- Wird zusammen mit der Client-ID erstellt.\n- Muss vertraulich und sicher aufbewahrt werden.\n- Wird zur Authentifizierung Ihrer Anwendung verwendet.",

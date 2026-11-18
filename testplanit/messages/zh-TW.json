@@ -8286,6 +8286,8 @@
       "authType": "## 驗證類型\n選擇如何與外部服務進行驗證。\n\n- **API 金鑰：** 使用電子郵件和 API 權杖的簡單驗證\n- **OAuth 2.0：** 使用 OAuth 流程的安全驗證\n- **個人存取權杖：** 直接以權杖為基礎的驗證",
       "email": "## 電子郵件地址\n您的外部服務帳號電子郵件地址。\n\n- 用於 API 金鑰驗證\n- 必須與產生 API 令牌的帳戶匹配\n- Jira Cloud 必需；Jira Server / Data Center 留空",
       "apiToken": "## API 令牌\n在外部服務的帳戶設定中產生 API 令牌。\n\n- 通常位於「帳號設定」→「安全性」→「API 令牌」中。\n- 提供安全訪問，無需暴露您的密碼。\n- 可依需要撤銷和重新產生。",
+      "username": "## 使用者名稱\n您的 Jira Server / Data Center 帳戶的使用者名稱，用於基本身分驗證。\n\n- 與密碼一起使用\n- 適用於 Jira Cloud 時請留空\n- 使用個人存取令牌進行身分驗證時請留空",
+      "password": "## 密碼\n您的 Jira Server / Data Center 帳戶的密碼，用於基本身分驗證。\n\n- 與使用者名稱一起使用\n- 適用於 Jira Cloud 時請留空\n- 使用個人存取令牌進行身分驗證時請留空",
       "jiraUrl": "## Jira URL\n您的 Jira 執行個體的基本 URL。\n\n- Jira Cloud：https://your-site.atlassian.net\n- Jira Server / Data Center：提供服務的位址，包括任何內容路徑（例如 https://jira.example.com/jira）\n- 不包括 /browse 或其他頁面路徑\n- 必須可從此伺服器存取",
       "clientId": "## OAuth 用戶端 ID\n來自您的 OAuth 應用程式設定的客戶端 ID。\n\n- 在外部服務的開發者控制台中建立。\n- 用於在 OAuth 流程中識別您的應用程式。\n- 可以安全地在設定檔中共用。",
       "clientSecret": "## OAuth 用戶端金鑰\n來自您的 OAuth 應用程式設定的用戶端金鑰。\n\n- 與客戶端 ID 一起建立\n- 必須保密且安全\n- 用於驗證您的應用程式",
