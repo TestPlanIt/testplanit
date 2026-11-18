@@ -2454,7 +2454,7 @@
           "remove": "Bayat Pin'leri Kaldır",
           "checkStarted": "Bayat pin kontrolü kuyruğa alındı.",
           "checkFailedToStart": "Bayat pin kontrolü başlatılamadı",
-          "running": "{{checked, number}} / {{total, plural, one {# dosya} other {# dosya}} kontrol ediliyor…",
+          "running": "{checked, number} / {total, plural, one {# dosya} other {# dosya}} kontrol ediliyor…",
           "neverChecked": "Henüz kontrol edilmedi",
           "checkFailed": "Son kontrol başarısız oldu",
           "summary": "{count, plural, =0 {Bayat pin yok} one {# bayat pin} other {# bayat pin}} · {checked, plural, one {# pin} other {# pin}} kontrol edildi",
@@ -4978,7 +4978,7 @@
           "issue_targets": "Testmo sorun hedeflerini TestPlanIt entegrasyonlarıyla (Jira, GitHub, vb.) eşleştirin."
         },
         "mappingDatasetDefaultDescription": "Testmo dışa aktarımında {dataset} incelemesi tespit edildi.",
-        "mappingDatasetCount": "{count, number} kayıt{count, plural, one {} other {s}} tespit edildi",
+        "mappingDatasetCount": "{count, plural, one {# kayıt tespit edildi} other {# kayıt tespit edildi}}",
         "mappingDatasetNoEntitiesTitle": "Haritalanacak bir şey yok.",
         "mappingDatasetNoEntitiesDescription": "Bu veri seti eşleme gerektirmiyor. Hazır olduğunuzda bir sonraki veri setine geçin.",
         "mappingDatasetUnsupportedTitle": "Haritalama gerekmiyor.",

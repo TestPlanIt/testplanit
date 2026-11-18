@@ -4978,7 +4978,7 @@
           "issue_targets": "Ánh xạ các mục tiêu vấn đề của Testmo với các tích hợp của TestPlanIt (Jira, GitHub, v.v.)."
         },
         "mappingDatasetDefaultDescription": "Đã phát hiện đánh giá {dataset} trong quá trình xuất Testmo.",
-        "mappingDatasetCount": "{count, number} bản ghi{count, plural, one {} other {s}} được phát hiện",
+        "mappingDatasetCount": "{count, plural, other {Đã phát hiện # bản ghi}}",
         "mappingDatasetNoEntitiesTitle": "Không có gì để lập bản đồ",
         "mappingDatasetNoEntitiesDescription": "Bộ dữ liệu này không cần ánh xạ. Hãy chuyển sang bộ dữ liệu tiếp theo khi bạn đã sẵn sàng.",
         "mappingDatasetUnsupportedTitle": "Không cần lập bản đồ",

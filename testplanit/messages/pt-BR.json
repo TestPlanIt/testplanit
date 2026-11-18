@@ -1149,8 +1149,8 @@
     "success": {
       "assigned": "Caso de teste atribuído com sucesso",
       "unassigned": "Caso de teste não atribuído com sucesso",
-      "bulkAssigned": "{count, plural, one {# caso de teste} other {# casos de teste}} atribuídos com sucesso",
-      "bulkUnassigned": "{count, plural, one {# caso de teste} other {# casos de teste}} não atribuídos com sucesso"
+      "bulkAssigned": "{count, plural, one {# caso de teste atribuído} other {# casos de teste atribuídos}} com sucesso",
+      "bulkUnassigned": "{count, plural, one {# caso de teste não atribuído} other {# casos de teste não atribuídos}} com sucesso"
     },
     "tabs": {
       "general": "Em geral",
@@ -2367,7 +2367,7 @@
           "enableDescription": "Verifica commits recentes na ramificação em cada atualização de cache. Desative para manter análises lendo chaves de tíquete apenas dos commits analisados; digitalizações manuais ainda são executadas.",
           "resultLinksLabel": "Contar também tickets adicionados aos resultados de teste",
           "resultLinksDescription": "Um ticket adicionado a um resultado de teste ou resultado de etapa também vincula o caso para o qual esse resultado foi registrado, portanto seus commits fixam e selecionam esse caso também. Desativado, apenas tickets vinculados diretamente a um caso de teste contam.",
-          "skippedLarge": "{count, plural, one {# commit foi} other {# commits foram}} ignorados por serem grandes demais para fixar.",
+          "skippedLarge": "{count, plural, one {# commit foi ignorado por ser grande demais para fixar.} other {# commits foram ignorados por serem grandes demais para fixar.}}",
           "fetchCapped": "Nem todos os commits que nomearam um tíquete vinculado tiveram seus arquivos lidos nesta passagem; o restante será encontrado na próxima varredura.",
           "scanRecent": "Rescan Commits Recentes",
           "scanFull": "Digitalizar Histórico Completo",
@@ -2382,20 +2382,20 @@
           "imported": "{imported, plural, =0 {Nenhum novo tíquete foi importado do rastreador.} one {# tíquete foi importado do rastreador.} other {# tíquetes foram importados do rastreador.}}",
           "fullCapped": "O passeio parou em {count, number} commits antes de chegar ao início da ramificação. Execute Digitalizar Histórico Completo novamente para continuar de onde parou.",
           "stale": "Uma varredura iniciada {date} nunca foi relatada — o worker pode ter sido reiniciado. Enfileire novamente para continuar.",
-          "summaryCommits": "{commits, plural, one {# commit} other {# commits}} lidos{cached, plural, =0 {} other { ({cached, number} do cache de commit)}} · {naming, number} nomeou um tíquete · {tickets, plural, one {# tíquete distinto} other {# tíquetes distintos}}",
+          "summaryCommits": "{commits, plural, one {# commit lido} other {# commits lidos}}{cached, plural, =0 {} other { ({cached, number} do cache de commit)}} · {naming, number} nomeou um tíquete · {tickets, plural, one {# tíquete distinto} other {# tíquetes distintos}}",
           "summaryPins": "Pins: {created, number} criados · {updated, number} atualizados · {removed, number} removidos",
           "noLinkedHint": "Os tíquetes só fixam casos de teste depois que um caso de teste é vinculado a eles. Vincule casos aos tíquetes importados e depois rescan.",
           "importFailuresTitle": "Chaves não encontradas no rastreador ({shown} de {total}):",
           "windowCapped": "Apenas os {count, number} commits mais recentes foram lidos (o limite da janela recente). Use Digitalizar Histórico Completo para ler os mais antigos.",
           "runningWalk": "{commits, number} commits lidos até agora{cached, plural, =0 {} other { ({cached, number} do cache de commit)}} — tíquetes são procurados assim que o passeio termina",
           "runningImport": "{commits, number} commits lidos · importando tíquetes: {lookups, number} procurados no rastreador · {imported, number} importados",
-          "summaryCommitsOnly": "{commits, plural, one {# commit} other {# commits}} lidos",
-          "importSkipped": "{skipped, plural, one {# chave não foi} other {# chaves não foram}} procurada ainda porque uma varredura faz um número limitado de buscas de rastreador. Execute a varredura novamente para continuar.",
+          "summaryCommitsOnly": "{commits, plural, one {# commit lido} other {# commits lidos}}",
+          "importSkipped": "{skipped, plural, one {# chave não foi procurada} other {# chaves não foram procuradas}} ainda porque uma varredura faz um número limitado de buscas de rastreador. Execute a varredura novamente para continuar.",
           "cancelRequested": "Cancelamento solicitado. A varredura para na próxima etapa; commits já lidos permanecem em cache.",
           "cancelled": "Varredura cancelada {date}. Os commits lidos antes do cancelamento são mantidos no cache de commits; os pins não foram atualizados.",
           "importMoved": "{moved, plural, one {# chave é um nome antigo} other {# chaves são nomes antigos}} de tíquetes já importados; foram movidos ou renomeados no rastreador.",
-          "importFailed": "{failed, plural, one {# chave não foi} other {# chaves não foram}} encontrada no rastreador, listada abaixo.",
-          "summaryMatched": "{matched, plural, one {# commit} other {# commits}} nomeou um tíquete vinculado a um caso de teste",
+          "importFailed": "{failed, plural, one {# chave não foi encontrada no rastreador, listada abaixo.} other {# chaves não foram encontradas no rastreador, listadas abaixo.}}",
+          "summaryMatched": "{matched, plural, one {# commit nomeou} other {# commits nomearam}} um tíquete vinculado a um caso de teste",
           "summarySymbolPins": "({count, number} dos pins criados visam uma função ou classe em vez de um arquivo inteiro.)"
         },
         "markers": {
@@ -2427,7 +2427,7 @@
           "viewDescription": "Como este repositório está conectado. Atualize o cache ou execute uma varredura de tíquete daqui; use Editar para alterar configurações.",
           "empty": "Nenhum repositório conectado ainda",
           "emptyDescription": "Conecte o repositório da aplicação em teste para começar a analisar alterações.",
-          "lastScan": "{created, plural, one {# pin} other {# pins}} criados pela última varredura",
+          "lastScan": "{created, plural, one {# pin criado} other {# pins criados}} pela última varredura",
           "scanFailed": "Última varredura falhou",
           "scanCancelled": "Última varredura cancelada"
         },
@@ -2457,8 +2457,8 @@
           "running": "Verificando {checked, number} de {total, plural, one {# arquivo} other {# arquivos}}…",
           "neverChecked": "Ainda não foi verificado",
           "checkFailed": "Última verificação falhou",
-          "summary": "{count, plural, =0 {Sem pins antigos} one {# pin antigo} other {# pins antigos}} · {checked, plural, one {# pin} other {# pins}} verificados",
-          "unreadable": "{count, plural, one {# arquivo} other {# arquivos}} não puderam ser lidos, portanto aqueles pins não foram verificados.",
+          "summary": "{count, plural, =0 {Sem pins antigos} one {# pin antigo} other {# pins antigos}} · {checked, plural, one {# pin verificado} other {# pins verificados}}",
+          "unreadable": "{count, plural, one {# arquivo não pôde ser lido} other {# arquivos não puderam ser lidos}}, portanto aqueles pins não foram verificados.",
           "removed": "{count, plural, =0 {Nenhum pin antigo foi removido} one {# pin antigo removido} other {# pins antigos removidos}}",
           "removeFailed": "Não foi possível remover os pins antigos",
           "removeConfirm": "Remover {count, plural, one {# Code Pin} other {# Code Pins}} que a última verificação não conseguiu encontrar na ponta de {name}?",
@@ -2606,7 +2606,7 @@
     "delete": {
       "title": "Excluir marco",
       "confirmMessage": "Tem certeza de que deseja excluir o marco {name}?",
-      "childrenWarning": "{count, plural, one {Seu # marco filho} other {Seus # marcos filhos e descendentes}} também serão excluídos.",
+      "childrenWarning": "{count, plural, one {Seu # marco filho também será excluído} other {Seus # marcos filhos e descendentes também serão excluídos}}.",
       "warning": "Este marco será removido do projeto. Os dados históricos referentes a este marco permanecerão no projeto.",
       "toast": {
         "loading": "Excluindo marco...",
@@ -3156,7 +3156,7 @@
         "bulkConfirmDescription": "Cada um dos {count} itens selecionados será restaurado para seu projeto, junto com qualquer coisa que foi deletada com ele.",
         "restored": "\"{name}\" restaurado.",
         "restoreFailed": "Não foi possível restaurar \"{name}\": {message}",
-        "bulkResult": "{restored, plural, one {# item} other {# itens}} restaurados, {failed} falharam.",
+        "bulkResult": "{restored, plural, one {# item restaurado} other {# itens restaurados}}, {failed} falharam.",
         "failure": {
           "parent_deleted": "sua pasta ou elemento pai ainda está deletado — restaure aquele primeiro",
           "name_conflict": "já existe um item com o mesmo nome",
@@ -3341,7 +3341,7 @@
     },
     "templateNotAssignedWarning": "Este caso de teste usa o modelo \"{templateName}\" que atualmente não está atribuído ao projeto \"{projectName}\". Pode ser necessário atribuir este modelo ao projeto ou alterar o caso de teste para usar um modelo diferente.",
     "orphanedStepsWarning": "Este caso de teste possui etapas, mas o modelo atual \"{templateName}\" não inclui o campo Etapas. As etapas não podem ser editadas até que o caso de teste tenha um modelo com um campo Etapas.",
-    "orphanedFieldsWarning": "Este caso de teste tem {count, plural, =1 {# valor de campo} other {# valores de campo}} que {count, plural, =1 {é} other {são}} não incluídos no modelo atual \"{templateName}\". {count, plural, =1 {Este campo é} other {Estes campos são}} mostrados abaixo, mas podem não ser editáveis até serem adicionados ao modelo.",
+    "orphanedFieldsWarning": "Este caso de teste tem {count, plural, =1 {# valor de campo} other {# valores de campo}} que {count, plural, =1 {é não incluído} other {são não incluídos}} no modelo atual \"{templateName}\". {count, plural, =1 {Este campo é mostrado abaixo, mas pode não ser editável até ser adicionado ao modelo.} other {Estes campos são mostrados abaixo, mas podem não ser editáveis até serem adicionados ao modelo.}}",
     "title": "Repositório de casos de teste",
     "folders": "Pastas",
     "showDescendants": "Mostrar todos os descendentes",
@@ -3452,7 +3452,7 @@
           "caseIdDescription": "ID do caso do TestPlanIt"
         },
         "success": {
-          "description": "{count, plural, one {# caso de teste} other {# casos de teste}} importados com sucesso"
+          "description": "{count, plural, one {# caso de teste importado} other {# casos de teste importados}} com sucesso"
         },
         "errors": {
           "templateRequired": "É necessário selecionar um modelo.",
@@ -3471,7 +3471,7 @@
         },
         "warnings": {
           "partialTitle": "Alguns links de issue não foram criados",
-          "summary": "{count, plural, one {# célula de issue} other {# células de issue}} não puderam ser vinculadas. Os casos de teste foram importados."
+          "summary": "{count, plural, one {# célula de issue não pôde ser vinculada} other {# células de issue não puderam ser vinculadas}}. Os casos de teste foram importados."
         },
         "page1": {
           "fileType": {
@@ -3503,7 +3503,7 @@
           "title": "Mapear colunas CSV para campos",
           "description": "Mapeie cada coluna do arquivo CSV para um campo no modelo ou opte por ignorá-la.",
           "ignoreColumn": "Ignorar coluna",
-          "requiredFieldsWarning": "{count, plural, one {# campo obrigatório é} other {# campos obrigatórios são}} não mapeados",
+          "requiredFieldsWarning": "{count, plural, one {# campo obrigatório é não mapeado} other {# campos obrigatórios são não mapeados}}",
           "caseIdHint": "Este deve ser o ID numérico do caso — os casos correspondentes serão substituídos."
         },
         "page3": {
@@ -3731,7 +3731,7 @@
       "generatingProgress": "Gerando caso {current, number} de {total, number}...",
       "generatingBatch": "Gerando {count, plural, one {# caso} other {# casos}} em um arquivo...",
       "previewTitle": "Pré-visualização da exportação",
-      "previewDescription": "{count, plural, one {# arquivo} other {# arquivos}} gerados",
+      "previewDescription": "{count, plural, one {# arquivo gerado} other {# arquivos gerados}}",
       "copySuccess": "Copiado para a área de transferência",
       "fallbackBadge": "Gerado usando modelo (IA indisponível)",
       "retryButton": "Tentativa de repetição da geração de IA",
@@ -3800,7 +3800,7 @@
       "runStatusDate": "{status} — {date}",
       "noFolder": "Sem pasta",
       "duplicateWarning": "Possíveis duplicados encontrados",
-      "duplicateWarningDescription": "{count, plural, one {# caso existente} other {# casos existentes}} podem abranger funcionalidades semelhantes",
+      "duplicateWarningDescription": "{count, plural, one {# caso existente pode} other {# casos existentes podem}} abranger funcionalidades semelhantes",
       "duplicateWarningReview": "Análise",
       "importWarning": "Possível duplicado",
       "importWarningTooltip": "Este nome de caso é semelhante a {count, plural, one {# caso existente} other {# casos existentes}}: {names}",
@@ -4344,7 +4344,7 @@
       "breakdownRow": "{count, plural, one {# caso} other {# casos}}",
       "autoCommentNote": "Cada caso recebe um comentário automático nomeando sua própria transição, e o revisor é notificado uma vez para todo o lote.",
       "otherEditsNote": "Suas outras edições de campo são aplicadas ao enviar. A mudança de estado aguarda aprovação.",
-      "pendingSkipNote": "{count, plural, one {# caso já está} other {# casos já estão}} aguardando revisão e serão ignorados.",
+      "pendingSkipNote": "{count, plural, one {# caso já está aguardando revisão e será ignorado} other {# casos já estão aguardando revisão e serão ignorados}}.",
       "submitSuccess": "{count, plural, one {# solicitação de revisão criada} other {# solicitações de revisão criadas}}.",
       "submitSuccessWithSkips": "{created, plural, one {# solicitação de revisão criada} other {# solicitações de revisão criadas}}, {skipped, plural, one {# ignorada} other {# ignoradas}} (já aguardando revisão).",
       "nothingToRequest": "Nenhuma solicitação de revisão foi necessária para os casos selecionados.",
@@ -4419,7 +4419,7 @@
       "blocked": "Bloqueado",
       "blockedBy": "Bloqueado até {count, plural, one {este caso passar} other {estes casos passarem}} nesta execução:",
       "blockedNotice": "Este caso de teste não pode ser executado até {count, plural, one {o caso do qual depende ter} other {todos os # casos dos quais depende terem}} passado nesta execução.",
-      "notInRun": "{count, plural, one {# caso do qual este depende está} other {# casos dos quais este depende estão}} não nesta execução e não bloquearão a execução:",
+      "notInRun": "{count, plural, one {# caso do qual este depende está não nesta execução e não bloqueará} other {# casos dos quais este depende estão não nesta execução e não bloquearão}} a execução:",
       "unblocked": "Todos os casos dos quais este depende passaram nesta execução."
     },
     "distribute": {
@@ -4465,7 +4465,7 @@
       "success": {
         "title": "Execução de teste adicionada com sucesso",
         "description": "{name} foi adicionado ao projeto",
-        "descriptionMultiple": "{count, plural, one {# execução de teste tem} other {# execuções de teste têm}} sido criadas para {name}"
+        "descriptionMultiple": "{count, plural, one {# execução de teste tem sido criada} other {# execuções de teste têm sido criadas}} para {name}"
       },
       "estimates": {
         "manual": "Tempo estimado de trabalho manual",
@@ -4668,7 +4668,7 @@
         "noCommits": "Nenhum commit encontrado."
       },
       "diff": {
-        "summary": "{files, plural, one {# arquivo} other {# arquivos}} alterados · +{additions, number} −{deletions, number}",
+        "summary": "{files, plural, one {# arquivo alterado} other {# arquivos alterados}} · +{additions, number} −{deletions, number}",
         "truncated": "O provedor retornou um diff parcial. Alguns arquivos alterados não são mostrados ou não têm patch.",
         "noChanges": "Sem alterações entre esses commits.",
         "statusModified": "Modificado",
@@ -4752,12 +4752,12 @@
       },
       "warnings": {
         "diff_truncated_by_provider": "O provedor retornou um diff parcial.",
-        "diff_truncated_by_budget": "Apenas parte do diff cabia no contexto de IA; {count, plural, one {# arquivo foi} other {# arquivos foram}} resumidos apenas pelo caminho.",
+        "diff_truncated_by_budget": "Apenas parte do diff cabia no contexto de IA; {count, plural, one {# arquivo foi resumido} other {# arquivos foram resumidos}} apenas pelo caminho.",
         "llm_not_configured": "Sem integração LLM ativa: a classificação de IA foi ignorada.",
         "search_fallback_db": "Índice de busca indisponível: a correspondência de palavras-chave usou o banco de dados.",
         "search_index_empty": "O índice de busca não possui casos de teste para este projeto, portanto a correspondência de palavras-chave voltou aos nomes dos casos de teste no banco de dados e pode ter perdido correspondências no conteúdo do caso. Peça a um administrador para reconstruir o índice de busca em Administração → Mecanismo de Pesquisa.",
         "ai_partial": "Alguns lotes de IA falharam; os resultados podem estar incompletos.",
-        "ai_truncated": "{count, plural, one {# lote de IA foi} other {# lotes de IA foram}} cortados pelo modelo.",
+        "ai_truncated": "{count, plural, one {# lote de IA foi cortado} other {# lotes de IA foram cortados}} pelo modelo.",
         "no_candidates": "Nenhum caso de teste foi correspondido.",
         "anchor_fetch_capped": "Alguns arquivos fixados foram correspondidos apenas pelo caminho (limite de busca atingido).",
         "issue_commit_fetch_capped": "Alguns commits que nomeiam tíquetes não foram lidos arquivo por arquivo (limite de busca atingido); seus casos não cobrem arquivos específicos.",
@@ -4868,8 +4868,8 @@
         "job": {
           "discoveringDatasets": "Descobrindo conjuntos de dados...",
           "scanningFile": "Analisando o arquivo de exportação do testmo...",
-          "datasetsProcessed": "{processed, number} conjunto de dados{processed, plural, one {} other {s}} processados",
-          "datasetsProcessedWithTotal": "{processed, number} de {total, number} conjunto de dados{total, plural, one {} other {s}} processados",
+          "datasetsProcessed": "{processed, number} {processed, plural, one {conjunto de dados processado} other {conjuntos de dados processados}}",
+          "datasetsProcessedWithTotal": "{processed, number} de {total, number} {total, plural, one {conjunto de dados processado} other {conjuntos de dados processados}}",
           "rowsProcessed": "{value, number} linhas processadas",
           "itemsProcessed": "{processed, number} de {total, number} itens processados",
           "analysisInProgress": "Analisando exportação…",
@@ -4978,7 +4978,7 @@
           "issue_targets": "Mapeie os destinos de problemas do Testmo para as integrações do TestPlanIt (Jira, GitHub, etc.)."
         },
         "mappingDatasetDefaultDescription": "Revisão {dataset} detectada na exportação do Testmo.",
-        "mappingDatasetCount": "{count, number} registro{count, plural, one {} other {s}} detectado",
+        "mappingDatasetCount": "{count, plural, one {# registro detectado} other {# registros detectados}}",
         "mappingDatasetNoEntitiesTitle": "Nada para mapear",
         "mappingDatasetNoEntitiesDescription": "Este conjunto de dados não requer mapeamento. Passe para o próximo conjunto de dados quando estiver pronto.",
         "mappingDatasetUnsupportedTitle": "Não é necessário mapeamento.",
@@ -5321,7 +5321,7 @@
         "defaultAccessUpdateFailed": "Falha ao atualizar o nível de acesso padrão",
         "emailVerificationEnabled": "A verificação por e-mail agora é obrigatória para novos usuários.",
         "emailVerificationDisabled": "A verificação por e-mail não é mais obrigatória para novos usuários.",
-        "emailVerificationDisabledAndVerified": "Verificação de e-mail desativada e {count, plural, one {# contas de usuário} other {# contas de usuário}} verificadas",
+        "emailVerificationDisabledAndVerified": "Verificação de e-mail desativada e {count, plural, one {# conta de usuário verificada} other {# contas de usuário verificadas}}",
         "emailVerificationUpdateFailed": "Falha ao atualizar as configurações de verificação de e-mail",
         "emailServerNotConfigured": "Não foi possível ativar a verificação de e-mail: o servidor de e-mail não está configurado.",
         "openRegistrationEnabled": "O auto-registro já está ativado.",
@@ -7075,7 +7075,7 @@
         },
         "success": {
           "title": "Reindexação bem-sucedida",
-          "description": "{count, plural, one {# documento} other {# documentos}} indexados com sucesso"
+          "description": "{count, plural, one {# documento indexado} other {# documentos indexados}} com sucesso"
         },
         "error": {
           "title": "Reindexação falhou",
@@ -7343,7 +7343,7 @@
         "aiStepsDerivedMessage": "{count, plural, one {# caso de teste recebeu} other {# casos de teste receberam}} passos derivados por IA — revise a precisão.",
         "aiStepsDerivedReviewLink": "Revisar execução de teste",
         "casesDraftedTitle": "Casos de teste rascunhados por IA prontos",
-        "casesDraftedMessage": "{count, plural, one {# caso de teste foi} other {# casos de teste foram}} rascunhados para {issueKey} — revise a precisão.",
+        "casesDraftedMessage": "{count, plural, one {# caso de teste foi rascunhado} other {# casos de teste foram rascunhados}} para {issueKey} — revise a precisão.",
         "casesDraftedReviewLink": "Revisar em {folderName}",
         "integrationAuthExpiredTitle": "Conexão de Integração Expirada",
         "integrationAuthExpiredMessage": "Sua conexão com \"{integrationName}\" expirou. Reconecte-se para retomar a sincronização de issues.",
@@ -7383,7 +7383,7 @@
           "RUN_NOT_PROGRESSING": "A execução não tem nenhum resultado novo há {idleHours, plural, one {# hora} other {# horas}} (limite {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "A execução automatizada em {target} terminou com {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% dos casos da execução não têm resultado com {daysRemaining, plural, one {# dia} other {# dias}} antes do vencimento do marco (limite {threshold}%).",
-          "RUN_ISSUES_OPENED": "{issues, plural, one {# problema está} other {# problemas estão}} vinculados aos resultados da execução (limite {threshold}).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# problema está vinculado} other {# problemas estão vinculados}} aos resultados da execução (limite {threshold}).",
           "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# padrão de falha apareceu} other {# padrões de falha apareceram}} pela primeira vez na execução (limite {threshold}).",
           "SESSION_OVERRUN": "A sessão levou {elapsed} em relação a uma estimativa de {estimate}, {overrun}% acima (mais de {threshold}% permitido).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} de {total} requisitos ({coverage}%) {basis, select, PASSING {têm um resultado mais recente passando} other {estão vinculados a um caso de teste}} (limite {threshold}%).",
@@ -7394,7 +7394,7 @@
           "CASE_FLAKY": "O resultado se inverteu {flips, plural, one {# vez} other {# vezes}} nos últimos {sampleCount} resultados (limite {threshold}).",
           "RUN_PASS_RATE_BELOW": "A taxa de aprovação é {passRate}% em {sampleCount} resultados (limite {threshold}%).",
           "RUN_FAILURE_COUNT": "{failed, plural, one {# resultado falhou} other {# resultados falharam}} (limite {threshold}).",
-          "MILESTONE_BEHIND": "O marco está {completion}% completo com {daysRemaining, plural, one {# dia} other {# dias}} restante (limite {threshold}%).",
+          "MILESTONE_BEHIND": "O marco está {completion}% completo com {daysRemaining, plural, one {# dia restante} other {# dias restantes}} (limite {threshold}%).",
           "MILESTONE_OVERDUE": "O marco é {daysOverdue, plural, one {# dia} other {# dias}} após seu vencimento.",
           "LLM_BUDGET_USED": "O gasto do período de faturamento é {spend} do orçamento mensal de {budget} ({percent}%, limite {threshold}%).",
           "LLM_ERROR_RATE": "{failed} das últimas {sampleCount} solicitações falharam ({failureRate}%, limite {threshold}%).",
@@ -7404,7 +7404,7 @@
           "QUEUE_FAILED_JOBS": "{failed, plural, one {# trabalho falhou} other {# trabalhos falharam}} na fila (limite {threshold}).",
           "QUEUE_BACKLOG": "O mais antigo de {waiting, plural, one {# trabalho em espera} other {# trabalhos em espera}} esperou {minutes, plural, one {# minuto} other {# minutos}} (limite {threshold}).",
           "AUDIT_BACKLOG": "A mudança de auditoria não processada mais antiga tem {minutes, plural, one {# minuto} other {# minutos}} (limite {threshold}).",
-          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# conta está} other {# contas estão}} bloqueadas após falhas de entrada (limite {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# conta está bloqueada} other {# contas estão bloqueadas}} após falhas de entrada (limite {threshold}).",
           "NO_AUTOMATED_RESULTS": "Nenhum resultado automatizado chegou por {hours, plural, one {# hora} other {# horas}} (limite {threshold})."
         },
         "reviewDecisionRevertedAction": "reverteram sua decisão em",
@@ -7456,7 +7456,7 @@
         "searching": "Procurando...",
         "searchError": "Falha ao pesquisar problemas",
         "linkButton": "Link",
-        "linkedCount": "{count, plural, one {# problema} other {# problemas}} vinculados"
+        "linkedCount": "{count, plural, one {# problema vinculado} other {# problemas vinculados}}"
       }
     },
     "copyMove": {
@@ -7694,7 +7694,7 @@
     "delete": {
       "dialogTitle": "Excluir Requisito",
       "confirmNoChildren": "Tem certeza de que deseja excluir este requisito? Esta ação pode ser desfeita.",
-      "confirmWithChildren": "Este requisito tem {count, plural, one {{count} descendente} other {{count} descendentes}} que também serão excluídos. Esta ação pode ser desfeita.",
+      "confirmWithChildren": "Este requisito tem {count, plural, one {{count} descendente que também será excluído} other {{count} descendentes que também serão excluídos}}. Esta ação pode ser desfeita.",
       "success": "Requisito excluído.",
       "failed": "Falha ao excluir o requisito.",
       "undo": "Desfazer",
@@ -9036,7 +9036,7 @@
           "failureRate": "Taxa de falha",
           "recency": "Pontuação de Recência",
           "backlogTitle": "Testes de baixa prioridade",
-          "backlogDescription": "{count, plural, one {# teste instável adicional} other {# testes instáveis adicionais}} não exibido"
+          "backlogDescription": "{count, plural, one {# teste instável adicional não exibido} other {# testes instáveis adicionais não exibidos}}"
         }
       },
       "testCaseHealth": {
@@ -9783,7 +9783,7 @@
       },
       "attempts": {
         "noAttemptsRemaining": "Não há mais tentativas disponíveis. Tente novamente mais tarde.",
-        "attemptsRemaining": "{count, plural, =1 {1 tentativa} other {# tentativas}} restantes."
+        "attemptsRemaining": "{count, plural, =1 {1 tentativa restante} other {# tentativas restantes}}."
       }
     },
     "sharedReport": {
@@ -9883,12 +9883,12 @@
         "stepsData": "Dados de etapas"
       },
       "success": {
-        "description": "{count, plural, one {# etapa compartilhada} other {# etapas compartilhadas}} importadas com sucesso"
+        "description": "{count, plural, one {# etapa compartilhada importada} other {# etapas compartilhadas importadas}} com sucesso"
       },
       "errors": {
         "parseFailed": "Falha ao analisar o arquivo CSV",
         "validationFailed": "Validação falhou",
-        "validationDescription": "{count, plural, one {# erro de validação} other {# erros de validação}} encontrados",
+        "validationDescription": "{count, plural, one {# erro de validação encontrado} other {# erros de validação encontrados}}",
         "importFailed": "A importação falhou",
         "fileRequired": "É necessário um arquivo CSV."
       },
@@ -9911,7 +9911,7 @@
         "title": "Mapear colunas CSV para campos de etapa compartilhados",
         "description": "Mapeie as colunas do seu arquivo CSV para os campos de etapa compartilhados. Os campos obrigatórios devem ser mapeados.",
         "ignoreColumn": "Ignore esta coluna",
-        "requiredFieldsWarning": "{count, plural, one {# campo obrigatório é} other {# campos obrigatórios são}} não mapeados. Por favor, mapeie todos os campos obrigatórios para continuar."
+        "requiredFieldsWarning": "{count, plural, one {# campo obrigatório é não mapeado} other {# campos obrigatórios são não mapeados}}. Por favor, mapeie todos os campos obrigatórios para continuar."
       },
       "page3": {
         "title": "Visualizar dados de importação",
@@ -10229,13 +10229,13 @@
       "description": "Clique nas etiquetas para ativar/desativar a aceitação. Clique duas vezes para editar o nome da etiqueta.",
       "selectEntity": "Selecione uma entidade para visualizar sugestões de tags.",
       "noTagsSelected": "Nenhuma etiqueta selecionada",
-      "footerSummary": "{assignCount, plural, one {# tag} other {# tags}} serão atribuídas, {newCount, plural, one {# nova tag} other {# novas tags}} serão criadas",
-      "footerAssignCount": "{assignCount, plural, one {# tag} other {# tags}} serão atribuídas",
-      "footerNewCount": "{newCount, plural, one {# nova tag} other {# novas tags}} serão criadas",
+      "footerSummary": "{assignCount, plural, one {# tag será atribuída} other {# tags serão atribuídas}}, {newCount, plural, one {# nova tag será criada} other {# novas tags serão criadas}}",
+      "footerAssignCount": "{assignCount, plural, one {# tag será atribuída} other {# tags serão atribuídas}}",
+      "footerNewCount": "{newCount, plural, one {# nova tag será criada} other {# novas tags serão criadas}}",
       "newTagsPopoverTitle": "Criar novas etiquetas",
       "applying": "Candidatando-se...",
-      "applySuccess": "{tagCount, plural, one {# tag} other {# tags}} aplicadas a {entityCount, plural, one {# entidade} other {# entidades}}",
-      "applySuccessNewTags": "{tagCount, plural, one {# tag} other {# tags}} aplicadas a {entityCount, plural, one {# entidade} other {# entidades}}, {newCount, plural, one {# nova tag} other {# novas tags}} criadas",
+      "applySuccess": "{tagCount, plural, one {# tag aplicada} other {# tags aplicadas}} a {entityCount, plural, one {# entidade} other {# entidades}}",
+      "applySuccessNewTags": "{tagCount, plural, one {# tag aplicada} other {# tags aplicadas}} a {entityCount, plural, one {# entidade} other {# entidades}}, {newCount, plural, one {# nova tag criada} other {# novas tags criadas}}",
       "applyError": "Não foi possível aplicar as tags. Tente novamente.",
       "suggestedTags": "Etiquetas sugeridas",
       "noSuggestions": "A IA não conseguiu gerar nenhuma etiqueta.",
@@ -10404,8 +10404,8 @@
     "importStep2HeaderParameter": "Parâmetro",
     "importStep2RequiredUnmapped": "O parâmetro obrigatório \"@{name}\" não possui uma coluna CSV mapeada.",
     "importStep2Label": "Colunas do mapa",
-    "importStep3SummaryOk": "{totalRows, plural, =1 {# linha} other {# linhas}} analisadas, sem erros.",
-    "importStep3SummaryErrors": "{totalRows, plural, =1 {# linha} other {# linhas}} analisadas; {errorCount, plural, =1 {# linha tem} other {# linhas têm}} erros.",
+    "importStep3SummaryOk": "{totalRows, plural, =1 {# linha analisada} other {# linhas analisadas}}, sem erros.",
+    "importStep3SummaryErrors": "{totalRows, plural, =1 {# linha analisada} other {# linhas analisadas}}; {errorCount, plural, =1 {# linha tem} other {# linhas têm}} erros.",
     "importStep3PreviewLimit": "Exibindo as primeiras {limit} linhas. Todas as linhas serão validadas na próxima etapa.",
     "importStep3Label": "Pré-visualização",
     "importStep4Heading": "Confirmar importação",
@@ -10964,7 +10964,7 @@
       "RUN_ISSUES_OPENED": {
         "label": "Problemas abertos de uma execução",
         "description": "Mais de um determinado número de problemas estão vinculados aos resultados de uma execução.",
-        "summary": "Mais de {threshold, plural, one {# problema está} other {# problemas estão}} vinculados aos resultados de uma execução, {evaluateOn, select, AS_RESULTS_ARRIVE {avaliado conforme os resultados chegam} other {avaliado quando a execução é concluída}}"
+        "summary": "Mais de {threshold, plural, one {# problema está vinculado} other {# problemas estão vinculados}} aos resultados de uma execução, {evaluateOn, select, AS_RESULTS_ARRIVE {avaliado conforme os resultados chegam} other {avaliado quando a execução é concluída}}"
       },
       "NEW_FAILURE_SIGNATURES": {
         "label": "Novos padrões de falha em uma execução",
@@ -11049,7 +11049,7 @@
       "ACCOUNT_LOCKOUTS": {
         "label": "Bloqueios de conta",
         "description": "Várias contas são bloqueadas após falhas de entrada de uma só vez, sinal de preenchimento de credencial. Verificado por hora.",
-        "summary": "Pelo menos {threshold, plural, one {# conta está} other {# contas estão}} bloqueadas após falhas de entrada"
+        "summary": "Pelo menos {threshold, plural, one {# conta está bloqueada} other {# contas estão bloqueadas}} após falhas de entrada"
       },
       "NO_AUTOMATED_RESULTS": {
         "label": "Nenhum resultado automatizado",

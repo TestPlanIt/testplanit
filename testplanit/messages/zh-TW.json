@@ -4978,7 +4978,7 @@
           "issue_targets": "將 Testmo 問題目標對應到 TestPlanIt 整合（Jira、GitHub 等）。"
         },
         "mappingDatasetDefaultDescription": "在 Testmo 匯出中偵測到評論 {dataset}。",
-        "mappingDatasetCount": "{count, number} 記錄{count, plural, one {} other {s}} 檢測到",
+        "mappingDatasetCount": "{count, plural, other {偵測到 # 筆記錄}}",
         "mappingDatasetNoEntitiesTitle": "地圖上沒有任何東西。",
         "mappingDatasetNoEntitiesDescription": "此資料集無需映射。準備好後，請繼續處理下一個資料集。",
         "mappingDatasetUnsupportedTitle": "無需映射",

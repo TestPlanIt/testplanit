@@ -4978,7 +4978,7 @@
           "issue_targets": "Testmo の問題ターゲットを TestPlanIt 統合 (Jira、GitHub など) にマップします。"
         },
         "mappingDatasetDefaultDescription": "Testmo エクスポートでレビュー {dataset} が検出されました。",
-        "mappingDatasetCount": "{count, number} 記録{count, plural, one {} other {s}} 検出",
+        "mappingDatasetCount": "{count, plural, other {# 件のレコードを検出}}",
         "mappingDatasetNoEntitiesTitle": "マップするものがありません",
         "mappingDatasetNoEntitiesDescription": "このデータセットはマッピングを必要としません。準備ができたら次のデータセットに進んでください。",
         "mappingDatasetUnsupportedTitle": "マッピングは不要",
@@ -6442,7 +6442,7 @@
         "tab": "ストレージ",
         "neverScanned": "ストレージはまだスキャンされていません。スキャンはストレージ内のファイルをデータベースと比較して、使用されていないファイルと、ファイルが見つからない添付ファイルを検出します。",
         "summary": "{objects, plural, one {# ファイル} other {# ファイル}}がストレージに保存されています（{size}）。{orphans, plural, =0 {孤立したものはありません。} one {# つが孤立しています（{orphanSize}）。} other {# つが孤立しています（{orphanSize}）。}}",
-        "missingFiles": "{count, plural, other {# 個の添付ファイルは、設定されたストレージにファイルがありません。}},one {# 個の添付ファイルは、設定されたストレージにファイルがありません。}}",
+        "missingFiles": "{count, plural, one {# 個の添付ファイルは、設定されたストレージにファイルがありません。} other {# 個の添付ファイルは、設定されたストレージにファイルがありません。}}",
         "allFolders": "すべてのフォルダ",
         "status": {
           "ORPHAN": "孤立している",
@@ -7402,7 +7402,7 @@
           "CODE_REPOSITORY_CACHE_FAILING": "リポジトリキャッシュが {hours, plural, one {# 時間} other {# 時間}} 間失敗しています（閾値 {threshold}）{error, select, other {: {error}}}",
           "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# ユーザーが} other {# ユーザーが}} 統合の再認可を行う必要があります（閾値 {threshold}）。",
           "QUEUE_FAILED_JOBS": "キューで {failed, plural, one {# ジョブが} other {# ジョブが}} 失敗しました（閾値 {threshold}）。",
-          "QUEUE_BACKLOG": "{{waiting, plural, one {# 待機中のジョブ} other {# 待機中のジョブ}} の最古のものが {minutes, plural, one {# 分} other {# 分}} 待機しています（閾値 {threshold}）。",
+          "QUEUE_BACKLOG": "{waiting, plural, one {# 待機中のジョブ} other {# 待機中のジョブ}} の最古のものが {minutes, plural, one {# 分} other {# 分}} 待機しています（閾値 {threshold}）。",
           "AUDIT_BACKLOG": "最も古い未処理の監査変更は {minutes, plural, one {# 分} other {# 分}} です（閾値 {threshold}）。",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# アカウントが} other {# アカウントが}} ログイン試行失敗後ロックされています（閾値 {threshold}）。",
           "NO_AUTOMATED_RESULTS": "{hours, plural, one {# 時間} other {# 時間}} の間に自動結果が到着しています（閾値 {threshold}）。"
@@ -11034,27 +11034,27 @@
       "QUEUE_FAILED_JOBS": {
         "label": "キューの失敗したジョブ",
         "description": "バックグラウンドキューが失敗したジョブを多すぎます。毎時チェック。",
-        "summary": "キューで {{threshold, plural, one {# ジョブが} other {# ジョブが}} 失敗しました"
+        "summary": "キューで {threshold, plural, one {# ジョブが} other {# ジョブが}} 失敗しました"
       },
       "QUEUE_BACKLOG": {
         "label": "キューのバックログ",
         "description": "バックグラウンドキューの最も古い待機ジョブが長く待機しており、停止したワーカーの兆候です。毎時チェック。",
-        "summary": "キューの最も古い待機ジョブが {{threshold, plural, one {# 分} other {# 分}} より古い"
+        "summary": "キューの最も古い待機ジョブが {threshold, plural, one {# 分} other {# 分}} より古い"
       },
       "AUDIT_BACKLOG": {
         "label": "監査ログのバックログ",
         "description": "キャプチャされた変更が監査ログに書き込まれておらず、停止した監査ワーカーの兆候です。毎時チェック。",
-        "summary": "最も古い未処理の監査変更が {{threshold, plural, one {# 分} other {# 分}} より古い"
+        "summary": "最も古い未処理の監査変更が {threshold, plural, one {# 分} other {# 分}} より古い"
       },
       "ACCOUNT_LOCKOUTS": {
         "label": "アカウントロック",
         "description": "複数のアカウントが同時にログイン試行失敗後にロックされており、認証情報詰め込み攻撃の兆候です。毎時チェック。",
-        "summary": "少なくとも {{threshold, plural, one {# アカウント} other {# アカウント}} がログイン失敗後にロック"
+        "summary": "少なくとも {threshold, plural, one {# アカウント} other {# アカウント}} がログイン失敗後にロック"
       },
       "NO_AUTOMATED_RESULTS": {
         "label": "自動結果なし",
         "description": "自動テスト結果がパイプラインから何らかの時間到着していません。毎日チェック。",
-        "summary": "{{threshold, plural, one {# 時間} other {# 時間}} の間に自動結果が到着していません"
+        "summary": "{threshold, plural, one {# 時間} other {# 時間}} の間に自動結果が到着していません"
       }
     },
     "sourceSummary": "結果: {source, select, MANUAL {手動} AUTOMATED {自動化} other {手動と自動化}}",

@@ -4978,7 +4978,7 @@
           "issue_targets": "Testmo 이슈 대상을 TestPlanIt 통합(Jira, GitHub 등)에 매핑합니다."
         },
         "mappingDatasetDefaultDescription": "Testmo 내보내기에서 {dataset} 리뷰가 감지되었습니다.",
-        "mappingDatasetCount": "{count, number} 기록{count, plural, one {} other {s}} 감지됨",
+        "mappingDatasetCount": "{count, plural, other {레코드 #개 감지됨}}",
         "mappingDatasetNoEntitiesTitle": "지도에 표시할 내용이 없습니다",
         "mappingDatasetNoEntitiesDescription": "이 데이터 세트는 매핑이 필요하지 않습니다. 준비가 되면 다음 데이터 세트로 이동하세요.",
         "mappingDatasetUnsupportedTitle": "지도가 필요 없습니다.",

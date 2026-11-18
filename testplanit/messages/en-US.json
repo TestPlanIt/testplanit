@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "{count, number} cases updated successfully"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "Validation Error",
       "stepsCannotBeBulkEdited": "Steps cannot be bulk edited",
       "stepsInfoTitle": "Steps Info",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "Discovering datasets...",
           "scanningFile": "Scanning testmo export file...",
-          "datasetsProcessed": "{processed, number} dataset{processed, plural, one {} other {s}} processed",
-          "datasetsProcessedWithTotal": "{processed, number} of {total, number} dataset{total, plural, one {} other {s}} processed",
           "rowsProcessed": "{value, number} rows processed",
           "itemsProcessed": "{processed, number} of {total, number} items processed",
           "analysisInProgress": "Analyzing export…",
@@ -4978,7 +4973,7 @@
           "issue_targets": "Map Testmo issue targets to TestPlanIt integrations (Jira, GitHub, etc.)."
         },
         "mappingDatasetDefaultDescription": "Review {dataset} detected in the Testmo export.",
-        "mappingDatasetCount": "{count, number} record{count, plural, one {} other {s}} detected",
+        "mappingDatasetCount": "{count, plural, one {# record detected} other {# records detected}}",
         "mappingDatasetNoEntitiesTitle": "Nothing to map",
         "mappingDatasetNoEntitiesDescription": "This dataset does not require mapping. Move on to the next dataset when you are ready.",
         "mappingDatasetUnsupportedTitle": "No mapping required",
