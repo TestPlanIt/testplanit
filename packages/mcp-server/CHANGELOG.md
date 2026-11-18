@@ -1,5 +1,18 @@
 # @testplanit/mcp-server
 
+## 1.2.1
+
+### Patch Changes
+
+- [`2263eb9`](https://github.com/TestPlanIt/testplanit/commit/2263eb9dc5cb698d50099f97b651daf51243dc4f) Thanks [@therealbrad](https://github.com/therealbrad)! - Tools describe whether they read or change data
+
+  Every tool now carries MCP annotations. List, get and count tools are marked
+  read-only, so a client can run them without asking. Tools that create records
+  are marked as additive, and tools that update, remove, unlink, delete or record
+  a review decision are marked destructive, so a client can ask before running
+  them. The four tools that reach outside TestPlanIt (issue resolution and
+  linking by key, script generation, and run execution) are marked open-world.
+
 ## 1.2.0
 
 ### Patch Changes
