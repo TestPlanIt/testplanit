@@ -103,7 +103,7 @@ AWS_ACCESS_KEY_ID="minioadmin"
 AWS_SECRET_ACCESS_KEY="minioadmin123"
 AWS_BUCKET_NAME="testplanit"
 AWS_ENDPOINT_URL="http://minio:9000"
-AWS_PUBLIC_ENDPOINT_URL="https://your-domain.com/minio"
+AWS_PUBLIC_ENDPOINT_URL="https://your-domain.com"
 
 # Application
 NEXTAUTH_URL="https://your-domain.com"
@@ -176,6 +176,10 @@ Every time the application container starts, it applies any pending migrations b
 
 ### 6. Set Up External Access (HTTPS)
 
+:::warning Serve TestPlanIt over HTTPS
+Do not leave users on plain `http://`. Each open TestPlanIt tab holds long-lived connections for live updates, and over plain HTTP a browser allows only six connections to a host at a time. With a few tabs open the limit is reached, further requests wait, and the application appears to hang until the extra tabs are closed. Serving over HTTPS with HTTP/2 removes the limit. See [HTTPS and HTTP/2](./sse-notifications.md#https-and-http2).
+:::
+
 For production, configure a reverse proxy (nginx/Caddy/CloudFlare) to:
 
 - Handle SSL termination
@@ -187,6 +191,7 @@ Example nginx configuration:
 ```nginx
 server {
     listen 443 ssl;
+    http2 on; # nginx 1.25.1+; on older versions use `listen 443 ssl http2;`
     server_name testplanit.yourdomain.com;
 
     # SSL configuration
@@ -263,7 +268,7 @@ If you are updating from a release that bundled MinIO, migrate your files before
 
 The workers container (`testplanit-workers`) handles:
 
-**Scheduled Jobs** (via PM2 cron):
+**Scheduled Jobs** (BullMQ job schedulers, registered by the scheduler when the workers start):
 
 - Daily digest emails (8 AM)
 - Forecast updates (3 AM)
@@ -292,7 +297,7 @@ docker exec testplanit-workers pm2 logs notification-worker
 
 Most service data is stored in `./docker-data/`:
 
-- `redis/` - Valkey persistence
+- `valkey/` - Valkey persistence
 - `elasticsearch/` - Search indexes
 - `rustfs/` - File attachments
 
@@ -304,7 +309,7 @@ of a bind mount, so it can never end up inside the build context.
 **Option 1: Docker RustFS** (`with-minio` profile)
 
 - Internal endpoint: `http://minio:9000` (app → storage)
-- External access: `https://yourdomain.com/minio/` (browser → files)
+- External access: `https://yourdomain.com/testplanit/…` (browser → files)
 - Admin console: `http://localhost:9001`
 
 **Option 2: AWS S3** (no `with-minio` profile)

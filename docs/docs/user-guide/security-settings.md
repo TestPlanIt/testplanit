@@ -88,7 +88,7 @@ After the lockout duration expires, the user can attempt to log in again. Succes
 
 ### Force Password Change (Individual)
 
-From the **Admin → User Management** page, click the three-dot menu on any internal user and select **Force Password Change**. This sets a flag on the user's account that requires them to set a new password on their next login.
+From the **Admin → People & Access → Users** page, click the three-dot menu on any internal user and select **Force Password Change**. This sets a flag on the user's account that requires them to set a new password on their next login.
 
 - Only available for users with INTERNAL or BOTH authentication methods (not SSO-only users)
 - Not available for your own account (to prevent self-lockout)
@@ -102,7 +102,7 @@ This targets users with INTERNAL or BOTH auth methods who are active and not alr
 
 ### Revoke Password
 
-From the **Admin → User Management** page, click the three-dot menu on any internal user and select **Revoke Password**. This removes the user's password entirely, requiring them to use an alternative login method (SSO or Magic Link). It also signs the user out of every active browser session.
+From the **Admin → People & Access → Users** page, click the three-dot menu on any internal user and select **Revoke Password**. This removes the user's password entirely, requiring them to use an alternative login method (SSO or Magic Link). It also signs the user out of every active browser session.
 
 **Prerequisites:** At least one passwordless login method must be configured before passwords can be revoked:
 

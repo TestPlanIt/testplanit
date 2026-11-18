@@ -124,6 +124,7 @@ TENANT_TENANT_B_AUDIT_LOG_RETENTION_MODE="delete"
 | `MULTI_TENANT_MODE`               | Set to `"true"` to enable multi-tenant mode | Yes          |
 | `VALKEY_URL`                      | Shared Valkey/Redis connection string       | Yes          |
 | `TENANT_CONFIGS`                  | JSON object with tenant configurations      | One of these |
+| `TENANT_CONFIG_FILE`              | Path to a JSON file with tenant configurations (default `/config/tenants.json`); re-read when it changes | One of these |
 | `TENANT_<ID>_DATABASE_URL`        | Database URL for tenant `<ID>`              | One of these |
 | `TENANT_<ID>_ELASTICSEARCH_NODE`  | Elasticsearch URL for tenant                | Optional     |
 | `TENANT_<ID>_ELASTICSEARCH_INDEX` | Elasticsearch index prefix                  | Optional     |
@@ -183,6 +184,21 @@ All workers support multi-tenant mode:
 | Webhook Outbox Worker          | Yes          | Polls every configured tenant per cycle, claims per-tenant batches via `FOR UPDATE SKIP LOCKED`, stamps `tenantId` on each enqueued dispatch job                                                                                                                                |
 | Webhook Retention Worker       | Yes          | Runs the daily 30-day purge against every configured tenant database, emits one audit row per tenant per run                                                                                                                                                                    |
 | DataChangeLog Retention Worker | Yes          | Runs the daily 30-day purge of the audit change-capture log against every configured tenant database, emits one audit row per tenant per run                                                                                                                                    |
+| Audit Log Retention Worker     | Yes          | Applies each tenant's own audit log retention per cycle and skips tenants with none |
+| Dataset Lease Sweep Worker     | Yes          | Sweeps expired dataset-row leases in every configured tenant database per cycle |
+| Execution Dispatch Worker      | Yes          | Dispatches per-job via `tenantId`; the execution status poll is registered per tenant |
+| Webhook Actions Worker         | Yes          | Uses the tenant database named by each job's `tenantId` |
+| Magic Select Worker            | Yes          | Uses the tenant database named by each job's `tenantId` |
+| Impact Analysis Worker         | Yes          | Uses the tenant database named by each job's `tenantId` |
+| Failure Triage Worker          | Yes          | Uses the tenant database named by each job's `tenantId` |
+| Risk Score Worker              | Yes          | Uses the tenant database named by each job's `tenantId`; the nightly sweep is registered per tenant |
+| Derive Case Steps Worker       | Yes          | Uses the tenant database named by each job's `tenantId` |
+| Copy/Move Worker               | Yes          | Uses the tenant database named by each job's `tenantId` |
+| Duplicate Scan Worker          | Yes          | Uses the tenant database named by each job's `tenantId` |
+| Step Scan Worker               | Yes          | Uses the tenant database named by each job's `tenantId` |
+| Generate from URL Worker       | Yes          | Uses the tenant database named by each job's `tenantId` |
+| Iteration Generation Worker    | Yes          | Uses the tenant database named by each job's `tenantId` |
+| SCIM Access Recompute Worker   | Yes          | Uses the tenant database named by each job's `tenantId` |
 
 ### Testmo Import Worker Note
 
@@ -206,7 +222,7 @@ services:
 
   # Tenant A web app
   tenant-a-web:
-    image: testplanit/testplanit:latest
+    image: ghcr.io/testplanit/testplanit-selfhost:latest
     environment:
       - INSTANCE_TENANT_ID=tenant-a
       - DATABASE_URL=postgresql://user:pass@tenant-a-db:5432/testplanit
@@ -214,7 +230,7 @@ services:
 
   # Tenant B web app
   tenant-b-web:
-    image: testplanit/testplanit:latest
+    image: ghcr.io/testplanit/testplanit-selfhost:latest
     environment:
       - INSTANCE_TENANT_ID=tenant-b
       - DATABASE_URL=postgresql://user:pass@tenant-b-db:5432/testplanit
@@ -222,8 +238,7 @@ services:
 
   # Shared workers
   workers:
-    image: testplanit/testplanit:latest
-    command: pnpm pm2:start --no-daemon
+    image: ghcr.io/testplanit/testplanit-selfhost:latest-workers
     environment:
       - MULTI_TENANT_MODE=true
       - VALKEY_URL=valkey://valkey:6379
@@ -271,7 +286,7 @@ Each tenant's admin UI shows:
 
    ```bash
    # Worker startup should log:
-   # "Loaded 2 tenant configurations from TENANT_CONFIGS"
+   # "Loaded 2 tenant configurations from TENANT_CONFIGS env var"
    ```
 
 3. Verify job data includes `tenantId`
@@ -326,7 +341,7 @@ In multi-tenant mode, Elasticsearch indices are automatically prefixed with the 
 When a worker processes an Elasticsearch job (e.g., reindexing):
 
 1. The job includes the `tenantId` from the web application that created it
-2. The worker retrieves the tenant-specific Prisma client for database access
+2. The worker retrieves the tenant-specific database client for database access
 3. All Elasticsearch operations use tenant-prefixed index names
 4. Search results and counts reflect only that tenant's data
 
@@ -367,7 +382,7 @@ All tenants can share a single Elasticsearch cluster. The tenant prefix in index
 # docker-compose.yml
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    image: elasticsearch:9.0.3
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -390,13 +405,13 @@ To migrate an existing single-tenant deployment to multi-tenant:
 3. **Rerun Scheduler**: Clear old scheduled jobs and run scheduler with multi-tenant config
 4. **Existing Jobs**: Jobs without `tenantId` will fail in multi-tenant mode; let them complete or remove them first
 5. **Reindex Elasticsearch**: Trigger a full reindex to create tenant-prefixed indices:
-   - Go to Admin > Elasticsearch in each tenant's web app
-   - Click "Reindex All" to create the new tenant-prefixed indices
+   - Go to **Administration → Search Engine** in each tenant's web app
+   - Under **Reindex Data**, leave **All Entities** selected and click **Start Reindex** to create the new tenant-prefixed indices
    - Optionally delete the old non-prefixed indices after verifying search works
 
 ## Performance Considerations
 
-- **Connection Pooling**: Each tenant gets a separate Prisma client; monitor total database connections
-- **Memory**: Multiple Prisma clients increase memory usage; plan accordingly
+- **Connection Pooling**: Each tenant gets a separate database client with its own connection pool; monitor total database connections
+- **Memory**: Multiple tenant clients increase memory usage; plan accordingly
 - **Scheduler**: More tenants = more scheduled jobs; stagger schedules if needed
 - **Queue Depth**: Monitor queue depth per tenant to identify bottlenecks

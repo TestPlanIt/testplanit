@@ -15,7 +15,7 @@ Similar to the Test Runs page, this page is structured within a card layout and 
 
    - Displays the title "Sessions".
    - Shows the current Project Name and Icon.
-   - Includes an **Add Session** button (visible to users with appropriate permissions - Admin or Project Admin) to open the [Add Session dialog](./sessions-add.md).
+   - Includes an **Add Session** button (visible to users with `Add/Edit` permission for Sessions, and system administrators) to open the [Add Session dialog](./sessions-add.md).
 
 2. **Summary Cards**: A collapsible **Summary** section of chart cards (work distribution, recent session results, and completion trend). Collapse it with its header to give the session list the full page; the choice is remembered per project in your browser.
 
@@ -58,7 +58,7 @@ This is the default view. Active sessions are grouped by their associated milest
   - A **chevron** that collapses and expands the group (see [Collapsing Milestone Groups](#collapsing-milestone-groups))
   - Milestone Icon and Name ([See Milestone Details](./milestone-details.md))
   - A count of the sessions in the group, including those in any child milestones
-  - Milestone Status Badge (e.g., Upcoming, In Progress, Completed)
+  - Milestone Status Badge (e.g., Upcoming, Started, Past Due)
   - Milestone Dates (Start/End/Due)
   - An **Add Session** button specific to that milestone, allowing you to quickly create a session linked to it.
 - **Unscheduled Sessions**: Sessions not linked to any milestone are grouped under a special "Unscheduled" section header.

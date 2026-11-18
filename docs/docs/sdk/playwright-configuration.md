@@ -14,17 +14,17 @@ reporter: [
 
 ## Required
 
-| Option | Type                     | Description |
-| -------- | -------------------------- | ------------- |
+| Option | Type | Description |
+| --- | --- | --- |
 | `domain` | `string` | Base URL of your TestPlanIt instance |
 | `apiToken` | `string` | API token for authentication (starts with `tpi_`) |
 | `projectId` | `number` | Project ID where results will be reported (find this on the [Project Overview](../user-guide/project-overview.md) page) |
 
 ## Optional
 
-| Option | Type                     | Default | Description |
+| Option | Type | Default | Description |
 | -------- | -------------------------- | --------- | ------------- |
-| `testRunId` | `number \| string` | - | Existing test run to add results to (ID or name). If set, `runName` is ignored |
+| `testRunId` | `number \| string` | - | Existing test run to add results to (ID or name). Defaults to the `TESTPLANIT_RUN_ID` environment variable. If set, `runName` is ignored and the reporter never completes the run |
 | `runName` | `string` | `'{suite} - {date} {time}'` | Name for new test runs (ignored if `testRunId` is set). Supports placeholders |
 | `testRunType` | `string` | `'JUNIT'` | Test framework type stored on the run |
 | `configId` | `number \| string` | - | Configuration for the test run (ID or name) |
@@ -43,7 +43,7 @@ reporter: [
 | `attachmentTypes` | `string[]` | all | Restrict which attachments upload, by attachment name or content-type prefix (e.g. `['image/']`) |
 | `includeStackTrace` | `boolean` | `true` | Include stack traces for failures |
 | `excludeSkipped` | `boolean` | `false` | Don't report skipped tests — they won't appear on the run or count toward its totals |
-| `completeRunOnFinish` | `boolean` | `true` | Mark run as complete when tests finish |
+| `completeRunOnFinish` | `boolean` | `true` | Mark run as complete when tests finish. Always off for a run given by `testRunId` or `TESTPLANIT_RUN_ID` |
 | `timeout` | `number` | `30000` | API request timeout in ms |
 | `maxRetries` | `number` | `3` | Retry attempts for failed requests |
 | `verbose` | `boolean` | `false` | Enable debug logging |
@@ -101,7 +101,10 @@ export default defineConfig({
 });
 ```
 
+The reporter leaves an existing run open. Complete it from the pipeline once every job has reported (`npx @testplanit/cli run complete`).
+
 This is useful for:
+
 - Aggregating results from multiple CI jobs
 - Running tests in parallel across machines
 - Re-running failed tests without creating new runs

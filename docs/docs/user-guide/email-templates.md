@@ -117,6 +117,16 @@ await transporter.sendMail({
 - `lt` - Less than
 - `lte` - Less than or equal
 
+### Translations
+
+The `t` helper looks up a key in the `translations` object passed in the template data and replaces `{name}` placeholders with the named arguments. A key with no translation renders as the key itself.
+
+```handlebars
+<p>{{t "email.greetingWithName" name=userName}}</p>
+```
+
+`formatDate` and `formatDateTime` format for the `locale` in the template data, defaulting to `en-US`.
+
 ## Template Variables
 
 ### Common Variables
@@ -257,7 +267,7 @@ Use media queries for mobile:
 
 ### Local Development
 
-1. **Set up MailHog** for local email testing:
+1. **Set up Mailpit** for local email testing:
 
    ```bash
    docker run -p 1025:1025 -p 8025:8025 mailhog/mailhog

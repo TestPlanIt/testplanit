@@ -35,7 +35,7 @@ The API provides:
 - **Row-level security** based on user permissions
 - **Authentication** via NextAuth.js sessions
 - **Rate limiting** and security measures
-- **OpenAPI 3.0 specification** for documentation and client generation
+- **OpenAPI 3.1 specification** for documentation and client generation
 
 ## OpenAPI Specification
 
@@ -143,7 +143,7 @@ Additional endpoints for specialized operations:
 /api/projects/{id}/execute-cases             - Ad-hoc execution of automated cases (POST)
 /api/projects/{id}/execution-targets         - Sanitized list of a project's execution targets (GET)
 /api/search                - Full-text search
-/api/files/upload          - File uploads
+/api/upload-attachment     - Attachment upload (multipart: file, prependString)
 /api/admin/*               - Administrative operations
 ```
 
@@ -353,4 +353,4 @@ When set, all authenticated requests are allowed through regardless of request v
 - **OpenAPI Spec:** Available at `/api/docs?category={category}`
 - **CLI Tool:** See the [CLI documentation](./cli.md) for importing test results from CI/CD pipelines
 - **API Tokens:** See the [API Tokens documentation](./api-tokens.md) for managing programmatic access
-- **ZenStack Documentation (v2):** [zenstack.dev](https://zenstack.dev/docs/2.x)
+- **ZenStack Documentation:** [zenstack.dev](https://zenstack.dev/docs)

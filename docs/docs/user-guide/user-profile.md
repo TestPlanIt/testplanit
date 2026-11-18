@@ -5,7 +5,7 @@ sidebar_position: 5 # After Users List
 
 # User Profile Page
 
-This page displays comprehensive information about a specific user. You can reach this page by clicking a user's name on the [Users List](./users-list.md) page, or by selecting "Profile" from the user menu to view your own profile.
+This page displays comprehensive information about a specific user. You can reach this page by clicking a user's name on the [Users List](./users-list.md) page, or by selecting "View Profile" from the user menu to view your own profile.
 
 ## Page Layout
 
@@ -93,13 +93,13 @@ When viewing your own profile, you can view and edit these preferences:
 
 - **Theme**: Choose from Light, Dark, System, Green, Orange, Purple, **Accessible**, or **Accessible (Dark)** themes (with color indicators). Accessible (light) and Accessible (Dark) are high-contrast options tuned for [WCAG 2.2](https://www.w3.org/TR/WCAG22/) Level AA — see [Accessibility](./user-menu.md#accessibility)
 - **Locale**: Language preference (English, Czech, German, Spanish, French, Italian, Dutch, Polish, Portuguese, Turkish, Vietnamese, Arabic, Russian, Chinese Simplified, Chinese Traditional, Japanese, Korean). Right-to-left languages such as Arabic switch the entire interface to a mirrored right-to-left layout.
-- **Items Per Page**: Number of items to show in paginated tables (10, 25, 50, 100)
+- **Items Per Page**: Number of items to show in paginated tables (10, 25, 50, 100, 250)
 - **Open Details In**: Where an item's details open when you click it in the test case repository, the review inbox, or requirements. **Docked panel** (the default) shows them beside the list; **New window** opens the item's own page in a new window.
 
 #### Date & Time Formatting
 
-- **Date Format**: Choose between MM/DD/YYYY, DD/MM/YYYY, or YYYY-MM-DD formats
-- **Time Format**: 12-hour (HH:MM AM/PM) or 24-hour (HH:MM) format
+- **Date Format**: Choose from MM/DD/YYYY, MM-DD-YYYY, DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD, MMM D, YYYY, or D MMM YYYY formats
+- **Time Format**: 12-hour (HH:MM AM/PM) or 24-hour (HH:MM) format, each with or without the timezone abbreviation
 - **Timezone**: Select your timezone from a searchable list
 
 #### Notification Settings
@@ -130,6 +130,10 @@ Shows user activity metrics in a grid layout:
 - Test Runs Created
 - Milestones Created
 - Last Active date
+
+### Trash
+
+Shown on your own profile, or on any user's profile when you're an administrator. Lists the items that user deleted that can still be restored. See [Your Trash](./trash.md#your-trash) for details.
 
 ### Audit Log
 

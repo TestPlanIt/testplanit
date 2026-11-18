@@ -8,7 +8,7 @@ description: Configure and manage SSO authentication for your TestPlanIt instanc
 
 TestPlanIt supports multiple Single Sign-On (SSO) authentication methods to provide secure and convenient access for your users. This guide covers the configuration and management of SSO providers and their effects on the authentication flow.
 
-SSO provider configuration lives at **Admin → Authentication → Authentication** (`/admin/sso`). Sign-in enforcement (Force SSO, Force 2FA) lives at **Admin → Authentication → Security** (`/admin/security`) — see [Security Settings](./security-settings.md). SCIM 2.0 provisioning and group role mapping live at **Admin → Authentication → SCIM Provisioning** (`/admin/scim`) — see [SCIM Provisioning](./scim.md).
+SSO provider configuration lives at **Admin → Authentication → Authentication** (`/admin/sso`). Sign-in enforcement (Force SSO, Require 2FA) lives at **Admin → Authentication → Security** (`/admin/security`) — see [Security Settings](./security-settings.md). SCIM 2.0 provisioning and group role mapping live at **Admin → Authentication → SCIM Provisioning** (`/admin/scim`) — see [SCIM Provisioning](./scim.md).
 
 ## Supported SSO Providers
 
@@ -58,7 +58,7 @@ SSO configuration is available to administrators at `/admin/sso`.
 
 ### Sign-in enforcement
 
-The Force SSO toggle (and the two Force 2FA toggles) have moved from the SSO page to the **Sign-in Enforcement** section on the Security page (`/admin/security`). See [Security Settings → Sign-in Enforcement](./security-settings.md#sign-in-enforcement) for the full details on Force SSO behavior.
+The Force SSO toggle and the two Require 2FA toggles are in the **Sign-in Enforcement** section on the Security page (`/admin/security`). See [Security Settings → Sign-in Enforcement](./security-settings.md#sign-in-enforcement) for the full details on Force SSO behavior.
 
 ### Provider toggles
 
@@ -148,6 +148,8 @@ EMAIL_FROM=noreply@example.com
 4. User clicks the link in their email
 5. User is automatically signed in
 6. Links expire after use or after a set time period for security
+
+By default the link is device-bound: it signs you in only in the browser that requested it, and opening it anywhere else shows a code to enter in that browser. See [Device-Bound Magic Link Sign-In](./passwordless-sign-in.md).
 
 **Benefits:**
 
@@ -248,8 +250,16 @@ When disabled:
 - SSO sign-in for first-time (unprovisioned) users is rejected
 
 :::tip
-Use this setting when you want to manage user onboarding manually — for example, when you provision users through the Admin → User Management page and do not want self-service sign-ups.
+Use this setting when you want to manage user onboarding manually — for example, when you provision users through the Admin → People & Access → Users page and do not want self-service sign-ups.
 :::
+
+#### Default Access Level
+
+The **Default Access Level** setting is the system access level given to users when they register. It defaults to **No Access**: new users cannot access the system until an administrator grants access. The options are No Access, User, Project Admin, and Admin.
+
+#### Require Email Verification
+
+When **Require Email Verification** is enabled, users must verify their email address before accessing the system. Email verification is automatically disabled until an email server is configured.
 
 #### Email Domain Restrictions
 
@@ -402,7 +412,7 @@ Configure how SAML attributes map to TestPlanIt user fields:
 
 - **Email Attribute**: SAML attribute containing the user's email. Defaults to `email`. When the IdP sends no email attribute, TestPlanIt also accepts the email carried in the NameID (Name ID format `EmailAddress`) — this is Okta's default and works out of the box.
 - **Name Attribute**: SAML attribute containing the user's display name. It names a user when they are provisioned, or fills in a name a user does not have yet; a name the user already has is never overwritten by a later login, so profile edits stick.
-- **Groups Attribute**: SAML attribute containing user groups (optional)
+- **Groups Attribute**: Optional. The value is stored with the configuration; TestPlanIt does not use it to assign groups or access. To drive groups and access from your identity provider, use [SCIM group and role mapping](./scim.md#role-mapping).
 
 ### SAML Authentication Flow
 
@@ -471,7 +481,7 @@ For users with existing TestPlanIt accounts:
 
 - Email address is used to match SSO identity with existing account
 - User profile may be updated with SSO provider information
-- Access level remains unchanged (unless updated by SAML attributes, or governed by [group role mapping](./scim.md#role-mapping) for users in mapped groups)
+- Access level remains unchanged (unless governed by [group role mapping](./scim.md#role-mapping) for users in mapped groups)
 
 ## Security Considerations
 
@@ -486,7 +496,7 @@ For users with existing TestPlanIt accounts:
 
 - SSO users inherit the same role-based access control as regular users
 - Administrators can manage SSO user permissions through the standard user management interface
-- SAML attribute mapping can automatically assign roles based on IdP groups
+- Access tiers can be assigned from identity provider groups and roles through SCIM — see [Role mapping](./scim.md#role-mapping)
 
 ### Session Management
 
@@ -543,14 +553,6 @@ For users with existing TestPlanIt accounts:
 - Ensure at least one admin has SSO access before enabling
 - Verify SSO provider is properly configured and tested
 
-### Debug Mode
-
-For troubleshooting, administrators can enable debug logging for SSO:
-
-- Set `SSO_DEBUG=true` in environment variables
-- Check application logs for detailed authentication flow
-- Review SAML assertions and responses
-
 ## Migration Guide
 
 ### Transitioning to SSO
@@ -581,44 +583,6 @@ When transitioning existing users to SSO:
 - User preferences remain intact
 
 ## API Integration
-
-### SSO Status Endpoint
-
-Applications can check SSO configuration:
-
-```bash
-GET /api/auth/sso-config
-```
-
-Response:
-
-```json
-{
-  "forceSso": false,
-  "providers": [
-    {
-      "type": "GOOGLE",
-      "enabled": true,
-      "name": "Google OAuth"
-    },
-    {
-      "type": "APPLE",
-      "enabled": true,
-      "name": "Apple Sign In"
-    },
-    {
-      "type": "MICROSOFT",
-      "enabled": true,
-      "name": "Microsoft"
-    },
-    {
-      "type": "SAML",
-      "enabled": true,
-      "name": "Corporate SSO"
-    }
-  ]
-}
-```
 
 ### Programmatic Authentication
 
@@ -658,14 +622,14 @@ TestPlanIt supports TOTP-based two-factor authentication that can work alongside
 
 ### SSO and Personal 2FA
 
-When **Force 2FA for All Logins** is disabled:
+When **Require 2FA for All Logins** is disabled:
 
 - Users can optionally enable personal 2FA on their accounts
 - Personal 2FA only applies to password-based logins
 - SSO logins bypass personal 2FA settings
 - A notice is displayed on user profiles to inform users of this behavior
 
-When **Force 2FA for All Logins** is enabled:
+When **Require 2FA for All Logins** is enabled:
 
 - All users must complete 2FA regardless of login method
 - Personal 2FA settings are enforced for SSO logins
@@ -679,4 +643,4 @@ Planned SSO improvements include:
 - OpenID Connect (OIDC) support
 - Additional SAML features (encrypted assertions, metadata import)
 
-User lifecycle management via SCIM 2.0 shipped in v0.24.0 — see [SCIM Provisioning](./scim.md).
+User lifecycle management via SCIM 2.0 shipped in v0.37.0 — see [SCIM Provisioning](./scim.md).

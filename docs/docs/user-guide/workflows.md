@@ -39,7 +39,7 @@ The states within each table can be reordered using **drag-and-drop** to define 
 
 ## Adding a New Workflow State
 
-1. Click the "Add Workflow State" button (located in the header of the main page).
+1. Click the "Add Workflow" button (located in the header of the main page).
 2. A dialog box will appear. First, select the **Scope** (Test Cases, Test Runs, or Sessions) for which you are adding this state.
 3. Configure the state details:
     - **Icon & Color:** Select an icon and color representation for the state using the pickers.

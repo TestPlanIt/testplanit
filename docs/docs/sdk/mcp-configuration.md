@@ -72,12 +72,12 @@ Empty scopes (the default for pre-existing tokens) means full access with audit 
 ## Create a read-only agent token
 
 1. Sign into your TestPlanIt instance and open your **Profile**.
-2. Open the **API Tokens** section and click **Create API Token**.
+2. Open the **API Tokens** section and click **Create Token**.
 3. Enter a descriptive name (e.g., *"Claude Desktop — Read-only"*).
 4. Optionally set an expiration date.
 5. Check **Read-only**. Helptext: *"Use for AI agents that should only query data, never modify it."*
 6. Check **Mark as agent token**. Helptext: *"Tags audit log entries with metadata.source: \"mcp\" so admins can attribute agent-driven changes."*
-7. Click **Create**.
+7. Click **Create Token**.
 8. Copy the token (starts with `tpi_`) — it is shown only once.
 
 :::warning Important
@@ -88,7 +88,7 @@ Tokens with both scopes set show a **Read-only** badge and an **Agent token** ba
 
 ## Tool catalog
 
-The full tool catalog — 44 tools across cases, templates, folders, tags, projects, test runs, results, sessions, findings, milestones, code repositories, issues, and repository case links — lives in the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server). Each tool entry shows its input parameters, output shape, and (where applicable) which killer-app composition it participates in.
+The full tool catalog — covering cases, templates, folders, tags, projects, test runs, results, sessions, findings, milestones, reviews, code repositories, issues, and repository case links — lives in the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server). Each tool entry shows its input parameters, output shape, and (where applicable) which killer-app composition it participates in.
 
 ## Troubleshooting
 

@@ -40,7 +40,7 @@ The Statuses page displays a table listing all configured statuses with the foll
     - **Success**: Toggle on/off. Defaults to off. Toggling this on will automatically turn off "Failure".
     - **Failure**: Toggle on/off. Defaults to off. Toggling this on will automatically turn off "Success".
     - **Completed**: Toggle on/off. Defaults to off.
-    - **Scope**: Use the multi-select dropdown to choose which areas (Cases, Runs, Sessions) this status applies to. You can use the "Select All" link.
+    - **Scope**: Use the multi-select dropdown to choose which areas (Test Run, Session, Automation) this status applies to. You can use the "Select All" link.
     - **Projects**: Use the multi-select dropdown to assign this status to specific projects. You can use the "Select All" link.
 3. Click **Submit**.
 

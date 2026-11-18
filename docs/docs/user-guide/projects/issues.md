@@ -1,6 +1,5 @@
 ---
 sidebar_label: 'Issues'
-# sidebar_position: TBD - Adjust as needed relative to other project items
 ---
 
 # Project Issues
@@ -35,7 +34,7 @@ This page is **read-only** — it lists issues that already exist. You do not ad
 ### Sorting
 
 - The table is initially sorted by **Name** in ascending order.
-- Sorting by other columns might be available depending on the implementation.
+- Click a column header to sort by **Name**, **Title**, **Status**, **Priority**, **Last Synced**, or any of the count columns (**Test Cases**, **Test Runs**, **Sessions**, **Milestones**). **Description** is not sortable.
 
 ### Data Table Columns
 
@@ -43,7 +42,7 @@ The table structure is similar to the global Issues List but focuses on the cont
 
 - **Name:**
     - Displays the issue's unique name and its external ID (if available).
-    - Clicking the issue name likely navigates to a detailed view (TBD).
+    - Clicking the name of an issue from an external tracker opens a popover with its details (status, priority, assignee, last update) and a link that opens the issue in the tracker.
 - **Test Cases:**
     - Shows a count of repository test cases *within this project* linked to the issue.
     - Clicking the count opens a modal listing these specific test cases.

@@ -18,6 +18,7 @@ The Roles page displays a table listing all defined roles (excluding those marke
 - **Columns**: The table includes columns for:
   - **Name**: The name of the Role.
   - **Default**: A switch indicating if this is the default Role assigned to new users. Only one role can be the default.
+  - **Users**: The users who hold this Role.
   - **Actions**: Buttons to **Edit** or **Delete** the Role. (The default role cannot be deleted).
 
 ## Adding a New Role
@@ -26,8 +27,8 @@ The Roles page displays a table listing all defined roles (excluding those marke
 2. A modal dialog will appear.
 3. Enter a unique **Name** for the new Role (e.g., "Tester", "Test Lead", "Read Only").
 4. Use the **Default** switch to designate this role as the default for new users. If another role is currently the default, setting this will automatically unset the default status for the other role. When no role is currently the default, the switch is locked on and the new role becomes the default.
-5. Click **Submit** to create the role.
-6. Edit the new role to set per-area permissions — see [Editing an Existing Role](#editing-an-existing-role) below. Newly-created roles start with every permission off; assign them deliberately.
+5. In the **Permissions** table, tick the actions the role can perform on each Application Area. Every permission starts off; assign them deliberately.
+6. Click **Submit** to create the role.
 
 ## Editing an Existing Role
 
@@ -54,14 +55,18 @@ You cannot delete the **Default** Role. To delete the current default, you must 
 
 # Roles
 
-Roles define the permissions users have within the application and specific projects. TestPlanIt comes with predefined system roles, and administrators can create custom roles to fit their organization's needs.
+Roles define the permissions users have within the application and specific projects. TestPlanIt ships with two roles, `admin` (every permission on every area) and `user` (the default role), and administrators can create custom roles to fit their organization's needs.
 
-## System Roles
+## System Access Levels
+
+Every user has one system access level, separate from their role:
 
 - **Admin:** Full access to all application settings and all projects.
 - **Project Admin:** Full access to administrative functions for a project to which the user has access.
-- **User:** Default role for new users. Can view and interact with every project whose default access is not **No Access**, plus any project they are added to. See [Project Access Control](./projects.md#project-access-control).
+- **User:** Standard access. Can view and interact with every project whose default access is not **No Access**, plus any project they are added to. See [Project Access Control](./projects.md#project-access-control).
 - **No Access:** The user's access to the system is revoked. The user can log in, but not interact with any projects.
+
+Users who register themselves receive the **Default Access Level** set in the **Registration Settings** card under **Administration -> Authentication -> Authentication**, which is **No Access** unless an administrator changes it.
 
 ## Custom Roles
 
@@ -82,11 +87,17 @@ When a user is assigned to a project, they are also assigned a project-specific 
 - **Closed Test Runs**: Deleting completed/archived test runs.
 - **Test Run Results**: Recording and managing results for test cases within a run.
 - **Test Run Result Restricted Fields**: Recording restricted field values on test run results, and (via the role's `Read Sensitive` grant on this area) viewing sensitive parameter values on iteration results, matrix cells, matrix CSV exports, and the auto-prefilled body when linking an external issue from a failed iteration.
+- **Automated Execution**: Starting, retrying, and cancelling automated executions on a CI provider.
+- **Failure Patterns**: Setting the root cause of, resolving or ignoring, and linking issues to [failure patterns](./failure-patterns.md).
 - **Sessions**: Creating and managing active test sessions.
 - **Sessions Restricted Fields**: Recording restricted field values on test sessions.
 - **Closed Sessions**: Deleting completed/archived test sessions.
 - **Session Results**: Recording and Managing results for test cases within a session.
 - **Tags**: Creating new tags.
+- **Shared Steps**: Managing shared test step groups.
+- **Issues**: Issue tracking and management.
+- **Reporting**: Reports and analytics.
+- **Project Administration**: Project administration. Add/Edit on this area makes the role a [project admin](./permissions-guide.md#project-admins) role.
 - **Alerts**: Subscribing other project members to a [alert](./alerts.md) rule (Add/Edit only). Anyone can follow or leave a rule themselves; project administrators manage the rules.
   :::
 
@@ -106,7 +117,7 @@ A user's final permissions within a specific project are determined by a hierarc
 
 1. **User-Specific Project Role:** If a user has been explicitly assigned a specific role _for that project_ (on the **Users** tab of **Administration -> Projects -> Edit**), that role's permissions are used, overriding all other settings.
 
-2. **Group-Specific Project Role(s):** If the user hasn't been assigned a specific role directly, the system checks the groups they belong to. If one or more of their groups have been assigned a specific role _for that project_ (on the **Groups** tab of **Administration -> Projects -> Edit**), the role providing the _highest level of access_ (most permissions) among those group assignments is used.
+2. **Group-Specific Project Role(s):** If the user hasn't been assigned a specific role directly, the system checks the groups they belong to. If one or more of their groups have been assigned a specific role _for that project_ (on the **Groups** tab of **Administration -> Projects -> Edit**), that role is used. If several groups have one, the first one found is used; the most permissive role is not picked automatically. Otherwise, a group set to **User's Global Role** applies the user's own global role.
 
 3. **Project Default Role:** If neither the user nor their groups have a specific role assigned for the project, the system checks the project's **Default Project Access** (on the **Details** tab of **Administration -> Projects -> Edit**):
    - If the default access is set to a role, that role is used.

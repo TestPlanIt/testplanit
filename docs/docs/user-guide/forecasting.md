@@ -165,7 +165,7 @@ The system collects execution time data from:
 
 **Manual Updates:**
 
-- Admin users can trigger forecast recalculation
+- Any user who can view a test case can trigger recalculation for that case through the API
 - Useful after importing large amounts of historical data
 - Available via API endpoints for integration
 
@@ -188,27 +188,21 @@ The system collects execution time data from:
 ### Get Repository Case Forecasts
 
 ```http
-GET /api/repository-cases/forecast
+POST /api/repository-cases/forecast
+Content-Type: application/json
+
+{ "caseIds": [101, 102] }
 ```
 
-Query Parameters:
-
-- `projectId`: Project to get forecasts for
-- `caseIds`: Array of specific case IDs (optional)
-
-Response:
+Returns the combined estimate for the given cases:
 
 ```json
 {
-  "forecasts": [
-    {
-      "caseId": "uuid",
-      "manualEstimate": 300,
-      "automatedEstimate": 60,
-      "mixedEstimate": 180,
-      "areAllCasesAutomated": false
-    }
-  ]
+  "manualEstimate": 300,
+  "mixedEstimate": 180,
+  "automatedEstimate": 60,
+  "areAllCasesAutomated": false,
+  "fetchedTestCasesCount": 2
 }
 ```
 
@@ -222,26 +216,20 @@ Response:
 
 ```json
 {
-  "milestoneId": "uuid",
-  "totalManualEstimate": 7200,
-  "totalAutomatedEstimate": 1800,
-  "totalMixedEstimate": 4500,
-  "testRunCount": 5,
-  "testCaseCount": 150
+  "manualEstimate": 7200,
+  "mixedEstimate": 9000,
+  "automatedEstimate": 1800,
+  "areAllCasesAutomated": false
 }
 ```
 
 ### Update Forecasts
 
 ```http
-POST /api/forecast/update
-Content-Type: application/json
-
-{
-  "caseIds": ["uuid1", "uuid2"],
-  "updateAll": false
-}
+GET /api/forecast/update?caseId=101
 ```
+
+Recalculates the forecast for one test case and returns `{ "success": true }`. The nightly job recalculates every case.
 
 ## Best Practices
 
@@ -336,12 +324,3 @@ Content-Type: application/json
 - Requires historical execution data for accuracy
 - Limited by quality and quantity of past results
 - No prediction for entirely new test cases
-
-### Future Enhancements
-
-**Potential Improvements:**
-
-- User-specific execution time patterns
-- Environment-specific forecast adjustments
-- Confidence intervals for forecast reliability
-- Trend analysis for forecast accuracy improvement

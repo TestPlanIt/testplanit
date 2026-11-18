@@ -14,13 +14,13 @@ TestPlanIt provides official npm packages to integrate with your test automation
 | --------- | ------------- | ----- |
 | [`@testplanit/api`](./api-client.md) | Official JavaScript/TypeScript API client | [![npm](https://img.shields.io/npm/v/@testplanit/api)](https://www.npmjs.com/package/@testplanit/api) |
 | [`@testplanit/cli`](../cli.md) | Command-line interface for importing results and managing test data | [![npm](https://img.shields.io/npm/v/@testplanit/cli)](https://www.npmjs.com/package/@testplanit/cli) |
-| [`@testplanit/forge-app`](./jira-forge-app.md) | TestPlanIt for Jira — Atlassian Forge app that surfaces test cases, runs, and sessions in Jira issue panels | [![npm](https://img.shields.io/npm/v/@testplanit/forge-app)](https://www.npmjs.com/package/@testplanit/forge-app) |
+| [TestPlanIt for Jira](./jira-forge-app.md) | Atlassian Forge app that surfaces test cases, runs, and sessions in Jira issue panels | [Atlassian Marketplace](https://marketplace.atlassian.com/) |
 | [`@testplanit/mcp-server`](./mcp-overview.md) | MCP server for AI agents (Claude Desktop, Cursor) | [![npm](https://img.shields.io/npm/v/@testplanit/mcp-server)](https://www.npmjs.com/package/@testplanit/mcp-server) |
 | [`@testplanit/playwright-reporter`](./playwright-overview.md) | Playwright reporter | [![npm](https://img.shields.io/npm/v/@testplanit/playwright-reporter)](https://www.npmjs.com/package/@testplanit/playwright-reporter) |
 | [`@testplanit/wdio-reporter`](./wdio-overview.md) | WebdriverIO reporter | [![npm](https://img.shields.io/npm/v/@testplanit/wdio-reporter)](https://www.npmjs.com/package/@testplanit/wdio-reporter) |
 
 :::note
-The `@testplanit/forge-app` package is the **TestPlanIt for Jira** Forge app. Instances hosted on a `*.testplanit.com` subdomain install it from the [Atlassian Marketplace](https://marketplace.atlassian.com/); self-hosted instances on a custom domain build and deploy it themselves (the Marketplace version can't reach non-`*.testplanit.com` domains).
+**TestPlanIt for Jira** is a Forge app (source in `forge-app/`), not an npm package. Instances hosted on a `*.testplanit.com` subdomain install it from the [Atlassian Marketplace](https://marketplace.atlassian.com/); self-hosted instances on a custom domain build and deploy it themselves (the Marketplace version can't reach non-`*.testplanit.com` domains).
 :::
 
 ## Architecture
@@ -83,7 +83,7 @@ const statusId = await client.getStatusId(1, 'passed');
 await client.createTestResult({
   testRunId: testRun.id,
   testRunCaseId: 456,
-  statusId,
+  statusId: statusId!,
   elapsed: 15, // seconds
 });
 ```
@@ -112,8 +112,8 @@ export const config = {
 All SDK packages use API tokens for authentication. To create an API token:
 
 1. Log into your TestPlanIt instance
-2. Go to **Settings** > **API Tokens**
-3. Click **Generate New Token**
+2. Open your **Profile** and go to the **API Tokens** section
+3. Click **Create Token**
 4. Copy the token (starts with `tpi_`)
 
 Store your token securely using environment variables:
@@ -188,16 +188,6 @@ try {
   }
 }
 ```
-
-## Coming Soon
-
-We're working on additional reporters for popular test frameworks:
-
-- Jest Reporter
-- Cypress Plugin
-- pytest Plugin
-
-Want to contribute? Check out our [GitHub repository](https://github.com/testplanit/testplanit).
 
 ## Further Resources
 

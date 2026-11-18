@@ -14,14 +14,17 @@ To access this page, enter the Administration area and select **Projects** from 
 The main view displays a table of all existing projects in the system. The table includes the following columns:
 
 - **Name:** The unique name of the project.
-- **Description:** A brief description of the project's purpose or scope.
-- **Completed:** Indicates if the project is marked as complete (e.g., a checkbox or status label).
-- **Completed On:** The date and time the project was marked as complete.
-- **Created At:** The date and time the project was created.
-- **Created By:** The user who originally created the project.
 - **Members:** A list or count of users assigned to the project.
+- **Groups:** The groups with access to the project.
 - **Milestone Types:** Associated types of milestones used within the project.
 - **Milestones:** A list or count of milestones defined for the project.
+- **Issue Tracker:** The issue integration assigned to the project.
+- **Code Repo:** The code repository connected to the project.
+- **Default LLM:** The default AI model assigned to the project.
+- **Created:** The date and time the project was created.
+- **Completed:** Indicates if the project is marked as complete (e.g., a checkbox or status label).
+- **Completed On:** The date and time the project was marked as complete.
+- **Created By:** The user who originally created the project.
 - **Actions:** Buttons to edit or delete the project.
 
 You can usually sort the table by clicking on column headers and may use a search or filter bar (if available) to find specific projects.
@@ -173,7 +176,8 @@ Individual users can have explicit permissions that override project defaults:
 Groups can have permissions that apply to all their members:
 
 - **`PROJECT_DEFAULT`**: Inherit from project's default settings
-- **`NO_ACCESS`**: Deny access to all group members
+- **`NO_ACCESS`**: The group grants nothing on this project. It does not block access members get from the project default or another group — to deny a person, set **No Access** on the user
+- **`GLOBAL_ROLE`** (shown as **User's Global Role**): Each member uses their own global role in this project
 - **`SPECIFIC_ROLE`**: All group members get a specific role
 
 ### Access Resolution Order
@@ -185,8 +189,8 @@ The system evaluates access in this priority order:
 3. **Explicit User Denial**: If a user has `NO_ACCESS` permission, they are denied (highest priority for non-admins)
 4. **Explicit User Permission**: User-specific `GLOBAL_ROLE` or `SPECIFIC_ROLE` permissions grant access
 5. **Direct Assignment**: Users explicitly assigned to the project have read access
-6. **Project Default**: If the project default is `GLOBAL_ROLE` or `SPECIFIC_ROLE`, every user with site access gets access; if it is `NO_ACCESS`, nobody gets access from this step
-7. **Group Permissions**: Evaluated based on group membership and group-specific settings
+6. **Group Permissions**: A group's specific role, or the member's own global role when the group is set to User's Global Role
+7. **Project Default**: If the project default is `GLOBAL_ROLE` or `SPECIFIC_ROLE`, every user with site access gets access; if it is `NO_ACCESS`, nobody gets access from this step
 
 ### Setting Up Access Control
 
@@ -209,7 +213,7 @@ When creating or editing a project, you can configure access control through thr
 
 - Configure permissions for entire groups
 - All members of a group inherit the group's permission settings
-- Groups can be set to Project Default, No Access, or a Specific Role
+- Groups can be set to Project Default, No Access, User's Global Role, or a specific role
 
 ### Common Scenarios
 
@@ -321,7 +325,7 @@ A project's **Advanced** settings tab governs how reviews and results are handle
 
 ### Enable Review Workflow
 
-When enabled, transitions into states that require review are gated by an approved review request: testers see a **Request Review** button, and reviewers receive notifications. This is on by default for each project.
+When enabled, transitions into states that require review are gated by an approved review request: testers see a **Request Review** button, and reviewers receive notifications. This is off by default for each project.
 
 The review workflow must also be turned on system-wide. If a system administrator has disabled it under **Administration → Workflows**, the project's preference is still saved, but nothing is gated until the feature is re-enabled — a warning is shown in that case.
 

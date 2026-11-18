@@ -166,7 +166,7 @@ AWS_ACCESS_KEY_ID="minioadmin"
 AWS_SECRET_ACCESS_KEY="minioadmin123"
 AWS_BUCKET_NAME="testplanit"
 AWS_ENDPOINT_URL="http://minio:9000"
-AWS_PUBLIC_ENDPOINT_URL="https://your-domain.com/minio"
+AWS_PUBLIC_ENDPOINT_URL="https://your-domain.com"
 
 # Application
 NEXTAUTH_URL="https://your-domain.com"
@@ -391,22 +391,10 @@ To run multiple TestPlanIt instances against different databases:
 4. **Monitor database performance** and connection pools
 5. **Use read replicas** for high-traffic deployments — see [Horizontal Read Scaling](./horizontal-read-scaling.md) to point TestPlanIt at them
 6. **Keep database and application on the same network/region** for low latency
-7. **Configure connection pooling** in your `DATABASE_URL` if needed:
-
-   ```text
-   DATABASE_URL="postgresql://user:pass@host:5432/db?schema=public&connection_limit=10&pool_timeout=20"
-   ```
+7. **Size the connection pool** with `DATABASE_POOL_MAX` (per process, default 20), `DATABASE_POOL_CONNECTION_TIMEOUT_MS`, and `DATABASE_POOL_IDLE_TIMEOUT_MS` — see [Environment Variables](./environment-variables.md).
 
    **Transaction-mode poolers (pgbouncer, RDS Proxy, Supabase pooler):** when a
-   transaction-mode pooler fronts Postgres, two extra steps are required:
-
-   - Append `&pgbouncer=true` to `DATABASE_URL` so Prisma disables named prepared
-     statements (which transaction pooling cannot keep alive across requests).
-     Optionally add `&connection_limit=<n>` to cap each process's client-side pool.
-
-     ```text
-     DATABASE_URL="postgresql://user:pass@pgbouncer:6432/db?schema=public&pgbouncer=true&connection_limit=5"
-     ```
+   transaction-mode pooler fronts Postgres, point `DATABASE_URL` at the pooler and:
 
    - Set `DIRECT_DATABASE_URL` to a connection that **bypasses the pooler** (straight
      to Postgres). Startup migrations (`zenstack migrate deploy`) and extension/index setup

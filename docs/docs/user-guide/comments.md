@@ -84,9 +84,8 @@ You can edit your own comments:
 
 **Permissions:**
 
-- You can edit your own comments
-- Project admins can edit any comment in their projects
-- System admins can edit all comments
+- You can edit only your own comments
+- Comments created by the review workflow (review requests and decisions) cannot be edited
 
 ### Deleting Comments
 
@@ -99,11 +98,11 @@ You can delete your own comments:
 **Permissions:**
 
 - You can delete your own comments
-- Project admins can delete any comment in their projects
-- System admins can delete all comments
+- System administrators can delete any comment
+- Comments created by the review workflow cannot be deleted
 
-:::warning Permanent Action
-Deleting a comment is permanent and cannot be undone. The comment content and all mentions are removed.
+:::note
+Deleting a comment removes it from the thread. It is a soft delete — a system administrator can restore it from [Trash](./trash.md).
 :::
 
 ## Comment Notifications
@@ -128,13 +127,9 @@ If someone mentions you in a comment on a project you do not have access to, you
 
 Control how you're notified about comments:
 
-1. Navigate to your **User Profile**
-2. Go to **Notification Preferences**
-3. Configure settings for comment mentions:
-   - **Immediate Email** - Receive emails as mentions happen
-   - **Daily Digest** - Receive a daily summary of mentions
-   - **In-App Only** - Only show notifications in the app
-   - **None** - Disable mention notifications
+1. Open **Notifications & Alerts** from the user menu
+2. On the **Notifications** tab, choose your **Notification Mode** (Use Global Settings, None, In-App Only, In-App + Email Immediate, or In-App + Email Daily Digest) — it applies to all notification types
+3. Under **What to notify me about**, switch **Mentions in comments** on or off
 
 ## Comments in Context
 
@@ -330,68 +325,13 @@ maintainability. The split test cases are:
 
 - Comments are stored permanently unless explicitly deleted
 - Edit history is tracked but previous versions are not stored
-- Deleted comments are permanently removed from the database
+- Deleted comments are soft-deleted: hidden from the thread but retained until purged from Trash
 
 ### Audit Trail
 
 - Comment creation, editing, and deletion events are logged
 - Timestamps track when each action occurred
 - Administrators can review comment activity in audit logs
-
-## API Reference
-
-For developers integrating with TestPlanIt's comment system:
-
-### Get Comments
-
-```http
-GET /api/comments/{entityType}/{entityId}
-```
-
-### Create Comment
-
-```http
-POST /api/comments
-Content-Type: application/json
-
-{
-  "projectId": 123,
-  "entityType": "repositoryCase",
-  "entityId": 456,
-  "content": {
-    "type": "doc",
-    "content": [
-      {
-        "type": "paragraph",
-        "content": [
-          { "type": "text", "text": "Comment text here" }
-        ]
-      }
-    ]
-  },
-  "mentionedUserIds": ["user-id-1", "user-id-2"]
-}
-```
-
-### Update Comment
-
-```http
-PUT /api/comments/{commentId}
-Content-Type: application/json
-
-{
-  "content": { /* TipTap JSON format */ },
-  "mentionedUserIds": ["user-id-1"]
-}
-```
-
-### Delete Comment
-
-```http
-DELETE /api/comments/{commentId}
-```
-
----
 
 **Related Documentation:**
 

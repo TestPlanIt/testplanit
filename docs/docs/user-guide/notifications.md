@@ -17,7 +17,7 @@ The notification system consists of:
 
 ## Notification Types
 
-Every notification TestPlanIt sends belongs to one of the types below. They are grouped the way they appear under **What to notify me about** on your [Notifications & Alerts](./alerts.md) page, where each one has a switch that is on by default (see [Choosing which notifications you receive](#choosing-which-notifications-you-receive)). Two types are **always on** and cannot be switched off; two are sent to **administrators** only.
+Every notification TestPlanIt sends belongs to one of the types below. They are grouped the way they appear under **What to notify me about** on your [Notifications & Alerts](./alerts.md) page, where each one has a switch that is on by default (see [Choosing which notifications you receive](#choosing-which-notifications-you-receive)). Two types are **always on** and cannot be switched off; one is sent to **administrators** only.
 
 | Group               | Notification                                       | Sent when                                                                                                        | Sent to                                                              |
 | ------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
@@ -31,6 +31,7 @@ Every notification TestPlanIt sends belongs to one of the types below. They are 
 | Reviews             | **Review rejected**                                | A reviewer rejects your request                                                                                  | The requester                                                        |
 | Reviews             | **Review cancelled**                               | A request you were asked to review is cancelled, or the item under review is deleted                             | The pending reviewers, minus whoever cancelled                       |
 | Reviews             | **Review reminders**                               | A review you owe is older than the reminder threshold (hourly), or the requester nudges you                      | The pending reviewers                                                |
+| Reviews             | **Review decision reverted**                       | A reviewer undoes a decision on a request you made, putting it back in their queue                               | The requester                                                        |
 | Runs and milestones | **Test run ready to complete**                     | Every case in a run has a result; includes a **Review and complete** link                                        | Users who can close the run, plus admins and project admins          |
 | Runs and milestones | **Milestone due reminders**                        | A milestone is inside its reminder window or overdue (daily)                                                     | The milestone creator and everyone involved in its runs and sessions |
 | Runs and milestones | **Alerts**                                         | An [alert](./alerts.md) you follow fires because a metric crossed its line; links to the subject and its project | The rule's subscribers who can see the project                       |
@@ -369,7 +370,7 @@ EMAIL_FROM=noreply@example.com
    - Serves the long-lived `text/event-stream` connection that the bell consumes
    - Subscribes per-connection to the user's Valkey channel and the tenant broadcast channel
    - Treats wake-up payloads as opaque "something changed" signals; the bell re-fetches through the policy-enforced ZenStack hook so multi-tenant isolation and access control are re-applied on every read
-   - Enforces per-user (4) and per-tenant (1000, default) connection caps and a 25-second heartbeat for proxy-friendly liveness
+   - Enforces per-user (10, default) and per-tenant (1000, default) connection caps and a 25-second heartbeat for proxy-friendly liveness
 
 3. **Email Worker** (`workers/emailWorker.ts`)
    - Sends actual emails
@@ -413,10 +414,9 @@ For ingress / proxy configuration required to run SSE reliably behind a load bal
 
 Administrators can configure system-wide defaults:
 
-1. Navigate to Admin → Notification Settings
-2. Set the default notification mode
-3. Configure email sending limits
-4. Manage notification types
+1. Navigate to **Administration → Tools & Integrations → Notifications**
+2. Choose the **Default Notification Mode** (In-App Only, In-App + Email (Immediate), or In-App + Email (Daily Digest)) and click **Save Settings**
+3. Use the **System Notifications** card to send an announcement to all users
 
 ## Best Practices
 
@@ -430,7 +430,6 @@ Administrators can configure system-wide defaults:
 ### For Administrators
 
 - Set reasonable global defaults
-- Monitor email sending rates
 - Ensure Valkey has sufficient memory
 - Configure SMTP settings properly
 - Test email delivery regularly
@@ -494,7 +493,7 @@ Example template:
 
 ### Testing Notifications
 
-1. Use development environment with MailHog
+1. Use development environment with Mailpit
 2. Configure test SMTP settings
 3. Trigger events to generate notifications
 4. Verify email rendering and delivery

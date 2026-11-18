@@ -6,7 +6,7 @@ description: Connect Git repositories that projects use for QuickScript (test au
 
 # Code Repositories
 
-The **Administration → Code Repositories** page registers connections to Git repositories. A project connects a registered repository for either or both of two purposes:
+The **Administration → Code Repositories** page registers connections to Git repositories. A project connects a registered repository for any of three purposes:
 
 - **QuickScript** — the repository of your _test automation_ code. It supplies source-file context to AI-powered test export, so generated automation scripts follow the framework, fixtures, and page objects your team already uses instead of generic boilerplate. See [Project QuickScript settings](projects/settings/quickscript.md).
 - **Impact Analysis** — the repositories of the _application under test_ (a project can connect several, one per service). It compares two commits of one of them and lists the test cases the changes affect, and test cases can be pinned to their files. See [Project Impact Analysis settings](projects/settings/impact.md) and [Test Impact Analysis](impact.md).

@@ -36,4 +36,3 @@ The item is laid out in two lines: identity above, detail below.
 ## Styling
 
 - The background and border colors of the item are subtly tinted based on the color associated with the test run's current workflow state.
-- Newly created test runs (e.g., after adding via the modal) might have a temporary highlighted border or pulsing animation to draw attention.

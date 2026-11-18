@@ -267,7 +267,7 @@ Each catalog entry carries:
 }
 ```
 
-Use the catalog to drive subscription configuration in your data platform without reading TestPlanIt source. The endpoint is read-only; webhook subscription CRUD lives at `/api/webhooks/configs` (covered in [Webhooks](./user-guide/webhooks.md)).
+Use the catalog to drive subscription configuration in your data platform without reading TestPlanIt source. The endpoint is read-only; webhook subscriptions are created in the UI (see [Webhooks](./user-guide/webhooks.md)).
 
 ## Operational notes
 

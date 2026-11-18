@@ -26,7 +26,7 @@ Independent of the health bucket, a case is flagged as **stale** when `daysSince
 
 - **Stale Days Threshold** — 7–90 days (default 30)
 - **Min Executions for Rate** — 3–20 executions needed before a case can be classified as Always Passing or Always Failing (default 5)
-- **Lookback Days** — 0–365; `0` means all-time
+- **Lookback Period** — Last 30 days, Last 3 months (the default), Last 12 months, or All Time
 
 ## Filters
 

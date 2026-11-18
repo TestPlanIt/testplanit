@@ -13,7 +13,7 @@ Almost everything in TestPlanIt is **soft-deleted** — when a record is deleted
 
 ## Your Trash
 
-Open your profile (user menu → **Profile**) and expand the **Trash** section. It lists the items you deleted that are still inside the **self-service restore window** (30 days by default — see [Restore window](#self-service-restore-window)). Each row shows the item's type, its name, the folder, run or other container it belonged to, the project, when it was deleted and how long it can still be restored. Items are always shown by name; you never need to know an id.
+Open your profile (user menu → **View Profile**) and expand the **Trash** section. It lists the items you deleted that are still inside the **self-service restore window** (30 days by default — see [Restore window](#self-service-restore-window)). Each row shows the item's type, its name, the folder, run or other container it belonged to, the project, when it was deleted and how long it can still be restored. Items are always shown by name; you never need to know an id.
 
 Only these kinds of items appear: test cases, folders, shared step groups, test runs, sessions, milestones, issues, datasets and attachments. Administrative records (users, roles, templates, fields, workflows and so on) are restored from Administration → Trash only.
 

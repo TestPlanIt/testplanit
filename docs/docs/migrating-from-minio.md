@@ -161,7 +161,7 @@ MinIO's, and MinIO cannot read the volume afterwards, so take a snapshot first.
 3. Upgrade the release:
 
    ```bash
-   helm upgrade <release> testplanit/testplanit -f my-values.yaml
+   helm upgrade <release> oci://ghcr.io/testplanit/charts/testplanit --version <version> -f my-values.yaml
    ```
 
 4. Open a few test cases with attachments and check that images and files load.

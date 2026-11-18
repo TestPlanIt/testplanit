@@ -5,54 +5,27 @@ title: Search Configuration
 
 # Search Configuration
 
-TestPlanIt uses Elasticsearch to provide powerful, fast search capabilities across all your test management data. This document covers how to configure, optimize, and troubleshoot the search system.
+TestPlanIt uses Elasticsearch for global search across test cases, shared steps, test runs, sessions, projects, issues, and milestones. This page covers connecting TestPlanIt to Elasticsearch, how the indices are built, and how to maintain and troubleshoot them.
 
-## Overview
-
-The search system provides:
-
-- **Full-text search** across all entities and content
-- **Faceted filtering** with dynamic filter options
-- **Real-time indexing** of new and updated content
-- **Advanced query capabilities** with highlighting and relevance scoring
-- **Scalable performance** for large datasets
+Search is optional. When `ELASTICSEARCH_NODE` is not set, global search is unavailable and the rest of the application keeps working.
 
 ## Elasticsearch Setup
 
-### Installation Options
+### Bundled Elasticsearch
 
-#### Docker Setup (Recommended)
+The production compose file ships a single-node Elasticsearch service behind a profile:
 
-Add Elasticsearch to your Docker Compose configuration:
-
-```yaml
-version: '3.8'
-services:
-  elasticsearch:
-    image: elasticsearch:9.0.3
-    container_name: testplanit-elasticsearch
-    environment:
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      - xpack.security.enabled=false
-      - xpack.security.enrollment.enabled=false
-    ports:
-      - '9200:9200'
-      - '9300:9300'
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    healthcheck:
-      test:
-        ['CMD-SHELL', 'curl -f http://localhost:9200/_cluster/health || exit 1']
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-volumes:
-  elasticsearch_data:
+```bash
+docker compose -f docker-compose.prod.yml --profile with-elasticsearch up -d
 ```
 
-#### Scaling Beyond the Bundled Node
+It runs `elasticsearch:9.0.3` as a single node with a 512MB heap and security disabled. See [Docker Setup](./docker-setup.md).
+
+### External Elasticsearch
+
+To use your own cluster, leave the `with-elasticsearch` profile off and point TestPlanIt at the cluster with `ELASTICSEARCH_NODE` (below). TestPlanIt uses the Elasticsearch 9 client.
+
+### Scaling Beyond the Bundled Node
 
 TestPlanIt's own `docker-compose.prod.yml` runs a **single** Elasticsearch node with a 512MB heap and no container memory limit, which is what a normal install needs. The example below is not that configuration — it is a starting point if you have outgrown a single node and want a secured multi-node cluster, and it assumes you add the `elasticsearch2` and `elasticsearch3` services it refers to:
 
@@ -80,328 +53,76 @@ elasticsearch:
 
 ### Environment Configuration
 
-Configure Elasticsearch connection in your `.env` file:
+Configure the Elasticsearch connection in your `.env` file:
 
 ```env
-# Elasticsearch Configuration
-ELASTICSEARCH_URL=http://localhost:9200
-ELASTICSEARCH_INDEX_PREFIX=testplanit_
-ELASTICSEARCH_USERNAME=elastic
-ELASTICSEARCH_PASSWORD=your_password
-
-# Optional: SSL Configuration
-ELASTICSEARCH_SSL_VERIFY=false
-ELASTICSEARCH_SSL_CA_PATH=/path/to/ca.crt
-
-# Performance Settings
-ELASTICSEARCH_REQUEST_TIMEOUT=30000
-ELASTICSEARCH_MAX_RETRIES=3
-ELASTICSEARCH_BULK_SIZE=1000
+# Elasticsearch URL. Leave unset to disable search.
+ELASTICSEARCH_NODE=http://localhost:9200
 ```
+
+`ELASTICSEARCH_NODE` is the only connection setting. If the cluster requires credentials, put them in the URL (`https://user:password@host:9200`). In multi-tenant mode, each tenant's `elasticsearchNode` overrides this value — see [Multi-Tenant Workers](./multi-tenant-workers.md).
 
 ## Administration Interface
 
-### Elasticsearch Admin Panel
-
-TestPlanIt provides a dedicated administration interface for managing Elasticsearch configuration and performing maintenance tasks directly from the web UI.
-
-**Accessing the Admin Panel:**
-
-Navigate to `/admin/elasticsearch` (requires admin privileges)
-
-**Available Features:**
-
-#### Connection Management
-
-- **View Connection Status**: Real-time connection status to Elasticsearch cluster
-- **Test Connection**: Verify connectivity and authentication
-- **Update Settings**: Modify Elasticsearch URL and credentials without restarting
-
-#### Index Management
-
-- **View All Indices**: List all TestPlanIt indices with their status
-- **Index Statistics**: View document counts, size, and health for each index
-- **Create Indices**: Initialize missing indices with proper mappings
-- **Delete Indices**: Remove indices when needed (with confirmation)
-- **Reindex Data**: Trigger full or partial reindexing operations
-
-#### Maintenance Operations
-
-- **Force Merge**: Optimize indices for better search performance
-- **Clear Cache**: Clear field data and query caches
-- **Refresh Indices**: Force refresh to make recent changes searchable
-- **Update Mappings**: Apply new field mappings to existing indices
-
-#### Monitoring Dashboard
-
-- **Cluster Health**: Overall cluster status (green/yellow/red)
-- **Node Statistics**: CPU, memory, and disk usage per node
-- **Search Metrics**: Query performance and latency statistics
-- **Indexing Rate**: Documents indexed per second
-- **Error Logs**: Recent Elasticsearch errors and warnings
-
-#### Bulk Operations
-
-- **Bulk Reindex**: Reindex all content with progress tracking
-- **Batch Size Configuration**: Adjust batch sizes for optimal performance
-- **Selective Reindexing**: Reindex specific projects or entity types
-- **Schedule Reindexing**: Set up automated reindexing schedules
-
-**Security Considerations:**
-
-- Admin panel access is restricted to users with `ADMIN` access level
-- All operations are logged for audit purposes
-- Destructive operations require confirmation
-- Connection credentials are encrypted at rest
+**Administration → Search Engine** (`/admin/elasticsearch`) is available to system administrators. It shows the connection and cluster health, lists each index with its document count, sets the **Number of Replicas**, and runs **Reindex Data**. See [Search Engine](./user-guide/search-engine.md).
 
 ## Index Configuration
 
 ### Index Structure
 
-TestPlanIt creates separate indices for each entity type:
+TestPlanIt creates one index per entity type:
 
 ```text
-testplanit_repository_cases    # Test cases
-testplanit_shared_steps       # Shared step groups
-testplanit_test_runs          # Test execution runs
-testplanit_sessions           # Exploratory testing sessions
-testplanit_projects           # Projects
-testplanit_issues             # Issue tracking
-testplanit_milestones         # Project milestones
+testplanit-repository-cases    # Test cases
+testplanit-shared-steps        # Shared step groups
+testplanit-test-runs           # Test runs
+testplanit-sessions            # Exploratory sessions
+testplanit-projects            # Projects
+testplanit-issues              # Issues
+testplanit-milestones          # Milestones
 ```
 
-### Mapping Configuration
+In multi-tenant mode the tenant ID is part of the name: `testplanit-<tenantId>-repository-cases`, and so on.
 
-Each index uses optimized field mappings:
+### Mappings
 
-```json
-{
-  "mappings": {
-    "properties": {
-      "id": { "type": "keyword" },
-      "title": {
-        "type": "text",
-        "analyzer": "standard",
-        "fields": {
-          "keyword": { "type": "keyword" }
-        }
-      },
-      "description": {
-        "type": "text",
-        "analyzer": "standard"
-      },
-      "content": {
-        "type": "text",
-        "analyzer": "standard"
-      },
-      "tags": { "type": "keyword" },
-      "projectId": { "type": "keyword" },
-      "createdAt": { "type": "date" },
-      "updatedAt": { "type": "date" },
-      "customFields": {
-        "type": "nested",
-        "properties": {
-          "name": { "type": "keyword" },
-          "value": { "type": "text" }
-        }
-      }
-    }
-  }
-}
+TestPlanIt creates the indices and their mappings itself; there is nothing to configure. Every index shares a base mapping — `id`, `projectId`, `projectName`, creator fields, `createdAt`, `updatedAt`, a full-text `searchableContent` field, and nested `customFields` — plus fields specific to the entity type. To inspect the live mapping of an index:
+
+```bash
+curl -X GET "localhost:9200/testplanit-repository-cases/_mapping?pretty"
 ```
+
+When a TestPlanIt upgrade changes a mapping, reindex (see below) so the indices are recreated with the new mapping.
 
 ### Index Settings
 
-Optimize performance with appropriate settings:
-
-```json
-{
-  "settings": {
-    "number_of_shards": 1,
-    "number_of_replicas": 1,
-    "analysis": {
-      "analyzer": {
-        "testplanit_analyzer": {
-          "tokenizer": "standard",
-          "filter": ["lowercase", "stop", "snowball"]
-        }
-      }
-    },
-    "max_result_window": 50000
-  }
-}
-```
+Each index is created with one primary shard, the standard analyzer with English stop words, and the replica count from **Administration → Search Engine → Number of Replicas**. Use `0` replicas on a single-node cluster; with a higher value the cluster health stays at Warning because the replicas cannot be allocated.
 
 ## Indexing Process
 
 ### Automatic Indexing
 
-Content is automatically indexed when:
-
-- **Creating** new entities
-- **Updating** existing entities
-- **Changing** entity relationships (tags, assignments)
-- **Modifying** custom field values
+Content is indexed automatically when entities are created or updated, including changes to tags, assignments, and custom field values.
 
 ### Manual Reindexing
 
-Force complete reindexing when needed:
+Reindex after an upgrade that changes the mappings, or to recover from missing documents. From the UI, use **Administration → Search Engine → Reindex Data**, which reindexes all entities or one entity type.
+
+From the command line:
 
 ```bash
-# Reindex all entities
-pnpm search:reindex
-
-# Reindex specific entity type
-pnpm search:reindex --type=repository_cases
-
-# Reindex specific project
-pnpm search:reindex --project=project-uuid
+pnpm elasticsearch:reindex          # reindex every entity type
+pnpm elasticsearch:reindex:fresh    # drop and recreate the indices, then reindex
+pnpm elasticsearch:reindex:cases    # repository cases only
 ```
 
-### Bulk Indexing
-
-For initial setup or large data migrations:
-
-```bash
-# Bulk index with progress tracking
-pnpm search:bulk-index --batch-size=500 --verbose
-
-# Index with specific time range
-pnpm search:bulk-index --from=2024-01-01 --to=2024-12-31
-```
+Search results may be incomplete while a reindex runs.
 
 ## Search API
 
-### Basic Search
+Search is served by a single endpoint, `POST /api/search`, which requires a signed-in session. The JSON body carries `filters` (the query text and entity types), and optionally `sort`, `pagination`, `highlight`, and `facets`; facet counts are returned in the same response. See the [API Reference](./api-reference.md) for the full schema.
 
-```http
-GET /api/search?q=login%20test&type=repository_cases&project=uuid
-```
-
-Parameters:
-
-- `q`: Search query string
-- `type`: Entity type filter (optional)
-- `project`: Project filter (optional)
-- `limit`: Number of results (default: 25)
-- `offset`: Pagination offset (default: 0)
-
-### Advanced Search
-
-```http
-POST /api/search
-Content-Type: application/json
-
-{
-  "query": {
-    "multi_match": {
-      "query": "user authentication",
-      "fields": ["title^2", "description", "content"]
-    }
-  },
-  "filters": {
-    "type": ["repository_cases", "sessions"],
-    "tags": ["authentication", "security"],
-    "projectId": "project-uuid",
-    "dateRange": {
-      "field": "createdAt",
-      "from": "2024-01-01",
-      "to": "2024-12-31"
-    }
-  },
-  "sort": [
-    { "_score": { "order": "desc" } },
-    { "updatedAt": { "order": "desc" } }
-  ],
-  "highlight": {
-    "fields": {
-      "title": {},
-      "description": {},
-      "content": {}
-    }
-  }
-}
-```
-
-### Faceted Search
-
-Get aggregated filter options:
-
-```http
-GET /api/search/facets?type=repository_cases&project=uuid
-```
-
-Response:
-
-```json
-{
-  "facets": {
-    "tags": {
-      "authentication": 45,
-      "security": 32,
-      "login": 28
-    },
-    "folders": {
-      "/Authentication": 67,
-      "/Security": 43,
-      "/User Management": 34
-    },
-    "templates": {
-      "Test Case Template": 89,
-      "Security Test Template": 23
-    },
-    "states": {
-      "Ready": 45,
-      "In Progress": 23,
-      "Completed": 12
-    }
-  }
-}
-```
-
-## Performance Optimization
-
-### Index Optimization
-
-1. **Refresh Interval**: Adjust for write-heavy workloads
-
-   ```json
-   {
-     "settings": {
-       "refresh_interval": "30s"
-     }
-   }
-   ```
-
-2. **Merge Policy**: Optimize for your use case
-
-   ```json
-   {
-     "settings": {
-       "merge.policy.max_merged_segment": "5gb",
-       "merge.policy.segments_per_tier": 10
-     }
-   }
-   ```
-
-3. **Field Data Cache**: Configure memory usage
-
-   ```json
-   {
-     "settings": {
-       "indices.fielddata.cache.size": "40%"
-     }
-   }
-   ```
-
-### Query Optimization
-
-1. **Use Filters**: Prefer filters over queries when possible
-2. **Limit Fields**: Use `_source` filtering to reduce payload
-3. **Pagination**: Use `search_after` for deep pagination
-4. **Aggregations**: Cache frequently used aggregations
-
-### Hardware Recommendations
+## Hardware Recommendations
 
 These are for the Elasticsearch service itself, not the whole TestPlanIt stack — see [Docker Setup](./docker-setup.md) for the per-service breakdown of a full install.
 
@@ -413,197 +134,82 @@ Raise the heap only if you have evidence you need it — a large index with slow
 
 **Scaling out:** separate data and master nodes only become relevant well beyond a single-node install, and TestPlanIt does not require or manage a multi-node topology.
 
-## Monitoring and Maintenance
+## Monitoring
 
-### Health Monitoring
-
-Check cluster health:
+The status card on **Administration → Search Engine** shows connection, cluster health, node count, and per-index document counts. To query the cluster directly:
 
 ```bash
 # Cluster status
 curl -X GET "localhost:9200/_cluster/health?pretty"
 
-# Index statistics
-curl -X GET "localhost:9200/_cat/indices?v"
+# Index list with document counts and sizes
+curl -X GET "localhost:9200/_cat/indices/testplanit-*?v"
 
 # Node information
 curl -X GET "localhost:9200/_cat/nodes?v"
 ```
 
-### Performance Metrics
-
-Monitor key metrics:
-
-- **Search latency**: Average response time
-- **Indexing rate**: Documents per second
-- **Memory usage**: Heap and field data cache
-- **CPU utilization**: Search and indexing load
-- **Disk usage**: Index size and growth rate
-
-### Maintenance Tasks
-
-**Regular Maintenance:**
-
-1. **Index Optimization**
-
-   ```bash
-   curl -X POST "localhost:9200/testplanit_*/_forcemerge?max_num_segments=1"
-   ```
-
-2. **Clear Cache**
-
-   ```bash
-   curl -X POST "localhost:9200/_cache/clear"
-   ```
-
-3. **Update Mappings** (when adding new fields)
-
-   ```bash
-   curl -X PUT "localhost:9200/testplanit_repository_cases/_mapping" \
-   -H "Content-Type: application/json" \
-   -d @new-mapping.json
-   ```
-
 ## Troubleshooting
 
-### Common Issues
+### Search Is Unavailable
 
-#### Search Not Working
+1. Confirm `ELASTICSEARCH_NODE` is set for both the application and the workers, and that the URL is reachable from inside their containers.
+2. Open **Administration → Search Engine** and check the connection status.
+3. Check the Elasticsearch container or service is running and healthy (`_cluster/health`).
+4. Review the application logs for Elasticsearch errors.
 
-**Symptoms:**
+### Search Returns No or Missing Results
 
-- No search results returned
-- Search endpoint errors
-- Empty response
+1. On **Administration → Search Engine**, check the document count for the affected index.
+2. Run **Reindex Data** for that entity type (or all entities).
+3. Check the workers are running — reindexing runs as a background job. See [Job Queues](./user-guide/queues.md).
 
-**Solutions:**
+### Cluster Health Shows Warning
 
-1. Check Elasticsearch service status
-2. Verify index exists and has data
-3. Test Elasticsearch connectivity
-4. Review application logs for errors
+On a single-node cluster this is almost always unallocated replicas. Set **Number of Replicas** to `0` on the Search Engine page.
 
-#### Poor Search Performance
+### Slow Searches
 
-**Symptoms:**
-
-- Slow search responses
-- High CPU usage
-- Memory issues
-
-**Solutions:**
-
-1. Optimize query structure
-2. Increase hardware resources
-3. Adjust refresh intervals
-4. Implement result caching
-
-#### Index Corruption
-
-**Symptoms:**
-
-- Search errors
-- Missing data
-- Inconsistent results
-
-**Solutions:**
-
-1. Check cluster health
-2. Reindex affected indices
-3. Restore from backup
-4. Review system logs
+1. Check heap pressure and CPU on the Elasticsearch node.
+2. Use SSD-backed storage.
+3. Raise the heap only if node statistics show it is needed (see [Hardware Recommendations](#hardware-recommendations)).
 
 ### Diagnostic Commands
 
 ```bash
-# Check specific index health
-curl -X GET "localhost:9200/testplanit_repository_cases/_stats?pretty"
+# Statistics for one index
+curl -X GET "localhost:9200/testplanit-repository-cases/_stats?pretty"
 
-# Analyze query performance
-curl -X GET "localhost:9200/testplanit_*/_search?explain=true" \
--H "Content-Type: application/json" \
--d '{"query":{"match":{"title":"test"}}}'
-
-# Check field mappings
-curl -X GET "localhost:9200/testplanit_repository_cases/_mapping?pretty"
-
-# Monitor search activity
+# Search thread pool activity
 curl -X GET "localhost:9200/_cat/thread_pool/search?v&h=node_name,name,active,rejected,completed"
 ```
 
-## Security Configuration
+## Security
 
-### Authentication
+The bundled Elasticsearch runs with security disabled and publishes port 9200 on the host, so keep that port firewalled. For an external or shared cluster:
 
-Configure Elasticsearch security:
+1. **Enable authentication** on the cluster and give TestPlanIt its own user, with its credentials in the `ELASTICSEARCH_NODE` URL. The user needs full privileges on the `testplanit-*` indices (TestPlanIt creates, deletes, and updates settings on them) and permission to read cluster health:
 
-```yaml
-elasticsearch:
-  environment:
-    - xpack.security.enabled=true
-    - xpack.security.authc.realms.native.native1.order=0
-```
+   ```bash
+   curl -X POST "localhost:9200/_security/role/testplanit_search" \
+   -u elastic:password \
+   -H "Content-Type: application/json" \
+   -d '{
+     "cluster": ["monitor"],
+     "indices": [
+       { "names": ["testplanit-*"], "privileges": ["all"] }
+     ]
+   }'
 
-Create search user:
+   curl -X POST "localhost:9200/_security/user/testplanit" \
+   -u elastic:password \
+   -H "Content-Type: application/json" \
+   -d '{ "password": "secure_password", "roles": ["testplanit_search"] }'
+   ```
 
-```bash
-# Create role for TestPlanIt
-curl -X POST "localhost:9200/_security/role/testplanit_search" \
--u elastic:password \
--H "Content-Type: application/json" \
--d '{
-  "indices": [
-    {
-      "names": ["testplanit_*"],
-      "privileges": ["read", "write", "create_index", "delete_index"]
-    }
-  ]
-}'
+2. **Use TLS** (`https://`) between TestPlanIt and the cluster.
+3. **Restrict network access** to the Elasticsearch port so only the application and workers can reach it.
 
-# Create user
-curl -X POST "localhost:9200/_security/user/testplanit" \
--u elastic:password \
--H "Content-Type: application/json" \
--d '{
-  "password": "secure_password",
-  "roles": ["testplanit_search"]
-}'
-```
+## Backups
 
-### Network Security
-
-1. **Firewall**: Restrict Elasticsearch port access
-2. **SSL/TLS**: Enable encryption for production
-3. **Network Isolation**: Use private networks
-4. **API Keys**: Use API keys instead of passwords
-
-### Data Protection
-
-1. **Field-Level Security**: Restrict sensitive fields
-2. **Document-Level Security**: Filter based on user permissions
-3. **Audit Logging**: Enable search audit trails
-4. **Data Masking**: Mask sensitive content in logs
-
-## Best Practices
-
-### Development
-
-1. **Use Aliases**: Create index aliases for flexibility
-2. **Version Mappings**: Track mapping changes
-3. **Test Queries**: Validate search behavior in development
-4. **Monitor Resources**: Watch memory and CPU usage
-
-### Production
-
-1. **Backup Strategy**: Regular index backups
-2. **Monitoring**: Implement comprehensive monitoring
-3. **Scaling Plan**: Plan for data growth
-4. **Security Hardening**: Follow Elasticsearch security guidelines
-5. **Performance Testing**: Regular performance validation
-
-### Content Strategy
-
-1. **Consistent Indexing**: Ensure all content is indexed
-2. **Rich Metadata**: Include comprehensive search fields
-3. **Relevance Tuning**: Optimize search relevance scoring
-4. **User Feedback**: Collect search experience feedback
+The search indices are derived from the database and can always be rebuilt with a reindex, so they do not need to be backed up. Back up PostgreSQL and file storage instead.

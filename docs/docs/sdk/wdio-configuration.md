@@ -8,39 +8,39 @@ These options apply to the **reporter**. If you're using the [Launcher Service](
 
 ## Required
 
-| Option | Type                     | Description |
-| -------- | -------------------------- | ------------- |
-| `domain` | `string` | Base URL of your TestPlanIt instance |
-| `apiToken` | `string` | API token for authentication (starts with `tpi_`) |
+| Option      | Type     | Description                                                                                                             |
+| ----------- | -------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `domain`    | `string` | Base URL of your TestPlanIt instance                                                                                    |
+| `apiToken`  | `string` | API token for authentication (starts with `tpi_`)                                                                       |
 | `projectId` | `number` | Project ID where results will be reported (find this on the [Project Overview](../user-guide/project-overview.md) page) |
 
 ## Optional
 
-| Option | Type                     | Default | Description |
-| -------- | -------------------------- | --------- | ------------- |
-| `testRunId` | `number \| string` | - | Existing test run to add results to (ID or name). If set, `runName` is ignored |
-| `runName` | `string` | `'{suite} - {date} {time}'` | Name for new test runs (ignored if `testRunId` is set). Supports placeholders |
-| `testRunType` | `string` | Auto-detected | Test framework type. Auto-detected from WebdriverIO config (`mocha` → `'MOCHA'`, `cucumber` → `'CUCUMBER'`, others → `'REGULAR'`). Override manually if needed. |
-| `configId` | `number \| string` | - | Configuration for the test run (ID or name) |
-| `milestoneId` | `number \| string` | - | Milestone for the test run (ID or name) |
-| `stateId` | `number \| string` | - | Workflow state for the test run (ID or name) |
-| `caseIdPattern` | `RegExp \| string` | `/\[(\d+)\]/g` | Regex pattern for extracting case IDs from test titles |
-| `matchByCustomField` | `object` | - | Resolve an existing case by a **custom field value** parsed from the title, before the name/create fallback. See [Matching by a Custom Field](#matching-by-a-custom-field) |
-| `autoCreateTestCases` | `boolean` | `false` | Auto-create test cases if they don't exist |
-| `captureSteps` | `boolean` | `true` | Populate a case's Steps. **Cucumber:** captures the scenario's Given/When/Then deterministically. **Mocha/Jasmine (and other low-structure frameworks):** requests opt-in **AI-derived** steps — but only when an LLM provider is [configured for the project](../user-guide/llm-step-derivation.md); otherwise it is a silent no-op. |
-| `overwriteSteps` | `boolean` | `false` | Re-sync steps on **every** run, replacing existing ones — **destructive** (discards manual edits). Applies to both paths: the Cucumber deterministic steps and the AI-derived steps for low-structure frameworks. |
-| `createFolderHierarchy` | `boolean` | `false` | Create folder hierarchy based on Mocha suite structure (requires `autoCreateTestCases` and `parentFolderId`) |
-| `parentFolderId` | `number \| string` | - | Folder for auto-created test cases (ID or name) |
-| `templateId` | `number \| string` | - | Template for auto-created test cases (ID or name) |
-| `tagIds` | `(number \| string)[]` | - | Tags to apply to the test run (IDs or names). Tags that don't exist are created automatically |
-| `uploadScreenshots` | `boolean` | `true` | Upload intercepted screenshots to TestPlanIt (requires screenshot capture — see [Screenshot Uploads](./wdio-screenshots.md)) |
-| `includeStackTrace` | `boolean` | `true` | Include stack traces for failures |
-| `excludeSkipped` | `boolean` | `false` | Don't report skipped tests — they won't appear on the run or count toward its totals. Also covers pending results and Cucumber scenarios whose steps were skipped |
-| `completeRunOnFinish` | `boolean` | `true` | Mark run as complete when tests finish |
-| `oneReport` | `boolean` | `true` | Combine parallel workers from the same spec file into a single test run. Does not persist across spec file batches — use the [Launcher Service](./wdio-launcher-service.md) for that |
-| `timeout` | `number` | `30000` | API request timeout in ms |
-| `maxRetries` | `number` | `3` | Retry attempts for failed requests |
-| `verbose` | `boolean` | `false` | Enable debug logging |
+|Option|Type|Default|Description|
+|---|---|---|---|
+|`testRunId`|`number \| string`|-|Existing test run to add results to (ID or name). Defaults to the `TESTPLANIT_RUN_ID` environment variable. If set, `runName` is ignored and the reporter never completes the run|
+|`runName`|`string`|`'{suite} - {date} {time}'`|Name for new test runs (ignored if `testRunId` is set). Supports placeholders|
+|`testRunType`|`string`|Auto-detected|Test framework type. Auto-detected from WebdriverIO config (`mocha` → `'MOCHA'`, `cucumber` → `'CUCUMBER'`, others → `'REGULAR'`). Override manually if needed.|
+|`configId`|`number \| string`|-|Configuration for the test run (ID or name)|
+|`milestoneId`|`number \| string`|-|Milestone for the test run (ID or name)|
+|`stateId`|`number \| string`|-|Workflow state for the test run (ID or name)|
+|`caseIdPattern`|`RegExp \| string`|`/\[(\d+)\]/g`|Regex pattern for extracting case IDs from test titles|
+|`matchByCustomField`|`object`|-|Resolve an existing case by a **custom field value** parsed from the title, before the name/create fallback. See [Matching by a Custom Field](#matching-by-a-custom-field)|
+|`autoCreateTestCases`|`boolean`|`false`|Auto-create test cases if they don't exist|
+|`captureSteps`|`boolean`|`true`|Populate a case's Steps. **Cucumber:** captures the scenario's Given/When/Then deterministically. **Mocha/Jasmine (and other low-structure frameworks):** requests opt-in **AI-derived** steps — but only when an LLM provider is [configured for the project](../user-guide/llm-step-derivation.md); otherwise it is a silent no-op.|
+|`overwriteSteps`|`boolean`|`false`|Re-sync steps on **every** run, replacing existing ones — **destructive** (discards manual edits). Applies to both paths: the Cucumber deterministic steps and the AI-derived steps for low-structure frameworks.|
+|`createFolderHierarchy`|`boolean`|`false`|Create folder hierarchy based on Mocha suite structure (requires `autoCreateTestCases` and `parentFolderId`)|
+|`parentFolderId`|`number \| string`|-|Folder for auto-created test cases (ID or name)|
+|`templateId`|`number \| string`|-|Template for auto-created test cases (ID or name)|
+|`tagIds`|`(number \| string)[]`|-|Tags to apply to the test run (IDs or names). Tags that don't exist are created automatically|
+|`uploadScreenshots`|`boolean`|`true`|Upload intercepted screenshots to TestPlanIt (requires screenshot capture — see [Screenshot Uploads](./wdio-screenshots.md))|
+|`includeStackTrace`|`boolean`|`true`|Include stack traces for failures|
+|`excludeSkipped`|`boolean`|`false`|Don't report skipped tests — they won't appear on the run or count toward its totals. Also covers pending results and Cucumber scenarios whose steps were skipped|
+|`completeRunOnFinish`|`boolean`|`true`|Mark run as complete when tests finish. Always off for a run given by `testRunId` or `TESTPLANIT_RUN_ID`|
+|`oneReport`|`boolean`|`true`|Combine parallel workers from the same spec file into a single test run. Does not persist across spec file batches — use the [Launcher Service](./wdio-launcher-service.md) for that|
+|`timeout`|`number`|`30000`|API request timeout in ms|
+|`maxRetries`|`number`|`3`|Retry attempts for failed requests|
+|`verbose`|`boolean`|`false`|Enable debug logging|
 
 ## Run Name Placeholders
 
@@ -91,7 +91,10 @@ export const config = {
 };
 ```
 
+The reporter leaves an existing run open. Complete it from the pipeline once every job has reported (`npx @testplanit/cli run complete`).
+
 This is useful for:
+
 - Aggregating results from multiple CI jobs
 - Running tests in parallel across machines
 - Re-running failed tests without creating new runs

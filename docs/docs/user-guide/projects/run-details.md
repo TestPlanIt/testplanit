@@ -29,17 +29,17 @@ The header displays:
     - **Export PDF**: Exports the test run to a PDF document including all metadata, description, documentation, test cases (ordered by run order) with their execution status, results, step results, custom field values, and attachments. Available for both regular and JUnit/automated test runs.
     - **Assign**: Opens the [Distribute assignments](#distributing-assignments) dialog to spread the run's test cases across several team members at once (requires add/edit permission on Test Runs).
     - **Execute automated cases** (in the case list header, left of **Start manual testing**): Dispatches the run's automated cases to one of the project's execution targets. Select rows in the case list to execute only those: the button then reads **Execute N selected automated cases** and requests just the automated cases among the selection. Shown when the project has an enabled target and the user can add/edit runs; disabled while the run has no automated cases, none of the selected cases are automated, or an execution is already in flight. See [Automated execution](#automated-execution).
-    - **Lock composition**: A toggle that freezes the run's case set. See [Composition lock](#composition-lock).
+    - **Cases Unlocked / Cases Locked**: A toggle that freezes the run's case set. See [Composition lock](#composition-lock).
     - **Complete**: Opens a confirmation dialog to mark the run as finished. Here you select the final "Done" state from the workflow and set the completion date. This action is irreversible (if user has permission). The same dialog opens on its own when a result you record gives every case in the run a result, so you can complete the run right away; cancel it to keep the run open.
   - **View Mode (Completed Run)**:
     - Displays a "Completed On [Date]" badge.
     - **Duplicate**: Opens the duplication dialog to create a copy of the test run.
     - **Export PDF**: Exports the test run to PDF (available on completed runs as well).
-    - **Delete**: Opens a confirmation dialog to permanently delete the test run and all its associated results. This action is irreversible (Admin only).
+    - **Delete**: Opens a confirmation dialog to delete the test run. Requires `Delete` permission for Test Runs (for a completed run, for Closed Test Runs). Deleted runs can be restored from the Trash.
   - **Edit Mode**:
     - **Save**: Saves changes made in Edit mode.
     - **Cancel**: Discards changes and returns to View mode.
-    - **Delete**: Opens a confirmation dialog to permanently delete the test run and all its associated results. This action is irreversible (Admin only).
+    - **Delete**: Opens a confirmation dialog to delete the test run. Requires `Delete` permission for Test Runs (for a completed run, for Closed Test Runs). Deleted runs can be restored from the Trash.
   - **Activity**: Available in view mode for both regular and automated runs. Opens the run's [Activity Log](../audit-logs.md#viewing-an-items-activity) — a scoped history of every change, including test cases added or removed, results recorded, and status changes. Visible to anyone who can view the run.
 - **Test Case Summary**: Below the title, a summary shows the progress of the test cases within the run (passed, failed, blocked, etc.).
 
@@ -147,12 +147,12 @@ This is different from **completing** a run: completion permanently freezes _eve
 
 ### Locking and unlocking
 
-- **Lock**: use the **Lock composition** toggle in the run header. Any user with add/edit permission on Test Runs can lock a run.
+- **Lock**: use the **Cases Unlocked** toggle in the run header. Any user with add/edit permission on Test Runs can lock a run.
 - **Unlock**: only the run's **creator**, a **Project Admin**, or a **system administrator** can unlock. For everyone else the toggle appears but is disabled, so an in‑flight scope can't be quietly reopened by any editor.
 
 ### Automatic locking
 
-A project can lock runs automatically when they enter execution — enable **Lock run composition when execution starts** in the project's [Advanced settings](settings/advanced.md#lock-run-composition-when-execution-starts). Auto‑locked runs behave exactly like manually locked ones and can be unlocked the same way.
+A project can lock runs automatically when they enter execution — enable **Lock Test Run composition when execution starts** in the project's [Advanced settings](settings/advanced.md#lock-run-composition-when-execution-starts). Auto‑locked runs behave exactly like manually locked ones and can be unlocked the same way.
 
 The lock is enforced everywhere — in the interface, through the API, and at the database — so a locked run's composition can't be changed by any path, whether or not the lock was applied automatically.
 
@@ -179,20 +179,16 @@ The lock is enforced everywhere — in the interface, through the API, and at th
 This table lists all the test cases included in the current test run:
 
 - **Checkbox**: For selecting multiple cases for bulk actions (e.g., assigning testers).
-- **Order (#)**: The execution order within the run (can often be changed via drag-and-drop if the run is not locked).
+- **Order (#)**: The execution order within the run. Drag a row to change it, unless the run's [composition is locked](#composition-lock).
 - **Test Case Name**: Opens the [Test Case Execution](./test-case-execution.md) sidebar for that specific case.
-- **Estimate**: The original estimated time (from the test case definition) needed to execute the case. Displayed in a human-readable format (e.g., "5m").
-- **State**: The workflow state of the test case version included in the run.
-- **Priority**: The priority of the test case version.
-- **Assignee**: The user assigned to execute this test case within this run. Can often be assigned/changed here.
-- **Status**: The current execution status for this case _within this run_ (e.g., Not Started, Passed, Failed). This often acts as a link to start or view the execution. When the project [enforces test case dependencies](./settings/advanced.md#enforce-test-case-dependencies-in-test-runs), a case whose prerequisites haven't passed in this run shows a **Blocked** badge next to its status, and the status control is disabled until they do; hover the badge to see which cases it is waiting on.
-- **Last Result**: Sometimes shows the status of the most recent execution attempt if multiple attempts are allowed.
-- **Tags**: Tags associated with the test case version.
-- **Actions** (Ellipsis Menu):
-    - **Execute**: Starts the test case execution flow.
-    - **View Execution(s)**: Shows the history of attempts for this case in this run.
-    - **Assign**: Allows changing the assigned tester.
-    - **Remove**: Removes the test case from this run (not available once the run's [composition is locked](#composition-lock) or completed).
+- **Configuration**: The configuration each row belongs to, shown when several configurations are selected.
+- **Assigned To**: The user assigned to execute this test case within this run. It can be changed here.
+- **Estimate** and **Forecast**: The case's estimated and forecast execution time, in a human-readable format (e.g., "5m").
+- **State**: The workflow state of the test case.
+- **Status**: The current execution status for this case _within this run_ (e.g., Untested, Passed, Failed), pinned at the right edge of the table. When the project [enforces test case dependencies](./settings/advanced.md#enforce-test-case-dependencies-in-test-runs), a case whose prerequisites haven't passed in this run shows a **Blocked** badge next to its status, and the status control is disabled until they do; hover the badge to see which cases it is waiting on.
+- **Tags** and **Issues**: Tags and issues associated with the test case.
+
+The remaining repository columns (ID, Version, Risk Score, Automated, Template, Created At, Creator, Attachments, Steps, and template fields) can be shown from the **Columns** control. Rows have no actions menu: to remove a case from the run, switch the run to Edit mode and deselect it (not available once the run's [composition is locked](#composition-lock) or completed).
 
 ## Automated execution
 

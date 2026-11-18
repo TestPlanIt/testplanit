@@ -15,7 +15,7 @@ Webhooks let TestPlanIt exchange events with external systems in near-real time.
 
 The Webhooks tab is split into two sections:
 
-- **Inbound** — at most one webhook per project, locked to the provider of the project's active issue integration. Receives `issue-created` / `issue-updated` events from the external tracker and triggers a full sync of the linked TestPlanIt issue. If an inbound event references an issue that has not yet been imported, TestPlanIt creates the local issue automatically.
+- **Inbound** — one issue-tracker webhook per project, locked to the provider of the project's active issue integration, plus one webhook per connected code repository. An issue-tracker webhook receives `issue-created` / `issue-updated` events from the external tracker and triggers a full sync of the linked TestPlanIt issue. An issue that has not yet been imported is created when one of the webhook's **Import Issues** actions takes it; new webhooks start with one.
 - **Outbound** — any number of destinations per project. Each outbound webhook has its own URL, secret, and event subscription list.
 
 Both kinds share the same activity panel, health badge, and **Send Test** button, so administrators can verify wiring without waiting for real traffic.
@@ -152,7 +152,7 @@ Repository webhooks are independent of the issue-tracker webhook above: changing
 ### Adding an outbound webhook
 
 1. Navigate to **Project Settings** → **Webhooks**.
-2. Click **Add Webhook** in the Outbound section.
+2. Open the **Outbound** tab and click **Add outbound webhook**.
 3. Fill in:
    - **Name** — an admin-facing label shown on the card and in delivery logs.
    - **URL** — the destination endpoint. Slack incoming-webhook URLs are auto-detected; everything else is treated as a generic HMAC endpoint.
@@ -242,9 +242,9 @@ The deliveries page supports selecting multiple rows and replaying them in one b
 
 ## Rotation
 
-Inbound Jira and GitHub webhooks and outbound generic-HMAC webhooks all expose a **Rotate Secret** action. Rotation behavior differs slightly by direction:
+Inbound Jira, GitHub, GitLab, Gitea/Forgejo/Gogs and Bitbucket webhooks and outbound generic-HMAC webhooks all expose a **Rotate Secret** action. Rotation behavior differs slightly by direction:
 
-- **Inbound (Jira / GitHub)** — Rotation is a hard cutover: a new token and a new HMAC secret are minted, the URL changes (because it embeds the token), and the previous values stop accepting traffic. Update the external tracker's webhook configuration with the new URL and secret immediately after rotating.
+- **Inbound (Jira / GitHub / GitLab / Gitea / Bitbucket)** — Rotation is a hard cutover: a new token and a new secret are minted, the URL changes (because it embeds the token), and the previous values stop accepting traffic. Update the external tracker's webhook configuration with the new URL and secret immediately after rotating.
 - **Outbound (generic HMAC)** — Rotation opens a brief two-secret window. The newly minted secret becomes active immediately, and the previous secret enters a retiring state. Both are accepted by signing logic during the window so receivers have time to re-key. The retiring secret has an auto-retire deadline shown on the card; you can shorten it by clicking **Retire now**, or extend it once if your receiver needs more time.
 
 Inbound Azure DevOps webhooks do not have a separate secret to rotate (the credentials are typed by the admin and stored encrypted). To change ADO credentials, delete the webhook and recreate it. Inbound **Redmine** and **MantisBT** webhooks likewise have no secret — the unguessable URL token is the credential. To rotate it, delete the webhook and recreate it, then update the URL in the tracker. Rotating an inbound **ClickUp** webhook that TestPlanIt registered removes the old registration in ClickUp and creates a new one with a fresh ClickUp-minted secret; a webhook you registered yourself must be deleted and recreated with the new secret.

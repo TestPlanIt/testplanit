@@ -106,8 +106,11 @@ for these to work reliably override `ingress.annotations` — see
 
 ## Step 2: Install
 
+The chart is published as an OCI artifact on GitHub Container Registry. Replace `<version>` with the TestPlanIt release you are deploying (the chart version matches the release version):
+
 ```bash
-helm install testplanit ./testplanit/helm/testplanit \
+helm install testplanit oci://ghcr.io/testplanit/charts/testplanit \
+  --version <version> \
   --namespace testplanit --create-namespace \
   -f my-values.yaml
 ```
@@ -151,7 +154,7 @@ postgresql:
   external:
     url: "postgresql://user:pass@my-rds.rds.amazonaws.com:5432/testplanit?schema=public"
     # If a transaction-mode pooler (RDS Proxy / pgbouncer) fronts the URL above,
-    # append ?pgbouncer=true to it and provide a direct (non-pooled) URL that the
+    # provide a direct (non-pooled) URL that the
     # schema-sync/migrate step uses:
     directUrl: "postgresql://user:pass@my-rds.rds.amazonaws.com:5432/testplanit?schema=public"
 
@@ -251,12 +254,13 @@ secrets:
 
 ## Upgrades
 
-Build and push a new image tag, then:
+Upgrade to the chart for the new release, and pin the image tag to the same version if you do not track `latest`:
 
 ```bash
-helm upgrade testplanit ./testplanit/helm/testplanit \
+helm upgrade testplanit oci://ghcr.io/testplanit/charts/testplanit \
+  --version <version> \
   --namespace testplanit -f my-values.yaml \
-  --set image.tag=1.1.0
+  --set image.tag=<version>
 ```
 
 The migrate/seed job re-runs on every upgrade (idempotent) and applies any new

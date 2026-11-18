@@ -59,14 +59,14 @@ Every tier currently grants the same thing: members of the group gain access to 
 :::warning Per-project access does not make anyone a project admin
 "Project Admin" in the tier list is a **system access level**, not a per-project role. Project-admin authority on a project comes from being a system Admin, being the project's creator, holding a user-specific permission that assigns a role named `Project Admin`, or holding the system Project Admin access level while assigned to the project directly. A group grant is none of those, so per-project access never confers it — members get the per-area permissions their own role carries, and nothing more.
 
-If you need someone to administer a specific project, assign it to them in **Project Settings > Members** rather than through a group mapping.
+If you need someone to administer a specific project, assign it to them in **Project Settings > Access** rather than through a group mapping.
 :::
 
 :::note Per-project access only grants
 It cannot take away access a project's own default already gives, which is why there is no **None** option. To deny access on a project, set that project's default access to **No access** and grant it explicitly to the groups that should have it.
 :::
 
-Access flows through the project's normal permission rules alongside anything assigned directly in **Project Settings > Members**, and follows the same precedence — a user-specific permission beats a group one. Removing a mapping withdraws only the grant it created; a permission an admin assigned to the group by hand in project settings is left alone.
+Access flows through the project's normal permission rules alongside anything assigned directly in **Project Settings > Access**, and follows the same precedence — a user-specific permission beats a group one. Removing a mapping withdraws only the grant it created; a permission an admin assigned to the group by hand in project settings is left alone.
 
 Because access follows group membership, a user added to the group picks up its per-project access with no further configuration.
 

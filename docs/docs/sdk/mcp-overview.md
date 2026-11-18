@@ -28,7 +28,7 @@ The TestPlanIt MCP server lets AI agents — Claude Desktop, Cursor, custom MCP-
 The MCP server doesn't support shared steps. A shared step group appears in a fetched case as an empty step, and updating a case's steps replaces all of them, which removes any shared step groups from the case. Add or edit shared steps in the web UI.
 :::
 
-See the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) for the full tool reference, including request/response schemas for all 50 tools.
+See the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) for the full tool reference, including request/response schemas for every tool.
 
 ## Installation
 
@@ -40,12 +40,12 @@ There is no daemon to manage and no port to forward. Your MCP-aware client launc
 
 ## Environment variables
 
-### Required
+### Variables
 
-| Variable               | Description                                                                                              |
-| ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `TESTPLANIT_API_TOKEN` | API token from your TestPlanIt profile. Must start with `tpi_`. Mint one under **Profile → API Tokens**. |
-| `TESTPLANIT_API_URL`   | Base URL of your TestPlanIt instance (e.g. `https://yourcompany.testplanit.com`).                        |
+| Variable               | Description                                                                                                                           |
+| ---------------------- | --------------------------------------------------------------------------------------------------------                              |
+| `TESTPLANIT_API_TOKEN` | Required. API token from your TestPlanIt profile. Must start with `tpi_`. Mint one under **Profile → API Tokens**.                    |
+| `TESTPLANIT_API_URL`   | Base URL of your TestPlanIt instance (e.g. `https://yourcompany.testplanit.com`). Optional; defaults to `https://app.testplanit.com`. |
 
 The server validates `TESTPLANIT_API_TOKEN` on startup and exits cleanly with a human-readable error if the token is invalid, expired, or unreachable — your agent reports a clean failure rather than hanging.
 

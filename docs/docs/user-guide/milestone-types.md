@@ -37,7 +37,7 @@ These types are re-created and re-assigned on every sync pass, so deleting or re
     - **Icon**: Select an icon to represent the Milestone Type.
     - **Name**: Enter a descriptive name for the Milestone Type (e.g., "Design Review", "Client Approval", "Internal QA"). This field is required.
     - **Default Milestone Type**: Toggle this switch on if you want this type to be the default. If another type is currently the default, enabling this will automatically disable the default status for the other type. When no Milestone Type is currently the default, the switch is locked on and the new type becomes the default.
-3. Click **Save** to create the new Milestone Type.
+3. Click **Submit** to create the new Milestone Type.
 
 ## Editing a Milestone Type
 
@@ -48,7 +48,7 @@ These types are re-created and re-assigned on every sync pass, so deleting or re
     - **Name**: Modify the name of the Milestone Type.
     - **Default Milestone Type**: Change the default status. Remember, only one type can be the default.
     - **Projects**: Assign or unassign the Milestone Type to specific projects. Note: If the Milestone Type is set as 'Default', it cannot be assigned to specific projects as it's automatically available to all. Unsetting the 'Default' toggle will enable project selection.
-4. Click **Save** to apply the changes.
+4. Click **Submit** to apply the changes.
 
 ## Deleting a Milestone Type
 
