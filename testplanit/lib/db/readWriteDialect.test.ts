@@ -5,9 +5,10 @@ import type {
   QueryResult,
   TransactionSettings,
 } from "kysely";
-import { describe, expect, it } from "vitest";
+import { EventEmitter } from "node:events";
+import { describe, expect, it, vi } from "vitest";
 
-import { __testing } from "./readWriteDialect";
+import { __testing, createPool } from "./readWriteDialect";
 import { runWithDbRouting, withPrimary, withReplica } from "./routingContext";
 
 // Read requests offload inside an autoReplica frame; a bare call has no frame
@@ -362,5 +363,38 @@ describe("readWriteDialect failover", () => {
     expect(await routeAuto(driver, selectCq())).toBe("primary");
     expect(replica.acquireCount).toBe(1);
     expect(primary.acquireCount).toBe(1);
+  });
+});
+
+describe("createPool", () => {
+  it("logs a lost idle connection instead of crashing the process", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const pool = createPool(
+      "postgresql://user:pw@127.0.0.1:1/none",
+      "replica #1"
+    );
+
+    // With no listener, emitting "error" on an EventEmitter throws.
+    expect(() =>
+      pool.emit("error", new Error("Connection terminated unexpectedly"))
+    ).not.toThrow();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("replica #1 was lost")
+    );
+
+    warn.mockRestore();
+    await pool.end();
+  });
+
+  it("survives losing a connection that is checked out between queries", async () => {
+    const pool = createPool("postgresql://user:pw@127.0.0.1:1/none", "primary");
+    const client = new EventEmitter();
+    pool.emit("connect", client);
+
+    expect(() =>
+      client.emit("error", new Error("Connection terminated unexpectedly"))
+    ).not.toThrow();
+
+    await pool.end();
   });
 });
