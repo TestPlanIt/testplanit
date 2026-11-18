@@ -691,14 +691,13 @@ export class ReadWriteRoutingDialect implements Dialect {
 
   constructor(config: ReadWriteRoutingDialectConfig) {
     const { poolConfig, replicaCooldownMs } = config;
-    const makePool = (connectionString: string) =>
-      new Pool({ ...poolConfig, connectionString });
-
-    const primaryPool = makePool(config.primaryUrl);
+    const primaryPool = createPool(config.primaryUrl, "primary", poolConfig);
     this.#primaryDialect = new PostgresDialect({ pool: primaryPool });
     const primaryDriver = this.#primaryDialect.createDriver();
 
-    const replicaPools = config.replicaUrls.map(makePool);
+    const replicaPools = config.replicaUrls.map((url, index) =>
+      createPool(url, `replica #${index}`, poolConfig)
+    );
     const replicaDrivers = replicaPools.map((pool) =>
       new PostgresDialect({ pool }).createDriver()
     );
@@ -735,6 +734,34 @@ export class ReadWriteRoutingDialect implements Dialect {
 }
 
 /**
+ * A pg pool that survives its server going away. When an idle connection is
+ * closed from the server side (restart, failover, a replica shut down), pg
+ * drops that connection and emits "error" on the pool. With no listener Node
+ * treats that as an uncaught exception and the process exits, which takes a
+ * worker down with it. The next query opens a fresh connection, so logging is
+ * all that is needed here.
+ */
+export function createPool(
+  connectionString: string,
+  label: string,
+  poolConfig?: Omit<PoolConfig, "connectionString">
+): Pool {
+  const pool = new Pool({ ...poolConfig, connectionString });
+  pool.on("error", (error) => {
+    console.warn(
+      `[readWriteDialect] idle connection to ${label} was lost: ${error.message}`
+    );
+  });
+  // The same for a connection that is checked out but between queries: pg
+  // emits "error" on the client itself, and the pool only listens while the
+  // client is idle. The next query on that client fails and reports the loss.
+  pool.on("connect", (client) => {
+    client.on("error", () => {});
+  });
+  return pool;
+}
+
+/**
  * Build the Kysely dialect for a ZenStack client. When `replicaUrls` is empty
  * this returns a plain single-pool PostgresDialect — byte-for-byte the previous
  * behaviour — so the routing layer is entirely opt-in. Callers pass the replica
@@ -749,7 +776,7 @@ export function createDialect(
 ): Dialect {
   if (replicaUrls.length === 0) {
     return new PostgresDialect({
-      pool: new Pool({ ...poolConfig, connectionString: primaryUrl }),
+      pool: createPool(primaryUrl, "primary", poolConfig),
     });
   }
   return new ReadWriteRoutingDialect({
