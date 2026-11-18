@@ -1145,8 +1145,8 @@
     "success": {
       "assigned": "Cas de test attribué avec succès",
       "unassigned": "Cas de test non attribué avec succès",
-      "bulkAssigned": "{count, plural, one {# cas de test} other {# cas de test}} attribués avec succès",
-      "bulkUnassigned": "{count, plural, one {# cas de test} other {# cas de test}} non assigné avec succès"
+      "bulkAssigned": "{count, plural, one {# cas de test attribué} other {# cas de test attribués}} avec succès",
+      "bulkUnassigned": "{count, plural, one {# cas de test non assigné} other {# cas de test non assignés}} avec succès"
     },
     "tabs": {
       "general": "Général",
@@ -2363,7 +2363,7 @@
           "enableDescription": "Analyse les commits récents sur la branche à chaque actualisation du cache. Désactivez cette option pour que les analyses lisent les clés de ticket à partir des commits analysés uniquement ; les analyses manuelles s'exécutent toujours.",
           "resultLinksLabel": "Compter également les tickets ajoutés aux résultats de test",
           "resultLinksDescription": "Un ticket ajouté à un résultat de test ou à un résultat d'étape lie également le cas pour lequel ce résultat a été enregistré, de sorte que ses commits épinglent et sélectionnent également ce cas. Désactivé, seuls les tickets liés directement à un cas de test sont comptabilisés.",
-          "skippedLarge": "{count, plural, one {# commit a} other {# commits ont}} été ignorés comme trop volumineux à épingler.",
+          "skippedLarge": "{count, plural, one {# commit a été ignoré} other {# commits ont été ignorés}} comme trop volumineux à épingler.",
           "fetchCapped": "Pas tous les commits qui ont nommé un ticket lié ont eu leurs fichiers lus lors de ce passage ; le reste est récupéré lors de la prochaine analyse.",
           "scanRecent": "Réanalyser les commits récents",
           "scanFull": "Analyser l'historique complet",
@@ -2378,20 +2378,20 @@
           "imported": "{imported, plural, =0 {Aucun nouveau ticket n'a été importé du gestionnaire.} one {# ticket a été importé du gestionnaire.} other {# tickets ont été importés du gestionnaire.}}",
           "fullCapped": "La marche s'est arrêtée à {count, number} commits avant d'atteindre le début de la branche. Exécutez Analyser l'historique complet à nouveau pour continuer à partir du point où elle s'est arrêtée.",
           "stale": "Une analyse démarrée {date} n'a jamais rapporté — le travailleur peut avoir été redémarré. Mettez-la en file d'attente à nouveau pour continuer.",
-          "summaryCommits": "{commits, plural, one {# commit} other {# commits}} lus{cached, plural, =0 {} other { ({cached, number} du cache de commit)}} · {naming, number} nommés un ticket · {tickets, plural, one {# ticket distinct} other {# tickets distincts}}",
+          "summaryCommits": "{commits, plural, one {# commit lu} other {# commits lus}}{cached, plural, =0 {} other { ({cached, number} du cache de commit)}} · {naming, number} nommés un ticket · {tickets, plural, one {# ticket distinct} other {# tickets distincts}}",
           "summaryPins": "Épingles : {created, number} créées · {updated, number} mises à jour · {removed, number} supprimées",
           "noLinkedHint": "Les épingles des cas de test ne commencent qu'une fois qu'un cas de test est lié. Liez les cas aux tickets importés, puis réanalysez.",
           "importFailuresTitle": "Clés introuvables dans le gestionnaire ({shown} sur {total}) :",
           "windowCapped": "Seuls les {count, number} commits les plus récents ont été lus (le cap de la fenêtre récente). Utilisez Analyser l'historique complet pour lire les anciens.",
           "runningWalk": "{commits, number} commits lus jusqu'à présent{cached, plural, =0 {} other { ({cached, number} du cache de commit)}} — les tickets sont recherchés une fois la marche terminée",
           "runningImport": "{commits, number} commits lus · importation de tickets : {lookups, number} recherchés dans le gestionnaire · {imported, number} importés",
-          "summaryCommitsOnly": "{commits, plural, one {# commit} other {# commits}} lus",
-          "importSkipped": "{skipped, plural, one {# clé n'a} other {# clés n'ont}} pas encore été recherchées car une analyse effectue un nombre limité de recherches de gestionnaire. Exécutez l'analyse à nouveau pour continuer.",
+          "summaryCommitsOnly": "{commits, plural, one {# commit lu} other {# commits lus}}",
+          "importSkipped": "{skipped, plural, one {# clé n'a pas encore été recherchée} other {# clés n'ont pas encore été recherchées}} car une analyse effectue un nombre limité de recherches de gestionnaire. Exécutez l'analyse à nouveau pour continuer.",
           "cancelRequested": "Annulation demandée. L'analyse s'arrête à sa prochaine étape ; les commits déjà lus restent mis en cache.",
           "cancelled": "Analyse annulée {date}. Les commits lus avant l'annulation sont conservés dans le cache de commit ; les épingles n'ont pas été mises à jour.",
           "importMoved": "{moved, plural, one {# clé est un ancien nom} other {# clés sont des anciens noms}} de tickets déjà importés ; ils ont été déplacés ou renommés dans le gestionnaire.",
-          "importFailed": "{failed, plural, one {# clé n'a} other {# clés n'ont}} pas été trouvée dans le gestionnaire, énumérée ci-dessous.",
-          "summaryMatched": "{matched, plural, one {# commit} other {# commits}} a nommé un ticket lié à un cas de test",
+          "importFailed": "{failed, plural, one {# clé n'a pas été trouvée dans le gestionnaire, énumérée ci-dessous.} other {# clés n'ont pas été trouvées dans le gestionnaire, énumérées ci-dessous.}}",
+          "summaryMatched": "{matched, plural, one {# commit a nommé} other {# commits ont nommé}} un ticket lié à un cas de test",
           "summarySymbolPins": "({count, number} des épingles créées ciblent une fonction ou une classe plutôt qu'un fichier entier.)"
         },
         "markers": {
@@ -2423,7 +2423,7 @@
           "viewDescription": "Comment ce dépôt est connecté. Actualisez le cache ou exécutez une analyse des tickets à partir d'ici ; utilisez Modifier pour changer les paramètres.",
           "empty": "Aucun dépôt connecté pour l'instant",
           "emptyDescription": "Connectez le dépôt de l'application testée pour commencer l'analyse des modifications.",
-          "lastScan": "{created, plural, one {# épingle} other {# épingles}} créée par la dernière analyse",
+          "lastScan": "{created, plural, one {# épingle créée} other {# épingles créées}} par la dernière analyse",
           "scanFailed": "Dernière analyse échouée",
           "scanCancelled": "Dernière analyse annulée"
         },
@@ -2453,8 +2453,8 @@
           "running": "Vérification de {checked, number} sur {total, plural, one {# fichier} other {# fichiers}}…",
           "neverChecked": "Pas encore vérifiés",
           "checkFailed": "Dernière vérification échouée",
-          "summary": "{count, plural, =0 {Pas d'épingles obsolètes} one {# épingle obsolète} other {# épingles obsolètes}} · {checked, plural, one {# épingle} other {# épingles}} vérifiées",
-          "unreadable": "{count, plural, one {# fichier} other {# fichiers}} n'ont pas pu être lus, donc ces épingles n'ont pas été vérifiées.",
+          "summary": "{count, plural, =0 {Pas d'épingles obsolètes} one {# épingle obsolète} other {# épingles obsolètes}} · {checked, plural, one {# épingle vérifiée} other {# épingles vérifiées}}",
+          "unreadable": "{count, plural, one {# fichier n'a pas pu être lu} other {# fichiers n'ont pas pu être lus}}, donc ces épingles n'ont pas été vérifiées.",
           "removed": "{count, plural, =0 {Pas d'épingles obsolètes supprimées} one {# épingle obsolète supprimée} other {# épingles obsolètes supprimées}}",
           "removeFailed": "Impossible de supprimer les épingles obsolètes",
           "removeConfirm": "Supprimer {count, plural, one {# épingle de code} other {# épingles de code}} que la dernière vérification n'a pas pu trouver à la pointe de {name} ?",
@@ -3330,7 +3330,7 @@
     },
     "templateNotAssignedWarning": "Ce cas de test utilise le modèle «{templateName}» qui n'est actuellement pas associé au projet «{projectName}». Vous devrez peut-être l'associer au projet ou modifier le cas de test pour utiliser un autre modèle.",
     "orphanedStepsWarning": "Ce cas de test comporte des étapes, mais le modèle actuel «{templateName}» ne contient pas le champ Étapes. Les étapes ne peuvent être modifiées que lorsque le cas de test dispose d'un modèle avec un champ Étapes.",
-    "orphanedFieldsWarning": "Ce cas de test comporte {count, plural, =1 {# valeur de champ} other {# valeurs de champ}} qui {count, plural, =1 {sont} other {sont}} non incluses dans le modèle actuel \"{templateName}\". {count, plural, =1 {Ce champ est} other {Ces champs sont}} affichés ci-dessous mais ne peuvent pas être modifiés tant qu'ils n'ont pas été ajoutés au modèle.",
+    "orphanedFieldsWarning": "Ce cas de test comporte {count, plural, =1 {# valeur de champ} other {# valeurs de champ}} qui {count, plural, =1 {est non incluse} other {sont non incluses}} dans le modèle actuel \"{templateName}\". {count, plural, =1 {Ce champ est affiché ci-dessous mais ne peut pas être modifié tant qu'il n'a pas été ajouté au modèle.} other {Ces champs sont affichés ci-dessous mais ne peuvent pas être modifiés tant qu'ils n'ont pas été ajoutés au modèle.}}",
     "title": "Référentiel de cas de test",
     "folders": "Dossiers",
     "showDescendants": "Afficher tous les descendants",
@@ -3441,7 +3441,7 @@
           "caseIdDescription": "ID de cas TestPlanIt"
         },
         "success": {
-          "description": "{count, plural, one {# cas de test} other {# cas de test}} importé avec succès"
+          "description": "{count, plural, one {# cas de test importé} other {# cas de test importés}} avec succès"
         },
         "errors": {
           "templateRequired": "La sélection du modèle est requise.",
@@ -3450,7 +3450,7 @@
           "markdownParseFailed": "Impossible d'analyser le fichier Markdown",
           "markdownLlmFailed": "Analyse par IA indisponible, utilisation de l'analyseur standard",
           "validationTitle": "La validation de l'importation a échoué",
-          "validationSummary": "{count, plural, one {# problème a été} other {# problèmes ont été}} trouvé dans votre fichier. Aucun cas de test n'a été importé.",
+          "validationSummary": "{count, plural, one {# problème a été trouvé} other {# problèmes ont été trouvés}} dans votre fichier. Aucun cas de test n'a été importé.",
           "validationEntry": "Ligne {row, number} · {field} : {message}",
           "validationEntryNamed": "Ligne {row, number} « {name} » · {field} : {message}",
           "validationMore": "{count, plural, one {# problème supplémentaire n'est pas affiché} other {# problèmes supplémentaires ne sont pas affichés}}.",
@@ -3460,7 +3460,7 @@
         },
         "warnings": {
           "partialTitle": "Certains liens de problèmes n'ont pas été créés",
-          "summary": "{count, plural, one {# cellule de problème} other {# cellules de problèmes}} n'a pas pu être lié. Les cas de test ont été importés."
+          "summary": "{count, plural, one {# cellule de problème n'a pas pu être liée} other {# cellules de problèmes n'ont pas pu être liées}}. Les cas de test ont été importés."
         },
         "page1": {
           "fileType": {
@@ -3492,7 +3492,7 @@
           "title": "Associer les colonnes CSV aux champs",
           "description": "Associez chaque colonne CSV à un champ du modèle ou choisissez de l'ignorer.",
           "ignoreColumn": "Ignorer la colonne",
-          "requiredFieldsWarning": "{count, plural, one {# champ obligatoire est} other {# champs obligatoires sont}} non mappés",
+          "requiredFieldsWarning": "{count, plural, one {# champ obligatoire est non mappé} other {# champs obligatoires sont non mappés}}",
           "caseIdHint": "Il doit s'agir de l'ID de cas numérique — les cas correspondants seront écrasés."
         },
         "page3": {
@@ -3716,7 +3716,7 @@
       "generatingProgress": "Génération du cas {current, number} de {total, number}...",
       "generatingBatch": "Génération de {count, plural, one {# cas} other {# cas}} dans un seul fichier...",
       "previewTitle": "Aperçu de l'exportation",
-      "previewDescription": "{count, plural, one {# fichier} other {# fichiers}} générés",
+      "previewDescription": "{count, plural, one {# fichier généré} other {# fichiers générés}}",
       "copySuccess": "Copié dans le presse-papiers",
       "fallbackBadge": "Généré à partir d'un modèle (IA indisponible)",
       "retryButton": "Réessayer la génération d'IA",
@@ -3785,7 +3785,7 @@
       "runStatusDate": "{status} — {date}",
       "noFolder": "Aucun dossier",
       "duplicateWarning": "Des doublons possibles ont été trouvés.",
-      "duplicateWarningDescription": "{count, plural, one {# cas existant} other {# cas existants}} peut couvrir des fonctionnalités similaires",
+      "duplicateWarningDescription": "{count, plural, one {# cas existant peut} other {# cas existants peuvent}} couvrir des fonctionnalités similaires",
       "duplicateWarningReview": "Revoir",
       "importWarning": "Duplicata possible",
       "importWarningTooltip": "Ce nom de cas est similaire à {count, plural, one {# cas existant} other {# cas existants}}: {names}",
@@ -4652,7 +4652,7 @@
         "noCommits": "Aucun commit trouvé."
       },
       "diff": {
-        "summary": "{files, plural, one {# fichier} other {# fichiers}} modifié · +{additions, number} −{deletions, number}",
+        "summary": "{files, plural, one {# fichier modifié} other {# fichiers modifiés}} · +{additions, number} −{deletions, number}",
         "truncated": "Le fournisseur a renvoyé un diff partiel. Certains fichiers modifiés ne sont pas affichés ou n'ont pas de correctif.",
         "noChanges": "Aucune modification entre ces commits.",
         "statusModified": "Modifié",
@@ -4736,12 +4736,12 @@
       },
       "warnings": {
         "diff_truncated_by_provider": "Le fournisseur a renvoyé un diff partiel.",
-        "diff_truncated_by_budget": "Seule une partie du diff s'adapte au contexte de l'IA ; {count, plural, one {# fichier a} other {# fichiers ont}} été résumés par chemin uniquement.",
+        "diff_truncated_by_budget": "Seule une partie du diff s'adapte au contexte de l'IA ; {count, plural, one {# fichier a été résumé} other {# fichiers ont été résumés}} par chemin uniquement.",
         "llm_not_configured": "Pas d'intégration LLM active : le classement de l'IA a été ignoré.",
         "search_fallback_db": "Index de recherche indisponible : la correspondance de mots-clés a utilisé la base de données.",
         "search_index_empty": "L'index de recherche ne contient pas de cas de test pour ce projet, donc la correspondance de mots-clés est revenue aux noms de cas de test dans la base de données et peut avoir manqué les correspondances sur le contenu des cas. Demandez à un administrateur de reconstruire l'index de recherche sous Administration → Moteur de recherche.",
         "ai_partial": "Certains lots d'IA ont échoué ; les résultats peuvent être incomplets.",
-        "ai_truncated": "{count, plural, one {# lot d'IA a} other {# lots d'IA ont}} été interrompus par le modèle.",
+        "ai_truncated": "{count, plural, one {# lot d'IA a été interrompu} other {# lots d'IA ont été interrompus}} par le modèle.",
         "no_candidates": "Aucun cas de test ne correspond.",
         "anchor_fetch_capped": "Certains fichiers épinglés ont été mis en correspondance par chemin uniquement (limite de récupération atteinte).",
         "issue_commit_fetch_capped": "Certains commits nommant des tickets n'ont pas été lus fichier par fichier (limite de récupération atteinte) ; leurs cas ne couvrent aucun fichier spécifique.",
@@ -4845,8 +4845,8 @@
         "job": {
           "discoveringDatasets": "Découverte des ensembles de données...",
           "scanningFile": "Numérisation du fichier d'exportation testmo...",
-          "datasetsProcessed": "{processed, number} jeu de données{processed, plural, one {} other {s}} traité",
-          "datasetsProcessedWithTotal": "{processed, number} de {total, number} ensemble de données{total, plural, one {} other {s}} traité",
+          "datasetsProcessed": "{processed, number} {processed, plural, one {jeu de données traité} other {jeux de données traités}}",
+          "datasetsProcessedWithTotal": "{processed, number} de {total, number} {total, plural, one {ensemble de données traité} other {ensembles de données traités}}",
           "rowsProcessed": "{value, number} lignes traitées",
           "itemsProcessed": "{processed, number} sur {total, number} éléments traités",
           "analysisInProgress": "Analyse de l'exportation…",
@@ -4955,7 +4955,7 @@
           "issue_targets": "Associer les cibles des problèmes Testmo aux intégrations TestPlanIt (Jira, GitHub, etc.)."
         },
         "mappingDatasetDefaultDescription": "Avis {dataset} détecté dans l'export Testmo.",
-        "mappingDatasetCount": "{count, number} enregistrement{count, plural, one {} other {s}} détecté",
+        "mappingDatasetCount": "{count, number} {count, plural, one {enregistrement détecté} other {enregistrements détectés}}",
         "mappingDatasetNoEntitiesTitle": "Rien à cartographier",
         "mappingDatasetNoEntitiesDescription": "Ce jeu de données ne nécessite pas de mappage. Passez au jeu de données suivant lorsque vous serez prêt.",
         "mappingDatasetUnsupportedTitle": "Aucune cartographie requise",
@@ -5298,7 +5298,7 @@
         "defaultAccessUpdateFailed": "Échec de la mise à jour du niveau d'accès par défaut",
         "emailVerificationEnabled": "La vérification de l'adresse électronique est désormais requise pour les nouveaux utilisateurs.",
         "emailVerificationDisabled": "La vérification par e-mail n'est plus requise pour les nouveaux utilisateurs.",
-        "emailVerificationDisabledAndVerified": "La vérification par e-mail est désactivée et {count, plural, one {# compte utilisateur} other {# comptes utilisateurs}} vérifiés",
+        "emailVerificationDisabledAndVerified": "La vérification par e-mail est désactivée et {count, plural, one {# compte utilisateur vérifié} other {# comptes utilisateurs vérifiés}}",
         "emailVerificationUpdateFailed": "Échec de la mise à jour des paramètres de vérification de l'e-mail",
         "emailServerNotConfigured": "Impossible d'activer la vérification des e-mails : le serveur de messagerie n'est pas configuré.",
         "openRegistrationEnabled": "L'auto-inscription est désormais activée",
@@ -6985,7 +6985,7 @@
         },
         "success": {
           "title": "Réindexation réussie",
-          "description": "{count, plural, one {# document} other {# documents}} indexés avec succès"
+          "description": "{count, plural, one {# document indexé} other {# documents indexés}} avec succès"
         },
         "error": {
           "title": "Échec de la réindexation",
@@ -7361,7 +7361,7 @@
         "searching": "Recherche...",
         "searchError": "Échec de la recherche des problèmes",
         "linkButton": "Lien",
-        "linkedCount": "{count, plural, one {# problème} other {# problèmes}} lié"
+        "linkedCount": "{count, plural, one {# problème lié} other {# problèmes liés}}"
       }
     },
     "copyMove": {
@@ -7599,7 +7599,7 @@
     "delete": {
       "dialogTitle": "Supprimer l'exigence",
       "confirmNoChildren": "Êtes-vous sûr de vouloir supprimer cette exigence ? Cette action peut être annulée.",
-      "confirmWithChildren": "Cette exigence a {count, plural, one {{count} descendant} other {{count} descendants}} qui seront également supprimés. Cette action peut être annulée.",
+      "confirmWithChildren": "Cette exigence a {count, plural, one {{count} descendant qui sera également supprimé} other {{count} descendants qui seront également supprimés}}. Cette action peut être annulée.",
       "success": "Exigence supprimée.",
       "failed": "Impossible de supprimer l'exigence.",
       "undo": "Annuler",
@@ -8936,7 +8936,7 @@
           "failureRate": "taux d'échec",
           "recency": "score de récence",
           "backlogTitle": "Tests de priorité inférieure",
-          "backlogDescription": "{count, plural, one {# test instable supplémentaire} other {# tests instables supplémentaires}} non affiché"
+          "backlogDescription": "{count, plural, one {# test instable supplémentaire non affiché} other {# tests instables supplémentaires non affichés}}"
         }
       },
       "testCaseHealth": {
@@ -9683,7 +9683,7 @@
       },
       "attempts": {
         "noAttemptsRemaining": "Aucune tentative restante. Veuillez réessayer plus tard.",
-        "attemptsRemaining": "{count, plural, =1 {1 tentative} other {# tentatives}} restantes."
+        "attemptsRemaining": "{count, plural, =1 {1 tentative restante} other {# tentatives restantes}}."
       }
     },
     "sharedReport": {
@@ -9783,12 +9783,12 @@
         "stepsData": "Données des étapes"
       },
       "success": {
-        "description": "{count, plural, one {# étape partagée} other {# étapes partagées}} importées avec succès"
+        "description": "{count, plural, one {# étape partagée importée} other {# étapes partagées importées}} avec succès"
       },
       "errors": {
         "parseFailed": "Impossible d'analyser le fichier CSV",
         "validationFailed": "La validation a échoué",
-        "validationDescription": "{count, plural, one {# erreur de validation} other {# erreurs de validation}} trouvées",
+        "validationDescription": "{count, plural, one {# erreur de validation trouvée} other {# erreurs de validation trouvées}}",
         "importFailed": "L'importation a échoué",
         "fileRequired": "Un fichier CSV est requis."
       },
@@ -9811,7 +9811,7 @@
         "title": "Associer les colonnes CSV aux champs d'étape partagés",
         "description": "Associez vos colonnes CSV aux champs d'étape partagés. Les champs obligatoires doivent être associés.",
         "ignoreColumn": "Ignorez cette colonne",
-        "requiredFieldsWarning": "{count, plural, one {# Champ obligatoire} other {# Champs obligatoires}} non associés. Veuillez associer tous les champs obligatoires pour continuer."
+        "requiredFieldsWarning": "{count, plural, one {# Champ obligatoire non associé} other {# Champs obligatoires non associés}}. Veuillez associer tous les champs obligatoires pour continuer."
       },
       "page3": {
         "title": "Aperçu des données importées",
@@ -10129,13 +10129,13 @@
       "description": "Cliquez sur les étiquettes pour les autoriser ou les désactiver. Double-cliquez pour modifier le nom d'une étiquette.",
       "selectEntity": "Sélectionnez une entité pour afficher les suggestions de balises.",
       "noTagsSelected": "Aucune étiquette sélectionnée",
-      "footerSummary": "{assignCount, plural, one {# étiquette} other {# étiquettes}} seront attribuées, {newCount, plural, one {# nouvelle étiquette} other {# nouvelles étiquettes}} seront créées",
-      "footerAssignCount": "{assignCount, plural, one {# étiquette} other {# étiquettes}} sera attribuée",
-      "footerNewCount": "{newCount, plural, one {# nouvelle étiquette} other {# nouvelles étiquettes}} seront créées",
+      "footerSummary": "{assignCount, plural, one {# étiquette sera attribuée} other {# étiquettes seront attribuées}}, {newCount, plural, one {# nouvelle étiquette sera créée} other {# nouvelles étiquettes seront créées}}",
+      "footerAssignCount": "{assignCount, plural, one {# étiquette sera attribuée} other {# étiquettes seront attribuées}}",
+      "footerNewCount": "{newCount, plural, one {# nouvelle étiquette sera créée} other {# nouvelles étiquettes seront créées}}",
       "newTagsPopoverTitle": "Nouvelles étiquettes à créer",
       "applying": "Candidature...",
-      "applySuccess": "{tagCount, plural, one {# étiquette} other {# étiquettes}} appliquées à {entityCount, plural, one {# entité} other {# entités}}",
-      "applySuccessNewTags": "{tagCount, plural, one {# étiquette} other {# étiquettes}} appliquées à {entityCount, plural, one {# entité} other {# entités}}, {newCount, plural, one {# nouvelle étiquette} other {# nouvelles étiquettes}} créées",
+      "applySuccess": "{tagCount, plural, one {# étiquette appliquée} other {# étiquettes appliquées}} à {entityCount, plural, one {# entité} other {# entités}}",
+      "applySuccessNewTags": "{tagCount, plural, one {# étiquette appliquée} other {# étiquettes appliquées}} à {entityCount, plural, one {# entité} other {# entités}}, {newCount, plural, one {# nouvelle étiquette créée} other {# nouvelles étiquettes créées}}",
       "applyError": "Impossible d'appliquer les balises. Veuillez réessayer.",
       "suggestedTags": "Suggestions de balises",
       "noSuggestions": "L'IA n'a pu générer aucune étiquette.",
@@ -10304,8 +10304,8 @@
     "importStep2HeaderParameter": "Paramètre",
     "importStep2RequiredUnmapped": "Le paramètre obligatoire \"@{name}\" n'a pas de colonne CSV mappée.",
     "importStep2Label": "Colonnes de la carte",
-    "importStep3SummaryOk": "{totalRows, plural, =1 {# ligne} other {# lignes}} analysé, aucune erreur.",
-    "importStep3SummaryErrors": "{totalRows, plural, =1 {# ligne} other {# lignes}} analysées ; {errorCount, plural, =1 {# ligne contient} other {# lignes contiennent}} erreurs.",
+    "importStep3SummaryOk": "{totalRows, plural, =1 {# ligne analysée} other {# lignes analysées}}, aucune erreur.",
+    "importStep3SummaryErrors": "{totalRows, plural, =1 {# ligne analysée} other {# lignes analysées}} ; {errorCount, plural, =1 {# ligne contient} other {# lignes contiennent}} erreurs.",
     "importStep3PreviewLimit": "Affichage des {limit} premières lignes. Toutes les lignes seront validées à l'étape suivante.",
     "importStep3Label": "Aperçu",
     "importStep4Heading": "Confirmer l'importation",

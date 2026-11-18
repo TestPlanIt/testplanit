@@ -1508,7 +1508,7 @@
           "importCapHint": "Leer lassen, um den Standardwert von {cap} zu verwenden.",
           "importAllHistoryNoCapHint": "„Gesamter Verlauf",
           "importPreview": "Vorschau",
-          "importPreviewResult": "~{count, plural, one {# Ticket} other {# Tickets}} entsprechen diesem Filter. Bis zu {cap} werden importiert.",
+          "importPreviewResult": "~{count, plural, one {# Ticket entspricht diesem Filter.} other {# Tickets entsprechen diesem Filter.}} Bis zu {cap} werden importiert.",
           "importOverCap": "Das überschreitet die Obergrenze von {cap}; nur die {cap} zuletzt aktualisierten werden importiert.",
           "importStarted": "Import gestartet. Tickets werden in Kürze angezeigt.",
           "importFailed": "Import fehlgeschlagen",
@@ -2363,7 +2363,7 @@
           "enableDescription": "Scannt aktuelle Commits im Zweig bei jeder Cache-Aktualisierung. Deaktivieren Sie diese Option, um Analysen die Ticket-Schlüssel nur aus den analysierten Commits lesen zu lassen; manuelle Scans werden trotzdem ausgeführt.",
           "resultLinksLabel": "Auch Tickets zählen, die zu Testergebnissen hinzugefügt wurden",
           "resultLinksDescription": "Ein Ticket, das zu einem Testergebnis oder Schritttestergebnis hinzugefügt wird, verlinkt auch den Fall, für den dieses Ergebnis aufgezeichnet wurde, sodass seine Commits diese Anfrage auch anheften und auswählen. Aus, nur Tickets, die direkt mit einem Testfall verlinkt sind, werden gezählt.",
-          "skippedLarge": "{count, plural, one {# Commit wurde} other {# Commits wurden}} übersprungen, da er zu groß zum Pinnen ist.",
+          "skippedLarge": "{count, plural, one {# Commit wurde übersprungen, da er zu groß zum Pinnen ist.} other {# Commits wurden übersprungen, da sie zu groß zum Pinnen sind.}}",
           "fetchCapped": "Nicht jeder Commit, der ein verknüpftes Ticket benannt hat, ließ seine Dateien in diesem Durchgang lesen; die restlichen werden beim nächsten Scan aufgegriffen.",
           "scanRecent": "Aktuelle Commits erneut scannen",
           "scanFull": "Vollständigen Verlauf scannen",
@@ -2391,7 +2391,7 @@
           "cancelled": "Scan abgebrochen {date}. Vor dem Abbruch gelesene Commits werden im Commit-Cache beibehalten; Pins wurden nicht aktualisiert.",
           "importMoved": "{moved, plural, one {# Schlüssel ist ein alter Name} other {# Schlüssel sind alte Namen}} von bereits importierten Tickets; sie wurden im Tracker verschoben oder umbenannt.",
           "importFailed": "{failed, plural, one {# Schlüssel wurde} other {# Schlüssel wurden}} nicht im Tracker gefunden, unten aufgeführt.",
-          "summaryMatched": "{matched, plural, one {# Commit} other {# Commits}} benannte ein Ticket, das mit einem Testfall verknüpft ist",
+          "summaryMatched": "{matched, plural, one {# Commit benannte ein Ticket, das mit einem Testfall verknüpft ist} other {# Commits benannten ein Ticket, das mit einem Testfall verknüpft ist}}",
           "summarySymbolPins": "({count, number} der erstellten Pins targeten eine Funktion oder Klasse statt einer ganzen Datei.)"
         },
         "markers": {
@@ -2433,9 +2433,9 @@
           "scanFullHint": "Jeden Commit im Branch des {count, plural, one {verbundenen Repositorys} other {aller # verbundenen Repositories}} durchlaufen und Pins für vorhandene Tickets ergänzen.",
           "scanFullConfirm": "Dies durchläuft jeden Commit im Branch des {count, plural, one {verbundenen Repositorys} other {aller # verbundenen Repositories}}. Repositories werden nacheinander gescannt, daher kann dies lange dauern, und jeder Durchlauf liest Commits über die API des Anbieters, was auf sein Ratenlimit angerechnet wird.",
           "checkStaleHint": "Überprüfen Sie die Code Pins des {count, plural, one {verbundenen Repositorys} other {aller # verbundenen Repositories}} gegen jeden Branch-Tip.",
-          "removeStaleHint": "Entfernen Sie {count, plural, one {# veralteten Code Pin} other {# veraltete Code Pins}} über {{repos, plural, one {# Repository} other {# Repositories}}}.",
-          "removeConfirm": "Entfernen Sie {count, plural, one {# Code Pin} other {# Code Pins}}, die die letzten Überprüfungen nicht am Branch-Tip finden konnten, über {{repos, plural, one {# Repository} other {# Repositories}}}}?",
-          "queued": "In Warteschlange für {{count, plural, one {# Repository} other {# Repositories}}.{skipped, plural, =0 {} one { # wurde bereits ausgeführt.} other { # wurden bereits ausgeführt.}}",
+          "removeStaleHint": "Entfernen Sie {count, plural, one {# veralteten Code Pin} other {# veraltete Code Pins}} über {repos, plural, one {# Repository} other {# Repositories}}.",
+          "removeConfirm": "Entfernen Sie {count, plural, one {# Code Pin, den} other {# Code Pins, die}} die letzten Überprüfungen nicht am Branch-Tip finden konnten, über {repos, plural, one {# Repository} other {# Repositories}}?",
+          "queued": "In Warteschlange für {count, plural, one {# Repository} other {# Repositories}}.{skipped, plural, =0 {} one { # wurde bereits ausgeführt.} other { # wurden bereits ausgeführt.}}",
           "allRunning": "Bereits in der Warteschlange oder wird für jedes Repository ausgeführt.",
           "failed": "Konnte nicht starten für: {names}"
         },
@@ -2454,10 +2454,10 @@
           "neverChecked": "Noch nicht überprüft",
           "checkFailed": "Letzte Überprüfung fehlgeschlagen",
           "summary": "{count, plural, =0 {Keine veralteten Pins} one {# veralteter Pin} other {# veraltete Pins}} · {checked, plural, one {# Pin} other {# Pins}} überprüft",
-          "unreadable": "{count, plural, one {# Datei} other {# Dateien}} konnte nicht gelesen werden, daher wurden diese Pins nicht überprüft.",
+          "unreadable": "{count, plural, one {# Datei konnte} other {# Dateien konnten}} nicht gelesen werden, daher wurden diese Pins nicht überprüft.",
           "removed": "{count, plural, =0 {Keine veralteten Pins wurden entfernt} one {# veralteter Pin entfernt} other {# veraltete Pins entfernt}}",
           "removeFailed": "Die veralteten Pins konnten nicht entfernt werden",
-          "removeConfirm": "{count, plural, one {# Code-Pin entfernen} other {# Code-Pins entfernen}}, die die letzte Überprüfung nicht finden konnte, am Zweig-Tipp von {name}?",
+          "removeConfirm": "{count, plural, one {# Code-Pin entfernen, den} other {# Code-Pins entfernen, die}} die letzte Überprüfung am Zweig-Tipp von {name} nicht finden konnte?",
           "removeConfirmNote": "Pins, deren Stale-Markierung verworfen wurde, und Pins, die von Repository-Markierungen verwaltet werden, bleiben bestehen. Entfernte Pins können aus dem Papierkorb wiederhergestellt werden.",
           "checkCancelled": "Letzte Überprüfung abgebrochen",
           "interrupted": "Eine Überprüfung, die am {date} gestartet wurde, hat keine Rückmeldung gegeben – der Worker wurde möglicherweise neu gestartet. Stellen Sie sie erneut in die Warteschlange, um fortzufahren."
@@ -2602,7 +2602,7 @@
     "delete": {
       "title": "Meilenstein löschen",
       "confirmMessage": "Möchten Sie den Meilenstein {name}wirklich löschen?",
-      "childrenWarning": "{count, plural, one {Sein # untergeordneter Meilenstein} other {Seine # untergeordneten und nachgeordneten Meilensteine}} werden ebenfalls gelöscht.",
+      "childrenWarning": "{count, plural, one {Sein # untergeordneter Meilenstein wird ebenfalls gelöscht.} other {Seine # untergeordneten und nachgeordneten Meilensteine werden ebenfalls gelöscht.}}",
       "warning": "Dieser Meilenstein wird aus dem Projekt entfernt. Die historischen Daten für diesen Meilenstein bleiben jedoch im Projekt erhalten.",
       "toast": {
         "loading": "Meilenstein wird gelöscht...",
@@ -3330,7 +3330,7 @@
     },
     "templateNotAssignedWarning": "Dieser Testfall verwendet die Vorlage \"{templateName}\", die dem Projekt \"{projectName}\" derzeit nicht zugewiesen ist. Sie müssen diese Vorlage möglicherweise dem Projekt zuweisen oder den Testfall so ändern, dass er eine andere Vorlage verwendet.",
     "orphanedStepsWarning": "Dieser Testfall enthält Schritte, aber die aktuelle Vorlage \"{templateName}\" enthält kein Feld für die Schritte. Die Schritte können erst bearbeitet werden, wenn der Testfall eine Vorlage mit einem Feld für die Schritte besitzt.",
-    "orphanedFieldsWarning": "Dieser Testfall enthält {count, plural, =1 {# Feldwert} other {# Feldwerte}} , die {count, plural, =1 {sind,} other {sind,}} nicht in der aktuellen Vorlage enthalten sind \"{templateName}\". {count, plural, =1 {Dieses Feld ist} other {Diese Felder sind}} unten aufgeführt, können aber möglicherweise erst bearbeitet werden, nachdem sie der Vorlage hinzugefügt wurden.",
+    "orphanedFieldsWarning": "Dieser Testfall enthält {count, plural, =1 {# Feldwert, der} other {# Feldwerte, die}} in der aktuellen Vorlage \"{templateName}\" nicht enthalten {count, plural, =1 {ist} other {sind}}. {count, plural, =1 {Dieses Feld ist unten aufgeführt, kann aber möglicherweise erst bearbeitet werden, nachdem es der Vorlage hinzugefügt wurde.} other {Diese Felder sind unten aufgeführt, können aber möglicherweise erst bearbeitet werden, nachdem sie der Vorlage hinzugefügt wurden.}}",
     "title": "Testfall-Repository",
     "folders": "Ordner",
     "showDescendants": "Alle untergeordneten Elemente anzeigen",
@@ -3460,7 +3460,7 @@
         },
         "warnings": {
           "partialTitle": "Einige Issue-Links wurden nicht erstellt",
-          "summary": "{count, plural, one {# Issue-Zelle} other {# Issue-Zellen}} konnte nicht verknüpft werden. Die Testfälle wurden importiert."
+          "summary": "{count, plural, one {# Issue-Zelle konnte} other {# Issue-Zellen konnten}} nicht verknüpft werden. Die Testfälle wurden importiert."
         },
         "page1": {
           "fileType": {
@@ -3785,7 +3785,7 @@
       "runStatusDate": "{status} — {date}",
       "noFolder": "Kein Ordner",
       "duplicateWarning": "Mögliche Duplikate gefunden",
-      "duplicateWarningDescription": "{count, plural, one {# bestehender Fall} other {# bestehende Fälle}} können ähnliche Funktionalitäten abdecken",
+      "duplicateWarningDescription": "{count, plural, one {# bestehender Fall kann} other {# bestehende Fälle können}} ähnliche Funktionalitäten abdecken",
       "duplicateWarningReview": "Rezension",
       "importWarning": "Mögliches Duplikat",
       "importWarningTooltip": "Dieser Fallname ähnelt {count, plural, one {# bestehender Fall} other {# bestehende Fälle}}: {names}",
@@ -4449,7 +4449,7 @@
       "success": {
         "title": "Testlauf erfolgreich hinzugefügt",
         "description": "{name} wurde dem Projekt hinzugefügt",
-        "descriptionMultiple": "{count, plural, one {# Testlauf hat} other {# Testläufe haben}} wurden für {name} erstellt"
+        "descriptionMultiple": "{count, plural, one {# Testlauf wurde} other {# Testläufe wurden}} für {name} erstellt"
       },
       "estimates": {
         "manual": "Geschätzte manuelle Zeit",
@@ -4845,8 +4845,8 @@
         "job": {
           "discoveringDatasets": "Datensätze entdecken...",
           "scanningFile": "Testmo-Exportdatei wird gescannt...",
-          "datasetsProcessed": "{processed, number} Datensatz{processed, plural, one {} other {s}} verarbeitet",
-          "datasetsProcessedWithTotal": "{processed, number} von {total, number} Datensatz{total, plural, one {} other {s}} verarbeitet",
+          "datasetsProcessed": "{processed, number} {processed, plural, one {Datensatz} other {Datensätze}} verarbeitet",
+          "datasetsProcessedWithTotal": "{processed, number} von {total, number} {total, plural, one {Datensatz} other {Datensätzen}} verarbeitet",
           "rowsProcessed": "{value, number} verarbeitete Zeilen",
           "itemsProcessed": "{processed, number} von {total, number} verarbeiteten Elementen",
           "analysisInProgress": "Exportanalyse…",
@@ -4955,7 +4955,7 @@
           "issue_targets": "Ordnen Sie Testmo-Problemziele den TestPlanIt-Integrationen (Jira, GitHub usw.) zu."
         },
         "mappingDatasetDefaultDescription": "Überprüfung {dataset} im Testmo-Export erkannt.",
-        "mappingDatasetCount": "{count, number} Datensatz{count, plural, one {} other {s}} erkannt",
+        "mappingDatasetCount": "{count, number} {count, plural, one {Datensatz} other {Datensätze}} erkannt",
         "mappingDatasetNoEntitiesTitle": "Nichts zu kartieren",
         "mappingDatasetNoEntitiesDescription": "Dieser Datensatz erfordert keine Zuordnung. Fahren Sie mit dem nächsten Datensatz fort, sobald Sie bereit sind.",
         "mappingDatasetUnsupportedTitle": "Keine Kartierung erforderlich",
@@ -7599,7 +7599,7 @@
     "delete": {
       "dialogTitle": "Anforderung löschen",
       "confirmNoChildren": "Sind Sie sicher, dass Sie diese Anforderung löschen möchten? Diese Aktion kann rückgängig gemacht werden.",
-      "confirmWithChildren": "Diese Anforderung hat {count, plural, one {{count} untergeordnetes Element} other {{count} untergeordnete Elemente}}, die ebenfalls gelöscht werden. Diese Aktion kann rückgängig gemacht werden.",
+      "confirmWithChildren": "Diese Anforderung hat {count, plural, one {{count} untergeordnetes Element, das ebenfalls gelöscht wird} other {{count} untergeordnete Elemente, die ebenfalls gelöscht werden}}. Diese Aktion kann rückgängig gemacht werden.",
       "success": "Anforderung gelöscht.",
       "failed": "Anforderung konnte nicht gelöscht werden.",
       "undo": "Rückgängig machen",
@@ -10129,9 +10129,9 @@
       "description": "Klicken Sie auf die Tags, um die Akzeptanz umzuschalten. Doppelklicken Sie, um einen Tag-Namen zu bearbeiten.",
       "selectEntity": "Wählen Sie eine Entität aus, um Tag-Vorschläge anzuzeigen.",
       "noTagsSelected": "Keine Schlagwörter ausgewählt",
-      "footerSummary": "{assignCount, plural, one {# Tag} other {# Tags}} werden zugewiesen, {newCount, plural, one {# neuer Tag} other {# neue Tags}} werden erstellt",
-      "footerAssignCount": "{assignCount, plural, one {# Tag} other {# Tags}} werden zugewiesen",
-      "footerNewCount": "{newCount, plural, one {# neues Tag} other {# neue Tags}} werden erstellt",
+      "footerSummary": "{assignCount, plural, one {# Tag wird zugewiesen} other {# Tags werden zugewiesen}}, {newCount, plural, one {# neuer Tag wird erstellt} other {# neue Tags werden erstellt}}",
+      "footerAssignCount": "{assignCount, plural, one {# Tag wird zugewiesen} other {# Tags werden zugewiesen}}",
+      "footerNewCount": "{newCount, plural, one {# neues Tag wird erstellt} other {# neue Tags werden erstellt}}",
       "newTagsPopoverTitle": "Neue Tags zum Erstellen",
       "applying": "Bewerbung läuft...",
       "applySuccess": "{tagCount, plural, one {# Tag} other {# Tags}} angewendet auf {entityCount, plural, one {# Entität} other {# Entitäten}}",

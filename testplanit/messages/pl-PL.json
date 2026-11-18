@@ -1146,7 +1146,7 @@
       "assigned": "Przypadek testowy przypisany pomyślnie",
       "unassigned": "Przypadek testowy został pomyślnie anulowany",
       "bulkAssigned": "{count, plural, one {# przypadek testowy} other {# przypadki testowe}} przypisano pomyślnie",
-      "bulkUnassigned": "{count, plural, one {# przypadek testowy} other {# przypadki testowe}} pomyślnie nieprzypisane"
+      "bulkUnassigned": "{count, plural, one {# przypadek testowy pomyślnie nieprzypisany} few {# przypadki testowe pomyślnie nieprzypisane} many {# przypadków testowych pomyślnie nieprzypisanych} other {# przypadków testowych pomyślnie nieprzypisanych}}"
     },
     "tabs": {
       "general": "Ogólny",
@@ -1508,7 +1508,7 @@
           "importCapHint": "Zostaw puste, aby użyć domyślnego {cap}.",
           "importAllHistoryNoCapHint": "Cała historia importuje każdy pasujący problem, bez limitu.",
           "importPreview": "Podgląd",
-          "importPreviewResult": "~{count, plural, one {# problem} few {# problemy} many {# problemów} other {# problemu}} spełnia ten filtr. Zaimportowanych zostanie maksymalnie {cap}.",
+          "importPreviewResult": "~{count, plural, one {# problem spełnia} few {# problemy spełniają} many {# problemów spełnia} other {# problemu spełnia}} ten filtr. Zaimportowanych zostanie maksymalnie {cap}.",
           "importOverCap": "Przekracza to limit {cap}; zostanie zaimportowanych tylko {cap} najnowszych zaktualizowanych problemów.",
           "importStarted": "Import rozpoczęty. Problemy pojawią się wkrótce.",
           "importFailed": "Import nie powiódł się",
@@ -2363,7 +2363,7 @@
           "enableDescription": "Skanuje ostatnie commity na gałęzi przy każdym odświeżeniu pamięci podręcznej. Wyłącz, aby analiz czytały klucze biletów z analizowanych commitów tylko; skanowania ręczne są nadal uruchamiane.",
           "resultLinksLabel": "Uwzględniaj również bilety dodane do wyników testów",
           "resultLinksDescription": "Bilet dodany do wyniku testu lub wyniku kroku łączy również przypadek testowy, dla którego ten wynik został zarejestrowany, więc jego commity przypinają i zaznaczają ten przypadek. Wyłączone: tylko bilety bezpośrednio powiązane z przypadkiem testowym się liczą.",
-          "skippedLarge": "{count, plural, one {# commit został} other {# commity zostały}} pominięte jako zbyt duże do przypięcia.",
+          "skippedLarge": "{count, plural, one {# commit został pominięty jako zbyt duży do przypięcia.} few {# commity zostały pominięte jako zbyt duże do przypięcia.} many {# commitów zostało pominiętych jako zbyt duże do przypięcia.} other {# commitów zostało pominiętych jako zbyt duże do przypięcia.}}",
           "fetchCapped": "Nie każdy commit, który nazwał powiązany bilet, miał swoje pliki przeczytane w tym przebiegu; reszta jest odbierana w następnym skanowaniu.",
           "scanRecent": "Ponownie zeskanuj ostatnie commity",
           "scanFull": "Skanuj pełną historię",
@@ -2378,19 +2378,19 @@
           "imported": "{imported, plural, =0 {Żadne nowe bilety nie zostały importowane z trackera.} one {# bilet został zaimportowany z trackera.} other {# bilety zostały zaimportowane z trackera.}}",
           "fullCapped": "Spacer zatrzymał się na {count, number} commitach, zanim dotarł do początku gałęzi. Uruchom ponownie Skan pełnej historii, aby kontynuować od miejsca, w którym się zatrzymał.",
           "stale": "Skan rozpoczęty {date} nigdy nie zgłosił się — pracownik mógł zostać ponownie uruchomiony. Kolejka go ponownie, aby kontynuować.",
-          "summaryCommits": "{commits, plural, one {# commit} other {# commity}} przeczytane{cached, plural, =0 {} other { ({cached, number} z commit cache)}} · {naming, number} nazwano bilet · {tickets, plural, one {# odrębny bilet} other {# odrębne bilety}}",
+          "summaryCommits": "{commits, plural, one {# commit przeczytany} few {# commity przeczytane} many {# commitów przeczytanych} other {# commitów przeczytanych}}{cached, plural, =0 {} other { ({cached, number} z commit cache)}} · {naming, number} nazwano bilet · {tickets, plural, one {# odrębny bilet} other {# odrębne bilety}}",
           "summaryPins": "Pinsy: {created, number} utworzone · {updated, number} zaktualizowane · {removed, number} usunięte",
           "noLinkedHint": "Bilety tylko przypinają przypadki testowe po połączeniu przypadku testowego z nimi. Połącz przypadki z zaimportowanymi biletami, a następnie ponownie zeskanuj.",
           "importFailuresTitle": "Klucze nie znalezione w trackerze ({shown} z {total}):",
           "windowCapped": "Przeczytano tylko najnowsze {count, number} commitów (limit okna niedawnego). Użyj Skan pełnej historii, aby przeczytać starsze.",
           "runningWalk": "{commits, number} commitów przeczytanych dotąd{cached, plural, =0 {} other { ({cached, number} z commit cache)}} — bilety są wyszukiwane, gdy spacer się skończy",
           "runningImport": "{commits, number} commitów przeczytanych · importowanie biletów: {lookups, number} szukane w trackerze · {imported, number} zaimportowane",
-          "summaryCommitsOnly": "{commits, plural, one {# commit} other {# commity}} przeczytane",
-          "importSkipped": "{skipped, plural, one {# klucz nie} other {# klucze nie}} został jeszcze wyszukany, ponieważ jeden skan wykonuje ograniczoną liczbę wyszukiwań w trackerze. Uruchom skan ponownie, aby kontynuować.",
+          "summaryCommitsOnly": "{commits, plural, one {# commit przeczytany} few {# commity przeczytane} many {# commitów przeczytanych} other {# commitów przeczytanych}}",
+          "importSkipped": "{skipped, plural, one {# klucz nie został jeszcze wyszukany} few {# klucze nie zostały jeszcze wyszukane} many {# kluczy nie zostało jeszcze wyszukanych} other {# kluczy nie zostało jeszcze wyszukanych}}, ponieważ jeden skan wykonuje ograniczoną liczbę wyszukiwań w trackerze. Uruchom skan ponownie, aby kontynuować.",
           "cancelRequested": "Anulowanie zażądane. Skan zatrzymuje się na następnym kroku; commity już przeczytane pozostają buforowane.",
           "cancelled": "Skan anulowany {date}. Commity przeczytane przed anulowaniem są przechowywane w cache commitów; szpilki nie zostały zaktualizowane.",
           "importMoved": "{moved, plural, one {# klucz to stara nazwa} other {# klucze to stare nazwy}} biletów już zaimportowanych; zostały przeniesione lub zmieniono ich nazwy w trackerze.",
-          "importFailed": "{failed, plural, one {# klucz nie} other {# klucze nie}} znaleziony w trackerze, wymienionym poniżej.",
+          "importFailed": "{failed, plural, one {# klucz nie znaleziony w trackerze, wymieniony poniżej.} few {# klucze nie znalezione w trackerze, wymienione poniżej.} many {# kluczy nie znalezionych w trackerze, wymienionych poniżej.} other {# kluczy nie znalezionych w trackerze, wymienionych poniżej.}}",
           "summaryMatched": "{matched, plural, one {# commit} other {# commity}} nazwano bilet powiązany z przypadkiem testowym",
           "summarySymbolPins": "({count, number} z utworzonych szpilek celuje w funkcję lub klasę, a nie w całą plik.)"
         },
@@ -2423,7 +2423,7 @@
           "viewDescription": "Jak to repozytorium jest połączone. Odśwież pamięć podręczną lub uruchom skan biletów stąd; użyj Edycji, aby zmienić ustawienia.",
           "empty": "Brak połączonych repozytoriów",
           "emptyDescription": "Połącz repozytorium aplikacji w testowaniu, aby rozpocząć analizę zmian.",
-          "lastScan": "{created, plural, one {# pin} other {# pins}} utworzony przez ostatnie skanowanie",
+          "lastScan": "{created, plural, one {# pin utworzony} few {# piny utworzone} many {# pinów utworzonych} other {# pinów utworzonych}} przez ostatnie skanowanie",
           "scanFailed": "Ostatnie skanowanie nie powiodło się",
           "scanCancelled": "Ostatnie skanowanie anulowane"
         },
@@ -2434,7 +2434,7 @@
           "scanFullConfirm": "To przejrzy każdy commit na gałęzi {count, plural, one {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych репозиториев} other {# połączonych repozytoriów}}. Repozytoria są skanowane po jednym, więc może to trwać długo, a każde przejście odczytuje commity za pośrednictwem API dostawcy, co liczy się w jego limicie szybkości.",
           "checkStaleHint": "Sprawdź Piny Kodu {count, plural, one {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych репозиториев} other {# połączonych repozytoriów}} względem każdego końca gałęzi.",
           "removeStaleHint": "Usuń {count, plural, one {# nieaktualny Pin Kodu} few {# nieaktualnych Pinów Kodu} many {# nieaktualnych Pinów Kodu} other {# nieaktualnych Pinów Kodu}} w {repos, plural, one {# repozytorium} few {# repozytoriach} many {# репозиториях} other {# repozytoriach}}.",
-          "removeConfirm": "Usunąć {count, plural, one {# Pin Kodu} few {# Piny Kodu} many {# Pinów Kodu} other {# Pinów Kodu}}, których ostatnie sprawdzenia nie mogły znaleźć na końcu gałęzi, w {repos, plural, one {# repozytorium} few {# repozytoriach} many {# репозиториях} other {# repozytoriach}}?",
+          "removeConfirm": "Usunąć {count, plural, one {# Pin Kodu, którego} few {# Piny Kodu, których} many {# Pinów Kodu, których} other {# Pinów Kodu, których}} ostatnie sprawdzenia nie mogły znaleźć na końcu gałęzi, w {repos, plural, one {# repozytorium} few {# repozytoriach} many {# репозиториях} other {# repozytoriach}}?",
           "queued": "Postawione w kolejce dla {count, plural, one {# repozytorium} few {# repozytoriów} many {# репозиториев} other {# repozytoriów}}.{skipped, plural, =0 {} one { # był już uruchomiony.} few { # były już uruchomione.} many { # было уже запущено.} other { # były już uruchomione.}}",
           "allRunning": "Już w kolejce lub uruchomione dla każdego repozytorium.",
           "failed": "Nie można było uruchomić dla: {names}"
@@ -2453,11 +2453,11 @@
           "running": "Sprawdzanie {checked, number} z {total, plural, one {# plik} other {# pliki}}…",
           "neverChecked": "Nie sprawdzono jeszcze",
           "checkFailed": "Ostatnie sprawdzenie nie powiodło się",
-          "summary": "{count, plural, =0 {Brak starych szpilek} one {# stara szpila} other {# stare szpilki}} · {checked, plural, one {# szpila} other {# szpilki}} sprawdzono",
+          "summary": "{count, plural, =0 {Brak starych szpilek} one {# stara szpila} other {# stare szpilki}} · {checked, plural, one {# szpilę sprawdzono} few {# szpilki sprawdzono} many {# szpilek sprawdzono} other {# szpilek sprawdzono}}",
           "unreadable": "{count, plural, one {# plik} other {# pliki}} nie można było przeczytać, więc te szpilki nie zostały sprawdzane.",
           "removed": "{count, plural, =0 {Brak usunięte starych szpilek} one {# stara szpila usunięta} other {# stare szpilki usunięte}}",
           "removeFailed": "Nie można było usunąć starych szpilek",
-          "removeConfirm": "Usunąć {count, plural, one {# Code Pin} other {# Code Pins}}, które ostatnie sprawdzenie nie mogło znaleźć na górze {name}?",
+          "removeConfirm": "Usunąć {count, plural, one {# Code Pin, którego} other {# Code Pins, które}} ostatnie sprawdzenie nie mogło znaleźć na górze {name}?",
           "removeConfirmNote": "Szpilki, których badge Stale został odrzucony i szpilki utrzymywane przez znaczniki repozytorium są przechowywane. Usunięte szpilki można przywrócić z kosza.",
           "checkCancelled": "Ostatnia kontrola anulowana",
           "interrupted": "Kontrola rozpoczęta {date} nigdy nie zgłosiła się — pracownik mógł zostać ponownie uruchomiony. Umieść ją w kolejce ponownie, aby kontynuować."
@@ -2602,7 +2602,7 @@
     "delete": {
       "title": "Usuń kamień milowy",
       "confirmMessage": "Czy na pewno chcesz usunąć kamień milowy {name}?",
-      "childrenWarning": "{count, plural, one {Jego # podrzędny kamień milowy} few {Jego # podrzędne i potomne kamienie milowe} many {Jego # podrzędnych i potomnych kamieni milowych} other {Jego # podrzędnego i potomnego kamienia milowego}} zostaną również usunięte.",
+      "childrenWarning": "{count, plural, one {Jego # podrzędny kamień milowy zostanie również usunięty.} few {Jego # podrzędne i potomne kamienie milowe zostaną również usunięte.} many {Jego # podrzędnych i potomnych kamieni milowych zostanie również usuniętych.} other {Jego # podrzędnego i potomnego kamienia milowego zostanie również usunięte.}}",
       "warning": "Ten kamień milowy zostanie usunięty z projektu. Dane historyczne dla tego kamienia milowego nadal będą dostępne w projekcie.",
       "toast": {
         "loading": "Usuwanie kamienia milowego...",
@@ -3330,7 +3330,7 @@
     },
     "templateNotAssignedWarning": "Ten przypadek testowy używa szablonu „{templateName}”, który nie jest obecnie przypisany do projektu „{projectName}”. Może być konieczne przypisanie tego szablonu do projektu lub zmiana przypadku testowego na inny.",
     "orphanedStepsWarning": "Ten przypadek testowy zawiera kroki, ale obecny szablon „{templateName}” nie zawiera pola „Kroki”. Kroków nie można edytować, dopóki przypadek testowy nie będzie miał szablonu z polem „Kroki”.",
-    "orphanedFieldsWarning": "Ten przypadek testowy ma {count, plural, =1 {# wartość pola} other {# wartości pola}} które {count, plural, =1 {są} other {i}} nie są uwzględnione w bieżącym szablonie \"{templateName}\". {count, plural, =1 {To pole jest} other {Te pola są}} pokazane poniżej, ale mogą nie być edytowalne, dopóki nie zostaną dodane do szablonu.",
+    "orphanedFieldsWarning": "Ten przypadek testowy ma {count, plural, =1 {# wartość pola} other {# wartości pola}}, {count, plural, =1 {która nie jest uwzględniona} other {które nie są uwzględnione}} w bieżącym szablonie \"{templateName}\". {count, plural, =1 {To pole jest pokazane poniżej, ale może nie być edytowalne, dopóki nie zostanie dodane do szablonu.} other {Te pola są pokazane poniżej, ale mogą nie być edytowalne, dopóki nie zostaną dodane do szablonu.}}",
     "title": "Repozytorium przypadków testowych",
     "folders": "Lornetka składana",
     "showDescendants": "Pokaż wszystkich potomków",
@@ -3460,7 +3460,7 @@
         },
         "warnings": {
           "partialTitle": "Niektóre powiązania problemów nie zostały utworzone",
-          "summary": "{count, plural, one {# komórka problemów} other {# komórki problemów}} nie mogła być powiązana. Przypadki testowe zostały zaimportowane."
+          "summary": "{count, plural, one {# komórka problemów nie mogła być powiązana} few {# komórki problemów nie mogły być powiązane} many {# komórek problemów nie mogło być powiązanych} other {# komórek problemów nie mogło być powiązanych}}. Przypadki testowe zostały zaimportowane."
         },
         "page1": {
           "fileType": {
@@ -3492,7 +3492,7 @@
           "title": "Mapowanie kolumn CSV na pola",
           "description": "Przypisz każdą kolumnę CSV do pola w szablonie lub zignoruj ją.",
           "ignoreColumn": "Ignoruj kolumnę",
-          "requiredFieldsWarning": "{count, plural, one {# wymagane pole to} other {# wymagane pola to}} nie są mapowane",
+          "requiredFieldsWarning": "{count, plural, one {# wymagane pole nie jest mapowane} few {# wymagane pola nie są mapowane} many {# wymaganych pól nie jest mapowanych} other {# wymaganych pól nie jest mapowanych}}",
           "caseIdHint": "To musi być numeryczne ID przypadku — pasujące przypadki zostaną nadpisane."
         },
         "page3": {
@@ -3785,7 +3785,7 @@
       "runStatusDate": "{status} — {date}",
       "noFolder": "Brak folderu",
       "duplicateWarning": "Znaleziono możliwe duplikaty",
-      "duplicateWarningDescription": "{count, plural, one {# istniejący przypadek} other {# istniejące przypadki}} mogą obejmować podobną funkcjonalność",
+      "duplicateWarningDescription": "{count, plural, one {# istniejący przypadek może obejmować} few {# istniejące przypadki mogą obejmować} many {# istniejących przypadków może obejmować} other {# istniejących przypadków może obejmować}} podobną funkcjonalność",
       "duplicateWarningReview": "Recenzja",
       "importWarning": "Możliwy duplikat",
       "importWarningTooltip": "Nazwa tego przypadku jest podobna do {count, plural, one {# istniejący przypadek} other {# istniejące przypadki}}: {names}",
@@ -4023,7 +4023,7 @@
         "discardAndStage": "Odrzuć edycje i przygotuj"
       },
       "linkedIssuesDroppedTitle": "Niektóre powiązane problemy nie zostały uwzględnione",
-      "linkedIssuesDropped": "{count, plural, =1 {# powiązane problemy zostały usunięte} other {# powiązane problemy zostały usunięte}} z powodu budżetu tokenów: {keys}.",
+      "linkedIssuesDropped": "{count, plural, =1 {# powiązany problem został usunięty} few {# powiązane problemy zostały usunięte} many {# powiązanych problemów zostało usuniętych} other {# powiązanych problemów zostało usuniętych}} z powodu budżetu tokenów: {keys}.",
       "linkedIssuesPreviewHeading": "Powiązane problemy, które zostaną uwzględnione",
       "contextImages": {
         "pickerHeading": "Obrazy do uwzględnienia jako kontekst (maks. {max})",
@@ -4131,7 +4131,7 @@
       "errorSnippetTooLarge": "Zapiętowany blok jest zbyt duży.",
       "errorSymbolNotFound": "Symbol nie znaleziony w pliku.",
       "filePlaceholder": "Szukaj plików...",
-      "filesCached": "{count, plural, one {# plik} other {# pliki}} buforowane · {date}",
+      "filesCached": "{count, plural, one {# plik buforowany} few {# pliki buforowane} many {# plików buforowanych} other {# plików buforowanych}} · {date}",
       "filesLive": "Wyświetlanie plików na bieżąco z repozytorium",
       "globMatches": "{count, plural, =0 {Żadne buforowane pliki nie pasują} one {# buforowany plik pasuje} other {# buforowane pliki pasują}}",
       "globPlaceholder": "src/payments/**",
@@ -4492,7 +4492,7 @@
       },
       "success": {
         "title": "Sugerowane przypadki testowe",
-        "description": "{count, plural, =1 {# wybrany przypadek testowy} other {# wybrany przypadek testowy}} na podstawie kontekstu uruchomienia testu",
+        "description": "{count, plural, =1 {# wybrany przypadek testowy} few {# wybrane przypadki testowe} many {# wybranych przypadków testowych} other {# wybranych przypadków testowych}} na podstawie kontekstu uruchomienia testu",
         "linkedCasesAdded": "{count, plural, =1 {# automatycznie uwzględniono powiązany przypadek} other {# automatycznie uwzględniono powiązane przypadki}}",
         "truncationWarningTitle": "Częściowe wyniki",
         "truncationWarning": "{count, plural, =1 {# partia została obcięta} other {# partie zostały obcięte}} przez model sztucznej inteligencji — niektóre przypadki testowe mogły nie zostać ocenione."
@@ -4652,7 +4652,7 @@
         "noCommits": "Nie znaleziono commitów."
       },
       "diff": {
-        "summary": "{files, plural, one {# plik} other {# pliki}} zmienione · +{additions, number} −{deletions, number}",
+        "summary": "{files, plural, one {# plik zmieniony} few {# pliki zmienione} many {# plików zmienionych} other {# plików zmienionych}} · +{additions, number} −{deletions, number}",
         "truncated": "Dostawca zwrócił różnicę częściową. Niektóre zmienione pliki nie są pokazywane lub nie mają poprawki.",
         "noChanges": "Brak zmian między tymi commitami.",
         "statusModified": "Zmodyfikowany",
@@ -4736,12 +4736,12 @@
       },
       "warnings": {
         "diff_truncated_by_provider": "Dostawca zwrócił różnicę częściową.",
-        "diff_truncated_by_budget": "Tylko część diff zmieściła się w kontekście sztucznej inteligencji; {count, plural, one {# plik był} other {# pliki były}} podsumowane tylko ścieżką.",
+        "diff_truncated_by_budget": "Tylko część diff zmieściła się w kontekście sztucznej inteligencji; {count, plural, one {# plik był podsumowany} few {# pliki były podsumowane} many {# plików było podsumowanych} other {# plików było podsumowanych}} tylko ścieżką.",
         "llm_not_configured": "Brak aktywnej integracji LLM: ranking AI został pominięty.",
         "search_fallback_db": "Indeks wyszukiwania niedostępny: dopasowywanie słów kluczowych używało bazy danych.",
         "search_index_empty": "Indeks wyszukiwania nie zawiera przypadków testowych dla tego projektu, więc dopasowywanie słów kluczowych przywróciło się do nazw przypadków testowych w bazie danych i mogło pominąć dopasowania zawartości sprawy. Poproś administratora o odbudowanie indeksu wyszukiwania w administracji → Wyszukiwanie.",
         "ai_partial": "Niektóre partie sztucznej inteligencji nie powiodły się; wyniki mogą być niekompletne.",
-        "ai_truncated": "{count, plural, one {# partia sztucznej inteligencji była} other {# partie sztucznej inteligencji były}} odcięte przez model.",
+        "ai_truncated": "{count, plural, one {# partia sztucznej inteligencji była odcięta} few {# partie sztucznej inteligencji były odcięte} many {# partii sztucznej inteligencji było odciętych} other {# partii sztucznej inteligencji było odciętych}} przez model.",
         "no_candidates": "Żaden przypadek testowy nie pasował.",
         "anchor_fetch_capped": "Niektóre przypięte pliki były dopasowywane tylko ścieżką (osiągnięty limit pobierania).",
         "issue_commit_fetch_capped": "Niektóre commity nazywające bilety nie były przeczytane plik po pliku (osiągnięty limit pobierania); ich przypadki nie obejmują żadnych konkretnych plików.",
@@ -4845,8 +4845,8 @@
         "job": {
           "discoveringDatasets": "Odkrywanie zbiorów danych...",
           "scanningFile": "Skanowanie pliku eksportowego testmo...",
-          "datasetsProcessed": "{processed, number} zbiór danych{processed, plural, one {} other {s}} przetworzony",
-          "datasetsProcessedWithTotal": "{processed, number} z {total, number} zestawu danych{total, plural, one {} other {s}} przetworzono",
+          "datasetsProcessed": "{processed, number} {processed, plural, one {zbiór danych przetworzony} few {zbiory danych przetworzone} many {zbiorów danych przetworzonych} other {zbiorów danych przetworzonych}}",
+          "datasetsProcessedWithTotal": "{processed, number} z {total, number} {total, plural, one {zestawu danych} other {zestawów danych}} przetworzono",
           "rowsProcessed": "{value, number} przetworzonych wierszy",
           "itemsProcessed": "Przetworzono {processed, number} z {total, number} elementów",
           "analysisInProgress": "Analiza eksportu…",
@@ -4955,7 +4955,7 @@
           "issue_targets": "Przypisz cele problemów Testmo do integracji TestPlanIt (Jira, GitHub itp.)."
         },
         "mappingDatasetDefaultDescription": "Wykryto {dataset} w eksporcie Testmo.",
-        "mappingDatasetCount": "{count, number} rekord{count, plural, one {} other {s}} wykryto",
+        "mappingDatasetCount": "{count, number} {count, plural, one {rekord} few {rekordy} many {rekordów} other {rekordów}} wykryto",
         "mappingDatasetNoEntitiesTitle": "Nic do mapowania",
         "mappingDatasetNoEntitiesDescription": "Ten zestaw danych nie wymaga mapowania. Przejdź do następnego zestawu danych, gdy będziesz gotowy.",
         "mappingDatasetUnsupportedTitle": "Nie jest wymagane mapowanie",
@@ -5298,7 +5298,7 @@
         "defaultAccessUpdateFailed": "Nie udało się zaktualizować domyślnego poziomu dostępu",
         "emailVerificationEnabled": "Nowi użytkownicy muszą teraz zweryfikować adres e-mail",
         "emailVerificationDisabled": "Weryfikacja adresu e-mail nie jest już wymagana dla nowych użytkowników",
-        "emailVerificationDisabledAndVerified": "Weryfikacja adresu e-mail wyłączona i {count, plural, one {# konto użytkownika} other {# konta użytkowników}} zweryfikowane",
+        "emailVerificationDisabledAndVerified": "Weryfikacja adresu e-mail wyłączona i {count, plural, one {# konto użytkownika zweryfikowane} few {# konta użytkowników zweryfikowane} many {# kont użytkowników zweryfikowanych} other {# kont użytkowników zweryfikowanych}}",
         "emailVerificationUpdateFailed": "Nie udało się zaktualizować ustawień weryfikacji adresu e-mail",
         "emailServerNotConfigured": "Nie można włączyć weryfikacji poczty e-mail: serwer poczty e-mail nie jest skonfigurowany",
         "openRegistrationEnabled": "Samodzielna rejestracja jest teraz włączona",
@@ -7361,7 +7361,7 @@
         "searching": "Badawczy...",
         "searchError": "Nie udało się wyszukać problemów",
         "linkButton": "Połączyć",
-        "linkedCount": "{count, plural, one {# problem} other {# problemy}} połączone"
+        "linkedCount": "{count, plural, one {# problem połączony} few {# problemy połączone} many {# problemów połączonych} other {# problemów połączonych}}"
       }
     },
     "copyMove": {
@@ -7599,7 +7599,7 @@
     "delete": {
       "dialogTitle": "Usuń wymaganie",
       "confirmNoChildren": "Czy na pewno chcesz usunąć to wymaganie? Tę czynność można odwrócić.",
-      "confirmWithChildren": "To wymaganie ma {count, plural, one {{count} element podrzędny} few {{count} elementy podrzędne} many {{count} elementów podrzędnych} other {{count} elementu podrzędnego}}, które również zostaną usunięte. Tę czynność można odwrócić.",
+      "confirmWithChildren": "To wymaganie ma {count, plural, one {{count} element podrzędny, który również zostanie usunięty} few {{count} elementy podrzędne, które również zostaną usunięte} many {{count} elementów podrzędnych, które również zostaną usunięte} other {{count} elementu podrzędnego, które również zostaną usunięte}}. Tę czynność można odwrócić.",
       "success": "Wymaganie usunięte.",
       "failed": "Nie udało się usunąć wymagania.",
       "undo": "Anuluj",
@@ -9683,7 +9683,7 @@
       },
       "attempts": {
         "noAttemptsRemaining": "Brak prób. Spróbuj ponownie później.",
-        "attemptsRemaining": "{count, plural, =1 {1 próba} other {# prób pozostało}}."
+        "attemptsRemaining": "{count, plural, =1 {1 próba pozostała} few {# próby pozostały} many {# prób pozostało} other {# prób pozostało}}."
       }
     },
     "sharedReport": {
@@ -9811,7 +9811,7 @@
         "title": "Mapowanie kolumn CSV na pola kroków współdzielonych",
         "description": "Zmapuj kolumny CSV na pola kroków współdzielonych. Wymagane pola muszą być zmapowane.",
         "ignoreColumn": "Zignoruj tę kolumnę",
-        "requiredFieldsWarning": "{count, plural, one {# pole wymagane to} other {# pola wymagane to}} niezmapowane. Aby kontynuować, zmapuj wszystkie wymagane pola."
+        "requiredFieldsWarning": "{count, plural, one {# pole wymagane jest niezmapowane} few {# pola wymagane są niezmapowane} many {# pól wymaganych jest niezmapowanych} other {# pól wymaganych jest niezmapowanych}}. Aby kontynuować, zmapuj wszystkie wymagane pola."
       },
       "page3": {
         "title": "Podgląd importowanych danych",
@@ -10129,9 +10129,9 @@
       "description": "Kliknij tagi, aby przełączyć akceptację. Kliknij dwukrotnie, aby edytować nazwę tagu.",
       "selectEntity": "Wybierz jednostkę, aby wyświetlić sugestie tagów.",
       "noTagsSelected": "Nie wybrano tagów",
-      "footerSummary": "{assignCount, plural, one {# tag} other {# tagi}} zostaną przypisane, {newCount, plural, one {# nowy tag} other {# nowe tagi}} zostaną utworzone",
-      "footerAssignCount": "{assignCount, plural, one {# tag} other {# tagi}} zostaną przypisane",
-      "footerNewCount": "{newCount, plural, one {# nowy tag} other {# nowe tagi}} zostaną utworzone",
+      "footerSummary": "{assignCount, plural, one {# tag zostanie przypisany} few {# tagi zostaną przypisane} many {# tagów zostanie przypisanych} other {# tagów zostanie przypisanych}}, {newCount, plural, one {# nowy tag zostanie utworzony} few {# nowe tagi zostaną utworzone} many {# nowych tagów zostanie utworzonych} other {# nowych tagów zostanie utworzonych}}",
+      "footerAssignCount": "{assignCount, plural, one {# tag zostanie przypisany} few {# tagi zostaną przypisane} many {# tagów zostanie przypisanych} other {# tagów zostanie przypisanych}}",
+      "footerNewCount": "{newCount, plural, one {# nowy tag zostanie utworzony} few {# nowe tagi zostaną utworzone} many {# nowych tagów zostanie utworzonych} other {# nowych tagów zostanie utworzonych}}",
       "newTagsPopoverTitle": "Nowe tagi do utworzenia",
       "applying": "Aplikowanie...",
       "applySuccess": "{tagCount, plural, one {# tag} other {# tagi}} zastosowano do {entityCount, plural, one {# encja} other {# encje}}",
