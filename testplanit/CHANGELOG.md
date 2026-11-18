@@ -1,3 +1,19 @@
+## [1.3.0-beta.3](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.2...v1.3.0-beta.3) (2026-11-18)
+
+### Features
+
+* **db:** check replica lag and count where reads are routed ([96d751e](https://github.com/TestPlanIt/testplanit/commit/96d751ef142b2e4223c5a1677734baef508cb288))
+* **db:** route every API read through the replica router ([24a1f89](https://github.com/TestPlanIt/testplanit/commit/24a1f89ea0f21dd48e6dbc50f5d72714a9f4e86d))
+
+### Bug Fixes
+
+* **db:** keep the process alive when a database connection is lost ([b29d3ae](https://github.com/TestPlanIt/testplanit/commit/b29d3aed84a9c22c62d46edf51a32033bcf51d74))
+* **db:** open one set of database clients per process ([ced47a7](https://github.com/TestPlanIt/testplanit/commit/ced47a72ebd20c01c5d9699986ed11dbef6cc170))
+* **db:** read repository connections from the primary ([f9e16c3](https://github.com/TestPlanIt/testplanit/commit/f9e16c3984635d4053f196be1773a337cf123c4e))
+* **i18n:** correct plural agreement and broken ICU syntax in translations ([e85095b](https://github.com/TestPlanIt/testplanit/commit/e85095be1788486d9da6cfc1c07e58d923919c95))
+* **i18n:** keep ICU exact selectors in AI translation and report untranslated strings ([8f1accf](https://github.com/TestPlanIt/testplanit/commit/8f1accf1bf1033a49a0fda76dcc9180ae1881c21))
+* **i18n:** stop the sync overwriting corrected translations ([01e428e](https://github.com/TestPlanIt/testplanit/commit/01e428e61c9a524bfcbaeb1d862a58c314dd9a87))
+
 ## [1.3.0-beta.2](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.1...v1.3.0-beta.2) (2026-11-18)
 
 ### Bug Fixes
