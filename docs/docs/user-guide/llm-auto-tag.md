@@ -33,7 +33,7 @@ Click the **Auto-Tag** button in the toolbar to open the Auto Tag wizard.
 Choose what to analyze:
 
 - **Entity Types**: Select which types of items to tag — test cases, test runs, and/or sessions. At least one type must be selected.
-- **Untagged Only**: Toggle this option to limit analysis to items that currently have no tags. This is useful for catching items that were missed during manual tagging.
+- **Only analyze records without existing tags**: Toggle this option to limit analysis to items that currently have no tags. This is useful for catching items that were missed during manual tagging.
 - **Allow creating new tags**: Keep this enabled to let AI suggest brand-new tags when no good match exists. Disable it to restrict suggestions to existing project tags only.
 
 Click **Start Analysis** to begin.
@@ -107,7 +107,7 @@ For each item, the AI receives:
 - **Test steps** and expected results (for test cases)
 - **Custom field values** from your templates
 - **Existing tags** (to avoid suggesting duplicates)
-- **Linked-issue context** from any linked Jira / GitHub / GitLab / Azure DevOps / Gitea issues — the issue key, title, type (e.g. _Bug_, _Story_), priority, status, and (for Jira) any labels and components assigned to the issue. This is often the highest-leverage signal: Jira labels are pre-made taxonomy and map almost directly to test tags. The auto-tag picker only sees the linked-issue context that's already been synced into TestPlanIt — manually-linked issues get this metadata on their next sync.
+- **Linked-issue context** from any linked tracker issues (Jira, GitHub, GitLab, Gitea, Azure DevOps, Redmine, MantisBT, ClickUp) — the issue key, title, type (e.g. _Bug_, _Story_), priority, status, and (for Jira) any labels and components assigned to the issue. This is often the highest-leverage signal: Jira labels are pre-made taxonomy and map almost directly to test tags. The auto-tag picker only sees the linked-issue context that's already been synced into TestPlanIt — manually-linked issues get this metadata on their next sync.
 
 ### Intelligent Tag Matching
 
@@ -159,7 +159,7 @@ Auto Tag works with any configured LLM provider. The provider is resolved in thi
 
 ### Start with Untagged Items
 
-Use the **Untagged Only** toggle on your first pass to focus on items that have no tags at all. This gives you the biggest organizational improvement with the least review effort.
+Use the **Only analyze records without existing tags** toggle on your first pass to focus on items that have no tags at all. This gives you the biggest organizational improvement with the least review effort.
 
 ### Review Before Applying
 
@@ -200,13 +200,13 @@ For large projects, consider running Auto Tag on one entity type at a time. This
 **Causes:**
 
 - Items have very little content (empty descriptions, no steps)
-- All items already have comprehensive tags (when not using "Untagged Only")
+- All items already have comprehensive tags (when **Only analyze records without existing tags** is off)
 - **Allow creating new tags** is disabled and no existing tags fit the analyzed content
 
 **Solutions:**
 
 - Ensure items have meaningful names and descriptions
-- Try running without the "Untagged Only" filter
+- Try running with **Only analyze records without existing tags** turned off
 
 ### Some Items Show as Failed
 

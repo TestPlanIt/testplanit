@@ -102,6 +102,7 @@ Templates use [Mustache](https://mustache.github.io/) syntax. The Template Body 
 | ---------- | ------ | ------------- |
 | `{{name}}` | Text | Test case name |
 | `{{id}}` | Integer | Test case ID |
+| `{{displayKey}}` | Text | [Record key](./record-keys.md) such as `BANKING-TC-1234`; empty when record keys are off or the project has no code |
 | `{{folder}}` | Text | Folder name |
 | `{{state}}` | Text | Workflow state |
 | `{{estimate}}` | Integer | Time estimate in seconds |

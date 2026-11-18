@@ -40,12 +40,12 @@ const passedStatusId = await client.getStatusId(1, 'passed');
 await client.createTestResult({
   testRunId: testRun.id,
   testRunCaseId: 123,
-  statusId: passedStatusId,
+  statusId: passedStatusId!,
   elapsed: 15, // seconds
 });
 
-// Complete the test run
-await client.completeTestRun(testRun.id);
+// Complete the test run (run ID, project ID)
+await client.completeTestRun(testRun.id, 1);
 ```
 
 ## Configuration
@@ -77,8 +77,8 @@ const client = new TestPlanItClient({
 
 Generate an API token from your TestPlanIt instance:
 
-1. Go to **Settings** > **API Tokens**
-2. Click **Generate New Token**
+1. Open your **Profile** and go to the **API Tokens** section
+2. Click **Create Token**
 3. Copy the token (it starts with `tpi_`)
 
 Store the token securely using environment variables:
@@ -125,9 +125,9 @@ await client.updateTestRun(123, {
 });
 
 // Complete a test run (mark as finished)
-await client.completeTestRun(123);
+await client.completeTestRun(123, 1); // run ID, project ID
 
-// List test runs with pagination
+// List a project's completed test runs with pagination (active runs are not returned)
 const { data, totalCount, pageCount } = await client.listTestRuns({
   projectId: 1,
   page: 1,
@@ -225,7 +225,8 @@ const cases = await client.findTestCases({
 });
 
 // Find or create a test case (useful for auto-creating cases)
-const testCase = await client.findOrCreateTestCase({
+// action is 'found', 'created', or 'moved'
+const { testCase, action } = await client.findOrCreateTestCase({
   projectId: 1,
   folderId: 1,
   templateId: 1,
@@ -566,7 +567,7 @@ The client automatically retries failed requests:
 
 - **Retries on**: 5xx server errors, 429 rate limiting, network errors
 - **Does not retry on**: 4xx client errors (except 429)
-- **Default**: 3 retries with exponential backoff
+- **Default**: 3 retries, waiting `retryDelay` × the attempt number (1s, 2s, 3s). A 429 response waits for the server's `Retry-After` header, up to 60 seconds
 
 Configure retry behavior:
 
@@ -654,9 +655,9 @@ async function reportTestResults() {
     }
 
     // Complete the test run
-    await client.completeTestRun(testRun.id);
+    await client.completeTestRun(testRun.id, 1);
 
-    console.log(`Test run completed: ${client.getBaseUrl()}/test-runs/${testRun.id}`);
+    console.log(`Test run completed: ${client.getBaseUrl()}/projects/runs/1/${testRun.id}`);
   } catch (error) {
     if (error instanceof TestPlanItError) {
       console.error(`TestPlanIt error: ${error.message} (${error.statusCode})`);

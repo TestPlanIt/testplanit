@@ -55,10 +55,8 @@ Every user has a system-wide access level that determines their baseline permiss
 **Capabilities**:
 
 - Manage projects they are assigned to
-- Add/remove users from their projects
-- Configure project settings
-- Create and delete projects
-- Assign roles within their projects
+- Configure project settings (integrations, webhooks, AI models, advanced settings, shares)
+- View who can access their projects under **Settings → Access**
 - Full access to content within assigned projects
 - View the [audit log](./audit-logs.md#viewing-a-projects-activity) for assigned projects
 
@@ -70,13 +68,11 @@ Every user has a system-wide access level that determines their baseline permiss
 
 **Permissions**:
 
-- Create projects
 - Manage assigned projects
-- Manage project members
 - Configure project settings
 - Full access to project data
-- Cannot access system-wide administration
-- Cannot manage users outside their projects
+- Cannot access system-wide administration — creating projects and changing who can access a project are done by a system administrator under **Administration > Projects**
+- Cannot manage users
 
 #### USER (Standard User)
 
@@ -283,7 +279,7 @@ This has three consequences worth knowing:
 
 ### Managing Roles
 
-TestPlanIt does not ship with pre-configured roles — administrators create them in **Administration** > **Roles**. Two role concepts carry special behavior:
+TestPlanIt ships with two roles — `admin` (every permission on every area) and `user` (the default role) — and administrators create more in **Administration** > **Roles**. Two role concepts carry special behavior:
 
 - **The default role** - one role can be marked as the default. Newly provisioned users (including SCIM-provisioned accounts) receive it automatically, and it cannot be deleted while it is the default.
 - **Project admin roles** - any role with **Add/Edit** on the **Project Administration** area. See [Project admins](#project-admins).
@@ -345,13 +341,15 @@ Roles you may want to create:
 ### Creating Custom Roles
 
 1. Navigate to **Administration** > **Roles**
-2. Click **Create Role**
+2. Click **Add Role**
 3. Enter role name
 4. For each application area, toggle:
-   - Add/Edit permission
-   - Delete permission
-   - Close permission
-5. Save role
+   - **Add/Edit**
+   - **Delete**
+   - **Complete**
+   - **Read sensitive** (Restricted Fields areas only)
+   - **Approve** (Test Case Repository, Test Runs, and Sessions only)
+5. Click **Submit**
 6. Assign to users in projects
 
 ### Role Assignment
@@ -359,8 +357,8 @@ Roles you may want to create:
 Roles can be assigned at multiple levels:
 
 1. **Globally** - Every user has a system-wide default role (set in **Administration > Users**)
-2. **Per-Project (User)** - A user can be given a specific role for a project (set in **Project Settings > Members**)
-3. **Per-Project (Group)** - A group can be given a specific role for a project (set in **Project Settings > Members**)
+2. **Per-Project (User)** - A user can be given a specific role for a project (set on the **Users** tab of **Administration > Projects > Edit**)
+3. **Per-Project (Group)** - A group can be given a specific role for a project (set on the **Groups** tab of **Administration > Projects > Edit**)
 
 **Effective Role Resolution** (highest to lowest priority):
 
@@ -387,20 +385,17 @@ Groups provide an efficient way to manage permissions for teams.
 **Creating Groups**:
 
 1. Navigate to **Administration** > **Groups**
-2. Click **Create Group**
+2. Click **Add Group**
 3. Name the group (e.g., "QA Team", "Engineering")
 4. Add users to the group
 5. Save
 
 **Assigning Groups to Projects**:
 
-1. Navigate to **Project Settings** > **Members**
-2. Click **Add Group**
-3. Select the group
-4. Configure group permissions:
-   - Access type (GLOBAL_ROLE or SPECIFIC_ROLE)
-   - Role (if using SPECIFIC_ROLE)
-5. Save
+1. Go to **Administration > Projects** and click **Edit** on the project
+2. Open the **Groups** tab
+3. Set the group's **Project Access**: **Project Default**, **No Access**, **User's Global Role** (`GLOBAL_ROLE`), or a specific role (`SPECIFIC_ROLE`)
+4. Click **Save**
 
 ### Group Permission Behavior
 
@@ -412,7 +407,7 @@ Groups provide an efficient way to manage permissions for teams.
 - **Groups with SPECIFIC_ROLE** - All group members share the same assigned role for that project; if a member also belongs to a GLOBAL_ROLE-granted group, the SPECIFIC_ROLE grant decides their role
 
 :::note
-The project permissions described here are assigned **per project** in **Project Settings > Members**. The **Admin > Groups** page can also grant a group access on specific projects — see [Per-project access](./groups.md#per-project-access) — which materializes into the same group permission rows described above and resolves through the same precedence ladder. Separately, a group's **Mapped Access Tier** drives members' _global_ access level (see [Role mapping](./scim.md#role-mapping)) rather than any per-project role.
+The project permissions described here are assigned **per project** on the **Groups** tab of **Administration > Projects > Edit**. The **Admin > Groups** page can also grant a group access on specific projects — see [Per-project access](./groups.md#per-project-access) — which materializes into the same group permission rows described above and resolves through the same precedence ladder. Separately, a group's **Mapped Access Tier** drives members' _global_ access level (see [Role mapping](./scim.md#role-mapping)) rather than any per-project role.
 :::
 
 ### Use Cases
@@ -787,13 +782,13 @@ If the change still has not applied after a minute, it is not this cache. Confir
 
 ### Project Settings
 
-**Project Settings** > **Members**:
+**Project Settings** > **Access**:
 
-- View all members
-- Add/remove users
-- Configure access types
-- Assign roles
-- Manage groups
+- View every user who can open the project
+- See the role each user holds in the project
+- See where each user's access comes from (user permissions, group permissions, project default, or system access)
+
+The page is read-only. System administrators change access under **Administration > Projects**.
 
 ## API and Programmatic Access
 

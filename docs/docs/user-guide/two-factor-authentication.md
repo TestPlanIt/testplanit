@@ -124,19 +124,19 @@ If you've used backup codes or want to generate new ones:
 
 ### 2FA Enforcement Settings
 
-Administrators can configure organization-wide 2FA policies from the **Admin > SSO** settings page under **Registration Settings**.
+Administrators can configure organization-wide 2FA policies from **Admin → Authentication → Security**, in the **Sign-in Enforcement** section.
 
-#### Force 2FA for Non-SSO Logins
+#### Require 2FA for Password Logins
 
 When enabled:
 
 - Users signing in with **email/password** must have 2FA enabled
 - Users without 2FA will be redirected to set it up before accessing the application
-- Does **not** affect SSO logins (Google, Apple, SAML, Magic Link)
+- Does **not** affect SSO logins (Google, Apple, Microsoft, SAML, Magic Link)
 
 **Use Case**: Require additional security for password-based logins while allowing SSO users to rely on their identity provider's security controls.
 
-#### Force 2FA for All Logins
+#### Require 2FA for All Logins
 
 When enabled:
 
@@ -151,18 +151,18 @@ When enabled:
 | Setting | Password Login | SSO Login |
 | --------- | ---------------- | ----------- |
 | Both disabled | 2FA optional | 2FA optional |
-| Non-SSO only | 2FA required | 2FA optional |
+| Password logins only | 2FA required | 2FA optional |
 | All logins | 2FA required | 2FA required |
 
 ### SSO and Personal 2FA
 
-When **Force 2FA for All Logins** is NOT enabled:
+When **Require 2FA for All Logins** is NOT enabled:
 
 - Users who set up personal 2FA will only be prompted when using password login
 - SSO logins bypass personal 2FA settings
 - A notice is displayed on user profiles to inform users of this behavior
 
-When **Force 2FA for All Logins** IS enabled:
+When **Require 2FA for All Logins** IS enabled:
 
 - SSO users must complete 2FA verification after identity provider authentication
 - Personal 2FA settings are enforced for all login methods
@@ -188,8 +188,9 @@ When either enforcement setting is enabled:
 
 If a user is locked out:
 
-1. **Backup codes**: User enters one of their backup codes
-2. **Admin assistance**: Administrators can reset a user's 2FA through the admin panel (requires verification)
+- **Backup codes**: User enters one of their backup codes
+
+There is no administrator action that resets another user's 2FA, so a user without their authenticator app needs a backup code.
 
 ### Audit Trail
 

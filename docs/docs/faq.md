@@ -16,16 +16,16 @@ TestPlanIt is an open-source test management platform for creating, managing, an
 
 Yes, TestPlanIt is **open-source** and **free** to use. You can self-host it on your own infrastructure at no cost. The source code is available on [GitHub](https://github.com/TestPlanIt/testplanit).
 
-The TestPlanIt Team will be offering a hosted solution for users who do not want to self-host. However, be aware there will be a charge for hosting, but we will never charge for the use of the software. This means no features will be paywalled because you've chosen to host with us. Sign up on the [waitlist](https://testplanit.com/waitlist) to find out when it becomes available.
+The TestPlanIt Team also offers a hosted solution for users who do not want to self-host. There is a charge for hosting, but we will never charge for the use of the software, and no features are paywalled because you've chosen to host with us. See [pricing](https://testplanit.com/pricing) for details.
 
 ### What are the system requirements?
 
 TestPlanIt requires:
 
-- **RAM** 24GB to build, 8GB to run the whole stack
+- **RAM** 8GB to build, 8GB to run the whole stack (14GB recommended)
 - **Disk** 25GB+ space for data and file attachments
 - **Node.js** 24 or later
-- **PostgreSQL** 14 or later
+- **PostgreSQL** 15 or later
 - **Redis/Valkey** for background job processing
 - **Elasticsearch** for advanced search
 - **S3-compatible storage** for file attachments (AWS S3, RustFS, MinIO, or other S3-compatible storage solutions)
@@ -89,7 +89,7 @@ Yes, TestPlanIt includes session-based exploratory testing features. You can cre
 
 ### Can I use AI to generate test cases?
 
-Yes, TestPlanIt integrates with various LLM providers including OpenAI, Azure OpenAI, Anthropic, and Ollama (for local/private deployments). The AI features can help generate test cases from requirements and suggest test steps. See the [LLM integrations guide](/docs/user-guide/llm-integrations).
+Yes, TestPlanIt integrates with various LLM providers including OpenAI, Azure OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama (for local/private deployments). The AI features can help generate test cases from requirements and suggest test steps. See the [LLM integrations guide](/docs/user-guide/llm-integrations).
 
 ### Does TestPlanIt support multiple languages?
 
@@ -143,10 +143,10 @@ Check the following:
 If you're using Elasticsearch:
 
 1. Verify Elasticsearch is running and accessible
-2. Check that the `ELASTICSEARCH_URL` environment variable is correctly set
+2. Check that the `ELASTICSEARCH_NODE` environment variable is correctly set
 3. Rebuild the search index if needed
 
-If you're not using Elasticsearch, basic search functionality is available using PostgreSQL's built-in text search.
+If you're not using Elasticsearch, global search is unavailable. List filters and the rest of the application keep working.
 
 ### Background jobs aren't processing
 

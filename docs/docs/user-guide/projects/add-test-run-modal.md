@@ -30,7 +30,7 @@ This step collects the core details for the new test run. The form is split into
   When multiple configurations are selected, a separate test run will be created for each configuration, all sharing the same test cases. These runs are grouped together in a "Configuration Group" allowing you to view aggregated data across all configurations. See [Multi-Configuration Support](./run-details.md#multi-configuration-support) for details on viewing multi-configuration data.
 
   You do not have to decide this up front: a run can join, change, or leave a Configuration Group later from its details page. See [Configuration Group](./run-details.md#configuration-group).
-- **Milestone**: A searchable dropdown to link the test run to a specific project [Milestone](./milestones.md) — type to filter the list. Milestones synced from Jira are marked with the Jira icon. Select "None" if it's not tied to a milestone.
+- **Milestone**: A searchable dropdown to link the test run to a specific project [Milestone](./milestones.md) — type to filter the list. Milestones synced from a tracker are marked with that tracker's icon. Select "None" if it's not tied to a milestone.
   - If the modal was opened using the `+` button on a specific milestone group on the Test Runs page, that milestone will be pre-selected here.
   - Only active (non-completed) milestones are shown in the dropdown. Completed milestones are excluded since new test runs should be associated with ongoing work.
 - **Docs**: Another rich-text editor for linking to or embedding relevant documentation.

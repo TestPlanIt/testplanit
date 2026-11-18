@@ -64,7 +64,7 @@ pnpm exec playwright install
 
 ### 4. Setup the E2E Database
 
-Run migrations and seed the E2E database with test data:
+Push the schema and seed the E2E database with test data:
 
 ```bash
 pnpm test:e2e:setup-db
@@ -146,8 +146,8 @@ The Playwright configuration is in `testplanit/e2e/playwright.config.ts`.
 | --------- | ------- | ------------- |
 | Port | 3002 | E2E tests run on port 3002 to avoid conflicts with dev server |
 | Timeout | 60s | Global test timeout |
-| Retries | 2 (CI only) | Tests retry on CI, not locally |
-| Workers | 1 (dev) / 6 (prod) | More workers with production build |
+| Retries | 2 (CI) / 1 (prod build) / 0 (dev) | Tests retry on CI and on local production-build runs |
+| Workers | 1 (dev) / 4 (prod) / 2 (CI) | Override with `E2E_WORKERS` |
 | Browser | Chromium | Currently testing on Chrome only |
 
 ### Environment Variables

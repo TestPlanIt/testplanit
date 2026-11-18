@@ -82,7 +82,7 @@ What may go into a test run and how runs are kept tidy.
 
 When enabled, test cases in a *Not Started* workflow state are hidden from the **Add Cases** picker and can't be added to a run. If an existing case is reverted to *Not Started* (for example by a Review & Approval rejection), it's removed from any open run — unless it already has a recorded result, in which case it stays in the run but becomes read-only.
 
-### Lock run composition when execution starts
+### Lock Test Run composition when execution starts {#lock-run-composition-when-execution-starts}
 
 When enabled, a test run's case composition is **automatically locked** the moment the run moves into an *In Progress* workflow state. A locked run's case set is frozen — no adding, removing, or reordering cases — while assigning and executing cases continue to work. See [Composition lock](../run-details.md#composition-lock) for how the lock behaves and who can unlock it.
 

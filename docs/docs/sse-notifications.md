@@ -11,12 +11,14 @@ TestPlanIt uses [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/d
 - **`/api/issues/stream?projectId=<id>`** — powers live issue updates driven by inbound webhooks. One connection per project per browser, regardless of how many components on the page are watching that project.
 - **`/api/milestones/{milestoneId}/stream`** — powers live updates on a single milestone's detail page. One connection per milestone per browser.
 - **`/api/projects/{projectId}/milestones/stream`** — powers live updates for every milestone in a project at once. One connection per project per browser; list pages hold a single connection covering every milestone card rather than one per card.
+- **`/api/test-runs/{testRunId}/stream`** — powers live updates on a single test run's page.
+- **`/api/projects/{projectId}/test-runs/stream`** — powers live updates for a project's test run list.
 
 All streams have the same ingress/proxy requirements (no buffering, long idle timeouts) and the same observability surface; the differences are limited to the connection caps each route applies. This page documents how the transport works, the ingress/proxy configuration required to make long-lived streams reliable behind a load balancer, and the tuning knobs available to operators.
 
 ## What it is and how it works
 
-Before this transport existed, the bell polled `useFindManyNotification` every 5–30 seconds per session. That worked but does not scale — every active browser tab generates 2–12 unnecessary requests per minute even when nothing changed.
+Before this transport existed, the bell polled the notification list every 5–30 seconds per session. That worked but does not scale — every active browser tab generates 2–12 unnecessary requests per minute even when nothing changed.
 
 The current architecture replaces that with:
 
@@ -24,9 +26,9 @@ The current architecture replaces that with:
    - User channel: `notifications:tenant:<tenantId>:user:<userId>`
    - Broadcast channel (used for `SYSTEM_ANNOUNCEMENT`): `notifications:tenant:<tenantId>:broadcast`
 2. **Subscribe.** Each authenticated browser tab opens one long-lived `EventSource` connection to `GET /api/notifications/stream` (`testplanit/app/api/notifications/stream/route.ts`). The route subscribes to both the user channel and the tenant broadcast channel for the requesting user. In the browser the connection is a refcounted singleton (`testplanit/hooks/notificationStreamManager.ts`): the bell, the review inbox button and the compact-header alert counts all share it, so a tab never holds more than one notification stream.
-3. **Refetch.** On every SSE message, the bell calls `refetch()` on its existing `useFindManyNotification` query, and the review surfaces invalidate their `ReviewRequest` queries. The wake-up payload is treated as opaque "something changed" — actual notification data is fetched through the policy-enforced ZenStack hook so multi-tenant isolation and access control are re-applied on every read.
+3. **Refetch.** On every SSE message, the bell calls `refetch()` on its existing `notification.useFindMany` query, and the review surfaces invalidate their `ReviewRequest` queries. The wake-up payload is treated as opaque "something changed" — actual notification data is fetched through the policy-enforced ZenStack hook so multi-tenant isolation and access control are re-applied on every read.
 
-The pub/sub layer is treated as untrusted plumbing: even if a wake-up arrives wrongly, the read path cannot leak data because `getEnhancedDb` re-applies the tenant filter and access policy. Tenant context for both publish and subscribe is resolved server-side via `getCurrentTenantId()` (`testplanit/lib/multiTenantPrisma.ts`), which reads `INSTANCE_TENANT_ID` from the environment — never from client input.
+The pub/sub layer is treated as untrusted plumbing: even if a wake-up arrives wrongly, the read path cannot leak data because `getEnhancedDb` re-applies the tenant filter and access policy. Tenant context for both publish and subscribe is resolved server-side via `getCurrentTenantId()` (`testplanit/lib/multiTenantDb.ts`), which reads `INSTANCE_TENANT_ID` from the environment — never from client input.
 
 A single shared Valkey instance handles fan-out for every tenant; isolation is by channel-key prefix, not by separate Valkey deployments. The Valkey already provisioned for BullMQ is reused.
 
@@ -122,7 +124,7 @@ HTTP/2 is enabled by default on ALB v2; no extra configuration needed. SSE multi
 For deployments that put TestPlanIt behind a manually configured nginx (e.g. on a single docker-compose host), add a location block for each stream. All routes need the same directives, so a regex location is the most compact way to cover them:
 
 ```nginx
-location ~ ^/api/(notifications|issues)/stream|^/api/milestones/[^/]+/stream|^/api/projects/[^/]+/milestones/stream {
+location ~ ^/api/(notifications|issues)/stream|^/api/(milestones|test-runs)/[^/]+/stream|^/api/projects/[^/]+/(milestones|test-runs)/stream {
   proxy_pass http://testplanit_upstream;
   proxy_http_version 1.1;
   proxy_set_header Connection "";
@@ -150,13 +152,15 @@ Each route has its own per-tenant and per-user connection caps so a misbehaving 
 | Variable                    | Default | Purpose                                                                                                                                                                                                                                                                                                                                              |
 | --------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SSE_ISSUES_PER_TENANT_CAP` | `1000`  | Same semantics as `SSE_PER_TENANT_CAP`, applied to the issue-update stream.                                                                                                                                                                                                                                                                          |
-| `SSE_ISSUES_PER_USER_CAP`   | `8`     | Maximum concurrent issue-update connections per user per pod. Higher than the notifications cap because the singleton EventSource manager opens one connection per project the user is watching, and a project switcher / multi-project workflow can legitimately need more open project streams than notification streams (which are user-scoped). |
+| `SSE_ISSUES_PER_USER_CAP`   | `8`     | Maximum concurrent issue-update connections per user per pod. The singleton EventSource manager opens one connection per project the user is watching, so this bounds how many projects a user can watch at once from one browser. |
 
 All four variables are read once at module load. Restart the application pods after changing them.
 
 ### Milestone stream caps
 
 The milestone routes don't implement their own per-tenant or per-user connection caps — there is no `SSE_MILESTONES_*` equivalent to the variables above. They share the same Valkey connection, the same subscribe-time access gate, and the same fail-closed `503`/`Retry-After: 30` response when Valkey isn't reachable, but connection volume for these two routes is bounded only by the browser-side refcounted singleton (one connection per milestone or per project, however many components subscribe) rather than a server-side cap.
+
+The two test-run routes (`/api/test-runs/{testRunId}/stream` and `/api/projects/{projectId}/test-runs/stream`) likewise have no server-side connection caps. They apply the same subscribe-time access gate (a `404` when the user cannot read the test run or project) and the same `503`/`Retry-After: 30` response when Valkey isn't reachable.
 
 ## Observability
 
@@ -217,7 +221,7 @@ The chart already sets `server.terminationGracePeriodSeconds: 45` on the web Dep
 
 - Route: `testplanit/app/api/notifications/stream/route.ts`
 - Channel helpers: `testplanit/lib/notifications/channels.ts`
-- Publisher: `testplanit/workers/notificationWorker.ts` (after `prisma.notification.create`)
+- Publisher: `testplanit/workers/notificationWorker.ts` (after `db.notification.create`)
 - Valkey wiring: `testplanit/lib/valkey.ts` (default singleton + `createSubscriberClient` factory)
 - Bell client: `testplanit/components/NotificationBell.tsx` (EventSource useEffect)
 - Milestone per-milestone route: `testplanit/app/api/milestones/[milestoneId]/stream/route.ts`

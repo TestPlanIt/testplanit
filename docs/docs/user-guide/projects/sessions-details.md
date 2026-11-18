@@ -31,11 +31,11 @@ The header area displays key information and actions:
   - **View Mode (Completed Session)**:
     - Displays a "Completed On [Date]" badge.
     - **Export PDF**: Exports the session to PDF (available on completed sessions as well).
-    - **Delete**: Opens a confirmation dialog to permanently delete the session and all its results/versions. This action is irreversible (Admin only).
+    - **Delete**: Opens a confirmation dialog to delete the session. Requires `Delete` permission for Sessions (for a completed session, for Closed Sessions). Deleted sessions can be restored from the Trash.
   - **Edit Mode**:
     - **Save**: Saves changes made in Edit mode. This creates a new version of the session.
     - **Cancel**: Discards changes and returns to View mode.
-    - **Delete**: Opens a confirmation dialog to permanently delete the session and all its results/versions. This action is irreversible (Admin only).
+    - **Delete**: Opens a confirmation dialog to delete the session. Requires `Delete` permission for Sessions (for a completed session, for Closed Sessions). Deleted sessions can be restored from the Trash.
   - **Activity**: Available in view mode. Opens the session's [Activity Log](../audit-logs.md#viewing-an-items-activity) — a scoped history of every change, including the results and field values captured during the session. Visible to anyone who can view the session.
 
 ## Left Panel Content
@@ -44,9 +44,9 @@ The header area displays key information and actions:
 - **Mission**: Displays the session's mission/charter using a rich-text viewer. In Edit mode, this becomes an editable TipTap editor.
 - **Configuration Selector** (View Mode Only, Multi-Config Sessions): When a session is part of a [multi-configuration group](./sessions-add.md#multi-configuration-support), a configuration selector appears above the results. This single-select combobox shows the current session's configuration and lists all sibling sessions in the group. Selecting a different configuration navigates to that sibling session's detail page, matching the behavior of the [Test Run Details](./run-details.md) multi-configuration selector.
 - **Session Results** (View Mode Only):
-  - **Summary**: Shows counts of different result types (Notes, Issues, Questions) recorded.
-  - **Add Result Form**: A form to quickly add new results (Note, Issue, Question), including a text area and optional attachment upload.
-  - **Results List**: A chronological list of all results recorded for this session, showing the type, content preview, creator, and creation time for each.
+  - **Summary**: A segmented bar of the results recorded so far, colored by status and sized by elapsed time, with the total elapsed time against the session's estimate. A toggle sorts the bar by status or by date.
+  - **Add Result Form**: A form to add a result: a details editor, a status, the elapsed time, attachments, linked issues, and any result fields the session's template defines. See [Session Execution & Results](./sessions-execution.md).
+  - **Results List**: A chronological list of all results recorded for this session, newest first, showing the status, details, creator, and creation time for each.
 
 ## Right Panel Content (Metadata & Controls)
 

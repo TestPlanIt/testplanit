@@ -125,6 +125,7 @@ const sidebars: SidebarsConfig = {
                 'user-guide/sso', // Single Sign-On providers and SAML configuration
                 'user-guide/passwordless-sign-in', // Device-bound magic link + relay code (scanner-proof)
                 'user-guide/security-settings', // Sign-in enforcement, password policy, lockout, enforcement
+                'user-guide/two-factor-authentication', // Two-factor authentication
                 'api-tokens', // API tokens
                 'user-guide/scim', // SCIM 2.0 provisioning from external IdP
               ],
@@ -205,6 +206,7 @@ const sidebars: SidebarsConfig = {
                 'user-guide/app-config', // Corresponds to app-config.md
                 'user-guide/record-keys', // Project-prefixed record keys (cosmetic IDs)
                 'user-guide/data-imports', // Data Imports (Testmo JSON wizard)
+                'import-testmo', // Testmo import guide
                 'user-guide/search-engine', // Elasticsearch status, replicas, reindex
                 'user-guide/queues', // Background job queue management
                 'user-guide/audit-logs', // Audit logs for compliance and security
@@ -224,6 +226,7 @@ const sidebars: SidebarsConfig = {
         'user-guide/alerts', // Metric alerts the user follows, managed from the profile
         'user-guide/user-menu', // Corresponds to user-menu.md
         'user-guide/notifications-inbox', // User-facing notification center + preferences
+        'user-guide/comments', // Comments and mentions
         'user-guide/reviews-inbox', // Reviewer inbox for Review & Approval
         // Add the new Projects category here
         {
@@ -273,10 +276,12 @@ const sidebars: SidebarsConfig = {
                     'user-guide/projects/staged-test-cases', // Private staged cases + batch create
                     'user-guide/projects/repository-case-details', // Add Test Case Details page
                     'user-guide/projects/repository-case-versions', // Add Test Case Versions page
+                    'user-guide/projects/test-case-links', // Linked test cases
                     'user-guide/projects/case-draft-autosave', // Auto-save and draft recovery
                     'user-guide/projects/parameterized-test-cases', // Parameterized Test Cases feature hub
                     'user-guide/projects/step-duplicate-detection', // Step sequence duplicate detection
                     'import-export', // Add import-export.md
+                    'import-markdown', // Markdown test case import
                     'copy-move-test-cases', // Copy/Move test cases between projects
                     'user-guide/projects/duplicate-detection', // Duplicate test case detection
                     'user-guide/projects/quickscript', // QuickScript from repository

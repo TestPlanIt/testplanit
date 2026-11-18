@@ -26,11 +26,13 @@ TestPlanIt supports three types of test case links:
 **Purpose**: Links test cases that represent the same test but come from different sources.
 
 **Common Use Cases**:
+
 - Linking a manually created test case to its automated JUnit equivalent
 - Connecting API tests to their UI counterparts
 - Linking test cases imported from different systems
 
 **Example**:
+
 ```
 Manual Test: "User Login - Happy Path"
     ↕ SAME_TEST_DIFFERENT_SOURCE
@@ -38,6 +40,7 @@ JUnit Test: "com.example.auth.LoginTest.testSuccessfulLogin"
 ```
 
 **Benefits**:
+
 - Track both manual and automated coverage for the same scenario
 - Compare execution results between manual and automated runs
 - Ensure test case parity across different test types
@@ -52,6 +55,7 @@ JUnit Test: "com.example.auth.LoginTest.testSuccessfulLogin"
 **Purpose**: Indicates that one test case depends on another. The link has a direction: the case that **depends on** the other is the dependant, and the other case is its **prerequisite**.
 
 **Common Use Cases**:
+
 - Test execution order requirements
 - Setup/precondition dependencies
 - Integration test dependencies
@@ -59,6 +63,7 @@ JUnit Test: "com.example.auth.LoginTest.testSuccessfulLogin"
 - Cross-team end-to-end scenarios, where each team's part is its own test case and must run after the previous one has passed
 
 **Example**:
+
 ```
 Test Case C: "Update User Profile"
     depends on ↓
@@ -75,6 +80,7 @@ On each case the panel shows the relationship from that case's side:
 When you add the link you can choose either direction, so you can record "C depends on B" from either C's page (*Depends on*) or B's page (*Blocks*). Both create the same link.
 
 **Benefits**:
+
 - Document test execution prerequisites
 - Plan test run sequencing
 - Identify blockers when tests fail
@@ -109,10 +115,11 @@ Links are checked for cycles when they are created, so a chain of dependencies a
 ### Viewing Links
 
 1. Navigate to a test case in the repository
-2. Scroll to the **Linked Cases** section (usually below test steps)
+2. Scroll to the **Linked Test Cases** section (usually below test steps)
 3. View all test cases linked to the current case
 
 The Linked Cases panel displays:
+
 - **Test Case Name** - Clickable link to the linked case
 - **Source Icon** - Visual indicator (manual vs. JUnit)
 - **Link Type** - Badge showing the relationship type
@@ -124,13 +131,14 @@ The Linked Cases panel displays:
 
 ### Empty State
 
-If no links exist, the panel shows: "No linked cases"
+If no links exist, the panel shows: "No linked test cases."
 
 ## Creating Links
 
 ### Prerequisites
 
 To create links, you need:
+
 - Write permissions on the project
 - Access to both test cases
 - Test cases must be in the same project
@@ -138,7 +146,7 @@ To create links, you need:
 ### Adding a Link
 
 1. Open a test case in the repository
-2. Locate the **Linked Cases** section
+2. Locate the **Linked Test Cases** section
 3. Click the **Add Link** button (+ icon)
 4. In the "Add Linked Test Case" dialog:
    - **Select Test Case**: Use the searchable dropdown to find the case
@@ -156,6 +164,7 @@ To create links, you need:
 ### Link Validation
 
 The system prevents invalid links:
+
 - **Self-Links**: Cannot link a test case to itself
 - **Duplicate Links**: Cannot create the same link twice
 - **Circular Dependencies**: A *Depends on* link that would make a case depend on itself, directly or through other cases, is rejected. The check is made on the server, so it also covers links created through the API, restored from the trash, or carried over when cases are merged.
@@ -169,15 +178,18 @@ If validation fails, an error message explains the issue.
 For each linked case, you can see:
 
 **Test Case Information**:
+
 - Name with clickable link to view the case
 - Source indicator (manual or automated)
 
 **Link Metadata**:
+
 - Link type badge
 - When the link was created
 - Who created the link
 
 **Execution Status**:
+
 - Latest test result status (Passed, Failed, etc.)
 - Status badge with color coding
 - Execution timestamp
@@ -187,12 +199,12 @@ For each linked case, you can see:
 
 To unlink test cases:
 
-1. Locate the link in the Linked Cases table
-2. Click the **X** (remove) button in the rightmost column
+1. Locate the link in the Linked Test Cases table
+2. Click the **Remove** button in the rightmost column
 3. In the confirmation popover:
    - Review the unlink action
    - Click **Cancel** to keep the link
-   - Click **Remove Link** to confirm
+   - Click **Remove** to confirm
 
 :::warning Unlink Action
 Removing a link is permanent and cannot be undone. The link relationship is deleted from both test cases.
@@ -211,12 +223,14 @@ The Linked Cases panel shows both outgoing and incoming links together, and labe
 Creating or removing links affects test execution forecasts:
 
 **Automatic Forecast Updates**:
+
 - When you add a link, forecasts update for both test cases
 - When you remove a link, forecasts recalculate for both cases
 - Helps maintain accurate time estimates
 - Considers relationship types in calculations
 
 **Forecast Behavior**:
+
 - Links may adjust estimated execution time
 - "Depends On" relationships can affect test run planning
 - "Same Test" links help identify redundant execution
@@ -227,16 +241,19 @@ Creating or removing links affects test execution forecasts:
 ### Linking Strategy
 
 **1. Link Related Tests Consistently**
+
 - Establish team conventions for when to create links
 - Document your linking strategy in project documentation
 - Review links during test case reviews
 
 **2. Use Appropriate Link Types**
+
 - Use "Same Test, Different Source" for test variations
 - Use "Depends On" for actual dependencies
 - Don't overuse links - only link when meaningful
 
 **3. Maintain Links**
+
 - Remove obsolete links when test cases are updated
 - Verify links after major test case changes
 - Update links when test dependencies change
@@ -244,16 +261,19 @@ Creating or removing links affects test execution forecasts:
 ### Organization Tips
 
 **1. Link During Test Creation**
+
 - Create links as you write new test cases
 - Link automated tests when importing JUnit results
 - Add dependency links during test planning
 
 **2. Review Links Periodically**
+
 - Audit links during sprint retrospectives
 - Check for broken relationships
 - Remove unnecessary links
 
 **3. Use Links for Planning**
+
 - Review dependency links when planning test runs
 - Check "Same Test" links for automation coverage gaps
 - Use links to optimize test execution order
@@ -261,6 +281,7 @@ Creating or removing links affects test execution forecasts:
 ### Common Patterns
 
 **Pattern 1: Manual to Automated Transition**
+
 ```
 1. Create manual test case
 2. Implement automated version
@@ -270,6 +291,7 @@ Creating or removing links affects test execution forecasts:
 ```
 
 **Pattern 2: Test Suite Dependencies**
+
 ```
 Setup Tests (no dependencies)
     ↓ DEPENDS_ON
@@ -281,6 +303,7 @@ Teardown Tests (depend on all)
 ```
 
 **Pattern 3: Cross-Platform Testing**
+
 ```
 Web Test: "Search Functionality"
     ↕ SAME_TEST_DIFFERENT_SOURCE
@@ -296,6 +319,7 @@ API Test: "Search Endpoint"
 **Scenario**: You're automating manual test cases
 
 **Process**:
+
 1. Identify manual test case for automation
 2. Create JUnit automated test
 3. Import JUnit results into TestPlanIt
@@ -304,6 +328,7 @@ API Test: "Search Endpoint"
 6. Track automation coverage percentage
 
 **Benefits**:
+
 - Easily see which tests are automated
 - Verify automation matches manual tests
 - Track automation progress
@@ -314,6 +339,7 @@ API Test: "Search Endpoint"
 **Scenario**: Tests must run in a specific order
 
 **Process**:
+
 1. Identify test execution dependencies
 2. Create "Depends On" links from dependent tests to prerequisites
 3. Use links to plan test run order
@@ -321,6 +347,7 @@ API Test: "Search Endpoint"
 5. Turn on [dependency enforcement](#enforcing-dependencies-in-test-runs) so dependent cases are blocked until their prerequisites pass, and the next tester is notified when they do
 
 **Benefits**:
+
 - Document execution order requirements
 - Prevent wasted test effort
 - Clear communication of dependencies
@@ -331,6 +358,7 @@ API Test: "Search Endpoint"
 **Scenario**: A feature changes and you need to know affected tests
 
 **Process**:
+
 1. Find test case for the changed feature
 2. Review all linked test cases
 3. Check both incoming and outgoing links
@@ -338,6 +366,7 @@ API Test: "Search Endpoint"
 5. Plan retesting strategy
 
 **Benefits**:
+
 - Quickly identify affected tests
 - Reduce risk of missing related tests
 - Better change impact assessment
@@ -348,6 +377,7 @@ API Test: "Search Endpoint"
 **Scenario**: Multiple test cases cover the same functionality
 
 **Process**:
+
 1. Identify duplicate or overlapping test cases
 2. Link them with "Same Test, Different Source"
 3. Compare execution history
@@ -355,6 +385,7 @@ API Test: "Search Endpoint"
 5. Maintain best version
 
 **Benefits**:
+
 - Reduce test maintenance burden
 - Eliminate redundant test execution
 - Improve test suite efficiency
@@ -367,6 +398,7 @@ API Test: "Search Endpoint"
 **Issue**: "Add Link" button is disabled or not visible
 
 **Solutions**:
+
 - Verify you have write permissions on the project
 - Ensure you're viewing a test case (not a folder)
 - Check that you're logged in
@@ -377,6 +409,7 @@ API Test: "Search Endpoint"
 **Issue**: Error message when trying to add a link
 
 **Common Causes**:
+
 - **"Cannot link to self"**: You selected the current test case
   - Solution: Select a different test case
 - **"Circular link detected"**: The link would create a cycle
@@ -389,6 +422,7 @@ API Test: "Search Endpoint"
 **Issue**: Expected links don't appear in the panel
 
 **Solutions**:
+
 - Refresh the page to reload links
 - Verify the linked case wasn't deleted
 - Check if links were removed
@@ -400,6 +434,7 @@ API Test: "Search Endpoint"
 **Issue**: Changes to linked cases don't reflect immediately
 
 **Solutions**:
+
 - Wait a moment for data to sync
 - Refresh the browser page
 - Check network connectivity
@@ -410,16 +445,19 @@ API Test: "Search Endpoint"
 ### Required Permissions
 
 **View Links**:
+
 - Read access to the test case
 - Read access to the project
 - Links to cases you can't access won't appear
 
 **Create Links**:
+
 - Write access to the project
 - Read access to both test cases
 - Cannot link cases across different projects
 
 **Remove Links**:
+
 - Write access to the project
 - Permission to modify test cases
 - Same permissions as creating links
@@ -449,11 +487,12 @@ API Test: "Search Endpoint"
 
 ### API Integration
 
-Links are accessible via API:
+Links are accessible via API. Read operations are `GET` requests whose `q` parameter is the URL-encoded JSON query; see the [API Reference](../../api-reference.md).
 
 **Get Links for Test Case**:
+
 ```http
-GET /api/model/RepositoryCaseLink/findMany?q={
+GET /api/model/repositoryCaseLink/findMany?q={
   "where": {
     "OR": [
       {"caseAId": 123, "isDeleted": false},
@@ -468,8 +507,9 @@ GET /api/model/RepositoryCaseLink/findMany?q={
 ```
 
 **Create Link**:
+
 ```http
-POST /api/model/RepositoryCaseLink/create
+POST /api/model/repositoryCaseLink/create
 Content-Type: application/json
 
 {
@@ -482,8 +522,9 @@ Content-Type: application/json
 ```
 
 **Remove Link (Soft Delete)**:
+
 ```http
-PUT /api/model/RepositoryCaseLink/update
+PATCH /api/model/repositoryCaseLink/update
 Content-Type: application/json
 
 {
@@ -495,6 +536,7 @@ Content-Type: application/json
 ---
 
 **Related Documentation**:
+
 - [Test Case Repository](./repository.md) - Managing test cases
 - [Test Execution](./test-case-execution.md) - Running tests
 - [Advanced Settings](./settings/advanced.md#enforce-test-case-dependencies-in-test-runs) - Enforcing dependencies in test runs

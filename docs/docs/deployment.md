@@ -103,7 +103,7 @@ AWS_ACCESS_KEY_ID="minioadmin"
 AWS_SECRET_ACCESS_KEY="minioadmin123"
 AWS_BUCKET_NAME="testplanit"
 AWS_ENDPOINT_URL="http://minio:9000"
-AWS_PUBLIC_ENDPOINT_URL="https://your-domain.com/minio"
+AWS_PUBLIC_ENDPOINT_URL="https://your-domain.com"
 
 # Application
 NEXTAUTH_URL="https://your-domain.com"
@@ -263,7 +263,7 @@ If you are updating from a release that bundled MinIO, migrate your files before
 
 The workers container (`testplanit-workers`) handles:
 
-**Scheduled Jobs** (via PM2 cron):
+**Scheduled Jobs** (BullMQ job schedulers, registered by the scheduler when the workers start):
 
 - Daily digest emails (8 AM)
 - Forecast updates (3 AM)
@@ -292,7 +292,7 @@ docker exec testplanit-workers pm2 logs notification-worker
 
 Most service data is stored in `./docker-data/`:
 
-- `redis/` - Valkey persistence
+- `valkey/` - Valkey persistence
 - `elasticsearch/` - Search indexes
 - `rustfs/` - File attachments
 
@@ -304,7 +304,7 @@ of a bind mount, so it can never end up inside the build context.
 **Option 1: Docker RustFS** (`with-minio` profile)
 
 - Internal endpoint: `http://minio:9000` (app → storage)
-- External access: `https://yourdomain.com/minio/` (browser → files)
+- External access: `https://yourdomain.com/testplanit/…` (browser → files)
 - Admin console: `http://localhost:9001`
 
 **Option 2: AWS S3** (no `with-minio` profile)

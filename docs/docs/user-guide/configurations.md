@@ -42,7 +42,7 @@ The Categories table lists all defined categories with columns for:
 ### Deleting a Category
 
 :::warning Important
-Deleting a Category is irreversible and will also **permanently delete all Variants within it AND all Configurations that use any of those Variants**. Proceed with extreme caution.
+Deleting a Category also deletes **all Variants within it and all Configurations that use any of those Variants**. These are soft deletes — an administrator can restore them from [Trash](./trash.md) — but the Configurations disappear from every picker immediately.
 :::
 
 1. Click the **Delete** icon in the Actions column for the desired Category.
@@ -71,7 +71,7 @@ To manage Variants, first expand the Category row by clicking the expand icon (�
   2. **Important:** Disabling a Variant prevents it from being used in new Configurations and **will automatically disable all existing Configurations that use this Variant**. A confirmation dialog will appear before disabling.
 - **Deleting a Variant:**
   :::warning Important
-  Deleting a Variant is irreversible and will also **permanently delete all Configurations that use this Variant**. Consider disabling the Variant instead if you might need it later or want to preserve related Configurations.
+  Deleting a Variant also deletes **all Configurations that use this Variant**. These are soft deletes — an administrator can restore them from [Trash](./trash.md) — but the Configurations disappear from every picker immediately. Consider disabling the Variant instead if you might need it later or want to preserve related Configurations.
   :::
   1. Click the **Delete** icon button next to the desired Variant name.
   2. A confirmation dialog will appear.
@@ -101,7 +101,7 @@ Above the table:
 Selecting one or more rows reveals an **Edit N configurations** button next to the project filter. Clicking it opens a single dialog where you can apply any combination of the following to every selected Configuration:
 
 - **Replace Projects**: Tick the **Projects** checkbox and pick the Projects the selected Configurations should be assigned to. Submitting *replaces* their existing assignments with the chosen set. Leave the checkbox unchecked to leave Project assignments untouched.
-- **Set enabled state**: Tick the **Set enabled state** checkbox and use the switch to enable or disable every selected Configuration on submit. Leave the checkbox unchecked to leave the enabled state untouched.
+- **Change enabled state**: Tick the **Change enabled state** checkbox and use the switch to enable or disable every selected Configuration on submit. Leave the checkbox unchecked to leave the enabled state untouched.
 - **Delete**: The destructive **Delete N configurations** button (with confirmation) marks every selected Configuration as deleted at once.
 
 Clicking **Apply to N configurations** runs the selected changes; **Cancel** discards them.

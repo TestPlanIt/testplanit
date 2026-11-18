@@ -73,6 +73,7 @@ This view is available to anyone who can open the item — no administrator acce
 | `BULK_CREATE` | Multiple records created at once |
 | `BULK_UPDATE` | Multiple records updated at once |
 | `BULK_DELETE` | Multiple records deleted at once |
+| `DUPLICATED` | A test case was created by copying another test case within the same project; the entry names the source case |
 
 ### Permission & Access Control
 
@@ -129,6 +130,52 @@ This view is available to anyone who can open the item — no administrator acce
 | Action | Description |
 | -------- | ------------- |
 | `DATA_EXPORTED` | Data was exported from the system |
+
+### Reviews
+
+| Action | Description |
+| -------- | ------------- |
+| `REVIEW_REQUESTED` | A review was requested for a workflow transition, singly or in bulk |
+| `REVIEW_APPROVED` | A reviewer approved a review request |
+| `REVIEW_CHANGES_REQUESTED` | A reviewer requested changes on a review request |
+| `REVIEW_REJECTED` | A reviewer rejected a review request |
+| `REVIEW_CANCELLED` | A review request was cancelled, by a user or because the item under review was deleted |
+| `REVIEW_REMINDED` | Reviewers were reminded of a pending review, by a user or by the scheduled reminder job |
+| `REVIEW_DECISION_REVERTED` | A review decision was reverted; the entry keeps the reverted decision and its comment |
+
+### Parameterized Test Cases
+
+| Action | Description |
+| -------- | ------------- |
+| `ITERATION_VALUES_OVERRIDDEN` | The parameter values of one iteration in a test run were overridden |
+| `ITERATION_BULK_SKIPPED` | Iterations of a test run case were skipped in bulk (one entry per iteration) |
+| `ITERATION_RESULT_RECORDED` | A result was recorded for an iteration |
+
+### Automated Execution
+
+| Action | Description |
+| -------- | ------------- |
+| `EXECUTION_REQUESTED` | An automated execution was requested for a test run |
+| `EXECUTION_DISPATCHED` | The CI provider accepted the execution's dispatch |
+| `EXECUTION_COMPLETED` | An execution reached a final state; the outcome (succeeded, failed, could not start, timed out, or cancelled) is in the metadata |
+
+### Webhooks
+
+| Action | Description |
+| -------- | ------------- |
+| `WEBHOOK_RECEIVED` | An inbound webhook delivery was processed; the outcome is in the metadata |
+| `WEBHOOK_DISPATCHED` | An outbound webhook delivery attempt finished, with its status code and success or failure |
+| `WEBHOOK_REPLAYED` | A user replayed an outbound webhook delivery, singly or in bulk |
+| `WEBHOOK_HEALTH_CHANGED` | A webhook's endpoint health changed, automatically after repeated failures or when a user re-enabled it |
+| `WEBHOOK_RETENTION_PURGED` | The retention job removed old webhook delivery records, with the row counts |
+
+### Retention Jobs
+
+| Action | Description |
+| -------- | ------------- |
+| `AUDIT_LOG_ARCHIVED` | The retention job moved old audit log entries to object storage (see [Retention](#retention)) |
+| `AUDIT_LOG_PURGED` | The retention job permanently deleted old audit log entries |
+| `DCL_RETENTION_PURGED` | The retention job removed old captured change records that had already been processed into the audit log |
 
 ## Tracked Entities
 

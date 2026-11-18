@@ -26,7 +26,7 @@ To use API tokens, a user must have **API Access** enabled on their account. Thi
 
 1. Navigate to your **User Profile** page
 2. Open the **API Tokens** section
-3. Click **Create API Token**
+3. Click **Create Token**
 4. Enter a descriptive name for the token (e.g., "CI/CD Pipeline", "Local CLI")
 5. Optionally set an expiration date
 6. Click **Create**
@@ -52,25 +52,27 @@ The `tpi_` prefix identifies TestPlanIt API tokens. The first 8 characters after
 Include the API token in the `Authorization` header of your HTTP requests:
 
 ```bash
-curl -X GET "https://your-domain.com/api/model/project/findMany" \
+curl -G "https://your-domain.com/api/model/projects/findMany" \
   -H "Authorization: Bearer tpi_your_token_here" \
-  -H "Content-Type: application/json"
+  --data-urlencode 'q={"where":{"isDeleted":false}}'
 ```
+
+Read operations such as `findMany` are `GET` requests; the query goes in the URL-encoded `q` parameter.
 
 ### JavaScript/TypeScript Example
 
 ```javascript
-const response = await fetch('https://your-domain.com/api/model/project/findMany', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer tpi_your_token_here',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
+const q = encodeURIComponent(
+  JSON.stringify({
     where: { isDeleted: false },
-    include: { folders: true }
+    include: { repositoryFolders: true },
   })
-});
+);
+
+const response = await fetch(
+  `https://your-domain.com/api/model/projects/findMany?q=${q}`,
+  { headers: { Authorization: 'Bearer tpi_your_token_here' } }
+);
 
 const projects = await response.json();
 ```
@@ -78,20 +80,16 @@ const projects = await response.json();
 ### Python Example
 
 ```python
+import json
 import requests
 
-headers = {
-    'Authorization': 'Bearer tpi_your_token_here',
-    'Content-Type': 'application/json'
-}
-
-response = requests.post(
-    'https://your-domain.com/api/model/project/findMany',
-    headers=headers,
-    json={
+response = requests.get(
+    'https://your-domain.com/api/model/projects/findMany',
+    headers={'Authorization': 'Bearer tpi_your_token_here'},
+    params={'q': json.dumps({
         'where': {'isDeleted': False},
-        'include': {'folders': True}
-    }
+        'include': {'repositoryFolders': True}
+    })}
 )
 
 projects = response.json()
@@ -265,13 +263,14 @@ import_results:
 | `INACTIVE_TOKEN` | 401 | Token has been revoked |
 | `INACTIVE_USER` | 401 | User account is inactive or deleted |
 | `API_ACCESS_DISABLED` | 401 | User's API access has been disabled |
+| `READ_ONLY_TOKEN` | 403 | A read-only (`mode:read`) token was used for a write request |
 
 ### Example Error Response
 
 ```json
 {
   "error": "API token has expired",
-  "errorCode": "EXPIRED_TOKEN"
+  "code": "EXPIRED_TOKEN"
 }
 ```
 
@@ -285,7 +284,7 @@ const response = await fetch(url, {
 if (response.status === 401) {
   const error = await response.json();
 
-  switch (error.errorCode) {
+  switch (error.code) {
     case 'EXPIRED_TOKEN':
       console.error('Token has expired. Please create a new token.');
       break;

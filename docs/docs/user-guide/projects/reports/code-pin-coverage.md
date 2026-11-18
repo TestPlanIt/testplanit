@@ -35,7 +35,7 @@ The chart shows the directories with the most pins and uncovered files side by s
 
 ## Settings
 
-- **Lookback Period** — 7–365 days, or all time (default 90); it scopes the analyses that supply uncovered and stale files, not the pins
+- **Lookback Period** — Last 7 days, Last 30 days, Last 3 months (the default), Last 12 months, or All Time; it scopes the analyses that supply uncovered and stale files, not the pins
 
 ## Filters
 

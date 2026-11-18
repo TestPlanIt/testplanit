@@ -55,7 +55,7 @@ Each project carries its own `Review Workflow` toggle. By default new projects a
 
 Either path works:
 
-- **Per project** — open the project, navigate to **Settings → Advanced**, toggle **Review Workflow** on. Useful for project administrators managing their own project.
+- **Per project** — open the project, navigate to **Settings → Advanced**, toggle **Enable review workflow** on. Useful for project administrators managing their own project.
 - **Bulk from the admin surface** — open **Administration → Workflows**. While the system feature is on, the Review Workflow card lists every project with an inline switch; flip any project on or off without leaving the page. The list is searchable and sortable, and loads more projects automatically as you scroll. Useful for system administrators rolling the feature out across many projects.
 
 When the system-level kill switch is off, the per-project toggle has no effect. When it is on, only projects with their own toggle on actually enforce gates.
@@ -186,7 +186,7 @@ To decide:
 
 - **Approve** — the request flips to APPROVED and the entity moves into the target state, consuming the approval. When an earlier gate in the entity's path is still unapproved, the entity stays put and the approval waits, unconsumed, until that gate clears and the transition is retried (by the requester saving the form, by a bulk edit, or by milestone completion).
 - **Reject** — the request flips to REJECTED. The transition is not allowed; the requester can submit a new request after addressing feedback.
-- **Comment** — leave a note without deciding (useful for asking the requester for clarification). The request stays in PENDING.
+- **Request changes** — the request flips to CHANGES_REQUESTED with your required feedback. The transition is not allowed; the requester can use **Request review again** after addressing it.
 
 Decisions can include a comment, which appears in the request history and in any associated notifications.
 
@@ -276,7 +276,7 @@ The reminder threshold (`review_reminder_threshold_days`) and the on/off state a
 If users on this instance use the daily-digest email mode and you set the reminder threshold to a value shorter than 24 hours of real time (not currently possible — minimum is 1 day — but worth knowing for future flexibility), the same reminder could land in their digest multiple times. The 1-day minimum on the UI makes this a non-issue in practice: even with `threshold = 1`, the daily digest can include at most one reminder row per pending request.
 :::
 
-### Slack and webhook subscribers (stretch)
+### Slack and webhook subscribers
 
 Requesters don't have to wait for the threshold: the **Send reminder** action on their own rows in the Review inbox fires the same reminder on demand, sharing the same one-hour cooldown so a reviewer can't be pinged twice for one request. See [Nudging a reviewer](#nudging-a-reviewer).
 

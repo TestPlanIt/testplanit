@@ -20,8 +20,8 @@ TestPlanIt includes a built-in issue tracking system that allows you to:
 
 ### Creating Internal Issues
 
-1. Navigate to your project's **Issues** section
-2. Click **Create Issue**
+1. Open a test case, test run, session, or result and click **Link Issue**
+2. In the search dialog, choose **Create New Issue**
 3. Fill in the issue details:
    - **Name**: A brief, descriptive title
    - **Description**: Detailed information using the rich text editor
@@ -196,8 +196,8 @@ A flexible integration for any issue tracking system that uses URL-based linking
 
 ### Administrator Setup
 
-1. Navigate to **Administration** → **Integrations**
-2. Click **Add Integration**
+1. Navigate to **Administration** → **Issue Integrations**
+2. Click **Add Issue Integration**
 3. Select your integration type (Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, MantisBT, ClickUp, or Simple URL)
 4. Fill in the integration details:
 
@@ -439,7 +439,7 @@ Creating the OAuth app and entering the Client ID/Secret is only half the setup.
 1. **Activate the integration by authorizing it.** A new OAuth 2.0 integration shows **Awaiting authorization** — this is expected, not an error. (Running **Test Connection** only confirms the Client ID/Secret are well-formed; OAuth has no client-credentials grant, so it cannot mark the integration Active on its own.) In **Administration → Issue Integrations**, click **Authorize** on the integration row, and grant access on the provider's consent screen. This connects your account and flips the integration to **Active**. An integration that is not yet Active does not appear when assigning to a project.
 2. **Assign it to a project.** In **Project Settings → Issue Integrations**, click **Assign** on the integration.
 3. **Link an external project (repository).** In the integration's settings panel, use **Linked External Projects → Add Projects**, select the target repository (e.g. `owner/repo`), click **Add Selected**, then **Save Settings**. This step is required — without a linked external project the Create Issue dialog reports **"Integration Not Configured"** and the **Create** button stays disabled.
-4. **Authorize the remaining users — once per user.** Authorization is per-user, so each *additional* person who will create issues opens **Project → Integrations**, clicks **Authorize**, and grants access on the provider's consent screen. (The admin who activated the integration in step 1 is already authorized.) Every issue is then attributed to the individual who created it.
+4. **Authorize the remaining users — once per user.** Authorization is per-user, so each *additional* person who will create issues clicks **Authenticate** in the Create Issue or Link Issue dialog (project administrators can also authorize from **Project Settings → Issue Integrations**) and grants access on the provider's consent screen. (The admin who activated the integration in step 1 is already authorized.) Every issue is then attributed to the individual who created it.
 
 #### Azure DevOps
 
@@ -569,13 +569,9 @@ The same external project can be linked from more than one TestPlanIt project. A
 - **Per-project default issue type** (Jira): Each linked project can have its own default issue type. Set it using the inline **Default Issue Type** selector on each project row.
 - **Remove a project**: Click the trash icon, then confirm. Removing a project stops syncing issues from it but does not delete previously synced issues. Removed projects can be re-added later.
 
-### Multiple Integrations
+### One Integration per Project
 
-Projects can have multiple integrations:
-
-- One primary integration for issue creation
-- Additional integrations for cross-referencing
-- Different integrations for different teams
+A project has one active issue integration at a time. Assigning a different integration deactivates the previous one. To reach several of a tracker's projects, link multiple external projects through the one integration (see above).
 
 ## User Authorization (OAuth)
 
@@ -583,8 +579,8 @@ Projects can have multiple integrations:
 
 For OAuth integrations, users must:
 
-1. Go to **Project** → **Integrations**
-2. Click **Authorize**
+1. Open the Create Issue or Link Issue dialog on a test case, run, or result
+2. Click **Authenticate**
 3. Log in to the external service
 4. Grant permissions to TestPlanIt
 5. Return to TestPlanIt automatically
@@ -596,8 +592,8 @@ When an OAuth access token is expired — or within a few minutes of expiring �
 Re-authorization is only required when there is no usable refresh token — for example, the refresh token was revoked, expired from inactivity, or the OAuth app was not granted offline access. When that happens, the connection's owner receives a notification (bell and, depending on their notification preferences, email) with a **Reconnect** link that starts the consent flow directly. They can also re-authorize from anywhere the connection is used:
 
 - When creating an issue, the dialog shows an **Authenticate** button that opens the consent window in place.
-- At any time, a user can re-authorize from **Project → Integrations** using the **Authorize** button.
-- An administrator can re-authorize their own connection from **Admin → Integrations**, by editing the integration and using the **Reauthorize** button. This replaces the existing token in place — there is no need to delete and re-add the integration.
+- At any time, a project admin can re-authorize from **Project Settings → Issue Integrations**.
+- An administrator can re-authorize their own connection from **Administration → Issue Integrations**, by editing the integration and using the **Re-authorize** button. This replaces the existing token in place — there is no need to delete and re-add the integration.
 
 Each user authorizes and refreshes independently, so re-authorizing only affects the user who does it.
 
@@ -630,13 +626,6 @@ Every user who has authorized the integration must re-authorize before the new s
 3. Select the integration
 4. Fill in issue details
 5. The issue will be linked to the test case
-
-### Bulk Issue Creation
-
-1. Select multiple failed tests
-2. Click **Create Issues**
-3. Choose to create separate issues or one combined issue
-4. Issues are created with links back to TestPlanIt
 
 ## Issue Linking and Synchronization
 
@@ -749,7 +738,7 @@ For Jira specifically, applying the matched user as the reporter requires the AP
 
 ### OAuth Benefits
 
-OAuth integrations (available for Jira, GitHub, GitLab, and Gitea/Forgejo) provide:
+OAuth integrations (available for Jira, GitHub, GitLab, Gitea/Forgejo, and ClickUp) provide:
 
 - Individual user authentication — each user authorizes their own access
 - Accurate reporter/author attribution — issues are created as the actual TestPlanIt user, not a shared service account
@@ -935,7 +924,7 @@ curl -H "Authorization: YOUR_ACCESS_TOKEN" \
 
 ## Best Practices
 
-1. **Prefer OAuth 2.0** when possible — for Jira, GitHub, GitLab, and Gitea/Forgejo it provides per-user attribution (issues are reported as the actual user) and granular scoping. Personal Access Tokens create every issue as a single shared account.
+1. **Prefer OAuth 2.0** when possible — for Jira, GitHub, GitLab, Gitea/Forgejo, and ClickUp it provides per-user attribution (issues are reported as the actual user) and granular scoping. Personal Access Tokens create every issue as a single shared account.
 2. **Standardize naming** between TestPlanIt and external systems
 3. **Configure field mappings** to capture all relevant data
 4. **Enable status sync** for automated workflow
@@ -952,7 +941,7 @@ curl -H "Authorization: YOUR_ACCESS_TOKEN" \
 | Feature | Cloud | Server/DC |
 | --------- | ------- | ----------- |
 | Authentication | OAuth 2.0, API Key | Basic Auth, PAT |
-| API Version | v3 | v2/v3 |
+| API Version | v3 | v2 |
 | User IDs | accountId | username |
 | Webhooks | Yes | Yes (different format) |
 
@@ -1007,23 +996,21 @@ For programmatic access to issue and integration features, see the [API Document
 
 **Issues:**
 
-- `POST /api/issues/create` - Create internal issue
-- `GET /api/issues/{issueId}` - Get issue details
 - `POST /api/issues/{issueId}/link` - Link issue to entity
 - `POST /api/issues/{issueId}/unlink` - Unlink issue from entity
+- `POST /api/issues/{issueId}/sync` - Refresh an issue from its tracker
 
 **Integrations:**
 
 - `POST /api/integrations/{id}/create-issue` - Create external issue
 - `GET /api/integrations/{id}/search` - Search external issues
-- `POST /api/integrations/{id}/link-issue` - Link existing issue
 - `GET /api/integrations/{id}/issue-types` - Get available issue types
-- `GET /api/integrations/{id}/fields` - Get field definitions
+- `GET /api/integrations/{id}/issue-type-fields` - Get field definitions for an issue type
 - `POST /api/integrations/test-connection` - Test integration connection
 
 **Project Integrations:**
 
 - `GET /api/projects/{projectId}/integrations` - Get project integrations
 - `POST /api/projects/{projectId}/integrations` - Assign integration to project
-- `PUT /api/projects/{projectId}/integrations/{id}` - Update project integration settings
+- `PATCH /api/projects/{projectId}/integrations/{id}` - Update project integration settings
 - `DELETE /api/projects/{projectId}/integrations/{id}` - Remove integration from project

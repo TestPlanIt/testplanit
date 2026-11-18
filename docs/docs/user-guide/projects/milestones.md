@@ -118,33 +118,16 @@ Hierarchical milestones enable you to:
    * **Parent Milestone**: Select the parent from the dropdown
 3. Save the milestone
 
-**Alternative Method:**
-
-* Open a parent milestone's details page
-* Look for **Add Child Milestone** button
-* Fill in child milestone details
-* Parent is automatically set
-
 ### Viewing Hierarchical Milestones
 
 **List View:**
 
-* Milestones can be displayed with indentation showing hierarchy levels
-* Expand/collapse controls for parent milestones
-* Visual indicators (icons) showing parent/child status
-
-**Tree View:**
-
-* Visual tree representation of milestone hierarchy
-* Shows entire milestone structure at a glance
-* Click to expand/collapse branches
-* Navigate directly to any milestone in the tree
+* Child milestones are nested and indented beneath their parent on the Active and Completed tabs
 
 **Milestone Details Page:**
 
-* **Parent Section**: Shows the parent milestone (if any) with link
-* **Children Section**: Lists all direct child milestones
-* **Breadcrumb**: Shows path from root to current milestone
+* **Parent**: The right panel shows the parent milestone (if any) with a link
+* **Child Milestones**: The left panel lists all direct child milestones with their status and dates
 
 ### Hierarchy Best Practices
 
@@ -223,20 +206,6 @@ Product Launch (Root)
 **Completion Behavior:**
 
 * Marking a parent as complete doesn't auto-complete children
-* System can calculate parent progress based on child completion
-* Completion percentages can roll up hierarchically
-
-**Status Indicators:**
-
-* **All children complete**: Parent can be marked complete
-* **Some children incomplete**: Parent shows in-progress status
-* **Overdue children**: Parent may show at-risk status
-
-**Metrics Roll-up:**
-
-* Test case counts aggregate from children to parents
-* Test run assignments can be filtered by milestone hierarchy
-* Reports can group by hierarchy levels
 
 ### Managing Hierarchy
 
@@ -304,22 +273,6 @@ Organize agile workflows:
 * **Level 2**: Epics
 * **Level 3**: User Stories
 
-### Filtering and Reporting
-
-**Filter by Hierarchy:**
-
-* Show only root milestones
-* Filter by specific parent
-* Show milestones at specific depth
-* Filter by entire hierarchy branch
-
-**Reports:**
-
-* Hierarchy-aware progress reports
-* Burndown charts by hierarchy level
-* Completion forecasting with child milestone data
-* Resource allocation across hierarchy
-
 ### Tips and Tricks
 
 1. **Start Simple**: Begin with 2-3 levels and expand as needed
@@ -353,10 +306,12 @@ Organize agile workflows:
 
 ### API Reference
 
+Read operations are `GET` requests whose `q` parameter is the URL-encoded JSON query. See the [API Reference](../../api-reference.md).
+
 **Get Milestone with Hierarchy:**
 
 ```http
-GET /api/model/Milestones/findFirst?q={
+GET /api/model/milestones/findFirst?q={
   "where": {"id": 123},
   "include": {
     "parent": true,
@@ -369,7 +324,7 @@ GET /api/model/Milestones/findFirst?q={
 **Create Child Milestone:**
 
 ```http
-POST /api/model/Milestones/create
+POST /api/model/milestones/create
 Content-Type: application/json
 
 {
@@ -378,7 +333,7 @@ Content-Type: application/json
     "project": {"connect": {"id": 1}},
     "parent": {"connect": {"id": 123}},
     "milestoneType": {"connect": {"id": 5}},
-    "dueDate": "2024-12-31"
+    "completedAt": "2024-12-31T00:00:00.000Z"
   }
 }
 ```
@@ -386,7 +341,7 @@ Content-Type: application/json
 **Get All Descendants:**
 
 ```http
-GET /api/model/Milestones/findMany?q={
+GET /api/model/milestones/findMany?q={
   "where": {"rootId": 123},
   "orderBy": {"createdAt": "asc"}
 }

@@ -42,7 +42,7 @@ When no LLM integration is configured, the scan returns fuzzy-only results and s
 1. Open a project and navigate to **Repository**.
 2. Click **Find Duplicates** in the repository toolbar.
 3. The scan is queued as a background job. A progress indicator appears while the job runs.
-4. When the scan completes, the **Find Duplicates** button updates to show the number of candidate pairs found.
+4. When the scan completes, the button becomes **View Duplicates**, with a badge showing the number of candidate pairs found.
 5. Click the button (or navigate to the Duplicates page) to review results.
 
 Scans are scoped to the current project. Only one scan can run per project at a time — submitting a new scan while one is already running has no effect.
@@ -51,9 +51,10 @@ Scans are scoped to the current project. Only one scan can run per project at a 
 
 The Duplicates page lists all candidate pairs sorted by confidence (High first). Each row shows:
 
-- Both case names and their folder locations
 - The confidence level
-- The last test result status for each case (if available)
+- Both case names
+- The fields that matched
+- The similarity score
 
 Click any row to open the **comparison dialog**, which shows a side-by-side view of both test cases including steps, tags, custom fields, folder, and last test result. Use this view to decide how to resolve the pair.
 
@@ -63,9 +64,9 @@ To make the differences easy to spot, the dialog highlights every field whose va
 
 The comparison dialog offers three resolution options.
 
-### Merge
+### Keep Primary
 
-Merge combines the two cases into one. You select which case is the **primary** — the other is soft-deleted. The primary case inherits:
+**Keep Primary** merges the two cases into one. You select which case is the **primary** — the other is soft-deleted. The primary case inherits:
 
 - All version history from both cases
 - All tags, issue links, and attachments from the other case (if not already present)
@@ -73,22 +74,22 @@ Merge combines the two cases into one. You select which case is the **primary** 
 The primary case keeps its own steps and custom fields unchanged. The merge runs as a single atomic transaction — either everything succeeds or nothing changes.
 
 :::note
-You must explicitly select the primary case before the **Merge** button becomes active. This prevents accidental data loss.
+You must explicitly select the primary case before the **Keep Primary** button becomes active. This prevents accidental data loss.
 :::
 
 ### Link as Related
 
 If two cases are intentional duplicates — for example, the same test written for different environments or configurations — you can link them as related instead of merging. Linked cases remain independent and gain a **Related** badge showing the connection. The pair is removed from future scan results.
 
-### Dismiss
+### Not a Duplicate
 
-Dismiss removes the pair from the results list and prevents it from appearing in future scans. Use this when the similarity is coincidental and the cases are testing genuinely different behavior.
+**Not a Duplicate** removes the pair from the results list and prevents it from appearing in future scans. Use this when the similarity is coincidental and the cases are testing genuinely different behavior.
 
 ## Creation-Time Warnings
 
 When you save a new test case, TestPlanIt checks whether any existing cases in the project have a similar name. If similar cases are found, a soft warning toast appears in the bottom-right corner of the screen.
 
-The warning is **advisory only** — your new case is always saved regardless of the result. You can click **View** in the toast to open the existing case and compare manually.
+The warning is **advisory only** — your new case is always saved regardless of the result. You can click **Review** in the toast to open the project's Duplicates page in a new tab.
 
 ## Import Warnings
 
@@ -106,5 +107,5 @@ See [AI Models](../llm-integrations.md) for instructions on setting up an LLM in
 
 - Detection is scoped to within a single project. Cross-project duplicate detection is not supported.
 - Creation-time and import warnings check name similarity only — they do not run a full fuzzy + semantic scan.
-- Bulk **Dismiss** and **Link as Related** are supported via the checkbox selection on the results page. Bulk merge is not supported — each merge must be resolved individually.
+- Bulk **Not Duplicates** and **Link as Related** are supported via the checkbox selection on the results page. Bulk merge is not supported — each merge must be resolved individually.
 - Warnings appear after a case is saved or on import preview, not on every keystroke while typing a case name.

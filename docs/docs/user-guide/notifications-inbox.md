@@ -40,16 +40,19 @@ TestPlanIt sends these kinds of notification. Each one can be switched off from 
 
 - **Work assigned to me** — a test case (or several) assigned to you in a run.
 - **Session assigned to me** — an exploratory session assigned to you.
+- **Assigned case unblocked** — a case assigned to you in a run can now be executed because the cases it depends on have passed.
 - **Mentions in comments** — you were @-mentioned on a case, run, session, milestone, or review.
-- **Review requested / approved / changes requested / rejected / cancelled / reminders** — activity on reviews you requested or were asked to give (see [Review & Approval](review-approvals.md) and the [Reviews inbox](reviews-inbox.md)).
+- **Review requested / approved / changes requested / rejected / cancelled / reminders / decision reverted** — activity on reviews you requested or were asked to give (see [Review & Approval](review-approvals.md) and the [Reviews inbox](reviews-inbox.md)).
 - **Test run ready to complete** — every case in a test run has been executed, and you are someone who can close it (see [Test Runs](projects/runs.md#ready-to-complete-notifications)).
 - **Milestone due reminders** — a milestone is due soon or overdue.
+- **Alerts** — an [alert](./alerts.md) you follow fired because a metric crossed its line.
 - **Share link viewed** — someone opened a share link you own that has notify-on-view enabled.
 - **AI steps derived** — an AI step-derivation job you started has finished.
+- **AI-drafted test cases** — a webhook action drafted test cases for an issue and named you as a reviewer.
 - **Integration needs re-authorization** (always on) — an OAuth integration you connected must be reconnected.
 - **Admin announcements** (always on) — an admin broadcast.
 - **What's New after an upgrade** — release notes on your first visit after an upgrade.
-- **New user registrations** and **AI budget alerts** — sent to administrators only.
+- **New user registrations** — sent to administrators only.
 
 ## Delivery and live updates
 
@@ -57,7 +60,7 @@ Notifications arrive in the bell in **near-real time** over a live server-sent e
 
 ## Notification preferences
 
-Two settings on your **profile page**, under **Preferences**, control notifications. The **Notification Mode** decides how you are reached:
+Two settings on the **Notifications** tab of your [Notifications & Alerts](./alerts.md) page (**Notifications & Alerts** in the user menu) control notifications. The **Notification Mode** decides how you are reached:
 
 | Mode                              | Behavior                                              |
 | --------------------------------- | ----------------------------------------------------- |
@@ -76,5 +79,5 @@ The email options appear only when an email server is configured for your deploy
 ## Related pages
 
 - [Notifications (Administration)](notifications.md) — system defaults, email templates, and announcements.
-- [User Profile](user-profile.md) — where notification preferences live.
+- [Notifications & Alerts](./alerts.md) — where notification preferences live.
 - [Reviews inbox](reviews-inbox.md) — act on review requests.

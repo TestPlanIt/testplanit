@@ -31,7 +31,16 @@ The application uses the following background processes:
 19. **Webhook Actions Worker** - Runs an issue-tracker webhook's [actions](./user-guide/webhooks.md#issue-tracker-actions) (importing the issue, creating test runs, drafting test cases with AI) after the webhook has been answered
 20. **Failure Triage Worker** - Groups automated failures into failure patterns, asks the project's LLM for a root cause and releases recovered quarantines
 21. **Risk Score Worker** - Keeps every test case's risk score current after results land and in a nightly sweep
-22. **Scheduler** - Sets up recurring jobs (cron jobs)
+22. **Impact Analysis Worker** - Runs Impact Analysis jobs: matches a commit range against Code Pins, tickets, keywords and run history, then asks the LLM to rank the remaining candidates
+23. **Execution Dispatch Worker** - Starts the CI job for a requested automated execution and polls the provider for its status
+24. **Derive Case Steps Worker** - After an automated results import, asks the project's LLM to write test steps for the imported cases that have none
+25. **Copy/Move Worker** - Copies and moves test cases, with their folders and shared step groups, between folders and projects
+26. **Duplicate Scan Worker** - Scans a project's test cases for near-duplicates
+27. **Step Scan Worker** - Scans a project's or folder's test cases for step sequences that repeat across cases
+28. **Generate from URL Worker** - Crawls a web page and the pages it links to, as input for AI test case generation
+29. **Iteration Generation Worker** - Creates the iterations of a large parameterized test run in the background
+30. **SCIM Access Recompute Worker** - Recomputes users' access levels after a SCIM group mapping, role mapping, or fallback default changes
+31. **Scheduler** - Sets up recurring jobs (cron jobs)
 
 ## Workers
 
@@ -60,7 +69,7 @@ The application uses the following background processes:
 
 ### Sync Worker
 
-- Synchronizes issues with external integrations (Jira, Linear, etc.)
+- Synchronizes issues with external integrations (Jira, GitHub, Azure DevOps, etc.)
 - Handles individual issue refreshes and bulk project syncs
 - Default concurrency: 2 (I/O-intensive, API rate-limited)
 - Location: `workers/syncWorker.ts`
@@ -224,11 +233,15 @@ The application uses the following background processes:
 ### Scheduler
 
 - Sets up recurring jobs using cron patterns
-- Configures daily digest emails (8 AM)
-- Configures forecast updates (3 AM)
+- Configures expired webhook signing secret retirement (2 AM)
+- Configures forecast updates, the Report Builder state sweep, and the stale case-draft purge (3 AM)
 - Configures the nightly risk-score sweep (3:30 AM)
 - Configures code repository cache refresh (4 AM)
+- Configures milestone auto-completion, milestone due notifications, and the daily alert evaluation (6 AM)
+- Configures daily digest emails (8 AM)
+- Configures review reminders and the hourly alert evaluation (every hour)
 - Configures the abandoned automated-run sweep (every 15 minutes)
+- Configures the automated execution status poll (every minute while an execution is in flight)
 - Location: `scheduler.ts`
 
 ## Running Workers
@@ -263,7 +276,7 @@ pnpm pm2:start
 This command:
 
 1. Runs the scheduler once to set up cron jobs
-2. Starts all three workers as background processes
+2. Starts every worker as a background process
 3. Automatically restarts workers if they crash
 
 #### Stop all workers
@@ -320,11 +333,11 @@ Every worker's `--max-old-space-size` is 75% of its `max_memory_restart` ceiling
 | Forecast Worker                | 2G                   | 1536M                  | Recomputes run/case forecasts over large historical result sets; the default 512 MB tier was OOM-killed under production data volumes                                                                                                                                                                                                                                                                                                            |
 | Elasticsearch Reindex Worker   | 2G (configurable)    | 1536M (configurable)   | A full reindex sweeps every project's cases/runs/sessions/issues/milestones and bulk-loads them into Elasticsearch; the default 512 MB tier OOM-killed full-DB reindexes mid-job — PM2 SIGKILLs the worker, BullMQ redelivers the same job, and it restarts from the top, so runs never finish indexing. Override via `ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART` for very large tenants (many projects / large run history), host RAM permitting |
 | SCIM Access Recompute Worker   | 2G                   | 1536M                  | Loads the full ZenStack runtime to recompute `User.access` tiers from IdP group mappings; boots to ~1.4 GB RSS at idle, so the default 512 MB tier triggered a tight PM2 SIGINT/restart loop rather than a real OOM                                                                                                                                                                                                                              |
-| Audit Log Worker               | 3G                   | 2304M                  | The CDC correlation loop (Loop B) caches one raw Prisma client per tenant in multi-tenant mode — one Rust query engine per tenant, the same per-tenant footprint as the webhook outbox worker. Harmless headroom in single-tenant mode (a single client).                                                                                                                                                                                        |
+| Audit Log Worker               | 3G                   | 2304M                  | The CDC correlation loop (Loop B) caches one database client per tenant in multi-tenant mode — one connection pool per tenant, the same per-tenant footprint as the webhook outbox worker. Harmless headroom in single-tenant mode (a single client).                                                                                                                                                                                        |
 | Webhook Dispatch Worker        | 3G                   | 2304M                  | Loads ZenStack runtime + ES sync services + audit log service; carries full `test_run.completed` payloads under concurrency=5; observed steady-state RSS in multi-tenant clusters sits near 1.9 GB                                                                                                                                                                                                                                               |
-| Webhook Outbox Worker          | 3G                   | 2304M                  | Same heavy dependency tree as dispatch; caches one Prisma client per tenant in multi-tenant mode                                                                                                                                                                                                                                                                                                                                                 |
-| Webhook Retention Worker       | 3G                   | 2304M                  | Iterates every tenant's database per pass; headroom protects against batched-delete loops on tenants with large retention backlogs. Tenant Prisma clients are disconnected after each pass to release Rust query engine buffers, so steady-state should drop substantially after the first few passes — these ceilings can be lowered once production telemetry confirms it.                                                                     |
-| DataChangeLog Retention Worker | 3G                   | 2304M                  | Loads the audit log service plus the raw Prisma base client and runs a batched-delete loop over the high-volume change-capture table; headroom mirrors the webhook retention worker so a large purge backlog (e.g. after a heavy import) does not trip the ceiling mid-pass.                                                                                                                                                                     |
+| Webhook Outbox Worker          | 3G                   | 2304M                  | Same heavy dependency tree as dispatch; caches one database client per tenant in multi-tenant mode                                                                                                                                                                                                                                                                                                                                                |
+| Webhook Retention Worker       | 3G                   | 2304M                  | Iterates every tenant's database per pass; headroom protects against batched-delete loops on tenants with large retention backlogs. Tenant database clients are disconnected after each pass to release their connections, so steady-state should drop substantially after the first few passes — these ceilings can be lowered once production telemetry confirms it.                                                                     |
+| DataChangeLog Retention Worker | 3G                   | 2304M                  | Loads the audit log service plus the raw database client and runs a batched-delete loop over the high-volume change-capture table; headroom mirrors the webhook retention worker so a large purge backlog (e.g. after a heavy import) does not trip the ceiling mid-pass.                                                                                                                                                                     |
 | Dataset Lease Sweep Worker     | 3G                   | 2304M                  | Sweeps every configured tenant's database on a ~60s loop to reap lapsed dataset-row leases; the per-tenant client footprint is the same as the retention workers'                                                                                                                                                                                                                                                                                |
 | Execution Dispatch Worker      | 3G                   | 2304M                  | Dispatches automated-execution jobs and polls active executions per tenant each minute, caching one client per tenant in multi-tenant mode                                                                                                                                                                                                                                                                                                       |
 | Audit Log Retention Worker     | 3G                   | 2304M                  | Holds one 25,000-row batch and its compressed file in memory while uploading and verifying it; headroom mirrors the retention workers.                                                                                                                                                                                                                                                                                                           |
@@ -397,7 +410,7 @@ You can monitor worker health and performance using:
 
 ### Memory issues
 
-- Most workers run with a 512 MB ceiling; the sync worker runs with a 1 GB ceiling; the forecast, SCIM access recompute, and Elasticsearch reindex workers run with a 2 GB ceiling; the audit log worker, the three webhook workers (dispatch, outbox, retention), the DataChangeLog retention worker, and the audit log retention worker run with a 3 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
+- Most workers run with a 512 MB ceiling; the sync worker runs with a 1 GB ceiling; the forecast, SCIM access recompute, and Elasticsearch reindex workers run with a 2 GB ceiling; the audit log worker, the three webhook workers (dispatch, outbox, retention), and the DataChangeLog retention, audit log retention, dataset lease sweep, and execution dispatch workers run with a 3 GB ceiling; the Testmo import worker runs with a 4 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
 - If a worker is being killed and restarted by PM2 in a tight loop (visible as repeated `restart` events in `pm2 status`), raise its ceiling before assuming there is a real leak: `TESTMO_IMPORT_MAX_MEMORY_RESTART`, `ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART` or `REPO_CACHE_MAX_MEMORY_RESTART` for those workers, or `WORKER_MAX_MEMORY_RESTART` for the 512 MB tier. Other elevated workers are set in `ecosystem.config.js`.
 - Monitor with `pm2 monit`
 

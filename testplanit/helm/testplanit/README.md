@@ -153,7 +153,7 @@ can roll back:
 # The storage volume is data-<release>-testplanit-minio-0 by default:
 kubectl -n <namespace> get pvc | grep minio
 # Snapshot that PVC with your storage provider's VolumeSnapshot or backup tool.
-helm upgrade <release> testplanit/testplanit -f my-values.yaml
+helm upgrade <release> oci://ghcr.io/testplanit/charts/testplanit --version <version> -f my-values.yaml
 ```
 
 If you pinned `objectStorage.minio.image` to a MinIO image in your values,

@@ -39,7 +39,7 @@ Download the appropriate binary for your platform from the [CLI releases](https:
 **Linux (x64):**
 
 ```bash
-curl -L -o testplanit https://github.com/testplanit/testplanit/releases/download/cli-v1.0.0/testplanit-linux-x64
+curl -L -o testplanit https://github.com/testplanit/testplanit/releases/download/cli-v1.4.0/testplanit-linux-x64
 chmod +x testplanit
 sudo mv testplanit /usr/local/bin/
 ```
@@ -47,7 +47,7 @@ sudo mv testplanit /usr/local/bin/
 **macOS (Apple Silicon):**
 
 ```bash
-curl -L -o testplanit https://github.com/testplanit/testplanit/releases/download/cli-v1.0.0/testplanit-macos-arm64
+curl -L -o testplanit https://github.com/testplanit/testplanit/releases/download/cli-v1.4.0/testplanit-macos-arm64
 chmod +x testplanit
 sudo mv testplanit /usr/local/bin/
 ```
@@ -55,7 +55,7 @@ sudo mv testplanit /usr/local/bin/
 **macOS (Intel):**
 
 ```bash
-curl -L -o testplanit https://github.com/testplanit/testplanit/releases/download/cli-v1.0.0/testplanit-macos-x64
+curl -L -o testplanit https://github.com/testplanit/testplanit/releases/download/cli-v1.4.0/testplanit-macos-x64
 chmod +x testplanit
 sudo mv testplanit /usr/local/bin/
 ```
@@ -63,7 +63,7 @@ sudo mv testplanit /usr/local/bin/
 **Windows (PowerShell):**
 
 ```powershell
-Invoke-WebRequest -Uri "https://github.com/testplanit/testplanit/releases/download/cli-v1.0.0/testplanit-windows-x64.exe" -OutFile "testplanit.exe"
+Invoke-WebRequest -Uri "https://github.com/testplanit/testplanit/releases/download/cli-v1.4.0/testplanit-windows-x64.exe" -OutFile "testplanit.exe"
 .\testplanit.exe --help
 ```
 
@@ -99,6 +99,7 @@ Environment variables take precedence over stored configuration, making them ide
 | `TESTPLANIT_TOKEN` | API token |
 | `TESTPLANIT_RUN_ID` | Set by TestPlanIt when it dispatches a job; `run plan`, `run started`, `run complete`, `run finish` and `import -r` default to it |
 | `TESTPLANIT_EXECUTION_ID` | Set by TestPlanIt when it dispatches a job; `run plan`, `run started` and `run finish` default to it |
+| `TESTPLANIT_PROJECT_ID` | Set by TestPlanIt when it dispatches a job; `run create` defaults `--project` to it |
 
 ```bash
 TESTPLANIT_URL=https://demo.testplanit.com \
@@ -320,7 +321,7 @@ testplanit run finish --conclusion success
 | `run plan` | `-r, --run <id>` (default `$TESTPLANIT_RUN_ID`), `--execution <id>` (default `$TESTPLANIT_EXECUTION_ID`; applies that execution's case subset and ref), `-F, --format json\|lines`, `--selector-field selector\|fullName\|title\|className\|id`, `-o, --output <file>` |
 | `run complete` | `-r, --run <id>`, `-p, --project <id>` (read from the run when omitted) |
 | `run started` | `-r, --run <id>`, `--execution <id>`, `--url <url>` (required; the job's own URL, linked from the run page), `--id <id>` (the job's build or run id) |
-| `run finish` | `-r, --run <id>`, `--execution <id>`, `--conclusion success\|failure\|cancelled` (required), `--message <text>` |
+| `run finish` | `-r, --run <id>`, `--execution <id>`, `--conclusion success\|failure\|cancelled` (required), `--message <text>`, `--url <url>` and `--id <id>` (the job's URL and build id, for a job that did not call `run started`) |
 
 `--format lines` prints `selector.fullName` (class name and test name) by default. The CLI never produces framework-specific filter syntax; a short script in your repository turns the lines into the `--grep`, `-k` or `--tests` expression your runner takes.
 
@@ -358,9 +359,9 @@ jobs:
 
 TestPlanIt polls a GitHub Actions or GitLab CI job for its outcome, so nothing else is needed. A job started through a generic webhook (Jenkins, for example) links itself with `testplanit run started --url <job url>` and ends with `testplanit run finish --conclusion success|failure`. Reserve `run complete` for runs that hold nothing but automated cases; it completes the whole run, manual cases included. The step-by-step guides are under [Automated Execution](./user-guide/automated-execution.md).
 
-### GitHub Actions
+These examples run the CLI from npm with `npx @testplanit/cli`, which needs Node.js 24 or later on the runner. On a runner without Node.js, download a [standalone binary](#standalone-binaries-recommended) instead.
 
-Using the standalone binary (no Node.js required):
+### GitHub Actions
 
 ```yaml
 name: Test and Import Results
@@ -376,18 +377,13 @@ jobs:
       - name: Run Tests
         run: npm test
 
-      - name: Download TestPlanIt CLI
-        run: |
-          curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
-          chmod +x testplanit
-
       - name: Import Test Results to TestPlanIt
         if: always()
         env:
           TESTPLANIT_URL: ${{ secrets.TESTPLANIT_URL }}
           TESTPLANIT_TOKEN: ${{ secrets.TESTPLANIT_TOKEN }}
         run: |
-          ./testplanit import ./test-results/*.xml \
+          npx @testplanit/cli import ./test-results/*.xml \
             -p 1 \
             -n "Build ${{ github.run_number }} - ${{ github.sha }}"
 ```
@@ -414,9 +410,7 @@ import-results:
   needs: [test]
   when: always
   script:
-    - curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
-    - chmod +x testplanit
-    - ./testplanit import ./test-results/*.xml -p 1 -n "Pipeline $CI_PIPELINE_ID"
+    - npx @testplanit/cli import ./test-results/*.xml -p 1 -n "Pipeline $CI_PIPELINE_ID"
   variables:
     TESTPLANIT_URL: $TESTPLANIT_URL
     TESTPLANIT_TOKEN: $TESTPLANIT_TOKEN
@@ -447,9 +441,7 @@ pipeline {
                     string(credentialsId: 'testplanit-token', variable: 'TESTPLANIT_TOKEN')
                 ]) {
                     sh '''
-                        curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
-                        chmod +x testplanit
-                        ./testplanit import ./target/surefire-reports/*.xml \
+                        npx @testplanit/cli import ./target/surefire-reports/*.xml \
                             -p 1 \
                             -n "Build ${BUILD_NUMBER}"
                     '''
@@ -474,9 +466,7 @@ steps:
     displayName: 'Run Tests'
 
   - script: |
-      curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
-      chmod +x testplanit
-      ./testplanit import ./test-results/*.xml \
+      npx @testplanit/cli import ./test-results/*.xml \
         -p 1 \
         -n "Build $(Build.BuildNumber)"
     displayName: 'Import Results to TestPlanIt'
@@ -503,9 +493,7 @@ jobs:
       - run:
           name: Import Results
           command: |
-            curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
-            chmod +x testplanit
-            ./testplanit import ./test-results/*.xml \
+            npx @testplanit/cli import ./test-results/*.xml \
               -p 1 \
               -n "Build ${CIRCLE_BUILD_NUM}"
           when: always

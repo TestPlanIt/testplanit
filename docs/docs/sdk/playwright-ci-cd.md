@@ -242,7 +242,8 @@ When TestPlanIt [dispatches the job](../user-guide/automated-execution.md), the 
 env:
   TESTPLANIT_URL: ${{ inputs.TESTPLANIT_URL }}
   TESTPLANIT_RUN_ID: ${{ inputs.TESTPLANIT_RUN_ID }}
-  TESTPLANIT_API_TOKEN: ${{ secrets.TESTPLANIT_API_TOKEN }}
+  TESTPLANIT_API_TOKEN: ${{ secrets.TESTPLANIT_API_TOKEN }} # read by the reporter
+  TESTPLANIT_TOKEN: ${{ secrets.TESTPLANIT_API_TOKEN }} # read by @testplanit/cli
 ```
 
 Read the plan of cases with `npx @testplanit/cli run plan --format lines` and narrow the test command to them; complete the run afterwards with `npx @testplanit/cli run complete`.
