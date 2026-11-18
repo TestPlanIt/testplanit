@@ -70,7 +70,7 @@ pnpm elasticsearch:reindex:cases
 
 ### Translations (Crowdin)
 
-Upload `messages/en-US.json` and corrected translations to Crowdin, AI-translate new strings, and download every locale:
+Upload `messages/en-US.json` to Crowdin, AI-translate new strings, and download every locale:
 
 ```bash
 pnpm crowdin:sync
@@ -79,7 +79,9 @@ pnpm crowdin:sync
 pnpm crowdin:target
 ```
 
-`main` and branches off it sync to the Crowdin project root; `release/vX.Y` and branches off it sync to the Crowdin branch `vX.Y`, which Crowdin creates on the line's first sync. Set `CROWDIN_BRANCH` to override (empty for the root). The individual steps are `crowdin:upload:translations`, `crowdin:upload:sources`, `crowdin:auto-translate` and `crowdin:download`.
+`main` and branches off it sync to the Crowdin project root; `release/vX.Y` and branches off it sync to the Crowdin branch `vX.Y`, which Crowdin creates on the line's first sync. Set `CROWDIN_BRANCH` to override (empty for the root). The individual steps are `crowdin:upload:sources`, `crowdin:auto-translate` and `crowdin:download`.
+
+A sync does not upload the translations in `messages/`. After correcting a translation by hand, run `pnpm crowdin:upload:translations` so Crowdin holds the same text; otherwise the next download restores the old one. A string shared with another release line is stored once in Crowdin, so make the same correction on that line too.
 
 ## Development
 

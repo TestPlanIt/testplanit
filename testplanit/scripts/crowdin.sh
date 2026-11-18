@@ -147,15 +147,15 @@ case $action in
   untranslated) report_untranslated ;;
   sync)
     if branch_exists; then
-      # Corrections in messages/*.json go up while Crowdin still holds the
-      # English they translate. Uploading sources first would clear every
-      # changed string's translation and this step would restore the stale
-      # text, leaving auto-translate nothing to do.
-      run upload translations
+      # Sources only. Uploading this checkout's translations as well would
+      # add its text as the newest translation of every string it shares with
+      # another release line, undoing corrections made there. To send a
+      # corrected translation to Crowdin, run the `translations` action.
       run upload sources
     else
       # A new release line: the source upload creates the Crowdin branch, and
-      # strings that match main's inherit its translations.
+      # strings that match main's inherit its translations. The line's own
+      # strings have translations only in its files, so those go up once.
       run upload sources
       run upload translations
     fi
