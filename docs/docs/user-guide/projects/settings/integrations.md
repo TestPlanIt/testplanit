@@ -84,10 +84,10 @@ Only system administrators and project administrators can import issues — the 
 
 ## Milestone Sync
 
-For milestone-capable providers (currently Jira), a **Milestone Sync** card appears below **Linked External Projects** once the active integration supports it:
+For milestone-capable providers (Jira and GitHub), a **Milestone Sync** card appears below **Linked External Projects** once the active integration supports it:
 
-- **Enable milestone sync** — turns sync on. Once enabled, the project's [Milestones](../milestones.md) page gains an **Import from Jira** button that previews Fix Versions and Sprints across all of this integration's linked Jira projects.
-- **Kinds to sync** — choose which of the tracker's time-based artifacts to sync as Milestones: **Releases** (Jira Fix Versions) and/or **Sprints**.
+- **Enable milestone sync** — turns sync on. Once enabled, the project's [Milestones](../milestones.md) page gains an **Import from Jira** or **Import from GitHub** button that previews the tracker's artifacts (Jira Fix Versions and Sprints, or GitHub milestones) across all of this integration's linked external projects.
+- **Kinds to sync** — choose which of the tracker's time-based artifacts to sync as Milestones: **Releases** (Jira Fix Versions, GitHub milestones) and/or **Sprints** (Jira only).
 - **Automatically add new ones** (auto-track) — when on, newly created unreleased versions and active/future sprints are imported automatically as they appear, without anyone opening the Import dialog. Only artifacts created **after** auto-track is enabled are imported — anything that already existed at that moment is left alone (use the Import dialog to pick those explicitly). When auto-track is on, a checkbox list of the project's connected tracker projects appears — all are scanned by default, and unchecking one stops new milestones from being created from it (explicit imports and already-synced milestones are unaffected; changing the selection re-baselines so re-included projects don't backfill). Auto-tracked imports are attributed to the admin who enabled sync (or auto-track), not to whoever's page load happens to trigger the pass.
 
 Enabling milestone sync also provisions the **Release** and **Sprint** [milestone types](../../milestone-types.md) for the project.
@@ -97,7 +97,7 @@ A manual **Sync now** always fetches the latest state from the tracker immediate
 See [Milestones](../milestones.md) and [Milestone Details](../milestone-details.md#source-badge) for what a synced milestone looks like, and [Webhooks → Milestone sync events](../../webhooks.md#milestone-sync-events-versionsprint) for the event-driven path.
 
 :::info
-Enabling or changing milestone sync settings, running **Sync now**, and **Import from Jira** all require **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../../permissions-guide.md).
+Enabling or changing milestone sync settings, running **Sync now**, and importing from the tracker all require **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../../permissions-guide.md).
 :::
 
 ## Requirement Sync

@@ -57,7 +57,7 @@ Select your Jira instance when prompted.
 1. Log into your TestPlanIt instance as an admin
 2. Go to **Admin > Integrations**
 3. Find or create a **Jira** integration
-4. Click **Generate Forge API Key**
+4. Under **Forge API Key**, click **Generate**
 5. Copy the generated key
 
 ### Step 2: Configure the App in Jira
@@ -159,7 +159,7 @@ See [CUSTOM_DOMAIN_SETUP.md](https://github.com/testplanit/testplanit/blob/main/
 
 - **Platform**: Atlassian Forge (Custom UI)
 - **Runtime**: Node.js 24.x
-- **Frontend**: React 18 with Tailwind CSS
+- **Frontend**: React 19 with Tailwind CSS
 - **Backend**: Forge Resolver functions
 - **Storage**: Forge Storage API (per-installation key-value store)
 
@@ -169,8 +169,10 @@ The app calls these endpoints on your TestPlanIt instance:
 
 | Endpoint | Purpose |
 | ---------- | --------- |
-| `GET /version.json` | Connection test (returns app version) |
+| `GET /version.json` | Connection test: checks the instance is reachable (returns app version) |
+| `GET /api/integrations/jira/test-connection` | Connection test: validates the Forge API key |
 | `GET /api/integrations/jira/test-info` | Fetch linked test cases, runs, and sessions |
+| `GET /api/integrations/jira/test-run-cases` | Fetch the cases of a linked test run |
 | `GET /api/integrations/jira/generate-context` | Projects, templates, and readiness for Generate Test Cases |
 | `POST /api/integrations/jira/generate-token` | Mint a short-lived token to stream test-case generation |
 | `POST /api/integrations/jira/generate-stream` | Stream AI-generated test cases (browser-direct) |

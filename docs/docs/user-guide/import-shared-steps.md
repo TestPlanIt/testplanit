@@ -28,7 +28,7 @@ Map your CSV columns to the appropriate shared step fields:
 
 #### Required Fields
 
-- **Group Name**: The name of the shared step group
+- **Name**: The name of the shared step group (the `Group Name` column in the examples below)
 
 #### Optional Fields
 

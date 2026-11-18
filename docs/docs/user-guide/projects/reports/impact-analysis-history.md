@@ -37,7 +37,7 @@ The chart stacks analyses per week by trigger.
 
 ## Settings
 
-- **Lookback Period** — 7–365 days, or all time (default 90)
+- **Lookback Period** — Last 7 days, Last 30 days, Last 3 months (the default), Last 12 months, or All Time
 
 ## Filters
 

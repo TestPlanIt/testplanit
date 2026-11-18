@@ -167,9 +167,15 @@ The Docker Compose setup starts these containerized services:
 
 4. **Choose Your Services:**
 
-   TestPlanIt uses Docker Compose profiles to make services optional:
+   TestPlanIt uses Docker Compose profiles to make services optional. The profiles depend on the compose file:
 
-   - `dev` / `prod` - Development/Production app+workers profiles (includes all dependencies)
+   `docker-compose.yml` (all-in-one, used when no `-f` is given):
+
+   - `dev` - Development app and workers, with PostgreSQL and Valkey
+   - `prod` - Production app and workers, with PostgreSQL, Valkey, Elasticsearch, RustFS file storage, and Nginx
+
+   `docker-compose.prod.yml` (the app and workers always start; each backing service is a profile):
+
    - `with-postgres` - PostgreSQL database
    - `with-valkey` - Valkey/Redis cache and queue
    - `with-elasticsearch` - Elasticsearch search (optional)
@@ -193,8 +199,8 @@ The Docker Compose setup starts these containerized services:
    # Development without search
    docker compose up dev workers-dev postgres valkey minio --build
 
-   # Production with only essential services
-   docker compose up prod workers postgres valkey
+   # Production with only the database and queue bundled
+   docker compose -f docker-compose.prod.yml --profile with-postgres --profile with-valkey up
    ```
 
 5. **Start the Application:**
@@ -248,7 +254,7 @@ The Docker Compose setup starts these containerized services:
    - **Production** (`prod`): [http://localhost:30000](http://localhost:30000)
      - Override with `DOCKER_PROD_APP_PORT`
    - **Default login**: `admin@example.com` / `admin` (change in production!)
-   - **Demo Project**: A pre-populated Demo Project is created during initial setup with sample test cases, test runs, sessions, milestones, and issues. Use the **Help menu > Start Demo Project Tour** for a guided walkthrough.
+   - **Demo Project**: A pre-populated Demo Project is created during initial setup with sample test cases, test runs, sessions, milestones, and issues. Use the **Help menu > Demo Project Tour** for a guided walkthrough.
 
 7. **Access Additional Services (if enabled):**
    - **RustFS Console** (`with-minio`): [http://localhost:9001](http://localhost:9001)
@@ -480,14 +486,19 @@ docker compose up prod workers -d
 
 **Service Profiles:**
 
-- `dev` - Development environment with all dependencies
-- `prod` - Production environment with all dependencies
+In `docker-compose.yml`:
+
+- `dev` - Development app and workers, with PostgreSQL and Valkey
+- `prod` - Production app and workers, with every backing service
+
+In `docker-compose.prod.yml`:
+
 - `with-postgres` - PostgreSQL database container
 - `with-valkey` - Valkey/Redis cache container
 - `with-elasticsearch` - Elasticsearch search container
 - `with-minio` - RustFS storage + Nginx proxy containers
 
-Mix profiles to customize your deployment (e.g., `--profile with-postgres --profile with-valkey` for just database and cache).
+Mix the `with-*` profiles to customize your deployment (e.g., `-f docker-compose.prod.yml --profile with-postgres --profile with-valkey` for just database and cache).
 
 ### Monitoring & Logs
 
@@ -547,7 +558,7 @@ docker compose exec postgres psql -U user -d testplanit_prod -c "SELECT 1;"
 curl http://localhost:9200/_cluster/health
 
 # Reindex data through admin interface
-# Go to: Admin → System → Reindex Search Data
+# Go to: Administration → Search Engine → Reindex Data → Start Reindex
 ```
 
 **File upload/display issues:**
@@ -607,7 +618,7 @@ curl http://localhost:9000/health
 
 _Image optimization errors:_
 
-- Add your domain to `next.config.mjs` `images.remotePatterns`
+- The self-host images run with the Next.js image optimizer off, so this only affects images built with `SELF_HOSTED=false`. Rebuild with `BASE_DOMAIN` set to your real domain, or with `SELF_HOSTED=true`
 - Verify files accessible at: `https://yourdomain.com/testplanit/...`
 
 **Background jobs not processing:**

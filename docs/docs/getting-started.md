@@ -21,7 +21,7 @@ TestPlanIt also supports alternative authentication methods including Magic Link
 :::
 
 :::warning Important Security Note
-If the initial administrator account was created with the **default** credentials (e.g., `admin@example.com` / `admin`) and you plan to use a different personal administrator account, remember to create your own account and delete the default initial one (see Step 3 for instructions).
+If the initial administrator account was created with the **default** credentials (e.g., `admin@example.com` / `admin`) and you plan to use a different personal administrator account, remember to create your own account and delete the default initial one (see Step 4 for instructions).
 
 If you configured your desired admin credentials using the `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` variables in your `.env` file **before** the initial setup process, then the created admin account is your intended primary account, and you do not need to delete it unless you create another one later.
 :::
@@ -38,7 +38,7 @@ After your first login, you'll find a pre-populated **Demo Project** that showca
 - **Tags** and **Issues** linked to test results
 - **Documentation** pages with a guided overview
 
-Use the **Help menu > Start Demo Project Tour** to take a guided walkthrough of the project and its features.
+Use the **Help menu > Demo Project Tour** to take a guided walkthrough of the project and its features.
 
 :::tip
 The Demo Project is a great starting point for learning. When you're ready, you can delete it and create your own projects.
@@ -48,13 +48,13 @@ The Demo Project is a great starting point for learning. When you're ready, you 
 
 Before creating tests, you might want to familiarize yourself with the administration settings.
 
-1. Click Admin from the top navigation menu.
+1. Click **Administration** from the top navigation menu.
 2. Explore sections like:
     - **Projects:** Manage your test projects.
-    - **Users & Groups:** Manage user accounts and permissions.
+    - **Users**, **Groups**, and **Roles:** Manage user accounts and permissions.
     - **Configurations:** Define test environments (e.g., browsers, OS).
     - **Templates & Fields:** Customize test case and result fields.
-    - **Statuses & Workflows:** Define custom statuses and state transitions.
+    - **Statuses** and **Workflows:** Define custom statuses and state transitions.
 
 See the [Administration section](./user-guide/administration.md) for details.
 
@@ -68,10 +68,10 @@ If you logged in using the default initial credentials and want to create a sepa
 2. Click the **Add User** button.
 3. Fill in the details for your own user account (Name, Email, Password). Assign appropriate **Roles** (e.g., Administrator) and **Groups** if applicable.
 4. Click **Submit**.
-5. Log out of the default admin account (User Menu > Logout).
+5. Log out of the default admin account (User Menu > Sign Out).
 6. Log back in using the credentials for the **new account** you just created.
 7. Navigate back to **Administration > Users**.
-8. Find the default `admin@testplanit.com` user in the list.
+8. Find the default `admin@example.com` user in the list.
 9. Click the **Delete** icon next to the default admin user.
 10. Confirm the deletion.
 
@@ -100,7 +100,7 @@ Click the TestPlanIt logo or the main navigation menu to go back to the main app
 From here, you can access key project areas via the left-hand sidebar:
 
 - **Repository:** Where you define your test cases.
-- **Runs:** Where you organize and execute test runs.
+- **Test Runs & Results:** Where you organize and execute test runs.
 - **Milestones:** Track progress against deadlines.
 - **Sessions:** Manage test sessions (often used for exploratory testing).
 - **Tags:** Organize cases with tags.
@@ -118,7 +118,7 @@ See the [Test Case Repository](./user-guide/projects/repository.md) guide for de
 
 ## 8. Creating a Test Run
 
-1. Navigate to **Runs** in the project sidebar.
+1. Navigate to **Test Runs & Results** in the project sidebar.
 2. Click **Add Test Run**.
 3. Enter a **Name** (e.g., "Login Smoke Test - Week 1").
 4. Click **Next**.

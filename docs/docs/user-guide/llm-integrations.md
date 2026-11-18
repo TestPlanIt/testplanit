@@ -11,48 +11,55 @@ TestPlanIt integrates with leading AI providers to power features across the pla
 
 AI-powered features in TestPlanIt:
 
-- **[Test Case Generation](../llm-test-generation)** — Generate test cases from requirements, issues, and documents
+- **[Test Case Generation](../llm-test-generation)** — Generate test cases from requirements, issues, documents, and web pages
 - **[Magic Select](../llm-magic-select)** — AI-assisted test case selection when building test runs
 - **[Writing Assistant](../llm-writing-assistant)** — Improve, translate, and enhance content in any rich text field
 - **[Markdown Import](../llm-markdown-import)** — AI-assisted field mapping when importing markdown test cases
 - **[QuickScript](../projects/quickscript)** — AI-assisted automation script generation from manual test cases
 - **[Automation Candidates](../projects/reports/automation-candidates)** — AI-ranked recommendation of which manual test cases to automate next, with a heuristic fallback when no LLM is configured
+- **[Auto Tag](../llm-auto-tag)** — AI-suggested tags for test cases, test runs, and exploratory sessions, reviewed before they are applied
+- **[Test Step Derivation](../llm-step-derivation)** — Readable steps written for automated test cases whose framework reports no step structure
+- **[Duplicate Test Case Detection](../projects/duplicate-detection)** — A semantic pass that confirms whether similar-looking test cases test the same thing
+- **[Impact Analysis](../impact)** — AI ranking of the test cases affected by the changes between two commits
+- **[Failure Patterns](../failure-patterns)** — A suggested root cause for each group of matching automated failures
 
 ## Supported AI Providers
 
+TestPlanIt works with any chat model the provider offers, not a fixed set. When you add an integration, the **Model** list is loaded from the provider using your API key, so newly released models appear without a TestPlanIt upgrade.
+
 ### OpenAI
 
-- **Models**: GPT-4, GPT-4 Turbo, GPT-3.5 Turbo
+- **Models**: Any chat model available to your API key
 - **Authentication**: API Key
 - **Strengths**: Excellent natural language understanding, reliable structured output
 
 ### Google Gemini
 
-- **Models**: Gemini Pro, Gemini Pro Vision
+- **Models**: Any Gemini model available to your API key
 - **Authentication**: API Key
 - **Strengths**: Strong reasoning capabilities, cost-effective
 
 ### Anthropic Claude
 
-- **Models**: Claude 3 Opus, Claude 3 Sonnet, Claude 3 Haiku
+- **Models**: Any Claude model available to your API key
 - **Authentication**: API Key
 - **Strengths**: Excellent instruction following, safety-focused
 
 ### DeepSeek
 
-- **Models**: DeepSeek V4 Flash, DeepSeek V4 Pro, and the experimental DeepSeek V4 Flash Vision
+- **Models**: Any DeepSeek model available to your API key
 - **Authentication**: API Key
 - **Strengths**: Low cost, strong reasoning (thinking mode is on by default)
 
 ### Ollama (Self-Hosted)
 
-- **Models**: Llama 2, Code Llama, Mistral, and other open-source models
+- **Models**: Any model installed on your Ollama server
 - **Authentication**: None (local deployment)
 - **Strengths**: Privacy, no API costs, customizable
 
 ### Azure OpenAI
 
-- **Models**: GPT-4, GPT-3.5 Turbo (deployed on Azure)
+- **Models**: Any model you have deployed in your Azure OpenAI resource
 - **Authentication**: API Key + Deployment Name
 - **Strengths**: Enterprise features, data residency, SLA guarantees
 
@@ -73,7 +80,7 @@ AI-powered features in TestPlanIt:
 ```yaml
 Name: 'Production OpenAI'
 Provider: OPENAI
-Model: gpt-4-turbo-preview
+Model: <selected from the model list>
 Status: ACTIVE
 ```
 
@@ -81,7 +88,7 @@ Status: ACTIVE
 
 ```text
 API Key: sk-...your-openai-api-key
-Model: gpt-4-turbo-preview
+Model: <selected from the model list>
 Max Tokens: 4096
 Temperature: 0.7
 ```
@@ -90,7 +97,7 @@ Temperature: 0.7
 
 ```text
 API Key: your-gemini-api-key
-Model: gemini-pro
+Model: <selected from the model list>
 Max Tokens: 8192
 Temperature: 0.7
 ```
@@ -99,7 +106,7 @@ Temperature: 0.7
 
 ```text
 API Key: your-anthropic-api-key
-Model: claude-3-sonnet-20240229
+Model: <selected from the model list>
 Max Tokens: 4096
 Temperature: 0.7
 ```
@@ -108,7 +115,7 @@ Temperature: 0.7
 
 ```text
 API Key: your-deepseek-api-key
-Model: deepseek-v4-flash
+Model: <selected from the model list>
 Max Tokens: 65536
 Temperature: 0.7
 ```
@@ -119,7 +126,7 @@ DeepSeek's V4 models reason before answering (thinking mode) by default. The rea
 
 ```text
 Base URL: https://your-ollama-server.example.com:11434
-Model: llama2:13b
+Model: <selected from the model list>
 Max Tokens: 4096
 Temperature: 0.7
 ```
@@ -129,7 +136,7 @@ Temperature: 0.7
 ```text
 API Key: your-azure-openai-key
 Endpoint: https://your-resource.openai.azure.com/
-Deployment Name: gpt-4-deployment
+Deployment Name: your-deployment-name
 API Version: 2024-02-15-preview
 Max Tokens: 4096
 Temperature: 0.7
@@ -155,8 +162,8 @@ An AI model's API key and endpoint are encrypted at rest with the instance's `EN
 
 The Add/Edit AI model dialog exposes two separate **output-token** fields rather than a single generic limit:
 
-- **Max Tokens Per Request** — the hard ceiling on the number of _output_ tokens the model may generate in one response. Set it to the model's real maximum output (for example, `128000` for Claude Opus/Sonnet, `64000` for Claude Haiku, `65536` for Gemini, `16384` for GPT-4o). It does not limit how much context you send.
-- **Default Max Tokens** — the output length requests on this model ask for (bounded by Max Tokens Per Request). Test Case Generation (every source, including the Jira issue panel), Markdown Test Case Parsing, the Editor Writing Assistant, and Smart Test Case Selection always use this value. Export Code Generation, AI Tag Suggestions, AI Step Derivation, and the Automation Candidates Report use the **Max Output Tokens** from their [Prompt Configuration](../prompt-configurations) instead. Models that think before answering (for example, Claude Opus 5) spend part of this budget on reasoning, so leave room for the reply.
+- **Max Tokens Per Request** — the hard ceiling on the number of _output_ tokens the model may generate in one response. Set it to the model's real maximum output, as listed in your provider's model documentation. It does not limit how much context you send.
+- **Default Max Tokens** — the output length requests on this model ask for (bounded by Max Tokens Per Request). Test Case Generation (every source, including the Jira issue panel), Markdown Test Case Parsing, the Editor Writing Assistant, and Smart Test Case Selection always use this value. Export Code Generation, AI Tag Suggestions, AI Step Derivation, and the Automation Candidates Report use the **Max Output Tokens** from their [Prompt Configuration](../prompt-configurations) instead. Models that think before answering spend part of this budget on reasoning, so leave room for the reply.
 
 Neither field controls how much source material is _sent_ to the model. For QuickScript, the amount of connected-repository code included with each generation is shown read-only as the **Repository Context Budget (QuickScript)** — auto-sized from the selected model's input context window, so larger-context models get more and small local models get a safe amount that won't overflow. There is nothing to configure here.
 
@@ -300,7 +307,7 @@ Project admins can override which LLM integration is used for specific AI featur
 
 ### Use Cases
 
-- Use a fast, inexpensive model (e.g., GPT-3.5) for connection tests and a more capable model (e.g., GPT-4) for test case generation
+- Use a fast, inexpensive model for connection tests and a more capable model for test case generation
 - Override a single feature to use a different AI provider without changing the configuration for other features
 - Allow project teams to customize their LLM usage independently of the system-wide prompt configuration
 

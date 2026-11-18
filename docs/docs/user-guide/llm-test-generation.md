@@ -25,7 +25,7 @@ Choose your test generation source:
 
 **From Issue:**
 
-- Select an existing issue from your integrated tracking system. Supports Jira, GitHub Issues, and Azure DevOps work items.
+- Select an existing issue from your integrated tracking system. Supports Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, MantisBT, and ClickUp.
 - The selected issue's title, description, and comment thread are included in the LLM context.
 - Issues directly linked to your selected issue (one hop) are also included automatically — for example, the Stories under an Epic, or the issues an issue blocks / is-blocked-by. Each linked issue contributes its own title, description, and comments to the context.
 - A "Linked issues that will be included" section appears in the issue preview after selection, listing each linked issue's key and link type so you can preview what context the AI will see before generating.
@@ -35,6 +35,10 @@ Choose your test generation source:
   - **Jira**: `issuelinks` (blocks/blocked-by, relates-to, duplicates, custom Jira link types), parent/subtask hierarchy, and the Epic-Link custom field
   - **GitHub**: native sub-issues and timeline cross-references (mentions in other issues or pull requests that link both ways)
   - **Azure DevOps**: every `System.LinkTypes.*` relationship the work item reports — Related, Hierarchy-Forward/Reverse (parent/child), Successor, Predecessor, Affects-Forward/Reverse, Tested-By/Tests, Duplicate-Forward/Reverse
+  - **Redmine**: every relation the issue reports, in either direction
+  - **MantisBT**: the issue's relationships
+  - **ClickUp**: task links ("relates to") and dependencies ("waiting on" / "blocking")
+  - **GitLab** and **Gitea / Forgejo / Gogs**: linked issues are not followed; only the selected issue and its comments are included
 
 **From Document:**
 
@@ -70,12 +74,12 @@ Choose your test generation source:
 
 **Quantity Options:**
 
-- **Just One**: Generate a single, comprehensive test case
-- **A Couple**: Generate 2-3 focused test cases
-- **A Few**: Generate 3-5 test cases covering different scenarios
-- **Several**: Generate 5-8 test cases with good coverage
-- **Many**: Generate 8-12 test cases for thorough testing
-- **Maximum**: Generate comprehensive test suite (12+ cases)
+- **Just one**: Generate a single test case
+- **A couple (2)**: Generate 2 test cases
+- **A few (2-3)**: Generate 2-3 test cases
+- **Several (4-6)**: Generate 4-6 test cases
+- **Many (7-10)**: Generate 7-10 test cases
+- **Maximum**: As many test cases as needed for comprehensive coverage
 
 **Additional Instructions:**
 
@@ -263,7 +267,7 @@ Expected Result: User is redirected to the dashboard
 The AI considers:
 
 - **Existing Test Cases**: Avoids duplication of current test scenarios in the folder
-- **Cases Already Linked to the Source Issue**: Test cases anywhere in the repository that are already linked to the issue you are generating from are included first, ahead of folder cases, so regenerating for an issue extends its coverage instead of repeating it. This applies to any connected issue source — Jira, GitHub, Azure DevOps, or a manual issue — and does not depend on a folder, so it is the context that carries surfaces where no folder is involved, such as the milestone issue list or the Jira panel. A case that is both linked to the issue and in the folder is only sent once.
+- **Cases Already Linked to the Source Issue**: Test cases anywhere in the repository that are already linked to the issue you are generating from are included first, ahead of folder cases, so regenerating for an issue extends its coverage instead of repeating it. This applies to any connected issue source — and does not depend on a folder, so it is the context that carries surfaces where no folder is involved, such as the milestone issue list or the Jira panel. A case that is both linked to the issue and in the folder is only sent once.
 - **Related Test Cases Elsewhere in the Project**: When Elasticsearch is configured, test cases from other folders whose names and content resemble the source issue are included after the folder's own cases, as examples of the project's naming, step granularity, and expected-result style. Cases on the selected template rank first. Without Elasticsearch, the newest cases on the selected template stand in. This fills the gap when the destination folder is new or empty, which is common for the Jira panel's "Generated from Jira" folder and for folders that webhook actions draft into. In the two-phase flow (outline, then expand), a few of these cases are also shown in full while each test case's steps are written.
 - **Project Domain**: Understands your application type and testing needs
 - **Template Structure**: Adapts content to fit your specific template fields

@@ -14,7 +14,6 @@ Project documentation provides:
 - **Rich Text Editing** - Full-featured editor with formatting, media, and AI assistance
 - **Centralized Knowledge** - Single source of truth for project information
 - **Access Control** - Permission-based editing with read-only viewing
-- **Version History** - Track changes through edit and save operations
 - **Collaborative** - Multiple team members can contribute to project documentation
 - **Default Templates** - Start with pre-configured documentation structure
 
@@ -23,6 +22,7 @@ Project documentation provides:
 Navigate to **Projects** → **[Your Project]** → **Documentation** from the sidebar.
 
 The documentation page displays:
+
 - **Project Header** - Shows project icon and name
 - **Edit Button** - Available to users with edit permissions (top-right)
 - **Rich Text Content** - Formatted documentation displayed in a full-height editor
@@ -38,6 +38,7 @@ All project members with read access can view documentation:
 5. Code blocks are syntax-highlighted
 
 **Read-Only Mode:**
+
 - Editor displays content without modification capability
 - All formatting, images, and media are visible
 - Links are clickable
@@ -65,12 +66,14 @@ The TipTap-based editor provides extensive formatting capabilities:
 #### Text Formatting
 
 **Basic Formatting:**
+
 - **Bold** - Highlight important text (Ctrl/Cmd + B)
 - **Italic** - Emphasize text (Ctrl/Cmd + I)
 - **Underline** - Underline text (Ctrl/Cmd + U)
 - **Strikethrough** - Cross out text
 
 **Text Structure:**
+
 - **Heading 1** - Top-level section headers
 - **Heading 2** - Subsection headers
 - **Heading 3** - Sub-subsection headers
@@ -80,12 +83,14 @@ The TipTap-based editor provides extensive formatting capabilities:
 - **Code Block** - Multi-line code with syntax highlighting
 
 **Lists:**
+
 - **Bullet List** - Unordered lists
 - **Numbered List** - Ordered lists with automatic numbering
 
 #### Advanced Features
 
 **Links:**
+
 1. Select text to link
 2. Click the Link button in the toolbar
 3. Enter the URL in the popup dialog
@@ -93,30 +98,36 @@ The TipTap-based editor provides extensive formatting capabilities:
 5. Linked text appears with link styling
 
 **To Remove Links:**
+
 - Select linked text and click the link button again
 
 **Images:**
+
 1. Click the Upload button or drag and drop an image file
 2. Images are automatically uploaded to project storage
 3. Resize images by dragging corners (in edit mode)
 4. Images display inline within the documentation
 
 **Supported Image Formats:**
-- PNG, JPG, JPEG, GIF, WebP
-- Automatic resize and optimization
+
+- Drag and drop and paste accept PNG, JPEG, and GIF images
+- The upload button accepts any image file
 
 **Videos:**
+
 1. Upload video files using the upload button
 2. Videos are embedded with playback controls
-3. Supports common video formats
+3. Drag and drop and paste accept MP4, WebM, and Ogg video; the upload button accepts any video file
 
 **Emoji:**
+
 1. Click the Emoji button (smile icon)
 2. Search or browse GitHub emoji library
 3. Click to insert emoji into text
 4. Emojis render as standard Unicode characters
 
 **Color:**
+
 - Text color customization available
 - Choose from color palette
 - Applies to selected text
@@ -126,23 +137,27 @@ The TipTap-based editor provides extensive formatting capabilities:
 If your project has LLM integrations configured, AI features become available:
 
 **AI-Powered Actions:**
+
 - **Improve Writing** - Enhance clarity and grammar
 - **Make Shorter** - Condense verbose text
 - **Make Longer** - Expand brief content
-- **Fix Spelling & Grammar** - Correct errors
-- **Change Tone** - Adjust formality or style
-- **Simplify Language** - Make content more accessible
-- **Custom Prompt** - Provide specific instructions
+- **Fix Grammar** - Correct errors
+- **Change Tone** - Professional, Casual, or Formal
+- **Translate** - English, Spanish, or French
+- **Summarize** - Condense the selection to its key points
+- **Add Examples** - Illustrate the text with examples
 
 **Using AI Features:**
+
 1. Select text you want to improve
 2. Click the AI (wand) button in the toolbar
 3. Choose an action from the dropdown
 4. AI processes the text using configured LLM
 5. Review the suggestion in the dialog
-6. Click **Apply** to accept or **Cancel** to discard
+6. Click **Accept Suggestion** to apply it, or close the dialog to discard
 
 **Requirements for AI:**
+
 - Project must have an LLM integration configured
 - See [LLM Integrations](../llm-integrations.md) for setup instructions
 - Supported providers: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Azure OpenAI, Ollama, Custom LLM
@@ -150,12 +165,14 @@ If your project has LLM integrations configured, AI features become available:
 ### Saving and Canceling
 
 **Save Changes:**
+
 - Click the **Save** button at the bottom of the editor
 - Documentation is saved to the database as JSON
 - Changes are immediately visible to all project members
 - You return to read-only view mode
 
 **Cancel Editing:**
+
 - Click the **Cancel** button to discard changes
 - Original documentation content is restored from the database
 - All unsaved edits are lost
@@ -179,13 +196,15 @@ Navigating away from the page while editing will lose unsaved changes. Always cl
 When a project is created, it may include default documentation content based on system configuration.
 
 **Default Template:**
+
 - Configured in system settings under `project_docs_default`
 - Administrators can customize the default template
 - Provides a starting structure for new projects
 - Can include headings, sections, and placeholder text
 
 **Example Default Structure:**
-```
+
+```code
 # Project Overview
 [Project description and goals]
 
@@ -205,7 +224,8 @@ When a project is created, it may include default documentation content based on
 ### Customizing Defaults
 
 System administrators can update the default template:
-1. Navigate to **Administration** → **Settings**
+
+1. Navigate to **Administration** → **Application Configuration**
 2. Find the `project_docs_default` configuration
 3. Edit the JSON content
 4. New projects will use the updated template
@@ -215,16 +235,19 @@ System administrators can update the default template:
 ### Documentation Structure
 
 **1. Organize with Headings**
+
 - Use Heading 1 for main sections
 - Use Heading 2 and 3 for subsections
 - Create a logical hierarchy
 
 **2. Start with Overview**
+
 - Begin with project introduction
 - Define scope and objectives
 - Link to related resources
 
 **3. Include Key Sections:**
+
 - **Test Strategy** - Overall approach to testing
 - **Environments** - Available test environments and access
 - **Test Data** - Where to find or how to create test data
@@ -235,24 +258,28 @@ System administrators can update the default template:
 ### Writing Effective Documentation
 
 **1. Be Concise**
+
 - Use clear, simple language
 - Break up large paragraphs
 - Use lists for multiple items
 - Avoid unnecessary jargon
 
 **2. Keep It Current**
+
 - Update documentation when processes change
 - Remove outdated information
 - Mark temporary notes clearly
 - Review periodically
 
 **3. Use Visual Elements**
+
 - Include diagrams and screenshots
 - Use code blocks for technical examples
 - Embed videos for complex workflows
 - Use emoji sparingly for visual breaks
 
 **4. Link to Resources**
+
 - Link to external documentation
 - Reference test cases and test runs
 - Link to issue tracker tickets
@@ -261,18 +288,20 @@ System administrators can update the default template:
 ### Collaboration Guidelines
 
 **1. Communicate Changes**
+
 - Notify team when making major updates
-- Use comments to discuss changes
 - Coordinate with other editors
 - Avoid simultaneous editing
 
 **2. Establish Conventions**
+
 - Agree on documentation structure
 - Define standard sections
 - Use consistent terminology
 - Follow style guidelines
 
 **3. Ownership and Maintenance**
+
 - Assign documentation ownership
 - Schedule regular reviews
 - Archive obsolete content
@@ -285,6 +314,7 @@ System administrators can update the default template:
 **Purpose**: Define the overall testing approach
 
 **Content to Include:**
+
 - Testing objectives and goals
 - Types of testing (unit, integration, E2E, performance)
 - Test coverage targets
@@ -294,6 +324,7 @@ System administrators can update the default template:
 - Reporting procedures
 
 **Example Structure:**
+
 ```markdown
 # Test Strategy
 
@@ -324,6 +355,7 @@ System administrators can update the default template:
 **Purpose**: Help new team members get started
 
 **Content to Include:**
+
 - Project overview and context
 - Team structure and contacts
 - Development environment setup
@@ -338,6 +370,7 @@ System administrators can update the default template:
 **Purpose**: Document test environments and access
 
 **Content to Include:**
+
 - Environment names and URLs
 - Access credentials (or where to find them)
 - Environment-specific configurations
@@ -350,6 +383,7 @@ System administrators can update the default template:
 **Purpose**: Document APIs under test
 
 **Content to Include:**
+
 - Base URLs for different environments
 - Authentication methods
 - Key endpoints and their purposes
@@ -362,6 +396,7 @@ System administrators can update the default template:
 **Purpose**: Operational procedures for testing
 
 **Content to Include:**
+
 - How to execute test runs
 - Smoke test procedures
 - Regression test procedures
@@ -376,6 +411,7 @@ System administrators can update the default template:
 **Issue**: Edit button is not visible or disabled
 
 **Solutions:**
+
 - Verify you have the `Add/Edit` permission for Documentation
 - Check your project role and permissions
 - Contact project admin to request edit access
@@ -386,6 +422,7 @@ System administrators can update the default template:
 **Issue**: Save button doesn't work or changes are lost
 
 **Solutions:**
+
 - Check your network connection
 - Ensure you clicked Save (not just Cancel)
 - Verify you have edit permissions
@@ -397,8 +434,8 @@ System administrators can update the default template:
 **Issue**: Image upload fails or images don't display
 
 **Solutions:**
-- Verify image file size is reasonable (< 10MB recommended)
-- Check file format is supported (PNG, JPG, GIF, WebP)
+
+- Check the file format: drag and drop and paste accept PNG, JPEG, and GIF; use the upload button for other image types
 - Ensure project has file storage configured
 - Check network connectivity during upload
 - Try using a smaller image
@@ -408,6 +445,7 @@ System administrators can update the default template:
 **Issue**: AI button is missing or doesn't work
 
 **Solutions:**
+
 - Verify project has LLM integration configured
 - Check that integration is active and properly set up
 - Ensure you selected text before clicking AI button
@@ -419,6 +457,7 @@ System administrators can update the default template:
 **Issue**: Formatting disappears or looks incorrect
 
 **Solutions:**
+
 - Avoid pasting from Microsoft Word (use plain text)
 - Use the editor's formatting tools rather than copy-paste
 - Clear formatting and reapply if needed
@@ -430,6 +469,7 @@ System administrators can update the default template:
 **Issue**: Editor is slow or unresponsive
 
 **Solutions:**
+
 - Break up very long documentation into multiple sections
 - Optimize large images before uploading
 - Remove unused images and videos
@@ -442,30 +482,25 @@ System administrators can update the default template:
 ### Required Permissions
 
 **View Documentation:**
+
 - Read access to the project
 - Default permission for all project members
 - Documentation inherits project access control
 
 **Edit Documentation:**
+
 - `Add/Edit` permission for `Documentation` application area
 - Assigned at the project level through roles
-- Typically granted to Managers, Admins, and specific Members
+- Assigned through the user's role in the project
 
-### Permission Levels
+### Granting Edit Access
 
-**Project Roles with Documentation Editing:**
-- **Admin** - Full edit access
-- **Manager** - Full edit access (default)
-- **Member** - Can be granted edit access
-- **Tester** - Typically read-only
-- **Guest** - Read-only
+1. A system administrator opens **Administration** → **Roles**
+2. Edit the role and enable `Add/Edit` for the `Documentation` application area
+3. Save changes
+4. Every user who holds that role in the project can now edit its documentation
 
-**Granting Edit Access:**
-1. Navigate to **Projects** → **[Project]** → **Settings** → **Permissions**
-2. Select a role to modify
-3. Enable `Add/Edit` for the `Documentation` application area
-4. Save changes
-5. Users with that role can now edit documentation
+The project's **Settings** → **Access** page shows which role each user holds.
 
 ## Technical Details
 
@@ -477,6 +512,7 @@ System administrators can update the default template:
 - Supports rich media references (images, videos)
 
 **Example JSON Structure:**
+
 ```json
 {
   "type": "doc",
@@ -506,24 +542,22 @@ System administrators can update the default template:
 
 - Documentation loads asynchronously
 - Large documents are handled efficiently by TipTap
-- Images are lazy-loaded
 - Video playback is on-demand
-- Editor optimized for documents up to several MB
 
 ### Browser Compatibility
 
 - Modern browsers: Chrome, Firefox, Safari, Edge
 - JavaScript must be enabled
 - Drag-and-drop requires modern browser
-- Mobile browsers supported (view mode)
-- Edit mode best on desktop/laptop
 
 ## API Reference
+
+Read operations are `GET` requests whose `q` parameter is the URL-encoded JSON query. See the [API Reference](../../api-reference.md).
 
 ### Get Project Documentation
 
 ```http
-GET /api/model/Projects/findFirst?q={
+GET /api/model/projects/findFirst?q={
   "where": { "id": 123 },
   "select": { "docs": true }
 }
@@ -532,7 +566,7 @@ GET /api/model/Projects/findFirst?q={
 ### Update Project Documentation
 
 ```http
-PUT /api/model/Projects/update
+PATCH /api/model/projects/update
 Content-Type: application/json
 
 {
@@ -558,7 +592,7 @@ Content-Type: application/json
 ### Default Template Configuration
 
 ```http
-GET /api/model/AppConfig/findFirst?q={
+GET /api/model/appConfig/findFirst?q={
   "where": { "key": "project_docs_default" }
 }
 ```

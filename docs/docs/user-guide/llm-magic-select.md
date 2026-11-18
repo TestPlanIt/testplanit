@@ -33,13 +33,13 @@ Magic Select helps you:
 
 2. **Click Next**: Navigate to the test case selection step
 
-3. **Click Magic Select**: The button appears alongside the "Selected Test Cases" button
+3. **Click Magic Select**: It is one of the **Ways to pick test cases** actions above the case list
 
 4. **Configure Analysis** (for large repositories):
    - **Clarification**: Add additional context to help the AI understand what you need
 
 5. **Wait for Analysis**: Magic Select runs in the background, showing real-time progress:
-   - **Batch progress**: "Analyzing batch X of Y" as the AI processes test cases
+   - **Progress**: "Analyzed X of Y test cases..." as the AI processes test cases, with a count of the cases selected so far
    - **Partial results warning**: If any batch was truncated by the AI provider, a warning is shown so you know some analysis may be incomplete
 
 6. **Review Suggestions**: The AI presents:
@@ -48,8 +48,8 @@ Magic Select helps you:
    - Option to view and modify the suggestions
 
 7. **Accept or Refine**:
-   - **Accept**: Merge suggestions with any existing selection
-   - **Refine**: Add clarification and re-run the analysis
+   - **Add to Selection**: Merge suggestions with any existing selection
+   - **Refine Selection**: Add clarification and re-run the analysis
    - **Cancel**: Keep your existing selection unchanged
 
 ## How It Works
@@ -172,7 +172,6 @@ MAGIC_SELECT_MAX_SEARCH_RESULTS=2000
 
 **Large Repositories** (1000+ cases):
 
-- Use batch processing for better results
 - Consider increasing `MAGIC_SELECT_MAX_SEARCH_RESULTS` if relevant cases are missed
 - Ensure Elasticsearch is configured and healthy
 
@@ -251,7 +250,6 @@ Add specific guidance when needed:
 
 - Use more specific test run names
 - Add clarification to narrow focus
-- Use batch processing with smaller batches
 
 ### Magic Select Button Disabled
 
@@ -276,7 +274,6 @@ Add specific guidance when needed:
 **Solutions:**
 
 - Configure Elasticsearch for pre-filtering
-- Use batch processing
 - Increase `MAGIC_SELECT_MIN_SEARCH_SCORE` to reduce candidates
 - Lower `MAGIC_SELECT_MAX_SEARCH_RESULTS`
 
@@ -379,7 +376,7 @@ GET /api/llm/magic-select-cases/status/{jobId}
       "suggestedCount": 5,
       "directlySelected": 3,
       "linkedCasesAdded": 2,
-      "model": "gpt-4-turbo",
+      "model": "<model-name>",
       "tokens": { "prompt": 2500, "completion": 150, "total": 2650 },
       "batchCount": 3,
       "failedBatchCount": 0

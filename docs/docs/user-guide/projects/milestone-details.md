@@ -31,10 +31,10 @@ In the default view mode:
 - All fields are read-only.
 - A **Back Arrow** button in the header navigates back to the main Milestones list.
 - An **Activity** button — the leftmost of the header actions — opens a slide-out **Activity Log** sheet listing the milestone's audit history. Which entries appear is governed by the milestone audit-log read policy.
-- An **Edit** button (icon: SquarePen) is available for users with **ADMIN** or **PROJECTADMIN** access.
+- An **Edit** button (icon: SquarePen) is available for users with `Add/Edit` permission for Milestones, and for system administrators.
 - An **Export PDF** button generates a print/evidence-grade PDF report of the milestone (see [Exporting to PDF](#exporting-to-pdf)).
 - The right panel displays:
-  - **Status Badge**: Shows the calculated status (Not Started, In Progress, Completed, Overdue).
+  - **Status Badge**: Shows the calculated status (Upcoming, Started, Delayed, Past Due, Unscheduled, or Completed).
   - **Completion Rate**: Displays the percentage of completed test results out of total test cases in test runs associated with this milestone and all descendant milestones.
   - **Dates**: Displays Start and Due dates.
   - **Description**: Shows the rich text description (`note` field). It's initially collapsed but expandable.
@@ -43,7 +43,7 @@ In the default view mode:
 
 ## Source Badge
 
-A milestone synced from an external tracker (currently Jira) shows a badge next to its name, for example **Jira · Sprint · active · Website**: the tracker's icon, the milestone's kind (**Release** or **Sprint**), its current tracker-reported state, and — space permitting — the Jira project the artifact belongs to.
+A milestone synced from an external tracker (Jira or GitHub) shows a badge next to its name, for example **Jira · Sprint · active · Website**: the tracker's icon, the milestone's kind (**Release** or **Sprint**), its current tracker-reported state, and — space permitting — the Jira project the artifact belongs to.
 
 - **Project admins** see the badge as a menu trigger. Clicking it opens:
   - **Open in Jira** — opens the linked artifact in a new tab. Disabled if no external URL is stored for the milestone.

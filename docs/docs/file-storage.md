@@ -40,10 +40,10 @@ Configure AWS S3 in your `.env` file:
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
 AWS_REGION=us-east-1
-AWS_S3_BUCKET_NAME=your-bucket-name
+AWS_BUCKET_NAME=your-bucket-name
 
 # Optional: Custom S3 endpoint (for S3-compatible services)
-# AWS_S3_ENDPOINT=https://your-s3-endpoint.com
+# AWS_ENDPOINT_URL=https://your-s3-endpoint.com
 ```
 
 :::caution Avoid dots in the bucket name
@@ -223,7 +223,7 @@ or anything else. Read it as "storage is not publicly readable".
 :::
 
 :::info Technical Note
-Proxy mode uses Next.js Server Actions instead of Route Handlers. This is because Next.js App Router Route Handlers have a hardcoded 1MB body size limit that cannot be configured. Server Actions support configurable body size limits via `experimental.serverActions.bodySizeLimit` in `next.config.mjs`.
+Proxy mode uses Next.js Server Actions instead of Route Handlers. This is because Next.js App Router Route Handlers have a hardcoded 1MB body size limit that cannot be configured. Server Actions support configurable body size limits via `experimental.serverActions.bodySizeLimit` in `next.config.ts`.
 :::
 
 #### Alternative: Public Endpoint URL
@@ -329,7 +329,7 @@ Attachments appear in several locations:
 
 - **Direct Download**: Click attachment name to download
 - **Preview**: Supported file types show inline preview (see [Inline Previews](#inline-previews))
-- **Secure Access**: All downloads use signed URLs with expiration
+- **Secure Access**: In proxy mode, downloads require a signed-in session or an API token
 - **Permission Checks**: Access based on entity permissions
 
 ### Inline Previews
@@ -422,50 +422,65 @@ A file whose address points at a host other than the configured storage, such as
 ### Access Control
 
 - **Permission-Based**: Access follows entity permissions
-- **Signed URLs**: All file access uses temporary signed URLs
-- **Expiration**: Download links expire after 1 hour
-- **Authentication**: Requires valid user session
+- **Uploads**: Presigned upload URLs are valid for 60 seconds
+- **Proxy mode**: Every file request goes through `/api/storage` and requires a signed-in session or an API token
+- **Direct mode**: Files are read straight from the bucket, which must be publicly readable (see [Storage Modes](#storage-modes))
 
 ### File Validation
 
-- **Type Checking**: MIME type validation on upload
-- **Size Limits**: Configurable maximum file sizes
-- **Malware Scanning**: Optional virus scanning integration
-- **Content Filtering**: Blocks potentially harmful file types
+- **Type Checking**: Project icons, avatars, and inline document images accept image files only; attachments accept any file type
+- **Size Limits**: Each upload type has a maximum size (see [File Size Limits](#file-size-limits))
+- **Safe Serving**: In proxy mode, only images, PDFs, plain text, audio, and video open in the browser; every other file type is sent as a download
 
 ## API Reference
 
 ### Get Upload URL
 
-```http
-POST /api/get-attachment-url
-Content-Type: application/json
+Used by the browser in direct mode. Requires a signed-in session.
 
-{
-  "fileName": "screenshot.png",
-  "fileSize": 1024000,
-  "contentType": "image/png"
-}
+```http
+GET /api/get-attachment-url?prependString=<prefix>
 ```
 
 Response:
 
 ```json
 {
-  "uploadUrl": "https://s3.amazonaws.com/bucket/file?signature=...",
-  "fileKey": "attachments/uuid/screenshot.png"
+  "success": {
+    "url": "https://s3.amazonaws.com/bucket/uploads/attachments/...?X-Amz-Signature=..."
+  }
+}
+```
+
+The URL accepts one `PUT` of the file and is valid for 60 seconds. `prependString` is optional and becomes the start of the object's file name.
+
+### Upload a File
+
+Uploads a file through the application. Accepts a signed-in session or an [API token](./api-tokens.md).
+
+```http
+POST /api/upload-attachment
+Content-Type: multipart/form-data
+
+file: <the file>
+prependString: <prefix> (optional)
+```
+
+Response:
+
+```json
+{
+  "success": {
+    "url": "/api/storage/uploads/attachments/1700000000000_screenshot.png",
+    "key": "uploads/attachments/1700000000000_screenshot.png"
+  }
 }
 ```
 
 ### File Downloads
 
-Files are accessed directly through signed URLs generated during upload. The system does not provide a separate download API endpoint - instead, files are downloaded directly from storage using the signed URLs provided during the upload process.
-
-**Direct Download:**
-
-- Files are accessed via signed URLs from storage
-- URLs are generated with appropriate expiration times
-- Access is controlled through the original upload permissions
+- **Proxy mode**: `GET /api/storage/<key>` returns the file. It requires a signed-in session or an API token.
+- **Direct mode**: Files are downloaded from the storage URL saved with the attachment.
 
 ## Troubleshooting
 
@@ -577,12 +592,12 @@ TestPlanIt can be extended to support additional storage backends by implementin
 
 ### CDN Integration
 
-For better performance, configure CloudFront or similar CDN:
+For better performance, put CloudFront or a similar CDN in front of the bucket and point `AWS_PUBLIC_ENDPOINT_URL` at it. Add the CDN's origin to `CSP_ALLOWED_ORIGINS`:
 
 ```env
 # CDN Configuration
-AWS_CLOUDFRONT_DOMAIN=d123456789.cloudfront.net
-AWS_CLOUDFRONT_DISTRIBUTION_ID=E123456789ABCD
+AWS_PUBLIC_ENDPOINT_URL=https://d123456789.cloudfront.net
+CSP_ALLOWED_ORIGINS=https://d123456789.cloudfront.net
 ```
 
 ### Backup and Archival

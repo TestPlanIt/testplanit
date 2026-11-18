@@ -21,14 +21,21 @@ If you do not see an option to access Admin settings, you may not have the neces
 
 ### Authentication & Access Control
 
-**Single Sign-On (SSO) Configuration** (`/admin/sso`)
+**Authentication** (`/admin/sso`)
 
-- Configure Google OAuth, Apple Sign In, Microsoft (Azure AD), and SAML authentication providers
-- Enable/disable Force SSO to require SSO authentication
+- Configure Google OAuth, Apple Sign In, Microsoft (Entra ID), SAML, and Magic Link sign-in
 - Manage email domain restrictions for new registrations
 - Control who can register based on email domains
 
 For detailed SSO configuration, see the [SSO Documentation](./sso.md).
+
+**Security** (`/admin/security`)
+
+- Set the password policy and the lockout policy
+- Enable **Force SSO Login**, **Require 2FA for Password Logins**, or **Require 2FA for All Logins** under Sign-in Enforcement
+- Force a password change for all users
+
+For details, see the [Security Settings Documentation](./security-settings.md).
 
 **SCIM Provisioning** (`/admin/scim`)
 
@@ -43,13 +50,11 @@ For detailed SCIM and role-mapping information, see the [SCIM Provisioning Docum
 
 ### Search & Indexing
 
-**Elasticsearch Administration** (`/admin/elasticsearch`)
+**Search Engine** (`/admin/elasticsearch`)
 
-- Monitor Elasticsearch cluster health and status
-- Manage search indices (create, delete, reindex)
-- Perform maintenance operations (cache clearing, optimization)
-- Configure connection settings and authentication
-- View real-time indexing statistics and performance metrics
+- View Elasticsearch connection and cluster health (nodes, indices, document counts)
+- Set the number of index replicas
+- Reindex all or selected entity types
 
 For detailed search configuration, see the [Search Configuration Documentation](../search-configuration.md).
 
@@ -84,7 +89,7 @@ For detailed search configuration, see the [Search Configuration Documentation](
 - Configure state transitions and permissions
 - Assign workflows to projects
 
-**Templates & Fields** (`/admin/templates-fields`)
+**Templates & Fields** (`/admin/fields`)
 
 - Create custom field templates for test cases
 - Define field types and validation rules
@@ -134,12 +139,11 @@ For detailed audit log information, see the [Audit Logs Documentation](./audit-l
 
 ### Monitoring & Maintenance
 
-**System Health**
+**Job Queues** (`/admin/queues`)
 
-- Monitor application performance
-- View system resource usage
-- Check background job status
-- Review error logs
+- Monitor background job queues
+- Inspect and retry failed jobs
+- See [Job Queues](./queues.md)
 
 **Reports** (`/admin/reports`)
 

@@ -61,6 +61,7 @@ Options in the Projects, States, Tags, Created By, Folders, Templates, Configura
 - **Tags** - Filter by tags
 - **Created By** - Filter by the user who created the item
 - **Date Range** - Filter by creation, update, or completion date
+- **Include deleted items** - Also show deleted items (administrators only)
 
 #### Entity-Specific Filters
 
@@ -71,19 +72,19 @@ Options in the Projects, States, Tags, Created By, Folders, Templates, Configura
 - Automation Status - Show only automated or manual tests
 - Estimate Range - Filter by time estimates
 - Custom Fields - Advanced filtering by custom field values with operators:
-  - Text fields: equals, not equals, contains, not contains, starts with, ends with
-  - Number fields: equals, greater than, less than, greater than or equal, less than or equal, between
-  - Select fields: in, not in
-  - All fields: exists, not exists
+  - Text String and Link fields: equals, not equals, contains, not contains, starts with, ends with
+  - Number and Integer fields: equals, not equals, greater than, less than, greater than or equal, less than or equal
+  - Date fields: equals, not equals, greater than, less than
+  - Dropdown and Multi-Select fields: equals, not equals, in, not in
+  - Checkbox, Text Long, and other fields: equals
 
 **Test Runs:**
 
-- Test Run Type - Regular or JUnit imports
+- Test Run Type - Regular, Hybrid, or JUnit
 - Configurations - Filter by test [Configurations](./configurations.md); when scoped to a specific project, only Configurations assigned to that project are listed
 - Milestones - Filter by associated milestones
 - Completed - Show only completed runs
 - Elapsed Time - Filter by execution time
-- Custom Fields - Advanced filtering by custom field values (same operators as Repository Cases)
 
 **Sessions:**
 
@@ -94,12 +95,10 @@ Options in the Projects, States, Tags, Created By, Folders, Templates, Configura
 
 **Issues:**
 
-- Has External ID - Show only issues with external IDs
+- Issues - Limit results to specific issues you select
 
 **Milestones:**
 
-- Has Parent - Show only sub-milestones
-- Due Date Range - Filter by due dates
 - Completed - Show only completed milestones
 
 ## Search Results
@@ -336,8 +335,6 @@ description:athentication~
 
 - `Cmd/Ctrl + K` - Open global search
 - `Escape` - Close search or clear current search
-- `Enter` - Navigate to the first result
-- `Arrow keys` - Navigate through results
 
 ## Search Indexing
 

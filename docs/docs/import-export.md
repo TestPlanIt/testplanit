@@ -652,7 +652,7 @@ Common validation errors:
 
 | Option | Values | Description |
 | -------- | -------- | ------------- |
-| **Scope** | Selected / All Filtered / All Project | Which test cases to include |
+| **Scope** | Selected / All in View / All in Project | Which test cases to include |
 | **Columns** | Visible / All | Which fields to export |
 | **Text Fields** | JSON / Plain Text | How to format rich text content (Markdown option available in CSV only) |
 | **Attachment Format** | Names / Embed Images | How to display attachments |
@@ -832,7 +832,7 @@ By default each result is matched to a case by **name + class name**, so renamin
 
 ### Export
 
-There is no server-side export endpoint. CSV, PDF, and other exports are generated in the browser from data already loaded by the Repository view — the export reflects the current filter, scope, and column selection in the UI. Use the **Export** button in the Repository toolbar to configure and download.
+The CSV and PDF exports are generated in the browser from data already loaded by the Repository view — the export reflects the current filter, scope, and column selection in the UI. Use the **Export** button in the Repository toolbar to configure and download. For machine-readable bulk export over the API, see [Data Lake Export](./data-lake-export.md).
 
 ## Best Practices
 

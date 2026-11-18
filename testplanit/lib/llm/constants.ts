@@ -292,7 +292,7 @@ export const LLM_FEATURE_LABELS: Record<LlmFeature, string> = {
   [LLM_FEATURES.AUTOMATION_CANDIDATES]: "Automation Candidates Report",
   [LLM_FEATURES.DERIVE_CASE_STEPS]: "AI Step Derivation",
   [LLM_FEATURES.IMPACT_ANALYSIS]: "Impact: Affected Test Selection",
-  [LLM_FEATURES.FAILURE_TRIAGE]: "Failure Triage: Root Cause",
+  [LLM_FEATURES.FAILURE_TRIAGE]: "Failure Patterns: Root Cause",
 };
 
 /**

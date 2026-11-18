@@ -17,16 +17,13 @@ This view typically includes:
 
     - **Test Case Name**: Displays the name of the test case being executed.
     - **Current Status**: Shows the current overall status (e.g., Untested, Passed, Failed, Blocked) for this case _within this specific run_.
-    - **Navigation**: May include Previous/Next buttons to move between test cases in the run sequence without returning to the main list.
+    - **Navigation**: **Previous Case** and **Next Case** buttons, with the case's position in the list, move between test cases without returning to the main list.
     - **Close Button**: Returns the right panel to the default Test Run metadata view.
 
-2. **Overall Result Controls**: Buttons to set the overall status for the _entire test case_ within this run:
+2. **Overall Result Controls**: Buttons to record a result for the _entire test case_ within this run:
 
-    - **Pass**: Marks the entire case as passed.
-    - **Fail**: Marks the entire case as failed.
-    - **Block**: Marks the case as blocked (e.g., due to an environment issue or dependency).
-    - **Skip**: Marks the case as skipped.
-    - _(Setting an overall result might automatically update step results accordingly, depending on configuration.)_
+    - **Add Result**: Opens the **Add Result** dialog, where you choose a status from the project's result statuses and add result details, elapsed time, attachments, and linked issues.
+    - **Pass & Next**: Records a passing result and moves to the next case. The arrow beside it lists the project's other statuses for recording one of those instead.
 
 3. **Steps List**: Displays the steps defined in the test case, usually including:
 
@@ -34,25 +31,21 @@ This view typically includes:
     - **Action/Description**: The instruction for the step.
     - **Expected Result**: What should happen after performing the action.
     - **Layout**: The icon above the steps switches between the expected result sitting under its step (the default) and the two side by side. The choice is saved to your profile and is shared with the case details view and editor. On a narrow panel, steps stack regardless.
-    - **Step Result Controls**: Individual Pass/Fail/Block/Skip buttons _for each step_. Setting a step result often updates the overall case result automatically (e.g., failing one step fails the case).
-    - **Step Comment Area**: An optional field to add notes specific to the execution of that step.
-    - **Step Attachments**: An option to attach files (screenshots, logs) directly related to the result of that specific step.
+    - **Step Results**: In the **Add Result** dialog each step can be given its own status, notes, and linked issues. A step recorded with a failure status marks the case as failed in the run.
 
-4. **Overall Comments**: A rich-text editor area to add comments relevant to the overall execution of the test case in this run (e.g., explaining why it was blocked, general observations).
+4. **Result Details**: A rich-text editor in the **Add Result** dialog for notes on the overall execution of the test case in this run (e.g., explaining why it was blocked, general observations).
 
-5. **Overall Attachments**: An area to upload and view attachments relevant to the _overall_ execution result of this test case within the run.
+5. **Attachments**: An area in the **Add Result** dialog to upload attachments relevant to the _overall_ execution result of this test case within the run.
 
 ## Execution Workflow
 
 1. **Select Case**: Click a test case from the list in the left panel of the Test Run Details page.
 2. **Review Steps**: Read the action and expected result for each step.
 3. **Perform Action**: Execute the test step action in the system under test.
-4. **Record Step Result**: Click the Pass, Fail, Block, or Skip button for the step based on the outcome.
-5. **Add Step Details (Optional)**: Add comments or attach files directly to the step if needed.
-6. **Repeat**: Continue for all steps.
-7. **Set Overall Result**: If not automatically set by step failures, use the overall result buttons at the top.
-8. **Add Overall Details (Optional)**: Add overall comments or attachments.
-9. **Navigate/Close**: Use the Previous/Next buttons or Close button to move to another case or return to the run overview.
+4. **Record the Result**: Click **Pass & Next** if every step passed, or click **Add Result** to choose another status.
+5. **Add Step Details (Optional)**: In the **Add Result** dialog, set a status, notes, or linked issues on individual steps.
+6. **Add Overall Details (Optional)**: Add result details, elapsed time, attachments, or linked issues, then save.
+7. **Navigate/Close**: Use the **Previous Case** / **Next Case** buttons or the Close button to move to another case or return to the run overview.
 
 ## Execution Time
 

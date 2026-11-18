@@ -7,7 +7,7 @@ title: User Management
 
 This section allows administrators (`ADMIN` access level) to manage user accounts within TestPlanIt. You can add, edit, and delete users, control their access levels, assign roles, and manage their project assignments, and group memberships.
 
-To access this page, enter the Administration area and select **User Management** from the left-hand navigation menu.
+To access this page, enter the Administration area and select **Users** (under **People & Access**) from the left-hand navigation menu.
 
 ## Viewing Users
 
@@ -21,11 +21,13 @@ The main view displays a table of all registered users (excluding those marked a
   - **Email**: User's email address.
   - **Email Verified**: Date the user's email address was verified.
   - **Is Active**: A switch indicating if the user account is active. Inactive users cannot log in. (Cannot be disabled for your own account).
+  - **Last Active**: When the user was last active.
   - **Access**: The user's system access level (ADMIN, PROJECTADMIN, USER, NONE).
   - **Role**: The user's assigned Role (determines permissions).
   - **Groups**: A count/list of Groups the user belongs to.
   - **Projects**: A count/list of Projects the user is assigned to.
   - **API Access**: (Hidden by default) A switch indicating if the user can access the API.
+  - **SCIM**: Marks users provisioned through [SCIM](./scim.md).
   - **Created At**: Date the user account was created.
   - **Created By**: (Hidden by default) The user who created this account (or "Self-Registration").
   - **Actions**: A three-dot menu with **Edit**, **Force Password Change**, **Revoke Password**, and **Delete** options. Password actions are only shown for internal/both auth method users and are hidden for your own account. Delete is also hidden for your own account.

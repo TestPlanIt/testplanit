@@ -84,6 +84,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **TestPlanIt CLI** - CLI tool for submitting test case results in popular formats
 - **API access** - Push results programmatically via the REST API
 - **WebdriverIO reporter** - Native integration with WebdriverIO test framework
+- **Playwright reporter** - Native integration with Playwright Test
 - **JUnit iteration property mapping** - Configurable per-project list of JUnit property/attribute names the importer uses to detect the iteration index — defaults to `iteration`, fully customizable for any CI vocabulary
 
 ## Exploratory Testing
@@ -129,7 +130,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Redmine integration** - Connect to a self-hosted Redmine instance for issue tracking
 - **MantisBT integration** - Connect to a self-hosted MantisBT instance for issue tracking
 - **ClickUp integration** - Create and sync ClickUp tasks, with custom fields, attachments and task links
-- **OAuth 2.0 authentication** - Use OAuth for GitHub, GitLab, and Gitea/Forgejo connections (no personal access token required)
+- **OAuth 2.0 authentication** - Use OAuth for Jira, GitHub, GitLab, and Gitea/Forgejo connections (no personal access token required)
 - **Two-way sync** - Optional outbound notifications and inbound webhook updates between TestPlanIt and the issue tracker
 - **Linked-issue context for AI** - Auto-tag and test case generation pull labels, components, and metadata from linked issues
 - **Bi-directional linking** - Navigate seamlessly between tests and issues
@@ -279,7 +280,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 
 - **Background job processing** - Asynchronous task processing with BullMQ (workers cover audit, search reindex, email, webhooks, AI, dataset import, and more)
 - **System health monitoring** - Monitor system status and queue health
-- **Multi-tenancy support** - Optional schema-isolated multi-tenant mode for SaaS deployments
+- **Multi-tenancy support** - Optional multi-tenant mode with a separate database per tenant and shared workers
 - **External database support** - Run against your own managed PostgreSQL, Redis-compatible cache (Redis/Valkey), and Elasticsearch instances
 - **Docker-first deployment** - Production Compose files, recommended ARM + x86 images, and a documented manual setup path
 - **Upgrade notifications** - Get notified about new features since the last time you logged in

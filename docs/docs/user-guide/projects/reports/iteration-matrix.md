@@ -5,26 +5,27 @@ sidebar_position: 6
 
 # Iteration Matrix
 
-A 2D grid view of parameterized test case execution results. Rows are test cases, columns are parameter configurations, and each cell summarizes the status counts and pass rate for that case run with that configuration.
+A grid of parameterized test case results: case × configuration × parameter row. Each cell shows the worst-of status for that iteration across the filtered runs.
 
 This report is project-only — it has no cross-project variant because matrix cells don't generalize across projects.
 
 ## What It Shows
 
-- **Rows** — parameterized test cases in the project
-- **Columns** — the configurations under which those cases were executed
-- **Cells** — per-cell status counts plus a pass-rate badge
+- **Cases** — parameterized test cases in the project
+- **Configurations** — the configurations under which those cases were executed
+- **Parameter rows** — the dataset rows each case was iterated over
+- **Cells** — the worst-of status for that case, configuration, and parameter row
 
 See [Parameterized Test Cases](../parameterized-test-cases.md) for how parameters and configurations are authored.
 
 ## Filters
 
-Filters apply post-generation to narrow the visible matrix:
+Filters narrow the matrix:
 
-- Folder
 - Status
-- Priority
-- Configuration scope
+- Configuration
+- Dataset
+- The report's date range
 
 ## Sensitive Parameter Values
 

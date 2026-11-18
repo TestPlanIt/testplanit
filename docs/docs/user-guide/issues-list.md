@@ -28,16 +28,25 @@ This page displays a table listing issues, allowing you to quickly see which iss
 ### Sorting
 
 - The table is initially sorted by **Name** in ascending order.
-- Clicking on sortable column headers will toggle the sorting direction (ascending/descending) for that column. _(Note: Based on current implementation, only 'Name' might be actively sortable)._
+- Clicking on sortable column headers will toggle the sorting direction (ascending/descending) for that column. Every column except **Description** and **Integration** is sortable.
 
 ### Data Table Columns
 
 The table displays the following information for each issue:
 
 - **Name:**
-    - Displays the issue's unique name and its external ID (if available).
-    - Clicking the issue name navigates to the detailed view of that specific issue (linking TBD).
-    - Associated project icons are displayed alongside the name.
+    - Displays the issue key/name with its issue-type icon. Always shown.
+    - Clicking it opens a popover with the issue's details (status, priority, description) and a link out to the external issue.
+- **Title:**
+    - The issue title. Clicking it opens a popover with the full formatted content.
+- **Description:**
+    - The issue description. Clicking it opens a popover with the full formatted content.
+- **Status:**
+    - The status synced from the external tracker.
+- **Priority:**
+    - The priority synced from the external tracker.
+- **Last Synced:**
+    - When the issue was last refreshed from the external system, or `-`.
 - **Test Cases:**
     - Shows a count of how many repository test cases are linked to this issue across all accessible projects.
     - Clicking the count opens a modal displaying the list of linked test cases.
@@ -53,6 +62,8 @@ The table displays the following information for each issue:
 - **Projects:**
     - Shows icons representing the projects associated with the issue through linked test cases, test runs, or sessions.
     - Clicking the project icons opens a modal displaying the list of associated projects.
+- **Integration:**
+    - The integration the issue was linked through, or `-`.
 
 ## Access Control
 

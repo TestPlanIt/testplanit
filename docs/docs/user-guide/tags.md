@@ -26,6 +26,7 @@ The Tags page displays a table listing all defined tags (excluding those marked 
   - **Test Cases**: Displays the number of Test Cases associated with this Tag. Clicking the number may show a list or link to the relevant cases (depending on component implementation).
   - **Sessions**: Displays the number of Test Sessions associated with this Tag. Clicking the number may provide more details.
   - **Test Runs**: Displays the number of Test Runs associated with this Tag. Clicking the number may provide more details.
+  - **Projects**: Displays the projects where this Tag is used.
   - **Actions**: Buttons to **Edit** or **Delete** the Tag.
 
 ## Adding a New Tag
@@ -35,7 +36,7 @@ The Tags page displays a table listing all defined tags (excluding those marked 
 3. Enter a unique **Name** for the new Tag in the input field.
 4. Click **Submit**.
 
-    - If the name already exists (case-insensitive match), an error message "Name already exists" will be displayed below the input field.
+    - If the name already exists (case-insensitive match), an error message "A tag with this name already exists" will be displayed below the input field.
     - If a previously deleted tag with the same name exists, it will be restored instead of creating a new tag.
     - If any other error occurs, a general error message will appear near the bottom of the modal.
 
@@ -56,8 +57,7 @@ Deleting a tag performs a _soft delete_, meaning it marks the tag as inactive bu
 1. Locate the Tag you wish to remove in the table.
 2. Click the **Delete** icon in the **Actions** column.
 3. A confirmation dialog will appear, asking you to confirm the deletion and showing the tag name.
-4. It will also display a warning: "This action cannot be undone. The Tag will be marked as deleted."
+4. It will also display a warning: "This tag will be removed from all test cases and Sessions."
 5. Click **Delete** (the red button) to confirm the soft deletion.
 6. Click **Cancel** to close the dialog without deleting.
 
-_(More content needed...)_

@@ -15,7 +15,7 @@ The page is structured within a card layout and features:
 
     - Displays the title "Test Runs".
     - Shows the current Project Name and Icon.
-    - Includes an **Add Test Run** button (visible to users with appropriate permissions - Admin or Project Admin) to open the [Add Test Run Modal](./add-test-run-modal.md).
+    - Includes an **Add Test Run** button (visible to users with `Add/Edit` permission for Test Runs) to open the [Add Test Run Modal](./add-test-run-modal.md).
 
 2. **Summary Cards**: A row of at-a-glance cards above the run list (see [Summary Cards](#summary-cards)).
 
@@ -93,9 +93,9 @@ This is the default view. Active test runs are grouped by their associated miles
 - **Milestone Groups**: Each milestone with associated active test runs is displayed as a collapsible section header. The header shows:
   - A **chevron** that collapses and expands the group (see [Collapsing Milestone Groups](#collapsing-milestone-groups))
   - Milestone Icon and Name ([See Milestone Details](./milestone-details.md))
-  - A [source badge](./milestone-details.md#source-badge) if the milestone is synced from Jira, for example **Jira · Sprint · active · Website**. Click it to open the sprint or release in the tracker in a new tab. (Unlinking is not offered here — that lives on the [Milestones](./milestones.md) pages, which own the milestone's lifecycle.)
+  - A [source badge](./milestone-details.md#source-badge) if the milestone is synced from Jira or GitHub, for example **Jira · Sprint · active · Website**. Click it to open the sprint or release in the tracker in a new tab. (Unlinking is not offered here — that lives on the [Milestones](./milestones.md) pages, which own the milestone's lifecycle.)
   - A count of the test runs in the group, including those in any child milestones
-  - Milestone Status Badge (e.g., Upcoming, In Progress, Completed)
+  - Milestone Status Badge (e.g., Upcoming, Started, Past Due)
   - Milestone Dates (Start/End/Due)
   - An **Add Test Run** button ( `+` icon) specific to that milestone, allowing you to quickly create a run linked to it.
 - **Unscheduled Runs**: Test runs not linked to any milestone are grouped under a special "Unscheduled" section header.

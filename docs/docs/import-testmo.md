@@ -32,8 +32,8 @@ Before starting the import:
 ## Accessing the Import Tool
 
 1. Log in as an administrator
-2. Navigate to **Administration** > **Imports**
-3. Click on the **Testmo** tab
+2. Navigate to **Administration** > **Data Imports**
+3. Click on the **Testmo JSON** tab
 4. The import wizard interface will appear
 
 ## Import Wizard Steps
@@ -45,13 +45,13 @@ Upload your Testmo export file to begin the import process.
 **Upload Process:**
 
 1. Click the **Upload File** button or drag and drop your file
-2. Select the Testmo export ZIP file from your computer
+2. Select the Testmo JSON export file from your computer
 3. Wait for the file to upload completely
 4. The system validates the file format
 5. Once validated, the **Next** button becomes available
 
 **Supported Formats:**
-- Testmo export ZIP files
+- The Testmo JSON export (`.json`)
 - Maximum file size depends on your server configuration
 
 **File Validation:**
@@ -308,7 +308,7 @@ User and group data:
 **Issue**: File upload fails or times out
 
 **Solutions**:
-- Check file format (must be Testmo export ZIP)
+- Check file format (must be a Testmo JSON export)
 - Verify file size is within limits
 - Ensure stable internet connection
 - Try uploading in smaller chunks if possible
@@ -460,23 +460,33 @@ For large imports:
 
 ### Start Import Job
 
-```http
-POST /api/admin/imports/testmo/jobs
-Content-Type: multipart/form-data
+Request an upload URL, upload the export file to it, then create the job from the uploaded file:
 
-file: <Testmo export ZIP file>
+```http
+POST /api/imports/testmo/upload-url
+```
+
+```http
+POST /api/imports/testmo/jobs
+Content-Type: application/json
+
+{
+  "key": "<storage key returned by upload-url>",
+  "fileName": "testmo-export.json",
+  "fileSizeBytes": 123456
+}
 ```
 
 ### Get Import Status
 
 ```http
-GET /api/admin/imports/testmo/jobs/{jobId}
+GET /api/imports/testmo/jobs/{jobId}
 ```
 
 ### Configure Mappings
 
 ```http
-PUT /api/admin/imports/testmo/jobs/{jobId}/configuration
+POST /api/imports/testmo/jobs/{jobId}/configuration
 Content-Type: application/json
 
 {
@@ -491,7 +501,7 @@ Content-Type: application/json
 ### Execute Import
 
 ```http
-POST /api/admin/imports/testmo/jobs/{jobId}/execute
+POST /api/imports/testmo/jobs/{jobId}/import
 ```
 
 ---

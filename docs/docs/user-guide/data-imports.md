@@ -8,7 +8,7 @@ description: Bring data from external test management tools into TestPlanIt
 
 The **Administration → Data Imports** page brings data from external test-management tools into TestPlanIt. You upload an export file, review what it contains, map its entities to your TestPlanIt configuration, and run the import as a background job you can monitor.
 
-Today the page supports **Testmo JSON** exports. Imports for TestRail, Zephyr, and other tools are on the roadmap.
+The page supports **Testmo JSON** exports.
 
 :::note
 Only system administrators can run imports. Imports require object storage and a running background worker to be configured for your deployment.

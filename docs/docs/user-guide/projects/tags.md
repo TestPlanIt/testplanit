@@ -28,9 +28,9 @@ The table displays tags that are used by at least one item (Case, Session, or Ru
 
 - **Columns**:
   - **Name**: Displays the tag name. Clicking the tag name navigates to the [Project Tag Details](./tag-details.md) page for that tag within this project.
-  - **Test Cases**: Shows the count of Test Cases _in this project_ that use this tag. Clicking the count might show a popover or list of associated cases.
-  - **Sessions**: Shows the count of Sessions _in this project_ that use this tag. Clicking the count might show a popover or list of associated sessions.
-  - **Test Runs**: Shows the count of Test Runs _in this project_ that use this tag. Clicking the count might show a popover or list of associated runs.
+  - **Test Cases**: Shows the count of Test Cases _in this project_ that use this tag. Clicking the count opens a list of the associated cases.
+  - **Sessions**: Shows the count of Sessions _in this project_ that use this tag. Clicking the count opens a list of the associated sessions.
+  - **Test Runs**: Shows the count of Test Runs _in this project_ that use this tag. Clicking the count opens a list of the associated runs.
 - **Loading More**: The list loads more tags automatically as you scroll toward the bottom; there are no page controls.
 
 ## Auto Tag
@@ -41,7 +41,7 @@ The **AI Tag** button in the toolbar opens the Auto Tag wizard, which uses AI to
 
 1. Click the **AI Tag** button in the toolbar
 2. Select which entity types to analyze (test cases, test runs, sessions)
-3. Optionally toggle **Untagged Only** to focus on items that have no tags yet
+3. Optionally toggle **Only analyze records without existing tags** to focus on items that have no tags yet
 4. Optionally disable **Allow creating new tags** to restrict suggestions to existing tags only
 5. Click **Start Analysis** — the AI will analyze your items in batches
 6. Review the suggestions: click tags to toggle them on/off, double-click to edit names
@@ -53,7 +53,7 @@ The AI will match suggestions against your existing project tags when possible.
 - If **Allow creating new tags** is disabled, Auto Tag only suggests tags that already exist in your project.
 
 :::tip
-Running Auto Tag with **Untagged Only** enabled is a great way to quickly organize items that were added without tags.
+Running Auto Tag with **Only analyze records without existing tags** enabled is a great way to quickly organize items that were added without tags.
 :::
 
 For full details on configuration, best practices, and troubleshooting, see the [Auto Tag documentation](../llm-auto-tag.md).

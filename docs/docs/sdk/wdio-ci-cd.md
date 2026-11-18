@@ -133,7 +133,7 @@ export const config = {
 
 You'll see detailed output:
 
-```
+```text
 [TestPlanIt] Initializing reporter...
 [TestPlanIt] Status mapping: passed -> 1
 [TestPlanIt] Status mapping: failed -> 2
@@ -249,10 +249,11 @@ const reporterOptions: TestPlanItReporterOptions = {
 
 | WebdriverIO Version | Supported |
 | -------------------- | ----------- |
+| 10.x | Yes |
 | 9.x | Yes |
 | 8.x | Yes |
 
-Requires Node.js 24 or later.
+Requires Node.js 20 or later.
 
 ## Related Resources
 
@@ -268,7 +269,8 @@ When TestPlanIt [dispatches the job](../user-guide/automated-execution.md), the 
 env:
   TESTPLANIT_URL: ${{ inputs.TESTPLANIT_URL }}
   TESTPLANIT_RUN_ID: ${{ inputs.TESTPLANIT_RUN_ID }}
-  TESTPLANIT_API_TOKEN: ${{ secrets.TESTPLANIT_API_TOKEN }}
+  TESTPLANIT_API_TOKEN: ${{ secrets.TESTPLANIT_API_TOKEN }} # read by the reporter
+  TESTPLANIT_TOKEN: ${{ secrets.TESTPLANIT_API_TOKEN }} # read by @testplanit/cli
 ```
 
 Read the plan of cases with `npx @testplanit/cli run plan --format lines` and narrow the test command to them; complete the run afterwards with `npx @testplanit/cli run complete`.

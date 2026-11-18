@@ -27,7 +27,7 @@ The item is laid out in two lines: identity above, detail below.
 
 **Detail line**
 
-- **Results Summary**: The results recorded within the session using the `SessionResultsSummary` component — a segmented bar plus counts of notes, bugs and questions. The bar **scrolls horizontally** when a session has more results than it can seat.
+- **Results Summary**: The results recorded within the session using the `SessionResultsSummary` component — a segmented bar of the session's results colored by status, plus the elapsed time against the estimate. The bar **scrolls horizontally** when a session has more results than it can seat.
 - **Milestone**: The associated [Milestone](./milestones.md), when the session has one and the surrounding list is not already grouped by milestone.
 - **Completion Date**: Shown in place of the members on completed sessions.
 - **Members**: User avatars involved with the session (Creator, Assigned To), shown at the end of the line using the `MemberList` component. These are the same two roles the [My Sessions filter](./sessions.md#what-counts-as-taking-part) matches on, so filtering by it keeps the sessions your avatar appears on.
@@ -39,4 +39,3 @@ The item is laid out in two lines: identity above, detail below.
 ## Styling
 
 - The background and border colors of the item are subtly tinted based on the color associated with the session's current workflow state.
-- Newly created sessions might have a temporary highlighted border or pulsing animation.
