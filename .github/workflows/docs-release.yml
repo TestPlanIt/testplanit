@@ -71,6 +71,22 @@ jobs:
           echo "Could not read a semver version from testplanit/package.json at $REF (got '$APP_VERSION')" >&2
           exit 1
         fi
+        # package.json lags the ref at two moments: a release branch's first
+        # push still carries the previous line's version, and the commit that
+        # graduates a line to main still carries its last beta. The ref says
+        # which line and channel this is, so it wins.
+        case "$REF" in
+          main)
+            APP_VERSION="${APP_VERSION%%-*}"
+            ;;
+          release/v[0-9]*.[0-9]*)
+            BRANCH_LINE="${REF#release/v}"
+            if [ "$LINE" != "$BRANCH_LINE" ]; then
+              LINE="$BRANCH_LINE"
+              APP_VERSION="${LINE}.0-beta.0"
+            fi
+            ;;
+        esac
         if [ "$REF" = "main" ]; then
           IMAGE_TAG="docs"
           DOCS_URL="https://docs.testplanit.com"
