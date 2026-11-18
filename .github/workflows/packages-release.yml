@@ -129,6 +129,19 @@ jobs:
           # No NPM_TOKEN — publishing authenticates via OIDC trusted publishing
           # (id-token: write above + the trusted publisher configured on npm).
 
+      # The action creates a GitHub release per published package, and GitHub
+      # marks the newest release "Latest". That badge belongs to the app, so
+      # hand it back to the highest stable app version.
+      - name: Keep the app release marked Latest
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APP_TAG=$(git tag -l 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          if [ -n "$APP_TAG" ]; then
+            gh release edit "$APP_TAG" --latest
+          fi
+
       - name: Summary
         if: steps.changesets.outputs.published == 'true'
         run: |
