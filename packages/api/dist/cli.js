@@ -169,7 +169,7 @@ var TestPlanItClient = class {
    * Make an authenticated request to the API
    */
   async request(method, path, options) {
-    const url = new URL(path, this.baseUrl);
+    const url = new URL(`${this.baseUrl}${path}`);
     if (options?.query) {
       for (const [key, value] of Object.entries(options.query)) {
         if (value !== void 0) {
@@ -338,7 +338,7 @@ var TestPlanItClient = class {
    * Make a multipart form data request
    */
   async requestFormData(method, path, formData, options) {
-    const url = new URL(path, this.baseUrl);
+    const url = new URL(`${this.baseUrl}${path}`);
     if (options?.query) {
       for (const [key, value] of Object.entries(options.query)) {
         if (value !== void 0) {
@@ -1091,8 +1091,9 @@ var TestPlanItClient = class {
    * failures are visible: each entry is `status: "success"` with a `caseId`, or
    * `status: "error"` with a message (e.g. a custom field not on the template).
    *
-   * `templateId` defaults to the template marked Default, else the project's
-   * first enabled template; resolve a specific one with
+   * `templateId` defaults to the project's default template, then the template
+   * marked Default, else the project's first enabled template; resolve a
+   * specific one with
    * {@link findTemplateByName}. `stateName` defaults to the CASES state marked
    * Default, else the first by order. Resolve `folderId` with
    * {@link findFolderByName} / {@link findOrCreateFolderPath}.
@@ -1574,7 +1575,7 @@ var TestPlanItClient = class {
         formData.append("tagIds", String(tagId));
       }
     }
-    const url = new URL("/api/test-results/import", this.baseUrl);
+    const url = new URL(`${this.baseUrl}/api/test-results/import`);
     const response = await fetch(url.toString(), {
       method: "POST",
       headers: {

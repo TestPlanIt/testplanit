@@ -512,8 +512,8 @@ interface CreateTestCasesOptions {
      */
     folderId: number;
     /**
-     * Template for the batch. Defaults to the template marked Default, else the
-     * project's first enabled template.
+     * Template for the batch. Defaults to the project's default template, then
+     * the template marked Default, else the project's first enabled template.
      */
     templateId?: number;
     /**
@@ -1287,8 +1287,9 @@ declare class TestPlanItClient {
      * failures are visible: each entry is `status: "success"` with a `caseId`, or
      * `status: "error"` with a message (e.g. a custom field not on the template).
      *
-     * `templateId` defaults to the template marked Default, else the project's
-     * first enabled template; resolve a specific one with
+     * `templateId` defaults to the project's default template, then the template
+     * marked Default, else the project's first enabled template; resolve a
+     * specific one with
      * {@link findTemplateByName}. `stateName` defaults to the CASES state marked
      * Default, else the first by order. Resolve `folderId` with
      * {@link findFolderByName} / {@link findOrCreateFolderPath}.
@@ -1583,4 +1584,5 @@ declare function automationStepsToCaseSteps(steps: AutomationStep[]): CaseStepRo
  */
 declare function deriveCaseStepsIfFresh(steps: AutomationStep[], existingStepCount: number): CaseStepRow[];
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseByCustomFieldOptions, type FindTestCaseOptions, type GenerateQuickScriptOptions, type GenerateQuickScriptResult, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type QuickScriptFile, type QuickScriptOutputMode, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type RunMetadata, type RunMetadataValue, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestCaseOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, isUniqueConstraintViolation, mergeRunMetadataIntoDoc, parseRunMetadataFromDoc, tipTapDoc };
+export { TestPlanItClient, TestPlanItError, automationStepsToCaseSteps, deriveCaseStepsIfFresh, isUniqueConstraintViolation, mergeRunMetadataIntoDoc, parseRunMetadataFromDoc, tipTapDoc };
+export type { AddTestCaseToRunOptions, ApiError, Attachment, AutomationStep, BulkTestCaseInput, BulkTestCaseResult, BulkTestCaseStep, CaseStepRow, Comment, Configuration, CreateFolderOptions, CreateJUnitPropertyOptions, CreateJUnitTestResultOptions, CreateJUnitTestStepOptions, CreateJUnitTestSuiteOptions, CreateStepOptions, CreateStepsOptions, CreateTagOptions, CreateTestCaseOptions, CreateTestCasesOptions, CreateTestCasesResult, CreateTestResultOptions, CreateTestRunOptions, FindOrCreateTestCaseResult, FindTestCaseByCustomFieldOptions, FindTestCaseOptions, GenerateQuickScriptOptions, GenerateQuickScriptResult, ImportProgressEvent, ImportTestResultsOptions, Issue, JUnitProperty, JUnitResultType, JUnitTestResult, JUnitTestStep, JUnitTestSuite, ListTestRunsOptions, Milestone, NormalizedStatus, PaginatedResponse, Project, QuickScriptFile, QuickScriptOutputMode, RepositoryCase, RepositoryCaseSource, RepositoryFolder, RequestStepDerivationCase, RequestStepDerivationOptions, RunMetadata, RunMetadataValue, Status, Step, Tag, Template, TestPlanItClientConfig, TestRun, TestRunCase, TestRunResult, TestRunStepResult, TestRunType, UpdateJUnitTestSuiteOptions, UpdateTestCaseOptions, UpdateTestRunOptions, UploadAttachmentOptions, User, WorkflowState };
