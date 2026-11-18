@@ -150,4 +150,22 @@ describe("i18n message keys", () => {
       .join("\n");
     expect(report, `Unresolved i18n references:\n${report}`).toBe("");
   });
+
+  // The integration form builds its help keys from each field's `help` value,
+  // which the scan above cannot follow.
+  it("every integration form field's help text resolves in en-US.json", () => {
+    const file = "components/admin/integrations/IntegrationConfigForm.tsx";
+    const content = fs.readFileSync(path.join(ROOT, file), "utf8");
+    const helpKeys = Array.from(
+      content.matchAll(/\bhelp:\s*"([^"]+)"/g),
+      (match) =>
+        `help.integration.${match[1]!.replace("config.", "").replace("Help", "")}`
+    );
+
+    expect(helpKeys.length).toBeGreaterThan(0);
+    const missing = Array.from(new Set(helpKeys)).filter(
+      (key) => typeof resolvePath(key) !== "string"
+    );
+    expect(missing, `Missing help messages in ${file}`).toEqual([]);
+  });
 });
