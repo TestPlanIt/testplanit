@@ -74,6 +74,18 @@ for (const entry of readdirSync("packages", { withFileTypes: true })) {
   }
 }
 
+// 3. Keep the packages marked private above out of changesets' "skipped" set.
+// With `privatePackages.version` off (the default), a private package counts as
+// skipped, and config validation rejects any publishable package that depends
+// on a skipped one ("Invalid tree"), e.g. a reporter being released while the
+// @testplanit/api version it depends on is already on npm. Turning `version`
+// on only affects that classification here: `changeset publish` still never
+// publishes a private package, and `tag: false` keeps it from tagging one.
+const configPath = ".changeset/config.json";
+const config = readJson(configPath);
+config.privatePackages = { version: true, tag: false };
+writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+
 // Inherit stdio and (by default) the environment: the changesets action passes
 // CHANGESETS_OUTPUT in the env and reads the published packages back from that
 // file, so the env must reach `changeset publish` unfiltered.
