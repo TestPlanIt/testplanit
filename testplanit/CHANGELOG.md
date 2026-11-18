@@ -1,3 +1,9 @@
+## [1.3.0-beta.2](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.1...v1.3.0-beta.2) (2026-11-18)
+
+### Bug Fixes
+
+* **integrations:** add the missing help text for Jira username and password ([be05fbd](https://github.com/TestPlanIt/testplanit/commit/be05fbd6c1e731eaf4ec035d66a488ab06638c6e))
+
 ## [1.3.0-beta.1](https://github.com/TestPlanIt/testplanit/compare/v1.2.0...v1.3.0-beta.1) (2026-11-18)
 
 ### Features
