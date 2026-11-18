@@ -3551,7 +3551,7 @@
     },
     "templateSwitch": {
       "title": "Changer de modèle ?",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" n'inclut pas {count, plural, =1 {ce champ} other {ces champs}}, les modifications que vous {count, plural, =1 {lui} other {leur}} avez apportées seront donc perdues :",
       "confirm": "Changer de modèle"
     },
     "columns": {
@@ -3631,9 +3631,6 @@
       },
       "success": {
         "casesUpdated": "{count, number} dossiers mis à jour avec succès"
-      },
-      "placeholders": {
-        "various": "<various values>"
       },
       "validationError": "Erreur de validation",
       "stepsCannotBeBulkEdited": "Les étapes ne peuvent pas être modifiées en masse.",
@@ -3816,7 +3813,7 @@
         "title": "Sélectionner la source des exigences",
         "description": "Choisissez si vous souhaitez générer des cas de test à partir d'un problème ou d'un document d'exigences.",
         "folderContextTip": "Les cas de test existants du dossier « {folderName} » et de ses sous-dossiers serviront de contexte afin d'éviter les doublons. Assurez-vous d'avoir sélectionné le bon dossier avant de continuer.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" et ses dossiers parents/enfants contiennent {count, plural, =1 {# cas de test existant} other {# cas de test existants}}. L'IA en utilise autant que possible selon son contexte pour correspondre au style de votre projet et éviter les doublons.",
         "folderContextEmptyTitle": "Aucun cas de test dans ce dossier pour le moment",
         "folderContextEmpty": "\"{folderName}\" et ses dossiers parents/enfants n'ont aucun cas de test. L'IA recherchera les cas de test connexes ailleurs dans ce projet pour apprendre votre style et éviter les doublons. Pour de meilleurs résultats, lancez le générateur à partir du dossier auquel appartiennent ces cas de test.",
         "currentFolder": "dossier actuel",
@@ -3871,7 +3868,7 @@
         "quantity": "Nombre de cas de test à générer",
         "placeholder": "Ajoutez des instructions spécifiques pour la génération des cas de test…\n\nPar exemple :\n• Privilégiez les tests de sécurité\n• Incluez les cas limites et les conditions limites\n• Testez les scénarios nominaux et d’erreur\n• Prenez en compte les scénarios mobiles et de bureau\n• Privilégiez les tests d’API",
         "linksIgnoredTitle": "Les liens dans les notes ne sont pas ouverts",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {Le lien dans vos notes sera envoyé en texte brut uniquement.} other {Les # liens dans vos notes seront envoyés en texte brut uniquement.}} Pour utiliser un document ou un tableur, collez le contenu pertinent (scénarios, données de test, résultats attendus) dans les notes.",
         "suggestions": "Suggestions rapides :",
         "quantityOptions": {
           "justOne": "Un seul",
@@ -4406,7 +4403,7 @@
       "blocked": "Bloqué",
       "blockedBy": "Bloqué jusqu'à {count, plural, one {ce cas réussit} other {ces # cas réussissent}} dans cette exécution :",
       "blockedNotice": "Ce cas de test ne peut pas être exécuté jusqu'à {count, plural, one {le cas dont il dépend a} other {tous les # cas dont il dépend ont}} réussi dans cette exécution.",
-      "notInRun": "{count, plural, one {# cas dont celui-ci dépend est} other {# cas dont celui-ci dépend sont}} absents de cette exécution et ne bloqueront pas l'exécution :",
+      "notInRun": "{count, plural, one {# cas dont celui-ci dépend est absent de cette exécution et ne bloquera pas l'exécution :} other {# cas dont celui-ci dépend sont absents de cette exécution et ne bloqueront pas l'exécution :}}",
       "unblocked": "Tous les cas dont celui-ci dépend ont réussi dans cette exécution."
     },
     "distribute": {
@@ -7251,7 +7248,7 @@
         "aiStepsDerivedMessage": "{count, plural, one {# cas de test a reçu} other {# cas de test ont reçu}} des étapes dérivées par IA — vérifiez leur exactitude.",
         "aiStepsDerivedReviewLink": "Examiner l'exécution de test",
         "casesDraftedTitle": "Cas de test rédigés par l'IA prêts",
-        "casesDraftedMessage": "{count, plural, one {# cas de test a été} other {# cas de test ont été}} rédigés pour {issueKey} — vérifiez leur exactitude.",
+        "casesDraftedMessage": "{count, plural, one {# cas de test a été rédigé} other {# cas de test ont été rédigés}} pour {issueKey} — vérifiez leur exactitude.",
         "casesDraftedReviewLink": "Examinez dans {folderName}",
         "integrationAuthExpiredTitle": "Connexion d'intégration expirée",
         "integrationAuthExpiredMessage": "Votre connexion à \"{integrationName}\" a expiré. Reconnectez-vous pour reprendre la synchronisation des tickets.",
@@ -7291,7 +7288,7 @@
           "RUN_NOT_PROGRESSING": "L'exécution n'a eu aucun nouveau résultat depuis {idleHours, plural, one {# heure} other {# heures}} (seuil {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "L'exécution automatisée sur {target} s'est terminée avec {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% des cas de l'exécution n'ont pas de résultat avec {daysRemaining, plural, one {# jour} other {# jours}} avant l'échéance de son jalon (seuil {threshold}%).",
-          "RUN_ISSUES_OPENED": "{issues, plural, one {# problème est} other {# problèmes sont}} lié aux résultats de l'exécution (seuil {threshold}).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# problème est lié} other {# problèmes sont liés}} aux résultats de l'exécution (seuil {threshold}).",
           "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# modèle d'échec est apparu} other {# modèles d'échec sont apparus}} pour la première fois dans l'exécution (seuil {threshold}).",
           "SESSION_OVERRUN": "La séance a pris {elapsed} par rapport à une estimation de {estimate}, dépassement de {overrun}% (plus de {threshold}% autorisé).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} sur {total} exigences ({coverage}%) {basis, select, PASSING {ont un dernier résultat réussi} other {sont liées à un cas de test}} (seuil {threshold}%).",
@@ -7302,7 +7299,7 @@
           "CASE_FLAKY": "Le résultat a basculé {flips, plural, one {# fois} other {# fois}} sur les {sampleCount} derniers résultats (seuil {threshold}).",
           "RUN_PASS_RATE_BELOW": "Le taux de réussite est {passRate}% sur {sampleCount} résultats (seuil {threshold}%).",
           "RUN_FAILURE_COUNT": "{failed, plural, one {# résultat a} other {# résultats ont}} échoué (seuil {threshold}).",
-          "MILESTONE_BEHIND": "Le jalon est à {completion}% avec {daysRemaining, plural, one {# jour} other {# jours}} restant (seuil {threshold}%).",
+          "MILESTONE_BEHIND": "Le jalon est à {completion}% avec {daysRemaining, plural, one {# jour restant} other {# jours restants}} (seuil {threshold}%).",
           "MILESTONE_OVERDUE": "Le jalon dépasse sa date d'échéance de {daysOverdue, plural, one {# jour} other {# jours}}.",
           "LLM_BUDGET_USED": "Les dépenses pour la période de facturation sont {spend} du budget mensuel de {budget} ({percent}%, seuil {threshold}%).",
           "LLM_ERROR_RATE": "{failed} des {sampleCount} dernières demandes ont échoué ({failureRate}%, seuil {threshold}%).",
@@ -7312,7 +7309,7 @@
           "QUEUE_FAILED_JOBS": "{failed, plural, one {# tâche a} other {# tâches ont}} échoué dans la file d'attente (seuil {threshold}).",
           "QUEUE_BACKLOG": "La plus ancienne des {waiting, plural, one {# tâche en attente} other {# tâches en attente}} attend depuis {minutes, plural, one {# minute} other {# minutes}} (seuil {threshold}).",
           "AUDIT_BACKLOG": "Le changement d'audit non traité le plus ancien a {minutes, plural, one {# minute} other {# minutes}} (seuil {threshold}).",
-          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# compte est} other {# comptes sont}} verrouillé après des tentatives de connexion échouées (seuil {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# compte est verrouillé} other {# comptes sont verrouillés}} après des tentatives de connexion échouées (seuil {threshold}).",
           "NO_AUTOMATED_RESULTS": "Aucun résultat automatisé n'est arrivé depuis {hours, plural, one {# heure} other {# heures}} (seuil {threshold})."
         },
         "reviewDecisionRevertedAction": "ont annulé leur décision sur",
@@ -10852,7 +10849,7 @@
       "RUN_NOT_PROGRESSING": {
         "label": "L'exécution ne progresse pas",
         "description": "Une exécution ouverte n'a eu aucun nouveau résultat pendant un nombre donné d'heures. Vérifié toutes les heures.",
-        "summary": "Une exécution ouverte n'a eu aucun nouveau résultat depuis plus de {threshold, plural, one {# heure} other {# heures}}}"
+        "summary": "Une exécution ouverte n'a eu aucun nouveau résultat depuis plus de {threshold, plural, one {# heure} other {# heures}}"
       },
       "AUTOMATED_EXECUTION_FAILED": {
         "label": "Échec de l'exécution automatisée",
@@ -10867,7 +10864,7 @@
       "RUN_ISSUES_OPENED": {
         "label": "Problèmes ouverts à partir d'une exécution",
         "description": "Plus qu'un nombre donné de problèmes sont liés aux résultats d'une exécution.",
-        "summary": "Plus de {threshold, plural, one {# problème est} other {# problèmes sont}} lié aux résultats d'une exécution, {evaluateOn, select, AS_RESULTS_ARRIVE {évalué au fur et à mesure que les résultats arrivent} other {évalué quand l'exécution se termine}}"
+        "summary": "Plus de {threshold, plural, one {# problème est lié} other {# problèmes sont liés}} aux résultats d'une exécution, {evaluateOn, select, AS_RESULTS_ARRIVE {évalué au fur et à mesure que les résultats arrivent} other {évalué quand l'exécution se termine}}"
       },
       "NEW_FAILURE_SIGNATURES": {
         "label": "Nouveaux modèles d'échec dans une exécution",
@@ -10897,7 +10894,7 @@
       "STALE_CASES": {
         "label": "Cas obsolètes",
         "description": "Plus qu'un nombre donné de cas ont fonctionné sans résultat pendant un nombre de jours. Vérifié quotidiennement.",
-        "summary": "Plus de {threshold, plural, one {# cas n'a} other {# cas n'ont}} eu aucun résultat en {days, plural, one {# jour} other {# jours}}}"
+        "summary": "Plus de {threshold, plural, one {# cas n'a} other {# cas n'ont}} eu aucun résultat en {days, plural, one {# jour} other {# jours}}"
       },
       "AUTOMATION_SHARE_BELOW": {
         "label": "Partage d'automation inférieur au seuil",
@@ -10927,7 +10924,7 @@
       "CODE_REPOSITORY_CACHE_FAILING": {
         "label": "Cache du dépôt en panne",
         "description": "Une connexion au dépôt de code n'a pas actualisé son cache avec succès depuis un moment. Vérifié toutes les heures.",
-        "summary": "Le cache d'une connexion au dépôt échoue depuis au moins {threshold, plural, one {# heure} other {# heures}}}"
+        "summary": "Le cache d'une connexion au dépôt échoue depuis au moins {threshold, plural, one {# heure} other {# heures}}"
       },
       "INTEGRATION_REAUTH_NEEDED": {
         "label": "Nouvelle autorisation d'intégration nécessaire",
@@ -10942,22 +10939,22 @@
       "QUEUE_BACKLOG": {
         "label": "Accumulation de files d'attente",
         "description": "La tâche en attente la plus ancienne d'une file d'attente en arrière-plan attend trop longtemps, signe d'un worker arrêté. Vérifié toutes les heures.",
-        "summary": "La tâche en attente la plus ancienne d'une file d'attente est plus ancienne que {threshold, plural, one {# minute} other {# minutes}}}"
+        "summary": "La tâche en attente la plus ancienne d'une file d'attente est plus ancienne que {threshold, plural, one {# minute} other {# minutes}}"
       },
       "AUDIT_BACKLOG": {
         "label": "Accumulation du journal d'audit",
         "description": "Les modifications capturées ne sont pas écrites dans le journal d'audit, signe d'un worker d'audit arrêté. Vérifié toutes les heures.",
-        "summary": "Le changement d'audit non traité le plus ancien est plus ancien que {threshold, plural, one {# minute} other {# minutes}}}"
+        "summary": "Le changement d'audit non traité le plus ancien est plus ancien que {threshold, plural, one {# minute} other {# minutes}}"
       },
       "ACCOUNT_LOCKOUTS": {
         "label": "Verrouillages de compte",
         "description": "Plusieurs comptes sont verrouillés après des tentatives de connexion échouées à la fois, signe de remplissage des identifiants. Vérifié toutes les heures.",
-        "summary": "Au moins {threshold, plural, one {# compte est} other {# comptes sont}} verrouillé après des tentatives de connexion échouées"
+        "summary": "Au moins {threshold, plural, one {# compte est verrouillé} other {# comptes sont verrouillés}} après des tentatives de connexion échouées"
       },
       "NO_AUTOMATED_RESULTS": {
         "label": "Aucun résultat automatisé",
         "description": "Aucun résultat de test automatisé n'est arrivé d'aucun pipeline depuis un moment. Vérifié quotidiennement.",
-        "summary": "Aucun résultat automatisé n'est arrivé depuis {threshold, plural, one {# heure} other {# heures}}}"
+        "summary": "Aucun résultat automatisé n'est arrivé depuis {threshold, plural, one {# heure} other {# heures}}"
       }
     },
     "sourceSummary": "Résultats : {source, select, MANUAL {manuel} AUTOMATED {automatisé} other {manuel et automatisé}}",

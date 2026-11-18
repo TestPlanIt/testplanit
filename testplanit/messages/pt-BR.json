@@ -3145,7 +3145,7 @@
         "bulkConfirmDescription": "Cada um dos {count} itens selecionados será restaurado para seu projeto, junto com qualquer coisa que foi deletada com ele.",
         "restored": "\"{name}\" restaurado.",
         "restoreFailed": "Não foi possível restaurar \"{name}\": {message}",
-        "bulkResult": "{restored, plural, one {# item} other {# itens}} restaurados, {failed} falharam.",
+        "bulkResult": "{restored, plural, one {# item restaurado} other {# itens restaurados}}, {failed} falharam.",
         "failure": {
           "parent_deleted": "sua pasta ou elemento pai ainda está deletado — restaure aquele primeiro",
           "name_conflict": "já existe um item com o mesmo nome",
@@ -3551,7 +3551,7 @@
     },
     "templateSwitch": {
       "title": "Trocar modelo?",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" não inclui {count, plural, =1 {este campo} other {estes campos}}, então suas alterações {count, plural, =1 {nele} other {neles}} serão descartadas:",
       "confirm": "Trocar modelo"
     },
     "columns": {
@@ -3631,9 +3631,6 @@
       },
       "success": {
         "casesUpdated": "{count, number} casos atualizados com sucesso"
-      },
-      "placeholders": {
-        "various": "<various values>"
       },
       "validationError": "Erro de validação",
       "stepsCannotBeBulkEdited": "Não é possível editar etapas em massa.",
@@ -3816,7 +3813,7 @@
         "title": "Selecione a fonte de requisitos",
         "description": "Escolha se deseja gerar casos de teste a partir de um problema ou de um documento de requisitos.",
         "folderContextTip": "Os casos de teste existentes de \"{folderName}\" e suas pastas pai/filho serão usados como contexto para evitar duplicatas. Certifique-se de ter selecionado a pasta correta antes de prosseguir.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" e suas pastas pai/filha contêm {count, plural, =1 {# caso de teste existente} other {# casos de teste existentes}}. A IA usa quantos couberem em seu contexto para corresponder ao estilo do seu projeto e evitar duplicatas.",
         "folderContextEmptyTitle": "Nenhum caso de teste nesta pasta ainda",
         "folderContextEmpty": "\"{folderName}\" e suas pastas pai/filha não têm casos de teste. A IA procurará por casos de teste relacionados em outro lugar neste projeto para aprender seu estilo e evitar duplicatas. Para melhores resultados, inicie o gerador a partir da pasta onde esses casos de teste pertencem.",
         "currentFolder": "pasta atual",
@@ -3871,7 +3868,7 @@
         "quantity": "Número de casos de teste a serem gerados",
         "placeholder": "Adicione instruções específicas para a geração de casos de teste...\n\nPor exemplo:\n• Concentre-se em testes de segurança\n• Inclua casos extremos e condições de contorno\n• Teste cenários de sucesso e de erro\n• Considere cenários para dispositivos móveis e desktops\n• Concentre-se em testes de API",
         "linksIgnoredTitle": "Links nas notas não são abertos",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {O link em suas notas será enviado apenas como texto simples.} other {Os # links em suas notas serão enviados apenas como texto simples.}} Para usar um documento ou planilha, cole o conteúdo relevante (cenários, dados de teste, resultados esperados) nas notas.",
         "suggestions": "Sugestões rápidas:",
         "quantityOptions": {
           "justOne": "Apenas um",
@@ -4406,7 +4403,7 @@
       "blocked": "Bloqueado",
       "blockedBy": "Bloqueado até {count, plural, one {este caso passar} other {estes casos passarem}} nesta execução:",
       "blockedNotice": "Este caso de teste não pode ser executado até {count, plural, one {o caso do qual depende ter} other {todos os # casos dos quais depende terem}} passado nesta execução.",
-      "notInRun": "{count, plural, one {# caso do qual este depende está} other {# casos dos quais este depende estão}} não nesta execução e não bloquearão a execução:",
+      "notInRun": "{count, plural, one {# caso do qual este depende está não nesta execução e não bloqueará} other {# casos dos quais este depende estão não nesta execução e não bloquearão}} a execução:",
       "unblocked": "Todos os casos dos quais este depende passaram nesta execução."
     },
     "distribute": {
@@ -7251,7 +7248,7 @@
         "aiStepsDerivedMessage": "{count, plural, one {# caso de teste recebeu} other {# casos de teste receberam}} passos derivados por IA — revise a precisão.",
         "aiStepsDerivedReviewLink": "Revisar execução de teste",
         "casesDraftedTitle": "Casos de teste rascunhados por IA prontos",
-        "casesDraftedMessage": "{count, plural, one {# caso de teste foi} other {# casos de teste foram}} rascunhados para {issueKey} — revise a precisão.",
+        "casesDraftedMessage": "{count, plural, one {# caso de teste foi rascunhado} other {# casos de teste foram rascunhados}} para {issueKey} — revise a precisão.",
         "casesDraftedReviewLink": "Revisar em {folderName}",
         "integrationAuthExpiredTitle": "Conexão de Integração Expirada",
         "integrationAuthExpiredMessage": "Sua conexão com \"{integrationName}\" expirou. Reconecte-se para retomar a sincronização de issues.",
@@ -7291,7 +7288,7 @@
           "RUN_NOT_PROGRESSING": "A execução não tem nenhum resultado novo há {idleHours, plural, one {# hora} other {# horas}} (limite {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "A execução automatizada em {target} terminou com {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% dos casos da execução não têm resultado com {daysRemaining, plural, one {# dia} other {# dias}} antes do vencimento do marco (limite {threshold}%).",
-          "RUN_ISSUES_OPENED": "{issues, plural, one {# problema está} other {# problemas estão}} vinculados aos resultados da execução (limite {threshold}).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# problema está vinculado} other {# problemas estão vinculados}} aos resultados da execução (limite {threshold}).",
           "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# padrão de falha apareceu} other {# padrões de falha apareceram}} pela primeira vez na execução (limite {threshold}).",
           "SESSION_OVERRUN": "A sessão levou {elapsed} em relação a uma estimativa de {estimate}, {overrun}% acima (mais de {threshold}% permitido).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} de {total} requisitos ({coverage}%) {basis, select, PASSING {têm um resultado mais recente passando} other {estão vinculados a um caso de teste}} (limite {threshold}%).",
@@ -7302,7 +7299,7 @@
           "CASE_FLAKY": "O resultado se inverteu {flips, plural, one {# vez} other {# vezes}} nos últimos {sampleCount} resultados (limite {threshold}).",
           "RUN_PASS_RATE_BELOW": "A taxa de aprovação é {passRate}% em {sampleCount} resultados (limite {threshold}%).",
           "RUN_FAILURE_COUNT": "{failed, plural, one {# resultado falhou} other {# resultados falharam}} (limite {threshold}).",
-          "MILESTONE_BEHIND": "O marco está {completion}% completo com {daysRemaining, plural, one {# dia} other {# dias}} restante (limite {threshold}%).",
+          "MILESTONE_BEHIND": "O marco está {completion}% completo com {daysRemaining, plural, one {# dia restante} other {# dias restantes}} (limite {threshold}%).",
           "MILESTONE_OVERDUE": "O marco é {daysOverdue, plural, one {# dia} other {# dias}} após seu vencimento.",
           "LLM_BUDGET_USED": "O gasto do período de faturamento é {spend} do orçamento mensal de {budget} ({percent}%, limite {threshold}%).",
           "LLM_ERROR_RATE": "{failed} das últimas {sampleCount} solicitações falharam ({failureRate}%, limite {threshold}%).",
@@ -7312,7 +7309,7 @@
           "QUEUE_FAILED_JOBS": "{failed, plural, one {# trabalho falhou} other {# trabalhos falharam}} na fila (limite {threshold}).",
           "QUEUE_BACKLOG": "O mais antigo de {waiting, plural, one {# trabalho em espera} other {# trabalhos em espera}} esperou {minutes, plural, one {# minuto} other {# minutos}} (limite {threshold}).",
           "AUDIT_BACKLOG": "A mudança de auditoria não processada mais antiga tem {minutes, plural, one {# minuto} other {# minutos}} (limite {threshold}).",
-          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# conta está} other {# contas estão}} bloqueadas após falhas de entrada (limite {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# conta está bloqueada} other {# contas estão bloqueadas}} após falhas de entrada (limite {threshold}).",
           "NO_AUTOMATED_RESULTS": "Nenhum resultado automatizado chegou por {hours, plural, one {# hora} other {# horas}} (limite {threshold})."
         },
         "reviewDecisionRevertedAction": "reverteram sua decisão em",
@@ -10867,7 +10864,7 @@
       "RUN_ISSUES_OPENED": {
         "label": "Problemas abertos de uma execução",
         "description": "Mais de um determinado número de problemas estão vinculados aos resultados de uma execução.",
-        "summary": "Mais de {threshold, plural, one {# problema está} other {# problemas estão}} vinculados aos resultados de uma execução, {evaluateOn, select, AS_RESULTS_ARRIVE {avaliado conforme os resultados chegam} other {avaliado quando a execução é concluída}}"
+        "summary": "Mais de {threshold, plural, one {# problema está vinculado} other {# problemas estão vinculados}} aos resultados de uma execução, {evaluateOn, select, AS_RESULTS_ARRIVE {avaliado conforme os resultados chegam} other {avaliado quando a execução é concluída}}"
       },
       "NEW_FAILURE_SIGNATURES": {
         "label": "Novos padrões de falha em uma execução",
@@ -10952,7 +10949,7 @@
       "ACCOUNT_LOCKOUTS": {
         "label": "Bloqueios de conta",
         "description": "Várias contas são bloqueadas após falhas de entrada de uma só vez, sinal de preenchimento de credencial. Verificado por hora.",
-        "summary": "Pelo menos {threshold, plural, one {# conta está} other {# contas estão}} bloqueadas após falhas de entrada"
+        "summary": "Pelo menos {threshold, plural, one {# conta está bloqueada} other {# contas estão bloqueadas}} após falhas de entrada"
       },
       "NO_AUTOMATED_RESULTS": {
         "label": "Nenhum resultado automatizado",

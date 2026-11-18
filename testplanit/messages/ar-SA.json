@@ -3145,7 +3145,7 @@
         "bulkConfirmDescription": "سيتم استعادة كل عنصر من العناصر المحددة {count} إلى مشروعه، جنباً إلى جنب مع أي شيء تم حذفه معه.",
         "restored": "تم استعادة \"{name}\".",
         "restoreFailed": "لم يتمكن من استعادة \"{name}\": {message}",
-        "bulkResult": "{restored, plural, one {عنصر واحد} two {عنصرين} few {# عناصر} many {# عنصر} other {# عنصر}} تم استعادتها، {failed} فشل.",
+        "bulkResult": "{restored, plural, one {عنصر واحد تم استعادته} two {عنصرين تم استعادتهما} few {# عناصر تم استعادتها} many {# عنصر تم استعادتها} other {# عنصر تم استعادتها}}، {failed} فشل.",
         "failure": {
           "parent_deleted": "مجلده أو العنصر الأب لا يزال محذوفاً — قم باستعادة ذلك أولاً",
           "name_conflict": "يوجد عنصر بنفس الاسم بالفعل",
@@ -3551,7 +3551,7 @@
     },
     "templateSwitch": {
       "title": "تبديل القالب؟",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" لا يتضمن {count, plural, =1 {هذا الحقل} other {هذه الحقول}}، لذا سيتم التخلص من تغييراتك على {count, plural, =1 {هذا الحقل} other {هذه الحقول}}:",
       "confirm": "تبديل القالب"
     },
     "columns": {
@@ -3631,9 +3631,6 @@
       },
       "success": {
         "casesUpdated": "تم تحديث {count, number} حالة بنجاح"
-      },
-      "placeholders": {
-        "various": "<various values>"
       },
       "validationError": "خطأ في التحقق من الصحة",
       "stepsCannotBeBulkEdited": "لا يمكن تعديل الخطوات بشكل جماعي",
@@ -7295,14 +7292,14 @@
           "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# نمط فشل ظهر} other {# أنماط فشل ظهرت}} للمرة الأولى في التشغيل (الحد الأدنى {threshold}).",
           "SESSION_OVERRUN": "استغرقت الجلسة {elapsed} مقابل تقدير {estimate}، {overrun}% أكثر (أكثر من {threshold}% مسموح).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} من {total} متطلب ({coverage}%) {basis, select, PASSING {لديهم نتيجة أخيرة ناجحة} other {مرتبطة بحالة اختبار}} (حد أدنى {threshold}%).",
-          "STALE_CASES": "{stale, plural, zero {لا توجد حالات} one {# حالة واحدة} two {# حالتان} few {# حالات} many {# حالة} other {# حالات}} لم تحصل على نتيجة في {days, plural, one {# يوم} other {# أيام}} (حد أدنى {threshold}).",
+          "STALE_CASES": "{stale, plural, zero {لا توجد حالات لم تحصل على نتيجة} one {# حالة واحدة لم تحصل على نتيجة} two {# حالتان لم تحصلا على نتيجة} few {# حالات لم تحصل على نتيجة} many {# حالة لم تحصل على نتيجة} other {# حالات لم تحصل على نتيجة}} في {days, plural, one {# يوم} other {# أيام}} (حد أدنى {threshold}).",
           "AUTOMATION_SHARE_BELOW": "{automated} من {total} حالة ({automatedPercent}%) مؤتمتة (حد أدنى {threshold}%).",
           "WEBHOOK_FAILURE_RATE": "{failed} من آخر {sampleCount} عملية تسليم فشلت ({failureRate}%، حد أدنى {threshold}%).",
           "CONSECUTIVE_FAILURES": "فشلت الحالة {streak, plural, one {# مرة} other {# مرات}} متتالية (حد أدنى {threshold}).",
           "CASE_FLAKY": "تقلب النتيجة {flips, plural, one {# مرة} other {# مرات}} عبر آخر {sampleCount} نتيجة (حد أدنى {threshold}).",
           "RUN_PASS_RATE_BELOW": "معدل النجاح هو {passRate}% عبر {sampleCount} نتيجة (حد أدنى {threshold}%).",
           "RUN_FAILURE_COUNT": "{failed, plural, zero {لم تفشل أي نتائج} one {# نتيجة واحدة فشلت} two {# نتيجتان فشلتا} few {# نتائج فشلت} many {# نتيجة فشلت} other {# نتائج فشلت}} (حد أدنى {threshold}).",
-          "MILESTONE_BEHIND": "اكتمل المعلم بنسبة {completion}% مع {daysRemaining, plural, one {# يوم} other {# أيام}} متبقية (حد أدنى {threshold}%).",
+          "MILESTONE_BEHIND": "اكتمل المعلم بنسبة {completion}% مع {daysRemaining, plural, one {# يوم متبقٍ} other {# أيام متبقية}} (حد أدنى {threshold}%).",
           "MILESTONE_OVERDUE": "المعلم متأخر {daysOverdue, plural, one {# يوم} other {# أيام}} عن تاريخ استحقاقه.",
           "LLM_BUDGET_USED": "المصروفات للفترة الفاتورية {spend} من ميزانية {budget} الشهرية ({percent}%، حد أدنى {threshold}%).",
           "LLM_ERROR_RATE": "{failed} من آخر {sampleCount} طلب فشلت ({failureRate}%، حد أدنى {threshold}%).",
@@ -10897,7 +10894,7 @@
       "STALE_CASES": {
         "label": "حالات قديمة",
         "description": "أكثر من عدد معين من الحالات لم تحصل على نتيجة لعدد من الأيام. يتم التحقق يوميًا.",
-        "summary": "أكثر من {threshold, plural, one {# حالة واحدة} two {# حالتان} few {# حالات} many {# حالة} other {# حالات}} لم تحصل على نتيجة في {days, plural, one {# يوم} other {# أيام}}"
+        "summary": "أكثر من {threshold, plural, one {# حالة واحدة لم تحصل على نتيجة} two {# حالتان لم تحصلا على نتيجة} few {# حالات لم تحصل على نتيجة} many {# حالة لم تحصل على نتيجة} other {# حالات لم تحصل على نتيجة}} في {days, plural, one {# يوم} other {# أيام}}"
       },
       "AUTOMATION_SHARE_BELOW": {
         "label": "حصة الأتمتة أقل من الحد الأدنى",
@@ -10927,37 +10924,37 @@
       "CODE_REPOSITORY_CACHE_FAILING": {
         "label": "فشل ذاكرة التخزين المؤقت للمستودع",
         "description": "لم ينعش اتصال مستودع الكود ذاكرة التخزين المؤقت الخاصة به بنجاح لفترة. يتم التحقق كل ساعة.",
-        "summary": "فشلت ذاكرة التخزين المؤقت لاتصال المستودع لمدة {{threshold, plural, one {# ساعة} other {# ساعات}}"
+        "summary": "فشلت ذاكرة التخزين المؤقت لاتصال المستودع لمدة {threshold, plural, one {# ساعة} other {# ساعات}}"
       },
       "INTEGRATION_REAUTH_NEEDED": {
         "label": "إعادة تخويل التكامل المطلوبة",
         "description": "فقد عدد كبير جدًا من المستخدمين اتصالهم بالتكامل ويحتاجون إلى إعادة تخويل. يتم التحقق يوميًا.",
-        "summary": "يحتاج {{threshold, plural, one {# مستخدم واحد} two {# مستخدمان} few {# مستخدمون} many {# مستخدم} other {# مستخدمون}} إلى إعادة تخويل التكامل"
+        "summary": "يحتاج {threshold, plural, one {# مستخدم واحد} two {# مستخدمان} few {# مستخدمون} many {# مستخدم} other {# مستخدمون}} إلى إعادة تخويل التكامل"
       },
       "QUEUE_FAILED_JOBS": {
         "label": "وظائف قائمة الانتظار الفاشلة",
         "description": "تحتفظ قائمة انتظار الخلفية بعدد كبير جدًا من الوظائف الفاشلة. يتم التحقق كل ساعة.",
-        "summary": "أكثر من {{threshold, plural, one {# وظيفة واحدة فشلت} two {# وظيفتان فشلتا} few {# وظائف فشلت} many {# وظيفة فشلت} other {# وظائف فشلت}} في قائمة الانتظار"
+        "summary": "أكثر من {threshold, plural, one {# وظيفة واحدة فشلت} two {# وظيفتان فشلتا} few {# وظائف فشلت} many {# وظيفة فشلت} other {# وظائف فشلت}} في قائمة الانتظار"
       },
       "QUEUE_BACKLOG": {
         "label": "تراكم قائمة الانتظار",
         "description": "كانت أقدم وظيفة انتظار في قائمة انتظار الخلفية تنتظر وقتًا طويلاً جدًا، وهو علامة على عامل متوقف. يتم التحقق كل ساعة.",
-        "summary": "أقدم وظيفة انتظار قائمة الانتظار أقدم من {{threshold, plural, one {# دقيقة} other {# دقائق}}"
+        "summary": "أقدم وظيفة انتظار قائمة الانتظار أقدم من {threshold, plural, one {# دقيقة} other {# دقائق}}"
       },
       "AUDIT_BACKLOG": {
         "label": "تراكم سجل التدقيق",
         "description": "لم يتم كتابة التغييرات المقبوضة إلى سجل التدقيق، وهو علامة على توقف عامل التدقيق. يتم التحقق كل ساعة.",
-        "summary": "أقدم تغيير تدقيق غير معالج أقدم من {{threshold, plural, one {# دقيقة} other {# دقائق}}"
+        "summary": "أقدم تغيير تدقيق غير معالج أقدم من {threshold, plural, one {# دقيقة} other {# دقائق}}"
       },
       "ACCOUNT_LOCKOUTS": {
         "label": "أقفال الحساب",
         "description": "تم قفل عدة حسابات بعد محاولات تسجيل دخول فاشلة في نفس الوقت، وهو علامة على حشو بيانات الاعتماد. يتم التحقق كل ساعة.",
-        "summary": "بعد محاولات تسجيل دخول فاشلة، تم قفل {{threshold, plural, one {# حساب واحد} two {# حسابان} few {# حسابات} many {# حساب} other {# حسابات}}"
+        "summary": "بعد محاولات تسجيل دخول فاشلة، تم قفل {threshold, plural, one {# حساب واحد} two {# حسابان} few {# حسابات} many {# حساب} other {# حسابات}}"
       },
       "NO_AUTOMATED_RESULTS": {
         "label": "لا توجد نتائج آلية",
         "description": "لم تصل أي نتيجة اختبار آلية من أي خط أنابيب لفترة. يتم التحقق يوميًا.",
-        "summary": "لم تصل أي نتيجة آلية لمدة {{threshold, plural, one {# ساعة} other {# ساعات}}"
+        "summary": "لم تصل أي نتيجة آلية لمدة {threshold, plural, one {# ساعة} other {# ساعات}}"
       }
     },
     "sourceSummary": "النتائج: {source, select, MANUAL {يدوي} AUTOMATED {آلي} other {يدوي وآلي}}",

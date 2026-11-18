@@ -3145,7 +3145,7 @@
         "bulkConfirmDescription": "Ognuno dei {count} elementi selezionati sarà ripristinato nel suo progetto, insieme a tutto ciò che è stato eliminato con esso.",
         "restored": "\"{name}\" ripristinato.",
         "restoreFailed": "Impossibile ripristinare \"{name}\": {message}",
-        "bulkResult": "{restored, plural, one {# elemento} other {# elementi}} ripristinato, {failed} non riuscito.",
+        "bulkResult": "{restored, plural, one {# elemento ripristinato} other {# elementi ripristinati}}, {failed} non riuscito.",
         "failure": {
           "parent_deleted": "la sua cartella o elemento padre è ancora eliminato — ripristinalo prima",
           "name_conflict": "esiste già un elemento con lo stesso nome",
@@ -3551,7 +3551,7 @@
     },
     "templateSwitch": {
       "title": "Cambiare modello?",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" non include {count, plural, =1 {questo campo} other {questi campi}}, quindi le tue modifiche a {count, plural, =1 {esso} other {essi}} verranno scartate:",
       "confirm": "Cambia modello"
     },
     "columns": {
@@ -3631,9 +3631,6 @@
       },
       "success": {
         "casesUpdated": "{count, number} casi aggiornati con successo"
-      },
-      "placeholders": {
-        "various": "<various values>"
       },
       "validationError": "Errore di convalida",
       "stepsCannotBeBulkEdited": "I passaggi non possono essere modificati in blocco",
@@ -3816,7 +3813,7 @@
         "title": "Seleziona la fonte dei requisiti",
         "description": "Scegliere se generare casi di test da un problema o da un documento di requisiti.",
         "folderContextTip": "I casi di test esistenti in \"{folderName}\" e nelle relative cartelle padre/figlio verranno utilizzati come contesto per evitare duplicati. Assicurati di aver selezionato la cartella corretta prima di procedere.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" e le sue cartelle padre/figlie contengono {count, plural, =1 {# caso di test esistente} other {# casi di test esistenti}}. L'IA ne utilizza quanti ne entrano nel suo contesto per rispecchiare lo stile del tuo progetto ed evitare duplicati.",
         "folderContextEmptyTitle": "Nessun caso di test in questa cartella ancora",
         "folderContextEmpty": "\"{folderName}\" e le sue cartelle padre/figlie non hanno casi di test. L'IA cercherà casi di test correlati altrove in questo progetto per imparare il tuo stile ed evitare duplicati. Per i migliori risultati, avvia il generatore dalla cartella in cui questi casi di test appartengono.",
         "currentFolder": "cartella corrente",
@@ -4406,7 +4403,7 @@
       "blocked": "Bloccato",
       "blockedBy": "Bloccato finché {count, plural, one {questo caso non ha esito positivo} other {questi # casi non hanno esito positivo}} in questa esecuzione:",
       "blockedNotice": "Questo caso di test non può essere eseguito finché {count, plural, one {il caso da cui dipende non ha} other {tutti i # casi da cui dipende non hanno}} avuto esito positivo in questa esecuzione.",
-      "notInRun": "{count, plural, one {# caso da cui dipende questo} other {# casi da cui dipende questo}} non sono in questa esecuzione e non bloccheranno l'esecuzione:",
+      "notInRun": "{count, plural, one {# caso da cui dipende questo non è in questa esecuzione e non bloccherà} other {# casi da cui dipende questo non sono in questa esecuzione e non bloccheranno}} l'esecuzione:",
       "unblocked": "Tutti i casi da cui dipende questo hanno avuto esito positivo in questa esecuzione."
     },
     "distribute": {
@@ -7251,7 +7248,7 @@
         "aiStepsDerivedMessage": "{count, plural, one {# caso di test ha} other {# casi di test hanno}} ricevuto passaggi derivati dall'AI — verificane l'accuratezza.",
         "aiStepsDerivedReviewLink": "Rivedi l'esecuzione del test",
         "casesDraftedTitle": "Casi di test redatti dall'AI pronti",
-        "casesDraftedMessage": "{count, plural, one {# caso di test è stato} other {# casi di test sono stati}} redatto per {issueKey} — verificane l'accuratezza.",
+        "casesDraftedMessage": "{count, plural, one {# caso di test è stato redatto} other {# casi di test sono stati redatti}} per {issueKey} — verificane l'accuratezza.",
         "casesDraftedReviewLink": "Rivedi in {folderName}",
         "integrationAuthExpiredTitle": "Connessione all'integrazione scaduta",
         "integrationAuthExpiredMessage": "La connessione a \"{integrationName}\" è scaduta. Riconnettiti per riprendere la sincronizzazione dei problemi.",
@@ -7291,7 +7288,7 @@
           "RUN_NOT_PROGRESSING": "L'esecuzione non ha avuto alcun nuovo risultato per {idleHours, plural, one {# ora} other {# ore}} (soglia {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "L'esecuzione automatizzata su {target} è terminata con {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% dei casi dell'esecuzione non ha alcun risultato con {daysRemaining, plural, one {# giorno} other {# giorni}} prima della scadenza della pietra miliare (soglia {threshold}%).",
-          "RUN_ISSUES_OPENED": "{issues, plural, one {# problema è} other {# problemi sono}} collegati ai risultati dell'esecuzione (soglia {threshold}).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# problema è collegato} other {# problemi sono collegati}} ai risultati dell'esecuzione (soglia {threshold}).",
           "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# schema di errori apparso} other {# schemi di errori apparsi}} per la prima volta nell'esecuzione (soglia {threshold}).",
           "SESSION_OVERRUN": "La sessione ha impiegato {elapsed} rispetto a una stima di {estimate}, {overrun}% in più (più del {threshold}% consentito).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} di {total} requisiti ({coverage}%) {basis, select, PASSING {hanno un risultato ultimo positivo} other {sono collegati a un caso di test}} (soglia {threshold}%).",
@@ -7302,7 +7299,7 @@
           "CASE_FLAKY": "L'esito è cambiato {flips, plural, one {# volta} other {# volte}} negli ultimi {sampleCount} risultati (soglia {threshold}).",
           "RUN_PASS_RATE_BELOW": "Il tasso di superamento è del {passRate}% negli ultimi {sampleCount} risultati (soglia {threshold}%).",
           "RUN_FAILURE_COUNT": "{failed, plural, one {# risultato non ha} other {# risultati non hanno}} avuto successo (soglia {threshold}).",
-          "MILESTONE_BEHIND": "La pietra miliare è completa al {completion}% con {daysRemaining, plural, one {# giorno} other {# giorni}} rimanenti (soglia {threshold}%).",
+          "MILESTONE_BEHIND": "La pietra miliare è completa al {completion}% con {daysRemaining, plural, one {# giorno rimanente} other {# giorni rimanenti}} (soglia {threshold}%).",
           "MILESTONE_OVERDUE": "La pietra miliare ha superato la data di scadenza di {daysOverdue, plural, one {# giorno} other {# giorni}}.",
           "LLM_BUDGET_USED": "La spesa per il periodo di fatturazione è {spend} su {budget} di budget mensile ({percent}%, soglia {threshold}%).",
           "LLM_ERROR_RATE": "{failed} delle ultime {sampleCount} richieste non hanno avuto successo ({failureRate}%, soglia {threshold}%).",
@@ -7312,7 +7309,7 @@
           "QUEUE_FAILED_JOBS": "{failed, plural, one {# lavoro non ha} other {# lavori non hanno}} avuto successo nella coda (soglia {threshold}).",
           "QUEUE_BACKLOG": "Il più vecchio tra {waiting, plural, one {# job in attesa} other {# job in attesa}} ha aspettato {minutes, plural, one {# minuto} other {# minuti}} (soglia {threshold}).",
           "AUDIT_BACKLOG": "La modifica di controllo non elaborata più recente ha {minutes, plural, one {# minuto} other {# minuti}} (soglia {threshold}).",
-          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# account è} other {# account sono}} bloccati dopo i tentativi di accesso non riusciti (soglia {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# account è bloccato} other {# account sono bloccati}} dopo i tentativi di accesso non riusciti (soglia {threshold}).",
           "NO_AUTOMATED_RESULTS": "Nessun risultato automatizzato è arrivato per {hours, plural, one {# ora} other {# ore}} (soglia {threshold})."
         },
         "reviewDecisionRevertedAction": "ha annullato la sua decisione su",
@@ -10867,7 +10864,7 @@
       "RUN_ISSUES_OPENED": {
         "label": "Problemi aperti da un'esecuzione",
         "description": "Più di un determinato numero di problemi sono collegati ai risultati di un'esecuzione.",
-        "summary": "Più di {threshold, plural, one {# problema è} other {# problemi sono}} collegati ai risultati di un'esecuzione, {evaluateOn, select, AS_RESULTS_ARRIVE {valutato man mano che i risultati arrivano} other {valutato al completamento dell'esecuzione}}"
+        "summary": "Più di {threshold, plural, one {# problema è collegato} other {# problemi sono collegati}} ai risultati di un'esecuzione, {evaluateOn, select, AS_RESULTS_ARRIVE {valutato man mano che i risultati arrivano} other {valutato al completamento dell'esecuzione}}"
       },
       "NEW_FAILURE_SIGNATURES": {
         "label": "Nuovi schemi di errori in un'esecuzione",
@@ -10937,27 +10934,27 @@
       "QUEUE_FAILED_JOBS": {
         "label": "Lavori non riusciti della coda",
         "description": "Una coda di sfondo contiene troppi lavori non riusciti. Controllato ogni ora.",
-        "summary": "Più di {{threshold, plural, one {# lavoro non ha} other {# lavori non hanno}} avuto successo in una coda"
+        "summary": "Più di {threshold, plural, one {# lavoro non ha} other {# lavori non hanno}} avuto successo in una coda"
       },
       "QUEUE_BACKLOG": {
         "label": "Arretrato della coda",
         "description": "Il lavoro in attesa più antico di una coda di sfondo ha aspettato troppo a lungo, il segno di un worker interrotto. Controllato ogni ora.",
-        "summary": "Il lavoro in attesa più antico di una coda ha più di {{threshold, plural, one {# minuto} other {# minuti}}"
+        "summary": "Il lavoro in attesa più antico di una coda ha più di {threshold, plural, one {# minuto} other {# minuti}}"
       },
       "AUDIT_BACKLOG": {
         "label": "Arretrato del registro di controllo",
         "description": "Le modifiche acquisite non vengono scritte nel registro di controllo, il segno di un worker di controllo interrotto. Controllato ogni ora.",
-        "summary": "La modifica di controllo non elaborata più recente ha più di {{threshold, plural, one {# minuto} other {# minuti}}"
+        "summary": "La modifica di controllo non elaborata più recente ha più di {threshold, plural, one {# minuto} other {# minuti}}"
       },
       "ACCOUNT_LOCKOUTS": {
         "label": "Blocchi di account",
         "description": "Diversi account sono bloccati dopo i tentativi di accesso non riusciti contemporaneamente, un segno di riempimento delle credenziali. Controllato ogni ora.",
-        "summary": "Almeno {{threshold, plural, one {# account è} other {# account sono}} bloccati dopo i tentativi di accesso non riusciti"
+        "summary": "Almeno {threshold, plural, one {# account è bloccato} other {# account sono bloccati}} dopo i tentativi di accesso non riusciti"
       },
       "NO_AUTOMATED_RESULTS": {
         "label": "Nessun risultato automatizzato",
         "description": "Nessun risultato di test automatico è arrivato da nessuna pipeline per un po'. Controllato giornalmente.",
-        "summary": "Nessun risultato automatizzato è arrivato per {{threshold, plural, one {# ora} other {# ore}}"
+        "summary": "Nessun risultato automatizzato è arrivato per {threshold, plural, one {# ora} other {# ore}}"
       }
     },
     "sourceSummary": "Risultati: {source, select, MANUAL {manuale} AUTOMATED {automatizzato} other {manuale e automatizzato}}",

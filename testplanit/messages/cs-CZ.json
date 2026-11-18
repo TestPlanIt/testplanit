@@ -701,7 +701,7 @@
       "permissionDenied": "Nemáte oprávnění pro přístup k této stránce.",
       "resultSubmitPermissionDenied": "Nemůžete odesílat výsledky pro tento případ. Požádejte administrátora projektu, aby vám jej přiřadil.",
       "dependenciesNotPassed": "Blokováno závislostmi",
-      "dependenciesNotPassedDescription": "Tento případ testu nelze spustit, dokud {count, plural, =0 {případy, na kterých závisí, mají} one {případ, na kterém závisí, má} few {případy, na kterých závisí, mají} many {případy, na kterých závisí, mají} other {všech # případů, na kterých závisí, mají}} neprojdou v tomto běhu.",
+      "dependenciesNotPassedDescription": "Tento případ testu nelze spustit, dokud {count, plural, =0 {případy, na kterých závisí, neprojdou} one {případ, na kterém závisí, neprojde} few {případy, na kterých závisí, neprojdou} many {případy, na kterých závisí, neprojdou} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
       "justificationRequired": "Zdůvodnění je povinné",
       "justificationRequiredDescription": "Obrácení dokončeného výsledku na jiný výstup vyžaduje podrobnosti výsledku vysvětlující změnu.",
       "requiredFieldMissing": "Povinnému poli výsledku chybí hodnota.",
@@ -3145,7 +3145,7 @@
         "bulkConfirmDescription": "Každá z {count} vybraných položek bude obnovena do svého projektu spolu se vším, co bylo odstraněno s ní.",
         "restored": "\"{name}\" obnovena.",
         "restoreFailed": "Nelze obnovit \"{name}\": {message}",
-        "bulkResult": "{restored, plural, one {# položka} few {# položky} many {# položek} other {# položek}} obnovena, {failed} selhalo.",
+        "bulkResult": "{restored, plural, one {# položka obnovena} few {# položky obnoveny} many {# položek obnoveno} other {# položek obnoveno}}, {failed} selhalo.",
         "failure": {
           "parent_deleted": "její složka nebo nadřazená položka je stále odstraněna — obnovte ji nejdříve",
           "name_conflict": "položka se stejným názvem již existuje",
@@ -3551,7 +3551,7 @@
     },
     "templateSwitch": {
       "title": "Přepnout šablonu?",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" neobsahuje {count, plural, =1 {toto pole} other {tato pole}}, takže vaše změny v {count, plural, =1 {něm} other {nich}} budou zahozeny:",
       "confirm": "Přepnout šablonu"
     },
     "columns": {
@@ -3631,9 +3631,6 @@
       },
       "success": {
         "casesUpdated": "Úspěšně aktualizováno {count, number} případů"
-      },
-      "placeholders": {
-        "various": "<various values>"
       },
       "validationError": "Chyba validace",
       "stepsCannotBeBulkEdited": "Kroky nelze hromadně upravovat",
@@ -3816,7 +3813,7 @@
         "title": "Vybrat zdroj požadavků",
         "description": "Vyberte, zda chcete generovat testovací případy z problému nebo z dokumentu s požadavky.",
         "folderContextTip": "Existující testovací případy ze složky \"{folderName}\" a jejích nadřazených/podřazených složek budou použity jako kontext, aby se zabránilo duplicitám. Před pokračováním se ujistěte, že jste vybrali správnou složku.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" a jeho nadřazené/podřazené složky obsahují {count, plural, =1 {# existující testovací případ} one {# existující testovací případ} few {# existující testovací případy} many {# existujícího testovacího případu} other {# existujících testovacích případů}}. AI používá tolik, kolik se vejde do jeho kontextu, aby odpovídal stylu vašeho projektu a zabránil duplikátům.",
         "folderContextEmptyTitle": "V této složce zatím nejsou žádné testovací případy",
         "folderContextEmpty": "\"{folderName}\" a její nadřazené/podřízené složky nemají žádné testovací případy. AI bude hledat související testovací případy jinde v tomto projektu, aby se naučila váš styl a vyhnula se duplikátům. Pro nejlepší výsledky spusťte generátor ze složky, do které tyto testovací případy patří.",
         "currentFolder": "aktuální složka",
@@ -4406,7 +4403,7 @@
       "blocked": "Blokováno",
       "blockedBy": "Blokováno až {count, plural, one {tento případ prošel} few {tyto # případy prošly} many {těchto # případů prošlo} other {tyto případy projdou}} v tomto běhu:",
       "blockedNotice": "Tento testovací případ nelze spustit, dokud {count, plural, one {případ, na kterém závisí, neprošel} few {všechny # případy, na kterých závisí, neprošly} many {všech # případů, na kterých závisí, neprošlo} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
-      "notInRun": "{count, plural, one {# případ, na kterém tento závisí, je} few {# případy, na kterých tento závisí, jsou} many {# případů, na kterých tento závisí, je} other {# případy, na kterých tento závisí, jsou}} v tomto běhu a nebudou blokovat spuštění:",
+      "notInRun": "{count, plural, one {# případ, na kterém tento závisí, je v tomto běhu a nebude blokovat spuštění} few {# případy, na kterých tento závisí, jsou v tomto běhu a nebudou blokovat spuštění} many {# případů, na kterých tento závisí, je v tomto běhu a nebude blokovat spuštění} other {# případy, na kterých tento závisí, jsou v tomto běhu a nebudou blokovat spuštění}}:",
       "unblocked": "Všechny případy, na kterých tento závisí, v tomto běhu prošly."
     },
     "distribute": {
@@ -7251,7 +7248,7 @@
         "aiStepsDerivedMessage": "{count, plural, one {# testovacímu případu byly přiřazeny} few {# testovacím případům byly přiřazeny} many {# testovacím případům byly přiřazeny} other {# testovacím případům byly přiřazeny}} kroky odvozené pomocí AI — zkontrolujte jejich přesnost.",
         "aiStepsDerivedReviewLink": "Zkontrolovat testovací běh",
         "casesDraftedTitle": "AI-navržené testovací případy jsou připraveny",
-        "casesDraftedMessage": "{count, plural, one {# testovací případ byl} few {# testovací případy byly} many {# testovacích případů bylo} other {# testovacích případů bylo}} navrženo pro {issueKey} — zkontrolujte přesnost.",
+        "casesDraftedMessage": "{count, plural, one {# testovací případ byl navržen} few {# testovací případy byly navrženy} many {# testovacích případů bylo navrženo} other {# testovacích případů bylo navrženo}} pro {issueKey} — zkontrolujte přesnost.",
         "casesDraftedReviewLink": "Zkontrolovat v {folderName}",
         "integrationAuthExpiredTitle": "Platnost připojení integrace vypršela",
         "integrationAuthExpiredMessage": "Platnost vašeho připojení k \"{integrationName}\" vypršela. Znovu se připojte pro obnovení synchronizace úkolů.",
@@ -7291,7 +7288,7 @@
           "RUN_NOT_PROGRESSING": "Běh nemá nový výsledek již {idleHours, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "Automatické spuštění na {target} skončilo s {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% případů běhu nemá výsledek s {daysRemaining, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} před splatností milníku (prahová hodnota {threshold}%).",
-          "RUN_ISSUES_OPENED": "{issues, plural, one {# problém je} few {# problémy jsou} many {# problémů je} other {# problémů je}} propojeno s výsledky běhu (prahová hodnota {threshold}).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# problém je propojen} few {# problémy jsou propojeny} many {# problémů je propojeno} other {# problémů je propojeno}} s výsledky běhu (prahová hodnota {threshold}).",
           "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# vzor selhání se objevil} few {# vzory selhání se objevily} many {# vzorů selhání se objevilo} other {# vzorů selhání se objevilo}} poprvé v běhu (práh {threshold}).",
           "SESSION_OVERRUN": "Relace trvala {elapsed} proti odhadu {estimate}, {overrun}% více (více než {threshold}% povoleno).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} z {total} požadavků ({coverage}%) {basis, select, PASSING {má procházející poslední výsledek} other {je propojen s testovacím případem}} (prahová hodnota {threshold}%).",
@@ -7312,7 +7309,7 @@
           "QUEUE_FAILED_JOBS": "{failed, plural, one {# úloha selhala} few {# úlohy selhaly} many {# úloh selhalo} other {# úloh selhalo}} ve frontě (prahová hodnota {threshold}).",
           "QUEUE_BACKLOG": "Nejstarší z {waiting, plural, one {# čekající úlohy} few {# čekajících úloh} many {# čekajících úloh} other {# čekajících úloh}} čeká {minutes, plural, one {# minutu} few {# minuty} many {# minut} other {# minut}} (prahová hodnota {threshold}).",
           "AUDIT_BACKLOG": "Nejstarší nezpracovaná změna auditu je stará {minutes, plural, one {# minutu} few {# minuty} many {# minut} other {# minut}} (prahová hodnota {threshold}).",
-          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# účet je} few {# účty jsou} many {# účtů je} other {# účtů je}} uzamčen po neúspěšných přihlášeních (prahová hodnota {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# účet je uzamčen} few {# účty jsou uzamčeny} many {# účtů je uzamčeno} other {# účtů je uzamčeno}} po neúspěšných přihlášeních (prahová hodnota {threshold}).",
           "NO_AUTOMATED_RESULTS": "Žádný automatizovaný výsledek nebyl přijat za {hours, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold})."
         },
         "reviewDecisionRevertedAction": "vrátili své rozhodnutí na",
@@ -10867,7 +10864,7 @@
       "RUN_ISSUES_OPENED": {
         "label": "Problémy otevřené z běhu",
         "description": "Více než daný počet problémů je propojen s výsledky běhu.",
-        "summary": "Více než {threshold, plural, one {# problém je} few {# problémy jsou} many {# problémů je} other {# problémů je}} propojen s výsledky běhu, {evaluateOn, select, AS_RESULTS_ARRIVE {vyhodnoceno jak přicházejí výsledky} other {vyhodnoceno po dokončení běhu}}"
+        "summary": "Více než {threshold, plural, one {# problém je propojen} few {# problémy jsou propojeny} many {# problémů je propojeno} other {# problémů je propojeno}} s výsledky běhu, {evaluateOn, select, AS_RESULTS_ARRIVE {vyhodnoceno jak přicházejí výsledky} other {vyhodnoceno po dokončení běhu}}"
       },
       "NEW_FAILURE_SIGNATURES": {
         "label": "Nové vzory selhání v běhu",
@@ -10952,7 +10949,7 @@
       "ACCOUNT_LOCKOUTS": {
         "label": "Uzamčení účtů",
         "description": "Několik účtů je zároveň uzamčeno po neúspěšných přihlášeních, znamení útoku na vyplňování přihlašovacích údajů. Kontrolováno každou hodinu.",
-        "summary": "Alespoň {threshold, plural, one {# účet je} few {# účty jsou} many {# účtů je} other {# účtů je}} uzamčen po neúspěšných přihlášeních"
+        "summary": "Alespoň {threshold, plural, one {# účet je uzamčen} few {# účty jsou uzamčeny} many {# účtů je uzamčeno} other {# účtů je uzamčeno}} po neúspěšných přihlášeních"
       },
       "NO_AUTOMATED_RESULTS": {
         "label": "Bez automatizovaných výsledků",

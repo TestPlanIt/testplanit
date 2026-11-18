@@ -3632,9 +3632,6 @@
       "success": {
         "casesUpdated": "{count, number} ケースが正常に更新されました"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "検証エラー",
       "stepsCannotBeBulkEdited": "ステップは一括編集できません",
       "stepsInfoTitle": "ステップ情報",
@@ -7310,7 +7307,7 @@
           "CODE_REPOSITORY_CACHE_FAILING": "リポジトリキャッシュが {hours, plural, one {# 時間} other {# 時間}} 間失敗しています（閾値 {threshold}）{error, select, other {: {error}}}",
           "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# ユーザーが} other {# ユーザーが}} 統合の再認可を行う必要があります（閾値 {threshold}）。",
           "QUEUE_FAILED_JOBS": "キューで {failed, plural, one {# ジョブが} other {# ジョブが}} 失敗しました（閾値 {threshold}）。",
-          "QUEUE_BACKLOG": "{{waiting, plural, one {# 待機中のジョブ} other {# 待機中のジョブ}} の最古のものが {minutes, plural, one {# 分} other {# 分}} 待機しています（閾値 {threshold}）。",
+          "QUEUE_BACKLOG": "{waiting, plural, one {# 待機中のジョブ} other {# 待機中のジョブ}} の最古のものが {minutes, plural, one {# 分} other {# 分}} 待機しています（閾値 {threshold}）。",
           "AUDIT_BACKLOG": "最も古い未処理の監査変更は {minutes, plural, one {# 分} other {# 分}} です（閾値 {threshold}）。",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# アカウントが} other {# アカウントが}} ログイン試行失敗後ロックされています（閾値 {threshold}）。",
           "NO_AUTOMATED_RESULTS": "{hours, plural, one {# 時間} other {# 時間}} の間に自動結果が到着しています（閾値 {threshold}）。"
@@ -10937,27 +10934,27 @@
       "QUEUE_FAILED_JOBS": {
         "label": "キューの失敗したジョブ",
         "description": "バックグラウンドキューが失敗したジョブを多すぎます。毎時チェック。",
-        "summary": "キューで {{threshold, plural, one {# ジョブが} other {# ジョブが}} 失敗しました"
+        "summary": "キューで {threshold, plural, one {# ジョブが} other {# ジョブが}} 失敗しました"
       },
       "QUEUE_BACKLOG": {
         "label": "キューのバックログ",
         "description": "バックグラウンドキューの最も古い待機ジョブが長く待機しており、停止したワーカーの兆候です。毎時チェック。",
-        "summary": "キューの最も古い待機ジョブが {{threshold, plural, one {# 分} other {# 分}} より古い"
+        "summary": "キューの最も古い待機ジョブが {threshold, plural, one {# 分} other {# 分}} より古い"
       },
       "AUDIT_BACKLOG": {
         "label": "監査ログのバックログ",
         "description": "キャプチャされた変更が監査ログに書き込まれておらず、停止した監査ワーカーの兆候です。毎時チェック。",
-        "summary": "最も古い未処理の監査変更が {{threshold, plural, one {# 分} other {# 分}} より古い"
+        "summary": "最も古い未処理の監査変更が {threshold, plural, one {# 分} other {# 分}} より古い"
       },
       "ACCOUNT_LOCKOUTS": {
         "label": "アカウントロック",
         "description": "複数のアカウントが同時にログイン試行失敗後にロックされており、認証情報詰め込み攻撃の兆候です。毎時チェック。",
-        "summary": "少なくとも {{threshold, plural, one {# アカウント} other {# アカウント}} がログイン失敗後にロック"
+        "summary": "少なくとも {threshold, plural, one {# アカウント} other {# アカウント}} がログイン失敗後にロック"
       },
       "NO_AUTOMATED_RESULTS": {
         "label": "自動結果なし",
         "description": "自動テスト結果がパイプラインから何らかの時間到着していません。毎日チェック。",
-        "summary": "{{threshold, plural, one {# 時間} other {# 時間}} の間に自動結果が到着していません"
+        "summary": "{threshold, plural, one {# 時間} other {# 時間}} の間に自動結果が到着していません"
       }
     },
     "sourceSummary": "結果: {source, select, MANUAL {手動} AUTOMATED {自動化} other {手動と自動化}}",

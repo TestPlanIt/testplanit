@@ -3632,9 +3632,6 @@
       "success": {
         "casesUpdated": "{count, number} 사례가 성공적으로 업데이트되었습니다."
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "유효성 검사 오류",
       "stepsCannotBeBulkEdited": "단계는 일괄 편집할 수 없습니다.",
       "stepsInfoTitle": "단계 정보",

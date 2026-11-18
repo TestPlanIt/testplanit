@@ -3632,9 +3632,6 @@
       "success": {
         "casesUpdated": "{count, number} trường hợp đã được cập nhật thành công"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "Lỗi xác thực",
       "stepsCannotBeBulkEdited": "Không thể chỉnh sửa hàng loạt các bước.",
       "stepsInfoTitle": "Thông tin các bước",

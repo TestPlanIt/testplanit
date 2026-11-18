@@ -701,7 +701,7 @@
       "permissionDenied": "U hebt geen toestemming om deze pagina te bezoeken.",
       "resultSubmitPermissionDenied": "Je kunt voor deze zaak geen resultaten indienen. Vraag een projectbeheerder om deze zaak aan je toe te wijzen.",
       "dependenciesNotPassed": "Geblokkeerd door afhankelijkheden",
-      "dependenciesNotPassedDescription": "Dit testgeval kan niet worden uitgevoerd totdat {count, plural, =0 {de gevallen waarvan het afhangt zijn} one {het geval waarvan het afhangt is} other {alle # gevallen waarvan het afhangt zijn}} in deze uitvoering zijn geslaagd.",
+      "dependenciesNotPassedDescription": "Dit testgeval kan niet worden uitgevoerd totdat {count, plural, =0 {de gevallen waarvan het afhangt in deze uitvoering zijn geslaagd} one {het geval waarvan het afhangt in deze uitvoering is geslaagd} other {alle # gevallen waarvan het afhangt in deze uitvoering zijn geslaagd}}.",
       "justificationRequired": "Rechtvaardiging vereist",
       "justificationRequiredDescription": "Om een voltooid resultaat om te zetten naar een andere uitkomst, zijn resultaatdetails nodig die de wijziging toelichten.",
       "requiredFieldMissing": "Een verplicht resultaatveld mist een waarde.",
@@ -3551,7 +3551,7 @@
     },
     "templateSwitch": {
       "title": "Template wisselen?",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" bevat {count, plural, =1 {dit veld} other {deze velden}} niet, dus uw wijzigingen in {count, plural, =1 {dit veld} other {deze velden}} worden verwijderd:",
       "confirm": "Template wisselen"
     },
     "columns": {
@@ -3631,9 +3631,6 @@
       },
       "success": {
         "casesUpdated": "{count, number} gevallen succesvol bijgewerkt"
-      },
-      "placeholders": {
-        "various": "<various values>"
       },
       "validationError": "Validatiefout",
       "stepsCannotBeBulkEdited": "Stappen kunnen niet in bulk worden bewerkt",
@@ -3816,7 +3813,7 @@
         "title": "Selecteer Vereistenbron",
         "description": "Kies of u testcases wilt genereren op basis van een probleem of een vereistendocument.",
         "folderContextTip": "Bestaande testgevallen uit \"{folderName}\" en de bijbehorende mappen worden als context gebruikt om duplicaten te voorkomen. Zorg ervoor dat u de juiste map hebt geselecteerd voordat u verdergaat.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" en de bovenliggende/onderliggende mappen bevatten {count, plural, =1 {# bestaand testgeval} other {# bestaande testgevallen}}. De AI gebruikt zoveel mogelijk die in de context passen om de stijl van uw project na te bootsen en duplicaten te voorkomen.",
         "folderContextEmptyTitle": "Nog geen testcases in deze map",
         "folderContextEmpty": "\"{folderName}\" en de bovenliggende/onderliggende mappen hebben geen testcases. De AI zoekt naar gerelateerde testcases elders in dit project om uw stijl te leren en duplicaten te voorkomen. Voor de beste resultaten start u de generator vanuit de map waar deze testcases thuishoren.",
         "currentFolder": "huidige map",
@@ -3871,7 +3868,7 @@
         "quantity": "Aantal te genereren testcases",
         "placeholder": "Voeg specifieke instructies toe voor het genereren van testcases...\n\nBijvoorbeeld:\n• Focus op beveiligingstesten\n• Neem edge cases en randvoorwaarden op\n• Test zowel happy path- als error-scenario's\n• Houd rekening met mobiele en desktop-scenario's\n• Focus op API-testen",
         "linksIgnoredTitle": "Links in notities worden niet geopend",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {De link in uw notities wordt alleen als platte tekst verzonden.} other {De # links in uw notities worden alleen als platte tekst verzonden.}} Als u een document of spreadsheet wilt gebruiken, plakt u de relevante inhoud (scenario's, testgegevens, verwachte resultaten) in de notities.",
         "suggestions": "Snelle suggesties:",
         "quantityOptions": {
           "justOne": "Slechts één",
@@ -4406,7 +4403,7 @@
       "blocked": "Geblokkeerd",
       "blockedBy": "Geblokkeerd totdat {count, plural, one {deze case geslaagd is} other {deze cases zijn geslaagd}} in deze run:",
       "blockedNotice": "Deze testcase kan pas worden uitgevoerd als {count, plural, one {de case waarvan deze afhangt, is} other {alle # cases waarvan deze afhangt, zijn}} geslaagd in deze run.",
-      "notInRun": "{count, plural, one {# case waarvan deze afhangt, is} other {# cases waarvan deze afhangt, zijn}} niet in deze run en blokkeert de uitvoering niet:",
+      "notInRun": "{count, plural, one {# case waarvan deze afhangt, is niet in deze run en blokkeert de uitvoering niet:} other {# cases waarvan deze afhangt, zijn niet in deze run en blokkeren de uitvoering niet:}}",
       "unblocked": "Alle cases waarvan deze afhangt, zijn in deze run geslaagd."
     },
     "distribute": {

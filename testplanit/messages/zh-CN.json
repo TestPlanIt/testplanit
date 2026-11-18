@@ -3632,9 +3632,6 @@
       "success": {
         "casesUpdated": "{count, number} 案例已成功更新"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "验证错误",
       "stepsCannotBeBulkEdited": "步骤无法批量编辑",
       "stepsInfoTitle": "步骤信息",
