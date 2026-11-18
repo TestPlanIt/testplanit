@@ -19,8 +19,8 @@ yarn add -D @testplanit/playwright-reporter
 ### 1. Generate an API Token
 
 1. Log into your TestPlanIt instance
-2. Go to **Settings** > **API Tokens**
-3. Click **Generate New Token**
+2. Open your **Profile** and go to the **API Tokens** section
+3. Click **Create Token**
 4. Copy the token (it starts with `tpi_`)
 
 ### 2. Add the reporter to your Playwright config
@@ -92,7 +92,8 @@ caseIdPattern: /TEST-(\d+)/g  // JIRA-style:         "TEST-12345 should work"
 | `milestoneId` | `number \| string` | No | - | Milestone ID or name for the test run |
 | `stateId` | `number \| string` | No | - | Workflow state ID or name for the test run |
 | `tagIds` | `(number \| string)[]` | No | - | Tags to apply (IDs or names). Non-existent tags are created automatically |
-| `caseIdPattern` | `RegExp \| string` | No | `/\[(\d+)\]/g` | Regex to extract case IDs from test titles. Must include a capturing group |
+| `caseIdAnnotation` | `string` | No | `'testplanit'` | Annotation `type` whose `description` holds the case ID(s). Set to `''` to disable |
+| `caseIdPattern` | `RegExp \| string` | No | `/\[(\d+)\]/g` | Regex to extract case IDs from test titles and tags. Must include a capturing group |
 | `autoCreateTestCases` | `boolean` | No | `false` | Auto-create test cases matched by describe path + test title |
 | `captureSteps` | `boolean` | No | `true` | Capture `test.step()` calls as authored steps on newly created cases (nested steps flattened, in order, prefixed by depth). Requires `autoCreateTestCases`; applies only to created cases — existing cases are never modified |
 | `overwriteSteps` | `boolean` | No | `false` | Overwrite an **existing** case's steps with the captured `test.step()` calls every run (linked-by-ID and auto-matched cases), keeping the case in sync as the script changes. **Destructive** — discards manual step edits. A test with no `test.step()` calls never clears existing steps |

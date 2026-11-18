@@ -40,7 +40,7 @@ await client.createTestResult({
 });
 
 // Complete the test run
-await client.completeTestRun(testRun.id);
+await client.completeTestRun(testRun.id, 1); // run ID, project ID
 ```
 
 ## Configuration
@@ -63,8 +63,8 @@ const client = new TestPlanItClient({
 
 Generate an API token from your TestPlanIt instance:
 
-1. Go to **Settings** > **API Tokens**
-2. Click **Generate New Token**
+1. Open your **Profile** and go to the **API Tokens** section
+2. Click **Create Token**
 3. Copy the token (it starts with `tpi_`)
 
 Store the token securely (e.g., environment variable):
@@ -111,9 +111,9 @@ await client.updateTestRun(123, {
 });
 
 // Complete a test run
-await client.completeTestRun(123);
+await client.completeTestRun(123, 1); // run ID, project ID
 
-// List test runs
+// List a project's completed test runs (active runs are not returned)
 const { data, totalCount, pageCount } = await client.listTestRuns({
   projectId: 1,
   page: 1,
@@ -159,8 +159,8 @@ const cases = await client.findTestCases({
   className: 'AuthTests',
 });
 
-// Find or create a test case
-const testCase = await client.findOrCreateTestCase({
+// Find or create a test case (action: 'found' | 'created' | 'moved')
+const { testCase, action } = await client.findOrCreateTestCase({
   projectId: 1,
   folderId: 1,
   templateId: 1,

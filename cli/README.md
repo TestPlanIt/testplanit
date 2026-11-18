@@ -34,8 +34,8 @@ Download the appropriate binary for your platform from the [CLI releases](https:
 **Linux / macOS:**
 
 ```bash
-# Download (replace URL with actual release URL)
-curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
+# Download (replace the file name with the binary for your platform)
+curl -L -o testplanit https://github.com/testplanit/testplanit/releases/download/cli-v1.4.0/testplanit-linux-x64
 chmod +x testplanit
 sudo mv testplanit /usr/local/bin/
 ```
@@ -43,7 +43,7 @@ sudo mv testplanit /usr/local/bin/
 **Windows (PowerShell):**
 
 ```powershell
-Invoke-WebRequest -Uri "https://github.com/testplanit/testplanit/releases/latest/download/testplanit-windows-x64.exe" -OutFile "testplanit.exe"
+Invoke-WebRequest -Uri "https://github.com/testplanit/testplanit/releases/download/cli-v1.4.0/testplanit-windows-x64.exe" -OutFile "testplanit.exe"
 ```
 
 ## Configuration
@@ -59,6 +59,9 @@ testplanit config show
 
 # Clear stored configuration
 testplanit config clear
+
+# Show the configuration file path
+testplanit config path
 ```
 
 ### Environment Variables
@@ -103,7 +106,7 @@ testplanit import <files...> --project <id|name> --name <name> [options]
 
 - `<files...>` - Test result files or glob patterns (e.g., `./results/*.xml`)
 - `-p, --project <value>` - Project (ID or exact name)
-- `-n, --name <name>` - Test run name
+- `-n, --name <name>` - Test run name (required unless appending to an existing run with `-r` or `TESTPLANIT_RUN_ID`)
 
 **Optional:**
 
@@ -113,7 +116,10 @@ testplanit import <files...> --project <id|name> --name <name> [options]
 - `-m, --milestone <value>` - Milestone (ID or exact name)
 - `-f, --folder <value>` - Parent folder for test cases (ID or exact name)
 - `-t, --tags <values>` - Tags (comma-separated IDs or names; use quotes for names with commas)
-- `-r, --test-run <value>` - Existing test run to append results (ID or exact name)
+- `-r, --test-run <value>` - Existing test run to append results (ID or exact name; default: `$TESTPLANIT_RUN_ID`)
+- `-d, --attachments-dir <path>` - Base directory for resolving attachment paths (default: the result file's directory)
+- `--no-attachments` - Skip uploading attachments
+- `-a, --run-attachments <files...>` - Files to attach to the test run
 - `--case-matcher <mode>` - Link results to existing cases by ID: `off`, `name`, `property`, `auto` (default: `off`)
 - `--case-id-format <preset>` - Case-ID pattern in the test name when matching by name: `brackets`, `c`, `tc` (default: `brackets`)
 
@@ -177,21 +183,18 @@ testplanit import results.xml -p 1 -n "Build 123" \
 
 ## CI/CD Integration
 
-### GitHub Actions (Standalone Binary)
+These examples run the CLI with `npx`, which needs Node.js 24 or later on the runner. On a runner without it, download a [standalone binary](#standalone-binaries-recommended) instead.
+
+### GitHub Actions
 
 ```yaml
-- name: Download TestPlanIt CLI
-  run: |
-    curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
-    chmod +x testplanit
-
 - name: Import Test Results
   env:
     TESTPLANIT_URL: ${{ secrets.TESTPLANIT_URL }}
     TESTPLANIT_TOKEN: ${{ secrets.TESTPLANIT_TOKEN }}
   run: |
-    ./testplanit import ./test-results/*.xml \
-      --project-id 1 \
+    npx @testplanit/cli import ./test-results/*.xml \
+      --project 1 \
       --name "Build ${{ github.run_number }}"
 ```
 
@@ -200,9 +203,7 @@ testplanit import results.xml -p 1 -n "Build 123" \
 ```yaml
 import-results:
   script:
-    - curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
-    - chmod +x testplanit
-    - ./testplanit import ./test-results/*.xml -p 1 -n "Pipeline $CI_PIPELINE_ID"
+    - npx @testplanit/cli import ./test-results/*.xml -p 1 -n "Pipeline $CI_PIPELINE_ID"
   variables:
     TESTPLANIT_URL: $TESTPLANIT_URL
     TESTPLANIT_TOKEN: $TESTPLANIT_TOKEN
@@ -216,9 +217,7 @@ withCredentials([
   string(credentialsId: 'testplanit-token', variable: 'TESTPLANIT_TOKEN')
 ]) {
   sh '''
-    curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
-    chmod +x testplanit
-    ./testplanit import ./target/surefire-reports/*.xml -p 1 -n "Build ${BUILD_NUMBER}"
+    npx @testplanit/cli import ./target/surefire-reports/*.xml -p 1 -n "Build ${BUILD_NUMBER}"
   '''
 }
 ```
