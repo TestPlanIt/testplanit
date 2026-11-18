@@ -12,12 +12,12 @@ The server speaks MCP over stdio, so your client launches it on demand — there
 
 ## Requirements
 
-Set two environment variables:
+Set these environment variables:
 
 | Variable               | Required | Description                                                                                |
 | ---------------------- | -------- | ------------------------------------------------------------------------------------------ |
 | `TESTPLANIT_API_TOKEN` | yes      | An API token from **Profile → API Tokens** in TestPlanIt. Starts with `tpi_`.              |
-| `TESTPLANIT_API_URL`   | yes      | The base URL of your TestPlanIt instance, e.g. `https://testplanit.yourcompany.com`.        |
+| `TESTPLANIT_API_URL`   | no       | Base URL of your TestPlanIt instance. Defaults to `https://app.testplanit.com` when unset. |
 
 The token is validated on startup. If it's invalid, expired, or revoked, the server exits immediately with a clear error (check your client's MCP logs) instead of hanging.
 
@@ -83,7 +83,7 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 
 | Tool | Description |
 | --- | --- |
-| `testplanit_whoami` | Show the authenticated user and token scopes — useful for verifying setup. |
+| `whoami` | Show the authenticated user and token scopes — useful for verifying setup. |
 | `testplanit_projects_list` | List the projects your token can access (to find project IDs). |
 
 ### Test cases
@@ -160,6 +160,7 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_issues_list` | List issues in a project. |
 | `testplanit_issues_get` | Get a single issue. |
 | `testplanit_issues_find_by_key` | Resolve an external key (e.g. `JIRA-123`) to a TestPlanIt issue. |
+| `testplanit_issues_resolve` | Resolve tracker issue keys to TestPlanIt issues, creating any that do not exist yet by reading the ticket through the project's integration. Use it when a key may never have been opened in TestPlanIt. |
 | `testplanit_issues_list_links` | List the test cases linked to an issue. |
 | `testplanit_issues_link` | Link an issue to a test case. |
 | `testplanit_issues_unlink` | Remove an issue–case link. |

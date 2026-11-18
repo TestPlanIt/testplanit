@@ -19,7 +19,7 @@ This repository uses [pnpm workspaces](https://pnpm.io/workspaces) to manage mul
 -   **`docs/`**: Documentation for the project.
 -   **`forge-app/`**: TestPlanIt for Jira plugin.
 -   **`cli/`**: Command-line interface tool.
--   **`packages/`**: Shared packages (API client, reporters).
+-   **`packages/`**: npm packages (API client, MCP server, Playwright and WebdriverIO reporters).
 -   **`pnpm-workspace.yaml`**: Defines the workspaces within the monorepo.
 -   **`package.json`**: Root package configuration.
 

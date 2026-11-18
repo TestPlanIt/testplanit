@@ -8,9 +8,13 @@ A [Forge](https://developer.atlassian.com/platform/forge/) app that displays Tes
 - **Settings Page**: Admin configuration for TestPlanIt instance URL and API key
 - **API Key Auth**: Secure communication via `X-Forge-Api-Key` header with timing-safe validation
 
-The app calls two endpoints on your TestPlanIt instance:
-- `GET /version.json` — connection test
+The app calls these endpoints on your TestPlanIt instance:
+- `GET /version.json` — connection test: checks the instance is reachable
+- `GET /api/integrations/jira/test-connection` — connection test: validates the Forge API key
 - `GET /api/integrations/jira/test-info?issueKey=...&issueId=...` — fetch linked test data
+- `GET /api/integrations/jira/test-run-cases` — fetch the cases of a linked test run
+- `GET /api/integrations/jira/generate-context`, `POST .../generate-token`, `POST .../generate-stream`, `POST .../import-test-cases` — Generate Test Cases
+- `GET /api/integrations/jira/quickscript-context`, `POST .../quickscript-token`, `POST .../quickscript-stream` — Generate QuickScript
 
 ## Domain Requirements
 
