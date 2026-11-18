@@ -3562,7 +3562,7 @@
     },
     "templateSwitch": {
       "title": "Cambiare modello?",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" non include {count, plural, =1 {questo campo} other {questi campi}}, quindi le tue modifiche a {count, plural, =1 {esso} other {essi}} verranno scartate:",
       "confirm": "Cambia modello"
     },
     "columns": {
@@ -3828,7 +3828,7 @@
         "title": "Seleziona la fonte dei requisiti",
         "description": "Scegliere se generare casi di test da un problema o da un documento di requisiti.",
         "folderContextTip": "I casi di test esistenti in \"{folderName}\" e nelle relative cartelle padre/figlio verranno utilizzati come contesto per evitare duplicati. Assicurati di aver selezionato la cartella corretta prima di procedere.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" e le sue cartelle padre/figlie contengono {count, plural, =1 {# caso di test esistente} other {# casi di test esistenti}}. L'IA ne utilizza quanti ne entrano nel suo contesto per rispecchiare lo stile del tuo progetto ed evitare duplicati.",
         "folderContextEmptyTitle": "Nessun caso di test in questa cartella ancora",
         "folderContextEmpty": "\"{folderName}\" e le sue cartelle padre/figlie non hanno casi di test. L'IA cercherà casi di test correlati altrove in questo progetto per imparare il tuo stile ed evitare duplicati. Per i migliori risultati, avvia il generatore dalla cartella in cui questi casi di test appartengono.",
         "currentFolder": "cartella corrente",

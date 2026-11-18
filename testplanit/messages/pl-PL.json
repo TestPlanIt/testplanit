@@ -2937,7 +2937,7 @@
       "automationRunsInProgress": "{count, plural, =0 {# Przebiegów automatyzacji w toku} =1 {# Przebieg automatyzacji w toku} few {# Przebiegi automatyzacji w toku} many {# Przebiegów automatyzacji w toku} other {# Przebiegów automatyzacji w toku}}",
       "activeSessions": "{count, plural, =0 {# Aktywne sesje} =1 {# Aktywna sesja} other {# Aktywne sesje}}",
       "issues": "{count, plural, =0 {# Problemy} =1 {# Problemy} other {# Problemy}}",
-      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+      "assignedToYou": "{count, plural, =1 {# przypadek testowy przypisany do Ciebie czeka} one {# przypadek testowy przypisany do Ciebie czeka} few {# przypadki testowe przypisane do Ciebie czekają} many {# przypadków testowych przypisanych do Ciebie czeka} other {# przypadków testowych przypisanych do Ciebie czeka}}"
     },
     "lastActivity": "Ostatnia aktywność",
     "noActivity": "Brak aktywności testów"
@@ -3562,7 +3562,7 @@
     },
     "templateSwitch": {
       "title": "Zmienić szablon?",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" nie zawiera {count, plural, =1 {tego pola} few {tych pól} many {tych pól} other {tych pól}}, dlatego Twoje zmiany {count, plural, =1 {w nim} few {w nich} many {w nich} other {w nich}} będą odrzucone:",
       "confirm": "Zmienić szablon"
     },
     "columns": {
@@ -3828,7 +3828,7 @@
         "title": "Wybierz źródło wymagań",
         "description": "Wybierz, czy chcesz generować przypadki testowe na podstawie zgłoszenia czy dokumentu wymagań.",
         "folderContextTip": "Istniejące przypadki testowe z folderu „{folderName}” i jego folderów nadrzędnych/podrzędnych zostaną użyte jako kontekst, aby uniknąć duplikatów. Przed kontynuowaniem upewnij się, że wybrałeś właściwy folder.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" i jego foldery nadrzędne/podrzędne zawierają {count, plural, =1 {# istniejący przypadek testowy} few {# istniejące przypadki testowe} many {# istniejących przypadków testowych} other {# istniejących przypadków testowych}}. AI wykorzystuje tyle, ile zmieści się w jego kontekście, aby dopasować się do stylu Twojego projektu i uniknąć duplikatów.",
         "folderContextEmptyTitle": "W tym folderze nie ma jeszcze żadnych przypadków testowych",
         "folderContextEmpty": "Folder \"{folderName}\" i jego foldery nadrzędne/podrzędne nie zawierają żadnych przypadków testowych. Asystent AI będzie szukać powiązanych przypadków testowych w innym miejscu tego projektu, aby poznać Twój styl i uniknąć duplikatów. Aby uzyskać najlepsze wyniki, uruchom generator z folderu, do którego należą te przypadki testowe.",
         "currentFolder": "bieżący folder",
@@ -3883,7 +3883,7 @@
         "quantity": "Liczba przypadków testowych do wygenerowania",
         "placeholder": "Dodaj szczegółowe instrukcje dotyczące generowania przypadków testowych...\n\nNa przykład:\n• Skup się na testowaniu bezpieczeństwa\n• Uwzględnij przypadki brzegowe i warunki brzegowe\n• Przetestuj scenariusze zarówno prawidłowej ścieżki, jak i błędu\n• Weź pod uwagę scenariusze mobilne i stacjonarne\n• Skup się na testowaniu interfejsu API",
         "linksIgnoredTitle": "Linki w notatkach nie są otwierane",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {Link w Twoich notatkach zostanie wysłany wyłącznie jako zwykły tekst.} few {# linki w Twoich notatkach zostaną wysłane wyłącznie jako zwykły tekst.} many {# linków w Twoich notatkach zostanie wysłanych wyłącznie jako zwykły tekst.} other {# linków w Twoich notatkach zostanie wysłanych wyłącznie jako zwykły tekst.}} Aby użyć dokumentu lub arkusza kalkulacyjnego, wklej odpowiednią zawartość (scenariusze, dane testowe, oczekiwane wyniki) do notatek.",
         "suggestions": "Szybkie sugestie:",
         "quantityOptions": {
           "justOne": "Tylko jeden",

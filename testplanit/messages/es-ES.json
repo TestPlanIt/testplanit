@@ -3562,7 +3562,7 @@
     },
     "templateSwitch": {
       "title": "¿Cambiar plantilla?",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" no incluye {count, plural, =1 {este campo} other {estos campos}}, por lo que tus cambios en {count, plural, =1 {él} other {ellos}} se descartarán:",
       "confirm": "Cambiar plantilla"
     },
     "columns": {
@@ -3828,7 +3828,7 @@
         "title": "Seleccionar Fuente de Requisitos",
         "description": "Elija si desea generar casos de prueba a partir de un problema o de un documento de requisitos.",
         "folderContextTip": "Los casos de prueba existentes de \"{folderName}\" y sus carpetas padre/hijo se utilizarán como contexto para evitar duplicados. Asegúrese de haber seleccionado la carpeta correcta antes de continuar.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" y sus carpetas principales/secundarias contienen {count, plural, =1 {# caso de prueba existente} other {# casos de prueba existentes}}. La IA utiliza tantos como quepan en su contexto para coincidir con el estilo de tu proyecto y evitar duplicados.",
         "folderContextEmptyTitle": "Aún no hay casos de prueba en esta carpeta",
         "folderContextEmpty": "\"{folderName}\" y sus carpetas principales/secundarias no tienen casos de prueba. La IA buscará casos de prueba relacionados en otros lugares de este proyecto para aprender su estilo y evitar duplicados. Para obtener los mejores resultados, inicie el generador desde la carpeta donde pertenecen estos casos de prueba.",
         "currentFolder": "carpeta actual",
@@ -3883,7 +3883,7 @@
         "quantity": "Número de casos de prueba a generar",
         "placeholder": "Agregue instrucciones específicas para la generación de casos de prueba...\n\nPor ejemplo:\n• Enfóquese en las pruebas de seguridad\n• Incluya casos extremos y condiciones límite\n• Pruebe escenarios de ruta feliz y de error\n• Considere escenarios móviles y de escritorio\n• Enfóquese en las pruebas de API",
         "linksIgnoredTitle": "Los enlaces en las notas no se abren",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {El enlace de tus notas se enviará únicamente como texto sin formato.} other {Los # enlaces de tus notas se enviarán únicamente como texto sin formato.}} Para utilizar un documento o una hoja de cálculo, pega el contenido relevante (escenarios, datos de prueba, resultados esperados) en las notas.",
         "suggestions": "Sugerencias rápidas:",
         "quantityOptions": {
           "justOne": "Sólo uno",

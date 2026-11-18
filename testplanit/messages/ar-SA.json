@@ -3562,7 +3562,7 @@
     },
     "templateSwitch": {
       "title": "تبديل القالب؟",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" لا يتضمن {count, plural, =1 {هذا الحقل} other {هذه الحقول}}، لذا سيتم التخلص من تغييراتك على {count, plural, =1 {هذا الحقل} other {هذه الحقول}}:",
       "confirm": "تبديل القالب"
     },
     "columns": {
@@ -6441,7 +6441,7 @@
       "storage": {
         "tab": "التخزين",
         "neverScanned": "لم يتم مسح التخزين بعد. يقارن المسح الملفات الموجودة في التخزين مع قاعدة البيانات للعثور على الملفات غير المستخدمة والمرفقات التي ملفها مفقود.",
-        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "summary": "{objects, plural, one {# ملف} other {# ملفات}} في التخزين ({size}). {orphans, plural, =0 {لا توجد ملفات يتيمة.} one {# ملف يتيم ({orphanSize}).} two {# ملفين يتيمين ({orphanSize}).} few {# ملفات يتيمة ({orphanSize}).} many {# ملف يتيم ({orphanSize}).} other {# ملف يتيم ({orphanSize}).}}",
         "missingFiles": "{count, plural, zero {لا توجد مرفقات بدون ملف في التخزين المكوّن.} one {# مرفق ليس له ملف في التخزين المكوّن.} two {# مرفقات ليس لها ملف في التخزين المكوّن.} few {# مرفقات ليس لها ملف في التخزين المكوّن.} many {# مرفقاً ليس له ملف في التخزين المكوّن.} other {# مرفق ليس له ملف في التخزين المكوّن.}}",
         "allFolders": "جميع المجلدات",
         "status": {
@@ -6449,7 +6449,7 @@
           "REFERENCED": "قيد الاستخدام"
         },
         "loadedSelected": "{shown, plural, zero {# ملف محدد} one {الملف المحمّل محدد} two {كلا الملفين المحمّلين محددان} few {جميع # ملفات محمّلة محددة} many {جميع # ملفاً محمّلاً محدداً} other {جميع # ملف محمّل محدد}}.",
-        "confirmDelete": "{count, plural, =0 {None of the selected files can be deleted.} one {Delete this file ({size}) from storage? This cannot be undone.} other {Delete # files ({size}) from storage? This cannot be undone.}}",
+        "confirmDelete": "{count, plural, =0 {لا يمكن حذف أي من الملفات المحددة.} one {حذف هذا الملف ({size}) من التخزين؟ لا يمكن التراجع عن هذا.} two {حذف هذين الملفين ({size}) من التخزين؟ لا يمكن التراجع عن هذا.} few {حذف # ملفات ({size}) من التخزين؟ لا يمكن التراجع عن هذا.} many {حذف # ملف ({size}) من التخزين؟ لا يمكن التراجع عن هذا.} other {حذف # ملف ({size}) من التخزين؟ لا يمكن التراجع عن هذا.}}",
         "skipped": "{count, plural, zero {لا توجد ملفات محددة تُترك وشأنها.} one {# ملف محدد مُترك وشأنه لأنه قيد الاستخدام.} two {# ملفات محددة مُتركة وشأنها لأنها قيد الاستخدام.} few {# ملفات محددة مُتركة وشأنها لأنها قيد الاستخدام.} many {# ملفاً محدداً مُترك وشأنه لأنه قيد الاستخدام.} other {# ملف محدد مُترك وشأنه لأنه قيد الاستخدام.}}",
         "deleted": "{count, plural, zero {لم يتم حذف أي ملف من التخزين} one {# ملف محذوف من التخزين} two {# ملفات محذوفة من التخزين} few {# ملفات محذوفة من التخزين} many {# ملفاً محذوفاً من التخزين} other {# ملف محذوف من التخزين}}"
       },
@@ -6475,12 +6475,12 @@
       "actions": {
         "detach": "فصل",
         "confirm": {
-          "detach": "{count, plural, =0 {None of these attachments are attached to anything.} one {Detach this attachment? It is removed from the item it is attached to and stays in this list as unattached.} other {Detach # attachments? They are removed from the items they are attached to and stay in this list as unattached.}}",
-          "softDelete": "{count, plural, =0 {These attachments are already deleted.} one {Delete this attachment? It is hidden from the item it is attached to and can be restored from this list.} other {Delete # attachments? They are hidden from the items they are attached to and can be restored from this list.}}",
-          "restore": "{count, plural, =0 {None of these attachments are deleted.} one {Restore this attachment?} other {Restore # attachments?}}",
-          "purge": "{count, plural, =0 {Only deleted attachments can be purged. Delete them first.} one {Permanently delete this attachment? This cannot be undone.} other {Permanently delete # attachments? This cannot be undone.}}"
+          "detach": "{count, plural, =0 {لا تعلق أي من هذه المرفقات بأي شيء.} one {فصل هذا المرفق؟ سيتم إزالته من العنصر المرفق به ويبقى في هذه القائمة كمرفق غير مرفق.} two {فصل هذين المرفقين؟ سيتم إزالتهما من العناصر المرفقة بهما ويبقيان في هذه القائمة كمرفقات غير مرفقة.} few {فصل # مرفقات؟ سيتم إزالتها من العناصر المرفقة بها وتبقى في هذه القائمة كمرفقات غير مرفقة.} many {فصل # مرفق؟ سيتم إزالتها من العناصر المرفقة بها وتبقى في هذه القائمة كمرفقات غير مرفقة.} other {فصل # مرفق؟ سيتم إزالتها من العناصر المرفقة بها وتبقى في هذه القائمة كمرفقات غير مرفقة.}}",
+          "softDelete": "{count, plural, =0 {تم حذف هذه المرفقات بالفعل.} one {حذف هذا المرفق؟ سيتم إخفاؤه من العنصر المرفق به ويمكن استعادته من هذه القائمة.} two {حذف هذين المرفقين؟ سيتم إخفاؤهما من العناصر المرفقة بهما ويمكن استعادتهما من هذه القائمة.} few {حذف # مرفقات؟ سيتم إخفاؤها من العناصر المرفقة بها ويمكن استعادتها من هذه القائمة.} many {حذف # مرفق؟ سيتم إخفاؤها من العناصر المرفقة بها ويمكن استعادتها من هذه القائمة.} other {حذف # مرفق؟ سيتم إخفاؤها من العناصر المرفقة بها ويمكن استعادتها من هذه القائمة.}}",
+          "restore": "{count, plural, =0 {لا تعتبر أي من هذه المرفقات محذوفة.} one {استعادة هذا المرفق؟} two {استعادة هذين المرفقين؟} few {استعادة # مرفقات؟} many {استعادة # مرفق؟} other {استعادة # مرفق؟}}",
+          "purge": "{count, plural, =0 {يمكن فقط مسح المرفقات المحذوفة. احذفها أولاً.} one {حذف هذا المرفق بشكل دائم؟ لا يمكن التراجع عن هذا.} two {حذف هذين المرفقين بشكل دائم؟ لا يمكن التراجع عن هذا.} few {حذف # مرفقات بشكل دائم؟ لا يمكن التراجع عن هذا.} many {حذف # مرفق بشكل دائم؟ لا يمكن التراجع عن هذا.} other {حذف # مرفق بشكل دائم؟ لا يمكن التراجع عن هذا.}}"
         },
-        "purgeFiles": "{count, plural, =0 {No stored files are deleted.} one {# stored file ({size}) is deleted.} other {# stored files ({size}) are deleted.}}",
+        "purgeFiles": "{count, plural, =0 {لم يتم حذف أي ملفات مخزنة.} one {تم حذف # ملف مخزن ({size}).} two {تم حذف # ملفين مخزنين ({size}).} few {تم حذف # ملفات مخزنة ({size}).} many {تم حذف # ملف مخزن ({size}).} other {تم حذف # ملف مخزن ({size}).}}",
         "purgeShared": "{count, plural, zero {} one {# ملف يبقى في التخزين لأن مرفق آخر يستخدمه.} two {# ملفان يبقيان في التخزين لأن مرفقات أخرى تستخدمهما.} few {# ملفات تبقى في التخزين لأن مرفقات أخرى تستخدمها.} many {# ملفاً يبقى في التخزين لأن مرفقات أخرى تستخدمها.} other {# ملف يبقى في التخزين لأن مرفقات أخرى تستخدمها.}}",
         "purgeInVersions": "{count, plural, zero {} one {# ملف يظهر في نسخة محفوظة لن تتمكن من فتحه.} two {# ملفان يظهران في نسخ محفوظة لن تتمكن من فتحهما.} few {# ملفات تظهر في نسخ محفوظة لن تتمكن من فتحها.} many {# ملفاً يظهر في نسخ محفوظة لن تتمكن من فتحها.} other {# ملف يظهر في نسخ محفوظة لن تتمكن من فتحه.}}",
         "skipped": "{count, plural, zero {} one {# مرفق محدد يترك كما هو لأن هذا الإجراء لا ينطبق عليه.} two {# مرفقان محددان يتركان كما هما لأن هذا الإجراء لا ينطبق عليهما.} few {# مرفقات محددة تترك كما هي لأن هذا الإجراء لا ينطبق عليها.} many {# مرفقاً محدداً يترك كما هو لأن هذا الإجراء لا ينطبق عليه.} other {# مرفق محدد يترك كما هو لأن هذا الإجراء لا ينطبق عليه.}}",

@@ -3562,7 +3562,7 @@
     },
     "templateSwitch": {
       "title": "Vorlage wechseln?",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" enthält {count, plural, =1 {dieses Feld} other {diese Felder}} nicht, daher werden Ihre Änderungen {count, plural, =1 {daran} other {daran}} verworfen:",
       "confirm": "Vorlage wechseln"
     },
     "columns": {
@@ -3828,7 +3828,7 @@
         "title": "Anforderungsquelle auswählen",
         "description": "Wählen Sie aus, ob Testfälle aus einem Ticket oder einem Anforderungsdokument generiert werden sollen.",
         "folderContextTip": "Vorhandene Testfälle aus \"{folderName}\" und dessen übergeordneten/untergeordneten Ordnern werden als Kontext verwendet, um Duplikate zu vermeiden. Stellen Sie sicher, dass Sie den richtigen Ordner ausgewählt haben, bevor Sie fortfahren.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" und seine übergeordneten/untergeordneten Ordner enthalten {count, plural, =1 {# vorhandenen Testfall} other {# vorhandene Testfälle}}. Die KI nutzt so viele, wie in ihren Kontext passen, um dem Stil Ihres Projekts zu entsprechen und Duplikate zu vermeiden.",
         "folderContextEmptyTitle": "Noch keine Testfälle in diesem Ordner",
         "folderContextEmpty": "\"{folderName}\" und seine übergeordneten/untergeordneten Ordner haben keine Testfälle. Die KI sucht nach verwandten Testfällen an anderer Stelle in diesem Projekt, um Ihren Stil zu erlernen und Duplikate zu vermeiden. Für beste Ergebnisse starten Sie den Generator aus dem Ordner, dem diese Testfälle angehören.",
         "currentFolder": "aktueller Ordner",
@@ -3883,7 +3883,7 @@
         "quantity": "Anzahl der zu generierenden Testfälle",
         "placeholder": "Fügen Sie spezifische Anweisungen zur Testfallgenerierung hinzu...\n\nZum Beispiel:\n• Fokus auf Sicherheitstests\n• Grenzfälle und Randbedingungen einbeziehen\n• Sowohl den Normalfall als auch Fehlerszenarien testen\n• Mobile und Desktop-Szenarien berücksichtigen\n• Fokus auf API-Tests",
         "linksIgnoredTitle": "Links in Notizen werden nicht geöffnet",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {Der Link in Ihren Notizen wird nur als Klartext gesendet.} other {Die # Links in Ihren Notizen werden nur als Klartext gesendet.}} Um ein Dokument oder eine Tabellenkalkulation zu verwenden, fügen Sie den relevanten Inhalt (Szenarien, Testdaten, erwartete Ergebnisse) in die Notizen ein.",
         "suggestions": "Kurzvorschläge:",
         "quantityOptions": {
           "justOne": "Nur eins",

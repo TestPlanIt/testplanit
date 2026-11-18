@@ -2937,7 +2937,7 @@
       "automationRunsInProgress": "{count, plural, =0 {# Execuções Automatizadas em Andamento} =1 {# Execução Automatizada em Andamento} other {# Execuções Automatizadas em Andamento}}",
       "activeSessions": "{count, plural, =0 {# Sessões Ativas} =1 {# Sessão Ativa} other {# Sessões Ativas}}",
       "issues": "{count, plural, =0 {# Problemas} =1 {# Problema} other {# Problemas}}",
-      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+      "assignedToYou": "{count, plural, =1 {# caso de teste atribuído a você está aguardando} other {# casos de teste atribuídos a você estão aguardando}}"
     },
     "lastActivity": "Última atividade",
     "noActivity": "Sem atividade de teste ainda"
@@ -3562,7 +3562,7 @@
     },
     "templateSwitch": {
       "title": "Trocar modelo?",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" não inclui {count, plural, =1 {este campo} other {estes campos}}, então suas alterações {count, plural, =1 {nele} other {neles}} serão descartadas:",
       "confirm": "Trocar modelo"
     },
     "columns": {
@@ -3828,7 +3828,7 @@
         "title": "Selecione a fonte de requisitos",
         "description": "Escolha se deseja gerar casos de teste a partir de um problema ou de um documento de requisitos.",
         "folderContextTip": "Os casos de teste existentes de \"{folderName}\" e suas pastas pai/filho serão usados como contexto para evitar duplicatas. Certifique-se de ter selecionado a pasta correta antes de prosseguir.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" e suas pastas pai/filha contêm {count, plural, =1 {# caso de teste existente} other {# casos de teste existentes}}. A IA usa quantos couberem em seu contexto para corresponder ao estilo do seu projeto e evitar duplicatas.",
         "folderContextEmptyTitle": "Nenhum caso de teste nesta pasta ainda",
         "folderContextEmpty": "\"{folderName}\" e suas pastas pai/filha não têm casos de teste. A IA procurará por casos de teste relacionados em outro lugar neste projeto para aprender seu estilo e evitar duplicatas. Para melhores resultados, inicie o gerador a partir da pasta onde esses casos de teste pertencem.",
         "currentFolder": "pasta atual",
@@ -3883,7 +3883,7 @@
         "quantity": "Número de casos de teste a serem gerados",
         "placeholder": "Adicione instruções específicas para a geração de casos de teste...\n\nPor exemplo:\n• Concentre-se em testes de segurança\n• Inclua casos extremos e condições de contorno\n• Teste cenários de sucesso e de erro\n• Considere cenários para dispositivos móveis e desktops\n• Concentre-se em testes de API",
         "linksIgnoredTitle": "Links nas notas não são abertos",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {O link em suas notas será enviado apenas como texto simples.} other {Os # links em suas notas serão enviados apenas como texto simples.}} Para usar um documento ou planilha, cole o conteúdo relevante (cenários, dados de teste, resultados esperados) nas notas.",
         "suggestions": "Sugestões rápidas:",
         "quantityOptions": {
           "justOne": "Apenas um",
@@ -6441,7 +6441,7 @@
       "storage": {
         "tab": "Armazenamento",
         "neverScanned": "O armazenamento ainda não foi digitalizado. Uma verificação compara os arquivos no armazenamento com o banco de dados para localizar arquivos não utilizados e anexos cujo arquivo está faltando.",
-        "summary": "{objects, plural, one {# file} other {# files}} in storage ({size}). {orphans, plural, =0 {None are orphaned.} one {# is orphaned ({orphanSize}).} other {# are orphaned ({orphanSize}).}}",
+        "summary": "{objects, plural, one {# arquivo} other {# arquivos}} no armazenamento ({size}). {orphans, plural, =0 {Nenhum está órfão.} one {# está órfão ({orphanSize}).} other {# estão órfãos ({orphanSize}).}}",
         "missingFiles": "{count, plural, one {# anexo não possui arquivo no armazenamento configurado.} other {# anexos não possuem arquivo no armazenamento configurado.}}",
         "allFolders": "Todas as pastas",
         "status": {
@@ -6449,7 +6449,7 @@
           "REFERENCED": "Em uso"
         },
         "loadedSelected": "{shown, plural, one {O arquivo carregado está selecionado} other {Todos os # arquivos carregados estão selecionados}}.",
-        "confirmDelete": "{count, plural, =0 {None of the selected files can be deleted.} one {Delete this file ({size}) from storage? This cannot be undone.} other {Delete # files ({size}) from storage? This cannot be undone.}}",
+        "confirmDelete": "{count, plural, =0 {Nenhum dos arquivos selecionados pode ser excluído.} one {Excluir este arquivo ({size}) do armazenamento? Isto não pode ser desfeito.} other {Excluir # arquivos ({size}) do armazenamento? Isto não pode ser desfeito.}}",
         "skipped": "{count, plural, one {# arquivo selecionado é deixado intacto porque está em uso.} other {# arquivos selecionados são deixados intactos porque estão em uso.}}",
         "deleted": "{count, plural, one {# arquivo excluído do armazenamento} other {# arquivos excluídos do armazenamento}}"
       },

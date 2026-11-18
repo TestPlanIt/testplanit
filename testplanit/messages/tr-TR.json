@@ -3562,7 +3562,7 @@
     },
     "templateSwitch": {
       "title": "Şablonu değiştir?",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" {count, plural, =1 {bu alanı} other {bu alanları}} içermez, bu nedenle {count, plural, =1 {buna} other {bunlara}} yapılan değişiklikleriniz iptal edilecektir:",
       "confirm": "Şablonu değiştir"
     },
     "columns": {
@@ -3828,7 +3828,7 @@
         "title": "Gereksinim Kaynağını Seçin",
         "description": "Test senaryolarını bir sorun belgesinden mi yoksa gereksinimler belgesinden mi oluşturacağınızı seçin.",
         "folderContextTip": "\"{folderName}\" ve üst/alt klasörlerindeki mevcut test örnekleri, tekrarları önlemek için bağlam olarak kullanılacaktır. Devam etmeden önce doğru klasörü seçtiğinizden emin olun.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" ve onun üst/alt klasörleri {count, plural, =1 {# mevcut test senaryosu} other {# mevcut test senaryosu}} içerir. Yapay zeka, projenizin stilini eşleştirmek ve tekrarlamalardan kaçınmak için bağlamına sığan kadarını kullanır.",
         "folderContextEmptyTitle": "Bu klasörde henüz test senaryosu yok",
         "folderContextEmpty": "\"{folderName}\" ve alt/üst klasörleri test senaryosu içermiyor. Yapay zeka, stilinizi öğrenmek ve tekrarları önlemek için bu projede başka yerlerde ilgili test senaryoları arayacaktır. En iyi sonuçlar için üreteçi, bu test senaryolarının ait olduğu klasörden başlatın.",
         "currentFolder": "mevcut klasör",
@@ -3883,7 +3883,7 @@
         "quantity": "Oluşturulacak test senaryosu sayısı",
         "placeholder": "Test senaryosu oluşturma için özel talimatlar ekleyin...\n\nÖrneğin:\n• Güvenlik testine odaklanın\n• Uç durumları ve sınır koşullarını dahil edin\n• Hem başarılı hem de hata senaryolarını test edin\n• Mobil ve masaüstü senaryolarını göz önünde bulundurun\n• API testine odaklanın",
         "linksIgnoredTitle": "Notlardaki bağlantılar açılmıyor",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {Notlarınızdaki bağlantı} other {Notlarınızdaki # bağlantı}} yalnız düz metin olarak gönderilecektir. Bir belge veya elektronik tablo kullanmak için ilgili içeriği (senaryolar, test verileri, beklenen sonuçlar) notlara yapıştırın.",
         "suggestions": "Hızlı Öneriler:",
         "quantityOptions": {
           "justOne": "Sadece bir tane",

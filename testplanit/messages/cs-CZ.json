@@ -2937,7 +2937,7 @@
       "automationRunsInProgress": "{count, plural, =0 {# probíhajících automatizovaných běhů} =1 {# probíhající automatizovaný běh} few {# probíhající automatizované běhy} many {# probíhajícího automatizovaného běhu} other {# probíhajících automatizovaných běhů}}",
       "activeSessions": "{count, plural, =0 {# aktivních relací} =1 {# aktivní relace} other {# aktivních relací}}",
       "issues": "{count, plural, =0 {# problémů} =1 {# problém} other {# problémů}}",
-      "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
+      "assignedToYou": "{count, plural, =1 {# testovací případ přiřazený vám čeká} one {# testovací případ přiřazený vám čeká} few {# testovací případy přiřazené vám čekají} many {# testovacích případů přiřazených vám čeká} other {# testovacích případů přiřazených vám čeká}}"
     },
     "lastActivity": "Poslední aktivita",
     "noActivity": "Zatím žádná testovací aktivita"
@@ -3562,7 +3562,7 @@
     },
     "templateSwitch": {
       "title": "Přepnout šablonu?",
-      "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
+      "description": "\"{templateName}\" neobsahuje {count, plural, =1 {toto pole} other {tato pole}}, takže vaše změny v {count, plural, =1 {něm} other {nich}} budou zahozeny:",
       "confirm": "Přepnout šablonu"
     },
     "columns": {
@@ -3828,7 +3828,7 @@
         "title": "Vybrat zdroj požadavků",
         "description": "Vyberte, zda chcete generovat testovací případy z problému nebo z dokumentu s požadavky.",
         "folderContextTip": "Existující testovací případy ze složky \"{folderName}\" a jejích nadřazených/podřazených složek budou použity jako kontext, aby se zabránilo duplicitám. Před pokračováním se ujistěte, že jste vybrali správnou složku.",
-        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" a jeho nadřazené/podřazené složky obsahují {count, plural, =1 {# existující testovací případ} one {# existující testovací případ} few {# existující testovací případy} many {# existujícího testovacího případu} other {# existujících testovacích případů}}. AI používá tolik, kolik se vejde do jeho kontextu, aby odpovídal stylu vašeho projektu a zabránil duplikátům.",
         "folderContextEmptyTitle": "V této složce zatím nejsou žádné testovací případy",
         "folderContextEmpty": "\"{folderName}\" a její nadřazené/podřízené složky nemají žádné testovací případy. AI bude hledat související testovací případy jinde v tomto projektu, aby se naučila váš styl a vyhnula se duplikátům. Pro nejlepší výsledky spusťte generátor ze složky, do které tyto testovací případy patří.",
         "currentFolder": "aktuální složka",
