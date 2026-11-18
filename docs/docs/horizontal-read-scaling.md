@@ -25,6 +25,7 @@ primary).
 - [What routes where](#what-routes-where)
 - [Read-your-own-writes](#read-your-own-writes-consistency)
 - [Failover behavior](#failover-behavior)
+- [Replication lag](#replication-lag)
 - [Security](#security)
 - [Background workers](#background-workers)
 - [Verifying it works](#verifying-it-works)
@@ -92,11 +93,12 @@ connection string per replica.
 Set these environment variables on every **app** replica (and, if you route
 worker reads, on the workers):
 
-| Variable                     | Meaning                                                                                                           | Default   |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------- |
-| `DATABASE_URL`               | Primary (read/write) endpoint. Receives all writes and transactions.                                              | required  |
-| `DATABASE_REPLICA_URLS`      | Comma-separated replica connection strings. **Unset ⇒ feature off** (single primary).                             | _(unset)_ |
-| `DATABASE_PRIMARY_STICKY_MS` | How long (ms) a browser's reads stay pinned to the primary after a mutation (read-your-own-writes). `0` disables. | `5000`    |
+| Variable                      | Meaning                                                                                                                                           | Default   |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `DATABASE_URL`                | Primary (read/write) endpoint. Receives all writes and transactions.                                                                              | required  |
+| `DATABASE_REPLICA_URLS`       | Comma-separated replica connection strings. **Unset ⇒ feature off** (single primary).                                                             | _(unset)_ |
+| `DATABASE_PRIMARY_STICKY_MS`  | How long (ms) a browser's reads stay pinned to the primary after a mutation (read-your-own-writes). `0` disables.                                 | `5000`    |
+| `DATABASE_REPLICA_MAX_LAG_MS` | Most replication lag (ms) a replica may have and still be read from. Unset or `0` ⇒ lag is not measured. See [Replication lag](#replication-lag). | _(unset)_ |
 
 Example:
 
@@ -104,6 +106,7 @@ Example:
 DATABASE_URL="postgresql://user:pass@primary:5432/testplanit?schema=public"
 DATABASE_REPLICA_URLS="postgresql://user:pass@replica-1:5432/testplanit?schema=public,postgresql://user:pass@replica-2:5432/testplanit?schema=public"
 DATABASE_PRIMARY_STICKY_MS=5000
+DATABASE_REPLICA_MAX_LAG_MS=2000
 ```
 
 Point replicas at **read-only** endpoints. If you run a connection pooler, give
@@ -112,20 +115,29 @@ uses its read/write (`-rw`) one.
 
 ## What routes where
 
-| Query                                                               | Routed to                                                      |
-| ------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `SELECT` from a read (`GET`) API request                            | **replica** (round-robin)                                      |
-| `INSERT` / `UPDATE` / `DELETE`, all transactions                    | **primary**                                                    |
-| Any query in a mutating (`POST`/`PUT`/`PATCH`/`DELETE`) API request | **primary** (kept consistent)                                  |
-| `SELECT ... FOR UPDATE` / `FOR SHARE` (row locks)                   | **primary**                                                    |
-| Raw SQL (`$queryRaw`) reads                                         | **primary** by default; **replica** when the code path opts in |
-| Reporting endpoints (heavy aggregation)                             | **replica** (opted in)                                         |
+| Request or query                                                          | Routed to                                                   |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `SELECT` in a `GET` or `HEAD` API request from a signed-in browser        | **replica** (round-robin)                                   |
+| Reporting endpoints, including their raw SQL                              | **replica**                                                 |
+| `INSERT` / `UPDATE` / `DELETE`, all transactions                          | **primary**                                                 |
+| Any query in a `POST` / `PUT` / `PATCH` / `DELETE` API request            | **primary**                                                 |
+| Any query in a request sent with an API token (`Authorization: Bearer …`) | **primary**                                                 |
+| Any query in a request that carries the stickiness cookie                 | **primary**                                                 |
+| Sign-in, single sign-on, SCIM and OAuth callback endpoints                | **primary**                                                 |
+| `GET` endpoints that write, such as the notification and issue streams    | **primary**                                                 |
+| `SELECT ... FOR UPDATE` / `FOR SHARE` (row locks)                         | **primary**                                                 |
+| Raw SQL (`$queryRaw`) outside the reporting endpoints                     | **primary**                                                 |
+| Server actions and server-rendered pages                                  | **primary**                                                 |
+| Background workers                                                        | **primary** (see [Background workers](#background-workers)) |
 
-The dominant UI read traffic — everything served by the generated data-fetching
-hooks (repository browsing, run/case/session listings, etc.) — flows through
-read (`GET`) API requests and is offloaded automatically. Heavy reporting reads
-are opted in explicitly. Additional custom read endpoints can be opted in over
-time.
+Every API endpoint follows these rules. The read traffic of the UI (repository
+browsing, run, case and session listings, search, dashboards) goes through
+`GET` API requests and is offloaded automatically.
+
+Requests sent with an API token stay on the primary because a script, a
+reporter or the CLI keeps no cookies: the stickiness cookie described below
+cannot protect it, and such clients routinely create a record and read it
+straight back.
 
 ## Read-your-own-writes consistency
 
@@ -135,10 +147,11 @@ automatically:
 
 1. **In-request:** once a request performs a write, the rest of that request's
    reads are pinned to the primary.
-2. **Cross-request:** after a successful mutation the app sets a short-lived,
-   `HttpOnly` cookie; while it is present that browser's reads are pinned to the
-   primary. The window is `DATABASE_PRIMARY_STICKY_MS` (default 5s). This covers
-   the common "submit form → list refetches" flow.
+2. **Cross-request:** a request that wrote to the database sets a short-lived,
+   `HttpOnly` cookie on its response; while it is present that browser's reads
+   are pinned to the primary. The window is `DATABASE_PRIMARY_STICKY_MS`
+   (default 5s). This covers the common "submit form → list refetches" flow.
+   Every server action sets the cookie as well.
 3. **Explicit:** application code can force the primary for any
    freshness-critical read.
 
@@ -157,6 +170,31 @@ and explicit layers.
   keeps working (just without the read offload).
 - Loss of the **primary** is a hard failure, exactly as in a single-primary
   deployment (replicas cannot accept writes).
+
+## Replication lag
+
+By default a replica is read from however far behind the primary it is. Set
+`DATABASE_REPLICA_MAX_LAG_MS` to stop reading from a replica that falls too far
+behind:
+
+- Each app process measures every replica's lag on a timer: twice per
+  threshold, no more often than once a second and no less often than every five
+  seconds.
+- A replica over the threshold is skipped, and its reads go to the other
+  replicas, or to the primary when none qualifies. It rejoins the rotation at
+  the first measurement that finds it back under the threshold. Both changes
+  are logged.
+- A replica that has replayed everything it has received counts as not behind,
+  so a quiet primary does not make its replicas look stale.
+- If a replica does not report its lag, it stays in the rotation.
+
+The measurement uses PostgreSQL's streaming-replication functions
+(`pg_is_in_recovery`, `pg_last_wal_receive_lsn`, `pg_last_wal_replay_lsn`,
+`pg_last_xact_replay_timestamp`). A managed service that replicates another way
+may not report lag through them.
+
+The threshold also bounds how stale a permission or session check can be on a
+`GET` request, since those checks read from the same replicas.
 
 ## Security
 
@@ -179,13 +217,58 @@ another tenant's database.
 
 ## Verifying it works
 
-- Watch `pg_stat_activity` (or your provider's metrics) on the replicas: browse
-  the repository and open listing screens, and you should see `SELECT` activity
-  land on the replicas while the primary handles writes.
-- Create an object and confirm it appears immediately on the next screen — the
-  stickiness cookie keeps that read on the primary.
-- Take a replica offline briefly and confirm the app keeps serving reads (from
-  the primary) and recovers when the replica returns.
+`GET /api/health` reports routing for the app process that answers it, in a
+`readReplicas` block that appears only when replicas are configured:
+
+```json
+"readReplicas": {
+  "replicaReads": 18234,
+  "primaryReads": {
+    "unframed": 912,
+    "notOptedIn": 0,
+    "forcedPrimary": 2071,
+    "afterWrite": 388,
+    "notEligible": 64,
+    "noHealthyReplica": 0
+  },
+  "failovers": 0,
+  "writesAfterReplicaRead": 0,
+  "replicas": [
+    { "index": 0, "status": "ok", "lagMs": 12 },
+    { "index": 1, "status": "ok", "lagMs": 9 }
+  ]
+}
+```
+
+| Field                           | Meaning                                                                                                              |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `replicaReads`                  | Reads served by a replica.                                                                                           |
+| `primaryReads.unframed`         | Reads from code with no routing rule: server actions, server-rendered pages, startup tasks.                          |
+| `primaryReads.notOptedIn`       | Reads in a background job, in a `POST` / `PUT` / `PATCH` / `DELETE` request, or in a request sent with an API token. |
+| `primaryReads.forcedPrimary`    | Reads pinned by the stickiness cookie or by a primary-only endpoint.                                                 |
+| `primaryReads.afterWrite`       | Reads that followed a write in the same request.                                                                     |
+| `primaryReads.notEligible`      | Locking `SELECT`s.                                                                                                   |
+| `primaryReads.noHealthyReplica` | Reads that wanted a replica when every replica was down or behind.                                                   |
+| `failovers`                     | Reads retried on the primary after their replica connection failed.                                                  |
+| `writesAfterReplicaRead`        | Writes made by a request that had already read from a replica. Each endpoint is also logged once.                    |
+| `replicas[].status`             | `ok`, `down` (in its cooldown after a connection failure) or `lagging` (over the lag threshold).                     |
+| `replicas[].lagMs`              | Lag at the last measurement; `null` unless `DATABASE_REPLICA_MAX_LAG_MS` is set.                                     |
+
+The counters start at zero when the process starts and count that process
+only, so with several app replicas each one reports its own.
+
+The application log records every change of state as a line beginning
+`[readWriteDialect]`: a replica marked down, back in rotation, over the lag
+threshold, or caught up.
+
+To check the behavior by hand:
+
+- Browse the repository and open listing screens, then confirm `replicaReads`
+  rises.
+- Create an object and confirm it appears immediately on the next screen. The
+  stickiness cookie keeps that read on the primary, and `forcedPrimary` rises.
+- Take a replica offline briefly and confirm the app keeps serving reads and
+  that the replica's status returns to `ok` afterwards.
 
 ## Limitations
 
@@ -194,5 +277,6 @@ another tenant's database.
   platform.
 - Writes are not horizontally scaled (they are commit/WAL-bound, addressed by
   faster disks / batching, not by sharding).
-- Bare raw-SQL reads stay on the primary unless a code path explicitly offloads
-  them.
+- Raw SQL reads stay on the primary outside the reporting endpoints.
+- Server actions and server-rendered pages read from the primary.
+- Reads sent with an API token stay on the primary.
