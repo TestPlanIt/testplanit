@@ -1,3 +1,9 @@
+## [1.2.3](https://github.com/TestPlanIt/testplanit/compare/v1.2.2...v1.2.3) (2026-11-18)
+
+### Bug Fixes
+
+* **i18n:** correct plural agreement in translations and stop the sync overwriting them ([#753](https://github.com/TestPlanIt/testplanit/issues/753)) ([dedc63c](https://github.com/TestPlanIt/testplanit/commit/dedc63c6bf4318a00c78579bf8e34699ccc1d94e))
+
 ## [1.2.2](https://github.com/TestPlanIt/testplanit/compare/v1.2.1...v1.2.2) (2026-11-18)
 
 ### Bug Fixes
