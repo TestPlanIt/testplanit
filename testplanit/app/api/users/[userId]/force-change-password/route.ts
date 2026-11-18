@@ -9,8 +9,9 @@ import { invalidateSessionUserCache } from "~/lib/session-cache";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     context: { params: Promise<{ userId: string }> }
@@ -116,3 +117,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

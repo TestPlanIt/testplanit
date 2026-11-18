@@ -7,6 +7,7 @@ import { getEnhancedDb } from "~/lib/auth/utils";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { redactValues } from "~/lib/services/parameterRedaction";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Phase 2 Plan 02-02 — Dataset attach + read.
@@ -59,7 +60,7 @@ async function resolveCanReadSensitive(
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 200;
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
@@ -166,7 +167,9 @@ export async function GET(
   }
 }
 
-export async function POST(
+export const GET = withRequestRouting(handleGET);
+
+async function handlePOST(
   _request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
@@ -232,3 +235,5 @@ export async function POST(
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

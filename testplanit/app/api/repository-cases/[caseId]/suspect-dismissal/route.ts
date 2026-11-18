@@ -4,6 +4,7 @@ import { getEnhancedDb } from "~/lib/auth/utils";
 import { isAccessPolicyError, isNotFoundError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 import { z } from "zod/v4";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const dismissalBodySchema = z.object({
   issueId: z.number().int().positive(),
@@ -31,7 +32,7 @@ const dismissalBodySchema = z.object({
  * Gate order: 401 (no session) -> 400 (non-integer caseId) -> 400 (invalid
  * body) -> 200/404/403/500.
  */
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
@@ -96,3 +97,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

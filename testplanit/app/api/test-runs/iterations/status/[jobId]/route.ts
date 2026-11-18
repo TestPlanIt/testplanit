@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { getIterationGenerationQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/test-runs/iterations/status/[jobId]
@@ -21,7 +22,7 @@ import { authOptions } from "~/server/auth";
  *   - 200 with `{ jobId, state, progress, result, failedReason, ... }`
  *     for the polling client to drive the UI.
  */
-export async function GET(
+async function handleGET(
   _request: Request,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
@@ -92,3 +93,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

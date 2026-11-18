@@ -4,6 +4,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const CASE_LIMIT = 50;
 
@@ -19,7 +20,7 @@ export interface SignatureCaseRow {
  * The signature's affected cases with how many results and distinct runs
  * each one failed in. Readable by anyone who can read the signature.
  */
-export async function GET(
+async function handleGET(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string; signatureId: string }> }
 ) {
@@ -79,3 +80,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

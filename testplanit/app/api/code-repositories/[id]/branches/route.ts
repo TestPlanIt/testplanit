@@ -10,6 +10,7 @@ import {
   providerErrorResponse,
   resolveRepoRouteContext,
 } from "~/lib/services/impact/repoRouteContext";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface BranchesPayload {
   branches: RepoBranch[];
@@ -84,7 +85,7 @@ async function searchBranches(
  * repository has more. With `q`, the loaded branches whose name contains it
  * and, when the list is truncated, whatever the provider finds for it.
  */
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -117,3 +118,5 @@ export async function GET(
     return providerErrorResponse(error);
   }
 }
+
+export const GET = withRequestRouting(handleGET);

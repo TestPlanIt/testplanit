@@ -13,13 +13,14 @@ import {
   getCasesWorkflowAssignments,
 } from "~/lib/services/workflowStateMapping";
 import { submitSchema } from "./schemas";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Wrapped with withAuditContext so
 // enqueueWithAuditContext below has an ALS frame. copyMoveWorker emits
 // audit events at L778 / L796; this wrapper propagates the user's
 // actorContext onto the job so the worker's ALS re-population attributes
 // those audits to the originating user.
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   // 1. Auth
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -251,3 +252,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

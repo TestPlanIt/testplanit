@@ -4,11 +4,12 @@ import { resolveViewerProjectScope } from "~/lib/authContext";
 import { baseDb } from "~/lib/db";
 import { getTestRunCaseDetail } from "~/lib/services/testRunCaseDetail";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Backs the test-run results panel's "load this case's full detail" fetch --
 // see lib/services/testRunCaseDetail.ts for why this moved off the
 // policy-enforced client hook (mean 10.6s / max 65s per call in prod).
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -50,3 +51,5 @@ export async function GET(request: NextRequest) {
     headers: { "content-type": "application/json" },
   });
 }
+
+export const GET = withRequestRouting(handleGET);

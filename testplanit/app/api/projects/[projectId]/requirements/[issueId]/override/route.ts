@@ -12,6 +12,7 @@ import {
   resolveEffectiveRequirementFlag,
 } from "~/lib/integrations/requirementTypeConfig";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // `override` is required and explicitly nullable — null means "reset to
 // the configured classification", and its absence is a client bug, not a
@@ -54,7 +55,7 @@ const bodySchema = z
  * 400 (bad body) -> 403 (authorizeProjectAdminForProject) -> 404 (no such
  * live issue in this project) -> 400 (not synced) -> operate.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string; issueId: string }> }
@@ -202,3 +203,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

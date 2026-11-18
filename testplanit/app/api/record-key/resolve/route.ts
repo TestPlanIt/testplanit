@@ -10,6 +10,7 @@ import {
 import { readRecordKeyTypeTokens } from "~/lib/services/recordKeyConfig";
 import { getServerAuthSession } from "~/server/auth";
 import { SearchableEntityType, type SearchHit } from "~/types/search";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export const dynamic = "force-dynamic";
 
@@ -110,7 +111,7 @@ async function resolveHit(
  * checked and all matches are returned (ids are unique per type, so at most one
  * per type).
  */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const session = await getServerAuthSession();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -143,3 +144,5 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({ hits });
 }
+
+export const GET = withRequestRouting(handleGET);

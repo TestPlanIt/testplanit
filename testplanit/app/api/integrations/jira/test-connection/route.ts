@@ -2,6 +2,7 @@ import { baseDb as db } from "@/lib/db";
 import { IntegrationProvider } from "~/zenstack/models";
 import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 function constantTimeCompare(a: string, b: string): boolean {
   try {
@@ -21,7 +22,7 @@ const headers = {
     "Content-Type, Authorization, X-Forge-Api-Key",
 };
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const forgeApiKey = request.headers.get("X-Forge-Api-Key");
 
@@ -67,9 +68,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function OPTIONS() {
+export const GET = withRequestRouting(handleGET);
+
+async function handleOPTIONS() {
   return new Response(null, {
     status: 200,
     headers,
   });
 }
+
+export const OPTIONS = withRequestRouting(handleOPTIONS);

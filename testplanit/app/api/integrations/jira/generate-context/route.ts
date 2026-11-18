@@ -13,6 +13,7 @@ import {
   suggestFolderForIssue,
   type GenerationProject,
 } from "@/lib/services/jira-panel-generation";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /** Derive the Jira project key ("PROJ") from an issue key ("PROJ-123"). */
 function projectKeyFromIssueKey(issueKey: string | null): string | null {
@@ -31,7 +32,7 @@ async function accessibleProjects(
   return projects.filter((_, i) => checks[i]);
 }
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const issueKey = searchParams.get("issueKey");
   const issueId = searchParams.get("issueId");
@@ -105,6 +106,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function OPTIONS() {
+export const GET = withRequestRouting(handleGET);
+
+async function handleOPTIONS() {
   return new Response(null, { status: 200, headers: FORGE_CORS_HEADERS });
 }
+
+export const OPTIONS = withRequestRouting(handleOPTIONS);

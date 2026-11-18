@@ -13,6 +13,7 @@ import { applyInboundCodeChange } from "~/lib/webhooks/services/applyInboundCode
 import { applyInboundIssueUpdate } from "~/lib/webhooks/services/applyInboundIssueUpdate";
 import { applyInboundMilestoneEvent } from "~/lib/webhooks/services/applyInboundMilestoneEvent";
 import { decrypt } from "~/utils/encryption";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Inbound webhook receiver — opaque-token routing.
@@ -278,4 +279,6 @@ async function handleWebhookReceive(
 // `captureAuditEvent` in the downstream sync service picks these up
 // automatically — same posture as the v0.22.1 actor-context completeness
 // pattern, even though the receiver has no user session.
-export const POST = withAuditContext(handleWebhookReceive);
+const handlePOST = withAuditContext(handleWebhookReceive);
+
+export const POST = withRequestRouting(handlePOST);

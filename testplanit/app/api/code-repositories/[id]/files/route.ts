@@ -5,6 +5,7 @@ import {
   providerErrorResponse,
   resolveRepoRouteContext,
 } from "~/lib/services/impact/repoRouteContext";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/code-repositories/[id]/files?configId=
@@ -12,7 +13,7 @@ import {
  * Privacy-mode configs (cacheEnabled=false) list live from the provider.
  * 409 when the cache is empty so the UI can ask an admin to refresh it.
  */
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -49,3 +50,5 @@ export async function GET(
     return providerErrorResponse(error);
   }
 }
+
+export const GET = withRequestRouting(handleGET);

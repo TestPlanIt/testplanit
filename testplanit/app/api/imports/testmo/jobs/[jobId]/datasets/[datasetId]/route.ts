@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import type { TestmoDatasetDetailPayload } from "~/services/imports/testmo/types";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface RouteContext {
   params: Promise<{
@@ -11,7 +12,7 @@ interface RouteContext {
   }>;
 }
 
-export async function GET(request: NextRequest, context: RouteContext) {
+async function handleGET(request: NextRequest, context: RouteContext) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -101,3 +102,5 @@ export async function GET(request: NextRequest, context: RouteContext) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

@@ -21,6 +21,7 @@ import { getAuditLogEntityTypes } from "~/lib/services/auditLog/getAuditLogEntit
 import { getAuditLogProjects } from "~/lib/services/auditLog/getAuditLogProjects";
 import { searchAuditLogUsers } from "~/lib/services/auditLog/searchAuditLogUsers";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const DEFAULT_PAGE_SIZE = 25;
 
@@ -30,7 +31,7 @@ function intParam(raw: string | null, fallback: number): number {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
 }
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const session = await getServerSession(authOptions);
 
   // Cross-user audit data — matches the AuditLog model's
@@ -75,3 +76,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

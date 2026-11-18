@@ -7,6 +7,7 @@ import { baseDb } from "~/lib/db";
 import { getStepScanQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
 import { type StepScanJobData } from "~/workers/stepSequenceScanWorker";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const submitSchema = z.object({
   projectId: z.number().int().positive(),
@@ -14,7 +15,7 @@ const submitSchema = z.object({
   minSteps: z.number().int().min(2).max(20).default(3),
 });
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   // 1. Auth
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -104,3 +105,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

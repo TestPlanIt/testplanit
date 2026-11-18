@@ -6,6 +6,7 @@ import {
   type QuickScriptGenerationInput,
 } from "~/lib/services/quickscript-generation";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface SingleExportBody {
   mode: "single";
@@ -25,7 +26,7 @@ interface BatchExportBody {
 
 type ExportStreamBody = SingleExportBody | BatchExportBody;
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -110,3 +111,5 @@ export async function POST(req: NextRequest) {
     },
   });
 }
+
+export const POST = withRequestRouting(handlePOST);

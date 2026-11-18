@@ -12,6 +12,7 @@ import {
   readRequirementTypeConfig,
 } from "~/lib/integrations/requirementTypeConfig";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Start a background, typed, paged-to-completion import (D-07) of the
@@ -26,7 +27,7 @@ import { authOptions } from "~/server/auth";
  * -> 403 admin -> 404 mapping -> 409 (already running) -> 400 (nothing
  * configured) -> enqueue.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
       const session = await getServerSession(authOptions);
@@ -158,3 +159,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

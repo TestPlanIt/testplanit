@@ -8,8 +8,9 @@ import { auditPasswordChange } from "~/lib/services/auditLog";
 import { validatePasswordPolicy } from "~/lib/validate-password-policy";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     context: { params: Promise<{ userId: string }> }
@@ -136,3 +137,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

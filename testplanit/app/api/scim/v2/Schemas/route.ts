@@ -19,6 +19,10 @@ import { scimLocation } from "~/lib/scim/responses";
 import enterpriseSchema from "~/lib/scim/schemas/enterprise.json";
 import groupSchema from "~/lib/scim/schemas/group.json";
 import userSchema from "~/lib/scim/schemas/user.json";
+import {
+  withPrimaryRequestRouting,
+  withRequestRouting,
+} from "~/lib/db/requestRouting";
 
 const SCHEMA_URNS = [
   SCIM_SCHEMAS.CORE_USER,
@@ -32,7 +36,7 @@ const URN_TO_SCHEMA: Record<(typeof SCHEMA_URNS)[number], unknown> = {
   [SCIM_SCHEMAS.ENTERPRISE_USER]: enterpriseSchema,
 };
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+async function handleGET(request: NextRequest): Promise<NextResponse> {
   try {
     await requireScimBearer(request);
   } catch (e) {
@@ -69,18 +73,28 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   );
 }
 
-export async function POST(): Promise<NextResponse> {
+export const GET = withPrimaryRequestRouting(handleGET);
+
+async function handlePOST(): Promise<NextResponse> {
   return scimError(405, null, "Method not supported");
 }
 
-export async function PUT(): Promise<NextResponse> {
+export const POST = withRequestRouting(handlePOST);
+
+async function handlePUT(): Promise<NextResponse> {
   return scimError(405, null, "Method not supported");
 }
 
-export async function PATCH(): Promise<NextResponse> {
+export const PUT = withRequestRouting(handlePUT);
+
+async function handlePATCH(): Promise<NextResponse> {
   return scimError(405, null, "Method not supported");
 }
 
-export async function DELETE(): Promise<NextResponse> {
+export const PATCH = withRequestRouting(handlePATCH);
+
+async function handleDELETE(): Promise<NextResponse> {
   return scimError(405, null, "Method not supported");
 }
+
+export const DELETE = withRequestRouting(handleDELETE);

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Tags used within a single project, with counts scoped to that project.
 //
@@ -12,7 +13,7 @@ import { authOptions } from "~/server/auth";
 // ZenStack re-inline the raw `Projects` `@@allow('read', ...)` ladder as a
 // correlated per-row subquery at every relation-filter site -- 120 of them
 // for this exact shape (3 relations x 2 sites), 78s mean execution time.
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -74,3 +75,5 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({ tags: result });
 }
+
+export const GET = withRequestRouting(handleGET);

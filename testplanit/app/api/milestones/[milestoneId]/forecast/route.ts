@@ -5,8 +5,9 @@ import { getVisibleMilestone } from "~/lib/services/milestoneAccess";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ milestoneId: string }> }
 ) {
@@ -97,3 +98,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

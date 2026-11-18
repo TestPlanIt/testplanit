@@ -13,6 +13,7 @@ import {
 } from "~/lib/schemas/sharedDatasetAssignmentSchema";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Per-case shared-dataset assignment endpoint.
@@ -87,7 +88,7 @@ function deriveVersionColumns(version: {
   return [];
 }
 
-export async function GET(
+async function handleGET(
   _request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
@@ -135,7 +136,9 @@ export async function GET(
   }
 }
 
-export const PUT = withAuditContext(
+export const GET = withRequestRouting(handleGET);
+
+const handlePUT = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ caseId: string }> }
@@ -348,7 +351,9 @@ export const PUT = withAuditContext(
   }
 );
 
-export const DELETE = withAuditContext(
+export const PUT = withRequestRouting(handlePUT);
+
+const handleDELETE = withAuditContext(
   async (
     _request: NextRequest,
     { params }: { params: Promise<{ caseId: string }> }
@@ -411,3 +416,5 @@ export const DELETE = withAuditContext(
     }
   }
 );
+
+export const DELETE = withRequestRouting(handleDELETE);

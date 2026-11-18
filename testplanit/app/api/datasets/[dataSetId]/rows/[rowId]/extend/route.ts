@@ -12,6 +12,7 @@ import {
   loadReadableDataset,
   resolveLeaseApiUser,
 } from "~/lib/services/datasetLease";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/datasets/{dataSetId}/rows/{rowId}/extend — 999.12.
@@ -35,7 +36,7 @@ const extendBodySchema = z.object({
   ttlSeconds: z.number().int().positive().optional(),
 });
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ dataSetId: string; rowId: string }> }
@@ -124,3 +125,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

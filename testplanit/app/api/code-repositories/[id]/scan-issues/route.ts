@@ -7,6 +7,7 @@ import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthor
 import { getRepoCacheQueue } from "~/lib/queues";
 import { enqueueRepoJob } from "~/lib/services/impact/repoJobs";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -26,7 +27,7 @@ const bodySchema = z.object({
  * status resolver reports as queued, running or interrupted until the scan
  * finishes.
  */
-export async function POST(req: NextRequest, { params }: RouteParams) {
+async function handlePOST(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -134,3 +135,5 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

@@ -6,6 +6,7 @@ import { loadEntityPreview } from "~/lib/linkPreviewData";
 import { defaultLocale, locales, type Locale } from "~/i18n/navigation";
 import { getAppUrl } from "~/lib/appUrl";
 import { BASE_PATH } from "~/lib/basePath";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Metadata-only document served to link unfurlers (Slack, Teams, iMessage, …)
@@ -63,7 +64,7 @@ function resolveBaseUrl(req: NextRequest): string {
   return `${host ? `${proto}://${host}` : req.nextUrl.origin}${BASE_PATH}`;
 }
 
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   // Rewritten requests carry their context in headers (a rewrite destination's
   // query string does not reach the handler); a direct GET can pass the same
   // fields as query params, which is how this route is exercised in tests.
@@ -178,3 +179,5 @@ export async function GET(req: NextRequest) {
     },
   });
 }
+
+export const GET = withRequestRouting(handleGET);

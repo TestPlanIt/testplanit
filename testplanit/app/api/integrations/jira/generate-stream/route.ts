@@ -38,6 +38,7 @@ import {
   resolveAttachmentImageMime,
   resolveIssueAttachmentImages,
 } from "@/api/llm/generate-test-cases/context-image-sources";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Token-authenticated streaming generation for the Jira panel. The browser
@@ -46,7 +47,7 @@ import {
  * project/issue). Cases are parsed server-side and streamed as `case` SSE
  * events so the panel doesn't need any JSON-extraction logic.
  */
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const payload = verifyForgeStreamToken(req.headers.get("X-Forge-Token"));
   if (!payload) {
     return NextResponse.json(
@@ -480,6 +481,10 @@ export async function POST(req: NextRequest) {
   });
 }
 
-export async function OPTIONS() {
+export const POST = withRequestRouting(handlePOST);
+
+async function handleOPTIONS() {
   return new Response(null, { status: 200, headers: FORGE_CORS_HEADERS });
 }
+
+export const OPTIONS = withRequestRouting(handleOPTIONS);

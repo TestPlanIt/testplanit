@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { getProjectCardStats } from "~/lib/services/projectCardStats";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const MAX_PROJECTS = 500;
 
@@ -10,7 +11,7 @@ const MAX_PROJECTS = 500;
  * for the requested projects the caller can read. Ids the caller cannot read,
  * or that do not exist, are left out.
  */
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -58,3 +59,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

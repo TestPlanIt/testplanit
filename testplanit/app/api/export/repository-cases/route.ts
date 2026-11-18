@@ -33,6 +33,7 @@ import {
   parsePageSize,
   parseSince,
 } from "~/lib/export/queryParams";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface CaseRow {
   id: number;
@@ -55,7 +56,7 @@ interface CaseRow {
   displayKey: string | null;
 }
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   const auth = await authenticateRequest(request, session);
   if (!auth.authenticated) {
@@ -200,3 +201,5 @@ export async function GET(request: NextRequest) {
 
   return ndjsonResponse({ manifest, pages: wrapped });
 }
+
+export const GET = withRequestRouting(handleGET);

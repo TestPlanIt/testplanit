@@ -5,6 +5,7 @@ import { resolveViewerProjectScope } from "~/lib/authContext";
 import { baseDb } from "~/lib/db";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * DELETE /api/projects/[projectId]/requirements/[issueId]/references/[referencedIssueId]
@@ -29,7 +30,7 @@ import { authOptions } from "~/server/auth";
  * The post-delete probe reads the join model only (`requirementIssueReference`)
  * — the referenced `Issue` row is still never read or written here (D-15).
  */
-export async function DELETE(
+async function handleDELETE(
   _request: NextRequest,
   {
     params,
@@ -126,3 +127,5 @@ export async function DELETE(
     );
   }
 }
+
+export const DELETE = withRequestRouting(handleDELETE);

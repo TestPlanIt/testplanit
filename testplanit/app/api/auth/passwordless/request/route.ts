@@ -17,6 +17,7 @@ import {
 } from "~/lib/passwordless";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { db } from "~/server/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const RequestSchema = z.object({
   email: z.email().max(320),
@@ -35,7 +36,7 @@ const RequestSchema = z.object({
  * known and unknown emails. A pending row is created either way; the email is
  * dispatched fire-and-forget only for real, active accounts.
  */
-export const POST = withAuditContext(async (req: NextRequest) => {
+const handlePOST = withAuditContext(async (req: NextRequest) => {
   if (!isPasswordlessDeviceBoundEnabled()) {
     // Client falls back to the stock EmailProvider flow.
     return NextResponse.json({ enabled: false });
@@ -146,3 +147,5 @@ export const POST = withAuditContext(async (req: NextRequest) => {
   );
   return res;
 });
+
+export const POST = withRequestRouting(handlePOST);

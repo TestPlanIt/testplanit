@@ -9,6 +9,7 @@ import {
   updateParameterInTransaction,
 } from "~/lib/services/parameterMutations";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Phase 2 Plan 02-02 — PATCH /api/repository/cases/[caseId]/parameters/[paramId]
@@ -18,7 +19,7 @@ import { authOptions } from "~/server/auth";
  * atomically rewrite every Tiptap step JSON reference and DataSet row key
  * inside the same `$transaction` (PARAM-05 atomic rename).
  */
-export async function PATCH(
+async function handlePATCH(
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string; paramId: string }> }
 ) {
@@ -59,6 +60,8 @@ export async function PATCH(
   }
 }
 
+export const PATCH = withRequestRouting(handlePATCH);
+
 /**
  * Phase 2 Plan 02-02 — DELETE /api/repository/cases/[caseId]/parameters/[paramId]
  *
@@ -66,7 +69,7 @@ export async function PATCH(
  * The helper bumps version + updates hasParameters (which recomputes false
  * if this was the last non-deleted param).
  */
-export async function DELETE(
+async function handleDELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ caseId: string; paramId: string }> }
 ) {
@@ -97,3 +100,5 @@ export async function DELETE(
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const DELETE = withRequestRouting(handleDELETE);

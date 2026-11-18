@@ -13,6 +13,7 @@ import {
   type PathPattern,
 } from "~/lib/integrations/repoPathPatterns";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const MAX_CONTEXT_BYTES = 500_000;
 
@@ -20,7 +21,7 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+async function handlePOST(req: NextRequest, { params }: RouteParams) {
   // Auth checks — return JSON errors before we start streaming
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -213,6 +214,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     },
   });
 }
+
+export const POST = withRequestRouting(handlePOST);
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";

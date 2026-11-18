@@ -5,8 +5,9 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export const GET = withAuditContext(async (_request: NextRequest) => {
+const handleGET = withAuditContext(async (_request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -51,7 +52,9 @@ export const GET = withAuditContext(async (_request: NextRequest) => {
   }
 });
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+export const GET = withRequestRouting(handleGET);
+
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -128,3 +131,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

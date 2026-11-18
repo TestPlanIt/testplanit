@@ -32,11 +32,12 @@ import {
   resolveEffectiveProjectAccess,
 } from "~/lib/services/areaPermission";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export const DELETE = withAuditContext(
+const handleDELETE = withAuditContext(
   async (
     req: NextRequest,
     { params }: { params: Promise<{ snapshotId: string }> }
@@ -87,6 +88,8 @@ export const DELETE = withAuditContext(
     return NextResponse.json({ snapshotId, deleted: true });
   }
 );
+
+export const DELETE = withRequestRouting(handleDELETE);
 
 /**
  * Mirrors the Reporting.canDelete branch of the snapshot's ZenStack policy.

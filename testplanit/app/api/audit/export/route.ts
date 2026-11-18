@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditDataExport } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/audit/export
@@ -9,7 +10,7 @@ import { getServerAuthSession } from "~/server/auth";
  * Log a data export event for audit tracking.
  * Called by client-side export functions after successful export.
  */
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerAuthSession();
     if (!session?.user) {
@@ -42,3 +43,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

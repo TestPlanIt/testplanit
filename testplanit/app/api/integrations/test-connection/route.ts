@@ -17,6 +17,7 @@ import {
   resolveAuthScheme,
   withoutJiraDetectedSettings,
 } from "@/lib/integrations/adapters/jiraDeployment";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface TestConnectionRequest {
   integrationId?: number;
@@ -764,7 +765,7 @@ async function testSimpleUrlConnection(
   }
 }
 
-export const POST = withAuditContext(async (req: NextRequest) => {
+const handlePOST = withAuditContext(async (req: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -958,3 +959,5 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

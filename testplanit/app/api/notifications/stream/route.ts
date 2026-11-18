@@ -9,6 +9,7 @@ import {
 } from "~/lib/notifications/channels";
 import { createSubscriberClient } from "~/lib/valkey";
 import { authOptions } from "~/server/auth";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
 // SSE notifications transport — long-lived stream + IORedis pub/sub require the
 // Node.js runtime, never Edge, and must opt out of any Next.js prerendering.
@@ -77,7 +78,7 @@ function registerOnce() {
   metricsTimer.unref?.();
 }
 
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   registerOnce();
 
   // ---- auth gate (SSE-02 / CR-02) — fires BEFORE any IORedis client is created ----
@@ -285,3 +286,5 @@ export async function GET(req: NextRequest) {
     },
   });
 }
+
+export const GET = withPrimaryRequestRouting(handleGET);

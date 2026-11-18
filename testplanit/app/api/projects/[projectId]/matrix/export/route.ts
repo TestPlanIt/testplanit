@@ -14,6 +14,7 @@ import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
 import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
 import { matrixFiltersSchema } from "~/lib/schemas/matrixFiltersSchema";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/projects/[projectId]/matrix/export
@@ -82,7 +83,7 @@ async function resolveCanReadSensitive(userId: string): Promise<boolean> {
     : false;
 }
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -251,3 +252,5 @@ export async function GET(
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const GET = withRequestRouting(handleGET);

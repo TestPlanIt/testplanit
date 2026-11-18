@@ -3,8 +3,12 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { absoluteAppUrl } from "~/lib/appUrl";
 import { COOKIE_PATH } from "~/lib/basePath";
+import {
+  withPrimaryRequestRouting,
+  withRequestRouting,
+} from "~/lib/db/requestRouting";
 
-export const GET = withAuditContext(async (request: NextRequest) => {
+const handleGET = withAuditContext(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const samlResponse = searchParams.get("SAMLResponse");
@@ -52,7 +56,9 @@ export const GET = withAuditContext(async (request: NextRequest) => {
   }
 });
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+export const GET = withPrimaryRequestRouting(handleGET);
+
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   // Handle SAML logout requests initiated by the IdP (Single Logout)
   try {
     const body = await request.text();
@@ -129,3 +135,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

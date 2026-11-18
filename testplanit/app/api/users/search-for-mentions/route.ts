@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -137,3 +138,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

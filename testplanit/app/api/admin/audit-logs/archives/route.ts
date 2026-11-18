@@ -13,6 +13,7 @@ import { resolveAuditLogRetention } from "~/lib/services/auditLogRetention";
 import { db } from "~/server/db";
 
 import { requireArchiveAdmin } from "./auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const DEFAULT_TAKE = 100;
 const MAX_TAKE = 1000;
@@ -33,7 +34,7 @@ function currentTenantConfig() {
   return tenantId ? getTenantConfig(tenantId) : undefined;
 }
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const auth = await requireArchiveAdmin(request);
   if (!auth.ok) return auth.response;
 
@@ -93,3 +94,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

@@ -16,6 +16,7 @@ import {
 import { authOptions } from "~/server/auth";
 import { ApplicationArea } from "~/zenstack/models";
 import { z } from "zod/v4";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // The external-pick shape a manual traceability reference can carry —
 // mirrors the ExternalIssue fields components/issues/search-issues-dialog.tsx
@@ -81,7 +82,7 @@ const referencesBodySchema = z
  * references are TestPlanIt-side annotations like Issue.note and must work
  * on a synced, locked requirement.
  */
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; issueId: string }> }
 ) {
@@ -349,3 +350,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

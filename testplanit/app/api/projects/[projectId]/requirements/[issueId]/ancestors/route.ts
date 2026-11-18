@@ -5,6 +5,7 @@ import { baseDb } from "~/lib/db";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { getRequirementAncestorChain } from "~/lib/services/requirementTree";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/projects/[projectId]/requirements/[issueId]/ancestors
@@ -28,7 +29,7 @@ import { authOptions } from "~/server/auth";
  * The 403 precedes the identity check so a caller cannot use the 404/200
  * split to probe which ids exist in a project they cannot see.
  */
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; issueId: string }> }
 ) {
@@ -85,3 +86,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

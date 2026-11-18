@@ -5,6 +5,7 @@ import { getEnhancedDb } from "~/lib/auth/utils";
 import { removableStalePinsWhere } from "~/lib/services/impact/stalePinRules";
 import { isAccessPolicyError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -22,7 +23,7 @@ const bodySchema = z.object({
  * remove them, so rows the caller cannot update are left in place.
  * Gate order: 401 -> 400 -> 404 (config) -> 403 (policy) -> 200.
  */
-export async function POST(req: NextRequest, { params }: RouteParams) {
+async function handlePOST(req: NextRequest, { params }: RouteParams) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -79,3 +80,5 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

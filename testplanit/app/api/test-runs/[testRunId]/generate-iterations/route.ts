@@ -19,6 +19,7 @@ import { captureAuditEvent } from "~/lib/services/auditLog";
 import { userCanAddEditArea } from "~/lib/services/projectPermissions";
 import { ApplicationArea } from "~/zenstack/models";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/test-runs/[testRunId]/generate-iterations
@@ -57,7 +58,7 @@ import { authOptions } from "~/server/auth";
  * cases that have no iterations yet.
  */
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ testRunId: string }> }
@@ -251,3 +252,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

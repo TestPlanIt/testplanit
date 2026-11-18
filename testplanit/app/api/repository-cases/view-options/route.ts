@@ -16,6 +16,7 @@ import {
 import { sanitizeSearchCaseIds } from "~/lib/repositoryCaseSearchIds";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface ViewOptionsRequest {
   projectId: number;
@@ -43,7 +44,7 @@ interface ViewOptionsRequest {
   searchCaseIds?: number[];
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const startTime = Date.now();
   const session = await getServerSession(authOptions);
 
@@ -1500,3 +1501,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

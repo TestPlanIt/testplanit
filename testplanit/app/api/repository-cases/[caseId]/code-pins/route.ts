@@ -11,6 +11,7 @@ import { RefNotFoundError } from "~/lib/services/impact/compareService";
 import { loadRepoConfigForUser } from "~/lib/services/impact/repoAccess";
 import { isAccessPolicyError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const pinSelect = {
   id: true,
@@ -104,7 +105,7 @@ function parseCaseId(raw: string): number | null {
  * Live pins on a case with computed staleness against the branch tip.
  * Gate order: 401 -> 400 -> 200 (policy filters rows the caller cannot read).
  */
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
@@ -170,6 +171,8 @@ export async function GET(
   }
 }
 
+export const GET = withRequestRouting(handleGET);
+
 /**
  * POST /api/repository-cases/[caseId]/code-pins
  * Create a manual pin. The server resolves the ref, reads the file, and
@@ -177,7 +180,7 @@ export async function GET(
  * Gate order: 401 -> 400 -> 404 (config/case) -> 409 (duplicate) ->
  * 422 (anchor) -> 403 (policy) -> 201.
  */
-export async function POST(
+async function handlePOST(
   req: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
@@ -297,3 +300,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

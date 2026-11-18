@@ -14,6 +14,7 @@ import { baseDb } from "~/lib/db";
 import { completeMilestoneWithCascade } from "~/lib/services/milestoneCompletion";
 import { getServerAuthSession } from "~/server/auth";
 import { toCalendarDate } from "~/utils/calendarDate";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/milestones/[milestoneId]/complete
@@ -39,7 +40,7 @@ const bodySchema = z.object({
   sessionStateId: z.number().int().positive().nullable().optional(),
 });
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     context: { params: Promise<{ milestoneId: string }> }
@@ -177,3 +178,5 @@ export const POST = withAuditContext(
     return NextResponse.json(result);
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

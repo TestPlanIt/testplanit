@@ -4,9 +4,10 @@ import {
   storageObjectQuerySchema,
 } from "~/lib/services/storageObjects";
 import { checkAdminAuth } from "../../../../trash/shared";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /** The keys of every object the list's filters match, for "select all". */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const auth = await checkAdminAuth(request);
   if (auth.error) return auth.error;
 
@@ -35,3 +36,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

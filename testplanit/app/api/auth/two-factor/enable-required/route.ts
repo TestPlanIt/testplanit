@@ -8,6 +8,7 @@ import {
   generateBackupCodes,
   verifyTOTP,
 } from "~/lib/two-factor";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
 
@@ -15,7 +16,7 @@ const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
  * POST /api/auth/two-factor/enable-required
  * Verify the TOTP token and enable 2FA during forced setup flow
  */
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const { token, setupToken } = body;
@@ -132,3 +133,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

@@ -1174,3 +1174,65 @@ describe("Content-Security-Policy", () => {
     );
   });
 });
+
+describe("Read replicas: pinning reads after a server action", () => {
+  const pageHeaders = { "sec-fetch-site": "same-origin" };
+
+  function actionRequest(headers: Record<string, string> = {}): NextRequest {
+    return new NextRequest(
+      new URL("/en-US/projects/overview/1", "http://localhost:3000"),
+      { method: "POST", headers: new Headers({ ...pageHeaders, ...headers }) }
+    );
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.NEXTAUTH_SECRET = "test-secret";
+    mockGetCachedSessionUser.mockResolvedValue(null);
+    mockGetToken.mockResolvedValue({ sub: "user-123", access: "USER" });
+  });
+
+  afterEach(() => {
+    delete process.env.NEXTAUTH_SECRET;
+    delete process.env.DATABASE_REPLICA_URLS;
+    delete process.env.DATABASE_PRIMARY_STICKY_MS;
+  });
+
+  it("sets the stickiness cookie on a server action when replicas are configured", async () => {
+    process.env.DATABASE_REPLICA_URLS = "postgresql://replica/db";
+    const response = await middlewareWithPreferences(
+      actionRequest({ "next-action": "abc123" })
+    );
+    expect(response.headers.get("set-cookie")).toContain("tpi_rw_primary=1");
+  });
+
+  it("leaves a server action alone without replicas", async () => {
+    const response = await middlewareWithPreferences(
+      actionRequest({ "next-action": "abc123" })
+    );
+    expect(response.headers.get("set-cookie") ?? "").not.toContain(
+      "tpi_rw_primary"
+    );
+  });
+
+  it("leaves an ordinary page request alone", async () => {
+    process.env.DATABASE_REPLICA_URLS = "postgresql://replica/db";
+    const response = await middlewareWithPreferences(
+      createMockRequest("/en-US/projects/overview/1", pageHeaders)
+    );
+    expect(response.headers.get("set-cookie") ?? "").not.toContain(
+      "tpi_rw_primary"
+    );
+  });
+
+  it("sets nothing when stickiness is turned off", async () => {
+    process.env.DATABASE_REPLICA_URLS = "postgresql://replica/db";
+    process.env.DATABASE_PRIMARY_STICKY_MS = "0";
+    const response = await middlewareWithPreferences(
+      actionRequest({ "next-action": "abc123" })
+    );
+    expect(response.headers.get("set-cookie") ?? "").not.toContain(
+      "tpi_rw_primary"
+    );
+  });
+});

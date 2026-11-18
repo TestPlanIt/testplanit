@@ -5,6 +5,7 @@ import { syncService } from "@/lib/integrations/services/SyncService";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Live details of one issue from its tracker, in the same shape whatever the
@@ -12,7 +13,7 @@ import { authOptions } from "~/server/auth";
  * stored under; a GitHub key without its repository is resolved from the
  * stored issue the same way a manual sync resolves it.
  */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -90,3 +91,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

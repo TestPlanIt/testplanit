@@ -14,6 +14,7 @@ import {
   providerErrorResponse,
   resolveRepoRouteContext,
 } from "~/lib/services/impact/repoRouteContext";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const querySchema = z.object({
   path: z.string().min(1).max(4096),
@@ -26,7 +27,7 @@ const querySchema = z.object({
  * the config's branch, then the repository default branch, and is resolved
  * to a sha so the response can be anchored.
  */
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -67,3 +68,5 @@ export async function GET(
     return providerErrorResponse(error);
   }
 }
+
+export const GET = withRequestRouting(handleGET);

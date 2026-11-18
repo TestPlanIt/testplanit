@@ -20,6 +20,7 @@ import {
 } from "~/lib/services/milestoneSummary";
 import { getVisibleMilestone } from "~/lib/services/milestoneAccess";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export type { MilestoneExportData };
 
@@ -40,7 +41,7 @@ async function buildParentPath(parentId: number | null): Promise<string[]> {
   return path;
 }
 
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ milestoneId: string }> }
 ) {
@@ -439,3 +440,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

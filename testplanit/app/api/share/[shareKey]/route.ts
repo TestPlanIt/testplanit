@@ -8,6 +8,7 @@ import { frozenReportMeta } from "~/lib/reports/frozenReportMeta";
 import { verifyShareAccessToken } from "~/lib/shareAccessToken";
 import { NotificationService } from "~/lib/services/notificationService";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,7 @@ function canOpenSavedReport(
  * Fetch share link metadata (without accessing content)
  * No authentication required
  */
-export const GET = withAuditContext(
+const handleGET = withAuditContext(
   async (
     req: NextRequest,
     { params }: { params: Promise<{ shareKey: string }> }
@@ -151,12 +152,14 @@ export const GET = withAuditContext(
   }
 );
 
+export const GET = withRequestRouting(handleGET);
+
 /**
  * POST /api/share/[shareKey]
  * Access shared content (with password verification if needed)
  * Logs access and triggers notifications
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     req: NextRequest,
     { params }: { params: Promise<{ shareKey: string }> }
@@ -433,3 +436,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

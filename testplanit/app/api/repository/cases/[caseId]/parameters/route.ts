@@ -6,6 +6,7 @@ import { auditedEnhancedTransaction } from "~/lib/audit/auditedTransaction";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
 import { createParameterInTransaction } from "~/lib/services/parameterMutations";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Phase 2 Plan 02-02 — POST /api/repository/cases/[caseId]/parameters
@@ -21,7 +22,7 @@ import { authOptions } from "~/server/auth";
  * XOR lookupDataSetId) at the boundary; the schema's @@validate clause
  * provides server-side belt-and-suspenders.
  */
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
@@ -60,3 +61,5 @@ export async function POST(
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

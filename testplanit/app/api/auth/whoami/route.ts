@@ -22,8 +22,9 @@ import {
 } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
-export const GET = withAuditContext(async (request: NextRequest) => {
+const handleGET = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerAuthSession();
     let userId: string | undefined = session?.user?.id;
@@ -76,3 +77,5 @@ export const GET = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const GET = withPrimaryRequestRouting(handleGET);

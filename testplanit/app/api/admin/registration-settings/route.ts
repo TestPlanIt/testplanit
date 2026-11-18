@@ -3,6 +3,7 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { calculateDiff, captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Password policy fields that this endpoint manages
 const POLICY_FIELDS = [
@@ -17,7 +18,7 @@ const POLICY_FIELDS = [
   "lockoutDurationMinutes",
 ] as const;
 
-export const PATCH = withAuditContext(async (request: NextRequest) => {
+const handlePATCH = withAuditContext(async (request: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -142,3 +143,5 @@ export const PATCH = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const PATCH = withRequestRouting(handlePATCH);

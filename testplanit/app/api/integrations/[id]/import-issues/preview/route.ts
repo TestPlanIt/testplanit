@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeProjectImport } from "~/lib/integrations/importAuthorization";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /** Coerce the recency window to a positive whole number of days, or undefined. */
 function normalizeDays(value: unknown): number | undefined {
@@ -17,7 +18,7 @@ function normalizeDays(value: unknown): number | undefined {
  * anything. Project-admin gated. Runs a live (page-of-1) tracker search so the
  * confirmation step can show "~N issues match" and whether the cap will bite.
  */
-export async function POST(
+async function handlePOST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -75,3 +76,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

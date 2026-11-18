@@ -3,8 +3,9 @@ import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   // This endpoint clears the LLM available-models cache — a cache-hygiene
   // operation with no business-object state mutation. Admin-only. Matches
   // the lastActiveAt session-keep-alive precedent at lib/baseDb.ts:693-701:
@@ -46,3 +47,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

@@ -3,6 +3,7 @@ import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/integrations/[id]/sprints?projectKey=
@@ -10,7 +11,7 @@ import { authOptions } from "~/server/auth";
  * The open (active and future) sprints on the project's boards — the only
  * sprints Jira lets a new issue be created into.
  */
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -103,3 +104,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

@@ -4,6 +4,7 @@ import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const EMPTY_METADATA: CreateIssueMetadata = {
   labels: [],
@@ -19,7 +20,7 @@ const EMPTY_METADATA: CreateIssueMetadata = {
  * form can offer for one tracker project. Trackers that take none of
  * these answer with empty lists.
  */
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -114,3 +115,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

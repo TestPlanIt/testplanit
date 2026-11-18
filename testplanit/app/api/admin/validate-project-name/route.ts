@@ -2,8 +2,9 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -71,3 +72,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

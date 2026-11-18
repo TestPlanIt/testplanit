@@ -5,6 +5,7 @@ import {
   isRouteResponse,
   parseId,
 } from "~/lib/execution/runAccess";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -13,7 +14,7 @@ const MAX_LIMIT = 100;
  * GET /api/test-runs/{testRunId}/executions?limit=
  * Dispatch history for a run, newest first. Never includes credentials.
  */
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ testRunId: string }> }
 ) {
@@ -70,3 +71,5 @@ export async function GET(
     { headers: { "Cache-Control": "no-store" } }
   );
 }
+
+export const GET = withRequestRouting(handleGET);

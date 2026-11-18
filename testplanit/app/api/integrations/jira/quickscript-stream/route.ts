@@ -12,6 +12,7 @@ import {
   resolveQuickScriptTemplate,
   streamQuickScript,
 } from "@/lib/services/quickscript-generation";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Token-authenticated streaming QuickScript generation for the Jira panel. The
@@ -20,7 +21,7 @@ import {
  * user/integration/project/issue). The script is streamed as `chunk`/`done`/
  * `fallback`/`error` SSE events — the same contract the in-app modal consumes.
  */
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const payload = verifyForgeStreamToken(req.headers.get("X-Forge-Token"));
   if (!payload) {
     return NextResponse.json(
@@ -162,6 +163,10 @@ export async function POST(req: NextRequest) {
   });
 }
 
-export async function OPTIONS() {
+export const POST = withRequestRouting(handlePOST);
+
+async function handleOPTIONS() {
   return new Response(null, { status: 200, headers: FORGE_CORS_HEADERS });
 }
+
+export const OPTIONS = withRequestRouting(handleOPTIONS);

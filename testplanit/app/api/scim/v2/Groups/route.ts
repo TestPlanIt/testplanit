@@ -33,6 +33,10 @@ import {
   createScimGroup,
   listScimGroups,
 } from "~/lib/scim/services/groups";
+import {
+  withPrimaryRequestRouting,
+  withRequestRouting,
+} from "~/lib/db/requestRouting";
 
 /**
  * Defense-in-depth cap on the raw filter string. The filter translator
@@ -68,7 +72,7 @@ const scimGroupBodySchema = z
   })
   .loose();
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+async function handlePOST(request: NextRequest): Promise<NextResponse> {
   let ctx;
   try {
     ctx = await requireScimBearer(request);
@@ -123,7 +127,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export const POST = withRequestRouting(handlePOST);
+
+async function handleGET(request: NextRequest): Promise<NextResponse> {
   let ctx;
   try {
     ctx = await requireScimBearer(request);
@@ -177,14 +183,22 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-export async function PUT(): Promise<NextResponse> {
+export const GET = withPrimaryRequestRouting(handleGET);
+
+async function handlePUT(): Promise<NextResponse> {
   return scimError(405, null, "Method not supported");
 }
 
-export async function PATCH(): Promise<NextResponse> {
+export const PUT = withRequestRouting(handlePUT);
+
+async function handlePATCH(): Promise<NextResponse> {
   return scimError(405, null, "Method not supported");
 }
 
-export async function DELETE(): Promise<NextResponse> {
+export const PATCH = withRequestRouting(handlePATCH);
+
+async function handleDELETE(): Promise<NextResponse> {
   return scimError(405, null, "Method not supported");
 }
+
+export const DELETE = withRequestRouting(handleDELETE);

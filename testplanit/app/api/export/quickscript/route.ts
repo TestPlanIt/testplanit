@@ -28,6 +28,7 @@ import {
 } from "~/lib/services/quickscript-generation";
 import { userHasProjectAccess } from "~/lib/services/projectAccess";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Generation calls an LLM provider and can take tens of seconds; raise the
 // platform function ceiling for hosts that honor it (self-hosted is unbounded).
@@ -42,7 +43,7 @@ const bodySchema = z.object({
   outputMode: z.enum(["combined", "perCase"]).optional().default("combined"),
 });
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   // ── Authentication (session, else API token) ──────────────────────────────
   const session = await getServerAuthSession();
   let userId: string | undefined = session?.user?.id;
@@ -182,3 +183,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

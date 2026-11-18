@@ -7,6 +7,7 @@ import {
 } from "~/lib/integrations/importAuthorization";
 import { milestoneSyncService } from "~/lib/integrations/services/MilestoneSyncService";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/milestones/[milestoneId]/unlink
@@ -31,7 +32,7 @@ import { authOptions } from "~/server/auth";
  * [milestoneId] (see 19-02-SUMMARY.md's identical precedent for the SSE
  * stream route).
  */
-export async function POST(
+async function handlePOST(
   _req: NextRequest,
   context: { params: Promise<{ milestoneId: string }> }
 ) {
@@ -161,3 +162,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

@@ -10,6 +10,7 @@ import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthor
 import { userCanAddEditArea } from "~/lib/services/projectPermissions";
 import { ApplicationArea } from "~/zenstack/models";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const BodySchema = z.object({ locked: z.boolean() });
 
@@ -26,7 +27,7 @@ const BodySchema = z.object({ locked: z.boolean() });
  * the un-policed `baseDb`. The authoritative add/remove/reorder guard is the
  * `tpl_composition_lock_guard` Postgres trigger.
  */
-export const PATCH = withAuditContext(
+const handlePATCH = withAuditContext(
   async (
     req: NextRequest,
     { params }: { params: Promise<{ testRunId: string }> }
@@ -150,3 +151,5 @@ export const PATCH = withAuditContext(
     return NextResponse.json({ locked: false });
   }
 );
+
+export const PATCH = withRequestRouting(handlePATCH);

@@ -33,6 +33,7 @@ import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { baseDb } from "~/lib/db";
 import { createSubscriberClient } from "~/lib/valkey";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Long-lived stream + IORedis pub/sub require the Node.js runtime; opt out
 // of every Next.js prerender path.
@@ -41,7 +42,7 @@ export const dynamic = "force-dynamic";
 
 const HEARTBEAT_MS = 25_000;
 
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -198,3 +199,5 @@ export async function GET(
     },
   });
 }
+
+export const GET = withRequestRouting(handleGET);

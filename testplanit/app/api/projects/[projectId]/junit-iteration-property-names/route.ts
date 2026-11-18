@@ -35,6 +35,7 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const RESERVED_PROTOTYPE_KEYS = new Set([
   "__proto__",
@@ -62,7 +63,7 @@ const putBodySchema = z.object({
     .max(16, "junitIterationPropertyNamesTooMany"),
 });
 
-export const PUT = withAuditContext(
+const handlePUT = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string }> }
@@ -124,3 +125,5 @@ export const PUT = withAuditContext(
     }
   }
 );
+
+export const PUT = withRequestRouting(handlePUT);

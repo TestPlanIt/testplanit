@@ -10,13 +10,14 @@ import {
   stripChatCompletionsSuffix,
   type ModelPricingMap,
 } from "./pricing";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface ModelsResult {
   models: string[];
   pricing: ModelPricingMap;
 }
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -91,6 +92,8 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);
 
 /**
  * Extract model ids from an OpenAI-compatible /models response. Most providers

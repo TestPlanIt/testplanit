@@ -17,6 +17,7 @@ import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface UploadResult {
   fileName: string;
@@ -26,7 +27,7 @@ interface UploadResult {
   url?: string;
 }
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   // Authenticate user (session or API token)
   const session = await getServerAuthSession();
   let userId = session?.user?.id;
@@ -188,3 +189,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

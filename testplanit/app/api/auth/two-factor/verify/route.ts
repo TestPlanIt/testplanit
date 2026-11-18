@@ -4,6 +4,7 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { checkRateLimit } from "~/lib/auth-security";
 import { baseDb } from "~/lib/db";
 import { decryptSecret, verifyBackupCode, verifyTOTP } from "~/lib/two-factor";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
 
@@ -12,7 +13,7 @@ const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
  * Verify 2FA token during sign-in flow
  * This endpoint is called after initial credentials verification
  */
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const { token, backupCode, pendingAuthToken } = body;
@@ -138,3 +139,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

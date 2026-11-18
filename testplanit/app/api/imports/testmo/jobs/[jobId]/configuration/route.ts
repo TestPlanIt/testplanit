@@ -14,6 +14,7 @@ import type {
   TestmoImportStatus,
   TestmoMappingConfiguration,
 } from "~/services/imports/testmo/types";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface RouteContext {
   params: Promise<{
@@ -21,7 +22,7 @@ interface RouteContext {
   }>;
 }
 
-export async function POST(request: NextRequest, context: RouteContext) {
+async function handlePOST(request: NextRequest, context: RouteContext) {
   // This endpoint is a Testmo-import preparation step (job configuration).
   // The consequential event is the import START -> COMPLETE pair audited at:
   //   - POST /api/imports/testmo/jobs/[jobId]/import (IMPORT_STARTED)
@@ -117,3 +118,5 @@ export async function POST(request: NextRequest, context: RouteContext) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

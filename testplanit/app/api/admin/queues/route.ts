@@ -4,9 +4,10 @@ import { getAllQueues } from "@/lib/queues";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // GET: Get all queues with their stats
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     // Check authentication - try session first, then API token
     const session = await getServerAuthSession();
@@ -283,3 +284,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

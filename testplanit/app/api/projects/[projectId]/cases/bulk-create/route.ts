@@ -19,6 +19,7 @@ import {
   type ImportCaseResult,
   type ImportInput,
 } from "~/lib/services/testCaseImport";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Bulk case-creation endpoint reached by the MCP `testplanit_cases_create_many`
 // tool (and any other programmatic caller). It resolves the shared context
@@ -87,7 +88,7 @@ const bulkCreateSchema = z.object({
 type BulkCreateRequest = z.infer<typeof bulkCreateSchema>;
 type IndexedCase = BulkCreateRequest["cases"][number] & { __id: string };
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string }> }
@@ -544,3 +545,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

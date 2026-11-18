@@ -5,8 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
 import { authOptions } from "~/server/auth";
 import { isSsrfSafe } from "~/utils/ssrf";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -129,3 +130,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

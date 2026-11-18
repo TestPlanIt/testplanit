@@ -37,6 +37,7 @@ import {
   classifyLlmStreamError,
   type LlmStreamErrorCode,
 } from "../error-codes";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 function formatError(err: unknown): string {
   if (!(err instanceof Error)) return "AI generation failed";
@@ -56,7 +57,7 @@ function formatError(err: unknown): string {
   return parts.filter(Boolean).join(": ");
 }
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -576,3 +577,5 @@ export async function POST(req: NextRequest) {
     },
   });
 }
+
+export const POST = withRequestRouting(handlePOST);

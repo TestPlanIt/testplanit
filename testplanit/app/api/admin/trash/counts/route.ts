@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdminAuth, itemTypeToModelMap } from "../shared";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Returns the number of soft-deleted rows for every trash item type in a
 // single batched request, so the Trash UI can show at-a-glance counts without
 // opening each type. Restore/purge behavior is unchanged.
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const auth = await checkAdminAuth(request);
   if (auth.error) return auth.error;
 
@@ -39,3 +40,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

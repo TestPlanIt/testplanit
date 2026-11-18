@@ -11,8 +11,9 @@ import {
 } from "~/lib/integrations/adapters/jiraDeployment";
 import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export const GET = withAuditContext(
+const handleGET = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -76,7 +77,9 @@ export const GET = withAuditContext(
   }
 );
 
-export const PUT = withAuditContext(
+export const GET = withRequestRouting(handleGET);
+
+const handlePUT = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -192,7 +195,9 @@ export const PUT = withAuditContext(
   }
 );
 
-export const DELETE = withAuditContext(
+export const PUT = withRequestRouting(handlePUT);
+
+const handleDELETE = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -265,3 +270,5 @@ export const DELETE = withAuditContext(
     }
   }
 );
+
+export const DELETE = withRequestRouting(handleDELETE);

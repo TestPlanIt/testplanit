@@ -11,6 +11,7 @@ import { RefNotFoundError } from "~/lib/services/impact/compareService";
 import { loadRepoConfigForUser } from "~/lib/services/impact/repoAccess";
 import { isAccessPolicyError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const bodySchema = z.object({
   ref: z.string().trim().min(1).max(255).optional(),
@@ -24,7 +25,7 @@ const bodySchema = z.object({
  * rewrites the anchor. RANGE pins may pass new lines; otherwise the stored
  * lines are re-validated at the new commit. Clears the stale dismissal.
  */
-export async function POST(
+async function handlePOST(
   req: NextRequest,
   { params }: { params: Promise<{ caseId: string; pinId: string }> }
 ) {
@@ -129,3 +130,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(
+async function handleGET(
   _request: NextRequest,
   context: { params: Promise<{ userId: string }> }
 ) {
@@ -46,3 +47,5 @@ export async function GET(
 
   return NextResponse.json({ policy: settings, hasPassword });
 }
+
+export const GET = withRequestRouting(handleGET);

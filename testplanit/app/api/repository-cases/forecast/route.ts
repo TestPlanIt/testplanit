@@ -2,12 +2,13 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { db } from "~/server/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const RequestBodySchema = z.object({
   caseIds: z.array(z.int().positive()).min(1),
 });
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   let body;
   try {
     body = await request.json();
@@ -106,3 +107,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

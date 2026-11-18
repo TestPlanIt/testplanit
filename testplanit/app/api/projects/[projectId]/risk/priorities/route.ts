@@ -5,6 +5,7 @@ import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthor
 import { resolvePriorityWeights } from "~/lib/schemas/riskPriorityWeights";
 import { getProjectPriorityUsage } from "~/lib/services/risk/priorities";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 type RouteContext = { params: Promise<{ projectId: string }> };
 
@@ -14,7 +15,7 @@ type RouteContext = { params: Promise<{ projectId: string }> };
  * Scoring settings page. Mapped-but-no-longer-used names come back with
  * count 0 so they stay editable.
  */
-export async function GET(_req: NextRequest, context: RouteContext) {
+async function handleGET(_req: NextRequest, context: RouteContext) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -59,3 +60,5 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

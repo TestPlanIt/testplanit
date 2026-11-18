@@ -12,6 +12,7 @@ import { db } from "~/server/db";
 import { JOB_PROCESS_TESTMO_IMPORT } from "~/services/imports/testmo/constants";
 import { serializeImportJob } from "~/services/imports/testmo/jobPresenter";
 import type { TestmoImportJobUpdateArgs } from "~/zenstack/input";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface RouteContext {
   params: Promise<{
@@ -29,7 +30,7 @@ function getQueue() {
   return queue;
 }
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (request: NextRequest, context: RouteContext) => {
     try {
       const session = await getServerSession(authOptions);
@@ -147,3 +148,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

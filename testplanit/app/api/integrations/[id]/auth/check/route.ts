@@ -2,8 +2,9 @@ import { getEnhancedDb } from "@/lib/auth/utils";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -91,3 +92,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

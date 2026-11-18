@@ -14,6 +14,7 @@ import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { db } from "~/server/db";
 import { createSAMLClient, validateSAMLResponse } from "~/server/saml-provider";
 import { absoluteAppUrl } from "~/lib/appUrl";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Resolve an IdP-initiated SAMLResponse (no RelayState — e.g. an Okta dashboard
@@ -62,7 +63,7 @@ type ResolvedSaml = NonNullable<
  * static route, so it takes precedence over the NextAuth [...nextauth]
  * catch-all for this exact path.
  */
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const clientIp =
       request.headers.get("x-forwarded-for") ||
@@ -412,3 +413,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

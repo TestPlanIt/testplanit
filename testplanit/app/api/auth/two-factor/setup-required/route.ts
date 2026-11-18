@@ -8,6 +8,7 @@ import {
   generateQRCodeDataURL,
   generateTOTPSecret,
 } from "~/lib/two-factor";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
 
@@ -15,7 +16,7 @@ const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
  * POST /api/auth/two-factor/setup-required
  * Generate a new TOTP secret for forced 2FA setup during sign-in
  */
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const { setupToken } = body;
@@ -100,3 +101,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

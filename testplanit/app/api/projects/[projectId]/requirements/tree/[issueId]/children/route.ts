@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import { getRequirementChildren } from "~/lib/services/requirementTree";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/projects/[projectId]/requirements/tree/[issueId]/children
@@ -29,7 +30,7 @@ import { authOptions } from "~/server/auth";
  * id) -> 403 (viewer's project scope excludes the requested project) ->
  * 200/500.
  */
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; issueId: string }> }
 ) {
@@ -65,3 +66,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

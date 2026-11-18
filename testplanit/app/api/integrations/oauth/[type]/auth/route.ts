@@ -9,8 +9,9 @@ import {
   responseStatusForIntegrationError,
   toIntegrationError,
 } from "~/lib/integrations/errors";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ type: string }> }
 ) {
@@ -121,3 +122,5 @@ export async function GET(
     });
   }
 }
+
+export const GET = withPrimaryRequestRouting(handleGET);

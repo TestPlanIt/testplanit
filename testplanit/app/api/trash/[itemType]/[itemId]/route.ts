@@ -6,6 +6,7 @@ import {
   type UserTrashRestoreFailure,
 } from "~/lib/services/userTrash";
 import { checkTrashAuth } from "../../shared";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const failureStatus: Record<UserTrashRestoreFailure, number> = {
   unknown_type: 404,
@@ -35,7 +36,7 @@ const failureMessage: Record<UserTrashRestoreFailure, string> = {
  * children). Every ownership / window / permission check runs server-side;
  * ADMINs bypass ownership and the window, matching Admin > Trash.
  */
-export const PATCH = withAuditContext(
+const handlePATCH = withAuditContext(
   async (
     request: NextRequest,
     context: { params: Promise<{ itemType: string; itemId: string }> }
@@ -71,3 +72,5 @@ export const PATCH = withAuditContext(
     }
   }
 );
+
+export const PATCH = withRequestRouting(handlePATCH);

@@ -24,6 +24,7 @@ import { userHasAreaPermission } from "~/lib/services/areaPermission";
 import { generateShareKey } from "~/lib/share-tokens";
 import { authOptions } from "~/server/auth";
 import { ApplicationArea, AuditAction } from "~/zenstack/models";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +63,7 @@ const bodySchema = z
  * counts and creates nothing; the caller confirms and resends with
  * `allowTruncate: true` to keep the first rows only.
  */
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -248,3 +249,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

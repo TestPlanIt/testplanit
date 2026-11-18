@@ -6,6 +6,7 @@ import { baseDb } from "~/lib/db";
 import { userHasAreaPermission } from "~/lib/services/areaPermission";
 import { authOptions } from "~/server/auth";
 import { ApplicationArea } from "~/zenstack/models";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * DELETE /api/projects/[projectId]/requirements/snapshots/[snapshotId]
@@ -24,7 +25,7 @@ import { ApplicationArea } from "~/zenstack/models";
  * only in the sense that a second call 404s — the record is gone from the
  * caller's point of view.
  */
-export const DELETE = withAuditContext(
+const handleDELETE = withAuditContext(
   async (
     _request: NextRequest,
     { params }: { params: Promise<{ projectId: string; snapshotId: string }> }
@@ -92,3 +93,5 @@ export const DELETE = withAuditContext(
     }
   }
 );
+
+export const DELETE = withRequestRouting(handleDELETE);

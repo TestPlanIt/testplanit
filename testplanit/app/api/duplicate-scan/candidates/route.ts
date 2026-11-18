@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const querySchema = z.object({
   projectId: z.coerce.number(),
@@ -10,7 +11,7 @@ const querySchema = z.object({
   limit: z.coerce.number().min(1).default(25),
 });
 
-export async function GET(request: Request) {
+async function handleGET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -78,3 +79,5 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

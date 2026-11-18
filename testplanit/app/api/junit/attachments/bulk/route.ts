@@ -21,6 +21,7 @@ import {
 } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const mappingSchema = z.array(
   z.object({
@@ -37,7 +38,7 @@ interface UploadResult {
   url?: string;
 }
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   // Authenticate user (session or API token)
   const session = await getServerAuthSession();
   let userId = session?.user?.id;
@@ -238,3 +239,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

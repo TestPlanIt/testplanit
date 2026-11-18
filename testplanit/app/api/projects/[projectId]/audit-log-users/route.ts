@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { searchProjectAuditLogUsers } from "~/lib/services/auditLog/searchProjectAuditLogUsers";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const DEFAULT_PAGE_SIZE = 25;
 
@@ -28,7 +29,7 @@ function intParam(raw: string | null, fallback: number): number {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
 }
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -62,3 +63,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

@@ -3,8 +3,9 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { getStepScanQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function POST(
+async function handlePOST(
   _request: Request,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
@@ -78,3 +79,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

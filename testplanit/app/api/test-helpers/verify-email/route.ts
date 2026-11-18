@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Test helper endpoint to verify user emails.
@@ -8,7 +9,7 @@ import { baseDb } from "~/lib/db";
  * It bypasses normal authentication to allow E2E tests to create verified users.
  */
 
-export const POST = withAuditContext(async (req: NextRequest) => {
+const handlePOST = withAuditContext(async (req: NextRequest) => {
   // Only allow when explicitly running E2E tests
   // Never available in actual production deployments
   const isE2ETest =
@@ -47,3 +48,5 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

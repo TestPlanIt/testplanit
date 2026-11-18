@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { baseDb } from "~/lib/db";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/config/review-feature
@@ -16,7 +17,9 @@ import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
  */
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function handleGET() {
   const enabled = await isReviewFeatureSystemEnabled(baseDb);
   return NextResponse.json({ enabled });
 }
+
+export const GET = withRequestRouting(handleGET);

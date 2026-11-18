@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { authorizeProjectMilestoneSyncAdmin } from "~/lib/integrations/importAuthorization";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const VALID_KINDS = new Set(["RELEASE", "ITERATION"]);
 
@@ -15,7 +16,7 @@ const VALID_KINDS = new Set(["RELEASE", "ITERATION"]);
  * import picker (17-06) can show what's available before anything is
  * imported. Project-ADMIN gated (T-17-05-01).
  */
-export const GET = withAuditContext(
+const handleGET = withAuditContext(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
       const session = await getServerSession(authOptions);
@@ -185,3 +186,5 @@ export const GET = withAuditContext(
     }
   }
 );
+
+export const GET = withRequestRouting(handleGET);

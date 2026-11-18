@@ -8,6 +8,7 @@ import {
   getElasticsearchClient,
   getRepositoryCaseIndexName,
 } from "~/services/elasticsearchService";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Request validation schema
 // Note: description and docs can be TipTap JSON objects or strings
@@ -262,7 +263,7 @@ function extractSearchKeywords(
   return uniqueKeywords.join(" ");
 }
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -584,3 +585,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

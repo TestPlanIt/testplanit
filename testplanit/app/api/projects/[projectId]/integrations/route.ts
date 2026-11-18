@@ -5,6 +5,7 @@ import { z } from "zod/v4";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const createProjectIntegrationSchema = z.object({
   integrationId: z.number(),
@@ -70,7 +71,7 @@ function buildProjectAccessWhere(
   };
 }
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -122,7 +123,9 @@ export async function GET(
   }
 }
 
-export const POST = withAuditContext(
+export const GET = withRequestRouting(handleGET);
+
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string }> }
@@ -286,3 +289,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

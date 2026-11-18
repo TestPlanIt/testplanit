@@ -14,6 +14,7 @@ import {
 } from "@/lib/services/testCaseImport";
 import { runWithAuditContext } from "@/lib/auditContext";
 import { NextRequest, NextResponse } from "next/server";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface IncomingCase {
   id: string;
@@ -28,7 +29,7 @@ interface IncomingCase {
  * mapped TestPlanIt user. Reuses the same persistence core as the in-app
  * wizard's import server action.
  */
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   let body: {
     projectId?: number;
     templateId?: number;
@@ -177,6 +178,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function OPTIONS() {
+export const POST = withRequestRouting(handlePOST);
+
+async function handleOPTIONS() {
   return new Response(null, { status: 200, headers: FORGE_CORS_HEADERS });
 }
+
+export const OPTIONS = withRequestRouting(handleOPTIONS);

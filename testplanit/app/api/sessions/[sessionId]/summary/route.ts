@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export type SessionSummaryData = {
   sessionId: number;
@@ -62,7 +63,7 @@ export type SessionSummaryData = {
   }>;
 };
 
-export async function GET(
+async function handleGET(
   _req: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
@@ -243,3 +244,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

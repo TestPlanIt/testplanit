@@ -4,6 +4,7 @@ import { getS3Client } from "~/lib/s3Client";
 import { getServerAuthSession } from "~/server/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { Readable } from "stream";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Types the app renders inline when the URL is opened directly. Anything else
 // (HTML, SVG, XML, scripts, archives…) is served as a download so uploaded
@@ -52,7 +53,7 @@ function isValidObjectPath(path: string[]): boolean {
  * Example: GET /api/storage/uploads/project-icons/icon_123.png
  * Fetches: s3://bucket-name/uploads/project-icons/icon_123.png
  */
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
@@ -137,3 +138,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

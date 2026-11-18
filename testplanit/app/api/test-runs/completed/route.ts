@@ -7,6 +7,7 @@ import {
   AUTOMATED_TEST_RUN_TYPES,
   MANUAL_TEST_RUN_TYPES,
 } from "~/utils/testResultTypes";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export type CompletedTestRunsResponse = {
   runs: Array<{
@@ -90,7 +91,7 @@ export type CompletedTestRunsResponse = {
   pageCount: number;
 };
 
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -290,3 +291,5 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

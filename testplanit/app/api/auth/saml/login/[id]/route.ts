@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { absoluteAppUrl } from "~/lib/appUrl";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/auth/saml/login/[id]
@@ -8,7 +9,7 @@ import { absoluteAppUrl } from "~/lib/appUrl";
  * The signin page navigates here with the provider ID in the URL path.
  * This handler extracts the ID and delegates to /api/auth/saml?provider={id}.
  */
-export async function GET(
+async function handleGET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
@@ -23,3 +24,5 @@ export async function GET(
 
   return NextResponse.redirect(samlUrl);
 }
+
+export const GET = withPrimaryRequestRouting(handleGET);

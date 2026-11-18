@@ -13,6 +13,7 @@ import { RefNotFoundError } from "~/lib/services/impact/compareService";
 import { loadRepoConfigForUser } from "~/lib/services/impact/repoAccess";
 import { isAccessPolicyError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const pinSelect = {
   id: true,
@@ -42,7 +43,7 @@ const pinSelect = {
  * Gate order: 401 -> 400 -> 404 -> 409 (managed/duplicate) -> 422 (anchor) ->
  * 403 -> 200.
  */
-export async function PATCH(
+async function handlePATCH(
   req: NextRequest,
   { params }: { params: Promise<{ caseId: string; pinId: string }> }
 ) {
@@ -227,13 +228,15 @@ export async function PATCH(
   }
 }
 
+export const PATCH = withRequestRouting(handlePATCH);
+
 /**
  * DELETE /api/repository-cases/[caseId]/code-pins/[pinId]
  * Soft-deletes a manual or AI pin. Repository-managed pins (ANNOTATION,
  * MAPFILE) are owned by the marker scan and cannot be removed here.
  * Gate order: 401 -> 400 -> 404 -> 409 -> 403 -> 200.
  */
-export async function DELETE(
+async function handleDELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ caseId: string; pinId: string }> }
 ) {
@@ -279,3 +282,5 @@ export async function DELETE(
     );
   }
 }
+
+export const DELETE = withRequestRouting(handleDELETE);

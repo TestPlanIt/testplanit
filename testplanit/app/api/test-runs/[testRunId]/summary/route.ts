@@ -6,10 +6,11 @@ import {
   TestRunNotFoundError,
 } from "~/lib/services/testRunSummary";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export type { TestRunSummaryData } from "~/lib/services/testRunSummary";
 
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ testRunId: string }> }
 ) {
@@ -45,3 +46,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

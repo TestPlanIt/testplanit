@@ -11,6 +11,7 @@ import { userCanAddEditArea } from "~/lib/services/projectPermissions";
 import { createSessionVersionInTransaction } from "~/lib/services/sessionVersionService";
 import { authOptions } from "~/server/auth";
 import { ApplicationArea } from "~/zenstack/models";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const createVersionSchema = z.object({
   // Increment Sessions.currentVersion and snapshot at the new number, in one
@@ -26,7 +27,7 @@ const createVersionSchema = z.object({
  * API clients (the MCP server) leave the same history. Accepts a browser
  * session or an API token, and requires add/edit on sessions.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ sessionId: string }> }
@@ -116,3 +117,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

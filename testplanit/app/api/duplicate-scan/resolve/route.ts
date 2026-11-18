@@ -17,6 +17,7 @@ import {
   linkPairs,
   mergeCases,
 } from "~/lib/services/mergeService";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /** Upper bound on pairs per bulk request (the server chunks internally). */
 const MAX_BULK_PAIRS = 50_000;
@@ -74,7 +75,7 @@ async function canResolve(userId: string, projectId: number) {
   );
 }
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -223,3 +224,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

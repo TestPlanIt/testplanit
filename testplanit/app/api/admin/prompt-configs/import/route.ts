@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { authOptions } from "~/server/auth";
 import { z } from "zod/v4";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const ImportSchema = z.object({
   name: z.string().min(1),
@@ -23,7 +24,7 @@ const ImportSchema = z.object({
   ),
 });
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -123,3 +124,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

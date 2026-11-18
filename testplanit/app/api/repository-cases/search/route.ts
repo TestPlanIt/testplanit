@@ -8,6 +8,7 @@ import {
   searchRepositoryCases,
   type SearchOptions,
 } from "~/services/repositoryCaseSearch";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Search request schema
 const searchSchema = z.object({
@@ -64,7 +65,7 @@ const searchSchema = z.object({
   facets: z.array(z.string()).optional(),
 });
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     // Check authentication - try session first, then API token
     const session = await getServerAuthSession();
@@ -114,8 +115,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export const POST = withRequestRouting(handlePOST);
+
 // GET endpoint for search suggestions
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     // Check authentication - try session first, then API token
     const session = await getServerAuthSession();
@@ -158,3 +161,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

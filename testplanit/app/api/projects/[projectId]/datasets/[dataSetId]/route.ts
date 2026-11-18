@@ -7,6 +7,7 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Project-scoped shared dataset detail + soft-delete endpoint.
@@ -28,7 +29,7 @@ import { authOptions } from "~/server/auth";
  *          runs is preserved by the snapshot capture).
  */
 
-export async function GET(
+async function handleGET(
   _request: NextRequest,
   {
     params,
@@ -97,7 +98,9 @@ export async function GET(
   }
 }
 
-export const DELETE = withAuditContext(
+export const GET = withRequestRouting(handleGET);
+
+const handleDELETE = withAuditContext(
   async (
     request: NextRequest,
     {
@@ -214,3 +217,5 @@ export const DELETE = withAuditContext(
     }
   }
 );
+
+export const DELETE = withRequestRouting(handleDELETE);

@@ -18,8 +18,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { getProjectAccessRoster } from "~/lib/services/projectAccessRoster";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(
+async function handleGET(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -57,3 +58,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

@@ -12,6 +12,7 @@ import {
   removeJob,
 } from "~/lib/services/queueAdmin";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Helper to check admin authentication (session or API token)
 async function checkAdminAuth(
@@ -70,7 +71,7 @@ async function checkAdminAuth(
 }
 
 // POST: Perform actions on the queue (pause, resume, clean, drain, obliterate)
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ queueName: string }> }
@@ -197,8 +198,10 @@ export const POST = withAuditContext(
   }
 );
 
+export const POST = withRequestRouting(handlePOST);
+
 // DELETE: Remove a specific job from the queue
-export const DELETE = withAuditContext(
+const handleDELETE = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ queueName: string }> }
@@ -266,3 +269,5 @@ export const DELETE = withAuditContext(
     }
   }
 );
+
+export const DELETE = withRequestRouting(handleDELETE);

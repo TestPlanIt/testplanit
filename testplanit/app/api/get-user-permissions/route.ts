@@ -10,6 +10,7 @@ import {
   type AreaPermissions,
 } from "~/lib/services/areaPermission";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Define the input schema using Zod
 const PermissionCheckSchema = z.object({
@@ -19,7 +20,7 @@ const PermissionCheckSchema = z.object({
   checkAccessOnly: z.boolean().optional(), // New flag to only check if user has project access
 });
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   // CR-02 fix: require an authenticated caller and refuse to disclose
   // another user's effective role unless the caller is a system ADMIN.
   // The endpoint returns a user's effective project role + access type;
@@ -143,3 +144,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

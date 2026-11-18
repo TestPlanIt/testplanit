@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 import { baseDb } from "~/lib/db";
 import { getEffectiveRunCaseStatuses } from "~/lib/services/effectiveCaseStatus";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const querySchema = z.object({
   caseAId: z.coerce.number().int().positive(),
@@ -111,7 +112,7 @@ async function fetchCaseDetails(caseId: number) {
   };
 }
 
-export async function GET(request: Request) {
+async function handleGET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -157,3 +158,5 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

@@ -11,6 +11,7 @@ import {
   getVerifierCookieName,
 } from "~/lib/passwordless";
 import { db } from "~/server/db";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/auth/passwordless/callback?pid=<id>&token=<linkToken>&code=<code>
@@ -30,7 +31,7 @@ import { db } from "~/server/db";
  *    their original window.
  *  - invalid/expired/used link → friendly expired page. Never a stack trace.
  */
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   // Locale-less page targets: proxy.ts localizes /passwordless/* entry URLs
   // (same treatment as emailed /share links) using the visitor's preferred
   // locale, so this handler doesn't pin one.
@@ -91,3 +92,5 @@ export async function GET(req: NextRequest) {
     `${baseUrl}/passwordless/code?code=${encodeURIComponent(code)}`
   );
 }
+
+export const GET = withPrimaryRequestRouting(handleGET);

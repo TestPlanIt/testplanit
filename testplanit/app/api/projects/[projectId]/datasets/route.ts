@@ -10,6 +10,7 @@ import { paginatedFindManyWithRelations } from "~/lib/paginatedFindMany";
 import { sharedDatasetCreateSchema } from "~/lib/schemas/sharedDatasetCreateSchema";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Project-scoped shared-dataset list + create endpoint.
@@ -33,7 +34,7 @@ import { authOptions } from "~/server/auth";
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 200;
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -112,7 +113,9 @@ export async function GET(
   }
 }
 
-export const POST = withAuditContext(
+export const GET = withRequestRouting(handleGET);
+
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string }> }
@@ -204,3 +207,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

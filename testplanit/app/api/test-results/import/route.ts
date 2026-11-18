@@ -72,6 +72,7 @@ import {
 } from "~/lib/services/llmStepDerivation";
 import type { DeriveCaseStepsJobData } from "~/workers/deriveCaseStepsWorker";
 import { progressMessages } from "./progress-messages";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Helper function to find matching status
 async function findMatchingStatus(junitStatus: string, projectId: number) {
@@ -149,7 +150,7 @@ function parseDuration(duration: unknown): number {
   return 0;
 }
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   // Try session-based auth first, then fall back to API token auth
   const session = await getServerAuthSession();
   let userId: string | undefined = session?.user?.id;
@@ -1568,3 +1569,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     },
   });
 });
+
+export const POST = withRequestRouting(handlePOST);

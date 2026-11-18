@@ -16,12 +16,13 @@ import { authOptions } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { getIndicesForEntityTypes } from "~/services/unifiedElasticsearchService";
 import { SearchHit, SearchOptions, UnifiedSearchResult } from "~/types/search";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/search
  * Unified search endpoint for all entity types
  */
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -256,3 +257,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Search failed" }, { status: 500 });
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

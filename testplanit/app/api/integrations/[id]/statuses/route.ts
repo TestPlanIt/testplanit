@@ -4,6 +4,7 @@ import { FIXED_TRACKER_STATUSES } from "@/lib/integrations/fixedTrackerStatuses"
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * The statuses an issue tracker uses, from its adapter: a project's workflow
@@ -11,7 +12,7 @@ import { authOptions } from "~/server/auth";
  * global list, or the fixed states of trackers that only open and close.
  * A tracker that can't list statuses returns an empty list.
  */
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -87,3 +88,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

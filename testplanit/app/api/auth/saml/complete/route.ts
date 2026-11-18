@@ -4,9 +4,10 @@ import { consumeTempSessionToken } from "~/lib/auth-security";
 import { db } from "~/server/db";
 import { absoluteAppUrl } from "~/lib/appUrl";
 import { COOKIE_PATH } from "~/lib/basePath";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
 // SAML completion handler - creates NextAuth session
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const token = searchParams.get("token");
@@ -118,3 +119,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withPrimaryRequestRouting(handleGET);

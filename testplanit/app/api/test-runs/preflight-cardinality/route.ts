@@ -9,6 +9,7 @@ import {
   type PreflightCaseInput,
 } from "~/lib/services/iterationCardinality";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/test-runs/preflight-cardinality
@@ -33,7 +34,7 @@ const requestSchema = z.object({
   projectId: z.number().int().positive(),
 });
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -161,3 +162,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

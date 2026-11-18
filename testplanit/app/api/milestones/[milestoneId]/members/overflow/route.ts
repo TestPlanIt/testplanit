@@ -7,6 +7,7 @@ import { authorizeProjectMilestoneSyncAdmin } from "~/lib/integrations/importAut
 import { milestoneSyncService } from "~/lib/integrations/services/MilestoneSyncService";
 import { IMPORT_MAX_CAP } from "~/lib/integrations/services/SyncService";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/milestones/[milestoneId]/members/overflow
@@ -47,7 +48,7 @@ const EMPTY_ENVELOPE: Omit<MemberOverflowResponse, "linkedCount"> = {
   overflowTotal: 0,
 };
 
-export async function GET(
+async function handleGET(
   _req: NextRequest,
   context: { params: Promise<{ milestoneId: string }> }
 ) {
@@ -183,6 +184,8 @@ export async function GET(
   }
 }
 
+export const GET = withRequestRouting(handleGET);
+
 /**
  * POST /api/milestones/[milestoneId]/members/overflow
  *
@@ -196,7 +199,7 @@ export async function GET(
  * specific set of issues to be linked; it can only ask "sync this milestone
  * now" and the server decides what's actually a member.
  */
-export async function POST(
+async function handlePOST(
   _req: NextRequest,
   context: { params: Promise<{ milestoneId: string }> }
 ) {
@@ -294,3 +297,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

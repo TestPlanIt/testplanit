@@ -3,12 +3,13 @@ import { loadLlmCredentials } from "@/lib/llm/credentials";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * What the edit dialog may show of an AI model's credentials: its endpoint
  * and whether a key is set. The key itself never leaves the server.
  */
-export async function GET(
+async function handleGET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -43,3 +44,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

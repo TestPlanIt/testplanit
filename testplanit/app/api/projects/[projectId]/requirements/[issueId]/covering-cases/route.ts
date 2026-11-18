@@ -13,6 +13,7 @@ import {
   type RequirementCoveringCase,
 } from "~/lib/services/requirementCoverage";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export type RequirementCoveringCaseRow = RequirementCoveringCase & {
   direct: boolean;
@@ -51,17 +52,21 @@ type RouteContext = {
  * (`{ milestoneIds, configIds }`), for a scope too long for a query
  * string.
  */
-export function GET(request: NextRequest, context: RouteContext) {
+function handleGET(request: NextRequest, context: RouteContext) {
   return handleCoveringCases(context, () =>
     parseExecutionScopeQuery(request.nextUrl.searchParams)
   );
 }
 
-export function POST(request: NextRequest, context: RouteContext) {
+export const GET = withRequestRouting(handleGET);
+
+function handlePOST(request: NextRequest, context: RouteContext) {
   return handleCoveringCases(context, () =>
     parseExecutionScopeRequestBody(request)
   );
 }
+
+export const POST = withRequestRouting(handlePOST);
 
 async function handleCoveringCases(
   { params }: RouteContext,

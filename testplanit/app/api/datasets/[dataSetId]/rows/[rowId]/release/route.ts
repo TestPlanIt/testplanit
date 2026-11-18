@@ -12,6 +12,7 @@ import {
   resolveLeaseApiUser,
 } from "~/lib/services/datasetLease";
 import { emitDatasetRowReleased } from "~/lib/webhooks/event-emitters/datasetLeaseEvents";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/datasets/{dataSetId}/rows/{rowId}/release — 999.12.
@@ -32,7 +33,7 @@ const releaseBodySchema = z.object({
   leaseToken: z.string().min(1).optional(),
 });
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ dataSetId: string; rowId: string }> }
@@ -130,3 +131,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

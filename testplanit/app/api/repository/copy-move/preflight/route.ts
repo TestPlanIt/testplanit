@@ -13,8 +13,9 @@ import {
   getWorkflowNamesByIds,
 } from "~/lib/services/workflowStateMapping";
 import { preflightSchema, type PreflightResponse } from "../schemas";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -313,3 +314,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

@@ -4,6 +4,7 @@ import { resolveViewerProjectScope } from "~/lib/authContext";
 import { baseDb } from "~/lib/db";
 import { getCaseLatestExecutedAt } from "~/lib/services/latestCaseResults";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export type CaseLatestExecutionResponse = {
   caseId: number;
@@ -37,7 +38,7 @@ export type CaseLatestExecutionResponse = {
  * sibling reference routes avoid the same oracle by gating on the
  * client-supplied projectId first, which this route does not have).
  */
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
@@ -87,3 +88,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

@@ -6,6 +6,7 @@ import { z, ZodError } from "zod/v4";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Phase 2 Plan 02-02 — Dataset row mutations (auto-save model).
@@ -59,7 +60,7 @@ async function resolveCaseAndDataset(
   return { testCase, dataset };
 }
 
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
@@ -153,7 +154,9 @@ export async function POST(
   }
 }
 
-export async function PATCH(
+export const POST = withRequestRouting(handlePOST);
+
+async function handlePATCH(
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
@@ -216,7 +219,9 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
+export const PATCH = withRequestRouting(handlePATCH);
+
+async function handleDELETE(
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
@@ -265,3 +270,5 @@ export async function DELETE(
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const DELETE = withRequestRouting(handleDELETE);

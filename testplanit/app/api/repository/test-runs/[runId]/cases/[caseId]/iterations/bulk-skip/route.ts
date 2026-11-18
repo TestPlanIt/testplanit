@@ -22,6 +22,7 @@ import {
   type ParameterSchemaEntry,
 } from "~/lib/services/parameterRedaction";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Phase 3 Wave 5 (Task 13) — Bulk-apply-status endpoint for parameterized
@@ -98,7 +99,7 @@ function parseAuditSchema(value: unknown): ParameterSchemaEntry[] {
   return out;
 }
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     req: NextRequest,
     {
@@ -383,3 +384,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

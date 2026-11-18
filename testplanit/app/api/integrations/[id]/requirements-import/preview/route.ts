@@ -9,6 +9,7 @@ import {
   readRequirementTypeConfig,
 } from "~/lib/integrations/requirementTypeConfig";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Windowless, type-scoped count probe (D-07's consent prompt). Approximates
@@ -26,7 +27,7 @@ import { authOptions } from "~/server/auth";
  * the mapping lookup deliberately follows the admin check so a 404 never
  * discloses a mapping's existence to a caller who failed the 403.
  */
-export async function POST(
+async function handlePOST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -131,3 +132,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

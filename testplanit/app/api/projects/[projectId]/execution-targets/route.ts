@@ -11,6 +11,7 @@ import {
 } from "~/lib/execution/targetAccess";
 import { userCanAddEditArea } from "~/lib/services/projectPermissions";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/projects/{projectId}/execution-targets
@@ -18,7 +19,7 @@ import { getServerAuthSession } from "~/server/auth";
  * anyone who can add/edit runs in the project — the same data the run page's
  * dialog gets from its server action, exposed for API tokens (CLI, MCP).
  */
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -67,6 +68,8 @@ export async function GET(
   );
 }
 
+export const GET = withRequestRouting(handleGET);
+
 /**
  * POST /api/projects/{projectId}/execution-targets
  * Body: the same shape the project settings dialog sends (name, provider,
@@ -76,7 +79,7 @@ export async function GET(
  * merely being valid is not enough; createExecutionTargetForActor enforces
  * it against this project.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string }> }
@@ -123,3 +126,5 @@ export const POST = withAuditContext(
     );
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

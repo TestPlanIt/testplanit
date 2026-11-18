@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { scanParameterReferences } from "~/lib/services/parameterReferences";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Phase 2 Plan 02-02 — GET /api/repository/cases/[caseId]/parameters/[paramId]/scan-references
@@ -18,7 +19,7 @@ import { authOptions } from "~/server/auth";
  * (the ZenStack v2 enhanced client supports the same query API as a
  * transaction client for read operations).
  */
-export async function GET(
+async function handleGET(
   _request: NextRequest,
   { params }: { params: Promise<{ caseId: string; paramId: string }> }
 ) {
@@ -52,3 +53,5 @@ export async function GET(
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const GET = withRequestRouting(handleGET);

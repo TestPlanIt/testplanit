@@ -4,9 +4,10 @@ import {
   listAdminAttachments,
 } from "~/lib/services/adminAttachments";
 import { checkAdminAuth } from "../trash/shared";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /** Every attachment on the instance, paged, for Admin > Attachments. */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const auth = await checkAdminAuth(request);
   if (auth.error) return auth.error;
 
@@ -30,3 +31,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

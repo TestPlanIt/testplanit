@@ -6,6 +6,7 @@ import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Test endpoint for LLM integration
@@ -13,7 +14,7 @@ import { authOptions } from "~/server/auth";
  * POST /api/llm/test - Tests an LLM integration
  */
 
-export async function GET(_request: NextRequest) {
+async function handleGET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -79,7 +80,9 @@ export async function GET(_request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export const GET = withRequestRouting(handleGET);
+
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -260,3 +263,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

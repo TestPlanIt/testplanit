@@ -5,8 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditSystemConfigChange } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
       const session = await getServerSession(authOptions);
@@ -83,3 +84,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

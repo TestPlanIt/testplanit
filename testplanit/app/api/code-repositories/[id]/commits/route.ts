@@ -9,6 +9,7 @@ import {
   providerErrorResponse,
   resolveRepoRouteContext,
 } from "~/lib/services/impact/repoRouteContext";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
 const querySchema = z.object({
   ref: z.string().trim().min(1).max(255).optional(),
@@ -22,7 +23,7 @@ const querySchema = z.object({
  * Commit log for a branch, tag, or sha (newest first). `ref` defaults to the
  * config's branch, then the repository default branch.
  */
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -75,3 +76,5 @@ export async function GET(
     return providerErrorResponse(error);
   }
 }
+
+export const GET = withPrimaryRequestRouting(handleGET);

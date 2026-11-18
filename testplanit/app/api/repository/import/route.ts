@@ -21,6 +21,7 @@ import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { parseStepsCell } from "~/lib/utils/parseExportedSteps";
 import { aggregateMultiRowSteps } from "~/lib/utils/aggregateMultiRowSteps";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 function parseTags(value: any): string[] {
   if (!value) return [];
@@ -162,7 +163,7 @@ interface ImportError {
   caseName?: string;
 }
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -1209,6 +1210,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     },
   });
 });
+
+export const POST = withRequestRouting(handlePOST);
 
 function validateFieldValue(
   value: any,

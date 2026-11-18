@@ -8,6 +8,7 @@ import {
 import { auditSystemConfigChange } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Helper to check admin authentication (session or API token)
 async function checkAdminAuth(
@@ -66,7 +67,7 @@ async function checkAdminAuth(
 }
 
 // GET: Retrieve current replica settings
-export const GET = withAuditContext(async (request: NextRequest) => {
+const handleGET = withAuditContext(async (request: NextRequest) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -88,8 +89,10 @@ export const GET = withAuditContext(async (request: NextRequest) => {
   }
 });
 
+export const GET = withRequestRouting(handleGET);
+
 // POST: Save replica settings to database
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -141,8 +144,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
   }
 });
 
+export const POST = withRequestRouting(handlePOST);
+
 // PUT: Update existing indices with new replica settings
-export const PUT = withAuditContext(async (request: NextRequest) => {
+const handlePUT = withAuditContext(async (request: NextRequest) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -206,3 +211,5 @@ export const PUT = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const PUT = withRequestRouting(handlePUT);

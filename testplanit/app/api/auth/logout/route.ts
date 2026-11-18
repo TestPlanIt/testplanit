@@ -6,8 +6,12 @@ import { db } from "~/server/db";
 import { createSAMLClient } from "~/server/saml-provider";
 import { absoluteAppUrl } from "~/lib/appUrl";
 import { COOKIE_PATH } from "~/lib/basePath";
+import {
+  withPrimaryRequestRouting,
+  withRequestRouting,
+} from "~/lib/db/requestRouting";
 
-export const POST = withAuditContext(async (_request: NextRequest) => {
+const handlePOST = withAuditContext(async (_request: NextRequest) => {
   try {
     // Get the current session to understand how the user signed in
     const session = await getServerAuthSession();
@@ -178,8 +182,10 @@ export const POST = withAuditContext(async (_request: NextRequest) => {
   }
 });
 
+export const POST = withRequestRouting(handlePOST);
+
 // Handle SAML logout callback
-export const GET = withAuditContext(async (request: NextRequest) => {
+const handleGET = withAuditContext(async (request: NextRequest) => {
   try {
     // Handle SAML logout response
     const searchParams = request.nextUrl.searchParams;
@@ -198,3 +204,5 @@ export const GET = withAuditContext(async (request: NextRequest) => {
     return NextResponse.redirect(absoluteAppUrl("/signin?error=logout-failed"));
   }
 });
+
+export const GET = withPrimaryRequestRouting(handleGET);

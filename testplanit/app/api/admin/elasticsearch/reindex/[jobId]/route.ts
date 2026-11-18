@@ -5,6 +5,7 @@ import { BULLMQ_PREFIX } from "@/lib/bullPrefix";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Helper to check admin authentication (session or API token)
 async function checkAdminAuth(
@@ -54,7 +55,7 @@ async function checkAdminAuth(
   return { userId };
 }
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
@@ -133,3 +134,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

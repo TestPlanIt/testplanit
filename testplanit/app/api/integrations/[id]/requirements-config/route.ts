@@ -14,6 +14,7 @@ import {
 } from "~/lib/integrations/requirementTypeConfig";
 import { recomputeRequirementClassification } from "~/lib/services/requirementHierarchy";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 function isPlainStringRecord(value: unknown): value is Record<string, string> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -40,7 +41,7 @@ function isPlainStringRecord(value: unknown): value is Record<string, string> {
  * issueTypeNames }` shape has no sub-field that skips the recompute, so
  * this route is the only save path for it.
  */
-export const PUT = withAuditContext(
+const handlePUT = withAuditContext(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
       const session = await getServerSession(authOptions);
@@ -176,3 +177,5 @@ export const PUT = withAuditContext(
     }
   }
 );
+
+export const PUT = withRequestRouting(handlePUT);

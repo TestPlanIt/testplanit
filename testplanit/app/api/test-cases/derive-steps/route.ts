@@ -14,6 +14,7 @@ import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
 import { baseDb } from "~/lib/db";
 import { enqueueDeriveCaseSteps } from "~/lib/services/llmStepDerivation";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const bodySchema = z.object({
   projectId: z.number().int().positive(),
@@ -34,7 +35,7 @@ const bodySchema = z.object({
     .min(1),
 });
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   // Authenticate (session OR API token — the reporter uses an API token).
   const session = await getServerAuthSession();
   let userId = session?.user?.id;
@@ -111,3 +112,5 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ enqueued });
 }
+
+export const POST = withRequestRouting(handlePOST);

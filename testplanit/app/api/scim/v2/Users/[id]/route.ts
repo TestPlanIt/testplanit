@@ -36,6 +36,10 @@ import {
   patchScimUser,
   putScimUser,
 } from "~/lib/scim/services/users";
+import {
+  withPrimaryRequestRouting,
+  withRequestRouting,
+} from "~/lib/db/requestRouting";
 
 /**
  * Inbound SCIM User body shape for PUT (and POST, on the collection sibling
@@ -95,7 +99,7 @@ const scimPatchSchema = z
   })
   .loose();
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
@@ -121,7 +125,9 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export const GET = withPrimaryRequestRouting(handleGET);
+
+async function handlePUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
@@ -182,7 +188,9 @@ export async function PUT(
   }
 }
 
-export async function PATCH(
+export const PUT = withRequestRouting(handlePUT);
+
+async function handlePATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
@@ -243,7 +251,9 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
+export const PATCH = withRequestRouting(handlePATCH);
+
+async function handleDELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
@@ -275,6 +285,10 @@ export async function DELETE(
   }
 }
 
-export async function POST(): Promise<NextResponse> {
+export const DELETE = withRequestRouting(handleDELETE);
+
+async function handlePOST(): Promise<NextResponse> {
   return scimError(405, null, "Method not supported");
 }
+
+export const POST = withRequestRouting(handlePOST);

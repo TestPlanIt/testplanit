@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET() {
+async function handleGET() {
   const session = await getServerAuthSession();
 
   // Only allow admins to check configuration status
@@ -19,3 +20,5 @@ export async function GET() {
 
   return NextResponse.json({ configured: isConfigured });
 }
+
+export const GET = withRequestRouting(handleGET);

@@ -6,6 +6,7 @@ import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Admin user-create endpoint with atomic soft-delete detection.
@@ -47,7 +48,7 @@ const createSchema = z.object({
   emailVerified: z.iso.datetime().nullable().optional(),
 });
 
-export const POST = withAuditContext(async (req: NextRequest) => {
+const handlePOST = withAuditContext(async (req: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -183,3 +184,5 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

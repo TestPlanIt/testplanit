@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdminAuth, getTrashModel } from "../shared";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   context: { params: Promise<{ itemType: string }> }
 ) {
@@ -73,3 +74,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

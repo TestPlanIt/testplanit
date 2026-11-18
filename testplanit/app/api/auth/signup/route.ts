@@ -7,6 +7,7 @@ import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { isForceSsoEnabled } from "~/lib/utils/force-sso";
 import { db } from "~/server/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Dedicated signup API endpoint that bypasses ZenStack access control.
@@ -29,7 +30,7 @@ const signupSchema = z.object({
   password: z.string().min(4),
 });
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   try {
     const body = await req.json();
 
@@ -184,3 +185,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

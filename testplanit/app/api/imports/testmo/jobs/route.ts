@@ -9,6 +9,7 @@ import { db } from "~/server/db";
 import { JOB_PROCESS_TESTMO_IMPORT } from "~/services/imports/testmo/constants";
 import { serializeImportJob } from "~/services/imports/testmo/jobPresenter";
 import type { TestmoImportJobPayload } from "~/services/imports/testmo/types";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const bucketName = process.env.AWS_BUCKET_NAME;
 
@@ -22,7 +23,7 @@ function getQueue() {
   return queue;
 }
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   // This endpoint is a Testmo-import preparation step (job create). The
   // consequential event is the import START -> COMPLETE pair audited at:
   //   - POST /api/imports/testmo/jobs/[jobId]/import (IMPORT_STARTED)
@@ -100,7 +101,9 @@ export const POST = withAuditContext(async (request: NextRequest) => {
   }
 });
 
-export async function GET(request: NextRequest) {
+export const POST = withRequestRouting(handlePOST);
+
+async function handleGET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -131,3 +134,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

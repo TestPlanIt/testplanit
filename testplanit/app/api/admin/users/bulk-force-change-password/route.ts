@@ -3,8 +3,9 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export const POST = withAuditContext(async (_request: NextRequest) => {
+const handlePOST = withAuditContext(async (_request: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -41,3 +42,5 @@ export const POST = withAuditContext(async (_request: NextRequest) => {
 
   return NextResponse.json({ success: true, count: result.count });
 });
+
+export const POST = withRequestRouting(handlePOST);

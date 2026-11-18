@@ -8,13 +8,14 @@ import { impactCancelKey } from "~/lib/services/impact/jobKeys";
 import { setCancelFlags } from "~/lib/services/jobCancel";
 import { isAccessPolicyError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/projects/[projectId]/impact/analyses/[analysisId]/cancel
  * Creator or project admin only. A waiting job is removed; an active one
  * gets the Redis cancel flag the worker checks between phases and batches.
  */
-export async function POST(
+async function handlePOST(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string; analysisId: string }> }
 ) {
@@ -96,3 +97,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

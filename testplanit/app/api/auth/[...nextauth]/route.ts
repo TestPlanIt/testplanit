@@ -6,6 +6,10 @@ import {
 } from "~/lib/auditContext";
 import { getAuthOptions } from "~/server/auth";
 import { COOKIE_PATH } from "~/lib/basePath";
+import {
+  withPrimaryRequestRouting,
+  withRequestRouting,
+} from "~/lib/db/requestRouting";
 
 /**
  * Clear existing session cookies to prevent conflicts when signing in
@@ -32,7 +36,7 @@ async function clearSessionCookies() {
 
 // Create handlers dynamically to load providers from database
 // Note: In Next.js 15+, params is a Promise that must be awaited
-export async function GET(
+async function handleGET(
   req: Request,
   context: { params: Promise<{ nextauth: string[] }> }
 ) {
@@ -62,7 +66,9 @@ export async function GET(
   return runWithAuditContext(auditCtx, () => handler(req, resolvedContext));
 }
 
-export async function POST(
+export const GET = withPrimaryRequestRouting(handleGET);
+
+async function handlePOST(
   req: Request,
   context: { params: Promise<{ nextauth: string[] }> }
 ) {
@@ -77,3 +83,5 @@ export async function POST(
   const auditCtx = extractAuditContextFromHeaders(req.headers);
   return runWithAuditContext(auditCtx, () => handler(req, resolvedContext));
 }
+
+export const POST = withRequestRouting(handlePOST);

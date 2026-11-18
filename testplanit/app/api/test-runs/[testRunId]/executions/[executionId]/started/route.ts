@@ -13,6 +13,7 @@ import {
 } from "~/lib/execution/runAccess";
 import { publishExecutionChanged } from "~/lib/execution/service";
 import { ACTIVE_EXECUTION_STATUSES } from "~/lib/execution/types";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const bodySchema = z.object({
   externalUrl: externalUrlSchema,
@@ -27,7 +28,7 @@ const bodySchema = z.object({
  * item); harmless for the others. Moves a waiting execution to RUNNING and
  * may be called again, for example by a retried job.
  */
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ testRunId: string; executionId: string }> }
 ) {
@@ -81,3 +82,5 @@ export async function POST(
   publishExecutionChanged(updated);
   return NextResponse.json({ id: updated.id, status: updated.status });
 }
+
+export const POST = withRequestRouting(handlePOST);

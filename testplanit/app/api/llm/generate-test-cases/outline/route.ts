@@ -48,8 +48,9 @@ import {
   resolveIssueAttachmentImages,
   type ContextImagesRequestBody,
 } from "../context-image-sources";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -524,3 +525,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

@@ -5,6 +5,7 @@ import {
   loadSpecByCategory,
   type ApiCategory,
 } from "~/lib/openapi/merge-specs";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/docs
@@ -14,7 +15,7 @@ import {
  * - category: specific API category (custom, projects, testCases, testRuns, planning, users, attachments)
  * - list: if "true", returns list of available categories instead of spec
  */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const listCategories = searchParams.get("list") === "true";
@@ -61,3 +62,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

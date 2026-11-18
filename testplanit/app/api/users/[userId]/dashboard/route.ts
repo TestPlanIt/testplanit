@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { resolveAccessibleProjectIds } from "~/lib/authContext";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export type UserDashboardData = {
   untestedStatusId: number | null;
@@ -37,7 +38,7 @@ export type UserDashboardData = {
   }>;
 };
 
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
@@ -203,3 +204,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

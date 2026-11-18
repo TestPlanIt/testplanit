@@ -4,6 +4,7 @@ import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { baseDb } from "~/lib/db";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Admin tag-create endpoint with atomic soft-delete detection.
@@ -43,7 +44,7 @@ const createSchema = z.object({
 // create hook carries the actor: the wrapper seeds the ALS frame and the
 // NextAuth session callback (fired by getServerAuthSession below) enriches it
 // with userId/userEmail/userName. Without the frame that enrichment is a no-op.
-export const POST = withAuditContext(async (req: NextRequest) => {
+const handlePOST = withAuditContext(async (req: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -130,3 +131,5 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

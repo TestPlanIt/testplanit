@@ -9,6 +9,7 @@ import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
 import { authOptions } from "~/server/auth";
 import { MAX_CONTEXT_IMAGES, MAX_IMAGE_BYTES } from "~/lib/llm/context-images";
 import { resolveAttachmentImageMime } from "../context-image-sources";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * List the image attachments of an external issue, for the Generate wizard's
@@ -20,7 +21,7 @@ import { resolveAttachmentImageMime } from "../context-image-sources";
  * authorization is enforced here: the caller must have project access and
  * the integration must belong to that project.
  */
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -178,3 +179,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

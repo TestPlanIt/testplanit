@@ -21,6 +21,7 @@ import {
   isNotFoundError,
 } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Body schema for POST /api/reviews/[id]/decide.
@@ -46,7 +47,7 @@ const decideBodySchema = z
     }
   );
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     context: { params: Promise<{ id: string }> }
@@ -192,3 +193,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

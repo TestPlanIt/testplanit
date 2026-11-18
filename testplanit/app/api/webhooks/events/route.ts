@@ -25,8 +25,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { authOptions } from "~/server/auth";
 import { listEventCatalog } from "~/lib/webhooks/eventCatalog";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   const auth = await authenticateRequest(request, session);
   if (!auth.authenticated) {
@@ -50,3 +51,5 @@ export async function GET(request: NextRequest) {
     events,
   });
 }
+
+export const GET = withRequestRouting(handleGET);

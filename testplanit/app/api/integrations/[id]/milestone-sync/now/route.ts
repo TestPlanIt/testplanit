@@ -7,6 +7,7 @@ import { authorizeProjectMilestoneSyncAdmin } from "~/lib/integrations/importAut
 import { milestoneSyncService } from "~/lib/integrations/services/MilestoneSyncService";
 import type { SyncJobData } from "~/lib/integrations/services/SyncService";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * "Sync now" for milestones — gate-0 (manual) / gate-300 (hover/page-load)
@@ -21,7 +22,7 @@ import { authOptions } from "~/server/auth";
  *     the project, so a page-load calling this on mount doesn't fire N
  *     requests for N milestones.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
       const session = await getServerSession(authOptions);
@@ -144,3 +145,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

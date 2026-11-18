@@ -10,6 +10,7 @@ import {
   providerErrorResponse,
   resolveRepoRouteContext,
 } from "~/lib/services/impact/repoRouteContext";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Providers without a native file diff (Azure DevOps, Gitea) fetch both sides
 // of every changed file; give them room.
@@ -23,7 +24,7 @@ const querySchema = z.object({ base: refSchema, head: refSchema });
  * Files changed between two refs. Refs are resolved to shas first so the
  * cache key is immutable.
  */
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -73,3 +74,5 @@ export async function GET(
     return providerErrorResponse(error);
   }
 }
+
+export const GET = withRequestRouting(handleGET);

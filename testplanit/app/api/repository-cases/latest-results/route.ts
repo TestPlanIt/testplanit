@@ -4,6 +4,7 @@ import { getEnhancedDb } from "~/lib/auth/utils";
 import { getLatestTestResultsByCase } from "~/lib/services/latestTestResults";
 import { LATEST_RESULTS_COUNT } from "~/lib/types/latestTestResults";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/repository-cases/latest-results
@@ -18,7 +19,7 @@ import { authOptions } from "~/server/auth";
  * the raw client; the ids are narrowed through the policy layer first, so a
  * caller only ever learns about cases it may already read.
  */
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -67,3 +68,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

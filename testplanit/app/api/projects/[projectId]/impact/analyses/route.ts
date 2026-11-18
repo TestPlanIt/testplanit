@@ -13,6 +13,7 @@ import {
 import { startImpactAnalysis } from "~/lib/services/impact/startAnalysis";
 import { isAccessPolicyError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const refSchema = z.string().trim().min(1).max(255).regex(/^\S+$/);
 
@@ -61,7 +62,7 @@ function parseProjectId(raw: string): number | null {
  * 400 (several repos, no configId) -> 404 (config) -> 404 (ref) ->
  * 400 (same commit) -> 403 (policy) -> 503 (queue) -> 202.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     req: NextRequest,
     { params }: { params: Promise<{ projectId: string }> }
@@ -216,12 +217,14 @@ export const POST = withAuditContext(
   }
 );
 
+export const POST = withRequestRouting(handlePOST);
+
 /**
  * GET /api/projects/[projectId]/impact/analyses?take=&cursor=&configId=
  * Newest analyses first, optionally for one connected repository. Policy on
  * the enhanced client scopes rows.
  */
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -274,3 +277,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { getMagicSelectQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const submitSchema = z.object({
   projectId: z.number(),
@@ -18,7 +19,7 @@ const submitSchema = z.object({
   excludeCaseIds: z.array(z.number()).optional(),
 });
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -58,3 +59,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

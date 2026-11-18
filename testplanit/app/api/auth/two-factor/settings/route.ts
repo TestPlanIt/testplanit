@@ -2,12 +2,13 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/auth/two-factor/settings
  * Get the system 2FA settings to determine if 2FA can be disabled
  */
-export async function GET() {
+async function handleGET() {
   try {
     const session = await getServerSession(authOptions);
 
@@ -34,3 +35,5 @@ export async function GET() {
     );
   }
 }
+
+export const GET = withPrimaryRequestRouting(handleGET);

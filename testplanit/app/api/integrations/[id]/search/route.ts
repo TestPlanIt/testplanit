@@ -9,6 +9,7 @@ import {
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // The search dialog opens this URL in a popup, so the callback should land on
 // the neutral auth-complete page (accessible to every signed-in user), not an
@@ -16,7 +17,7 @@ import { authOptions } from "~/server/auth";
 const buildOAuthKickoffUrl = (provider: string, integrationId: number) =>
   `/api/integrations/oauth/${provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -201,3 +202,5 @@ export async function GET(
     });
   }
 }
+
+export const GET = withRequestRouting(handleGET);

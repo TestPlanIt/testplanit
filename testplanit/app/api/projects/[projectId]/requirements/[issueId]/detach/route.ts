@@ -7,6 +7,7 @@ import { baseDb } from "~/lib/db";
 import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // This route takes no request body. An absent or empty body is tolerated;
 // a non-empty body must still be a plain object with no unexpected keys,
@@ -41,7 +42,7 @@ const emptyBodySchema = z.object({}).strict();
  * (authorizeProjectAdminForProject) -> 404 (not a live requirement in this
  * project) -> 400 (no integrationId to detach from) -> operate.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string; issueId: string }> }
@@ -153,3 +154,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

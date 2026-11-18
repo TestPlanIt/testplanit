@@ -3,8 +3,9 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { getGenerateFromUrlQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(
+async function handleGET(
   _request: Request,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
@@ -101,11 +102,13 @@ export async function GET(
   }
 }
 
+export const GET = withRequestRouting(handleGET);
+
 /**
  * PUT: Save generated test cases to Redis so the notification link
  * can restore them without re-running LLM generation.
  */
-export async function PUT(
+async function handlePUT(
   request: Request,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
@@ -143,11 +146,13 @@ export async function PUT(
   }
 }
 
+export const PUT = withRequestRouting(handlePUT);
+
 /**
  * DELETE: Clean up crawled page content and generated results from Redis after import.
  * Prevents the notification link from re-triggering generation.
  */
-export async function DELETE(
+async function handleDELETE(
   _request: Request,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
@@ -181,3 +186,5 @@ export async function DELETE(
     );
   }
 }
+
+export const DELETE = withRequestRouting(handleDELETE);

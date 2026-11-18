@@ -18,6 +18,7 @@ import {
   isAutomatedTestRunType,
   isHybridTestRunType,
 } from "~/utils/testResultTypes";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export type BatchTestRunSummaryResponse = {
   summaries: Record<number, TestRunSummaryData>;
@@ -27,7 +28,7 @@ export type BatchTestRunSummaryResponse = {
  * Batch fetch summaries for multiple test runs
  * Query param: testRunIds (comma-separated list of test run IDs)
  */
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -240,6 +241,8 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);
 
 async function getBatchRegularRunSummaries(
   testRunIds: number[]

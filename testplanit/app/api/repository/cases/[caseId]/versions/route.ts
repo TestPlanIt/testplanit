@@ -15,6 +15,7 @@ import { baseDb } from "~/lib/db";
 import { buildProjectAccessWhere } from "~/lib/project-access";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Centralized endpoint for creating test case versions.
@@ -95,7 +96,7 @@ const createVersionSchema = z.object({
 
 type _CreateVersionRequest = z.infer<typeof createVersionSchema>;
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ caseId: string }> }
@@ -247,3 +248,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

@@ -8,6 +8,7 @@ import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthor
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { assertValidReparent } from "~/lib/services/requirementHierarchy";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // `parentId: null` is a first-class value here (moving a node to the root
 // level), not an error — the schema accepts an explicit null distinctly
@@ -37,7 +38,7 @@ const requestSchema = z.object({
  * run before the 404 row lookup so a non-admin can never probe whether a
  * given issue id exists in a project they cannot administer.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string; issueId: string }> }
@@ -185,3 +186,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

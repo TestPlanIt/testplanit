@@ -5,8 +5,9 @@ import { AuthenticationService } from "~/lib/integrations/AuthenticationService"
 import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
 import { authOptions } from "~/server/auth";
 import { absoluteAppUrl } from "~/lib/appUrl";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ type: string }> }
 ) {
@@ -169,3 +170,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withPrimaryRequestRouting(handleGET);

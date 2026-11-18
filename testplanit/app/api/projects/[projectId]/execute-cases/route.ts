@@ -9,6 +9,7 @@ import { baseDb } from "~/lib/db";
 import { requestExecution } from "~/lib/execution/requestExecution";
 import { userCanAddEditAreas } from "~/lib/services/projectPermissions";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const bodySchema = z.object({
   caseIds: z.array(z.number().int().positive()).min(1).max(500),
@@ -28,7 +29,7 @@ const bodySchema = z.object({
  * a new run holding just those cases is created. Then the same dispatch as
  * the run-level execute route.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string }> }
@@ -253,3 +254,5 @@ export const POST = withAuditContext(
     );
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

@@ -6,6 +6,7 @@ import { getEnhancedDb } from "~/lib/auth/utils";
 import { baseDb } from "~/lib/db";
 import { buildIterationIssueBody } from "~/lib/services/iterationIssueBodyBuilder";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * INT-05 — issue-body prefill endpoint.
@@ -62,7 +63,7 @@ async function resolveUserContext(
   return { canReadSensitive, locale };
 }
 
-export async function GET(
+async function handleGET(
   _request: NextRequest,
   context: {
     params: Promise<{ runId: string; caseId: string; iterId: string }>;
@@ -125,3 +126,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

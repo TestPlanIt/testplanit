@@ -6,6 +6,7 @@ import {
   IssueKeyResolutionError,
   resolveIssueKeys,
 } from "~/lib/services/resolveIssueKeys";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Resolve tracker issue keys to local `Issue` rows, creating any row that
@@ -32,7 +33,7 @@ const resolveSchema = z.object({
   integrationId: z.number().int().positive().optional(),
 });
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string }> }
@@ -96,3 +97,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

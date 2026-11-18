@@ -6,6 +6,7 @@ import { z } from "zod/v4";
 import { baseDb } from "~/lib/db";
 import { convertMatch } from "~/lib/services/stepSequenceConversionService";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const editedStepSchema = z.object({
   step: z.string().nullable(),
@@ -19,7 +20,7 @@ const convertSchema = z.object({
   editedSteps: z.array(editedStepSchema).optional(),
 });
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   // 1. Auth
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -115,3 +116,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

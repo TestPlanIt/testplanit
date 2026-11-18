@@ -19,6 +19,7 @@ import {
   type ParameterSchemaEntry,
 } from "~/lib/services/parameterRedaction";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Phase 3 Wave 5 (Task 12) — Iteration values override endpoint.
@@ -114,7 +115,7 @@ function toAuditSchema(
   }));
 }
 
-export const PATCH = withAuditContext(
+const handlePATCH = withAuditContext(
   async (
     req: NextRequest,
     {
@@ -278,3 +279,5 @@ export const PATCH = withAuditContext(
     }
   }
 );
+
+export const PATCH = withRequestRouting(handlePATCH);

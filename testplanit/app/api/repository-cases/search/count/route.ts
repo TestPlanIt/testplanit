@@ -6,6 +6,7 @@ import {
   countRepositoryCases,
   type SearchOptions,
 } from "~/services/repositoryCaseSearch";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Count request schema
 const countSchema = z.object({
@@ -46,7 +47,7 @@ const countSchema = z.object({
     .optional(),
 });
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     // Check authentication - try session first, then API token
     const session = await getServerAuthSession();
@@ -89,3 +90,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

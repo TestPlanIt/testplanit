@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface FolderStats {
   folderId: number;
@@ -10,7 +11,7 @@ interface FolderStats {
   totalCaseCount: number;
 }
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -162,3 +163,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

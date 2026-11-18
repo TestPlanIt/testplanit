@@ -30,6 +30,7 @@ import {
   type RequirementTreeSort,
 } from "~/lib/services/requirementTree";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET/POST /api/projects/[projectId]/requirements/tree
@@ -187,7 +188,7 @@ async function readRootsPage(
   return { total, rows: page.rows, nextCursor: page.nextCursor };
 }
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -294,6 +295,8 @@ export async function GET(
   }
 }
 
+export const GET = withRequestRouting(handleGET);
+
 const requirementTreeCursorSchema = z.object({
   // Opaque to this route: whatever the sort column produced for the last
   // row of the previous page. A number arrives for a numeric sort column
@@ -340,7 +343,7 @@ const requirementTreeFilterBodySchema = z.object({
   ...executionScopeBodyShape,
 });
 
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -490,3 +493,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

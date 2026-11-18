@@ -11,6 +11,7 @@ import { userHasAreaPermission } from "~/lib/services/areaPermission";
 import { captureRequirementTraceabilitySnapshot } from "~/lib/services/requirementTraceabilitySnapshot";
 import { authOptions } from "~/server/auth";
 import { ApplicationArea } from "~/zenstack/models";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /** Mirrors the report handler's `requirementIds` cap. */
 const MAX_REQUIREMENT_SCOPE_IDS = 1000;
@@ -54,7 +55,7 @@ const bodySchema = z
  * presentation opt-in, not an access boundary (the traceability route's
  * own convention).
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string }> }
@@ -130,3 +131,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

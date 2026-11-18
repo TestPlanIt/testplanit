@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { resolveTagByName } from "~/lib/services/tagResolution";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface LookupRequest {
   projectId?: number; // Not required for project lookup
@@ -26,7 +27,7 @@ interface LookupResponse {
   created?: boolean;
 }
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   // Authenticate
   const session = await getServerAuthSession();
   let userId: string | undefined = session?.user?.id;
@@ -279,3 +280,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

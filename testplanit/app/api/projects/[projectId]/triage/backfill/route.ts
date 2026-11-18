@@ -9,6 +9,7 @@ import {
   triageBackfillJobId,
 } from "~/lib/services/triage/enqueue";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 type RouteContext = { params: Promise<{ projectId: string }> };
 
@@ -52,7 +53,7 @@ async function findBackfillJob(projectId: number) {
 }
 
 /** GET: state of the project's backfill job, if any. */
-export async function GET(_req: NextRequest, context: RouteContext) {
+async function handleGET(_req: NextRequest, context: RouteContext) {
   const auth = await authorize(context);
   if ("error" in auth) return auth.error;
   const { job } = await findBackfillJob(auth.projectId);
@@ -64,11 +65,13 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   return NextResponse.json({ state, processed });
 }
 
+export const GET = withRequestRouting(handleGET);
+
 /**
  * POST: group every automated failure already recorded in the project.
  * One backfill per project at a time (409 while one is queued or running).
  */
-export async function POST(_req: NextRequest, context: RouteContext) {
+async function handlePOST(_req: NextRequest, context: RouteContext) {
   const auth = await authorize(context);
   if ("error" in auth) return auth.error;
   const { session, projectId } = auth;
@@ -122,3 +125,5 @@ export async function POST(_req: NextRequest, context: RouteContext) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

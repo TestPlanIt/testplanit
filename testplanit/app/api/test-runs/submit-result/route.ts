@@ -46,6 +46,7 @@ import {
 import { authOptions } from "~/server/auth";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const submitResultSchema = z.object({
   testRunId: z.number().int().positive(),
@@ -152,7 +153,7 @@ function parseParameterSchema(
   return out;
 }
 
-export const POST = withAuditContext(async (req: NextRequest) => {
+const handlePOST = withAuditContext(async (req: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     const auth = await authenticateRequest(req, session);
@@ -1002,3 +1003,5 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

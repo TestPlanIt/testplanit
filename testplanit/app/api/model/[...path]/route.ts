@@ -27,6 +27,7 @@ import {
   isReplicaRoutingEnabled,
   PRIMARY_STICKY_COOKIE,
 } from "~/lib/db/replicaConfig";
+import { requestRoutingInit } from "~/lib/db/requestRouting";
 import { runWithDbRouting } from "~/lib/db/routingContext";
 import { baseDb } from "~/lib/db";
 import {
@@ -439,18 +440,15 @@ async function innerHandler(
   req: NextRequest,
   context: { params: Promise<{ path: string[] }> }
 ) {
-  // Only pure-read (GET/HEAD) requests offload to replicas. Mutations run
-  // entirely on the primary so their before-snapshots, the write, and the
-  // post-write ES/webhook/audit reads are all consistent.
-  const isReadRequest = req.method === "GET" || req.method === "HEAD";
-  const honorPrimaryCookie =
-    isReplicaRoutingEnabled() &&
-    getPrimaryStickyMs() > 0 &&
-    req.cookies.get(PRIMARY_STICKY_COOKIE) !== undefined;
-  return runWithDbRouting(() => handleRequest(req, context), {
-    autoReplica: isReadRequest,
-    forcePrimary: honorPrimaryCookie,
-  });
+  // Only pure-read (GET/HEAD) requests from a browser offload to replicas.
+  // Mutations run entirely on the primary so their before-snapshots, the
+  // write, and the post-write ES/webhook/audit reads are all consistent, and
+  // so does anything sent with a Bearer token (see requestRoutingInit).
+  if (!isReplicaRoutingEnabled()) return handleRequest(req, context);
+  return runWithDbRouting(
+    () => handleRequest(req, context),
+    requestRoutingInit(req)
+  );
 }
 
 // Inner handler. Exports below wrap this with `withAuditContext` per HTTP

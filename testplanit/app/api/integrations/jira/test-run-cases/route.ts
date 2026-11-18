@@ -7,6 +7,7 @@ import {
 } from "~/lib/services/jiraForgePanel";
 import { authenticateForgeIntegration } from "~/lib/services/forge-jira-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -19,7 +20,7 @@ const headers = {
 // fetched when the user expands the run instead of with the panel's initial
 // load. Only runs linked to the issue are served, so the Forge key reaches
 // exactly what test-info already shows for that issue.
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const issueKey = searchParams.get("issueKey");
   const issueId = searchParams.get("issueId");
@@ -74,6 +75,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function OPTIONS() {
+export const GET = withRequestRouting(handleGET);
+
+async function handleOPTIONS() {
   return new Response(null, { status: 200, headers });
 }
+
+export const OPTIONS = withRequestRouting(handleOPTIONS);

@@ -11,6 +11,7 @@ import {
   type RequirementCoverageBreakdown,
 } from "~/lib/services/requirementCoverage";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export type RequirementCoverageResponse = {
   projectId: number;
@@ -46,17 +47,21 @@ type RouteContext = { params: Promise<{ projectId: string }> };
  * (`{ milestoneIds, configIds }`), for a scope too long for a query
  * string; `requirementIds` stays a query param on both.
  */
-export function GET(request: NextRequest, context: RouteContext) {
+function handleGET(request: NextRequest, context: RouteContext) {
   return handleCoverage(request, context, () =>
     parseExecutionScopeQuery(request.nextUrl.searchParams)
   );
 }
 
-export function POST(request: NextRequest, context: RouteContext) {
+export const GET = withRequestRouting(handleGET);
+
+function handlePOST(request: NextRequest, context: RouteContext) {
   return handleCoverage(request, context, () =>
     parseExecutionScopeRequestBody(request)
   );
 }
+
+export const POST = withRequestRouting(handlePOST);
 
 async function handleCoverage(
   request: NextRequest,

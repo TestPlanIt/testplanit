@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCspMode } from "~/lib/contentSecurityPolicy";
 import { recordCspViolation, type CspViolation } from "~/lib/cspReportLog";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,7 @@ function summarize(payload: unknown): ViolationSummary[] {
  * server log shows what the policy blocked, or in report-only mode what it
  * would have blocked.
  */
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   if (getCspMode() === "off") {
     return new NextResponse(null, { status: 204 });
   }
@@ -71,3 +72,5 @@ export async function POST(request: NextRequest) {
 
   return new NextResponse(null, { status: 204 });
 }
+
+export const POST = withRequestRouting(handlePOST);

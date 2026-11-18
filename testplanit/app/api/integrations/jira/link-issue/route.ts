@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const linkIssueSchema = z
   .object({
@@ -32,7 +33,7 @@ const linkIssueSchema = z
     }
   );
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -154,6 +155,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export const POST = withRequestRouting(handlePOST);
+
 const unlinkIssueSchema = z
   .object({
     testCaseId: z.number().optional(),
@@ -178,7 +181,7 @@ const unlinkIssueSchema = z
     }
   );
 
-export async function DELETE(request: NextRequest) {
+async function handleDELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -237,6 +240,8 @@ export async function DELETE(request: NextRequest) {
   }
 }
 
+export const DELETE = withRequestRouting(handleDELETE);
+
 const getLinkedIssuesSchema = z
   .object({
     testCaseId: z.string().transform(Number).optional(),
@@ -260,7 +265,7 @@ const getLinkedIssuesSchema = z
     }
   );
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -323,3 +328,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

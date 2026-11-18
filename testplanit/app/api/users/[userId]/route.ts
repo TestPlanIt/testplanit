@@ -19,6 +19,7 @@ import { baseDb } from "~/lib/db";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 import { invalidateSessionUserCache } from "~/lib/session-cache";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Dedicated user update API endpoint that bypasses ZenStack access control.
@@ -60,7 +61,7 @@ const updateUserSchema = z.object({
     .optional(),
 });
 
-export const PATCH = withAuditContext(
+const handlePATCH = withAuditContext(
   async (
     req: NextRequest,
     context: { params: Promise<{ userId: string }> }
@@ -266,3 +267,5 @@ export const PATCH = withAuditContext(
     }
   }
 );
+
+export const PATCH = withRequestRouting(handlePATCH);

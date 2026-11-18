@@ -15,8 +15,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { baseDb } from "@/lib/db";
 import { loadLlmCredentials } from "@/lib/llm/credentials";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   // Test credentials endpoint called
 
   try {
@@ -211,3 +212,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

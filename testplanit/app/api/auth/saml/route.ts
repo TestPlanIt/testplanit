@@ -7,9 +7,10 @@ import {
 } from "~/lib/auth-security";
 import { db } from "~/server/db";
 import { createSAMLClient } from "~/server/saml-provider";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
 // SAML login initiation
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const providerId = searchParams.get("provider");
@@ -84,3 +85,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withPrimaryRequestRouting(handleGET);

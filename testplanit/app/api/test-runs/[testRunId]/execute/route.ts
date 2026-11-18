@@ -10,6 +10,7 @@ import {
   isRouteResponse,
   parseId,
 } from "~/lib/execution/runAccess";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/test-runs/{testRunId}/execute
@@ -19,7 +20,7 @@ import {
  * subset) on one of the project's execution targets. Responds 202 with the
  * new execution; the dispatch itself happens on the worker.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ testRunId: string }> }
@@ -72,3 +73,5 @@ export const POST = withAuditContext(
     );
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

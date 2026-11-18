@@ -6,6 +6,7 @@ import {
   isReleaseCheckEnabled,
 } from "~/lib/services/releaseCheck";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export const dynamic = "force-dynamic";
  * an instance whose workers are down. It never creates notifications; the
  * daily job does.
  */
-export async function GET() {
+async function handleGET() {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -48,3 +49,5 @@ export async function GET() {
     lastError: record?.lastError ?? null,
   });
 }
+
+export const GET = withRequestRouting(handleGET);

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * The sign-in page's "Trouble signing in?" line is on by default. Set
@@ -10,7 +11,7 @@ function isAdminContactEnabled(): boolean {
   return process.env.SIGNIN_ADMIN_CONTACT?.toLowerCase() !== "false";
 }
 
-export async function GET() {
+async function handleGET() {
   if (!isAdminContactEnabled()) {
     return NextResponse.json({ enabled: false, email: null });
   }
@@ -40,3 +41,5 @@ export async function GET() {
     return NextResponse.json({ enabled: true, email: null });
   }
 }
+
+export const GET = withRequestRouting(handleGET);

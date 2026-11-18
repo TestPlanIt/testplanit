@@ -11,6 +11,7 @@ import {
 } from "~/lib/schemas/sharedDatasetSaveSchema";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Shared-dataset Save endpoint — the explicit commit boundary that
@@ -31,7 +32,7 @@ import { authOptions } from "~/server/auth";
  * endpoint; they keep the inline-edit `DataSetRow.update` path.
  */
 
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   {
     params,
@@ -236,3 +237,5 @@ export async function POST(
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { SKIP_MAPPING_SENTINEL } from "~/lib/schemas/sharedDatasetAssignmentSchema";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Returns the cases whose `CaseSharedDataSetAssignment.mappingJson`
@@ -13,7 +14,7 @@ import { authOptions } from "~/server/auth";
  * a non-zero usage count blocks the delete and surfaces which cases
  * need their mappings updated first.
  */
-export async function GET(
+async function handleGET(
   request: NextRequest,
   {
     params,
@@ -80,3 +81,5 @@ export async function GET(
     sampleCases: referencingCases.slice(0, 10),
   });
 }
+
+export const GET = withRequestRouting(handleGET);

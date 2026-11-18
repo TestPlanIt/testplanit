@@ -4,12 +4,13 @@ import { z } from "zod/v4";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const updateProjectIntegrationSchema = z.object({
   config: z.record(z.string(), z.any()),
 });
 
-export const PATCH = withAuditContext(
+const handlePATCH = withAuditContext(
   async (
     request: NextRequest,
     {
@@ -89,7 +90,9 @@ export const PATCH = withAuditContext(
   }
 );
 
-export const DELETE = withAuditContext(
+export const PATCH = withRequestRouting(handlePATCH);
+
+const handleDELETE = withAuditContext(
   async (
     request: NextRequest,
     {
@@ -151,3 +154,5 @@ export const DELETE = withAuditContext(
     }
   }
 );
+
+export const DELETE = withRequestRouting(handleDELETE);

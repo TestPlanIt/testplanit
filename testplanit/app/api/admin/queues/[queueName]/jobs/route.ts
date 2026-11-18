@@ -6,9 +6,10 @@ import { authenticateApiToken } from "~/lib/api-token-auth";
 import { cancelFlagsForJob } from "~/lib/services/jobCancel";
 import { getQueueByName } from "~/lib/services/queueAdmin";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // GET: Get jobs from a specific queue
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ queueName: string }> }
 ) {
@@ -162,3 +163,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

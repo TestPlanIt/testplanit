@@ -22,6 +22,7 @@ import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface QueryShape {
   milestoneIds: number[];
@@ -38,7 +39,7 @@ const MAX_BATCHED_IDS = 250;
 // of pathologically large inputs before JSON.parse runs.
 const MAX_Q_LENGTH = 16_384;
 
-export const GET = withAuditContext(async (request: NextRequest) => {
+const handleGET = withAuditContext(async (request: NextRequest) => {
   try {
     const auth = await authenticateApiToken(request);
     if (!auth.authenticated || !auth.userId) {
@@ -143,3 +144,5 @@ export const GET = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const GET = withRequestRouting(handleGET);

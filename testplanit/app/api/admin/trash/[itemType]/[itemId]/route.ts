@@ -8,6 +8,7 @@ import { syncRunCaseStatusAfterResultRemoval } from "~/lib/services/runCaseStatu
 import { isForeignKeyError, isNotFoundError } from "~/lib/utils/errors";
 import { db } from "~/server/db";
 import { checkAdminAuth, getTrashModel, TrashModel } from "../../shared";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // This used to build its own client with no `endpoint`, so purge deletes always
 // went to real AWS S3 and silently missed the object on any S3-compatible
@@ -60,7 +61,7 @@ function displayName(item: any): string | undefined {
 }
 
 // PATCH handler for restoring an item (setting isDeleted = false)
-export const PATCH = withAuditContext(
+const handlePATCH = withAuditContext(
   async (
     request: NextRequest,
     context: { params: Promise<{ itemType: string; itemId: string }> }
@@ -146,8 +147,10 @@ export const PATCH = withAuditContext(
   }
 );
 
+export const PATCH = withRequestRouting(handlePATCH);
+
 // DELETE handler for purging an item (hard delete)
-export const DELETE = withAuditContext(
+const handleDELETE = withAuditContext(
   async (
     request: NextRequest,
     context: { params: Promise<{ itemType: string; itemId: string }> }
@@ -286,3 +289,5 @@ export const DELETE = withAuditContext(
     }
   }
 );
+
+export const DELETE = withRequestRouting(handleDELETE);

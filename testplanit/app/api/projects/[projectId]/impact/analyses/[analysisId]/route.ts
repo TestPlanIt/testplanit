@@ -4,6 +4,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { getImpactAnalysisQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 function parseIds(rawProject: string, rawAnalysis: string) {
   const projectId = Number(rawProject);
@@ -19,7 +20,7 @@ function parseIds(rawProject: string, rawAnalysis: string) {
  * The analysis row, its scored cases (joined to case name/folder), and the
  * live job progress while it is still queued or running.
  */
-export async function GET(
+async function handleGET(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string; analysisId: string }> }
 ) {
@@ -96,3 +97,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

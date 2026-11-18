@@ -4,6 +4,7 @@ import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import { buildMappingAnalysis } from "~/services/imports/testmo/mappingAnalysis";
 import type { TestmoMappingAnalysis } from "~/services/imports/testmo/types";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
 interface RouteContext {
   params: Promise<{
@@ -11,7 +12,7 @@ interface RouteContext {
   }>;
 }
 
-export async function GET(request: NextRequest, context: RouteContext) {
+async function handleGET(request: NextRequest, context: RouteContext) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -99,3 +100,5 @@ export async function GET(request: NextRequest, context: RouteContext) {
     );
   }
 }
+
+export const GET = withPrimaryRequestRouting(handleGET);

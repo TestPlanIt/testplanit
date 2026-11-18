@@ -5,6 +5,7 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { absoluteAppUrl } from "~/lib/appUrl";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/auth/send-magic-link
@@ -16,7 +17,7 @@ import { absoluteAppUrl } from "~/lib/appUrl";
  * - email: The email address to send the magic link to
  * - callbackUrl: Optional callback URL (defaults to home page)
  */
-export const POST = withAuditContext(async (req: NextRequest) => {
+const handlePOST = withAuditContext(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const { email, callbackUrl = "/" } = body;
@@ -120,3 +121,5 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

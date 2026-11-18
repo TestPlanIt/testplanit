@@ -15,6 +15,7 @@ import {
 } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const attachmentSchema = z.object({
   junitTestResultId: z.number().int().positive(),
@@ -26,7 +27,7 @@ const attachmentSchema = z.object({
   note: z.string().optional(),
 });
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   // Authenticate user (session or API token)
   const session = await getServerAuthSession();
   let userId = session?.user?.id;
@@ -119,3 +120,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

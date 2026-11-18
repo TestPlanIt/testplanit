@@ -6,12 +6,13 @@ import {
   type SsoConfigSummary,
 } from "~/lib/auth/ssoConfig";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * What the SSO settings page may show of each provider's config: its
  * identifiers and whether each secret is set. Secrets never leave the server.
  */
-export async function GET() {
+async function handleGET() {
   const session = await getServerAuthSession();
   if (!session?.user || session.user.access !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -33,3 +34,5 @@ export async function GET() {
   }
   return NextResponse.json({ providers: summaries });
 }
+
+export const GET = withRequestRouting(handleGET);

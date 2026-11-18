@@ -47,6 +47,7 @@ import {
 } from "~/lib/services/reports/automationCandidatesContext";
 import { buildHeuristicRanking } from "~/lib/services/reports/automationCandidatesHeuristic";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Long-running LLM completion needs the Node.js runtime; opt out of every
 // Next prerender path.
@@ -79,9 +80,11 @@ const REPORT_TYPE = "automation_candidates";
  * neither — there's nothing for the user to configure inline — so we return
  * empty arrays. Mirrors the iteration-matrix preset's GET stub.
  */
-export async function GET() {
+async function handleGET() {
   return NextResponse.json({ dimensions: [], metrics: [] });
 }
+
+export const GET = withRequestRouting(handleGET);
 
 const generateBodySchema = z.object({
   projectId: z.number().int().positive(),
@@ -156,7 +159,7 @@ interface SnapshotOutput {
   generationMode?: "llm" | "heuristic";
 }
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   // Shared-report bypass: the public share endpoint
   // (`/api/share/[shareKey]/report`) forwards POSTs server-to-server with
   // this internal header after validating the share link's mode/expiry/
@@ -596,6 +599,8 @@ export async function POST(req: NextRequest) {
     },
   });
 }
+
+export const POST = withRequestRouting(handlePOST);
 
 /**
  * Read-only shared-report path: load the latest complete snapshot for the

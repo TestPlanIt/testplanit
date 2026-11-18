@@ -11,10 +11,11 @@ import {
 } from "~/lib/services/milestoneSummary";
 import { getVisibleMilestone } from "~/lib/services/milestoneAccess";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export type { MilestoneSummaryData };
 
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ milestoneId: string }> }
 ) {
@@ -121,3 +122,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

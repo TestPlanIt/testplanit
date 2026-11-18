@@ -6,6 +6,7 @@ import { paginatedFindManyWithRelations } from "~/lib/paginatedFindMany";
 import { reviveWhereFromTransport } from "~/lib/repository/whereTransport";
 import { sanitizeSearchCaseIds } from "~/lib/repositoryCaseSearchIds";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // One POST read path for the case table in BOTH of its modes: the client-built
 // predicate `where` (which carries folder scoping) and the Elasticsearch id set
@@ -139,7 +140,7 @@ function serializeCases(cases: Array<Record<string, unknown>> | null) {
   });
 }
 
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -404,3 +405,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

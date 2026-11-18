@@ -10,6 +10,7 @@ import { authenticateForgeIntegration } from "~/lib/services/forge-jira-auth";
 import { getLatestTestResultsByCase } from "~/lib/services/latestTestResults";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { NextRequest, NextResponse } from "next/server";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // How many executions the panel's result-history table shows per case.
 const JIRA_PANEL_HISTORY_LIMIT = 5;
@@ -591,7 +592,7 @@ async function loadPanelTestCases(
   return formattedTestCases;
 }
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const issueKey = searchParams.get("issueKey");
   const issueId = searchParams.get("issueId");
@@ -737,7 +738,9 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function OPTIONS() {
+export const GET = withRequestRouting(handleGET);
+
+async function handleOPTIONS() {
   return new Response(null, {
     status: 200,
     headers: {
@@ -748,3 +751,5 @@ export async function OPTIONS() {
     },
   });
 }
+
+export const OPTIONS = withRequestRouting(handleOPTIONS);

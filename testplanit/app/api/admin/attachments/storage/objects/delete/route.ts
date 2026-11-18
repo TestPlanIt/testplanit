@@ -4,12 +4,13 @@ import { orphanDeleteSchema } from "~/lib/services/storageObjects";
 import { deleteOrphanObjects } from "~/lib/services/storageScan";
 import { db } from "~/server/db";
 import { checkAdminAuth } from "../../../../trash/shared";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Delete orphaned objects from storage. `dryRun` reports what would be
  * deleted and changes nothing.
  */
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   const auth = await checkAdminAuth(request);
   if (auth.error) return auth.error;
 
@@ -38,3 +39,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

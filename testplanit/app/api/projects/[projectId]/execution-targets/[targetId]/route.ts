@@ -11,6 +11,7 @@ import {
   resolveExecutionTargetActor,
 } from "~/lib/execution/targetAccess";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 function errorStatus(error: string): number {
   if (error === "Unauthorized") return 401;
@@ -27,7 +28,7 @@ function errorStatus(error: string): number {
  * just dispatch permission, since staticInputs/url/paramSchema are more than
  * the run-page dialog needs.
  */
-export const GET = withAuditContext(
+const handleGET = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ targetId: string }> }
@@ -55,6 +56,8 @@ export const GET = withAuditContext(
   }
 );
 
+export const GET = withRequestRouting(handleGET);
+
 /**
  * PATCH /api/projects/{projectId}/execution-targets/{targetId}
  * Body: a partial update — same shape as POST, every field optional. Set
@@ -62,7 +65,7 @@ export const GET = withAuditContext(
  * mint a new generic-webhook signing secret (returned once as
  * `revealedSecret`).
  */
-export const PATCH = withAuditContext(
+const handlePATCH = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ targetId: string }> }
@@ -101,12 +104,14 @@ export const PATCH = withAuditContext(
   }
 );
 
+export const PATCH = withRequestRouting(handlePATCH);
+
 /**
  * DELETE /api/projects/{projectId}/execution-targets/{targetId}
  * Soft-delete; past executions keep their history (see
  * deleteExecutionTargetForActor).
  */
-export const DELETE = withAuditContext(
+const handleDELETE = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ targetId: string }> }
@@ -133,3 +138,5 @@ export const DELETE = withAuditContext(
     return new NextResponse(null, { status: 204 });
   }
 );
+
+export const DELETE = withRequestRouting(handleDELETE);

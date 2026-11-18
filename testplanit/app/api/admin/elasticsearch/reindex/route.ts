@@ -11,6 +11,7 @@ import {
 import { getServerAuthSession } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import type { ReindexJobData } from "~/workers/elasticsearchReindexWorker";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Helper to check admin authentication (session or API token)
 async function checkAdminAuth(
@@ -68,7 +69,7 @@ async function checkAdminAuth(
   return { userId };
 }
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -127,8 +128,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
   }
 });
 
+export const POST = withRequestRouting(handlePOST);
+
 // GET endpoint to check Elasticsearch status
-export const GET = withAuditContext(async (request: NextRequest) => {
+const handleGET = withAuditContext(async (request: NextRequest) => {
   try {
     const auth = await checkAdminAuth(request);
     if (auth.error) return auth.error;
@@ -200,3 +203,5 @@ export const GET = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const GET = withRequestRouting(handleGET);

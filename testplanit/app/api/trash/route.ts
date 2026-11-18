@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listUserTrash } from "~/lib/services/userTrash";
 import { checkTrashAuth } from "./shared";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * The caller's own Trash: items they deleted, still inside the self-service
@@ -8,7 +9,7 @@ import { checkTrashAuth } from "./shared";
  * edit. An ADMIN may pass `?userId=` to view another user's Trash (the profile
  * page shows the section to admins too).
  */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const auth = await checkTrashAuth(request);
   if (auth.error) return auth.error;
   const actor = auth.actor!;
@@ -30,3 +31,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

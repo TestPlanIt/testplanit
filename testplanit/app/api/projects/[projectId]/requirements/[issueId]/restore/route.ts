@@ -7,6 +7,7 @@ import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthor
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { restoreRequirementSubtree } from "~/lib/services/requirementHierarchy";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // This route takes no request body -- issueId is already the path param. An
 // absent or empty body is tolerated; a non-empty body must still be a plain
@@ -31,7 +32,7 @@ const emptyBodySchema = z.object({}).strict();
  * (authorizeProjectAdminForProject) -> 404 (not a soft-deleted requirement
  * in this project) -> operate.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string; issueId: string }> }
@@ -113,3 +114,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

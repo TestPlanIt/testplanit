@@ -8,6 +8,7 @@ import { baseDb } from "~/lib/db";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
 import { authOptions } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const checkNewSchema = z.object({
   projectId: z.number(),
@@ -16,7 +17,7 @@ const checkNewSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -126,3 +127,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     return NextResponse.json({ cases: [] });
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { resolveTrialContact } from "~/lib/trialContact";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * API endpoint to return trial configuration at runtime.
  * This is needed because NEXT_PUBLIC_* variables are replaced at build time,
  * but trial instances need to read these values from environment at runtime.
  */
-export async function GET() {
+async function handleGET() {
   const isTrialInstance = process.env.IS_TRIAL_INSTANCE === "true";
   const trialEndDate = process.env.TRIAL_END_DATE || null;
   // Set by the control plane for non-payment / ended subscription; proxy.ts
@@ -27,3 +28,5 @@ export async function GET() {
     feedbackSurveyUrl,
   });
 }
+
+export const GET = withRequestRouting(handleGET);

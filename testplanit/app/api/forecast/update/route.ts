@@ -4,6 +4,7 @@ import { baseDb } from "~/lib/db";
 import { getAuthDb } from "~/lib/zenstack";
 import { getServerAuthSession } from "~/server/auth";
 import { updateRepositoryCaseForecast } from "~/services/forecastService";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Recompute a repository case's forecast on demand. Browser surfaces call
@@ -13,7 +14,7 @@ import { updateRepositoryCaseForecast } from "~/services/forecastService";
  * Callers must be signed in (session cookie or `tpi_` bearer) and able to
  * read the case through the policy client; anything else is 401/404.
  */
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   const session = await getServerAuthSession();
   let userId: string | undefined = session?.user?.id;
   if (!userId) {
@@ -62,3 +63,5 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

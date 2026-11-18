@@ -5,9 +5,10 @@ import {
   startStorageScan,
 } from "~/lib/services/storageObjects";
 import { checkAdminAuth } from "../../../trash/shared";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /** The last storage scan and what it found, for Admin > Attachments. */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const auth = await checkAdminAuth(request);
   if (auth.error) return auth.error;
 
@@ -22,8 +23,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export const GET = withRequestRouting(handleGET);
+
 /** Start a storage scan. */
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   const auth = await checkAdminAuth(request);
   if (auth.error || !auth.userId) {
     return (
@@ -53,3 +56,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

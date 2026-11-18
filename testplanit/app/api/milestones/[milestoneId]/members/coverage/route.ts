@@ -4,6 +4,7 @@ import { resolveViewerProjectScope } from "~/lib/authContext";
 import { getVisibleMilestone } from "~/lib/services/milestoneAccess";
 import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/milestones/[milestoneId]/members/coverage
@@ -49,7 +50,7 @@ export type {
   MemberCoverageResponse,
 } from "~/lib/services/milestoneMemberCoverage";
 
-export async function GET(
+async function handleGET(
   _req: NextRequest,
   context: { params: Promise<{ milestoneId: string }> }
 ) {
@@ -96,3 +97,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

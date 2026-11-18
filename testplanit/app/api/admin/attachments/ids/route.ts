@@ -4,9 +4,10 @@ import {
   listAdminAttachmentIds,
 } from "~/lib/services/adminAttachments";
 import { checkAdminAuth } from "../../trash/shared";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /** The ids of every attachment the list's filters match, for "select all". */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const auth = await checkAdminAuth(request);
   if (auth.error) return auth.error;
 
@@ -32,3 +33,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

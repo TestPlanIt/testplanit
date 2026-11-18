@@ -8,8 +8,9 @@
  */
 
 import { NextRequest } from "next/server";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   // Clone the request and get the form data
   const formData = await request.formData();
 
@@ -49,3 +50,5 @@ export async function POST(request: NextRequest) {
     headers,
   });
 }
+
+export const POST = withRequestRouting(handlePOST);

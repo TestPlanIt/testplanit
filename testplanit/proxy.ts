@@ -1,6 +1,10 @@
 import { getToken } from "next-auth/jwt";
 import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  isReplicaRoutingEnabled,
+  primaryStickyCookie,
+} from "~/lib/db/replicaConfig";
 import { checkApiRateLimit, type RateLimitResult } from "~/lib/api-rate-limit";
 import { isLinkPreviewBot, matchPreviewRoute } from "~/lib/linkPreview";
 import { normalizeRecordKeyPath } from "~/lib/recordKeyRoutes";
@@ -596,6 +600,34 @@ async function middlewareWithPreferences(request: NextRequest) {
  * finished policy goes on the response. API routes return JSON and get none.
  */
 export default async function proxy(request: NextRequest) {
+  const response = await proxyWithPolicy(request);
+  pinReadsAfterServerAction(request, response);
+  return response;
+}
+
+/**
+ * A server action may have written, and the page then refetches through
+ * requests of its own. With read replicas configured, the stickiness cookie
+ * sends those to the primary so they see the write. An action is an opaque
+ * POST from here, so every one sets it; route handlers set it themselves,
+ * and only when they wrote (lib/db/requestRouting.ts).
+ */
+function pinReadsAfterServerAction(
+  request: NextRequest,
+  response: Response
+): void {
+  if (
+    request.method !== "POST" ||
+    !request.headers.has("next-action") ||
+    !isReplicaRoutingEnabled()
+  ) {
+    return;
+  }
+  const cookie = primaryStickyCookie();
+  if (cookie) response.headers.append("Set-Cookie", cookie);
+}
+
+async function proxyWithPolicy(request: NextRequest) {
   const mode = getCspMode();
   if (mode === "off" || request.nextUrl.pathname.startsWith("/api/")) {
     return middlewareWithPreferences(request);

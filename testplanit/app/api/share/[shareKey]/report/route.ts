@@ -10,6 +10,7 @@ import {
   callerAuthHeaders,
 } from "~/lib/reports/sharedReportPayload";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export const dynamic = "force-dynamic";
  * Fetch report data for a shared link (public access)
  * This endpoint is accessible without authentication for PUBLIC and PASSWORD_PROTECTED shares
  */
-export const GET = withAuditContext(
+const handleGET = withAuditContext(
   async (
     req: NextRequest,
     { params }: { params: Promise<{ shareKey: string }> }
@@ -191,3 +192,5 @@ export const GET = withAuditContext(
     }
   }
 );
+
+export const GET = withRequestRouting(handleGET);

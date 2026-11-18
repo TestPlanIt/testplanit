@@ -8,6 +8,7 @@ import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { createSubscriberClient } from "~/lib/valkey";
 import { projectIssueUpdateChannel } from "~/lib/webhooks/issueUpdateChannels";
 import { authOptions } from "~/server/auth";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
 // SSE issue-updates transport — same constraints as the notifications
 // route: long-lived stream + IORedis pub/sub require the Node.js
@@ -75,7 +76,7 @@ function registerOnce() {
   metricsTimer.unref?.();
 }
 
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   registerOnce();
 
   // 1. Auth gate.
@@ -309,3 +310,5 @@ export async function GET(req: NextRequest) {
     },
   });
 }
+
+export const GET = withPrimaryRequestRouting(handleGET);

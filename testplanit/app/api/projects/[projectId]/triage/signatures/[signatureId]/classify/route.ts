@@ -12,13 +12,14 @@ import {
 import { enqueueSignatureClassification } from "~/lib/services/triage/enqueue";
 import { getFailureTriageQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/projects/[projectId]/triage/signatures/[signatureId]/classify
  * Asks the project's AI model to (re)classify one signature. Same gate as
  * editing the signature: project admin or Failure Patterns add/edit.
  */
-export async function POST(
+async function handlePOST(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string; signatureId: string }> }
 ) {
@@ -92,3 +93,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

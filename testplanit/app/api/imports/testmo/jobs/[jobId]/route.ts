@@ -4,6 +4,7 @@ import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import { serializeImportJob } from "~/services/imports/testmo/jobPresenter";
 import type { TestmoImportJobPayload } from "~/services/imports/testmo/types";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const ACTIVE_STATUSES = new Set(["QUEUED", "RUNNING"]);
 
@@ -13,7 +14,7 @@ interface RouteContext {
   }>;
 }
 
-export async function GET(request: NextRequest, context: RouteContext) {
+async function handleGET(request: NextRequest, context: RouteContext) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -72,7 +73,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 }
 
-export async function POST(request: NextRequest, context: RouteContext) {
+export const GET = withRequestRouting(handleGET);
+
+async function handlePOST(request: NextRequest, context: RouteContext) {
   // This endpoint is a Testmo-import preparation step (generic job mutation,
   // currently only `action: "cancel"`). The consequential event is the
   // import START -> COMPLETE pair audited at:
@@ -171,3 +174,5 @@ export async function POST(request: NextRequest, context: RouteContext) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

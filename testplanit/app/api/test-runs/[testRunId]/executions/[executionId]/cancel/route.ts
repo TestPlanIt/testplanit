@@ -10,13 +10,14 @@ import {
 import { resolveTargetCredentials } from "~/lib/execution/service";
 import { ACTIVE_EXECUTION_STATUSES } from "~/lib/execution/types";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/test-runs/{testRunId}/executions/{executionId}/cancel
  * Marks an in-flight execution CANCELLED and asks the provider to stop the
  * job (best-effort). Requires add/edit on Test Runs.
  */
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ testRunId: string; executionId: string }> }
 ) {
@@ -91,3 +92,5 @@ export async function POST(
 
   return NextResponse.json({ id: execution.id, status: "CANCELLED" });
 }
+
+export const POST = withRequestRouting(handlePOST);

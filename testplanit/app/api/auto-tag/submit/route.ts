@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { getAutoTagQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const submitSchema = z.object({
   entityIds: z.array(z.number()).min(1),
@@ -12,7 +13,7 @@ const submitSchema = z.object({
   allowNewTags: z.boolean().optional().default(true),
 });
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -53,3 +54,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

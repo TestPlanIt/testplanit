@@ -11,6 +11,7 @@ import {
   providerErrorResponse,
   resolveRepoRouteContext,
 } from "~/lib/services/impact/repoRouteContext";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
 const querySchema = z.object({
   state: z.enum(["all", "open", "merged", "closed"]).default("all"),
@@ -25,7 +26,7 @@ const querySchema = z.object({
  * naming two commits by hand. A provider without the concept answers 501 so
  * the picker can hide the mode rather than show an error.
  */
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -99,3 +100,5 @@ export async function GET(
     return providerErrorResponse(error);
   }
 }
+
+export const GET = withPrimaryRequestRouting(handleGET);

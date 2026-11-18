@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const createIssueSchema = z.object({
   projectKey: z.string(),
@@ -23,7 +24,7 @@ const createIssueSchema = z.object({
   projectId: z.number().optional(),
 });
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -193,3 +194,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

@@ -5,12 +5,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRepoCacheQueue } from "~/lib/queues";
 import { enqueueRepoJob } from "~/lib/services/impact/repoJobs";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+async function handlePOST(req: NextRequest, { params }: RouteParams) {
   // This endpoint kicks off a code-repository cache refresh (file listings +
   // contents). Admin/project-admin surface, cache hygiene with no business
   // object mutation. The actual fetch runs in the repo-cache worker so a
@@ -106,3 +107,5 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

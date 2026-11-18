@@ -14,6 +14,7 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Accept either ISO datetime (2025-12-31T00:00:00Z) or date-only (2025-12-31)
 const dateOrDatetimeSchema = z.string().refine(
@@ -50,7 +51,7 @@ const createTokenSchema = z.object({
   scopes: z.array(z.enum([...ALLOWED_API_TOKEN_SCOPES])).default([]),
 });
 
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   const session = await getServerAuthSession();
 
   if (!session?.user) {
@@ -122,3 +123,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

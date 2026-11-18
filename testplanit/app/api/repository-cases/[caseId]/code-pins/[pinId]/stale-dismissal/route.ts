@@ -3,12 +3,13 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { isAccessPolicyError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/repository-cases/[caseId]/code-pins/[pinId]/stale-dismissal
  * Server-clock dismissal of the stale badge (cleared again by reanchor).
  */
-export async function POST(
+async function handlePOST(
   _req: NextRequest,
   { params }: { params: Promise<{ caseId: string; pinId: string }> }
 ) {
@@ -49,3 +50,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

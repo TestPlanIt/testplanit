@@ -6,6 +6,7 @@ import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { isAccessPolicyError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const bodySchema = z.object({
   testRunId: z.number().int().positive().optional(),
@@ -19,7 +20,7 @@ const bodySchema = z.object({
  * which cases were added by hand, and (optionally) the run they went into.
  * This is the raw material for the accuracy readout.
  */
-export const PATCH = withAuditContext(
+const handlePATCH = withAuditContext(
   async (
     req: NextRequest,
     { params }: { params: Promise<{ projectId: string; analysisId: string }> }
@@ -145,3 +146,5 @@ export const PATCH = withAuditContext(
     }
   }
 );
+
+export const PATCH = withRequestRouting(handlePATCH);

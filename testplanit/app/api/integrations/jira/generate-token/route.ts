@@ -4,6 +4,7 @@ import {
   mintForgeStreamToken,
 } from "@/lib/services/forge-jira-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Mint a short-lived token the panel uses to stream generation directly from
@@ -12,7 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
  * is bound to the resolved user/integration/project/issue, so the streaming
  * endpoint needs nothing else from the browser.
  */
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   let body: { projectId?: number; issueKey?: string; issueId?: string };
   try {
     body = await request.json();
@@ -50,6 +51,10 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ token }, { headers: FORGE_CORS_HEADERS });
 }
 
-export async function OPTIONS() {
+export const POST = withRequestRouting(handlePOST);
+
+async function handleOPTIONS() {
   return new Response(null, { status: 200, headers: FORGE_CORS_HEADERS });
 }
+
+export const OPTIONS = withRequestRouting(handleOPTIONS);

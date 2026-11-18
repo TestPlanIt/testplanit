@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Request cooperative cancellation of a running typed import (D-07).
@@ -29,7 +30,7 @@ import { authOptions } from "~/server/auth";
  * gate. Gate order, fixed: 401 session -> 400 integration id -> 400 payload
  * shape -> 403 admin -> 404 mapping -> 409 (not currently syncing) -> write.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
       const session = await getServerSession(authOptions);
@@ -138,3 +139,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

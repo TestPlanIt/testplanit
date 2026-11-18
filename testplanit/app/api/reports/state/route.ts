@@ -4,6 +4,10 @@ import { baseDb } from "~/lib/db";
 import { reportBuilderStateCreateSchema } from "~/lib/schemas/reportBuilderStateSchema";
 import { hashReportBuilderState } from "~/lib/services/reportBuilderState";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import {
+  withPrimaryRequestRouting,
+  withRequestRouting,
+} from "~/lib/db/requestRouting";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +28,7 @@ export const dynamic = "force-dynamic";
  * Body: { projectId?, reportType, config }. Returns { id } — an existing row
  * with the same project and config hash is reused.
  */
-export const POST = withAuditContext(async (req: NextRequest) => {
+const handlePOST = withAuditContext(async (req: NextRequest) => {
   let body: unknown;
   try {
     body = await req.json();
@@ -86,12 +90,14 @@ export const POST = withAuditContext(async (req: NextRequest) => {
   return Response.json({ id: created.id }, { status: 201 });
 });
 
+export const POST = withRequestRouting(handlePOST);
+
 /**
  * GET /api/reports/state?id=…
  * Returns { reportType, config } for a row the caller may read and marks it
  * used, so the retention sweep keeps states that are still opened.
  */
-export const GET = withAuditContext(async (req: NextRequest) => {
+const handleGET = withAuditContext(async (req: NextRequest) => {
   const id = new URL(req.url).searchParams.get("id")?.trim();
   if (!id) {
     return Response.json({ error: "id is required" }, { status: 400 });
@@ -121,3 +127,5 @@ export const GET = withAuditContext(async (req: NextRequest) => {
 
   return Response.json({ reportType: row.reportType, config: row.config });
 });
+
+export const GET = withPrimaryRequestRouting(handleGET);

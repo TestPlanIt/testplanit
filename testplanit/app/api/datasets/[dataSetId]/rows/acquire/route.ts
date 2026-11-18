@@ -14,6 +14,7 @@ import {
   resolveLeaseApiUser,
 } from "~/lib/services/datasetLease";
 import { emitDatasetRowAcquired } from "~/lib/webhooks/event-emitters/datasetLeaseEvents";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/datasets/{dataSetId}/rows/acquire — 999.12 lease primitive.
@@ -36,7 +37,7 @@ const acquireBodySchema = z.object({
   ttlSeconds: z.number().int().positive().optional(),
 });
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ dataSetId: string }> }
@@ -137,3 +138,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

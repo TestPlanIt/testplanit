@@ -6,6 +6,7 @@ import { runCellCountPreflight } from "~/lib/matrix/matrixCellCount";
 import { baseDb } from "~/lib/db";
 import { matrixFiltersBodySchema } from "~/lib/schemas/matrixFiltersSchema";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/projects/[projectId]/matrix/cell-count
@@ -28,7 +29,7 @@ import { authOptions } from "~/server/auth";
  *     it through the enhanced wrapper would add latency for no security
  *     benefit (raw SQL bypasses policies regardless).
  */
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -81,3 +82,5 @@ export async function POST(
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

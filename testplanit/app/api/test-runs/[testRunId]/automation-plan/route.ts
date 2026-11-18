@@ -6,6 +6,7 @@ import {
   isRouteResponse,
   parseId,
 } from "~/lib/execution/runAccess";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/test-runs/{testRunId}/automation-plan[?executionId=]
@@ -15,7 +16,7 @@ import {
  * session or an API token (read-only tokens are fine). When `executionId`
  * names an execution of this run, its ad-hoc case subset and ref apply.
  */
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ testRunId: string }> }
 ) {
@@ -67,3 +68,5 @@ export async function GET(
     headers: { "Cache-Control": "no-store" },
   });
 }
+
+export const GET = withRequestRouting(handleGET);

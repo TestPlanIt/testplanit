@@ -5,12 +5,13 @@ import {
   attachmentActionSchema,
 } from "~/lib/services/adminAttachmentActions";
 import { checkAdminAuth } from "../../trash/shared";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Detach, delete, restore or permanently delete attachments from
  * Admin > Attachments. `dryRun` reports what would happen and changes nothing.
  */
-export const POST = withAuditContext(async (request: NextRequest) => {
+const handlePOST = withAuditContext(async (request: NextRequest) => {
   const auth = await checkAdminAuth(request);
   if (auth.error || !auth.userId) {
     return (
@@ -41,3 +42,5 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

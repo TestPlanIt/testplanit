@@ -5,12 +5,13 @@ import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const bucketName = process.env.AWS_BUCKET_NAME;
 
 const s3Client = getPresignClient();
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     if (!bucketName) {
       return NextResponse.json(
@@ -61,3 +62,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

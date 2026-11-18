@@ -6,6 +6,7 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { authorizeProjectMilestoneSyncAdmin } from "~/lib/integrations/importAuthorization";
 import type { SyncJobData } from "~/lib/integrations/services/SyncService";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const VALID_KINDS = new Set(["RELEASE", "ITERATION"]);
 const MAX_EXTERNAL_IDS = 500;
@@ -17,7 +18,7 @@ const MAX_EXTERNAL_IDS = 500;
  * threaded into the job so the worker cannot be tricked into writing to a
  * different project than the one the caller was authorized against.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
       const session = await getServerSession(authOptions);
@@ -116,3 +117,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

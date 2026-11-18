@@ -146,6 +146,31 @@ describe("GET /api/health", () => {
       expect(data.eventLoop.max).toBeGreaterThanOrEqual(data.eventLoop.p99);
     });
 
+    it("reports read-replica routing only when replicas are configured", async () => {
+      expect((await (await GET()).json()).readReplicas).toBeUndefined();
+
+      process.env.DATABASE_REPLICA_URLS = "postgresql://replica/db";
+      try {
+        const data = await (await GET()).json();
+        expect(data.readReplicas).toMatchObject({
+          replicaReads: expect.any(Number),
+          failovers: expect.any(Number),
+          writesAfterReplicaRead: expect.any(Number),
+          replicas: expect.any(Array),
+        });
+        expect(Object.keys(data.readReplicas.primaryReads).sort()).toEqual([
+          "afterWrite",
+          "forcedPrimary",
+          "noHealthyReplica",
+          "notEligible",
+          "notOptedIn",
+          "unframed",
+        ]);
+      } finally {
+        delete process.env.DATABASE_REPLICA_URLS;
+      }
+    });
+
     it("keeps event-loop lag out of the overall status", async () => {
       // A blocked loop must never mark an instance unhealthy: that would pull it
       // from the load balancer at its busiest and dump the traffic on its

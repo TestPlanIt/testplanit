@@ -13,6 +13,7 @@ import {
 } from "~/lib/execution/runAccess";
 import { ACTIVE_EXECUTION_STATUSES } from "~/lib/execution/types";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const bodySchema = z.object({
   conclusion: z.enum(["success", "failure", "cancelled"]),
@@ -27,7 +28,7 @@ const bodySchema = z.object({
  * others. The run itself stays open — completing it is a separate decision.
  * A job that never called `/started` can still hand over its own URL here.
  */
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ testRunId: string; executionId: string }> }
 ) {
@@ -86,3 +87,5 @@ export async function POST(
   });
   return NextResponse.json({ id: execution.id, status });
 }
+
+export const POST = withRequestRouting(handlePOST);

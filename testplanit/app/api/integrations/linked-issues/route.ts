@@ -4,8 +4,9 @@ import type { LinkedIssueRef } from "@/lib/integrations/adapters/IssueAdapter";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -67,3 +68,5 @@ export async function GET(request: NextRequest) {
 
   return Response.json({ refs });
 }
+
+export const GET = withRequestRouting(handleGET);

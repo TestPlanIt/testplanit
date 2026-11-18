@@ -12,6 +12,7 @@ import {
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { updateHasParameters } from "~/lib/services/parameterMaintenance";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Phase 2 Plan 02-02 — CSV import wizard final commit.
@@ -41,7 +42,7 @@ const importCsvBodySchema = z.object({
 
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
 
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
 ) {
@@ -273,3 +274,5 @@ export async function POST(
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

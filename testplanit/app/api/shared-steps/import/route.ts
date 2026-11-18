@@ -14,6 +14,7 @@ import {
   parseLabeledSteps,
   tryParseJsonSteps,
 } from "~/lib/utils/parseExportedSteps";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Helper function to safely parse JSON
 const safeJsonParse = (jsonString: any, defaultValue: any = null): any => {
@@ -83,7 +84,7 @@ interface ParsedSharedStep {
   stepsData?: string;
 }
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -355,3 +356,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

@@ -8,12 +8,13 @@ import {
   generateTOTPSecret,
 } from "~/lib/two-factor";
 import { authOptions } from "~/server/auth";
+import { withPrimaryRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/auth/two-factor/setup
  * Generate a new TOTP secret and QR code for 2FA setup
  */
-export const GET = withAuditContext(async (_request: NextRequest) => {
+const handleGET = withAuditContext(async (_request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
 
@@ -60,3 +61,5 @@ export const GET = withAuditContext(async (_request: NextRequest) => {
     );
   }
 });
+
+export const GET = withPrimaryRequestRouting(handleGET);

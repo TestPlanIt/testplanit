@@ -9,6 +9,7 @@ import { issueScanCancelKey } from "~/lib/services/impact/jobKeys";
 import { findRepoJob, isLiveJobState } from "~/lib/services/impact/repoJobs";
 import { setCancelFlags } from "~/lib/services/jobCancel";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -26,7 +27,7 @@ const bodySchema = z.object({
  * cancelled report itself when it stops. With no job at all, a leftover
  * running flag is simply cleared.
  */
-export async function POST(req: NextRequest, { params }: RouteParams) {
+async function handlePOST(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -136,3 +137,5 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

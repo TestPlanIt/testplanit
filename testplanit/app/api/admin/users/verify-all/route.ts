@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * POST /api/admin/users/verify-all
@@ -13,7 +14,7 @@ import { authOptions } from "~/server/auth";
  *
  * Security: Only accessible to ADMIN users
  */
-export const POST = withAuditContext(async (_request: NextRequest) => {
+const handlePOST = withAuditContext(async (_request: NextRequest) => {
   try {
     // Check authentication and authorization
     const session = await getServerSession(authOptions);
@@ -57,3 +58,5 @@ export const POST = withAuditContext(async (_request: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

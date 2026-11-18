@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { authorizeProjectImport } from "~/lib/integrations/importAuthorization";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /** Coerce the recency window to a positive whole number of days, or undefined. */
 function normalizeDays(value: unknown): number | undefined {
@@ -28,7 +29,7 @@ function normalizeCap(value: unknown): number {
  * project into its TestPlanIt project, scoped by a recency window + cap.
  * Project-admin gated; the actual work runs on the `issue-sync` queue.
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
       const session = await getServerSession(authOptions);
@@ -99,3 +100,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

@@ -28,6 +28,7 @@ import { notifyUnblockedDependants } from "~/lib/services/dependencyHandoff";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { isNotFoundError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Edits an existing manual test-run result under the same governance as
@@ -74,7 +75,7 @@ const editResultSchema = z.object({
 // Scalar fields captured before and after the update so the audit event
 // records an accurate field-level diff (calculateDiff skips timestamps/ids it
 // doesn't care about and masks sensitive values).
-export const POST = withAuditContext(async (req: NextRequest) => {
+const handlePOST = withAuditContext(async (req: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     const auth = await authenticateRequest(req, session);
@@ -504,3 +505,5 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

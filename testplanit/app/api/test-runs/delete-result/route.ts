@@ -11,6 +11,7 @@ import { hasResultMutationPermission } from "~/lib/services/resultGuards";
 import { syncRunCaseStatusAfterResultRemoval } from "~/lib/services/runCaseStatusSync";
 import { isNotFoundError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * Soft-deletes a manual test-run result and re-derives the owning run-case's
@@ -31,7 +32,7 @@ const deleteResultSchema = z.object({
   resultId: z.number().int().positive(),
 });
 
-export const POST = withAuditContext(async (req: NextRequest) => {
+const handlePOST = withAuditContext(async (req: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     const auth = await authenticateRequest(req, session);
@@ -229,3 +230,5 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     );
   }
 });
+
+export const POST = withRequestRouting(handlePOST);

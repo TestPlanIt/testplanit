@@ -15,8 +15,9 @@ import { captureAuditEvent } from "~/lib/services/auditLog";
 import { db } from "~/server/db";
 
 import { requireArchiveAdmin } from "../auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
@@ -83,3 +84,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

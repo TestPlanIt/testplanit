@@ -9,6 +9,7 @@ import { getVisibleMilestone } from "~/lib/services/milestoneAccess";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import { authOptions } from "~/server/auth";
 import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export type { MilestoneBurndownData };
 
@@ -25,7 +26,7 @@ export type { MilestoneBurndownData };
  * `createdAt` (import time) — imprecise to the day but keeps `total` honest and
  * lets the line reach zero.
  */
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ milestoneId: string }> }
 ) {
@@ -188,3 +189,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

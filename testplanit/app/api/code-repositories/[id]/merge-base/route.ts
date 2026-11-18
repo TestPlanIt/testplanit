@@ -5,6 +5,7 @@ import {
   providerErrorResponse,
   resolveRepoRouteContext,
 } from "~/lib/services/impact/repoRouteContext";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 const querySchema = z.object({
   base: z.string().trim().min(1).max(255),
@@ -19,7 +20,7 @@ const querySchema = z.object({
  * `sha` comes back null when the provider cannot answer; callers fall back to
  * the base the provider gave them.
  */
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -44,3 +45,5 @@ export async function GET(
     return providerErrorResponse(error);
   }
 }
+
+export const GET = withRequestRouting(handleGET);

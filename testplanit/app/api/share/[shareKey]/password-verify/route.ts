@@ -12,6 +12,7 @@ import {
   createShareAccessToken,
   SHARE_ACCESS_TOKEN_TTL_SECONDS,
 } from "~/lib/shareAccessToken";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic";
  * Verify password for password-protected share link
  * Rate limited to prevent brute force attacks
  */
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     req: NextRequest,
     { params }: { params: Promise<{ shareKey: string }> }
@@ -162,3 +163,5 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);

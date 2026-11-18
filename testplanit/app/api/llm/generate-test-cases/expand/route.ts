@@ -31,6 +31,7 @@ import {
   type ContextImage,
 } from "~/lib/llm/context-images";
 import { readContextImages } from "~/lib/llm/context-image-stash";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /** Token budget for the style exemplars folded into each expand prompt. */
 const EXPAND_EXEMPLAR_TOKEN_BUDGET = 1500;
@@ -54,7 +55,7 @@ function formatError(err: unknown): string {
   return parts.filter(Boolean).join(": ");
 }
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -440,3 +441,5 @@ export async function POST(req: NextRequest) {
     },
   });
 }
+
+export const POST = withRequestRouting(handlePOST);

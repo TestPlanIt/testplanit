@@ -5,6 +5,7 @@ import { z } from "zod/v4";
 import { baseDb } from "~/lib/db";
 import { paginatedFindManyWithRelations } from "~/lib/paginatedFindMany";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Accepts the same `where` / `orderBy` / `select` that the ZenStack
 // useFindManyRepositoryCases hook would build client-side. We POST instead of
@@ -24,7 +25,7 @@ const requestSchema = z.object({
   take: z.number().int().nonnegative().optional(),
 });
 
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
@@ -151,3 +152,5 @@ export async function POST(
     );
   }
 }
+
+export const POST = withRequestRouting(handlePOST);

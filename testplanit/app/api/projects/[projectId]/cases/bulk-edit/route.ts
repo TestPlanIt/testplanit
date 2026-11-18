@@ -15,6 +15,7 @@ import {
   ReviewGateError,
 } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Schema for bulk edit request
 const bulkEditSchema = z.object({
@@ -77,7 +78,7 @@ const bulkEditSchema = z.object({
 
 type BulkEditRequest = z.infer<typeof bulkEditSchema>;
 
-export const POST = withAuditContext(
+const handlePOST = withAuditContext(
   async (
     request: NextRequest,
     { params }: { params: Promise<{ projectId: string }> }
@@ -608,6 +609,8 @@ export const POST = withAuditContext(
     }
   }
 );
+
+export const POST = withRequestRouting(handlePOST);
 
 // Helper function to apply search/replace to TipTap JSON content
 function applySearchReplace(

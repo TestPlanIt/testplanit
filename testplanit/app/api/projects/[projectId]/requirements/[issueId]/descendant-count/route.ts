@@ -5,6 +5,7 @@ import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthor
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { getRequirementSubtreeCount } from "~/lib/services/requirementHierarchy";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/projects/[projectId]/requirements/[issueId]/descendant-count
@@ -30,7 +31,7 @@ import { authOptions } from "~/server/auth";
  * be able to use this route's 404/200 split to learn whether a requirement
  * id exists in a project they cannot administer.
  */
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; issueId: string }> }
 ) {
@@ -85,3 +86,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

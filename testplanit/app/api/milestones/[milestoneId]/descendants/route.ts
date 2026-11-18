@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import { getVisibleMilestone } from "~/lib/services/milestoneAccess";
 import { authOptions } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
-export async function GET(
+async function handleGET(
   req: NextRequest,
   { params }: { params: Promise<{ milestoneId: string }> }
 ) {
@@ -44,3 +45,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestRouting(handleGET);

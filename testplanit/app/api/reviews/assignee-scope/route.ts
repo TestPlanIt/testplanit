@@ -10,6 +10,7 @@ import {
   reviewAssigneeWhere,
 } from "~/lib/services/reviewInboxScope";
 import { getServerAuthSession } from "~/server/auth";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 /**
  * GET /api/reviews/assignee-scope
@@ -21,7 +22,7 @@ import { getServerAuthSession } from "~/server/auth";
  * what `decideReviewRequest` lets the caller decide. Always the caller's
  * own scope; there is no way to ask for another user's.
  */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   let userId: string | undefined = (await getServerAuthSession())?.user?.id;
   if (!userId) {
     if (!extractBearerToken(request)) {
@@ -45,3 +46,5 @@ export async function GET(request: NextRequest) {
   const scope = await resolveReviewAssigneeScope(userId, baseDb as any);
   return NextResponse.json({ ...scope, where: reviewAssigneeWhere(scope) });
 }
+
+export const GET = withRequestRouting(handleGET);

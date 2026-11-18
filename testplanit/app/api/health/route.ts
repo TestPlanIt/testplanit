@@ -4,8 +4,14 @@ import { NextResponse } from "next/server";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import valkeyConnection from "~/lib/valkey";
 import { getVersionInfo } from "~/lib/version";
+import { isReplicaRoutingEnabled } from "~/lib/db/replicaConfig";
+import {
+  getReadRoutingStats,
+  type ReadRoutingStats,
+} from "~/lib/db/routingStats";
 import { db } from "~/server/db";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
+import { withRequestRouting } from "~/lib/db/requestRouting";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +51,12 @@ export interface HealthCheckResponse {
    * `checks` feeds the overall `status`, and this must NOT. See getEventLoopLag.
    */
   eventLoop: EventLoopLag;
+  /**
+   * Read/write routing counters for this process, present only when read
+   * replicas are configured. Like `eventLoop`, it never feeds `status`: a
+   * replica that is down or behind is served around, not an outage.
+   */
+  readReplicas?: ReadRoutingStats;
   timestamp: string;
 }
 
@@ -102,7 +114,7 @@ function getEventLoopLag(): EventLoopLag {
   };
 }
 
-export async function GET() {
+async function handleGET() {
   const versionInfo = getVersionInfo();
 
   // Check database connectivity
@@ -150,6 +162,7 @@ export async function GET() {
       storage: storageCheck,
     },
     eventLoop: getEventLoopLag(),
+    ...(isReplicaRoutingEnabled() && { readReplicas: getReadRoutingStats() }),
     timestamp: new Date().toISOString(),
   };
 
@@ -169,8 +182,10 @@ export async function GET() {
   });
 }
 
+export const GET = withRequestRouting(handleGET);
+
 // Handle preflight OPTIONS request for CORS
-export async function OPTIONS() {
+async function handleOPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
@@ -180,6 +195,8 @@ export async function OPTIONS() {
     },
   });
 }
+
+export const OPTIONS = withRequestRouting(handleOPTIONS);
 
 async function checkDatabase(): Promise<ServiceCheck> {
   try {
