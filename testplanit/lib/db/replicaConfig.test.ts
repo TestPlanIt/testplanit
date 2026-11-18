@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   getPrimaryStickyMs,
+  getReplicaMaxLagMs,
   getReplicaUrls,
   isReplicaRoutingEnabled,
 } from "./replicaConfig";
@@ -12,6 +13,22 @@ describe("replicaConfig", () => {
   afterEach(() => {
     delete process.env.DATABASE_REPLICA_URLS;
     delete process.env.DATABASE_PRIMARY_STICKY_MS;
+    delete process.env.DATABASE_REPLICA_MAX_LAG_MS;
+  });
+
+  describe("getReplicaMaxLagMs", () => {
+    it("is off unless a positive number is set", () => {
+      expect(getReplicaMaxLagMs()).toBeNull();
+      for (const value of ["", "  ", "0", "-5", "soon"]) {
+        process.env.DATABASE_REPLICA_MAX_LAG_MS = value;
+        expect(getReplicaMaxLagMs()).toBeNull();
+      }
+    });
+
+    it("reads the limit in whole milliseconds", () => {
+      process.env.DATABASE_REPLICA_MAX_LAG_MS = "2500.7";
+      expect(getReplicaMaxLagMs()).toBe(2500);
+    });
   });
 
   describe("getReplicaUrls", () => {

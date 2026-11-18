@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   getRoutingContext,
@@ -21,6 +21,8 @@ describe("routingContext", () => {
         forceReplica: false,
         autoReplica: false,
         wroteInContext: false,
+        replicaReads: 0,
+        label: undefined,
       });
     });
   });
@@ -86,5 +88,22 @@ describe("routingContext", () => {
       // Outer frame unchanged after the nested block returns.
       expect(getRoutingContext()?.wroteInContext).toBe(true);
     });
+  });
+});
+
+describe("routingContext across module copies", () => {
+  it("shares one frame store between separately loaded copies of the module", async () => {
+    vi.resetModules();
+    const copyA = await import("./routingContext");
+    vi.resetModules();
+    const copyB = await import("./routingContext");
+    expect(copyA.runWithDbRouting).not.toBe(copyB.runWithDbRouting);
+
+    copyA.runWithDbRouting(
+      () => {
+        expect(copyB.getRoutingContext()).toMatchObject({ autoReplica: true });
+      },
+      { autoReplica: true }
+    );
   });
 });

@@ -8,6 +8,8 @@
 // dormant and the app uses a single primary pool — byte-for-byte identical to a
 // build without this module. See docs/docs/horizontal-read-scaling.md.
 
+import { COOKIE_PATH } from "../basePath";
+
 /** Name of the cookie that pins a browser's reads to the primary for a short
  *  window after a mutation (cross-request read-your-own-writes). Presence is
  *  the only signal; the value is not interpreted. */
@@ -51,4 +53,33 @@ export function getPrimaryStickyMs(): number {
   const parsed = Number(raw);
   if (!Number.isFinite(parsed) || parsed < 0) return DEFAULT_PRIMARY_STICKY_MS;
   return Math.floor(parsed);
+}
+
+/**
+ * Most replication lag a replica may have and still be read from, in
+ * milliseconds (DATABASE_REPLICA_MAX_LAG_MS). Null when unset, empty, zero,
+ * negative or not a number: lag is then not measured and never excludes a
+ * replica.
+ */
+export function getReplicaMaxLagMs(): number | null {
+  const raw = process.env.DATABASE_REPLICA_MAX_LAG_MS;
+  if (raw === undefined || raw.trim() === "") return null;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return Math.floor(parsed);
+}
+
+/** The Set-Cookie value that pins a browser's reads to the primary. */
+export function primaryStickyCookie(): string | null {
+  const stickyMs = getPrimaryStickyMs();
+  if (stickyMs <= 0) return null;
+  const attributes = [
+    `${PRIMARY_STICKY_COOKIE}=1`,
+    `Path=${COOKIE_PATH}`,
+    `Max-Age=${Math.ceil(stickyMs / 1000)}`,
+    "HttpOnly",
+    "SameSite=Lax",
+  ];
+  if (process.env.NODE_ENV === "production") attributes.push("Secure");
+  return attributes.join("; ");
 }

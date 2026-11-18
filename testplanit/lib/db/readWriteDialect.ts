@@ -39,7 +39,19 @@ import type {
 } from "kysely";
 import { Pool, type PoolConfig } from "pg";
 
+import { getReplicaMaxLagMs } from "./replicaConfig";
 import { getRoutingContext, markWroteInContext } from "./routingContext";
+import {
+  countFailover,
+  countPrimaryRead,
+  countReplicaRead,
+  countWriteAfterReplicaRead,
+  type PrimaryReadReason,
+  registerReplicaStateSource,
+  type ReplicaState,
+  type ReplicaStateSource,
+  unregisterReplicaStateSource,
+} from "./routingStats";
 
 export interface ReadWriteRoutingDialectConfig {
   /** Primary (read/write) connection string — receives all writes + transactions. */
@@ -50,9 +62,47 @@ export interface ReadWriteRoutingDialectConfig {
   poolConfig?: Omit<PoolConfig, "connectionString">;
   /** How long (ms) to skip a replica after a connection failure. Default 10000. */
   replicaCooldownMs?: number;
+  /**
+   * Skip a replica whose replication lag exceeds this many milliseconds.
+   * Unset: lag is not measured.
+   */
+  maxLagMs?: number | null;
 }
 
 const DEFAULT_REPLICA_COOLDOWN_MS = 10_000;
+
+/** Reads a replica's replication lag in milliseconds; null when unknown. */
+export type ReplicaLagProbe = () => Promise<number | null>;
+
+// A replica that has replayed everything it received is not behind, however
+// long ago the last transaction was: on a quiet primary the replay timestamp
+// stops advancing, and reading it alone would report an ever-growing lag.
+const REPLICA_LAG_SQL = `SELECT CASE
+  WHEN NOT pg_is_in_recovery() THEN 0
+  WHEN pg_last_wal_receive_lsn() = pg_last_wal_replay_lsn() THEN 0
+  ELSE EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp())) * 1000
+END AS lag_ms`;
+
+/** How often lag is measured: twice per threshold, between 1s and 5s. */
+function lagCheckIntervalMs(maxLagMs: number): number {
+  return Math.min(5000, Math.max(1000, Math.floor(maxLagMs / 2)));
+}
+
+// A write that follows a replica read in the same request may have been
+// decided on data the replica had not caught up with. Say so once per source.
+const warnedStaleWriteLabels = new Set<string>();
+
+function noteWriteAfterReplicaRead(label: string | undefined): void {
+  countWriteAfterReplicaRead();
+  const key = label ?? "(unlabelled)";
+  if (warnedStaleWriteLabels.has(key) || warnedStaleWriteLabels.size >= 500) {
+    return;
+  }
+  warnedStaleWriteLabels.add(key);
+  console.warn(
+    `[readWriteDialect] ${key} wrote after reading from a replica; pin it to the primary if the write depends on what it read`
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Node classification
@@ -140,22 +190,46 @@ interface ReplicaSlot {
   driver: Driver;
   /** Epoch ms until which this replica is considered down (0 = healthy). */
   downUntil: number;
+  /** Marked down and not yet seen back in rotation. */
+  wasDown: boolean;
+  /** Lag at the last probe; null when not measured or unknown. */
+  lagMs: number | null;
+  /** Over the lag threshold at the last probe. */
+  lagging: boolean;
 }
 
-class Router {
+interface RouterOptions {
+  cooldownMs: number;
+  maxLagMs?: number | null;
+  /** One per replica, in replica order. Lag is only checked when given. */
+  lagProbes?: ReplicaLagProbe[];
+}
+
+class Router implements ReplicaStateSource {
   readonly primaryDriver: Driver;
   private readonly replicas: ReplicaSlot[];
   private readonly cooldownMs: number;
+  private readonly maxLagMs: number | null;
+  private readonly lagProbes: ReplicaLagProbe[];
+  private lagTimer: ReturnType<typeof setInterval> | undefined;
   private rr = 0;
 
   constructor(
     primaryDriver: Driver,
     replicaDrivers: Driver[],
-    cooldownMs: number
+    options: RouterOptions
   ) {
     this.primaryDriver = primaryDriver;
-    this.replicas = replicaDrivers.map((driver) => ({ driver, downUntil: 0 }));
-    this.cooldownMs = cooldownMs;
+    this.replicas = replicaDrivers.map((driver) => ({
+      driver,
+      downUntil: 0,
+      wasDown: false,
+      lagMs: null,
+      lagging: false,
+    }));
+    this.cooldownMs = options.cooldownMs;
+    this.maxLagMs = options.maxLagMs ?? null;
+    this.lagProbes = options.lagProbes ?? [];
   }
 
   get hasReplicas(): boolean {
@@ -169,12 +243,58 @@ class Router {
     const now = Date.now();
     for (let i = 0; i < n; i++) {
       const idx = (this.rr + i) % n;
-      if (this.replicas[idx].downUntil <= now) {
+      const slot = this.replicas[idx];
+      if (slot.downUntil <= now && !slot.lagging) {
+        if (slot.wasDown) {
+          slot.wasDown = false;
+          console.warn(
+            `[readWriteDialect] replica #${idx} is back in rotation`
+          );
+        }
         this.rr = (idx + 1) % n;
         return idx;
       }
     }
     return null;
+  }
+
+  replicaStates(): ReplicaState[] {
+    const now = Date.now();
+    return this.replicas.map((slot, index) => ({
+      index,
+      status: slot.downUntil > now ? "down" : slot.lagging ? "lagging" : "ok",
+      lagMs: slot.lagMs,
+    }));
+  }
+
+  /** Measure every replica's lag once and set aside the ones over the limit. */
+  async checkLag(): Promise<void> {
+    const maxLagMs = this.maxLagMs;
+    if (maxLagMs === null) return;
+    await Promise.all(
+      this.replicas.map(async (slot, index) => {
+        const probe = this.lagProbes[index];
+        if (!probe) return;
+        try {
+          const lagMs = await probe();
+          slot.lagMs = lagMs;
+          const lagging = lagMs !== null && lagMs > maxLagMs;
+          if (lagging && !slot.lagging) {
+            console.warn(
+              `[readWriteDialect] replica #${index} is ${Math.round(lagMs)}ms behind (limit ${maxLagMs}ms); routing its reads elsewhere`
+            );
+          } else if (!lagging && slot.lagging) {
+            console.warn(
+              `[readWriteDialect] replica #${index} has caught up and is back in rotation`
+            );
+          }
+          slot.lagging = lagging;
+        } catch (err) {
+          slot.lagMs = null;
+          if (isConnectionError(err)) this.markReplicaDown(index);
+        }
+      })
+    );
   }
 
   replicaDriver(index: number): Driver {
@@ -184,19 +304,39 @@ class Router {
   markReplicaDown(index: number): void {
     const slot = this.replicas[index];
     if (slot) {
-      slot.downUntil = Date.now() + this.cooldownMs;
-      console.warn(
-        `[readWriteDialect] replica #${index} marked down for ${this.cooldownMs}ms; routing its reads to the primary`
-      );
+      const now = Date.now();
+      const alreadyDown = slot.downUntil > now;
+      slot.downUntil = now + this.cooldownMs;
+      slot.wasDown = true;
+      if (!alreadyDown) {
+        console.warn(
+          `[readWriteDialect] replica #${index} marked down for ${this.cooldownMs}ms; routing its reads elsewhere`
+        );
+      }
     }
   }
 
   async initAll(): Promise<void> {
     await this.primaryDriver.init();
     await Promise.all(this.replicas.map((r) => r.driver.init()));
+    registerReplicaStateSource(this);
+    if (this.maxLagMs !== null && this.lagProbes.length > 0 && !this.lagTimer) {
+      void this.checkLag();
+      this.lagTimer = setInterval(
+        () => void this.checkLag(),
+        lagCheckIntervalMs(this.maxLagMs)
+      );
+      // Never keep a process alive just to measure lag.
+      this.lagTimer.unref?.();
+    }
   }
 
   async destroyAll(): Promise<void> {
+    if (this.lagTimer) {
+      clearInterval(this.lagTimer);
+      this.lagTimer = undefined;
+    }
+    unregisterReplicaStateSource(this);
     await Promise.all([
       this.primaryDriver.destroy(),
       ...this.replicas.map((r) => r.driver.destroy()),
@@ -325,39 +465,56 @@ class RoutingConnection implements DatabaseConnection {
     if (this.#subConn) return this.#subConn;
 
     const write = isWriteNode(compiledQuery);
-    if (write) markWroteInContext();
-
-    if (this.#wantsReplica(compiledQuery, write)) {
-      const replicaConn = await this.#tryAcquireReplica(options);
-      if (replicaConn) return replicaConn;
-      // No healthy replica (or all failed to connect) → fall through to primary.
+    if (write) {
+      const ctx = getRoutingContext();
+      if (ctx && ctx.replicaReads > 0 && !ctx.wroteInContext) {
+        noteWriteAfterReplicaRead(ctx.label);
+      }
+      markWroteInContext();
+      return this.#acquirePrimary(options);
+    }
+    if (this.#pinnedToPrimary || !this.#router.hasReplicas) {
+      return this.#acquirePrimary(options);
     }
 
+    let reason = this.#primaryReadReason(compiledQuery);
+    if (reason === null) {
+      const replicaConn = await this.#tryAcquireReplica(options);
+      if (replicaConn) {
+        countReplicaRead();
+        const ctx = getRoutingContext();
+        if (ctx) ctx.replicaReads++;
+        return replicaConn;
+      }
+      // No healthy replica (or all failed to connect) → fall through to primary.
+      reason = "noHealthyReplica";
+    }
+    // Raw queries are not known to be reads, so only SELECTs are counted.
+    if (isSelectNode(compiledQuery)) countPrimaryRead(reason);
     return this.#acquirePrimary(options);
   }
 
-  #wantsReplica(compiledQuery: CompiledQuery, write: boolean): boolean {
-    if (write || this.#pinnedToPrimary || !this.#router.hasReplicas) {
-      return false;
-    }
+  /** Why this read must run on the primary, or null when a replica may serve it. */
+  #primaryReadReason(compiledQuery: CompiledQuery): PrimaryReadReason | null {
     // Safe-by-default: a read with no routing frame stays on the primary, so an
     // un-wrapped write-then-read path can't serve a stale replica read.
     const ctx = getRoutingContext();
-    if (!ctx || ctx.forcePrimary || ctx.wroteInContext) return false;
+    if (!ctx) return "unframed";
+    if (ctx.forcePrimary) return "forcedPrimary";
+    if (ctx.wroteInContext) return "afterWrite";
 
+    const plainSelect =
+      isSelectNode(compiledQuery) && !isLockingSelect(compiledQuery);
     if (ctx.forceReplica) {
       // Explicit opt-in (withReplica): SELECTs (non-locking) and raw reads.
-      return (
-        (isSelectNode(compiledQuery) && !isLockingSelect(compiledQuery)) ||
-        isRawNode(compiledQuery)
-      );
+      return plainSelect || isRawNode(compiledQuery) ? null : "notEligible";
     }
     if (ctx.autoReplica) {
       // Automatic offload for read requests: plain, non-locking SELECTs only.
-      return isSelectNode(compiledQuery) && !isLockingSelect(compiledQuery);
+      return plainSelect ? null : "notEligible";
     }
     // Framed (e.g. a worker job) but not opted in → primary.
-    return false;
+    return "notOptedIn";
   }
 
   async #tryAcquireReplica(
@@ -411,6 +568,7 @@ class RoutingConnection implements DatabaseConnection {
       return null;
     }
     this.#router.markReplicaDown(this.#usedReplicaIndex);
+    countFailover();
     // Discard the broken replica connection, then re-run on the primary.
     try {
       if (this.#subConn && this.#owningDriver) {
@@ -540,15 +698,23 @@ export class ReadWriteRoutingDialect implements Dialect {
     this.#primaryDialect = new PostgresDialect({ pool: primaryPool });
     const primaryDriver = this.#primaryDialect.createDriver();
 
-    const replicaDrivers = config.replicaUrls.map((url) =>
-      new PostgresDialect({ pool: makePool(url) }).createDriver()
+    const replicaPools = config.replicaUrls.map(makePool);
+    const replicaDrivers = replicaPools.map((pool) =>
+      new PostgresDialect({ pool }).createDriver()
     );
+    const lagProbes = replicaPools.map((pool): ReplicaLagProbe => async () => {
+      const result = await pool.query(REPLICA_LAG_SQL);
+      const raw = result.rows[0]?.lag_ms;
+      if (raw === null || raw === undefined) return null;
+      const lagMs = Number(raw);
+      return Number.isFinite(lagMs) ? lagMs : null;
+    });
 
-    this.#router = new Router(
-      primaryDriver,
-      replicaDrivers,
-      replicaCooldownMs ?? DEFAULT_REPLICA_COOLDOWN_MS
-    );
+    this.#router = new Router(primaryDriver, replicaDrivers, {
+      cooldownMs: replicaCooldownMs ?? DEFAULT_REPLICA_COOLDOWN_MS,
+      maxLagMs: config.maxLagMs,
+      lagProbes,
+    });
   }
 
   createDriver(): Driver {
@@ -586,7 +752,12 @@ export function createDialect(
       pool: new Pool({ ...poolConfig, connectionString: primaryUrl }),
     });
   }
-  return new ReadWriteRoutingDialect({ primaryUrl, replicaUrls, poolConfig });
+  return new ReadWriteRoutingDialect({
+    primaryUrl,
+    replicaUrls,
+    poolConfig,
+    maxLagMs: getReplicaMaxLagMs(),
+  });
 }
 
 // Exported for unit tests: the node classifiers plus a factory that builds a
@@ -602,10 +773,20 @@ export const __testing = {
   createRoutingDriver(
     primaryDriver: Driver,
     replicaDrivers: Driver[] = [],
-    cooldownMs = DEFAULT_REPLICA_COOLDOWN_MS
-  ): Driver {
-    return new RoutingDriver(
-      new Router(primaryDriver, replicaDrivers, cooldownMs)
-    );
+    cooldownMs = DEFAULT_REPLICA_COOLDOWN_MS,
+    lag?: { maxLagMs: number; probes: ReplicaLagProbe[] }
+  ): Driver & { checkLag(): Promise<void> } {
+    const router = new Router(primaryDriver, replicaDrivers, {
+      cooldownMs,
+      maxLagMs: lag?.maxLagMs,
+      lagProbes: lag?.probes,
+    });
+    return Object.assign(new RoutingDriver(router), {
+      checkLag: () => router.checkLag(),
+    });
+  },
+  lagCheckIntervalMs,
+  resetStaleWriteWarnings(): void {
+    warnedStaleWriteLabels.clear();
   },
 };

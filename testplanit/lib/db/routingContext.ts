@@ -37,9 +37,21 @@ export interface DbRoutingContext {
   autoReplica: boolean;
   /** Set by the dialect once a write runs in this context. */
   wroteInContext: boolean;
+  /** Reads this context has been served from a replica, counted by the dialect. */
+  replicaReads: number;
+  /** What opened the frame ("GET /api/…"), for log lines about it. */
+  label?: string;
 }
 
-const storage = new AsyncLocalStorage<DbRoutingContext>();
+// Kept on globalThis like the database clients: Next.js can load this module
+// once per server layer, while the clients (and the dialect inside them) are
+// created once per process. A frame opened through one copy of this module
+// must be the frame the dialect reads through another.
+const globalForRouting = globalThis as unknown as {
+  __tpiDbRoutingStorage?: AsyncLocalStorage<DbRoutingContext>;
+};
+const storage = (globalForRouting.__tpiDbRoutingStorage ??=
+  new AsyncLocalStorage<DbRoutingContext>());
 
 /** Current routing context, or undefined outside any run* wrapper. */
 export function getRoutingContext(): DbRoutingContext | undefined {
@@ -66,7 +78,10 @@ export function getRoutingContext(): DbRoutingContext | undefined {
 export function runWithDbRouting<T>(
   fn: () => T,
   init?: Partial<
-    Pick<DbRoutingContext, "forcePrimary" | "forceReplica" | "autoReplica">
+    Pick<
+      DbRoutingContext,
+      "forcePrimary" | "forceReplica" | "autoReplica" | "label"
+    >
   >
 ): T {
   return storage.run(
@@ -75,6 +90,8 @@ export function runWithDbRouting<T>(
       forceReplica: init?.forceReplica ?? false,
       autoReplica: init?.autoReplica ?? false,
       wroteInContext: false,
+      replicaReads: 0,
+      label: init?.label,
     },
     fn
   );
@@ -92,6 +109,7 @@ export function withPrimary<T>(fn: () => T): T {
       forceReplica: false,
       autoReplica: false,
       wroteInContext: false,
+      replicaReads: 0,
     },
     fn
   );
@@ -110,6 +128,7 @@ export function withReplica<T>(fn: () => T): T {
       forceReplica: true,
       autoReplica: false,
       wroteInContext: false,
+      replicaReads: 0,
     },
     fn
   );
