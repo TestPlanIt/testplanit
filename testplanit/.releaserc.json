@@ -19,6 +19,7 @@
         ]
       }
     ],
+    "./scripts/semantic-release-guard.mjs",
     [
       "@semantic-release/release-notes-generator",
       {

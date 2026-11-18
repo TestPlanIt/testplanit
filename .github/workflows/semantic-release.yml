@@ -16,6 +16,15 @@ on:
   # can be cut when a push-triggered run was skipped (e.g. raced "behind
   # remote" by a concurrent [skip ci] commit).
   workflow_dispatch:
+    inputs:
+      # `main` refuses a minor or major release unless the matching
+      # `release/vX.Y` line is merged into it (see
+      # testplanit/scripts/semantic-release-guard.mjs). Tick this to release one
+      # anyway, e.g. after a squash-merged graduation.
+      allow_minor:
+        description: 'Allow a minor or major release from main'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -61,6 +70,7 @@ jobs:
           GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
+          ALLOW_MINOR_RELEASE: ${{ inputs.allow_minor == true && 'true' || 'false' }}
         run: |
           cd testplanit
           # Detect a genuinely new release as the tag this run created: the
