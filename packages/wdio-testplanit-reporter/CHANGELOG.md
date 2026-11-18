@@ -1,5 +1,17 @@
 # @testplanit/wdio-reporter
 
+## 1.2.1
+
+### Patch Changes
+
+- [`2263eb9`](https://github.com/TestPlanIt/testplanit/commit/2263eb9dc5cb698d50099f97b651daf51243dc4f) Thanks [@therealbrad](https://github.com/therealbrad)! - Commands and screenshots go to the right test when tests run in parallel
+
+  With WebdriverIO 10's parallel mode, several tests run at once. The reporter
+  attached every browser command and screenshot to whichever test had started
+  last, so one test's screenshots and AI-derived steps could land on another.
+  On WebdriverIO 10.2 and later it now asks WebdriverIO which test a command
+  belongs to. Earlier versions run tests one at a time and are unchanged.
+
 ## 1.2.0
 
 ### Minor Changes
