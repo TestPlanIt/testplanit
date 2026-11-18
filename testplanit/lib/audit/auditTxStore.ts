@@ -24,4 +24,12 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { TxClient } from "~/lib/zenstack";
 
-export const auditTxStore = new AsyncLocalStorage<TxClient>();
+// Kept on globalThis like the database clients: Next.js can load this module
+// once per server layer, and the shared client's plugin must read the same
+// store `auditedTransaction` wrote, or it opens the second transaction this
+// store exists to prevent.
+const globalForAuditTx = globalThis as unknown as {
+  __tpiAuditTxStorage?: AsyncLocalStorage<TxClient>;
+};
+export const auditTxStore = (globalForAuditTx.__tpiAuditTxStorage ??=
+  new AsyncLocalStorage<TxClient>());

@@ -75,16 +75,19 @@ function createClients() {
   return { rawClient, baseClient, policyClient };
 }
 
-// Reuse a single set of clients across dev hot-reloads to avoid exhausting the
-// connection pool (mirrors the v2 global-singleton pattern).
+// One set of clients per process, kept on globalThis. Next.js loads this
+// module once per server layer, and each copy would otherwise open its own
+// connection pools, multiplying DATABASE_POOL_MAX by the number of layers. The
+// same global also survives dev hot-reloads.
+//
+// The plugins on the shared client come from whichever layer loaded first, so
+// any per-request state they read (audit context, audit transaction, routing
+// frame) must live on globalThis too.
 const globalForZenstack = globalThis as unknown as {
   __zenstackClients?: ReturnType<typeof createClients>;
 };
 
-const clients =
-  process.env.NODE_ENV === "production"
-    ? createClients()
-    : (globalForZenstack.__zenstackClients ??= createClients());
+const clients = (globalForZenstack.__zenstackClients ??= createClients());
 
 export const rawClient = clients.rawClient;
 export const baseClient = clients.baseClient;

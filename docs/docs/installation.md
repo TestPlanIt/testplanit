@@ -65,6 +65,8 @@ pnpm build
 
 All three variables are described under [Content Security Policy](environment-variables.md#content-security-policy).
 
+**`DATABASE_POOL_MAX` is now the limit for the whole application process.** Earlier releases opened three connection pools in each application process, so the process could hold up to three times `DATABASE_POOL_MAX` connections. From 1.3 it opens one. If queries start failing while waiting for a free connection after the upgrade, raise `DATABASE_POOL_MAX`, keeping the total across all processes under the server's `max_connections`.
+
 ### Upgrading from a pre-1.0 release
 
 Databases created by a 0.x release predate versioned migrations and have no migration history, so the first v1.0 startup would try to re-create the baseline schema and fail. **Back up your database**, then record the baseline as already applied — once, before the first v1.0 start:
