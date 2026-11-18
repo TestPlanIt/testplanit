@@ -3,6 +3,7 @@ import * as z from "zod/v4";
 import { validateToken, TestPlanItHttpError } from "../http.js";
 import type { EnvConfig } from "../env.js";
 import { mapHttpErrorToToolResult } from "../errors.js";
+import { READS } from "./annotations.js";
 
 export interface WhoamiDeps {
   env: EnvConfig;
@@ -30,6 +31,7 @@ export function registerWhoami(server: McpServer, deps: WhoamiDeps): void {
   server.registerTool(
     "whoami",
     {
+      annotations: READS,
       description:
         "Debug: returns the authenticated user (token owner) and scopes.",
       // RAW zod shape, as the SDK expects — NOT z.object({}).

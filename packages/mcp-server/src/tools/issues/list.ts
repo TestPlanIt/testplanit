@@ -12,6 +12,7 @@ import {
   mapIssueRow,
   type RawIssueRow,
 } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface IssuesListDeps {
   env: EnvConfig;
@@ -27,6 +28,7 @@ export function registerIssuesList(
   server.registerTool(
     "testplanit_issues_list",
     {
+      annotations: READS,
       description:
         "List issues scoped to a project. Filters: externalSystem (IntegrationProvider enum), integrationId, status (TestPlanIt-side, exact match), externalStatus (externally-synced label, case-insensitive substring). Cursor pagination ordered by createdAt DESC then id DESC (deterministic). Each row carries linkedCaseCount via _count for the dominant fan-out signal. The assignee filter is intentionally omitted — Issue has no native assigneeId column; assignee data lives in Issue.data: Json (provider-shaped) and is not addressable here. By default only defect-context issues are returned; pass includeRequirements: true to widen the result to include requirement-classified issues as well.",
       inputSchema: {

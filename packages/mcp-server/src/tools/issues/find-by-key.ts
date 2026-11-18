@@ -12,6 +12,7 @@ import {
   mapIssueRow,
   type RawIssueRow,
 } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface IssuesFindByKeyDeps {
   env: EnvConfig;
@@ -31,6 +32,7 @@ export function registerIssuesFindByKey(
   server.registerTool(
     "testplanit_issues_find_by_key",
     {
+      annotations: READS,
       description:
         "Resolve an Issue by (externalKey, externalSystem, projectId). Schema enforces @@unique([externalId, integrationId]) — externalKey is NOT globally unique, so when two integrations of the same provider share a key in the same project, the response shape is { issues: [...], multipleMatches: true, hint: 'Pass integrationId to disambiguate.' } instead of { issue, multipleMatches: false }. Pass optional integrationId to skip the multi-match path. Internal-only issues (where Issue.integrationId IS NULL) are NOT addressable by this tool — agents reach those via testplanit_issues_list.",
       inputSchema: {

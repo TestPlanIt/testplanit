@@ -3,6 +3,7 @@ import * as z from "zod/v4";
 import { postHostJson } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { ADDS } from "../annotations.js";
 
 export interface CasesCreateManyDeps {
   env: EnvConfig;
@@ -53,6 +54,7 @@ export function registerCasesCreateMany(
   server.registerTool(
     "testplanit_cases_create_many",
     {
+      annotations: ADDS,
       description:
         "Create many test cases in one operation, far faster than calling testplanit_cases_create per case. Each case supports the same fields as a single create (name, steps, tags, customFields) plus optional per-case folderId / stateName overriding the batch defaults. Cases are grouped by their effective (folder, state) and each group is persisted in one transaction. Returns a per-case results array so partial failures are visible (each entry has status 'success' with caseId, or 'error' with a message). customFields must belong to the chosen template — out-of-template fields are reported as a per-case error, not silently dropped. Each case may also carry `issues`: tracker issue keys resolved server-side and created when TestPlanIt has never seen them, so attaching a ticket needs no UI pre-step.",
       inputSchema: {

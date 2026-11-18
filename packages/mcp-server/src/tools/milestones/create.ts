@@ -8,6 +8,7 @@ import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { TestPlanItHttpError } from "../../http.js";
 import { proseMirrorToMarkdown } from "../../richText.js";
+import { ADDS } from "../annotations.js";
 
 export interface MilestonesCreateDeps {
   env: EnvConfig;
@@ -38,6 +39,7 @@ export function registerMilestonesCreate(
   server.registerTool(
     "testplanit_milestones_create",
     {
+      annotations: ADDS,
       description:
         "Create a new milestone in a project. The milestone type defaults to the one marked Default; use testplanit_milestone_types_list to pick another. Optionally nest under a parent milestone. Returns the created milestone header.",
       inputSchema: {

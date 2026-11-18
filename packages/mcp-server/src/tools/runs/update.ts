@@ -21,6 +21,7 @@ import {
   type RawRunRow,
   type RawRunDetailTestCase,
 } from "./shared.js";
+import { CHANGES } from "../annotations.js";
 
 export interface RunsUpdateDeps {
   env: EnvConfig;
@@ -35,6 +36,7 @@ export function registerRunsUpdate(
   server.registerTool(
     "testplanit_runs_update",
     {
+      annotations: CHANGES,
       description:
         "Update an existing test run. Supports renaming, changing workflow state, swapping milestone or configuration, and replacing tags. All fields except runId are optional — only supplied fields are changed. Returns the full denormalized run detail (same shape as testplanit_test_runs_get).",
       inputSchema: {

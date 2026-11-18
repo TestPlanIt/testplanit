@@ -14,6 +14,7 @@ import { resolveCustomFields, writeCustomFieldValues } from "./customFields.js";
 import { resolveTagIds } from "./shared.js";
 import { replaceStepsForCase, type StepInput } from "./steps.js";
 import { fetchCaseDetail } from "./fetchDetail.js";
+import { CHANGES } from "../annotations.js";
 
 export interface CasesUpdateDeps {
   env: EnvConfig;
@@ -26,6 +27,7 @@ export function registerCasesUpdate(
   server.registerTool(
     "testplanit_cases_update",
     {
+      annotations: CHANGES,
       description:
         "Update a test case (partial). Provide only the fields to change: name, automated, steps (replaces all current steps), tags (replaces the tag set), customFields (upserts each; null clears a field, which a required field refuses), stateName, folderId. Returns the full denormalized case detail (same shape as testplanit_cases_get).",
       inputSchema: {

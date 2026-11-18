@@ -16,6 +16,7 @@ import {
   recordSessionVersion,
   type RawSessionDetail,
 } from "./shared.js";
+import { ADDS } from "../annotations.js";
 
 export interface SessionsCreateDeps {
   env: EnvConfig;
@@ -64,6 +65,7 @@ export function registerSessionsCreate(
   server.registerTool(
     "testplanit_sessions_create",
     {
+      annotations: ADDS,
       description:
         "Create a new exploratory test session in a project. Resolves the default template and SESSIONS workflow state automatically. Returns the full denormalized session detail (same shape as testplanit_sessions_get).",
       inputSchema: {

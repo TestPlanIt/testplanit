@@ -14,6 +14,7 @@ import {
   recordSessionVersion,
   type RawSessionDetail,
 } from "./shared.js";
+import { CHANGES } from "../annotations.js";
 
 export interface SessionsUpdateDeps {
   env: EnvConfig;
@@ -28,6 +29,7 @@ export function registerSessionsUpdate(
   server.registerTool(
     "testplanit_sessions_update",
     {
+      annotations: CHANGES,
       description:
         "Update an existing exploratory test session. All fields except sessionId are optional — only supplied fields are changed. Tags use full-replacement semantics (the new list replaces all current tags). Returns the full denormalized session detail.",
       inputSchema: {

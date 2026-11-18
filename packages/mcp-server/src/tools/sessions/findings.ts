@@ -8,6 +8,7 @@ import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { mapFinding } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface SessionsFindingsDeps {
   env: EnvConfig;
@@ -76,6 +77,7 @@ export function registerSessionsFindings(
   server.registerTool(
     "testplanit_sessions_findings_list",
     {
+      annotations: READS,
       description:
         "List findings — Issue rows linked to a session OR retrieve the cross-cutting view of one issue across sessions/results. Provide EXACTLY ONE of `sessionId` or `issueId` (exactly one). " +
         "sessionId mode returns { session: {id,name}, findings: Issue[], truncated }. Findings are issues linked to the session OR to any of the session's results (Issue.sessions OR Issue.sessionResults.session). Capped at 500 rows; truncated:true indicates overflow. " +

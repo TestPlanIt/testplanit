@@ -7,6 +7,7 @@ import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { buildFolderBreadcrumb, mapCaseDetail } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export const CASE_DETAIL_INCLUDE = {
   // Surface inline codeRepository on cases_get by chaining
@@ -141,6 +142,7 @@ export function registerCasesGet(server: McpServer, deps: CasesGetDeps): void {
   server.registerTool(
     "testplanit_cases_get",
     {
+      annotations: READS,
       description:
         "Fetch a single test case by id with full denormalized details — steps (Markdown, so a step can be edited and written back without losing its formatting), custom fields (flat dict), folder breadcrumb, tags, linked issues, linked automated tests.",
       inputSchema: {

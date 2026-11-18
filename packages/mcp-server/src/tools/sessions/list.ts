@@ -12,6 +12,7 @@ import {
   mapSessionRow,
   type RawSessionRow,
 } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface SessionsListDeps {
   env: EnvConfig;
@@ -27,6 +28,7 @@ export function registerSessionsList(
   server.registerTool(
     "testplanit_sessions_list",
     {
+      annotations: READS,
       description:
         "List sessions scoped to a project. Filters: stateId, isCompleted, createdById (user id, string), from/to (createdAt range; YYYY-MM-DD or an ISO 8601 timestamp — a date-only `to` covers that whole UTC day). Cursor pagination ordered by createdAt DESC then id DESC. Each row carries denormalized state/createdBy/assignedTo/template/configuration/milestone/tags + mission and note as Markdown.",
       inputSchema: {

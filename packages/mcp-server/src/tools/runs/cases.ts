@@ -11,6 +11,7 @@ import {
   mapRunDetailTestCase,
   type RawRunDetailTestCase,
 } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface RunsCasesListDeps {
   env: EnvConfig;
@@ -26,6 +27,7 @@ export function registerRunsCasesList(
   server.registerTool(
     "testplanit_test_runs_cases_list",
     {
+      annotations: READS,
       description:
         "List the test cases assigned to a specific run. Filters: isCompleted, statusId, assignedToId (user id, string). Cursor pagination ordered by `order` then `id`. Cases removed from the run (soft-deleted rows) are excluded; restore one via testplanit_runs_cases_add. Each row carries `latestResult` (most recent executedAt) inline — a union of manual TestRunResults and run-scoped automated JUnit results, discriminated by `source` (\"TestRun\" | \"JUnit\"); pass both the id and source to testplanit_test_run_results_get. Row `status` is the junction row's status when set, falling back to latestResult.status; the statusId FILTER matches only the junction column, which automated runs (testRunType != REGULAR) never set — filter automated results by status via testplanit_test_run_results_list({runId, statusId}) instead.",
       inputSchema: {

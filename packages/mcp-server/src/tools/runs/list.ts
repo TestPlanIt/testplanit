@@ -18,6 +18,7 @@ import {
   type RawRunRow,
   type StatusGroup,
 } from "./shared.js";
+import { READS } from "../annotations.js";
 
 export interface RunsListDeps {
   env: EnvConfig;
@@ -45,6 +46,7 @@ export function registerRunsList(
   server.registerTool(
     "testplanit_test_runs_list",
     {
+      annotations: READS,
       description:
         "List test runs scoped to a project, with statusCounts rollup inline on every row. Filters: stateId, isCompleted, createdById (user id, string), from/to (createdAt range; YYYY-MM-DD or an ISO 8601 timestamp — a date-only `to` covers that whole UTC day). Cursor pagination via the `cursor` returned in `nextCursor`. Each row carries denormalized project/state/createdBy/configuration/milestone/tags/issues + testRunType + `statusCounts: [{id,name,count}]` + `untested` + `total` (counts SUM to total). Rollup source depends on testRunType: REGULAR runs count TestRunCases by execution status (`untested` = cases with no result, `total` = case count); automated runs (JUNIT/TESTNG/XUNIT/NUNIT/MSTEST/MOCHA/CUCUMBER) count imported JUnit result ROWS by status — attempts, so retries count once per row and `total` is the attempt count, matching the web UI. Rollups are fetched via batched groupBy calls per page, NOT per-row — agents can list 100 runs in one tool call without N+1 cost.",
       inputSchema: {

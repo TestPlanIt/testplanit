@@ -3,6 +3,7 @@ import * as z from "zod/v4";
 import { getHostJson } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { READS } from "../annotations.js";
 
 export interface RunsAutomationPlanDeps {
   env: EnvConfig;
@@ -15,6 +16,7 @@ export function registerRunsAutomationPlan(
   server.registerTool(
     "testplanit_runs_automation_plan",
     {
+      annotations: READS,
       description:
         "Read the plan a CI job executes for a run: its automated cases with every identifier a runner filter can match on — `selector.fullName` (className.name), `selector.name`, `selector.idTokens` ([123], C123, TC123) and tags. Pass `executionId` to apply that execution's ad-hoc case subset and ref. Same data the job gets from TESTPLANIT_PLAN_URL or `testplanit run plan`.",
       inputSchema: {

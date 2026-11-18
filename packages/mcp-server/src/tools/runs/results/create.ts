@@ -16,6 +16,7 @@ import {
   mapRunResultDetail,
   type RawRunResultDetail,
 } from "../shared.js";
+import { ADDS } from "../../annotations.js";
 
 export interface RunResultsCreateDeps {
   env: EnvConfig;
@@ -81,6 +82,7 @@ export function registerRunResultsCreate(
   server.registerTool(
     "testplanit_test_run_results_create",
     {
+      annotations: ADDS,
       description:
         "Submit a test result for a case in a run. Atomically creates the result record and updates the run case's current status. For a data-driven case, pass the iterationId of the data row the result is for. The attempt number is auto-incremented — no need to track it manually. Optional `fieldValues` records custom Result Field entries alongside the result; pass either the field's display name or its system name. The server rejects the submission if the case's template marks any Result Field required and `fieldValues` does not supply each one. Returns the full denormalized result (same shape as testplanit_test_run_results_get).",
       inputSchema: {
