@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/TestPlanIt/testplanit/compare/v1.2.1...v1.2.2) (2026-11-18)
+
+### Bug Fixes
+
+* **db:** keep the process alive when a database connection is lost ([#748](https://github.com/TestPlanIt/testplanit/issues/748)) ([7eb3c85](https://github.com/TestPlanIt/testplanit/commit/7eb3c8566be696ef1abcc70588d3d4697b2c4a89))
+* **i18n:** keep ICU exact selectors in AI translation and report untranslated strings ([#749](https://github.com/TestPlanIt/testplanit/issues/749)) ([b10e7df](https://github.com/TestPlanIt/testplanit/commit/b10e7dfca66353212ac66282877bc32544a55ed3))
+
 ## [1.2.1](https://github.com/TestPlanIt/testplanit/compare/v1.2.0...v1.2.1) (2026-11-18)
 
 ### Bug Fixes
