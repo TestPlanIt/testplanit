@@ -57,7 +57,7 @@
     "@testplanit/api": "workspace:^"
   },
   "devDependencies": {
-    "@playwright/test": "^1.65.0",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^26.6.6",
     "@vitest/coverage-v8": "^5.1.0",
     "tsup": "^9.0.0",

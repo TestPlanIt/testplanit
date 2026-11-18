@@ -49,8 +49,8 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.14.0",
-    "markdownlint-cli": "^0.49.1",
-    "prettier": "^3.9.10",
+    "markdownlint-cli": "^0.50.0",
+    "prettier": "^3.10.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.1"
   },
