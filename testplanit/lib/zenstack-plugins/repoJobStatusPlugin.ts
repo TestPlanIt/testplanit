@@ -8,6 +8,7 @@
 // their own. A flag the queue disowns is rewritten as interrupted on the
 // way out and persisted, so a leftover clears itself on first read.
 import { definePlugin } from "@zenstackhq/orm";
+import { withPrimary } from "~/lib/db/routingContext";
 import { schema } from "~/zenstack/schema";
 import type { RepoStatusRow } from "~/lib/services/impact/repoJobStatus";
 
@@ -25,13 +26,16 @@ export const repoJobStatusPlugin = definePlugin(schema, {
   id: "testplanit-repo-job-status",
 
   onQuery: async ({ model, operation, args, proceed, client }) => {
-    const result = await proceed(args as never);
     if (
       model !== "ProjectCodeRepositoryConfig" ||
       !READ_OPERATIONS.has(operation)
     ) {
-      return result;
+      return proceed(args as never);
     }
+    // Read from the primary: a flag the queue disowns is rewritten below, and
+    // a replica that is a moment behind can still show a flag the worker has
+    // just cleared.
+    const result = await withPrimary(() => proceed(args as never));
     const rows = (
       Array.isArray(result) ? result : result ? [result] : []
     ) as RepoStatusRow[];
