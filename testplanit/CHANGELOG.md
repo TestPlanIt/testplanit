@@ -1,3 +1,9 @@
+## [1.2.1](https://github.com/TestPlanIt/testplanit/compare/v1.2.0...v1.2.1) (2026-11-18)
+
+### Bug Fixes
+
+* **integrations:** add missing Jira help text, with reporter and MCP package updates ([#741](https://github.com/TestPlanIt/testplanit/issues/741)) ([2263eb9](https://github.com/TestPlanIt/testplanit/commit/2263eb9dc5cb698d50099f97b651daf51243dc4f))
+
 ## [1.2.0](https://github.com/TestPlanIt/testplanit/compare/v1.1.22...v1.2.0) (2026-11-17)
 
 ### Features
