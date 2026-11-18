@@ -1,3 +1,41 @@
+## [1.3.0-beta.1](https://github.com/TestPlanIt/testplanit/compare/v1.2.0...v1.3.0-beta.1) (2026-11-18)
+
+### Features
+
+* **admin:** list and manage every attachment on the instance ([197b654](https://github.com/TestPlanIt/testplanit/commit/197b6548aee1e1d9bec4c84718c973c8397a3335))
+* **admin:** scan storage for orphaned and missing attachment files ([d07f73b](https://github.com/TestPlanIt/testplanit/commit/d07f73b35fb14f6542ab4eabbe4bdd87ed906808))
+* **admin:** tell administrators when a newer release is published ([aea985c](https://github.com/TestPlanIt/testplanit/commit/aea985c65faf2c0406d30c28d96ea9cc43f6199e))
+* **llm:** let admins write AI generation guidance on each case field ([8ab1421](https://github.com/TestPlanIt/testplanit/commit/8ab14213935e145dc2f60ee02dc82ea75329dd9f))
+* **mcp:** annotate every tool as read-only, additive or destructive ([3eddbd0](https://github.com/TestPlanIt/testplanit/commit/3eddbd07d50303ac4fd1fb6127254ae7ef8eb5a5))
+* **projects:** show what needs the viewer on each project card ([9f30f90](https://github.com/TestPlanIt/testplanit/commit/9f30f90b44ffb804bdc446a52073a8d9412ff2b6))
+* **runs:** track manual execution time automatically ([1838769](https://github.com/TestPlanIt/testplanit/commit/18387696187b4bf066c201f6d5b9d5bd3d7dba34))
+* **security:** enforce the Content-Security-Policy by default ([0f492ee](https://github.com/TestPlanIt/testplanit/commit/0f492eeb72651600a5975b5fc4092d67607373da))
+* **tables:** select a range of rows with shift-click everywhere ([4c3e7d6](https://github.com/TestPlanIt/testplanit/commit/4c3e7d6613eda2bc249ce7929a449f0c767eaf57))
+
+### Bug Fixes
+
+* **a11y:** keep the ellipsis on clamped issue text buttons ([69409a2](https://github.com/TestPlanIt/testplanit/commit/69409a269878b756ef6b91c0b685a6181e92192f))
+* **a11y:** name the case edit form's field controls ([839f44f](https://github.com/TestPlanIt/testplanit/commit/839f44fc824852a88b372de0762ce0a0e7547d45))
+* **a11y:** name the generation wizard's controls and step delete buttons ([c3f0f91](https://github.com/TestPlanIt/testplanit/commit/c3f0f913f6c14d31c4a816dcd05b5f4f0f673cb1))
+* **a11y:** name the risk score badge and unnest the project list link ([dba1fe2](https://github.com/TestPlanIt/testplanit/commit/dba1fe275add5083b111d7dc631c986bb5bfd5e2))
+* **a11y:** name unlabelled controls and make popover triggers real buttons ([23fd89f](https://github.com/TestPlanIt/testplanit/commit/23fd89fb44f7054b5c51fcd4d9473e7145c40b86))
+* **a11y:** tie case field names to their controls as labels ([f00c739](https://github.com/TestPlanIt/testplanit/commit/f00c7396aaa8ba85e4e7fb8edf2f246b767952f9))
+* **attachments:** say why a file on another storage host has no preview ([ed83bb0](https://github.com/TestPlanIt/testplanit/commit/ed83bb0d8e0790632c9a75d2fd6e9d11c4981d2c))
+* **comments:** keep a long mention list inside the window ([3eea2d4](https://github.com/TestPlanIt/testplanit/commit/3eea2d408b189396136265dc9dd69d8499fdce05))
+* **csp:** stop shipping Node's util polyfill to the browser ([0a39b55](https://github.com/TestPlanIt/testplanit/commit/0a39b55ac30c39a2749f3c534b1f8bda1db67a54))
+* **email:** stop retrying emails the mail server permanently rejected ([cc5d29a](https://github.com/TestPlanIt/testplanit/commit/cc5d29a2788e8fd84e3afe8fc00ad7f3e93deb23))
+* **errors:** re-fetch the failed page when Try again is clicked ([0a47514](https://github.com/TestPlanIt/testplanit/commit/0a475148978f90275e2c63c53b3ca158aeab554f))
+* **forge:** keep the TestPlanIt API key in Forge's secret store ([c67afa1](https://github.com/TestPlanIt/testplanit/commit/c67afa11047b8a8f885606b3ac6cac34bb98f5b1))
+* **forge:** stop sending the saved API key to the browser ([be1ae6f](https://github.com/TestPlanIt/testplanit/commit/be1ae6f45aac292944e02f5b6247a7e4f680c5fe))
+* **import:** report only real datasets when analyzing a Testmo export ([dc12c16](https://github.com/TestPlanIt/testplanit/commit/dc12c16e00bc985f2c884c2dd645b8121c32231a))
+* **issues:** keep a row's action menu open while the counts load ([491cdd6](https://github.com/TestPlanIt/testplanit/commit/491cdd677161d8ded7e5b1ddf039a89a67464b1d))
+* **llm:** let a slow model take longer than five minutes to answer ([8559d97](https://github.com/TestPlanIt/testplanit/commit/8559d9722c778db3d4e1eb2813701587c7099cba))
+* **llm:** record the provider's token counts for streamed responses ([50c8306](https://github.com/TestPlanIt/testplanit/commit/50c8306f97c59d6a25a8d3f6bee8350cfe4d7b39))
+* **navigation:** open a new page scrolled to the top ([b321b3b](https://github.com/TestPlanIt/testplanit/commit/b321b3b97fd5de19f3355bee1c76105d8c0241a5))
+* **tables:** apply the saved page size when the session loads late ([76b7818](https://github.com/TestPlanIt/testplanit/commit/76b781832b861f23b16605c653d41c8e5d20d5ed))
+* **tables:** stop rebuilding issue and tag tables when their counts load ([900417d](https://github.com/TestPlanIt/testplanit/commit/900417defab6b7dbc8948099049049202ebf82a4))
+* **wdio-reporter:** attribute commands to the right test in parallel mode ([fa4d8ab](https://github.com/TestPlanIt/testplanit/commit/fa4d8ab7d871ad943ac53dcc8a765fa0bb40eae4))
+
 ## [1.2.0](https://github.com/TestPlanIt/testplanit/compare/v1.1.22...v1.2.0) (2026-11-17)
 
 ### Features
