@@ -45,8 +45,8 @@ jobs:
       - name: Install Crowdin CLI
         run: npm install -g @crowdin/cli@5
 
-      # Uploads the repo's corrected translations, then the sources, then
-      # auto-translates new strings via AI and downloads every locale.
+      # Uploads the sources, auto-translates new strings via AI and downloads
+      # every locale. Translations in the repo are not uploaded.
       - name: Sync with Crowdin
         working-directory: testplanit
         run: sh scripts/crowdin.sh sync

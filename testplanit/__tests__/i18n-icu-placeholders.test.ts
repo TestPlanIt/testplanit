@@ -153,6 +153,22 @@ describe("i18n ICU placeholders", () => {
       ).toEqual([]);
     });
 
+    it("has balanced braces in every message", () => {
+      // An extra or missing brace is invalid ICU: the message fails to format
+      // and the user sees the key or the raw text instead.
+      const unbalanced = Object.keys(translated).flatMap((key) => {
+        const text = translated[key];
+        const opens = text.split("{").length - 1;
+        const closes = text.split("}").length - 1;
+        return opens === closes ? [] : [`${key}\n    ${locale}: ${text}`];
+      });
+
+      expect(
+        unbalanced,
+        `${locale} has unbalanced braces in ${unbalanced.length} message(s).`
+      ).toEqual([]);
+    });
+
     it("keeps every typed ICU argument", () => {
       const dropped = shared.flatMap((key) => {
         const expected = matchAll(source[key], TYPED_ARG);

@@ -1508,7 +1508,7 @@
           "importCapHint": "Laat leeg om de standaard van {cap} te gebruiken.",
           "importAllHistoryNoCapHint": "Alle geschichte importeert elk overeenkomend issue, zonder limiet.",
           "importPreview": "Voorbeeld",
-          "importPreviewResult": "~{count, plural, one {# issue} other {# issues}} komen overeen met dit filter. Tot {cap} zullen worden geïmporteerd.",
+          "importPreviewResult": "~{count, plural, one {# issue komt overeen met dit filter.} other {# issues komen overeen met dit filter.}} Tot {cap} zullen worden geïmporteerd.",
           "importOverCap": "Dat overschrijdt de limiet van {cap}; alleen de {cap} meest recent bijgewerkte zullen worden geïmporteerd.",
           "importStarted": "Import gestart. Issues verschijnen binnenkort.",
           "importFailed": "Importeren mislukt",
@@ -2363,7 +2363,7 @@
           "enableDescription": "Scant recente commits op de branch bij elke cachevernieuwing. Schakel uit om analyses alleen ticket-sleutels uit de geanalyseerde commits te laten lezen; handmatige scans worden nog steeds uitgevoerd.",
           "resultLinksLabel": "Ook tickets tellen die aan testresultaten zijn toegevoegd",
           "resultLinksDescription": "Een ticket dat aan een testresultaat of stapresultaat is toegevoegd, koppelt ook de zaak waarvoor dat resultaat is vastgelegd, dus de bijbehorende commits worden ook aan die zaak vastgepind en geselecteerd. Uit, alleen tickets die rechtstreeks aan een testgeval zijn gekoppeld, tellen mee.",
-          "skippedLarge": "{count, plural, one {# commit was} other {# commits waren}} overgeslagen omdat deze te groot is om vast te zetten.",
+          "skippedLarge": "{count, plural, one {# commit was overgeslagen omdat deze te groot is om vast te zetten.} other {# commits waren overgeslagen omdat deze te groot zijn om vast te zetten.}}",
           "fetchCapped": "Niet elke commit die een gekoppeld ticket noemde, heeft zijn bestanden deze pass gelezen; de rest worden bij de volgende scan opgehaald.",
           "scanRecent": "Recente commits opnieuw scannen",
           "scanFull": "Volledige geschiedenis scannen",
@@ -2391,7 +2391,7 @@
           "cancelled": "Scan geannuleerd {date}. Commits die vóór het annuleren zijn gelezen, worden in de commit-cache bewaard; pinnen zijn niet bijgewerkt.",
           "importMoved": "{moved, plural, one {# sleutel is een oude naam} other {# sleutels zijn oude namen}} van al geïmporteerde tickets; ze zijn verplaatst of hernoemd in de tracker.",
           "importFailed": "{failed, plural, one {# sleutel was} other {# sleutels waren}} niet gevonden in de tracker, hieronder vermeld.",
-          "summaryMatched": "{matched, plural, one {# commit} other {# commits}} noemde een ticket gekoppeld aan een testgeval",
+          "summaryMatched": "{matched, plural, one {# commit noemde een ticket gekoppeld aan een testgeval} other {# commits noemden een ticket gekoppeld aan een testgeval}}",
           "summarySymbolPins": "({count, number} van de aangemaakte pins gericht op een functie of klasse in plaats van een heel bestand.)"
         },
         "markers": {
@@ -2454,7 +2454,7 @@
           "neverChecked": "Nog niet gecontroleerd",
           "checkFailed": "Controle mislukt",
           "summary": "{count, plural, =0 {Geen verouderde pins} one {# verouderde pin} other {# verouderde pins}} · {checked, plural, one {# pin} other {# pins}} gecontroleerd",
-          "unreadable": "{count, plural, one {# bestand} other {# bestanden}} kon niet worden gelezen, dus die pins zijn niet gecontroleerd.",
+          "unreadable": "{count, plural, one {# bestand kon niet worden gelezen, dus die pins zijn niet gecontroleerd.} other {# bestanden konden niet worden gelezen, dus die pins zijn niet gecontroleerd.}}",
           "removed": "{count, plural, =0 {Geen verouderde pins zijn verwijderd} one {# verouderde pin verwijderd} other {# verouderde pins verwijderd}}",
           "removeFailed": "Kon de verouderde pins niet verwijderen",
           "removeConfirm": "Verwijder {count, plural, one {# code pin} other {# code pins}} die de laatste controle niet kon vinden op de tip van {name}?",
@@ -2602,7 +2602,7 @@
     "delete": {
       "title": "Mijlpaal verwijderen",
       "confirmMessage": "Weet u zeker dat u de mijlpaal {name}wilt verwijderen?",
-      "childrenWarning": "{count, plural, one {De # onderliggende mijlpaal} other {De # onderliggende en afstammende mijlpalen}} worden ook verwijderd.",
+      "childrenWarning": "{count, plural, one {De # onderliggende mijlpaal wordt ook verwijderd.} other {De # onderliggende en afstammende mijlpalen worden ook verwijderd.}}",
       "warning": "Deze mijlpaal wordt uit het project verwijderd. Historische gegevens voor deze mijlpaal blijven wel in het project aanwezig.",
       "toast": {
         "loading": "Mijlpaal verwijderen...",
@@ -3330,7 +3330,7 @@
     },
     "templateNotAssignedWarning": "Deze testcase gebruikt de sjabloon \"{templateName}\", die momenteel niet is toegewezen aan het project \"{projectName}\". Mogelijk moet u deze sjabloon aan het project toewijzen of de testcase aanpassen om een andere sjabloon te gebruiken.",
     "orphanedStepsWarning": "Deze testcase heeft stappen, maar de huidige sjabloon \"{templateName}\" bevat geen veld voor stappen. De stappen kunnen pas worden bewerkt als de testcase een sjabloon met een veld voor stappen heeft.",
-    "orphanedFieldsWarning": "Deze testcase heeft {count, plural, =1 {# veldwaarde} other {# veldwaarden}} die {count, plural, =1 {is} other {zijn}} niet opgenomen in de huidige sjabloon \"{templateName}\". {count, plural, =1 {Dit veld is} other {Deze velden zijn}} hieronder weergegeven, maar kunnen mogelijk pas worden bewerkt nadat ze aan de sjabloon zijn toegevoegd.",
+    "orphanedFieldsWarning": "Deze testcase heeft {count, plural, =1 {# veldwaarde} other {# veldwaarden}} die {count, plural, =1 {is} other {zijn}} niet opgenomen in de huidige sjabloon \"{templateName}\". {count, plural, =1 {Dit veld is hieronder weergegeven, maar kan mogelijk pas worden bewerkt nadat het aan de sjabloon is toegevoegd.} other {Deze velden zijn hieronder weergegeven, maar kunnen mogelijk pas worden bewerkt nadat ze aan de sjabloon zijn toegevoegd.}}",
     "title": "Testcase-repository",
     "folders": "Mappen",
     "showDescendants": "Toon alle afstammelingen",
@@ -3460,7 +3460,7 @@
         },
         "warnings": {
           "partialTitle": "Sommige issue-koppelingen zijn niet gemaakt",
-          "summary": "{count, plural, one {# issue-cel} other {# issue-cellen}} kon niet worden gekoppeld. De testgevallen zijn geïmporteerd."
+          "summary": "{count, plural, one {# issue-cel kon niet worden gekoppeld.} other {# issue-cellen konden niet worden gekoppeld.}} De testgevallen zijn geïmporteerd."
         },
         "page1": {
           "fileType": {
@@ -3785,7 +3785,7 @@
       "runStatusDate": "{status} — {date}",
       "noFolder": "Geen map",
       "duplicateWarning": "Mogelijke duplicaten gevonden",
-      "duplicateWarningDescription": "{count, plural, one {# bestaand geval} other {# bestaande gevallen}} kunnen vergelijkbare functionaliteit omvatten",
+      "duplicateWarningDescription": "{count, plural, one {# bestaand geval kan vergelijkbare functionaliteit omvatten} other {# bestaande gevallen kunnen vergelijkbare functionaliteit omvatten}}",
       "duplicateWarningReview": "Beoordeling",
       "importWarning": "Mogelijk een duplicaat",
       "importWarningTooltip": "Deze casusnaam is vergelijkbaar met {count, plural, one {# bestaande casus} other {# bestaande casussen}}: {names}",
@@ -4449,7 +4449,7 @@
       "success": {
         "title": "Testrun succesvol toegevoegd",
         "description": "{name} is toegevoegd aan het project",
-        "descriptionMultiple": "{count, plural, one {# testrun heeft} other {# testruns hebben}} zijn aangemaakt voor {name}"
+        "descriptionMultiple": "{count, plural, one {# testrun is} other {# testruns zijn}} aangemaakt voor {name}"
       },
       "estimates": {
         "manual": "Geschatte handmatige tijd",
@@ -6278,7 +6278,7 @@
         "saved": "Projecttoegang opgeslagen"
       },
       "downgradeConfirmTitle": "Toegangswijziging bevestigen",
-      "downgradeConfirmDescription": "{count, plural, one {# gebruiker} other {# gebruikers}} zouden een lager toegangsniveau krijgen. Doorgaan?",
+      "downgradeConfirmDescription": "{count, plural, one {# gebruiker zou een lager toegangsniveau krijgen.} other {# gebruikers zouden een lager toegangsniveau krijgen.}} Doorgaan?",
       "downgradeConfirmApplyAnyway": "Toch toepassen",
       "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
@@ -7599,7 +7599,7 @@
     "delete": {
       "dialogTitle": "Vereiste verwijderen",
       "confirmNoChildren": "Weet u zeker dat u deze vereiste wilt verwijderen? Deze actie kan ongedaan worden gemaakt.",
-      "confirmWithChildren": "Deze vereiste heeft {count, plural, one {{count} onderliggend item} other {{count} onderliggende items}} die ook worden verwijderd. Deze actie kan ongedaan worden gemaakt.",
+      "confirmWithChildren": "Deze vereiste heeft {count, plural, one {{count} onderliggend item dat ook wordt verwijderd} other {{count} onderliggende items die ook worden verwijderd}}. Deze actie kan ongedaan worden gemaakt.",
       "success": "Vereiste verwijderd.",
       "failed": "Het verwijderen van de vereiste is mislukt.",
       "undo": "Ongedaan maken",
@@ -10129,9 +10129,9 @@
       "description": "Klik op tags om de acceptatie ervan in of uit te schakelen. Dubbelklik om een tagnaam te bewerken.",
       "selectEntity": "Selecteer een entiteit om suggesties voor tags te bekijken.",
       "noTagsSelected": "Geen tags geselecteerd",
-      "footerSummary": "{assignCount, plural, one {# tag} other {# tags}} worden toegewezen, {newCount, plural, one {# nieuwe tag} other {# nieuwe tags}} worden aangemaakt",
-      "footerAssignCount": "{assignCount, plural, one {# tag} other {# tags}} zullen worden toegewezen",
-      "footerNewCount": "{newCount, plural, one {# nieuwe tag} other {# nieuwe tags}} worden aangemaakt",
+      "footerSummary": "{assignCount, plural, one {# tag wordt toegewezen} other {# tags worden toegewezen}}, {newCount, plural, one {# nieuwe tag wordt aangemaakt} other {# nieuwe tags worden aangemaakt}}",
+      "footerAssignCount": "{assignCount, plural, one {# tag zal worden toegewezen} other {# tags zullen worden toegewezen}}",
+      "footerNewCount": "{newCount, plural, one {# nieuwe tag wordt aangemaakt} other {# nieuwe tags worden aangemaakt}}",
       "newTagsPopoverTitle": "Nieuwe tags om te maken",
       "applying": "Aanvragen...",
       "applySuccess": "{tagCount, plural, one {# tag} other {# tags}} toegepast op {entityCount, plural, one {# entiteit} other {# entiteiten}}",
