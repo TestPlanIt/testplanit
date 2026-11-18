@@ -8193,6 +8193,8 @@
       "authType": "## 認証タイプ\n外部サービスでの認証方法を選択します。\n\n- **APIキー:** メールとAPIトークンを使用したシンプルな認証\n- **OAuth 2.0:** OAuthフローを使用した安全な認証\n- **個人アクセストークン:** トークンベースの直接認証",
       "email": "## メールアドレス\n外部サービス用のアカウントのメールアドレス。\n\n- APIキー認証に使用されます\n- APIトークンを生成したアカウントと一致する必要があります\n- Jira Cloudに必須。Jira Server / Data Centerの場合は空白のままにしてください",
       "apiToken": "## APIトークン\n外部サービスのアカウント設定からAPIトークンを生成します。\n\n- 通常はアカウント設定 → セキュリティ → APIトークンにあります\n- パスワードを公開することなく安全なアクセスを提供します\n- 必要に応じて取り消しや再生成が可能です",
+      "username": "## ユーザー名\nBasic認証用のJira Server / Data Centerアカウントのユーザー名。\n\n- パスワードと一緒に使用します\n- Jira Cloudの場合は空白にしてください\n- Personal Access Tokenで認証する場合は空白にしてください",
+      "password": "## パスワード\nBasic認証用のJira Server / Data Centerアカウントのパスワード。\n\n- ユーザー名と一緒に使用します\n- Jira Cloudの場合は空白にしてください\n- Personal Access Tokenで認証する場合は空白にしてください",
       "jiraUrl": "## Jira URL\nJiraインスタンスのベースURL。\n\n- Jira Cloud: https://your-site.atlassian.net\n- Jira Server / Data Center: コンテキストパスを含めた提供元のアドレス（例：https://jira.example.com/jira）\n- /browseやその他のページパスは含めないでください\n- このサーバーからアクセス可能である必要があります",
       "clientId": "## OAuthクライアントID\nOAuthアプリケーション構成からのクライアントID。\n\n- 外部サービスの開発者コンソールで作成されます\n- OAuthフロー中にアプリケーションを識別するために使用されます\n- 構成ファイルで安全に共有できます",
       "clientSecret": "## OAuthクライアントシークレット\nOAuthアプリケーション構成からのクライアントシークレット。\n\n- クライアントIDと一緒に作成されます\n- 機密性と安全性を保つ必要があります\n- アプリケーションの認証に使用されます",
