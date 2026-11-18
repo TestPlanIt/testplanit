@@ -3632,9 +3632,6 @@
       "success": {
         "casesUpdated": "{count, number} cases updated successfully"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "Validation Error",
       "stepsCannotBeBulkEdited": "Steps cannot be bulk edited",
       "stepsInfoTitle": "Steps Info",
