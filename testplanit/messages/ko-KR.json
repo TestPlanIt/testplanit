@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "{count, number} 사례가 성공적으로 업데이트되었습니다."
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "유효성 검사 오류",
       "stepsCannotBeBulkEdited": "단계는 일괄 편집할 수 없습니다.",
       "stepsInfoTitle": "단계 정보",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "데이터셋 탐색...",
           "scanningFile": "testmo 내보내기 파일을 스캔하는 중...",
-          "datasetsProcessed": "{processed, number} 데이터셋{processed, plural, one {} other {s}} 처리됨",
-          "datasetsProcessedWithTotal": "{processed, number} {total, number} 데이터셋{total, plural, one {} other {s}} 처리됨",
           "rowsProcessed": "{value, number} 처리된 행 수",
           "itemsProcessed": "{processed, number} {total, number} 항목 처리됨",
           "analysisInProgress": "수출 분석…",
@@ -4978,7 +4973,7 @@
           "issue_targets": "Testmo 이슈 대상을 TestPlanIt 통합(Jira, GitHub 등)에 매핑합니다."
         },
         "mappingDatasetDefaultDescription": "Testmo 내보내기에서 {dataset} 리뷰가 감지되었습니다.",
-        "mappingDatasetCount": "{count, plural, other {레코드 #개 감지됨}}",
+        "mappingDatasetCount": "{count, plural, one {# 레코드 감지됨} other {# 레코드 감지됨}}",
         "mappingDatasetNoEntitiesTitle": "지도에 표시할 내용이 없습니다",
         "mappingDatasetNoEntitiesDescription": "이 데이터 세트는 매핑이 필요하지 않습니다. 준비가 되면 다음 데이터 세트로 이동하세요.",
         "mappingDatasetUnsupportedTitle": "지도가 필요 없습니다.",

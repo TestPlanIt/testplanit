@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "Úspěšně aktualizováno {count, number} případů"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "Chyba validace",
       "stepsCannotBeBulkEdited": "Kroky nelze hromadně upravovat",
       "stepsInfoTitle": "Informace o krocích",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "Zjišťování datových sad...",
           "scanningFile": "Skenování exportního souboru Testmo...",
-          "datasetsProcessed": "{processed, number} {processed, plural, one {datová sada zpracována} few {datové sady zpracovány} many {datové sady zpracováno} other {datových sad zpracováno}}",
-          "datasetsProcessedWithTotal": "Zpracováno {processed, number} z {total, number} {total, plural, one {datové sady} other {datových sad}}",
           "rowsProcessed": "Zpracováno {value, number} řádků",
           "itemsProcessed": "Zpracováno {processed, number} z {total, number} položek",
           "analysisInProgress": "Analyzování exportu…",
@@ -4978,7 +4973,7 @@
           "issue_targets": "Namapujte cíle problémů Testmo na integrace TestPlanIt (Jira, GitHub atd.)."
         },
         "mappingDatasetDefaultDescription": "Zkontrolujte {dataset} detekované v exportu Testmo.",
-        "mappingDatasetCount": "{count, plural, one {# záznam zjištěn} few {# záznamy zjištěny} many {# záznamu zjištěno} other {# záznamů zjištěno}}",
+        "mappingDatasetCount": "{count, plural, one {# záznam detekován} few {# záznamy detekovány} many {# záznamů detekováno} other {# záznamů detekováno}}",
         "mappingDatasetNoEntitiesTitle": "Nic k mapování",
         "mappingDatasetNoEntitiesDescription": "Tato datová sada nevyžaduje mapování. Až budete připraveni, přejděte na další datovou sadu.",
         "mappingDatasetUnsupportedTitle": "Mapování není nutné",

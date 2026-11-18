@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "{count, number} 案例已成功更新"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "驗證錯誤",
       "stepsCannotBeBulkEdited": "步驟無法批次編輯",
       "stepsInfoTitle": "步驟資訊",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "發現數據集…",
           "scanningFile": "正在掃描 testmo 匯出檔案...",
-          "datasetsProcessed": "{processed, number} 資料集{processed, plural, one {} other {s}} 已處理",
-          "datasetsProcessedWithTotal": "已處理 {processed, number}/{total, number} 個資料集{total, plural, other {}}",
           "rowsProcessed": "{value, number} 行已處理",
           "itemsProcessed": "已處理 {processed, number} 項中的 {total, number} 項",
           "analysisInProgress": "分析導出…",
@@ -4978,7 +4973,7 @@
           "issue_targets": "將 Testmo 問題目標對應到 TestPlanIt 整合（Jira、GitHub 等）。"
         },
         "mappingDatasetDefaultDescription": "在 Testmo 匯出中偵測到評論 {dataset}。",
-        "mappingDatasetCount": "{count, plural, other {偵測到 # 筆記錄}}",
+        "mappingDatasetCount": "{count, plural, one {# 筆記錄已偵測} other {# 筆記錄已偵測}}",
         "mappingDatasetNoEntitiesTitle": "地圖上沒有任何東西。",
         "mappingDatasetNoEntitiesDescription": "此資料集無需映射。準備好後，請繼續處理下一個資料集。",
         "mappingDatasetUnsupportedTitle": "無需映射",

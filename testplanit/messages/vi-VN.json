@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "{count, number} trường hợp đã được cập nhật thành công"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "Lỗi xác thực",
       "stepsCannotBeBulkEdited": "Không thể chỉnh sửa hàng loạt các bước.",
       "stepsInfoTitle": "Thông tin các bước",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "Khám phá các tập dữ liệu...",
           "scanningFile": "Đang quét tập tin xuất testmo...",
-          "datasetsProcessed": "{processed, number} tập dữ liệu{processed, plural, one {} other {s}} đã xử lý",
-          "datasetsProcessedWithTotal": "{processed, number} của {total, number} tập dữ liệu{total, plural, one {} other {s}} đã được xử lý",
           "rowsProcessed": "{value, number} hàng đã được xử lý",
           "itemsProcessed": "{processed, number} trong số {total, number} mục đã được xử lý",
           "analysisInProgress": "Phân tích xuất khẩu…",
@@ -4978,7 +4973,7 @@
           "issue_targets": "Ánh xạ các mục tiêu vấn đề của Testmo với các tích hợp của TestPlanIt (Jira, GitHub, v.v.)."
         },
         "mappingDatasetDefaultDescription": "Đã phát hiện đánh giá {dataset} trong quá trình xuất Testmo.",
-        "mappingDatasetCount": "{count, plural, other {Đã phát hiện # bản ghi}}",
+        "mappingDatasetCount": "{count, plural, one {# bản ghi được phát hiện} other {# bản ghi được phát hiện}}",
         "mappingDatasetNoEntitiesTitle": "Không có gì để lập bản đồ",
         "mappingDatasetNoEntitiesDescription": "Bộ dữ liệu này không cần ánh xạ. Hãy chuyển sang bộ dữ liệu tiếp theo khi bạn đã sẵn sàng.",
         "mappingDatasetUnsupportedTitle": "Không cần lập bản đồ",

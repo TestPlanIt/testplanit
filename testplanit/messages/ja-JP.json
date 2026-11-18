@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "{count, number} ケースが正常に更新されました"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "検証エラー",
       "stepsCannotBeBulkEdited": "ステップは一括編集できません",
       "stepsInfoTitle": "ステップ情報",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "データセットを検出しています...",
           "scanningFile": "testmo エクスポート ファイルをスキャンしています...",
-          "datasetsProcessed": "{processed, number} データセット{processed, plural, one {} other {s}} が処理されました",
-          "datasetsProcessedWithTotal": "{processed, number} のうち {total, number} データセット{total, plural, one {} other {秒}} が処理されました",
           "rowsProcessed": "{value, number} 行が処理されました",
           "itemsProcessed": "{total, number} 件中 {processed, number} 件のアイテムが処理されました",
           "analysisInProgress": "エクスポートの分析…",
@@ -4978,7 +4973,7 @@
           "issue_targets": "Testmo の問題ターゲットを TestPlanIt 統合 (Jira、GitHub など) にマップします。"
         },
         "mappingDatasetDefaultDescription": "Testmo エクスポートでレビュー {dataset} が検出されました。",
-        "mappingDatasetCount": "{count, plural, other {# 件のレコードを検出}}",
+        "mappingDatasetCount": "{count, plural, one {# record detected} other {# レコードが検出されました}}",
         "mappingDatasetNoEntitiesTitle": "マップするものがありません",
         "mappingDatasetNoEntitiesDescription": "このデータセットはマッピングを必要としません。準備ができたら次のデータセットに進んでください。",
         "mappingDatasetUnsupportedTitle": "マッピングは不要",

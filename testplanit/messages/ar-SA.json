@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "تم تحديث {count, number} حالة بنجاح"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "خطأ في التحقق من الصحة",
       "stepsCannotBeBulkEdited": "لا يمكن تعديل الخطوات بشكل جماعي",
       "stepsInfoTitle": "معلومات الخطوات",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "جارٍ اكتشاف مجموعات البيانات...",
           "scanningFile": "جارٍ فحص ملف تصدير testmo...",
-          "datasetsProcessed": "{processed, number} مجموعة بيانات{processed, plural, one {} other {}} تمت معالجتها",
-          "datasetsProcessedWithTotal": "{processed, number} من {total, number} مجموعة بيانات{total, plural, one {} other {}} تمت معالجتها",
           "rowsProcessed": "تمت معالجة {value, number} صف",
           "itemsProcessed": "تمت معالجة {processed, number} من {total, number} عنصر",
           "analysisInProgress": "جارٍ تحليل التصدير…",
@@ -4978,7 +4973,7 @@
           "issue_targets": "قم بتعيين أهداف مشكلات Testmo إلى تكاملات TestPlanIt (Jira و GitHub وغيرها)."
         },
         "mappingDatasetDefaultDescription": "راجع {dataset} المكتشفة في تصدير Testmo.",
-        "mappingDatasetCount": "{count, plural, zero {لم يُكتشف أي سجل} one {تم اكتشاف سجل واحد} two {تم اكتشاف سجلين} few {تم اكتشاف # سجلات} many {تم اكتشاف # سجلاً} other {تم اكتشاف # سجل}}",
+        "mappingDatasetCount": "{count, plural, one {# سجل تم اكتشافه} other {# سجلات تم اكتشافها}}",
         "mappingDatasetNoEntitiesTitle": "لا يوجد شيء للتعيين",
         "mappingDatasetNoEntitiesDescription": "لا تتطلب مجموعة البيانات هذه أي تعيين. انتقل إلى مجموعة البيانات التالية عندما تكون جاهزًا.",
         "mappingDatasetUnsupportedTitle": "لا يتطلب تعيينًا",

@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "{count, number} vakalar başarıyla güncellendi."
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "Doğrulama Hatası",
       "stepsCannotBeBulkEdited": "Adımlar toplu olarak düzenlenemez.",
       "stepsInfoTitle": "Adımlar Bilgisi",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "Veri kümelerini keşfetmek...",
           "scanningFile": "Testmo dışa aktarma dosyasını tarama...",
-          "datasetsProcessed": "{processed, number} veri seti{processed, plural, one {} other {s}} işlendi",
-          "datasetsProcessedWithTotal": "{processed, number} veri kümesinin {total, number}{total, plural, one {} other {}} işlendi",
           "rowsProcessed": "{value, number} işlenen satır sayısı",
           "itemsProcessed": "{processed, number} / {total, number} öğe işlendi",
           "analysisInProgress": "Dışa aktarma analiz ediliyor…",
@@ -4978,7 +4973,7 @@
           "issue_targets": "Testmo sorun hedeflerini TestPlanIt entegrasyonlarıyla (Jira, GitHub, vb.) eşleştirin."
         },
         "mappingDatasetDefaultDescription": "Testmo dışa aktarımında {dataset} incelemesi tespit edildi.",
-        "mappingDatasetCount": "{count, plural, one {# kayıt tespit edildi} other {# kayıt tespit edildi}}",
+        "mappingDatasetCount": "{count, plural, one {# kayıt algılandı} other {# kayıt algılandı}}",
         "mappingDatasetNoEntitiesTitle": "Haritalanacak bir şey yok.",
         "mappingDatasetNoEntitiesDescription": "Bu veri seti eşleme gerektirmiyor. Hazır olduğunuzda bir sonraki veri setine geçin.",
         "mappingDatasetUnsupportedTitle": "Haritalama gerekmiyor.",

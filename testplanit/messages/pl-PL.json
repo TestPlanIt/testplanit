@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "{count, number} przypadków zaktualizowano pomyślnie"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "Błąd walidacji",
       "stepsCannotBeBulkEdited": "Kroków nie można edytować zbiorczo",
       "stepsInfoTitle": "Informacje o krokach",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "Odkrywanie zbiorów danych...",
           "scanningFile": "Skanowanie pliku eksportowego testmo...",
-          "datasetsProcessed": "{processed, number} {processed, plural, one {zbiór danych przetworzony} few {zbiory danych przetworzone} many {zbiorów danych przetworzonych} other {zbiorów danych przetworzonych}}",
-          "datasetsProcessedWithTotal": "{processed, number} z {total, number} {total, plural, one {zestawu danych} other {zestawów danych}} przetworzono",
           "rowsProcessed": "{value, number} przetworzonych wierszy",
           "itemsProcessed": "Przetworzono {processed, number} z {total, number} elementów",
           "analysisInProgress": "Analiza eksportu…",
@@ -4978,7 +4973,7 @@
           "issue_targets": "Przypisz cele problemów Testmo do integracji TestPlanIt (Jira, GitHub itp.)."
         },
         "mappingDatasetDefaultDescription": "Wykryto {dataset} w eksporcie Testmo.",
-        "mappingDatasetCount": "{count, plural, one {wykryto # rekord} few {wykryto # rekordy} many {wykryto # rekordów} other {wykryto # rekordu}}",
+        "mappingDatasetCount": "{count, plural, one {# rekord wykryty} few {# rekordy wykryte} many {# rekordów wykrytych} other {# rekordów wykrytych}}",
         "mappingDatasetNoEntitiesTitle": "Nic do mapowania",
         "mappingDatasetNoEntitiesDescription": "Ten zestaw danych nie wymaga mapowania. Przejdź do następnego zestawu danych, gdy będziesz gotowy.",
         "mappingDatasetUnsupportedTitle": "Nie jest wymagane mapowanie",

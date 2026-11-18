@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "{count, number} casos atualizados com sucesso"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "Erro de validação",
       "stepsCannotBeBulkEdited": "Não é possível editar etapas em massa.",
       "stepsInfoTitle": "Informações sobre os passos",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "Descobrindo conjuntos de dados...",
           "scanningFile": "Analisando o arquivo de exportação do testmo...",
-          "datasetsProcessed": "{processed, number} {processed, plural, one {conjunto de dados processado} other {conjuntos de dados processados}}",
-          "datasetsProcessedWithTotal": "{processed, number} de {total, number} {total, plural, one {conjunto de dados processado} other {conjuntos de dados processados}}",
           "rowsProcessed": "{value, number} linhas processadas",
           "itemsProcessed": "{processed, number} de {total, number} itens processados",
           "analysisInProgress": "Analisando exportação…",

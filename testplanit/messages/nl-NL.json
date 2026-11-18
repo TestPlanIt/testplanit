@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "{count, number} gevallen succesvol bijgewerkt"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "Validatiefout",
       "stepsCannotBeBulkEdited": "Stappen kunnen niet in bulk worden bewerkt",
       "stepsInfoTitle": "Stappen Info",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "Datasets ontdekken...",
           "scanningFile": "Testmo-exportbestand scannen...",
-          "datasetsProcessed": "{processed, number} dataset{processed, plural, one {} other {s}} verwerkt",
-          "datasetsProcessedWithTotal": "{processed, number} van {total, number} dataset{total, plural, one {} other {s}} verwerkt",
           "rowsProcessed": "{value, number} rijen verwerkt",
           "itemsProcessed": "{processed, number} van {total, number} items verwerkt",
           "analysisInProgress": "Export analyseren…",

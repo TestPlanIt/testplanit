@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "{count, number} Fälle erfolgreich aktualisiert"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "Validierungsfehler",
       "stepsCannotBeBulkEdited": "Schritte können nicht in großen Mengen bearbeitet werden",
       "stepsInfoTitle": "Schrittinformationen",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "Datensätze entdecken...",
           "scanningFile": "Testmo-Exportdatei wird gescannt...",
-          "datasetsProcessed": "{processed, number} {processed, plural, one {Datensatz} other {Datensätze}} verarbeitet",
-          "datasetsProcessedWithTotal": "{processed, number} von {total, number} {total, plural, one {Datensatz} other {Datensätzen}} verarbeitet",
           "rowsProcessed": "{value, number} verarbeitete Zeilen",
           "itemsProcessed": "{processed, number} von {total, number} verarbeiteten Elementen",
           "analysisInProgress": "Exportanalyse…",

@@ -3644,9 +3644,6 @@
       "success": {
         "casesUpdated": "{count, number} дела успешно обновлены"
       },
-      "placeholders": {
-        "various": "<various values>"
-      },
       "validationError": "Ошибка проверки",
       "stepsCannotBeBulkEdited": "Шаги нельзя редактировать одновременно.",
       "stepsInfoTitle": "Информация о шагах",
@@ -4868,8 +4865,6 @@
         "job": {
           "discoveringDatasets": "Поиск наборов данных...",
           "scanningFile": "Сканирование файла экспорта testmo...",
-          "datasetsProcessed": "{processed, number} {processed, plural, one {набор данных обработан} few {набора данных обработано} many {наборов данных обработано} other {набора данных обработано}}",
-          "datasetsProcessedWithTotal": "{processed, number} из {total, number} {total, plural, one {набора данных} few {наборов данных} many {наборов данных} other {набора данных}} обработано",
           "rowsProcessed": "{value, number} строк обработано",
           "itemsProcessed": "{processed, number} из {total, number} обработанных элементов",
           "analysisInProgress": "Анализ экспорта…",
@@ -4978,7 +4973,7 @@
           "issue_targets": "Сопоставьте целевые задачи Testmo с интеграциями TestPlanIt (Jira, GitHub и т. д.)."
         },
         "mappingDatasetDefaultDescription": "В экспорте Testmo обнаружен отзыв {dataset}.",
-        "mappingDatasetCount": "{count, plural, one {# запись обнаружена} few {# записи обнаружено} many {# записей обнаружено} other {# записи обнаружено}}",
+        "mappingDatasetCount": "{count, plural, one {# запись обнаружена} few {# записи обнаружены} many {# записей обнаружено} other {# записей обнаружено}}",
         "mappingDatasetNoEntitiesTitle": "Нет ничего для отображения на карте",
         "mappingDatasetNoEntitiesDescription": "Для работы с этим набором данных сопоставление не требуется. Переходите к следующему набору данных, когда будете готовы.",
         "mappingDatasetUnsupportedTitle": "Картирование не требуется",
