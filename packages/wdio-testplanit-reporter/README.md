@@ -22,8 +22,8 @@ yarn add @testplanit/wdio-reporter
 ### 1. Generate an API Token
 
 1. Log into your TestPlanIt instance
-2. Go to **Settings** > **API Tokens**
-3. Click **Generate New Token**
+2. Open your **Profile** and go to the **API Tokens** section
+3. Click **Create Token**
 4. Copy the token (it starts with `tpi_`)
 
 ### 2. Configure the Reporter and Service
@@ -231,8 +231,8 @@ This strategy is opt-in and runs **before** name/create resolution. On no match 
 | `caseIdPattern` | `RegExp \| string` | No | `/\[(\d+)\]/g` | Regex to extract case IDs from test titles. Must include a capturing group |
 | `matchByCustomField` | `{ fieldName: string; idPattern?: RegExp \| string }` | No | - | Resolve an existing case by a custom field value parsed from the title (default `idPattern`: `/^(\d+)/`), before the name/create fallback. See [Matching Cases by a Custom Field](#matching-cases-by-a-custom-field) |
 | `autoCreateTestCases` | `boolean` | No | `false` | Auto-create test cases matched by suite name + test title |
-| `captureSteps` | `boolean` | No | `true` | Capture a Cucumber scenario's Given/When/Then as the case's Steps. Cucumber only; silent no-op for Mocha/Jasmine |
-| `overwriteSteps` | `boolean` | No | `false` | Replace an existing Cucumber case's steps on each run (destructive: discards manual edits). Cucumber only |
+| `captureSteps` | `boolean` | No | `true` | Populate a case's Steps. Cucumber: captures the scenario's Given/When/Then. Mocha/Jasmine: requests AI-derived steps when an LLM provider is configured for the project; otherwise a silent no-op |
+| `overwriteSteps` | `boolean` | No | `false` | Re-sync steps on every run, replacing existing ones (destructive: discards manual edits). Applies to Cucumber steps and to AI-derived steps |
 | `createFolderHierarchy` | `boolean` | No | `false` | Create nested folders based on suite structure. Requires `autoCreateTestCases` and `parentFolderId` |
 | `parentFolderId` | `number \| string` | No | - | Parent folder for auto-created cases (ID or name) |
 | `templateId` | `number \| string` | No | - | Template for auto-created cases (ID or name) |
@@ -281,7 +281,7 @@ export const config = {
 
 ### Limitations
 
-- **Mocha and Jasmine produce no deterministic steps.** They have no native step structure, so `captureSteps`/`overwriteSteps` are silent no-ops for those frameworks (the reporter logs a one-time notice). If an LLM provider is configured for the project, TestPlanIt's LLM enrichment can derive steps for these cases automatically — configuring a provider is the opt-in; no extra reporter option is needed.
+- **Mocha and Jasmine produce no deterministic steps.** They have no native step structure, so there is nothing to capture directly (the reporter logs a one-time notice). If an LLM provider is configured for the project, TestPlanIt's LLM enrichment derives steps for newly created cases when `captureSteps` is on (the default) — set `captureSteps: false` to opt out, or `overwriteSteps: true` to re-derive cases that already have steps (destructive). Without a provider it is a silent no-op.
 - **`scenarioLevelReporter: true` is not supported for step capture.** In that Cucumber mode the framework suppresses per-step events, so the reporter cannot see the individual Gherkin steps. Use the default `scenarioLevelReporter: false` to capture steps.
 
 ## Service Options
@@ -613,10 +613,11 @@ const reporterOptions: TestPlanItReporterOptions = {
 
 | WebdriverIO Version | Supported |
 | -------------------- | ----------- |
+| 10.x | Yes |
 | 9.x | Yes |
 | 8.x | Yes |
 
-Requires Node.js 24 or later.
+Requires Node.js 20 or later.
 
 ## Related Packages
 
