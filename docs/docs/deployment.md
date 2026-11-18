@@ -176,6 +176,10 @@ Every time the application container starts, it applies any pending migrations b
 
 ### 6. Set Up External Access (HTTPS)
 
+:::warning Serve TestPlanIt over HTTPS
+Do not leave users on plain `http://`. Each open TestPlanIt tab holds long-lived connections for live updates, and over plain HTTP a browser allows only six connections to a host at a time. With a few tabs open the limit is reached, further requests wait, and the application appears to hang until the extra tabs are closed. Serving over HTTPS with HTTP/2 removes the limit. See [HTTPS and HTTP/2](./sse-notifications.md#https-and-http2).
+:::
+
 For production, configure a reverse proxy (nginx/Caddy/CloudFlare) to:
 
 - Handle SSL termination
@@ -187,6 +191,7 @@ Example nginx configuration:
 ```nginx
 server {
     listen 443 ssl;
+    http2 on; # nginx 1.25.1+; on older versions use `listen 443 ssl http2;`
     server_name testplanit.yourdomain.com;
 
     # SSL configuration

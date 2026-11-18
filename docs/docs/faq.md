@@ -148,6 +148,12 @@ If you're using Elasticsearch:
 
 If you're not using Elasticsearch, global search is unavailable. List filters and the rest of the application keep working.
 
+### The application hangs when several tabs are open
+
+If TestPlanIt stops responding to clicks when you have more than one tab or window open, and recovers when you close the extra ones, the instance is being accessed over plain `http://`. Each tab holds long-lived connections for live updates, and over plain HTTP a browser allows only six connections to a host at a time. Once they are used up, other requests wait.
+
+Serve TestPlanIt over HTTPS behind a reverse proxy with HTTP/2 enabled (nginx, Caddy, Traefik). See [HTTPS and HTTP/2](./sse-notifications.md#https-and-http2).
+
 ### Background jobs aren't processing
 
 Check the following:

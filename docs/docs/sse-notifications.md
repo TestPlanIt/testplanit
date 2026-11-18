@@ -49,6 +49,20 @@ Every wake-up is published to both channels, so either consumer pattern stays cu
 
 In the browser, both hooks (`useMilestoneLiveStream`, `useProjectMilestoneStream`) share the same refcounted singleton-EventSource registry: every component subscribed to the same milestone or project stream reuses one connection, which closes after a short grace period once the last subscriber unmounts.
 
+## HTTPS and HTTP/2
+
+Serve TestPlanIt over HTTPS with HTTP/2 enabled on the proxy or load balancer that browsers connect to.
+
+Every stream is a connection that stays open for as long as the page is open. Over HTTP/1.1 a browser allows only six connections to a host at a time, shared across all of its tabs and windows. A user with several TestPlanIt tabs open can fill all six with streams; every other request then waits for a free connection, so clicking a button appears to do nothing and the application seems to hang until the extra tabs are closed.
+
+HTTP/2 carries all of a browser's requests and streams over one connection, so the limit no longer applies. Browsers use HTTP/2 only over TLS, which is why plain `http://` access is always subject to the six-connection limit.
+
+- **Caddy** and **Traefik** enable HTTP/2 on HTTPS listeners by default.
+- **nginx** needs `http2 on;` in the `server` block (nginx 1.25.1 and later; on older versions, `listen 443 ssl http2;`).
+- **AWS ALB** and most managed load balancers enable HTTP/2 by default.
+
+Only the connection between the browser and the proxy needs HTTP/2. The proxy can keep talking to TestPlanIt over HTTP/1.1.
+
 ## Ingress and proxy configuration
 
 SSE relies on the connection staying open and on byte-by-byte delivery. Most ingress controllers and load balancers buffer responses and apply short idle timeouts by default — both will break SSE. The same TestPlanIt application image runs in every environment; the differences are configuration on the ingress, not in the code.
