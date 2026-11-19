@@ -303,6 +303,8 @@ As a safeguard, a test with **no** `test.step()` calls never clears an existing 
 
 ## Tags
 
+Copying tags onto test cases requires TestPlanIt 1.2.0 or later. Against an older server the reporter logs a warning for each case and reports results as usual.
+
 ### Copying tags onto new cases
 
 When the reporter creates a new test case, it copies the test's [Playwright tags](https://playwright.dev/docs/test-annotations#tag-tests) onto it. This is on by default whenever `autoCreateTestCases` is enabled.

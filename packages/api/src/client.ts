@@ -2104,11 +2104,11 @@ export class TestPlanItClient {
   ): Promise<{ url: string; key: string }> {
     const formData = new FormData();
 
-    if (file instanceof Buffer) {
-      formData.append("file", new Blob([new Uint8Array(file)], { type: mimeType }), fileName);
-    } else {
-      formData.append("file", file, fileName);
-    }
+    const blob =
+      file instanceof Blob
+        ? file
+        : new Blob([new Uint8Array(file)], { type: mimeType });
+    formData.append("file", blob, fileName);
     if (prependString) {
       formData.append("prependString", prependString);
     }

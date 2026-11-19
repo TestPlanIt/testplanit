@@ -114,6 +114,8 @@ caseIdPattern: /TEST-(\d+)/g  // JIRA-style:         "TEST-12345 should work"
 | `maxRetries` | `number` | No | `3` | Number of retries for failed API requests |
 | `verbose` | `boolean` | No | `false` | Enable verbose logging |
 
+`captureTags` and `overwriteTags` require TestPlanIt 1.2.0 or later.
+
 > **Tip:** Options like `configId`, `milestoneId`, `stateId`, `parentFolderId`, and `templateId` accept either numeric IDs or string names. When a string is provided, the resource is looked up by exact name match.
 
 ## Attachments
