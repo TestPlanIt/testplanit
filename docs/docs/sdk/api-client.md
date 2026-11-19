@@ -247,6 +247,7 @@ const byExternalId = await client.findTestCaseByCustomField({
 await client.updateTestCase(456, { automated: true });
 
 // Add tags to a case, keeping the tags it already has
+// (setTestCaseTags requires a TestPlanIt server on 1.0.0 or later)
 const [smoke, critical] = await client.resolveTagIds(1, ['smoke', 'critical']);
 await client.setTestCaseTags(456, [smoke, critical]);
 
