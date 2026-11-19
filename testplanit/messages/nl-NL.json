@@ -703,7 +703,7 @@
       "permissionDenied": "U hebt geen toestemming om deze pagina te bezoeken.",
       "resultSubmitPermissionDenied": "Je kunt voor deze zaak geen resultaten indienen. Vraag een projectbeheerder om deze zaak aan je toe te wijzen.",
       "dependenciesNotPassed": "Geblokkeerd door afhankelijkheden",
-      "dependenciesNotPassedDescription": "Dit testgeval kan niet worden uitgevoerd totdat {count, plural, =0 {de gevallen waarvan het afhangt in deze uitvoering zijn geslaagd} one {het geval waarvan het afhangt in deze uitvoering is geslaagd} other {alle # gevallen waarvan het afhangt in deze uitvoering zijn geslaagd}}.",
+      "dependenciesNotPassedDescription": "Dit testgeval kan niet worden uitgevoerd totdat {count, plural, =0 {de gevallen waarvan het afhangt in deze uitvoering zijn geslaagd} =1 {het geval waarvan het afhangt in deze uitvoering is geslaagd} other {alle # gevallen waarvan het afhangt in deze uitvoering zijn geslaagd}}.",
       "justificationRequired": "Rechtvaardiging vereist",
       "justificationRequiredDescription": "Om een voltooid resultaat om te zetten naar een andere uitkomst, zijn resultaatdetails nodig die de wijziging toelichten.",
       "requiredFieldMissing": "Een verplicht resultaatveld mist een waarde.",
@@ -926,9 +926,9 @@
       "attachments": {
         "title": "Bijlagen uploaden",
         "description": "Versleep uw bestanden of klik op de onderstaande knop om bestanden te selecteren.",
-        "selectFiles": "{count, plural, =0 {Selecteer bestanden} one {1 geselecteerd bestand} other {# geselecteerde bestanden}}",
+        "selectFiles": "{count, plural, =0 {Selecteer bestanden} =1 {1 geselecteerd bestand} other {# geselecteerde bestanden}}",
         "selectFile": "{count, plural, =0 {Bestand selecteren} other {1 Geselecteerd bestand}}",
-        "filesSelected": "{count, plural, one {1 bestand geselecteerd} other {# bestanden geselecteerd}}",
+        "filesSelected": "{count, plural, =1 {1 bestand geselecteerd} other {# bestanden geselecteerd}}",
         "addMoreFiles": "Voeg meer bestanden toe...",
         "replaceFile": "Bestand vervangen...",
         "invalidFileType": "Ongeldig bestandstype. Alleen {types} bestanden zijn toegestaan.",
@@ -2432,11 +2432,11 @@
           "scanCancelled": "Scan geannuleerd"
         },
         "bulk": {
-          "label": "{count, plural, one {Uw repository:} other {Alle # repositories:}}",
-          "scanRecentHint": "Scan recente commits opnieuw in {count, plural, one {de verbonden repository} other {alle # verbonden repositories}}.",
-          "scanFullHint": "Loop elke commit op de branch van {count, plural, one {de verbonden repository} other {alle # verbonden repositories}} door en vul pins voor bestaande tickets in.",
-          "scanFullConfirm": "Dit loopt elke commit op de branch van {count, plural, one {de verbonden repository} other {alle # verbonden repositories}} door. Repositories worden één voor één gescand, dus dit kan lange tijd duren, en elke walk leest commits via de API van de provider, wat meerekent voor de ratelimit.",
-          "checkStaleHint": "Controleer de Code Pins van {count, plural, one {de verbonden repository} other {alle # verbonden repositories}} tegen elke branch tip.",
+          "label": "{count, plural, =1 {Uw repository:} other {Alle # repositories:}}",
+          "scanRecentHint": "Scan recente commits opnieuw in {count, plural, =1 {de verbonden repository} other {alle # verbonden repositories}}.",
+          "scanFullHint": "Loop elke commit op de branch van {count, plural, =1 {de verbonden repository} other {alle # verbonden repositories}} door en vul pins voor bestaande tickets in.",
+          "scanFullConfirm": "Dit loopt elke commit op de branch van {count, plural, =1 {de verbonden repository} other {alle # verbonden repositories}} door. Repositories worden één voor één gescand, dus dit kan lange tijd duren, en elke walk leest commits via de API van de provider, wat meerekent voor de ratelimit.",
+          "checkStaleHint": "Controleer de Code Pins van {count, plural, =1 {de verbonden repository} other {alle # verbonden repositories}} tegen elke branch tip.",
           "removeStaleHint": "Verwijder {count, plural, one {# verouderde Code Pin} other {# verouderde Code Pins}} over {repos, plural, one {# repository} other {# repositories}}.",
           "removeConfirm": "Verwijder {count, plural, one {# Code Pin} other {# Code Pins}} die de laatste controles niet konden vinden op de branch tip, over {repos, plural, one {# repository} other {# repositories}}?",
           "queued": "In wachtrij gezet voor {count, plural, one {# repository} other {# repositories}}.{skipped, plural, =0 {} one { # werd al uitgevoerd.} other { # werden al uitgevoerd.}}",
@@ -3586,7 +3586,7 @@
       "activeRunWarningMessage": "Deze testcase maakt deel uit van {count, plural, =1 {# actieve testrun} other {# actieve testruns}}. Als u de testcase verwijdert, wordt deze binnen die runs als verwijderd gemarkeerd."
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {Als u deze map verwijdert, worden ook alle submappen verwijderd. Weet u het zeker?} one {Als u deze map verwijdert, worden ook 1 testcase in deze map en alle submappen verwijderd. Weet u het zeker?} other {Als u deze map verwijdert, worden ook # testcases in deze map en alle submappen verwijderd. Weet u het zeker?}}",
+      "confirmMessage": "{count, plural, =0 {Als u deze map verwijdert, worden ook alle submappen verwijderd. Weet u het zeker?} =1 {Als u deze map verwijdert, worden ook 1 testcase in deze map en alle submappen verwijderd. Weet u het zeker?} other {Als u deze map verwijdert, worden ook # testcases in deze map en alle submappen verwijderd. Weet u het zeker?}}",
       "warning": "Deze map en alle bijbehorende testcases worden uit het project verwijderd. Historische gegevens voor deze testcases blijven wel in het project aanwezig, inclusief de resultaten.",
       "confirm": "Bevestig het verwijderen van de map",
       "success": "Map en alle submappen/zaken succesvol verwijderd."
@@ -4312,7 +4312,7 @@
       "filterAllProjects": "Alle projecten",
       "actionRevert": "Beslissing terugdraaien",
       "revertedBadge": "Teruggedraaid",
-      "revertedBadgeTooltip": "{count, plural, one {Eenmaal eerder teruggedraaid} other {# keer eerder teruggedraaid}}"
+      "revertedBadgeTooltip": "{count, plural, =1 {Eenmaal eerder teruggedraaid} other {# keer eerder teruggedraaid}}"
     },
     "requester": {
       "openButton": "Verzoek om beoordeling",
@@ -4415,7 +4415,7 @@
     "dependencies": {
       "blocked": "Geblokkeerd",
       "blockedBy": "Geblokkeerd totdat {count, plural, one {deze case geslaagd is} other {deze cases zijn geslaagd}} in deze run:",
-      "blockedNotice": "Deze testcase kan pas worden uitgevoerd als {count, plural, one {de case waarvan deze afhangt, is} other {alle # cases waarvan deze afhangt, zijn}} geslaagd in deze run.",
+      "blockedNotice": "Deze testcase kan pas worden uitgevoerd als {count, plural, =1 {de case waarvan deze afhangt, is} other {alle # cases waarvan deze afhangt, zijn}} geslaagd in deze run.",
       "notInRun": "{count, plural, one {# case waarvan deze afhangt, is niet in deze run en blokkeert de uitvoering niet:} other {# cases waarvan deze afhangt, zijn niet in deze run en blokkeren de uitvoering niet:}}",
       "unblocked": "Alle cases waarvan deze afhangt, zijn in deze run geslaagd."
     },
@@ -4734,7 +4734,7 @@
         "historyDetail": "{count, plural, one {# eerdere run} other {# eerdere runs}} na wijzigingen in dezelfde bestanden",
         "historyFailed": "Mislukt in een eerdere run na vergelijkbare wijzigingen",
         "linkedDetail": "Gekoppeld aan case {caseId}",
-        "issueDetail": "Gekoppeld aan {key}, genoemd in {count, plural, one {commit {sha}} other {# commits}}"
+        "issueDetail": "Gekoppeld aan {key}, genoemd in {count, plural, =1 {commit {sha}} other {# commits}}"
       },
       "stale": {
         "badge": "Verouderd",
@@ -4789,9 +4789,9 @@
       "description": "De gevallen die het meest verdienen om te worden uitgevoerd, hoogste risico eerst standaard. Gevallen die al in deze run zitten, worden niet meegenomen.",
       "minimumScore": "Minimale risicoscore",
       "showing": "{shown, plural, one {# geval geladen} other {# gevallen geladen}} van {total, plural, one {# overeenkomst} other {# overeenkomsten}}",
-      "loadedSelected": "{shown, plural, =2 {Beide geladen gevallen zijn geselecteerd} one {Het geladen geval is geselecteerd} other {Alle # geladen gevallen zijn geselecteerd}}.",
-      "selectAllMatches": "{total, plural, =2 {Selecteer beide overeenkomsten} one {Selecteer de enige overeenkomst} other {Selecteer alle # overeenkomsten}}",
-      "allMatchesSelected": "{total, plural, =2 {Beide overeenkomsten zijn geselecteerd} one {De enige overeenkomst is geselecteerd} other {Alle # overeenkomsten zijn geselecteerd}}.",
+      "loadedSelected": "{shown, plural, =2 {Beide geladen gevallen zijn geselecteerd} =1 {Het geladen geval is geselecteerd} other {Alle # geladen gevallen zijn geselecteerd}}.",
+      "selectAllMatches": "{total, plural, =2 {Selecteer beide overeenkomsten} =1 {Selecteer de enige overeenkomst} other {Selecteer alle # overeenkomsten}}",
+      "allMatchesSelected": "{total, plural, =2 {Beide overeenkomsten zijn geselecteerd} =1 {De enige overeenkomst is geselecteerd} other {Alle # overeenkomsten zijn geselecteerd}}.",
       "noneMatch": "Geen gescoorde gevallen op of boven deze score.",
       "caseColumn": "Testgeval",
       "scoreColumn": "Risicoscore",
@@ -6190,13 +6190,13 @@
       "deselectAllShiftTooltip": "Alle configuraties op alle pagina's deselecteren/selecteren",
       "shiftClickHint": "Houd Shift ingedrukt om alle pagina's te selecteren/deselecteren.",
       "bulkEdit": {
-        "button": "{count, plural, one {Bewerk 1 configuratie} other {Bewerk # configuraties}}",
-        "title": "{count, plural, one {Projecten bewerken op 1 configuratie} other {Projecten bewerken op # configuraties}}",
+        "button": "{count, plural, =1 {Bewerk 1 configuratie} other {Bewerk # configuraties}}",
+        "title": "{count, plural, =1 {Projecten bewerken op 1 configuratie} other {Projecten bewerken op # configuraties}}",
         "description": "Vervang de projecttoewijzingen op de geselecteerde configuraties. De configuratienaam kan niet in bulk worden gewijzigd.",
-        "applyButton": "{count, plural, one {Toepassen op 1 configuratie} other {Toepassen op # configuraties}}",
-        "deleteButton": "{count, plural, one {Verwijder 1 configuratie} other {Verwijder # configuraties}}",
-        "deleteConfirmTitle": "{count, plural, one {1 configuratie verwijderen?} other {# configuraties verwijderen?}}",
-        "deleteConfirmMessage": "{count, plural, one {Hiermee wordt 1 configuratie verwijderd. Deze actie kan niet ongedaan worden gemaakt.} other {Hiermee worden # configuraties verwijderd. Deze actie kan niet ongedaan worden gemaakt.}}",
+        "applyButton": "{count, plural, =1 {Toepassen op 1 configuratie} other {Toepassen op # configuraties}}",
+        "deleteButton": "{count, plural, =1 {Verwijder 1 configuratie} other {Verwijder # configuraties}}",
+        "deleteConfirmTitle": "{count, plural, =1 {1 configuratie verwijderen?} other {# configuraties verwijderen?}}",
+        "deleteConfirmMessage": "{count, plural, =1 {Hiermee wordt 1 configuratie verwijderd. Deze actie kan niet ongedaan worden gemaakt.} other {Hiermee worden # configuraties verwijderd. Deze actie kan niet ongedaan worden gemaakt.}}",
         "applyEnabledLabel": "Wijzig de ingeschakelde status"
       },
       "categories": {
@@ -6229,8 +6229,8 @@
         "selectCombinationDescription": "Selecteer de variantcombinaties die u wilt toevoegen. Combinaties die al bestaan, worden uitgeschakeld weergegeven.",
         "alreadyExists": "(bestaat al)",
         "reviewTitle": "Configuraties controleren",
-        "createButton": "{count, plural, one {Maak 1 configuratie aan} other {Maak # configuraties aan}}",
-        "creating": "{count, plural, one {1 configuratie aanmaken...} other {# configuraties aanmaken...}}",
+        "createButton": "{count, plural, =1 {Maak 1 configuratie aan} other {Maak # configuraties aan}}",
+        "creating": "{count, plural, =1 {1 configuratie aanmaken...} other {# configuraties aanmaken...}}",
         "allExist": "Alle combinaties bestaan al.",
         "selectAtLeast": "Selecteer minimaal één combinatie."
       },
@@ -6352,7 +6352,7 @@
       "delete": {
         "confirmMessage": "Weet je zeker dat je de hoofdoorzaak {name} wilt verwijderen?",
         "inUse": "{count, plural, one {# foutpatroon gebruikt het.} other {# foutpatronen gebruiken het.}}",
-        "moveLabel": "{count, plural, one {Verplaats het patroon naar} other {Verplaats de # patronen naar}}"
+        "moveLabel": "{count, plural, =1 {Verplaats het patroon naar} other {Verplaats de # patronen naar}}"
       }
     },
     "issue_config": {
@@ -6443,8 +6443,8 @@
           "ORPHAN": "Verweest",
           "REFERENCED": "In gebruik"
         },
-        "loadedSelected": "{shown, plural, one {Het geladen bestand is geselecteerd} other {Alle # geladen bestanden zijn geselecteerd}}.",
-        "confirmDelete": "{count, plural, =0 {Geen van de geselecteerde bestanden kan worden verwijderd.} one {Dit bestand ({size}) uit de opslag verwijderen? Dit kan niet ongedaan worden gemaakt.} other {# bestanden ({size}) uit de opslag verwijderen? Dit kan niet ongedaan worden gemaakt.}}",
+        "loadedSelected": "{shown, plural, =1 {Het geladen bestand is geselecteerd} other {Alle # geladen bestanden zijn geselecteerd}}.",
+        "confirmDelete": "{count, plural, =0 {Geen van de geselecteerde bestanden kan worden verwijderd.} =1 {Dit bestand ({size}) uit de opslag verwijderen? Dit kan niet ongedaan worden gemaakt.} other {# bestanden ({size}) uit de opslag verwijderen? Dit kan niet ongedaan worden gemaakt.}}",
         "skipped": "{count, plural, one {# geselecteerd bestand wordt met rust gelaten omdat het in gebruik is.} other {# geselecteerde bestanden worden met rust gelaten omdat ze in gebruik zijn.}}",
         "deleted": "{count, plural, one {# bestand verwijderd uit opslag} other {# bestanden verwijderd uit opslag}}"
       },
@@ -6462,18 +6462,18 @@
         "attachedThrough": "Gekoppeld via"
       },
       "selection": {
-        "loadedSelected": "{shown, plural, one {De geladen bijlage is geselecteerd} other {Alle # geladen bijlagen zijn geselecteerd}}.",
-        "selectAllMatches": "{total, plural, one {Selecteer de enige overeenkomst} other {Selecteer alle # overeenkomsten}}",
-        "allMatchesSelected": "{total, plural, one {De enige overeenkomst is geselecteerd} other {Alle # overeenkomsten zijn geselecteerd}}.",
+        "loadedSelected": "{shown, plural, =1 {De geladen bijlage is geselecteerd} other {Alle # geladen bijlagen zijn geselecteerd}}.",
+        "selectAllMatches": "{total, plural, =1 {Selecteer de enige overeenkomst} other {Selecteer alle # overeenkomsten}}",
+        "allMatchesSelected": "{total, plural, =1 {De enige overeenkomst is geselecteerd} other {Alle # overeenkomsten zijn geselecteerd}}.",
         "tooMany": "Tot {max} kunnen tegelijk worden geselecteerd. Verklein de filters om elke overeenkomst te selecteren."
       },
       "actions": {
         "detach": "Ontkoppelen",
         "confirm": {
-          "detach": "{count, plural, =0 {Geen van deze bijlagen is aan iets gekoppeld.} one {Deze bijlage ontkoppelen? Deze wordt verwijderd uit het item waaraan het is gekoppeld en blijft in deze lijst als niet-gekoppeld.} other {# bijlagen ontkoppelen? Deze worden verwijderd uit de items waaraan ze zijn gekoppeld en blijven in deze lijst als niet-gekoppeld.}}",
-          "softDelete": "{count, plural, =0 {Deze bijlagen zijn al verwijderd.} one {Deze bijlage verwijderen? Deze wordt verborgen uit het item waaraan het is gekoppeld en kan uit deze lijst worden hersteld.} other {# bijlagen verwijderen? Deze worden verborgen uit de items waaraan ze zijn gekoppeld en kunnen uit deze lijst worden hersteld.}}",
-          "restore": "{count, plural, =0 {Geen van deze bijlagen is verwijderd.} one {Deze bijlage herstellen?} other {# bijlagen herstellen?}}",
-          "purge": "{count, plural, =0 {Alleen verwijderde bijlagen kunnen definitief worden verwijderd. Verwijder ze eerst.} one {Deze bijlage definitief verwijderen? Dit kan niet ongedaan worden gemaakt.} other {# bijlagen definitief verwijderen? Dit kan niet ongedaan worden gemaakt.}}"
+          "detach": "{count, plural, =0 {Geen van deze bijlagen is aan iets gekoppeld.} =1 {Deze bijlage ontkoppelen? Deze wordt verwijderd uit het item waaraan het is gekoppeld en blijft in deze lijst als niet-gekoppeld.} other {# bijlagen ontkoppelen? Deze worden verwijderd uit de items waaraan ze zijn gekoppeld en blijven in deze lijst als niet-gekoppeld.}}",
+          "softDelete": "{count, plural, =0 {Deze bijlagen zijn al verwijderd.} =1 {Deze bijlage verwijderen? Deze wordt verborgen uit het item waaraan het is gekoppeld en kan uit deze lijst worden hersteld.} other {# bijlagen verwijderen? Deze worden verborgen uit de items waaraan ze zijn gekoppeld en kunnen uit deze lijst worden hersteld.}}",
+          "restore": "{count, plural, =0 {Geen van deze bijlagen is verwijderd.} =1 {Deze bijlage herstellen?} other {# bijlagen herstellen?}}",
+          "purge": "{count, plural, =0 {Alleen verwijderde bijlagen kunnen definitief worden verwijderd. Verwijder ze eerst.} =1 {Deze bijlage definitief verwijderen? Dit kan niet ongedaan worden gemaakt.} other {# bijlagen definitief verwijderen? Dit kan niet ongedaan worden gemaakt.}}"
         },
         "purgeFiles": "{count, plural, =0 {Er worden geen opgeslagen bestanden verwijderd.} one {# opgeslagen bestand ({size}) is verwijderd.} other {# opgeslagen bestanden ({size}) zijn verwijderd.}}",
         "purgeShared": "{count, plural, one {# bestand blijft in opslag omdat een andere bijlage het gebruikt.} other {# bestanden blijven in opslag omdat andere bijlagen ze gebruiken.}}",
@@ -7282,7 +7282,7 @@
         "mentionedYouInComment": "noemde je in een reactie op",
         "inProject": "in het project",
         "testRun": "Testrun:",
-        "casesInProject": "{count, plural, =1 {# geval} other {# gevallen}} in",
+        "casesInProject": "{count, plural, =1 {# geval} other {# gevallen}} in <project></project>",
         "sentBy": "Verzonden door {name}",
         "milestoneDueSoonTitle": "Mijlpaal binnenkort bereikt",
         "milestoneOverdueTitle": "Mijlpaal te laat",
@@ -7372,8 +7372,8 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "Het resultaat duurde {elapsed}, {deviation}% afwijking van de basislijn van {baseline} (meer dan {threshold}% toegestaan).",
-          "CASE_REGRESSED": "Het testgeval mislukte na het slagen van {passedBefore, plural, one {het laatste resultaat} other {zijn laatste # resultaten}}.",
-          "CASE_RECOVERED": "Het testgeval slaagde na het mislukken van {failedBefore, plural, one {het laatste resultaat} other {zijn laatste # resultaten}}.",
+          "CASE_REGRESSED": "Het testgeval mislukte na het slagen van {passedBefore, plural, =1 {het laatste resultaat} other {zijn laatste # resultaten}}.",
+          "CASE_RECOVERED": "Het testgeval slaagde na het mislukken van {failedBefore, plural, =1 {het laatste resultaat} other {zijn laatste # resultaten}}.",
           "RUN_DURATION_DEVIATION": "De run duurde {elapsed}, {deviation}% afwijking van de basislijn van {baseline} (meer dan {threshold}% toegestaan).",
           "RUN_NOT_PROGRESSING": "De run heeft {idleHours, plural, one {# uur} other {# uren}} lang geen nieuw resultaat gehad (drempel {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "De geautomatiseerde uitvoering op {target} eindigd met {status}{error, select, other {: {error}}}",
@@ -10641,7 +10641,7 @@
     "deleteRule": "Waarschuwing verwijderen",
     "deleteConfirm": "De waarschuwing \"{name}\" verwijderen? De abonnees ontvangen geen meldingen meer en het kan uit de prullenbak worden hersteld.",
     "pauseTitle": "Deze waarschuwing voor iedereen onderbreken?",
-    "pauseConfirm": "\"{name}\" stopt met afgaan voor {count, plural, =0 {iedereen} one {de enige abonnee} =2 {beide abonnees} other {alle # abonnees}}, niet alleen voor u, totdat iemand het opnieuw inschakelt. Om alleen uw eigen meldingen te stoppen, schakel je Meld me uit.",
+    "pauseConfirm": "\"{name}\" stopt met afgaan voor {count, plural, =0 {iedereen} =1 {de enige abonnee} =2 {beide abonnees} other {alle # abonnees}}, niet alleen voor u, totdat iemand het opnieuw inschakelt. Om alleen uw eigen meldingen te stoppen, schakel je Meld me uit.",
     "columns": {
       "name": "Regel",
       "condition": "Voorwaarde",

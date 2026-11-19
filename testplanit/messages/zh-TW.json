@@ -703,7 +703,7 @@
       "permissionDenied": "您沒有權限存取此頁面。",
       "resultSubmitPermissionDenied": "您無法提交此案例的結果。請聯絡專案管理員將其分配給您。",
       "dependenciesNotPassed": "被依賴項阻止",
-      "dependenciesNotPassedDescription": "此測試案例必須等到 {count, plural, =0 {其依賴的案例已} one {其依賴的案例已} other {其依賴的全部 # 個案例都}} 在此執行中通過後才能執行。",
+      "dependenciesNotPassedDescription": "此測試案例必須等到 {count, plural, =0 {其依賴的案例已} =1 {其依賴的案例已} other {其依賴的全部 # 個案例都}} 在此執行中通過後才能執行。",
       "justificationRequired": "需要提供理由",
       "justificationRequiredDescription": "將已完成的結果變更為不同的結果需要結果詳情來解釋變更。",
       "requiredFieldMissing": "必填結果欄位缺少值。",
@@ -926,9 +926,9 @@
       "attachments": {
         "title": "上傳附件",
         "description": "拖放檔案或點擊下方按鈕選擇檔案。",
-        "selectFiles": "{count, plural, =0 {選擇檔案} one {已選檔案 1 個} other {已選檔案# ~<[⌇⌇3⌇⌇⌇]>~ 已選檔案數}}",
+        "selectFiles": "{count, plural, =0 {選擇檔案} =1 {已選檔案 1 個} other {已選檔案# ~<[⌇⌇3⌇⌇⌇]>~ 已選檔案數}}",
         "selectFile": "{count, plural, =0 {選取檔案} other {選取 1 個檔案}}",
-        "filesSelected": "{count, plural, one {已選取 1 個檔案} other {已選取 # 個檔案}}",
+        "filesSelected": "{count, plural, =1 {已選取 1 個檔案} other {已選取 # 個檔案}}",
         "addMoreFiles": "新增更多檔案...",
         "replaceFile": "替換檔案...",
         "invalidFileType": "文件類型無效。僅允許使用 {types} 檔案。",
@@ -4415,7 +4415,7 @@
     "dependencies": {
       "blocked": "已屏蔽",
       "blockedBy": "被屏蔽直到 {count, plural, one {此案例通過} other {這些案例通過}}在此執行中：",
-      "blockedNotice": "此測試案例無法執行，直到 {count, plural, one {其相依的案例已} other {其所有 # 個相依的案例都}} 在此執行中通過。",
+      "blockedNotice": "此測試案例無法執行，直到 {count, plural, =1 {其相依的案例已} other {其所有 # 個相依的案例都}} 在此執行中通過。",
       "notInRun": "{count, plural, one {此案例相依的 # 個案例不在} other {此案例相依的 # 個案例不在}}此執行中且不會屏蔽執行：",
       "unblocked": "此案例相依的所有案例都已在此執行中通過。"
     },
@@ -4734,7 +4734,7 @@
         "historyDetail": "{count, plural, one {# 次較早的執行} other {# 次較早的執行}} 在對相同檔案的變更之後",
         "historyFailed": "在較早的執行中失敗，經歷類似變更後",
         "linkedDetail": "連結到案例 {caseId}",
-        "issueDetail": "連結到 {key}，在 {count, plural, one {提交 {sha}} other {# 次提交}} 中命名"
+        "issueDetail": "連結到 {key}，在 {count, plural, =1 {提交 {sha}} other {# 次提交}} 中命名"
       },
       "stale": {
         "badge": "陳舊",
@@ -4789,9 +4789,9 @@
       "description": "最值得運行的案例，預設情況下風險最高優先。此次運行中已包含的案例除外。",
       "minimumScore": "最低風險分數",
       "showing": "{shown, plural, one {已載入 # 個案例} other {已載入 # 個案例}}，共 {total, plural, one {# 個符合} other {# 個符合}}",
-      "loadedSelected": "{shown, plural, =2 {兩個已載入的案例已選中} one {已載入的案例已選中} other {所有 # 個已載入的案例已選中}}。",
-      "selectAllMatches": "{total, plural, =2 {選擇兩個符合項} one {選擇唯一的符合項} other {選擇全部 # 個符合項}}",
-      "allMatchesSelected": "{total, plural, =2 {兩個符合項已選中} one {唯一的符合項已選中} other {全部 # 個符合項已選中}}。",
+      "loadedSelected": "{shown, plural, =2 {兩個已載入的案例已選中} =1 {已載入的案例已選中} other {所有 # 個已載入的案例已選中}}。",
+      "selectAllMatches": "{total, plural, =2 {選擇兩個符合項} =1 {選擇唯一的符合項} other {選擇全部 # 個符合項}}",
+      "allMatchesSelected": "{total, plural, =2 {兩個符合項已選中} =1 {唯一的符合項已選中} other {全部 # 個符合項已選中}}。",
       "noneMatch": "在此分數或以上沒有評分的案例。",
       "caseColumn": "測試用例",
       "scoreColumn": "風險分數",
@@ -6190,11 +6190,11 @@
       "deselectAllShiftTooltip": "取消選擇/選擇所有頁面上的所有配置",
       "shiftClickHint": "按住 Shift 鍵可選擇/取消選擇所有頁面",
       "bulkEdit": {
-        "button": "{count, plural, one {編輯 1 個設定} other {編輯 # 個設定}}",
-        "title": "{count, plural, one {編輯 1 個配置上的項目} other {編輯 # 個配置上的項目}}",
+        "button": "{count, plural, =1 {編輯 1 個設定} other {編輯 # 個設定}}",
+        "title": "{count, plural, =1 {編輯 1 個配置上的項目} other {編輯 # 個配置上的項目}}",
         "description": "取代所選配置中的項目分配。配置名稱無法批次編輯。",
-        "applyButton": "{count, plural, one {應用於 1 個配置} other {應用於 # 個配置}}",
-        "deleteButton": "{count, plural, one {刪除 1 個設定} other {刪除 # 個設定}}",
+        "applyButton": "{count, plural, =1 {應用於 1 個配置} other {應用於 # 個配置}}",
+        "deleteButton": "{count, plural, =1 {刪除 1 個設定} other {刪除 # 個設定}}",
         "deleteConfirmTitle": "{count, plural, other {刪除 # 個設定？}}",
         "deleteConfirmMessage": "{count, plural, other {這將刪除 # 個設定。此操作無法復原。}}",
         "applyEnabledLabel": "更改已啟用狀態"
@@ -6229,8 +6229,8 @@
         "selectCombinationDescription": "請選擇要新增的變體組合。已存在的組合將顯示為停用狀態。",
         "alreadyExists": "（已存在）",
         "reviewTitle": "查看配置",
-        "createButton": "{count, plural, one {建立 1 個設定} other {建立 # 個設定}}",
-        "creating": "{count, plural, one {正在建立 1 個設定...} other {正在建立 # 個設定...}}",
+        "createButton": "{count, plural, =1 {建立 1 個設定} other {建立 # 個設定}}",
+        "creating": "{count, plural, =1 {正在建立 1 個設定...} other {正在建立 # 個設定...}}",
         "allExist": "所有組合都已存在。",
         "selectAtLeast": "請至少選擇一種組合。"
       },
@@ -6352,7 +6352,7 @@
       "delete": {
         "confirmMessage": "您確定要刪除 {name} 根本原因嗎？",
         "inUse": "{count, plural, one {# 個故障模式正在使用它。} other {# 個故障模式正在使用它。}}",
-        "moveLabel": "{count, plural, one {將該模式移至} other {將這 # 個模式移至}}"
+        "moveLabel": "{count, plural, =1 {將該模式移至} other {將這 # 個模式移至}}"
       }
     },
     "issue_config": {
@@ -6444,7 +6444,7 @@
           "REFERENCED": "正在使用"
         },
         "loadedSelected": "{shown, plural, other {已選取所有 # 個已載入的檔案}}。",
-        "confirmDelete": "{count, plural, =0 {選定的檔案都無法刪除。} one {從儲存空間中刪除此檔案（{size}）？此操作無法復原。} other {從儲存空間中刪除 # 個檔案（{size}）？此操作無法復原。}}",
+        "confirmDelete": "{count, plural, =0 {選定的檔案都無法刪除。} =1 {從儲存空間中刪除此檔案（{size}）？此操作無法復原。} other {從儲存空間中刪除 # 個檔案（{size}）？此操作無法復原。}}",
         "skipped": "{count, plural, other {# 個選定檔案因正在使用而保留。}}",
         "deleted": "{count, plural, other {已從儲存空間中刪除 # 個檔案}}"
       },
@@ -6470,10 +6470,10 @@
       "actions": {
         "detach": "解除連結",
         "confirm": {
-          "detach": "{count, plural, =0 {這些附件都未附加到任何項目。} one {解除此附件的連結？該附件將從其附加的項目中移除，並在此列表中保留為未附加的附件。} other {解除 # 個附件的連結？它們將從其附加的項目中移除，並在此列表中保留為未附加的附件。}}",
-          "softDelete": "{count, plural, =0 {這些附件已被刪除。} one {刪除此附件？該附件將在其附加的項目中隱藏，並可從此列表還原。} other {刪除 # 個附件？它們將在其附加的項目中隱藏，並可從此列表還原。}}",
-          "restore": "{count, plural, =0 {這些附件都未被刪除。} one {還原此附件？} other {還原 # 個附件？}}",
-          "purge": "{count, plural, =0 {只有已刪除的附件才能被清除。請先將其刪除。} one {永久刪除此附件？此操作無法撤銷。} other {永久刪除 # 個附件？此操作無法撤銷。}}"
+          "detach": "{count, plural, =0 {這些附件都未附加到任何項目。} =1 {解除此附件的連結？該附件將從其附加的項目中移除，並在此列表中保留為未附加的附件。} other {解除 # 個附件的連結？它們將從其附加的項目中移除，並在此列表中保留為未附加的附件。}}",
+          "softDelete": "{count, plural, =0 {這些附件已被刪除。} =1 {刪除此附件？該附件將在其附加的項目中隱藏，並可從此列表還原。} other {刪除 # 個附件？它們將在其附加的項目中隱藏，並可從此列表還原。}}",
+          "restore": "{count, plural, =0 {這些附件都未被刪除。} =1 {還原此附件？} other {還原 # 個附件？}}",
+          "purge": "{count, plural, =0 {只有已刪除的附件才能被清除。請先將其刪除。} =1 {永久刪除此附件？此操作無法撤銷。} other {永久刪除 # 個附件？此操作無法撤銷。}}"
         },
         "purgeFiles": "{count, plural, =0 {沒有儲存的檔案被刪除。} one {# 個儲存的檔案（{size}）已被刪除。} other {# 個儲存的檔案（{size}）已被刪除。}}",
         "purgeShared": "{count, plural, other {# 個檔案保留在儲存中，因為其他附件使用它們。}}",
@@ -7282,7 +7282,7 @@
         "mentionedYouInComment": "在評論中提到了你",
         "inProject": "專案",
         "testRun": "測試運行：",
-        "casesInProject": "{count, plural, =1 {# 案例} other {# 案例}}",
+        "casesInProject": "{count, plural, =1 {# 案例} other {# 案例}} <project></project>",
         "sentBy": "發送者： {name}",
         "milestoneDueSoonTitle": "里程碑即將到來",
         "milestoneOverdueTitle": "里程碑逾期",
@@ -10641,7 +10641,7 @@
     "deleteRule": "刪除警報",
     "deleteConfirm": "刪除警報 \"{name}\"？其訂閱者將停止接收通知，可以從垃圾桶還原。",
     "pauseTitle": "暫停所有人的此警報？",
-    "pauseConfirm": "\"{name}\" 停止對 {count, plural, =0 {所有人} one {其唯一訂閱者} =2 {其兩個訂閱者} other {其全部 # 個訂閱者}} 觸發，直到有人再次啟用它。要僅停止您自己的通知，改為關閉通知我。",
+    "pauseConfirm": "\"{name}\" 停止對 {count, plural, =0 {所有人} =1 {其唯一訂閱者} =2 {其兩個訂閱者} other {其全部 # 個訂閱者}} 觸發，直到有人再次啟用它。要僅停止您自己的通知，改為關閉通知我。",
     "columns": {
       "name": "規則",
       "condition": "條件",

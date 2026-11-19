@@ -703,7 +703,7 @@
       "permissionDenied": "您没有权限访问此页面。",
       "resultSubmitPermissionDenied": "您无法提交此案例的结果。请联系项目管理员将其分配给您。",
       "dependenciesNotPassed": "被依赖项阻止",
-      "dependenciesNotPassedDescription": "在此运行中，此测试用例必须等到 {count, plural, =0 {它依赖的用例都} one {它依赖的用例} other {它依赖的所有 # 个用例都}} 通过后才能执行。",
+      "dependenciesNotPassedDescription": "在此运行中，此测试用例必须等到 {count, plural, =0 {它依赖的用例都} =1 {它依赖的用例} other {它依赖的所有 # 个用例都}} 通过后才能执行。",
       "justificationRequired": "需要提供理由",
       "justificationRequiredDescription": "将已完成的结果更改为不同的结果需要结果详情来解释更改。",
       "requiredFieldMissing": "必填结果字段缺少值。",
@@ -926,9 +926,9 @@
       "attachments": {
         "title": "上传附件",
         "description": "拖放文件或点击下方按钮选择文件。",
-        "selectFiles": "{count, plural, =0 {选择文件} one {已选文件数：1} other {已选文件数：#}}",
+        "selectFiles": "{count, plural, =0 {选择文件} =1 {已选文件数：1} other {已选文件数：#}}",
         "selectFile": "{count, plural, =0 {选择文件} other {已选择 1 个文件}}",
-        "filesSelected": "{count, plural, one {已选择 1 个文件} other {已选择 # 个文件}}",
+        "filesSelected": "{count, plural, =1 {已选择 1 个文件} other {已选择 # 个文件}}",
         "addMoreFiles": "添加更多文件...",
         "replaceFile": "替换文件...",
         "invalidFileType": "文件类型无效。仅允许使用 {types} 文件。",
@@ -4312,7 +4312,7 @@
       "filterAllProjects": "所有项目",
       "actionRevert": "恢复决定",
       "revertedBadge": "已恢复",
-      "revertedBadgeTooltip": "{count, plural, one {之前恢复过一次} other {之前恢复过 # 次}}"
+      "revertedBadgeTooltip": "{count, plural, =1 {之前恢复过一次} other {之前恢复过 # 次}}"
     },
     "requester": {
       "openButton": "请求审核",
@@ -4415,7 +4415,7 @@
     "dependencies": {
       "blocked": "已屏蔽",
       "blockedBy": "屏蔽直到 {count, plural, one {此用例通过} other {这些用例通过}} 在此运行中：",
-      "blockedNotice": "测试用例无法执行，直到 {count, plural, one {它所依赖的用例已} other {它所依赖的所有 # 个用例已}} 在此运行中通过。",
+      "blockedNotice": "测试用例无法执行，直到 {count, plural, =1 {它所依赖的用例已} other {它所依赖的所有 # 个用例已}} 在此运行中通过。",
       "notInRun": "{count, plural, one {此用例依赖的 # 个用例是} other {此用例依赖的 # 个用例是}} 不在此运行中，不会阻止执行：",
       "unblocked": "此用例依赖的所有用例都在此运行中通过。"
     },
@@ -4789,9 +4789,9 @@
       "description": "最值得运行的用例，默认按最高风险优先。已在此运行中的用例不包括在内。",
       "minimumScore": "最低风险分数",
       "showing": "{shown, plural, one {已加载 # 个用例} other {已加载 # 个用例}}，共 {total, plural, one {# 个匹配项} other {# 个匹配项}}",
-      "loadedSelected": "{shown, plural, =2 {两个已加载的用例已被选中} one {已加载的用例已被选中} other {所有 # 个已加载的用例已被选中}}。",
-      "selectAllMatches": "{total, plural, =2 {选择两个匹配项} one {选择唯一的匹配项} other {选择全部 # 个匹配项}}",
-      "allMatchesSelected": "{total, plural, =2 {两个匹配项已被选中} one {唯一的匹配项已被选中} other {所有 # 个匹配项已被选中}}。",
+      "loadedSelected": "{shown, plural, =2 {两个已加载的用例已被选中} =1 {已加载的用例已被选中} other {所有 # 个已加载的用例已被选中}}。",
+      "selectAllMatches": "{total, plural, =2 {选择两个匹配项} =1 {选择唯一的匹配项} other {选择全部 # 个匹配项}}",
+      "allMatchesSelected": "{total, plural, =2 {两个匹配项已被选中} =1 {唯一的匹配项已被选中} other {所有 # 个匹配项已被选中}}。",
       "noneMatch": "没有评分的用例达到或超过此分数。",
       "caseColumn": "测试用例",
       "scoreColumn": "风险分数",
@@ -6190,11 +6190,11 @@
       "deselectAllShiftTooltip": "取消选择/选择所有页面上的所有配置",
       "shiftClickHint": "按住 Shift 键可选择/取消选择所有页面",
       "bulkEdit": {
-        "button": "{count, plural, one {编辑 1 个配置} other {编辑 # 个配置}}",
-        "title": "{count, plural, one {编辑 1 个配置上的项目} other {编辑 # 个配置上的项目}}",
+        "button": "{count, plural, =1 {编辑 1 个配置} other {编辑 # 个配置}}",
+        "title": "{count, plural, =1 {编辑 1 个配置上的项目} other {编辑 # 个配置上的项目}}",
         "description": "替换所选配置中的项目分配。配置名称无法批量编辑。",
-        "applyButton": "{count, plural, one {应用于 1 个配置} other {应用于 # 个配置}}",
-        "deleteButton": "{count, plural, one {删除 1 个配置} other {删除 # 个配置}}",
+        "applyButton": "{count, plural, =1 {应用于 1 个配置} other {应用于 # 个配置}}",
+        "deleteButton": "{count, plural, =1 {删除 1 个配置} other {删除 # 个配置}}",
         "deleteConfirmTitle": "{count, plural, other {删除 # 个配置？}}",
         "deleteConfirmMessage": "{count, plural, other {这将删除 # 个配置。此操作无法撤消。}}",
         "applyEnabledLabel": "更改已启用状态"
@@ -6229,8 +6229,8 @@
         "selectCombinationDescription": "请选择要添加的变体组合。已存在的组合将显示为禁用状态。",
         "alreadyExists": "（已存在）",
         "reviewTitle": "查看配置",
-        "createButton": "{count, plural, one {创建 1 个配置} other {创建 # 个配置}}",
-        "creating": "{count, plural, one {正在创建 1 个配置...} other {正在创建 # 个配置...}}",
+        "createButton": "{count, plural, =1 {创建 1 个配置} other {创建 # 个配置}}",
+        "creating": "{count, plural, =1 {正在创建 1 个配置...} other {正在创建 # 个配置...}}",
         "allExist": "所有组合都已存在。",
         "selectAtLeast": "请至少选择一种组合。"
       },
@@ -6352,7 +6352,7 @@
       "delete": {
         "confirmMessage": "您确定要删除 {name} 根本原因吗？",
         "inUse": "{count, plural, other {# 个失败模式使用它。}}",
-        "moveLabel": "{count, plural, one {将模式移动到} other {将 # 个模式移动到}}"
+        "moveLabel": "{count, plural, =1 {将模式移动到} other {将 # 个模式移动到}}"
       }
     },
     "issue_config": {
@@ -6443,8 +6443,8 @@
           "ORPHAN": "孤立",
           "REFERENCED": "正在使用"
         },
-        "loadedSelected": "{shown, plural, one {已加载的文件已选中} other {所有 # 个已加载的文件已选中}}。",
-        "confirmDelete": "{count, plural, =0 {所有选定的文件都无法删除。} one {从存储中删除此文件（{size}）？此操作无法撤销。} other {从存储中删除 # 个文件（{size}）？此操作无法撤销。}}",
+        "loadedSelected": "{shown, plural, =1 {已加载的文件已选中} other {所有 # 个已加载的文件已选中}}。",
+        "confirmDelete": "{count, plural, =0 {所有选定的文件都无法删除。} =1 {从存储中删除此文件（{size}）？此操作无法撤销。} other {从存储中删除 # 个文件（{size}）？此操作无法撤销。}}",
         "skipped": "{count, plural, one {# 个选定的文件保持不变，因为它正在使用。} other {# 个选定的文件保持不变，因为它们正在使用。}}",
         "deleted": "{count, plural, one {# 个文件已从存储中删除} other {# 个文件已从存储中删除}}"
       },
@@ -7282,7 +7282,7 @@
         "mentionedYouInComment": "在评论中提到了你",
         "inProject": "项目",
         "testRun": "测试运行：",
-        "casesInProject": "{count, plural, =1 {# 案例} other {# 案例}}",
+        "casesInProject": "{count, plural, =1 {# 案例} other {# 案例}} <project></project>",
         "sentBy": "发送者： {name}",
         "milestoneDueSoonTitle": "里程碑即将到来",
         "milestoneOverdueTitle": "里程碑逾期",
@@ -7372,8 +7372,8 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "结果耗时 {elapsed}，距离基线 {baseline} 的 {deviation}%（允许超过 {threshold}%）。",
-          "CASE_REGRESSED": "在通过其最后 {passedBefore, plural, one {# 个结果} other {# 个结果}} 后，用例失败。",
-          "CASE_RECOVERED": "在失败其最后 {failedBefore, plural, one {# 个结果} other {# 个结果}} 后，用例通过。",
+          "CASE_REGRESSED": "在通过其最后 {passedBefore, plural, =1 {# 个结果} other {# 个结果}} 后，用例失败。",
+          "CASE_RECOVERED": "在失败其最后 {failedBefore, plural, =1 {# 个结果} other {# 个结果}} 后，用例通过。",
           "RUN_DURATION_DEVIATION": "运行耗时 {elapsed}，距离基线 {baseline} 的 {deviation}%（允许超过 {threshold}%）。",
           "RUN_NOT_PROGRESSING": "运行已 {idleHours, plural, one {# 小时} other {# 小时}} 无新结果（阈值 {threshold}）。",
           "AUTOMATED_EXECUTION_FAILED": "在 {target} 上的自动化执行以 {status}{error, select, other {: {error}}} 结束",
@@ -10641,7 +10641,7 @@
     "deleteRule": "删除警报",
     "deleteConfirm": "删除警报\"{name}\"？其订阅者将停止接收通知，可从垃圾箱恢复。",
     "pauseTitle": "暂停所有人的此警报？",
-    "pauseConfirm": "\"{name}\"将停止为{count, plural, =0 {所有人} one {其唯一订阅者} =2 {其两个订阅者} other {其全部 # 个订阅者}}触发，不仅仅是您，直到有人再次启用它。要仅停止您自己的通知，请改为关闭通知我。",
+    "pauseConfirm": "\"{name}\"将停止为{count, plural, =0 {所有人} =1 {其唯一订阅者} =2 {其两个订阅者} other {其全部 # 个订阅者}}触发，不仅仅是您，直到有人再次启用它。要仅停止您自己的通知，请改为关闭通知我。",
     "columns": {
       "name": "规则",
       "condition": "条件",

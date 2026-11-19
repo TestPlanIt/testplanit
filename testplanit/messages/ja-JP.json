@@ -703,7 +703,7 @@
       "permissionDenied": "このページにアクセスする権限がありません。",
       "resultSubmitPermissionDenied": "この案件については、結果を提出できません。プロジェクト管理者に依頼して、あなたに割り当ててもらってください。",
       "dependenciesNotPassed": "依存関係によってブロックされています",
-      "dependenciesNotPassedDescription": "このテストケースは、{count, plural, =0 {依存している全てのケースが} one {依存しているケースが} other {依存している全て # つのケースが}}このラン内でパスするまで実行できません。",
+      "dependenciesNotPassedDescription": "このテストケースは、{count, plural, =0 {依存している全てのケースが} =1 {依存しているケースが} other {依存している全て # つのケースが}}このラン内でパスするまで実行できません。",
       "justificationRequired": "正当化が必要",
       "justificationRequiredDescription": "完了した結果を別の結果に変更するには、変更内容を説明する結果の詳細が必要です。",
       "requiredFieldMissing": "必須項目である結果フィールドに値が入力されていません。",
@@ -926,9 +926,9 @@
       "attachments": {
         "title": "添付ファイルをアップロード",
         "description": "ファイルをドラッグ アンド ドロップするか、下のボタンをクリックしてファイルを選択してください。",
-        "selectFiles": "{count, plural, =0 {ファイルを選択} one {選択したファイル 1 個} other {選択したファイル # 個}}",
+        "selectFiles": "{count, plural, =0 {ファイルを選択} =1 {選択したファイル 1 個} other {選択したファイル # 個}}",
         "selectFile": "{count, plural, =0 {ファイルを選択} other {選択されたファイル 1 件}}",
-        "filesSelected": "{count, plural, one {1 ファイルが選択されました} other {# ファイルが選択されました}}",
+        "filesSelected": "{count, plural, =1 {1 ファイルが選択されました} other {# ファイルが選択されました}}",
         "addMoreFiles": "ファイルを追加...",
         "replaceFile": "ファイルを置き換えます...",
         "invalidFileType": "無効なファイルタイプです。許可されるのは {types} ファイルだけです。",
@@ -2433,10 +2433,10 @@
         },
         "bulk": {
           "label": "{count, plural, other {すべての # リポジトリ:}}",
-          "scanRecentHint": "接続されたリポジトリを再スキャンします（{count, plural, one {1 つ} other {# つ}}）。",
-          "scanFullHint": "{count, plural, one {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のブランチのすべてのコミットをウォークし、既存のチケットのピンをバックフィルします。",
-          "scanFullConfirm": "{count, plural, one {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のブランチのすべてのコミットをウォークします。リポジトリは一度に 1 つずつスキャンされるため、この処理には長時間かかる可能性があり、各ウォークではプロバイダーの API 経由でコミットを読み取り、このプロセスはレート制限にカウントされます。",
-          "checkStaleHint": "{count, plural, one {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のコード ピンを各ブランチ先端に対してチェックします。",
+          "scanRecentHint": "接続されたリポジトリを再スキャンします（{count, plural, =1 {1 つ} other {# つ}}）。",
+          "scanFullHint": "{count, plural, =1 {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のブランチのすべてのコミットをウォークし、既存のチケットのピンをバックフィルします。",
+          "scanFullConfirm": "{count, plural, =1 {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のブランチのすべてのコミットをウォークします。リポジトリは一度に 1 つずつスキャンされるため、この処理には長時間かかる可能性があり、各ウォークではプロバイダーの API 経由でコミットを読み取り、このプロセスはレート制限にカウントされます。",
+          "checkStaleHint": "{count, plural, =1 {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のコード ピンを各ブランチ先端に対してチェックします。",
           "removeStaleHint": "{count, plural, one {# 個のスタレ コード ピン} other {# 個のスタレ コード ピン}}を{repos, plural, one {# リポジトリ} other {# リポジトリ}}全体で削除します。",
           "removeConfirm": "{repos, plural, one {# リポジトリ} other {# リポジトリ}}全体で、最後のチェックでブランチ先端に見つからなかった{count, plural, one {# 個のコード ピン} other {# 個のコード ピン}}を削除しますか？",
           "queued": "{count, plural, one {# リポジトリ} other {# リポジトリ}}でキューに登録されました。{skipped, plural, =0 {} one {# は既に実行中です。} other {# は既に実行中です。}}",
@@ -3586,7 +3586,7 @@
       "activeRunWarningMessage": "このテストケースは、 {count, plural, =1 {# アクティブなテスト実行} other {# アクティブなテスト実行}}の一部です。削除すると、これらの実行内で削除済みとしてマークされます。"
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {このフォルダを削除すると、サブフォルダもすべて削除されます。よろしいですか?} one {このフォルダを削除すると、このフォルダとすべてのサブフォルダ内のテストケースが 1 つ削除されます。よろしいですか?} other {このフォルダを削除すると、このフォルダとすべてのサブフォルダ内のテストケースが # つ削除されます。よろしいですか?}}",
+      "confirmMessage": "{count, plural, =0 {このフォルダを削除すると、サブフォルダもすべて削除されます。よろしいですか?} =1 {このフォルダを削除すると、このフォルダとすべてのサブフォルダ内のテストケースが 1 つ削除されます。よろしいですか?} other {このフォルダを削除すると、このフォルダとすべてのサブフォルダ内のテストケースが # つ削除されます。よろしいですか?}}",
       "warning": "このフォルダとすべてのテストケースはプロジェクトから削除されます。これらのテストケースの履歴データ（結果を含む）はプロジェクト内に残ります。",
       "confirm": "フォルダの削除を確認",
       "success": "フォルダーとすべてのサブフォルダー/ケースが正常に削除されました。"
@@ -4415,7 +4415,7 @@
     "dependencies": {
       "blocked": "ブロックされました",
       "blockedBy": "{count, plural, one {このケースがパスする} other {これらのケースがパスする}}までブロックされています。この実行では:",
-      "blockedNotice": "このテストケースは、{count, plural, one {依存するケースがこの実行でパスするまで} other {依存するすべての # ケースがこの実行でパスするまで}}実行できません。",
+      "blockedNotice": "このテストケースは、{count, plural, =1 {依存するケースがこの実行でパスするまで} other {依存するすべての # ケースがこの実行でパスするまで}}実行できません。",
       "notInRun": "{count, plural, one {これが依存する # ケースはこの実行内にありません} other {これが依存する # ケースはこの実行内にありません}}、実行をブロックしません:",
       "unblocked": "このケースが依存するすべてのケースがこの実行でパスしました。"
     },
@@ -4734,7 +4734,7 @@
         "historyDetail": "{count, plural, one {# 前の実行} other {# 前の実行}} 同じファイルへの変更後",
         "historyFailed": "同様の変更後の前の実行で失敗",
         "linkedDetail": "ケース{caseId}にリンク",
-        "issueDetail": "{key}にリンク。{count, plural, one {コミット{sha}} other {# コミット}}で名前が付けられています"
+        "issueDetail": "{key}にリンク。{count, plural, =1 {コミット{sha}} other {# コミット}}で名前が付けられています"
       },
       "stale": {
         "badge": "古い",
@@ -4789,9 +4789,9 @@
       "description": "実行の価値が最も高いケース。デフォルトではリスクが最も高い順です。このラン内に既にあるケースは除外されます。",
       "minimumScore": "最小リスク スコア",
       "showing": "{shown, plural, one {# ケースが読み込まれました} other {# ケースが読み込まれました}} / {total, plural, one {# 件の一致} other {# 件の一致}}",
-      "loadedSelected": "{shown, plural, =2 {読み込まれた両方のケースが選択されています} one {読み込まれたケースが選択されています} other {読み込まれたすべての # ケースが選択されています}}。",
-      "selectAllMatches": "{total, plural, =2 {両方の一致を選択} one {唯一の一致を選択} other {すべての # 件の一致を選択}}",
-      "allMatchesSelected": "{total, plural, =2 {両方の一致が選択されています} one {唯一の一致が選択されています} other {すべての # 件の一致が選択されています}}。",
+      "loadedSelected": "{shown, plural, =2 {読み込まれた両方のケースが選択されています} =1 {読み込まれたケースが選択されています} other {読み込まれたすべての # ケースが選択されています}}。",
+      "selectAllMatches": "{total, plural, =2 {両方の一致を選択} =1 {唯一の一致を選択} other {すべての # 件の一致を選択}}",
+      "allMatchesSelected": "{total, plural, =2 {両方の一致が選択されています} =1 {唯一の一致が選択されています} other {すべての # 件の一致が選択されています}}。",
       "noneMatch": "このスコア以上のスコア付きケースがありません。",
       "caseColumn": "テストケース",
       "scoreColumn": "リスク スコア",
@@ -6190,13 +6190,13 @@
       "deselectAllShiftTooltip": "すべてのページにわたるすべての設定の選択を解除/選択する",
       "shiftClickHint": "Shiftキーを押しながら操作すると、すべてのページを選択/選択解除できます。",
       "bulkEdit": {
-        "button": "{count, plural, one {1 つの設定を編集} other {# つの設定を編集}}",
-        "title": "{count, plural, one {1 つの構成でプロジェクトを編集} other {# つの構成でプロジェクトを編集}}",
+        "button": "{count, plural, =1 {1 つの設定を編集} other {# つの設定を編集}}",
+        "title": "{count, plural, =1 {1 つの構成でプロジェクトを編集} other {# つの構成でプロジェクトを編集}}",
         "description": "選択した構成のプロジェクト割り当てを置き換えます。構成名は一括編集できません。",
-        "applyButton": "{count, plural, one {1 つの設定に適用} other {# つの設定に適用}}",
-        "deleteButton": "{count, plural, one {1 つの設定を削除} other {# つの設定を削除}}",
-        "deleteConfirmTitle": "{count, plural, one {設定を 1 つ削除しますか?} other {設定を # つ削除しますか?}}",
-        "deleteConfirmMessage": "{count, plural, one {これにより1つの設定が削除されます。この操作は元に戻せません。} other {これにより#個の設定が削除されます。この操作は元に戻せません。}}",
+        "applyButton": "{count, plural, =1 {1 つの設定に適用} other {# つの設定に適用}}",
+        "deleteButton": "{count, plural, =1 {1 つの設定を削除} other {# つの設定を削除}}",
+        "deleteConfirmTitle": "{count, plural, =1 {設定を 1 つ削除しますか?} other {設定を # つ削除しますか?}}",
+        "deleteConfirmMessage": "{count, plural, =1 {これにより1つの設定が削除されます。この操作は元に戻せません。} other {これにより#個の設定が削除されます。この操作は元に戻せません。}}",
         "applyEnabledLabel": "有効状態を変更する"
       },
       "categories": {
@@ -6229,8 +6229,8 @@
         "selectCombinationDescription": "追加するバリエーションの組み合わせを選択してください。既に存在する組み合わせは無効になっています。",
         "alreadyExists": "（既に存在します）",
         "reviewTitle": "設定を確認する",
-        "createButton": "{count, plural, one {設定を 1 つ作成} other {設定を # つ作成}}",
-        "creating": "{count, plural, one {1 つの設定を作成しています...} other {# つの設定を作成しています...}}",
+        "createButton": "{count, plural, =1 {設定を 1 つ作成} other {設定を # つ作成}}",
+        "creating": "{count, plural, =1 {1 つの設定を作成しています...} other {# つの設定を作成しています...}}",
         "allExist": "すべての組み合わせはすでに存在します。",
         "selectAtLeast": "少なくとも 1 つの組み合わせを選択してください。"
       },
@@ -6443,8 +6443,8 @@
           "ORPHAN": "孤立している",
           "REFERENCED": "使用中"
         },
-        "loadedSelected": "{shown, plural, one {読み込まれたファイルが選択されています。} other {読み込まれた# つのファイルがすべて選択されています。}}",
-        "confirmDelete": "{count, plural, =0 {選択されたファイルは削除できません。} one {このファイル（{size}）をストレージから削除しますか？この操作は取り消せません。} other {# つのファイル（{size}）をストレージから削除しますか？この操作は取り消せません。}}",
+        "loadedSelected": "{shown, plural, =1 {読み込まれたファイルが選択されています。} other {読み込まれた# つのファイルがすべて選択されています。}}",
+        "confirmDelete": "{count, plural, =0 {選択されたファイルは削除できません。} =1 {このファイル（{size}）をストレージから削除しますか？この操作は取り消せません。} other {# つのファイル（{size}）をストレージから削除しますか？この操作は取り消せません。}}",
         "skipped": "{count, plural, one {選択された# つのファイルは使用中であるため、そのまま残されます。} other {選択された# つのファイルは使用中であるため、そのまま残されます。}}",
         "deleted": "{count, plural, one {ストレージから# つのファイルを削除しました} other {ストレージから# つのファイルを削除しました}}"
       },
@@ -6470,10 +6470,10 @@
       "actions": {
         "detach": "切断",
         "confirm": {
-          "detach": "{count, plural, =0 {これらの添付ファイルはいずれも何にも添付されていません。} one {この添付ファイルを切断しますか？ それは添付されているアイテムから削除され、このリストに未添付として残ります。} other {# 個の添付ファイルを切断しますか？ それらは添付されているアイテムから削除され、このリストに未添付として残ります。}}",
-          "softDelete": "{count, plural, =0 {これらの添付ファイルは既に削除されています。} one {この添付ファイルを削除しますか？ それは添付されているアイテムから非表示になり、このリストから復元できます。} other {# 個の添付ファイルを削除しますか？ それらは添付されているアイテムから非表示になり、このリストから復元できます。}}",
-          "restore": "{count, plural, =0 {削除された添付ファイルはありません。} one {この添付ファイルを復元しますか？} other {# 個の添付ファイルを復元しますか？}}",
-          "purge": "{count, plural, =0 {削除された添付ファイルのみをパージできます。まず削除してください。} one {この添付ファイルを永続的に削除しますか？ この操作は取り消せません。} other {# 個の添付ファイルを永続的に削除しますか？ この操作は取り消せません。}}"
+          "detach": "{count, plural, =0 {これらの添付ファイルはいずれも何にも添付されていません。} =1 {この添付ファイルを切断しますか？ それは添付されているアイテムから削除され、このリストに未添付として残ります。} other {# 個の添付ファイルを切断しますか？ それらは添付されているアイテムから削除され、このリストに未添付として残ります。}}",
+          "softDelete": "{count, plural, =0 {これらの添付ファイルは既に削除されています。} =1 {この添付ファイルを削除しますか？ それは添付されているアイテムから非表示になり、このリストから復元できます。} other {# 個の添付ファイルを削除しますか？ それらは添付されているアイテムから非表示になり、このリストから復元できます。}}",
+          "restore": "{count, plural, =0 {削除された添付ファイルはありません。} =1 {この添付ファイルを復元しますか？} other {# 個の添付ファイルを復元しますか？}}",
+          "purge": "{count, plural, =0 {削除された添付ファイルのみをパージできます。まず削除してください。} =1 {この添付ファイルを永続的に削除しますか？ この操作は取り消せません。} other {# 個の添付ファイルを永続的に削除しますか？ この操作は取り消せません。}}"
         },
         "purgeFiles": "{count, plural, =0 {削除されたストレージファイルはありません。} one {# 個のストレージファイル ({size}) が削除されました。} other {# 個のストレージファイル ({size}) が削除されました。}}",
         "purgeShared": "{count, plural, other {別の添付ファイルがそれを使用しているため、# 個のファイルはストレージに残ります。}}",
@@ -7282,7 +7282,7 @@
         "mentionedYouInComment": "コメントであなたに言及しました",
         "inProject": "プロジェクト中",
         "testRun": "試運転：",
-        "casesInProject": "{count, plural, =1 {# 件} other {# 件}} 内",
+        "casesInProject": "{count, plural, =1 {# 件} other {# 件}} 内 <project></project>",
         "sentBy": "{name}から送信",
         "milestoneDueSoonTitle": "マイルストーンは間もなく達成",
         "milestoneOverdueTitle": "マイルストーンの期限超過",
@@ -7372,8 +7372,8 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "結果に {elapsed} 時間かかり、ベースライン {baseline} から {deviation}% の乖離があります（許可 {threshold}% 以下）。",
-          "CASE_REGRESSED": "ケースは {passedBefore, plural, one {最後の結果の後で} other {最後の # 件の結果の後で}} 失敗しました。",
-          "CASE_RECOVERED": "ケースは {failedBefore, plural, one {最後の結果の後で} other {最後の # 件の結果の後で}} 成功しました。",
+          "CASE_REGRESSED": "ケースは {passedBefore, plural, =1 {最後の結果の後で} other {最後の # 件の結果の後で}} 失敗しました。",
+          "CASE_RECOVERED": "ケースは {failedBefore, plural, =1 {最後の結果の後で} other {最後の # 件の結果の後で}} 成功しました。",
           "RUN_DURATION_DEVIATION": "実行に {elapsed} 時間かかり、ベースライン {baseline} から {deviation}% の乖離があります（許可 {threshold}% 以下）。",
           "RUN_NOT_PROGRESSING": "実行は {idleHours, plural, one {# 時間} other {# 時間}} の間に新しい結果を得ていません（閾値 {threshold}）。",
           "AUTOMATED_EXECUTION_FAILED": "{target} での自動実行は {status}{error, select, other {: {error}}} で終了しました",
@@ -10641,7 +10641,7 @@
     "deleteRule": "アラートを削除",
     "deleteConfirm": "アラート「{name}」を削除しますか？その購読者は通知を受け取られなくなり、ゴミ箱から復元できます。",
     "pauseTitle": "このアラートを全員のために一時停止しますか？",
-    "pauseConfirm": "「{name}」は {count, plural, =0 {全員} one {その唯一の購読者} =2 {両方の購読者} other {その # 人の購読者すべて}} に対して発火を停止し、他の誰かがそれを再度有効にするまで、あなただけではなく停止します。自分の通知のみを停止するには、代わりに通知してくださいをオフにします。",
+    "pauseConfirm": "「{name}」は {count, plural, =0 {全員} =1 {その唯一の購読者} =2 {両方の購読者} other {その # 人の購読者すべて}} に対して発火を停止し、他の誰かがそれを再度有効にするまで、あなただけではなく停止します。自分の通知のみを停止するには、代わりに通知してくださいをオフにします。",
     "columns": {
       "name": "ルール",
       "condition": "条件",

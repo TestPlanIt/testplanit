@@ -703,7 +703,7 @@
       "permissionDenied": "Nie masz uprawnień dostępu do tej strony.",
       "resultSubmitPermissionDenied": "Nie możesz przesłać wyników dla tej sprawy. Poproś administratora projektu o jej przypisanie.",
       "dependenciesNotPassed": "Zablokowane przez zależności",
-      "dependenciesNotPassedDescription": "Ten przypadek testowy nie może być wykonany do czasu, aż {count, plural, =0 {przypadki, od których zależy, przejdą} one {przypadek, od którego zależy, przejdzie} few {# przypadki, od których zależy, przejdą} many {# przypadków, od których zależy, przejdzie} other {wszystkie # przypadki, od których zależy, przejdą}} w tym przebiegu.",
+      "dependenciesNotPassedDescription": "Ten przypadek testowy nie może być wykonany do czasu, aż {count, plural, =0 {przypadki, od których zależy, przejdą} =1 {przypadek, od którego zależy, przejdzie} few {# przypadki, od których zależy, przejdą} many {# przypadków, od których zależy, przejdzie} other {wszystkie # przypadki, od których zależy, przejdą}} w tym przebiegu.",
       "justificationRequired": "Wymagane uzasadnienie",
       "justificationRequiredDescription": "Aby zmienić zakończony wynik na inny, należy zapoznać się ze szczegółami wyniku wyjaśniającymi zmianę.",
       "requiredFieldMissing": "Wymagane pole wyniku nie zawiera wartości.",
@@ -926,9 +926,9 @@
       "attachments": {
         "title": "Prześlij załączniki",
         "description": "Przeciągnij i upuść pliki lub kliknij przycisk poniżej, aby wybrać pliki.",
-        "selectFiles": "{count, plural, =0 {Wybierz pliki} one {1 Wybrany plik} many {# Wybranych plików} other {# Wybrane pliki}}",
+        "selectFiles": "{count, plural, =0 {Wybierz pliki} =1 {1 Wybrany plik} many {# Wybranych plików} other {# Wybrane pliki}}",
         "selectFile": "{count, plural, =0 {Wybierz plik} other {1 Wybrany plik}}",
-        "filesSelected": "{count, plural, one {Wybrano 1 plik} few {Wybrano # pliki} other {Wybrano # plików}}",
+        "filesSelected": "{count, plural, =1 {Wybrano 1 plik} few {Wybrano # pliki} other {Wybrano # plików}}",
         "addMoreFiles": "Dodaj więcej plików...",
         "replaceFile": "Zastąp plik...",
         "invalidFileType": "Nieprawidłowy typ pliku. Dozwolone są tylko pliki {types} .",
@@ -2432,11 +2432,11 @@
           "scanCancelled": "Ostatnie skanowanie anulowane"
         },
         "bulk": {
-          "label": "{count, plural, one {Twoje repozytorium:} few {Wszystkie # repozytoria:} many {Wszystkich # repozytoriów:} other {Wszystkie # repozytoriów:}}",
-          "scanRecentHint": "Ponownie przeskanuj ostatnie commity w {count, plural, one {połączonym repozytorium} few {# połączonych repozytoriach} many {# połączonych repozytoriach} other {# połączonych repozytoriach}}.",
-          "scanFullHint": "Przejrzyj każdy commit na gałęzi {count, plural, one {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych repozytoriów} other {# połączonych repozytoriów}} i uzupełnij wstecznie piny dla istniejących biletów.",
-          "scanFullConfirm": "To przejrzy każdy commit na gałęzi {count, plural, one {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych repozytoriów} other {# połączonych repozytoriów}}. Repozytoria są skanowane po jednym, więc może to trwać długo, a każde przejście odczytuje commity za pośrednictwem API dostawcy, co liczy się w jego limicie szybkości.",
-          "checkStaleHint": "Sprawdź Piny Kodu {count, plural, one {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych repozytoriów} other {# połączonych repozytoriów}} względem każdego końca gałęzi.",
+          "label": "{count, plural, =1 {Twoje repozytorium:} few {Wszystkie # repozytoria:} many {Wszystkich # repozytoriów:} other {Wszystkie # repozytoriów:}}",
+          "scanRecentHint": "Ponownie przeskanuj ostatnie commity w {count, plural, =1 {połączonym repozytorium} few {# połączonych repozytoriach} many {# połączonych repozytoriach} other {# połączonych repozytoriach}}.",
+          "scanFullHint": "Przejrzyj każdy commit na gałęzi {count, plural, =1 {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych repozytoriów} other {# połączonych repozytoriów}} i uzupełnij wstecznie piny dla istniejących biletów.",
+          "scanFullConfirm": "To przejrzy każdy commit na gałęzi {count, plural, =1 {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych repozytoriów} other {# połączonych repozytoriów}}. Repozytoria są skanowane po jednym, więc może to trwać długo, a każde przejście odczytuje commity za pośrednictwem API dostawcy, co liczy się w jego limicie szybkości.",
+          "checkStaleHint": "Sprawdź Piny Kodu {count, plural, =1 {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych repozytoriów} other {# połączonych repozytoriów}} względem każdego końca gałęzi.",
           "removeStaleHint": "Usuń {count, plural, one {# nieaktualny Pin Kodu} few {# nieaktualne Piny Kodu} many {# nieaktualnych Pinów Kodu} other {# nieaktualnych Pinów Kodu}} w {repos, plural, one {# repozytorium} few {# repozytoriach} many {# repozytoriach} other {# repozytoriach}}.",
           "removeConfirm": "Usunąć {count, plural, one {# Pin Kodu, którego} few {# Piny Kodu, których} many {# Pinów Kodu, których} other {# Pinów Kodu, których}} ostatnie sprawdzenia nie mogły znaleźć na końcu gałęzi, w {repos, plural, one {# repozytorium} few {# repozytoriach} many {# repozytoriach} other {# repozytoriach}}?",
           "queued": "Postawione w kolejce dla {count, plural, one {# repozytorium} few {# repozytoriów} many {# repozytoriów} other {# repozytoriów}}.{skipped, plural, =0 {} one { # był już uruchomiony.} few { # były już uruchomione.} many { # było już uruchomionych.} other { # były już uruchomione.}}",
@@ -3586,7 +3586,7 @@
       "activeRunWarningMessage": "Ten przypadek testowy jest częścią {count, plural, =1 {# aktywnego przebiegu testu} other {# aktywnych przebiegów testu}}. Usunięcie go spowoduje oznaczenie go jako usuniętego w tych przebiegach."
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {Usunięcie tego folderu spowoduje również usunięcie wszystkich podfolderów. Czy jesteś pewien?} one {Usunięcie tego folderu spowoduje również usunięcie 1 przypadku testowego w tym folderze i wszystkich podfolderach. Czy jesteś pewien?} other {Usunięcie tego folderu spowoduje również usunięcie # przypadków testowych w tym folderze i wszystkich podfolderach. Czy jesteś pewien?}}",
+      "confirmMessage": "{count, plural, =0 {Usunięcie tego folderu spowoduje również usunięcie wszystkich podfolderów. Czy jesteś pewien?} =1 {Usunięcie tego folderu spowoduje również usunięcie 1 przypadku testowego w tym folderze i wszystkich podfolderach. Czy jesteś pewien?} other {Usunięcie tego folderu spowoduje również usunięcie # przypadków testowych w tym folderze i wszystkich podfolderach. Czy jesteś pewien?}}",
       "warning": "Ten folder i wszystkie jego przypadki testowe zostaną usunięte z projektu. Dane historyczne tych przypadków testowych, w tym wyniki, pozostaną w projekcie.",
       "confirm": "Potwierdź usunięcie folderu",
       "success": "Folder i wszystkie podfoldery/sprawy zostały pomyślnie usunięte."
@@ -4312,7 +4312,7 @@
       "filterAllProjects": "Wszystkie projekty",
       "actionRevert": "Cofnij decyzję",
       "revertedBadge": "Cofnięte",
-      "revertedBadgeTooltip": "{count, plural, one {Cofnięte raz wcześniej} few {Cofnięte # razy wcześniej} many {Cofnięte # razy wcześniej} other {Cofnięte # razy wcześniej}}"
+      "revertedBadgeTooltip": "{count, plural, =1 {Cofnięte raz wcześniej} few {Cofnięte # razy wcześniej} many {Cofnięte # razy wcześniej} other {Cofnięte # razy wcześniej}}"
     },
     "requester": {
       "openButton": "Poproś o recenzję",
@@ -4415,7 +4415,7 @@
     "dependencies": {
       "blocked": "Zablokowany",
       "blockedBy": "Zablokowany, dopóki {count, plural, one {ten przypadek nie przejdzie} few {te # przypadki nie przejdą} many {tych # przypadków nie przejdzie} other {tych # przypadków nie przejdzie}} w tym przebiegu:",
-      "blockedNotice": "Ten przypadek testowy nie może być wykonany do czasu, aż {count, plural, one {ten przypadek, od którego zależy, przejdzie} few {wszystkie # przypadki, od których zależy, przejdą} many {wszystkich # przypadków, od których zależy, przejdzie} other {wszystkich # przypadków, od których zależy, przejdzie}} w tym przebiegu.",
+      "blockedNotice": "Ten przypadek testowy nie może być wykonany do czasu, aż {count, plural, =1 {ten przypadek, od którego zależy, przejdzie} few {wszystkie # przypadki, od których zależy, przejdą} many {wszystkich # przypadków, od których zależy, przejdzie} other {wszystkich # przypadków, od których zależy, przejdzie}} w tym przebiegu.",
       "notInRun": "{count, plural, one {# przypadek, od którego zależy, nie jest w tym przebiegu i nie będzie blokować wykonania:} few {# przypadki, od których zależy, nie są w tym przebiegu i nie będą blokować wykonania:} many {# przypadków, od których zależy, nie jest w tym przebiegu i nie będzie blokować wykonania:} other {# przypadków, od których zależy, nie jest w tym przebiegu i nie będzie blokować wykonania:}}",
       "unblocked": "Wszystkie przypadki, od których zależy ten, przeszły w tym przebiegu."
     },
@@ -4734,7 +4734,7 @@
         "historyDetail": "{count, plural, one {# wcześniejszy przebieg} many {# wcześniejszych przebiegów} other {# wcześniejsze przebiegi}} po zmianach do tych samych plików",
         "historyFailed": "Nie powiodło się w wcześniejszym przebiegu po podobnych zmianach",
         "linkedDetail": "Powiązane z przypadkiem {caseId}",
-        "issueDetail": "Powiązane z {key}, nazwane w {count, plural, one {commicie {sha}} other {# commitach}}"
+        "issueDetail": "Powiązane z {key}, nazwane w {count, plural, =1 {commicie {sha}} other {# commitach}}"
       },
       "stale": {
         "badge": "Zabytek",
@@ -4789,9 +4789,9 @@
       "description": "Przypadki, które najbardziej zasługują na przebieg, najpierw od największego ryzyka. Przypadki już znajdujące się w tym przebiegu są pomijane.",
       "minimumScore": "Minimalny wynik ryzyka",
       "showing": "{shown, plural, one {# przypadek załadowany} few {# przypadki załadowane} many {# przypadków załadowanych} other {# przypadków załadowanych}} z {total, plural, one {# dopasowanie} few {# dopasowania} many {# dopasowań} other {# dopasowań}}",
-      "loadedSelected": "{shown, plural, =2 {Oba załadowane przypadki są wybrane} one {Załadowany przypadek jest wybrany} many {Wszystkich # załadowanych przypadków jest wybranych} other {Wszystkie # załadowane przypadki są wybrane}}.",
-      "selectAllMatches": "{total, plural, =2 {Wybierz oba dopasowania} one {Wybierz jedyne dopasowanie} many {Wybierz wszystkie # dopasowań} other {Wybierz wszystkie # dopasowania}}",
-      "allMatchesSelected": "{total, plural, =2 {Oba dopasowania są wybrane} one {Jedyne dopasowanie jest wybrane} many {Wszystkich # dopasowań jest wybranych} other {Wszystkie # dopasowania są wybrane}}.",
+      "loadedSelected": "{shown, plural, =2 {Oba załadowane przypadki są wybrane} =1 {Załadowany przypadek jest wybrany} many {Wszystkich # załadowanych przypadków jest wybranych} other {Wszystkie # załadowane przypadki są wybrane}}.",
+      "selectAllMatches": "{total, plural, =2 {Wybierz oba dopasowania} =1 {Wybierz jedyne dopasowanie} many {Wybierz wszystkie # dopasowań} other {Wybierz wszystkie # dopasowania}}",
+      "allMatchesSelected": "{total, plural, =2 {Oba dopasowania są wybrane} =1 {Jedyne dopasowanie jest wybrane} many {Wszystkich # dopasowań jest wybranych} other {Wszystkie # dopasowania są wybrane}}.",
       "noneMatch": "Brak ocenionych przypadków na tym poziomie lub wyższym.",
       "caseColumn": "Przypadek testowy",
       "scoreColumn": "Wynik ryzyka",
@@ -6190,13 +6190,13 @@
       "deselectAllShiftTooltip": "Odznacz/Zaznacz wszystkie konfiguracje na wszystkich stronach",
       "shiftClickHint": "Przytrzymaj klawisz Shift, aby zaznaczyć/odznaczyć wszystkie strony",
       "bulkEdit": {
-        "button": "{count, plural, one {Edytuj 1 konfigurację} few {Edytuj # konfiguracje} other {Edytuj # konfiguracji}}",
-        "title": "{count, plural, one {Edytuj projekty w 1 konfiguracji} other {Edytuj projekty w # konfiguracjach}}",
+        "button": "{count, plural, =1 {Edytuj 1 konfigurację} few {Edytuj # konfiguracje} other {Edytuj # konfiguracji}}",
+        "title": "{count, plural, =1 {Edytuj projekty w 1 konfiguracji} other {Edytuj projekty w # konfiguracjach}}",
         "description": "Zastąp przypisania projektu w wybranych konfiguracjach. Nazwy konfiguracji nie można edytować zbiorczo.",
-        "applyButton": "{count, plural, one {Zastosuj do 1 konfiguracji} other {Zastosuj do # konfiguracji}}",
-        "deleteButton": "{count, plural, one {Usuń 1 konfigurację} few {Usuń # konfiguracje} other {Usuń # konfiguracji}}",
-        "deleteConfirmTitle": "{count, plural, one {Usunąć 1 konfigurację?} few {Usunąć # konfiguracje?} other {Usunąć # konfiguracji?}}",
-        "deleteConfirmMessage": "{count, plural, one {Spowoduje to usunięcie 1 konfiguracji. Tej czynności nie można cofnąć.} other {Spowoduje to usunięcie # konfiguracji. Tej czynności nie można cofnąć.}}",
+        "applyButton": "{count, plural, =1 {Zastosuj do 1 konfiguracji} other {Zastosuj do # konfiguracji}}",
+        "deleteButton": "{count, plural, =1 {Usuń 1 konfigurację} few {Usuń # konfiguracje} other {Usuń # konfiguracji}}",
+        "deleteConfirmTitle": "{count, plural, =1 {Usunąć 1 konfigurację?} few {Usunąć # konfiguracje?} other {Usunąć # konfiguracji?}}",
+        "deleteConfirmMessage": "{count, plural, =1 {Spowoduje to usunięcie 1 konfiguracji. Tej czynności nie można cofnąć.} other {Spowoduje to usunięcie # konfiguracji. Tej czynności nie można cofnąć.}}",
         "applyEnabledLabel": "Zmień stan włączenia"
       },
       "categories": {
@@ -6229,8 +6229,8 @@
         "selectCombinationDescription": "Wybierz kombinacje wariantów, które chcesz dodać. Wszystkie kombinacje, które już istnieją, są wyświetlane jako wyłączone.",
         "alreadyExists": "(już istnieje)",
         "reviewTitle": "Przegląd konfiguracji",
-        "createButton": "{count, plural, one {Utwórz 1 konfigurację} few {Utwórz # konfiguracje} other {Utwórz # konfiguracji}}",
-        "creating": "{count, plural, one {Tworzenie 1 konfiguracji...} other {Tworzenie # konfiguracji...}}",
+        "createButton": "{count, plural, =1 {Utwórz 1 konfigurację} few {Utwórz # konfiguracje} other {Utwórz # konfiguracji}}",
+        "creating": "{count, plural, =1 {Tworzenie 1 konfiguracji...} other {Tworzenie # konfiguracji...}}",
         "allExist": "Wszystkie kombinacje już istnieją.",
         "selectAtLeast": "Proszę wybrać co najmniej jedną kombinację."
       },
@@ -6352,7 +6352,7 @@
       "delete": {
         "confirmMessage": "Czy na pewno chcesz usunąć przyczynę główną {name}?",
         "inUse": "{count, plural, one {# wzorzec awarii go używa.} few {# wzorce awarii go używają.} many {# wzorców awarii go używa.} other {# wzorców awarii go używa.}}",
-        "moveLabel": "{count, plural, one {Przenieś wzorzec do} few {Przenieś # wzorce do} many {Przenieś # wzorców do} other {Przenieś # wzorców do}}"
+        "moveLabel": "{count, plural, =1 {Przenieś wzorzec do} few {Przenieś # wzorce do} many {Przenieś # wzorców do} other {Przenieś # wzorców do}}"
       }
     },
     "issue_config": {
@@ -6443,8 +6443,8 @@
           "ORPHAN": "Osierocone",
           "REFERENCED": "W użyciu"
         },
-        "loadedSelected": "{shown, plural, one {Załadowany plik jest wybrany} few {Wszystkie # załadowane pliki są wybrane} many {Wszystkie # załadowanych plików jest wybranych} other {Wszystkie # załadowanych plików jest wybranych}}.",
-        "confirmDelete": "{count, plural, =0 {Żaden z wybranych plików nie może być usunięty.} one {Usunąć ten plik ({size}) z magazynu? Tej operacji nie można cofnąć.} few {Usunąć # pliki ({size}) z magazynu? Tej operacji nie można cofnąć.} many {Usunąć # plików ({size}) z magazynu? Tej operacji nie można cofnąć.} other {Usunąć # plików ({size}) z magazynu? Tej operacji nie można cofnąć.}}",
+        "loadedSelected": "{shown, plural, =1 {Załadowany plik jest wybrany} few {Wszystkie # załadowane pliki są wybrane} many {Wszystkie # załadowanych plików jest wybranych} other {Wszystkie # załadowanych plików jest wybranych}}.",
+        "confirmDelete": "{count, plural, =0 {Żaden z wybranych plików nie może być usunięty.} =1 {Usunąć ten plik ({size}) z magazynu? Tej operacji nie można cofnąć.} few {Usunąć # pliki ({size}) z magazynu? Tej operacji nie można cofnąć.} many {Usunąć # plików ({size}) z magazynu? Tej operacji nie można cofnąć.} other {Usunąć # plików ({size}) z magazynu? Tej operacji nie można cofnąć.}}",
         "skipped": "{count, plural, one {# wybrany plik jest pozostawiony, ponieważ jest w użyciu.} few {# wybrane pliki są pozostawione, ponieważ są w użyciu.} many {# wybranych plików jest pozostawionych, ponieważ są w użyciu.} other {# wybranych plików jest pozostawionych, ponieważ są w użyciu.}}",
         "deleted": "{count, plural, one {# plik usunięty z magazynu} few {# pliki usunięte z magazynu} many {# plików usuniętych z magazynu} other {# plików usuniętych z magazynu}}"
       },
@@ -6462,18 +6462,18 @@
         "attachedThrough": "Dołączone przez"
       },
       "selection": {
-        "loadedSelected": "{shown, plural, one {Załadowany załącznik jest wybrany} few {Wszystkie # załadowane załączniki są wybrane} many {Wszystkich # załadowanych załączników jest wybranych} other {Wszystkich # załadowanych załączników jest wybranych}}.",
-        "selectAllMatches": "{total, plural, one {Wybierz jedyne dopasowanie} few {Wybierz wszystkie # dopasowania} many {Wybierz wszystkie # dopasowań} other {Wybierz wszystkie # dopasowań}}",
-        "allMatchesSelected": "{total, plural, one {Jedyne dopasowanie jest wybrane} few {Wszystkie # dopasowania są wybrane} many {Wszystkich # dopasowań jest wybranych} other {Wszystkich # dopasowań jest wybranych}}.",
+        "loadedSelected": "{shown, plural, =1 {Załadowany załącznik jest wybrany} few {Wszystkie # załadowane załączniki są wybrane} many {Wszystkich # załadowanych załączników jest wybranych} other {Wszystkich # załadowanych załączników jest wybranych}}.",
+        "selectAllMatches": "{total, plural, =1 {Wybierz jedyne dopasowanie} few {Wybierz wszystkie # dopasowania} many {Wybierz wszystkie # dopasowań} other {Wybierz wszystkie # dopasowań}}",
+        "allMatchesSelected": "{total, plural, =1 {Jedyne dopasowanie jest wybrane} few {Wszystkie # dopasowania są wybrane} many {Wszystkich # dopasowań jest wybranych} other {Wszystkich # dopasowań jest wybranych}}.",
         "tooMany": "Maksymalnie {max} można wybrać jednocześnie. Zawęź filtry, aby wybrać każde dopasowanie."
       },
       "actions": {
         "detach": "Odłącz",
         "confirm": {
-          "detach": "{count, plural, =0 {Żaden z tych załączników nie jest do niczego dołączony.} one {Odłączyć ten załącznik? Zostaje usunięty z elementu, do którego jest dołączony i pozostaje na tej liście jako nie dołączony.} few {Odłączyć # załączniki? Zostają usunięte z elementów, do których są dołączone i pozostają na tej liście jako nie dołączone.} many {Odłączyć # załączników? Zostają usunięte z elementów, do których są dołączone i pozostają na tej liście jako nie dołączone.} other {Odłączyć # załączników? Zostają usunięte z elementów, do których są dołączone i pozostają na tej liście jako nie dołączone.}}",
-          "softDelete": "{count, plural, =0 {Te załączniki zostały już usunięte.} one {Usunąć ten załącznik? Zostaje ukryty z elementu, do którego jest dołączony i może być przywrócony z tej listy.} few {Usunąć # załączniki? Zostają ukryte z elementów, do których są dołączone i mogą być przywrócone z tej listy.} many {Usunąć # załączników? Zostają ukryte z elementów, do których są dołączone i mogą być przywrócone z tej listy.} other {Usunąć # załączników? Zostają ukryte z elementów, do których są dołączone i mogą być przywrócone z tej listy.}}",
-          "restore": "{count, plural, =0 {Żaden z tych załączników nie został usunięty.} one {Przywrócić ten załącznik?} few {Przywrócić # załączniki?} many {Przywrócić # załączników?} other {Przywrócić # załączników?}}",
-          "purge": "{count, plural, =0 {Tylko usunięte załączniki mogą być trwale usunięte. Najpierw je usuń.} one {Trwale usunąć ten załącznik? Tej czynności nie można cofnąć.} few {Trwale usunąć # załączniki? Tej czynności nie można cofnąć.} many {Trwale usunąć # załączników? Tej czynności nie można cofnąć.} other {Trwale usunąć # załączników? Tej czynności nie można cofnąć.}}"
+          "detach": "{count, plural, =0 {Żaden z tych załączników nie jest do niczego dołączony.} =1 {Odłączyć ten załącznik? Zostaje usunięty z elementu, do którego jest dołączony i pozostaje na tej liście jako nie dołączony.} few {Odłączyć # załączniki? Zostają usunięte z elementów, do których są dołączone i pozostają na tej liście jako nie dołączone.} many {Odłączyć # załączników? Zostają usunięte z elementów, do których są dołączone i pozostają na tej liście jako nie dołączone.} other {Odłączyć # załączników? Zostają usunięte z elementów, do których są dołączone i pozostają na tej liście jako nie dołączone.}}",
+          "softDelete": "{count, plural, =0 {Te załączniki zostały już usunięte.} =1 {Usunąć ten załącznik? Zostaje ukryty z elementu, do którego jest dołączony i może być przywrócony z tej listy.} few {Usunąć # załączniki? Zostają ukryte z elementów, do których są dołączone i mogą być przywrócone z tej listy.} many {Usunąć # załączników? Zostają ukryte z elementów, do których są dołączone i mogą być przywrócone z tej listy.} other {Usunąć # załączników? Zostają ukryte z elementów, do których są dołączone i mogą być przywrócone z tej listy.}}",
+          "restore": "{count, plural, =0 {Żaden z tych załączników nie został usunięty.} =1 {Przywrócić ten załącznik?} few {Przywrócić # załączniki?} many {Przywrócić # załączników?} other {Przywrócić # załączników?}}",
+          "purge": "{count, plural, =0 {Tylko usunięte załączniki mogą być trwale usunięte. Najpierw je usuń.} =1 {Trwale usunąć ten załącznik? Tej czynności nie można cofnąć.} few {Trwale usunąć # załączniki? Tej czynności nie można cofnąć.} many {Trwale usunąć # załączników? Tej czynności nie można cofnąć.} other {Trwale usunąć # załączników? Tej czynności nie można cofnąć.}}"
         },
         "purgeFiles": "{count, plural, =0 {Żaden przechowywany plik nie został usunięty.} one {# przechowywany plik ({size}) został usunięty.} few {# przechowywane pliki ({size}) zostały usunięte.} many {# przechowywanych plików ({size}) zostało usuniętych.} other {# przechowywanych plików ({size}) zostało usuniętych.}}",
         "purgeShared": "{count, plural, one {# plik pozostaje w magazynie, ponieważ inny załącznik go wykorzystuje.} few {# pliki pozostają w magazynie, ponieważ inne załączniki je wykorzystują.} many {# plików pozostaje w magazynie, ponieważ inne załączniki je wykorzystują.} other {# plików pozostaje w magazynie, ponieważ inne załączniki je wykorzystują.}}",
@@ -7282,7 +7282,7 @@
         "mentionedYouInComment": "wspomniałem o tobie w komentarzu",
         "inProject": "w projekcie",
         "testRun": "Test biegowy:",
-        "casesInProject": "{count, plural, =1 {# przypadek} many {# przypadków} other {# przypadki}} w",
+        "casesInProject": "{count, plural, =1 {# przypadek} many {# przypadków} other {# przypadki}} w <project></project>",
         "sentBy": "Wysłane przez {name}",
         "milestoneDueSoonTitle": "Kamień milowy wkrótce",
         "milestoneOverdueTitle": "Przekroczony kamień milowy",
@@ -7372,8 +7372,8 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "Wynik zajął {elapsed}, {deviation}% od linii bazowej {baseline} (więcej niż {threshold}% dozwolone).",
-          "CASE_REGRESSED": "Przypadek nie powiódł się po {passedBefore, plural, one {ostatnim pozytywnym wyniku} other {# ostatnich pozytywnych wynikach}}.",
-          "CASE_RECOVERED": "Przypadek przeszedł po {failedBefore, plural, one {ostatnim nieudanym wyniku} other {# ostatnich nieudanych wynikach}}.",
+          "CASE_REGRESSED": "Przypadek nie powiódł się po {passedBefore, plural, =1 {ostatnim pozytywnym wyniku} other {# ostatnich pozytywnych wynikach}}.",
+          "CASE_RECOVERED": "Przypadek przeszedł po {failedBefore, plural, =1 {ostatnim nieudanym wyniku} other {# ostatnich nieudanych wynikach}}.",
           "RUN_DURATION_DEVIATION": "Przebieg zajął {elapsed}, {deviation}% od linii bazowej {baseline} (więcej niż {threshold}% dozwolone).",
           "RUN_NOT_PROGRESSING": "Przebieg nie miał żadnego nowego wyniku przez {idleHours, plural, one {# godzinę} few {# godziny} many {# godzin} other {# godzinę}} (próg {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "Automatyczne wykonanie na {target} zakończyło się z {status}{error, select, other {: {error}}}",
@@ -10641,7 +10641,7 @@
     "deleteRule": "Usuń alert",
     "deleteConfirm": "Usunąć alert \"{name}\"? Jego subskrybenci przestają otrzymywać powiadomienia, a można go przywrócić z kosza.",
     "pauseTitle": "Wstrzymać ten alert dla wszystkich?",
-    "pauseConfirm": "\"{name}\" przestaje się uruchamiać dla {count, plural, =0 {wszystkich} one {jedynego subskrybenta} =2 {obojga subskrybentów} other {wszystkich # subskrybentów}}, nie tylko dla Ciebie, dopóki ktoś nie włączy go ponownie. Aby zatrzymać tylko własne powiadomienia, wyłącz opcję Powiadom mnie.",
+    "pauseConfirm": "\"{name}\" przestaje się uruchamiać dla {count, plural, =0 {wszystkich} =1 {jedynego subskrybenta} =2 {obojga subskrybentów} other {wszystkich # subskrybentów}}, nie tylko dla Ciebie, dopóki ktoś nie włączy go ponownie. Aby zatrzymać tylko własne powiadomienia, wyłącz opcję Powiadom mnie.",
     "columns": {
       "name": "Reguła",
       "condition": "Warunek",

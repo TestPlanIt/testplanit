@@ -703,7 +703,7 @@
       "permissionDenied": "You do not have permission to access this page.",
       "resultSubmitPermissionDenied": "You can’t submit results for this case. Ask a project admin to assign it to you.",
       "dependenciesNotPassed": "Blocked by dependencies",
-      "dependenciesNotPassedDescription": "This test case can't be executed until {count, plural, =0 {the cases it depends on have} one {the case it depends on has} other {all # cases it depends on have}} passed in this run.",
+      "dependenciesNotPassedDescription": "This test case can't be executed until {count, plural, =0 {the cases it depends on have} =1 {the case it depends on has} other {all # cases it depends on have}} passed in this run.",
       "justificationRequired": "Justification required",
       "justificationRequiredDescription": "Flipping a completed result to a different outcome requires Result Details explaining the change.",
       "requiredFieldMissing": "A required result field is missing a value.",
@@ -926,9 +926,9 @@
       "attachments": {
         "title": "Upload Attachments",
         "description": "Drag and drop your files or click the button below to select files.",
-        "selectFiles": "{count, plural, =0 {Select Files} one {1 Selected File} other {# Selected Files}}",
+        "selectFiles": "{count, plural, =0 {Select Files} =1 {1 Selected File} other {# Selected Files}}",
         "selectFile": "{count, plural, =0 {Select File} other {1 Selected File}}",
-        "filesSelected": "{count, plural, one {1 file selected} other {# files selected}}",
+        "filesSelected": "{count, plural, =1 {1 file selected} other {# files selected}}",
         "addMoreFiles": "Add more files...",
         "replaceFile": "Replace file...",
         "invalidFileType": "Invalid file type. Only {types} files are allowed.",
@@ -1144,6 +1144,7 @@
       "case": "{count, plural, =1 {case} other {cases}}",
       "result": "{count, plural, =1 {result} other {results}}",
       "run": "{count, plural, =1 {run} other {runs}}",
+      "session": "{count, plural, =1 {session} other {sessions}}",
       "comment": "{count, plural, =1 {# comment} other {# comments}}"
     },
     "success": {
@@ -2432,11 +2433,11 @@
           "scanCancelled": "Last scan cancelled"
         },
         "bulk": {
-          "label": "{count, plural, one {Your repository:} other {All # repositories:}}",
-          "scanRecentHint": "Rescan recent commits in {count, plural, one {the connected repository} other {all # connected repositories}}.",
-          "scanFullHint": "Walk every commit on the branch of {count, plural, one {the connected repository} other {all # connected repositories}} and backfill pins for existing tickets.",
-          "scanFullConfirm": "This walks every commit on the branch of {count, plural, one {the connected repository} other {all # connected repositories}}. Repositories are scanned one at a time, so this can take a long time, and each walk reads commits through the provider's API, which counts against its rate limit.",
-          "checkStaleHint": "Check the Code Pins of {count, plural, one {the connected repository} other {all # connected repositories}} against each branch tip.",
+          "label": "{count, plural, =1 {Your repository:} other {All # repositories:}}",
+          "scanRecentHint": "Rescan recent commits in {count, plural, =1 {the connected repository} other {all # connected repositories}}.",
+          "scanFullHint": "Walk every commit on the branch of {count, plural, =1 {the connected repository} other {all # connected repositories}} and backfill pins for existing tickets.",
+          "scanFullConfirm": "This walks every commit on the branch of {count, plural, =1 {the connected repository} other {all # connected repositories}}. Repositories are scanned one at a time, so this can take a long time, and each walk reads commits through the provider's API, which counts against its rate limit.",
+          "checkStaleHint": "Check the Code Pins of {count, plural, =1 {the connected repository} other {all # connected repositories}} against each branch tip.",
           "removeStaleHint": "Remove {count, plural, one {# stale Code Pin} other {# stale Code Pins}} across {repos, plural, one {# repository} other {# repositories}}.",
           "removeConfirm": "Remove {count, plural, one {# Code Pin} other {# Code Pins}} that the last checks could not find at the branch tip, across {repos, plural, one {# repository} other {# repositories}}?",
           "queued": "Queued for {count, plural, one {# repository} other {# repositories}}.{skipped, plural, =0 {} one { # was already running.} other { # were already running.}}",
@@ -3586,7 +3587,7 @@
       "activeRunWarningMessage": "This test case is part of {count, plural, =1 {# active test run} other {# active test runs}}. Deleting it will mark it as deleted within those runs."
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {Deleting this folder will also delete all subfolders. Are you sure?} one {Deleting this folder will also delete 1 test case in this folder and all subfolders. Are you sure?} other {Deleting this folder will also delete # test cases in this folder and all subfolders. Are you sure?}}",
+      "confirmMessage": "{count, plural, =0 {Deleting this folder will also delete all subfolders. Are you sure?} =1 {Deleting this folder will also delete 1 test case in this folder and all subfolders. Are you sure?} other {Deleting this folder will also delete # test cases in this folder and all subfolders. Are you sure?}}",
       "warning": "This folder and all its test cases will be removed from the project. Historical data for these test cases will still remain in the project including results.",
       "confirm": "Confirm Delete Folder",
       "success": "Folder and all subfolders/cases deleted successfully."
@@ -4312,7 +4313,7 @@
       "filterAllProjects": "All projects",
       "actionRevert": "Revert decision",
       "revertedBadge": "Reverted",
-      "revertedBadgeTooltip": "{count, plural, one {Reverted once before} other {Reverted # times before}}"
+      "revertedBadgeTooltip": "{count, plural, =1 {Reverted once before} other {Reverted # times before}}"
     },
     "requester": {
       "openButton": "Request review",
@@ -4415,7 +4416,7 @@
     "dependencies": {
       "blocked": "Blocked",
       "blockedBy": "Blocked until {count, plural, one {this case passes} other {these cases pass}} in this run:",
-      "blockedNotice": "This test case can't be executed until {count, plural, one {the case it depends on has} other {all # cases it depends on have}} passed in this run.",
+      "blockedNotice": "This test case can't be executed until {count, plural, =1 {the case it depends on has} other {all # cases it depends on have}} passed in this run.",
       "notInRun": "{count, plural, one {# case this one depends on is} other {# cases this one depends on are}} not in this run and won't block execution:",
       "unblocked": "All cases this one depends on have passed in this run."
     },
@@ -4734,7 +4735,7 @@
         "historyDetail": "{count, plural, one {# earlier run} other {# earlier runs}} after changes to the same files",
         "historyFailed": "Failed in an earlier run after similar changes",
         "linkedDetail": "Linked to case {caseId}",
-        "issueDetail": "Linked to {key}, named in {count, plural, one {commit {sha}} other {# commits}}"
+        "issueDetail": "Linked to {key}, named in {count, plural, =1 {commit {sha}} other {# commits}}"
       },
       "stale": {
         "badge": "Stale",
@@ -4789,9 +4790,9 @@
       "description": "The cases that most deserve a run, highest risk first by default. Cases already in this run are left out.",
       "minimumScore": "Minimum risk score",
       "showing": "{shown, plural, one {# case loaded} other {# cases loaded}} of {total, plural, one {# match} other {# matches}}",
-      "loadedSelected": "{shown, plural, =2 {Both loaded cases are selected} one {The loaded case is selected} other {All # loaded cases are selected}}.",
-      "selectAllMatches": "{total, plural, =2 {Select both matches} one {Select the only match} other {Select all # matches}}",
-      "allMatchesSelected": "{total, plural, =2 {Both matches are selected} one {The only match is selected} other {All # matches are selected}}.",
+      "loadedSelected": "{shown, plural, =2 {Both loaded cases are selected} =1 {The loaded case is selected} other {All # loaded cases are selected}}.",
+      "selectAllMatches": "{total, plural, =2 {Select both matches} =1 {Select the only match} other {Select all # matches}}",
+      "allMatchesSelected": "{total, plural, =2 {Both matches are selected} =1 {The only match is selected} other {All # matches are selected}}.",
       "noneMatch": "No scored cases at or above this score.",
       "caseColumn": "Test case",
       "scoreColumn": "Risk score",
@@ -6190,13 +6191,13 @@
       "deselectAllShiftTooltip": "Deselect/Select all configurations across all pages",
       "shiftClickHint": "Hold Shift to select/deselect all pages",
       "bulkEdit": {
-        "button": "{count, plural, one {Edit 1 configuration} other {Edit # configurations}}",
-        "title": "{count, plural, one {Edit projects on 1 configuration} other {Edit projects on # configurations}}",
+        "button": "{count, plural, =1 {Edit 1 configuration} other {Edit # configurations}}",
+        "title": "{count, plural, =1 {Edit projects on 1 configuration} other {Edit projects on # configurations}}",
         "description": "Replace the project assignments on the selected configurations. The configuration name is not editable in bulk.",
-        "applyButton": "{count, plural, one {Apply to 1 configuration} other {Apply to # configurations}}",
-        "deleteButton": "{count, plural, one {Delete 1 configuration} other {Delete # configurations}}",
-        "deleteConfirmTitle": "{count, plural, one {Delete 1 configuration?} other {Delete # configurations?}}",
-        "deleteConfirmMessage": "{count, plural, one {This will delete 1 configuration. This action cannot be undone.} other {This will delete # configurations. This action cannot be undone.}}",
+        "applyButton": "{count, plural, =1 {Apply to 1 configuration} other {Apply to # configurations}}",
+        "deleteButton": "{count, plural, =1 {Delete 1 configuration} other {Delete # configurations}}",
+        "deleteConfirmTitle": "{count, plural, =1 {Delete 1 configuration?} other {Delete # configurations?}}",
+        "deleteConfirmMessage": "{count, plural, =1 {This will delete 1 configuration. This action cannot be undone.} other {This will delete # configurations. This action cannot be undone.}}",
         "applyEnabledLabel": "Change enabled state"
       },
       "categories": {
@@ -6229,8 +6230,8 @@
         "selectCombinationDescription": "Select the variant combinations to add. Any combinations that already exist are shown disabled.",
         "alreadyExists": "(already exists)",
         "reviewTitle": "Review Configurations",
-        "createButton": "{count, plural, one {Create 1 Configuration} other {Create # Configurations}}",
-        "creating": "{count, plural, one {Creating 1 Configuration...} other {Creating # Configurations...}}",
+        "createButton": "{count, plural, =1 {Create 1 Configuration} other {Create # Configurations}}",
+        "creating": "{count, plural, =1 {Creating 1 Configuration...} other {Creating # Configurations...}}",
         "allExist": "All combinations already exist.",
         "selectAtLeast": "Please select at least one combination."
       },
@@ -6352,7 +6353,7 @@
       "delete": {
         "confirmMessage": "Are you sure you want to delete the {name} root cause?",
         "inUse": "{count, plural, one {# failure pattern uses it.} other {# failure patterns use it.}}",
-        "moveLabel": "{count, plural, one {Move the pattern to} other {Move the # patterns to}}"
+        "moveLabel": "{count, plural, =1 {Move the pattern to} other {Move the # patterns to}}"
       }
     },
     "issue_config": {
@@ -6443,8 +6444,8 @@
           "ORPHAN": "Orphaned",
           "REFERENCED": "In use"
         },
-        "loadedSelected": "{shown, plural, one {The loaded file is selected} other {All # loaded files are selected}}.",
-        "confirmDelete": "{count, plural, =0 {None of the selected files can be deleted.} one {Delete this file ({size}) from storage? This cannot be undone.} other {Delete # files ({size}) from storage? This cannot be undone.}}",
+        "loadedSelected": "{shown, plural, =1 {The loaded file is selected} other {All # loaded files are selected}}.",
+        "confirmDelete": "{count, plural, =0 {None of the selected files can be deleted.} =1 {Delete this file ({size}) from storage? This cannot be undone.} other {Delete # files ({size}) from storage? This cannot be undone.}}",
         "skipped": "{count, plural, one {# selected file is left alone because it is in use.} other {# selected files are left alone because they are in use.}}",
         "deleted": "{count, plural, one {# file deleted from storage} other {# files deleted from storage}}"
       },
@@ -6462,18 +6463,18 @@
         "attachedThrough": "Attached through"
       },
       "selection": {
-        "loadedSelected": "{shown, plural, one {The loaded attachment is selected} other {All # loaded attachments are selected}}.",
-        "selectAllMatches": "{total, plural, one {Select the only match} other {Select all # matches}}",
-        "allMatchesSelected": "{total, plural, one {The only match is selected} other {All # matches are selected}}.",
+        "loadedSelected": "{shown, plural, =1 {The loaded attachment is selected} other {All # loaded attachments are selected}}.",
+        "selectAllMatches": "{total, plural, =1 {Select the only match} other {Select all # matches}}",
+        "allMatchesSelected": "{total, plural, =1 {The only match is selected} other {All # matches are selected}}.",
         "tooMany": "Up to {max} can be selected at once. Narrow the filters to select every match."
       },
       "actions": {
         "detach": "Detach",
         "confirm": {
-          "detach": "{count, plural, =0 {None of these attachments are attached to anything.} one {Detach this attachment? It is removed from the item it is attached to and stays in this list as unattached.} other {Detach # attachments? They are removed from the items they are attached to and stay in this list as unattached.}}",
-          "softDelete": "{count, plural, =0 {These attachments are already deleted.} one {Delete this attachment? It is hidden from the item it is attached to and can be restored from this list.} other {Delete # attachments? They are hidden from the items they are attached to and can be restored from this list.}}",
-          "restore": "{count, plural, =0 {None of these attachments are deleted.} one {Restore this attachment?} other {Restore # attachments?}}",
-          "purge": "{count, plural, =0 {Only deleted attachments can be purged. Delete them first.} one {Permanently delete this attachment? This cannot be undone.} other {Permanently delete # attachments? This cannot be undone.}}"
+          "detach": "{count, plural, =0 {None of these attachments are attached to anything.} =1 {Detach this attachment? It is removed from the item it is attached to and stays in this list as unattached.} other {Detach # attachments? They are removed from the items they are attached to and stay in this list as unattached.}}",
+          "softDelete": "{count, plural, =0 {These attachments are already deleted.} =1 {Delete this attachment? It is hidden from the item it is attached to and can be restored from this list.} other {Delete # attachments? They are hidden from the items they are attached to and can be restored from this list.}}",
+          "restore": "{count, plural, =0 {None of these attachments are deleted.} =1 {Restore this attachment?} other {Restore # attachments?}}",
+          "purge": "{count, plural, =0 {Only deleted attachments can be purged. Delete them first.} =1 {Permanently delete this attachment? This cannot be undone.} other {Permanently delete # attachments? This cannot be undone.}}"
         },
         "purgeFiles": "{count, plural, =0 {No stored files are deleted.} one {# stored file ({size}) is deleted.} other {# stored files ({size}) are deleted.}}",
         "purgeShared": "{count, plural, one {# file stays in storage because another attachment uses it.} other {# files stay in storage because other attachments use them.}}",
@@ -7282,7 +7283,7 @@
         "mentionedYouInComment": "mentioned you in a comment on",
         "inProject": "in project",
         "testRun": "Test Run:",
-        "casesInProject": "{count, plural, =1 {# case} other {# cases}} in",
+        "casesInProject": "{count, plural, =1 {# case} other {# cases}} in <project></project>",
         "sentBy": "Sent by {name}",
         "milestoneDueSoonTitle": "Milestone Due Soon",
         "milestoneOverdueTitle": "Milestone Overdue",
@@ -7372,8 +7373,8 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "The result took {elapsed}, {deviation}% away from the baseline of {baseline} (more than {threshold}% allowed).",
-          "CASE_REGRESSED": "The case failed after passing {passedBefore, plural, one {its last result} other {its last # results}}.",
-          "CASE_RECOVERED": "The case passed after failing {failedBefore, plural, one {its last result} other {its last # results}}.",
+          "CASE_REGRESSED": "The case failed after passing {passedBefore, plural, =1 {its last result} other {its last # results}}.",
+          "CASE_RECOVERED": "The case passed after failing {failedBefore, plural, =1 {its last result} other {its last # results}}.",
           "RUN_DURATION_DEVIATION": "The run took {elapsed}, {deviation}% away from the baseline of {baseline} (more than {threshold}% allowed).",
           "RUN_NOT_PROGRESSING": "The run has had no new result for {idleHours, plural, one {# hour} other {# hours}} (threshold {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "The automated execution on {target} ended with {status}{error, select, other {: {error}}}",
@@ -10641,7 +10642,7 @@
     "deleteRule": "Delete Alert",
     "deleteConfirm": "Delete the alert \"{name}\"? Its subscribers stop receiving notifications and it can be restored from the trash.",
     "pauseTitle": "Pause this alert for everyone?",
-    "pauseConfirm": "\"{name}\" stops firing for {count, plural, =0 {everyone} one {its only subscriber} =2 {both of its subscribers} other {all # of its subscribers}}, not just you, until someone enables it again. To stop your own notifications only, turn off Notify me instead.",
+    "pauseConfirm": "\"{name}\" stops firing for {count, plural, =0 {everyone} =1 {its only subscriber} =2 {both of its subscribers} other {all # of its subscribers}}, not just you, until someone enables it again. To stop your own notifications only, turn off Notify me instead.",
     "columns": {
       "name": "Rule",
       "condition": "Condition",

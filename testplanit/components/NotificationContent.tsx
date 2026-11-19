@@ -115,12 +115,16 @@ export function NotificationContent({
                   </Link>
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  {t("casesInProject", { count: group.testCases.length })}
-                  <ProjectNameCell
-                    projectId={group.projectId}
-                    value={group.projectName}
-                    size="sm"
-                  />
+                  {t.rich("casesInProject", {
+                    count: group.testCases.length,
+                    project: () => (
+                      <ProjectNameCell
+                        projectId={group.projectId}
+                        value={group.projectName}
+                        size="sm"
+                      />
+                    ),
+                  })}
                 </div>
               </div>
             ))}

@@ -703,7 +703,7 @@
       "permissionDenied": "이 페이지에 접근할 권한이 없습니다.",
       "resultSubmitPermissionDenied": "이 사례에 대한 결과를 제출할 수 없습니다. 프로젝트 관리자에게 배정해 달라고 요청하세요.",
       "dependenciesNotPassed": "종속성에 의해 차단됨",
-      "dependenciesNotPassedDescription": "이 테스트 케이스는 {count, plural, =0 {종속된 케이스가} one {종속된 케이스가} other {종속된 # 케이스가}} 이 실행에서 통과할 때까지 실행할 수 없습니다.",
+      "dependenciesNotPassedDescription": "이 테스트 케이스는 {count, plural, =0 {종속된 케이스가} =1 {종속된 케이스가} other {종속된 # 케이스가}} 이 실행에서 통과할 때까지 실행할 수 없습니다.",
       "justificationRequired": "정당성 제시 필요",
       "justificationRequiredDescription": "완료된 결과를 다른 결과로 변경하려면 변경 사항을 설명하는 결과 세부 정보가 필요합니다.",
       "requiredFieldMissing": "필수 결과 필드에 값이 누락되었습니다.",
@@ -926,9 +926,9 @@
       "attachments": {
         "title": "첨부파일 업로드",
         "description": "파일을 드래그 앤 드롭하거나 아래 버튼을 클릭하여 파일을 선택하세요.",
-        "selectFiles": "{count, plural, =0 {파일 선택} one {선택된 파일 1개} other {선택된 파일 #}}",
+        "selectFiles": "{count, plural, =0 {파일 선택} =1 {선택된 파일 1개} other {선택된 파일 #}}",
         "selectFile": "{count, plural, =0 {파일 선택} other {파일 1개 선택됨}}",
-        "filesSelected": "{count, plural, one {파일 1개 선택됨} other {선택된 파일 #}}",
+        "filesSelected": "{count, plural, =1 {파일 1개 선택됨} other {선택된 파일 #}}",
         "addMoreFiles": "파일을 더 추가하세요...",
         "replaceFile": "파일을 교체하세요...",
         "invalidFileType": "잘못된 파일 형식입니다. {types} 파일만 허용됩니다.",
@@ -2432,11 +2432,11 @@
           "scanCancelled": "마지막 스캔 취소됨"
         },
         "bulk": {
-          "label": "{count, plural, one {저장소:} other {모든 # 저장소:}}",
-          "scanRecentHint": "연결된 {count, plural, one {저장소} other {# 개의 저장소}}에서 최근 커밋을 다시 스캔합니다.",
-          "scanFullHint": "{count, plural, one {연결된 저장소} other {모든 # 개의 연결된 저장소}}의 브랜치의 모든 커밋을 순회하고 기존 티켓에 대한 핀을 역입력합니다.",
-          "scanFullConfirm": "{count, plural, one {연결된 저장소} other {모든 # 개의 연결된 저장소}}의 브랜치의 모든 커밋을 순회합니다. 저장소는 한 번에 하나씩 스캔되므로 시간이 오래 걸릴 수 있으며, 각 순회는 제공자의 API를 통해 커밋을 읽으므로 속도 제한에 영향을 줍니다.",
-          "checkStaleHint": "{count, plural, one {연결된 저장소} other {모든 # 개의 연결된 저장소}}의 코드 핀을 각 브랜치 끝에 대해 확인합니다.",
+          "label": "{count, plural, =1 {저장소:} other {모든 # 저장소:}}",
+          "scanRecentHint": "연결된 {count, plural, =1 {저장소} other {# 개의 저장소}}에서 최근 커밋을 다시 스캔합니다.",
+          "scanFullHint": "{count, plural, =1 {연결된 저장소} other {모든 # 개의 연결된 저장소}}의 브랜치의 모든 커밋을 순회하고 기존 티켓에 대한 핀을 역입력합니다.",
+          "scanFullConfirm": "{count, plural, =1 {연결된 저장소} other {모든 # 개의 연결된 저장소}}의 브랜치의 모든 커밋을 순회합니다. 저장소는 한 번에 하나씩 스캔되므로 시간이 오래 걸릴 수 있으며, 각 순회는 제공자의 API를 통해 커밋을 읽으므로 속도 제한에 영향을 줍니다.",
+          "checkStaleHint": "{count, plural, =1 {연결된 저장소} other {모든 # 개의 연결된 저장소}}의 코드 핀을 각 브랜치 끝에 대해 확인합니다.",
           "removeStaleHint": "{repos, plural, one {# 저장소} other {# 개의 저장소}}에서 {count, plural, one {# 개의 오래된 코드 핀} other {# 개의 오래된 코드 핀}}을 제거합니다.",
           "removeConfirm": "{repos, plural, one {# 저장소} other {# 개의 저장소}}에서 마지막 확인에서 브랜치 끝에서 찾을 수 없는 {count, plural, one {# 개의 코드 핀} other {# 개의 코드 핀}}을 제거하시겠습니까?",
           "queued": "{count, plural, one {# 저장소} other {# 개의 저장소}}에 대해 대기열에 추가되었습니다.{skipped, plural, =0 {} one { # 개가 이미 실행 중입니다.} other { # 개가 이미 실행 중입니다.}}",
@@ -3586,7 +3586,7 @@
       "activeRunWarningMessage": "이 테스트 케이스는 {count, plural, =1 {# 활성 테스트 실행} other {# 활성 테스트 실행}}의 일부입니다. 이 테스트 케이스를 삭제하면 해당 실행 내에서 삭제된 것으로 표시됩니다."
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {이 폴더를 삭제하면 모든 하위 폴더도 삭제됩니다. 삭제하시겠습니까?} one {이 폴더를 삭제하면 이 폴더와 모든 하위 폴더에 있는 테스트 케이스 1개도 삭제됩니다. 삭제하시겠습니까?} other {이 폴더를 삭제하면 이 폴더와 모든 하위 폴더에 있는 테스트 케이스 #개도 삭제됩니다. 삭제하시겠습니까?}}",
+      "confirmMessage": "{count, plural, =0 {이 폴더를 삭제하면 모든 하위 폴더도 삭제됩니다. 삭제하시겠습니까?} =1 {이 폴더를 삭제하면 이 폴더와 모든 하위 폴더에 있는 테스트 케이스 1개도 삭제됩니다. 삭제하시겠습니까?} other {이 폴더를 삭제하면 이 폴더와 모든 하위 폴더에 있는 테스트 케이스 #개도 삭제됩니다. 삭제하시겠습니까?}}",
       "warning": "이 폴더와 그 안에 있는 모든 테스트 케이스는 프로젝트에서 삭제됩니다. 하지만 해당 테스트 케이스의 과거 데이터(결과 포함)는 프로젝트에 계속 남아 있습니다.",
       "confirm": "폴더 삭제를 확인하세요",
       "success": "폴더와 모든 하위 폴더/케이스가 성공적으로 삭제되었습니다."
@@ -4312,7 +4312,7 @@
       "filterAllProjects": "모든 프로젝트",
       "actionRevert": "결정 되돌리기",
       "revertedBadge": "되돌려짐",
-      "revertedBadgeTooltip": "{count, plural, one {이전에 한 번 되돌려짐} other {이전에 #번 되돌려짐}}"
+      "revertedBadgeTooltip": "{count, plural, =1 {이전에 한 번 되돌려짐} other {이전에 #번 되돌려짐}}"
     },
     "requester": {
       "openButton": "검토 요청",
@@ -4415,7 +4415,7 @@
     "dependencies": {
       "blocked": "차단됨",
       "blockedBy": "이 실행에서 {count, plural, one {이 사례가 통과할 때까지} other {이 사례들이 모두 통과할 때까지}} 차단됨:",
-      "blockedNotice": "이 테스트 사례는 {count, plural, one {의존하는 사례가} other {의존하는 모든 # 사례가}} 이 실행에서 통과할 때까지 실행할 수 없습니다.",
+      "blockedNotice": "이 테스트 사례는 {count, plural, =1 {의존하는 사례가} other {의존하는 모든 # 사례가}} 이 실행에서 통과할 때까지 실행할 수 없습니다.",
       "notInRun": "{count, plural, one {이 사례가 의존하는 # 사례가} other {이 사례가 의존하는 # 사례가}} 이 실행에 없으므로 실행을 차단하지 않습니다:",
       "unblocked": "이 사례가 의존하는 모든 사례가 이 실행에서 통과했습니다."
     },
@@ -4734,7 +4734,7 @@
         "historyDetail": "같은 파일에 대한 변경 후 {count, plural, one {# 이전 실행} other {# 이전 실행들}}",
         "historyFailed": "유사한 변경 후 이전 실행에서 실패",
         "linkedDetail": "케이스 {caseId}에 연결됨",
-        "issueDetail": "{key}에 연결되어 {count, plural, one {커밋 {sha}} other {# 커밋들}}에서 이름 지어집니다"
+        "issueDetail": "{key}에 연결되어 {count, plural, =1 {커밋 {sha}} other {# 커밋들}}에서 이름 지어집니다"
       },
       "stale": {
         "badge": "오래됨",
@@ -4789,9 +4789,9 @@
       "description": "실행할 자격이 가장 있는 케이스들입니다. 기본적으로 위험도가 가장 높은 순서입니다. 이미 이 실행에 포함된 케이스는 제외됩니다.",
       "minimumScore": "최소 위험 점수",
       "showing": "{shown, plural, one {# 케이스 로드됨} other {# 케이스 로드됨}} / {total, plural, one {# 일치} other {# 일치}}",
-      "loadedSelected": "{shown, plural, =2 {로드된 두 케이스가 모두 선택됨} one {로드된 케이스가 선택됨} other {로드된 모든 # 케이스가 선택됨}}.",
-      "selectAllMatches": "{total, plural, =2 {두 일치 항목 모두 선택} one {유일한 일치 항목 선택} other {모든 # 일치 항목 선택}}",
-      "allMatchesSelected": "{total, plural, =2 {두 일치 항목이 모두 선택됨} one {유일한 일치 항목이 선택됨} other {모든 # 일치 항목이 선택됨}}.",
+      "loadedSelected": "{shown, plural, =2 {로드된 두 케이스가 모두 선택됨} =1 {로드된 케이스가 선택됨} other {로드된 모든 # 케이스가 선택됨}}.",
+      "selectAllMatches": "{total, plural, =2 {두 일치 항목 모두 선택} =1 {유일한 일치 항목 선택} other {모든 # 일치 항목 선택}}",
+      "allMatchesSelected": "{total, plural, =2 {두 일치 항목이 모두 선택됨} =1 {유일한 일치 항목이 선택됨} other {모든 # 일치 항목이 선택됨}}.",
       "noneMatch": "이 점수 이상으로 점수가 매겨진 케이스가 없습니다.",
       "caseColumn": "테스트 케이스",
       "scoreColumn": "위험 점수",
@@ -6190,13 +6190,13 @@
       "deselectAllShiftTooltip": "모든 페이지에서 모든 설정을 선택/선택 해제",
       "shiftClickHint": "Shift 키를 누른 상태로 모든 페이지를 선택/선택 해제하세요.",
       "bulkEdit": {
-        "button": "{count, plural, one {1번째 설정 편집} other {#번째 설정 편집}}",
-        "title": "{count, plural, one {1개 구성에서 프로젝트 편집} other {#개 구성에서 프로젝트 편집}}",
+        "button": "{count, plural, =1 {1번째 설정 편집} other {#번째 설정 편집}}",
+        "title": "{count, plural, =1 {1개 구성에서 프로젝트 편집} other {#개 구성에서 프로젝트 편집}}",
         "description": "선택한 구성에 대한 프로젝트 할당을 바꿉니다. 구성 이름은 일괄적으로 편집할 수 없습니다.",
-        "applyButton": "{count, plural, one {1개 구성에 적용} other {#개 구성에 적용}}",
-        "deleteButton": "{count, plural, one {설정 1개 삭제} other {설정 #개 삭제}}",
-        "deleteConfirmTitle": "{count, plural, one {설정 1개를 삭제하시겠습니까?} other {설정 #개를 삭제하시겠습니까?}}",
-        "deleteConfirmMessage": "{count, plural, one {이 작업은 설정을 1개 삭제합니다. 이 작업은 되돌릴 수 없습니다.} other {이 작업은 설정을 #개 삭제합니다. 이 작업은 되돌릴 수 없습니다.}}",
+        "applyButton": "{count, plural, =1 {1개 구성에 적용} other {#개 구성에 적용}}",
+        "deleteButton": "{count, plural, =1 {설정 1개 삭제} other {설정 #개 삭제}}",
+        "deleteConfirmTitle": "{count, plural, =1 {설정 1개를 삭제하시겠습니까?} other {설정 #개를 삭제하시겠습니까?}}",
+        "deleteConfirmMessage": "{count, plural, =1 {이 작업은 설정을 1개 삭제합니다. 이 작업은 되돌릴 수 없습니다.} other {이 작업은 설정을 #개 삭제합니다. 이 작업은 되돌릴 수 없습니다.}}",
         "applyEnabledLabel": "활성화 상태 변경"
       },
       "categories": {
@@ -6229,8 +6229,8 @@
         "selectCombinationDescription": "추가할 변형 조합을 선택하세요. 이미 존재하는 조합은 비활성화된 상태로 표시됩니다.",
         "alreadyExists": "(이미 존재합니다)",
         "reviewTitle": "구성 검토",
-        "createButton": "{count, plural, one {구성 1개 생성} other {구성 #개 생성}}",
-        "creating": "{count, plural, one {구성 1개 생성 중...} other {구성 #개 생성 중...}}",
+        "createButton": "{count, plural, =1 {구성 1개 생성} other {구성 #개 생성}}",
+        "creating": "{count, plural, =1 {구성 1개 생성 중...} other {구성 #개 생성 중...}}",
         "allExist": "모든 조합이 이미 존재합니다.",
         "selectAtLeast": "최소 한 가지 조합을 선택해 주세요."
       },
@@ -6443,8 +6443,8 @@
           "ORPHAN": "분리됨",
           "REFERENCED": "사용 중"
         },
-        "loadedSelected": "{shown, plural, one {로드된 파일이 선택되었습니다} other {로드된 파일 # 개가 모두 선택되었습니다}}.",
-        "confirmDelete": "{count, plural, =0 {선택한 파일을 삭제할 수 없습니다.} one {이 파일 {size}을 저장소에서 삭제하시겠습니까? 이 작업은 실행 취소할 수 없습니다.} other {#개의 파일 {size}을 저장소에서 삭제하시겠습니까? 이 작업은 실행 취소할 수 없습니다.}}",
+        "loadedSelected": "{shown, plural, =1 {로드된 파일이 선택되었습니다} other {로드된 파일 # 개가 모두 선택되었습니다}}.",
+        "confirmDelete": "{count, plural, =0 {선택한 파일을 삭제할 수 없습니다.} =1 {이 파일 {size}을 저장소에서 삭제하시겠습니까? 이 작업은 실행 취소할 수 없습니다.} other {#개의 파일 {size}을 저장소에서 삭제하시겠습니까? 이 작업은 실행 취소할 수 없습니다.}}",
         "skipped": "{count, plural, one {선택한 파일 # 개를 사용 중이므로 삭제하지 않았습니다.} other {선택한 파일 # 개를 사용 중이므로 삭제하지 않았습니다.}}",
         "deleted": "{count, plural, one {저장소에서 파일 # 개 삭제됨} other {저장소에서 파일 # 개 삭제됨}}"
       },
@@ -6470,10 +6470,10 @@
       "actions": {
         "detach": "분리",
         "confirm": {
-          "detach": "{count, plural, =0 {이러한 첨부파일 중 어느 것도 첨부되지 않았습니다.} one {이 첨부파일을 분리하시겠습니까? 첨부된 항목에서 제거되고 이 목록에 미첨부로 유지됩니다.} other {#개의 첨부파일을 분리하시겠습니까? 첨부된 항목에서 제거되고 이 목록에 미첨부로 유지됩니다.}}",
-          "softDelete": "{count, plural, =0 {이러한 첨부파일은 이미 삭제되었습니다.} one {이 첨부파일을 삭제하시겠습니까? 첨부된 항목에서 숨겨지며 이 목록에서 복원할 수 있습니다.} other {#개의 첨부파일을 삭제하시겠습니까? 첨부된 항목에서 숨겨지며 이 목록에서 복원할 수 있습니다.}}",
-          "restore": "{count, plural, =0 {이러한 첨부파일 중 삭제된 것은 없습니다.} one {이 첨부파일을 복원하시겠습니까?} other {#개의 첨부파일을 복원하시겠습니까?}}",
-          "purge": "{count, plural, =0 {삭제된 첨부파일만 영구 삭제할 수 있습니다. 먼저 삭제하십시오.} one {이 첨부파일을 영구적으로 삭제하시겠습니까? 이 작업은 실행 취소할 수 없습니다.} other {#개의 첨부파일을 영구적으로 삭제하시겠습니까? 이 작업은 실행 취소할 수 없습니다.}}"
+          "detach": "{count, plural, =0 {이러한 첨부파일 중 어느 것도 첨부되지 않았습니다.} =1 {이 첨부파일을 분리하시겠습니까? 첨부된 항목에서 제거되고 이 목록에 미첨부로 유지됩니다.} other {#개의 첨부파일을 분리하시겠습니까? 첨부된 항목에서 제거되고 이 목록에 미첨부로 유지됩니다.}}",
+          "softDelete": "{count, plural, =0 {이러한 첨부파일은 이미 삭제되었습니다.} =1 {이 첨부파일을 삭제하시겠습니까? 첨부된 항목에서 숨겨지며 이 목록에서 복원할 수 있습니다.} other {#개의 첨부파일을 삭제하시겠습니까? 첨부된 항목에서 숨겨지며 이 목록에서 복원할 수 있습니다.}}",
+          "restore": "{count, plural, =0 {이러한 첨부파일 중 삭제된 것은 없습니다.} =1 {이 첨부파일을 복원하시겠습니까?} other {#개의 첨부파일을 복원하시겠습니까?}}",
+          "purge": "{count, plural, =0 {삭제된 첨부파일만 영구 삭제할 수 있습니다. 먼저 삭제하십시오.} =1 {이 첨부파일을 영구적으로 삭제하시겠습니까? 이 작업은 실행 취소할 수 없습니다.} other {#개의 첨부파일을 영구적으로 삭제하시겠습니까? 이 작업은 실행 취소할 수 없습니다.}}"
         },
         "purgeFiles": "{count, plural, =0 {저장된 파일이 삭제되지 않았습니다.} one {저장된 파일 # 개({size})가 삭제되었습니다.} other {저장된 파일 # 개({size})가 삭제되었습니다.}}",
         "purgeShared": "{count, plural, other {#개의 파일은 다른 첨부파일에서 사용되므로 스토리지에 유지됩니다.}}",
@@ -7282,7 +7282,7 @@
         "mentionedYouInComment": "댓글에서 당신을 언급했습니다.",
         "inProject": "프로젝트에서",
         "testRun": "테스트 실행:",
-        "casesInProject": "{count, plural, =1 {# 경우} other {# 경우}}",
+        "casesInProject": "{count, plural, =1 {# 경우} other {# 경우}} <project></project>",
         "sentBy": "{name}님이 보냈습니다.",
         "milestoneDueSoonTitle": "곧 중요한 일정이 예정되어 있습니다.",
         "milestoneOverdueTitle": "주요 일정 기한 초과",
@@ -7372,8 +7372,8 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "결과가 {elapsed}를 소요했으며, {baseline}의 기준선에서 {deviation}% 벗어났습니다({threshold}% 이상 허용 안 됨).",
-          "CASE_REGRESSED": "케이스가 마지막 {passedBefore, plural, one {결과} other {# 결과}} 후에 실패했습니다.",
-          "CASE_RECOVERED": "케이스가 마지막 {failedBefore, plural, one {결과} other {# 결과}} 후에 통과했습니다.",
+          "CASE_REGRESSED": "케이스가 마지막 {passedBefore, plural, =1 {결과} other {# 결과}} 후에 실패했습니다.",
+          "CASE_RECOVERED": "케이스가 마지막 {failedBefore, plural, =1 {결과} other {# 결과}} 후에 통과했습니다.",
           "RUN_DURATION_DEVIATION": "실행이 {elapsed}를 소요했으며, {baseline}의 기준선에서 {deviation}% 벗어났습니다({threshold}% 이상 허용 안 됨).",
           "RUN_NOT_PROGRESSING": "실행이 {idleHours, plural, one {# 시간} other {# 시간}} 동안 새 결과가 없었습니다(임계값 {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "{target}의 자동화된 실행이 {status}{error, select, other {: {error}}}로 종료되었습니다",
@@ -10641,7 +10641,7 @@
     "deleteRule": "경고 삭제",
     "deleteConfirm": "\"{name}\" 경고를 삭제하시겠습니까? 구독자가 알림 수신을 중지하며 휴지통에서 복원할 수 있습니다.",
     "pauseTitle": "모두에 대해 이 경고를 일시 중지하시겠습니까?",
-    "pauseConfirm": "\"{name}\"은 누군가 다시 활성화할 때까지 {count, plural, =0 {모두} one {유일한 구독자} =2 {두 구독자 모두} other {모든 # 구독자}}에 대해 발동을 중지합니다. 자신의 알림만 중지하려면 대신 알림 받기를 끄세요.",
+    "pauseConfirm": "\"{name}\"은 누군가 다시 활성화할 때까지 {count, plural, =0 {모두} =1 {유일한 구독자} =2 {두 구독자 모두} other {모든 # 구독자}}에 대해 발동을 중지합니다. 자신의 알림만 중지하려면 대신 알림 받기를 끄세요.",
     "columns": {
       "name": "규칙",
       "condition": "조건",

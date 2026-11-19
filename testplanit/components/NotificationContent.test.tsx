@@ -64,7 +64,7 @@ describe("NotificationContent", () => {
         assignedSession: "assigned you to session",
         inProject: "in project",
         testRun: "Test Run:",
-        casesInProject: "{count} cases in",
+        casesInProject: "{count} cases in <project></project>",
         sentBy: "Sent by {name}",
         // New i18n keys for the four notification types we just
         // refactored to render via t() instead of falling back to the
@@ -112,6 +112,19 @@ describe("NotificationContent", () => {
       }
       return result;
     });
+
+    // t.rich: substitute params, then put each <tag></tag> where its
+    // render function says.
+    (mockT as any).rich = (key: string, params: Record<string, any> = {}) => {
+      const text = mockT(key, params) as string;
+      return text
+        .split(/<(\w+)><\/\1>/)
+        .map((part, index) =>
+          index % 2 === 1 && typeof params[part] === "function"
+            ? params[part]()
+            : part
+        );
+    };
 
     (vi.mocked(useTranslations) as any).mockReturnValue(mockT);
   });
@@ -280,6 +293,7 @@ describe("NotificationContent", () => {
       expect(screen.getByText("assigned you 5 test cases")).toBeInTheDocument();
       expect(screen.getByText("Sprint 1 Tests")).toBeInTheDocument();
       expect(screen.getByText("2 cases in")).toBeInTheDocument();
+      expect(screen.getByText("Test Project")).toBeInTheDocument();
     });
   });
 

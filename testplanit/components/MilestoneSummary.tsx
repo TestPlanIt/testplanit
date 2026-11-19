@@ -73,7 +73,6 @@ export function MilestoneSummary({
 }: MilestoneSummaryProps) {
   const tCommon = useTranslations("common");
   const tMilestones = useTranslations("milestones");
-  const tGlobal = useTranslations();
   const locale = useLocale();
   const { data: _session } = useSession();
 
@@ -318,9 +317,9 @@ export function MilestoneSummary({
         {/* Summary text below the bar */}
         <div
           className="flex min-w-0 grow items-center text-xs text-foreground"
-          title={`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
+          title={`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tCommon("plural.session", { count: sessionCount })}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
         >
-          <span className="shrink truncate">{`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}`}</span>
+          <span className="shrink truncate">{`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tCommon("plural.session", { count: sessionCount })}`}</span>
           {totalElapsedText ? (
             <Tooltip>
               <TooltipTrigger asChild>

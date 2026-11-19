@@ -703,7 +703,7 @@
       "permissionDenied": "Bạn không có quyền truy cập vào trang này.",
       "resultSubmitPermissionDenied": "Bạn không thể gửi kết quả cho trường hợp này. Hãy yêu cầu quản trị viên dự án chỉ định cho bạn.",
       "dependenciesNotPassed": "Bị chặn bởi các phụ thuộc",
-      "dependenciesNotPassedDescription": "Trường hợp kiểm thử này không thể được thực thi cho đến khi {count, plural, =0 {các trường hợp nó phụ thuộc vào đã} one {trường hợp nó phụ thuộc vào đã} other {tất cả # trường hợp nó phụ thuộc vào đã}} vượt qua trong lần chạy này.",
+      "dependenciesNotPassedDescription": "Trường hợp kiểm thử này không thể được thực thi cho đến khi {count, plural, =0 {các trường hợp nó phụ thuộc vào đã} =1 {trường hợp nó phụ thuộc vào đã} other {tất cả # trường hợp nó phụ thuộc vào đã}} vượt qua trong lần chạy này.",
       "justificationRequired": "Cần có sự giải thích.",
       "justificationRequiredDescription": "Việc thay đổi kết quả đã hoàn thành sang một kết quả khác đòi hỏi phải có Chi tiết Kết quả giải thích sự thay đổi đó.",
       "requiredFieldMissing": "Một trường kết quả bắt buộc bị thiếu giá trị.",
@@ -926,9 +926,9 @@
       "attachments": {
         "title": "Tải lên tệp đính kèm",
         "description": "Kéo và thả tệp tin của bạn hoặc nhấp vào nút bên dưới để chọn tệp tin.",
-        "selectFiles": "{count, plural, =0 {Chọn tập tin} one {1 Tập tin đã chọn} other {# Tập tin đã chọn}}",
+        "selectFiles": "{count, plural, =0 {Chọn tập tin} =1 {1 Tập tin đã chọn} other {# Tập tin đã chọn}}",
         "selectFile": "{count, plural, =0 {Chọn tập tin} other {1 Tập tin đã chọn}}",
-        "filesSelected": "{count, plural, one {1 tập tin đã được chọn} other {# tập tin đã được chọn}}",
+        "filesSelected": "{count, plural, =1 {1 tập tin đã được chọn} other {# tập tin đã được chọn}}",
         "addMoreFiles": "Thêm nhiều tập tin hơn...",
         "replaceFile": "Thay thế tập tin...",
         "invalidFileType": "Loại tệp không hợp lệ. Chỉ cho phép các tệp {types}.",
@@ -2432,11 +2432,11 @@
           "scanCancelled": "Lần quét cuối cùng bị hủy"
         },
         "bulk": {
-          "label": "{count, plural, one {Kho lưu trữ của bạn:} other {Tất cả # kho lưu trữ:}}",
-          "scanRecentHint": "Quét lại các commit gần đây trong {count, plural, one {kho lưu trữ được kết nối} other {tất cả # kho lưu trữ được kết nối}}.",
-          "scanFullHint": "Duyệt qua mọi commit trên nhánh của {count, plural, one {kho lưu trữ được kết nối} other {tất cả # kho lưu trữ được kết nối}} và backfill chân ghim cho các vé hiện có.",
-          "scanFullConfirm": "Điều này sẽ duyệt qua mọi commit trên nhánh của {count, plural, one {kho lưu trữ được kết nối} other {tất cả # kho lưu trữ được kết nối}}. Các kho lưu trữ được quét từng cái một, vì vậy điều này có thể mất nhiều thời gian, và mỗi lần duyệt sẽ đọc các commit thông qua API của nhà cung cấp, điều này tính vào giới hạn tốc độ của nó.",
-          "checkStaleHint": "Kiểm tra Code Pins của {count, plural, one {kho lưu trữ được kết nối} other {tất cả # kho lưu trữ được kết nối}} so với mỗi tip nhánh.",
+          "label": "{count, plural, =1 {Kho lưu trữ của bạn:} other {Tất cả # kho lưu trữ:}}",
+          "scanRecentHint": "Quét lại các commit gần đây trong {count, plural, =1 {kho lưu trữ được kết nối} other {tất cả # kho lưu trữ được kết nối}}.",
+          "scanFullHint": "Duyệt qua mọi commit trên nhánh của {count, plural, =1 {kho lưu trữ được kết nối} other {tất cả # kho lưu trữ được kết nối}} và backfill chân ghim cho các vé hiện có.",
+          "scanFullConfirm": "Điều này sẽ duyệt qua mọi commit trên nhánh của {count, plural, =1 {kho lưu trữ được kết nối} other {tất cả # kho lưu trữ được kết nối}}. Các kho lưu trữ được quét từng cái một, vì vậy điều này có thể mất nhiều thời gian, và mỗi lần duyệt sẽ đọc các commit thông qua API của nhà cung cấp, điều này tính vào giới hạn tốc độ của nó.",
+          "checkStaleHint": "Kiểm tra Code Pins của {count, plural, =1 {kho lưu trữ được kết nối} other {tất cả # kho lưu trữ được kết nối}} so với mỗi tip nhánh.",
           "removeStaleHint": "Xóa {count, plural, one {# Code Pin lỗi thời} other {# Code Pins lỗi thời}} trên {repos, plural, one {# kho lưu trữ} other {# kho lưu trữ}}.",
           "removeConfirm": "Xóa {count, plural, one {# Code Pin} other {# Code Pins}} mà các lần kiểm tra gần đây không thể tìm thấy ở tip nhánh, trên {repos, plural, one {# kho lưu trữ} other {# kho lưu trữ}}?",
           "queued": "Được xếp hàng cho {count, plural, one {# kho lưu trữ} other {# kho lưu trữ}}.{skipped, plural, =0 {} one { # đã chạy rồi.} other { # đã chạy rồi.}}",
@@ -3586,7 +3586,7 @@
       "activeRunWarningMessage": "Trường hợp kiểm thử này là một phần của {count, plural, =1 {# lần chạy kiểm thử đang hoạt động} other {# các lần chạy kiểm thử đang hoạt động}}. Việc xóa nó sẽ đánh dấu nó là đã bị xóa trong các lần chạy đó."
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {Xóa thư mục này cũng sẽ xóa tất cả các thư mục con. Bạn có chắc chắn không?} one {Xóa thư mục này cũng sẽ xóa 1 trường hợp kiểm thử trong thư mục này và tất cả các thư mục con. Bạn có chắc chắn không?} other {Xóa thư mục này cũng sẽ xóa # trường hợp kiểm thử trong thư mục này và tất cả các thư mục con. Bạn có chắc chắn không?}}",
+      "confirmMessage": "{count, plural, =0 {Xóa thư mục này cũng sẽ xóa tất cả các thư mục con. Bạn có chắc chắn không?} =1 {Xóa thư mục này cũng sẽ xóa 1 trường hợp kiểm thử trong thư mục này và tất cả các thư mục con. Bạn có chắc chắn không?} other {Xóa thư mục này cũng sẽ xóa # trường hợp kiểm thử trong thư mục này và tất cả các thư mục con. Bạn có chắc chắn không?}}",
       "warning": "Thư mục này và tất cả các trường hợp kiểm thử bên trong sẽ bị xóa khỏi dự án. Dữ liệu lịch sử cho các trường hợp kiểm thử này, bao gồm cả kết quả, vẫn sẽ được lưu giữ trong dự án.",
       "confirm": "Xác nhận xóa thư mục",
       "success": "Thư mục và tất cả các thư mục con/trường hợp đã được xóa thành công."
@@ -4415,7 +4415,7 @@
     "dependencies": {
       "blocked": "Bị chặn",
       "blockedBy": "Bị chặn cho đến khi {count, plural, one {trường hợp này vượt qua} other {các trường hợp này vượt qua}} trong lần chạy này:",
-      "blockedNotice": "Trường hợp thử nghiệm này không thể được thực thi cho đến khi {count, plural, one {trường hợp nó phụ thuộc vào đã} other {tất cả # trường hợp nó phụ thuộc vào đã}} vượt qua trong lần chạy này.",
+      "blockedNotice": "Trường hợp thử nghiệm này không thể được thực thi cho đến khi {count, plural, =1 {trường hợp nó phụ thuộc vào đã} other {tất cả # trường hợp nó phụ thuộc vào đã}} vượt qua trong lần chạy này.",
       "notInRun": "{count, plural, one {# trường hợp cái này phụ thuộc vào là} other {# trường hợp cái này phụ thuộc vào là}} không nằm trong lần chạy này và sẽ không chặn thực thi:",
       "unblocked": "Tất cả các trường hợp cái này phụ thuộc vào đã vượt qua trong lần chạy này."
     },
@@ -4734,7 +4734,7 @@
         "historyDetail": "{count, plural, one {# lần chạy trước} other {# lần chạy trước}} sau khi thay đổi cùng một tệp",
         "historyFailed": "Thất bại trong một lần chạy trước sau các thay đổi tương tự",
         "linkedDetail": "Được liên kết với trường hợp {caseId}",
-        "issueDetail": "Được liên kết với {key}, được đặt tên trong {count, plural, one {cam kết {sha}} other {# cam kết}}"
+        "issueDetail": "Được liên kết với {key}, được đặt tên trong {count, plural, =1 {cam kết {sha}} other {# cam kết}}"
       },
       "stale": {
         "badge": "Cũ",
@@ -4789,9 +4789,9 @@
       "description": "Các trường hợp xứng đáng nhất để chạy, rủi ro cao nhất trước theo mặc định. Các trường hợp đã có trong lần chạy này bị loại trừ.",
       "minimumScore": "Điểm rủi ro tối thiểu",
       "showing": "{shown, plural, one {# trường hợp đã tải} other {# trường hợp đã tải}} của {total, plural, one {# kết quả trùng khớp} other {# kết quả trùng khớp}}",
-      "loadedSelected": "{shown, plural, =2 {Cả hai trường hợp đã tải đều được chọn} one {Trường hợp đã tải được chọn} other {Tất cả # trường hợp đã tải được chọn}}.",
-      "selectAllMatches": "{total, plural, =2 {Chọn cả hai kết quả trùng khớp} one {Chọn kết quả trùng khớp duy nhất} other {Chọn tất cả # kết quả trùng khớp}}",
-      "allMatchesSelected": "{total, plural, =2 {Cả hai kết quả trùng khớp đều được chọn} one {Kết quả trùng khớp duy nhất được chọn} other {Tất cả # kết quả trùng khớp được chọn}}.",
+      "loadedSelected": "{shown, plural, =2 {Cả hai trường hợp đã tải đều được chọn} =1 {Trường hợp đã tải được chọn} other {Tất cả # trường hợp đã tải được chọn}}.",
+      "selectAllMatches": "{total, plural, =2 {Chọn cả hai kết quả trùng khớp} =1 {Chọn kết quả trùng khớp duy nhất} other {Chọn tất cả # kết quả trùng khớp}}",
+      "allMatchesSelected": "{total, plural, =2 {Cả hai kết quả trùng khớp đều được chọn} =1 {Kết quả trùng khớp duy nhất được chọn} other {Tất cả # kết quả trùng khớp được chọn}}.",
       "noneMatch": "Không có trường hợp được chấm điểm ở hoặc trên điểm này.",
       "caseColumn": "Trường hợp kiểm tra",
       "scoreColumn": "Điểm rủi ro",
@@ -6190,13 +6190,13 @@
       "deselectAllShiftTooltip": "Bỏ chọn/Chọn tất cả cấu hình trên tất cả các trang.",
       "shiftClickHint": "Giữ phím Shift để chọn/bỏ chọn tất cả các trang.",
       "bulkEdit": {
-        "button": "{count, plural, one {Chỉnh sửa cấu hình 1} other {Chỉnh sửa # cấu hình}}",
-        "title": "{count, plural, one {Chỉnh sửa dự án trên 1 cấu hình} other {Chỉnh sửa dự án trên # cấu hình}}",
+        "button": "{count, plural, =1 {Chỉnh sửa cấu hình 1} other {Chỉnh sửa # cấu hình}}",
+        "title": "{count, plural, =1 {Chỉnh sửa dự án trên 1 cấu hình} other {Chỉnh sửa dự án trên # cấu hình}}",
         "description": "Thay thế các nhiệm vụ dự án trên các cấu hình đã chọn. Không thể chỉnh sửa tên cấu hình hàng loạt.",
-        "applyButton": "{count, plural, one {Áp dụng cho 1 cấu hình} other {Áp dụng cho # cấu hình}}",
-        "deleteButton": "{count, plural, one {Xóa 1 cấu hình} other {Xóa # cấu hình}}",
-        "deleteConfirmTitle": "{count, plural, one {Xóa 1 cấu hình?} other {Xóa # cấu hình?}}",
-        "deleteConfirmMessage": "{count, plural, one {Thao tác này sẽ xóa 1 cấu hình. Không thể hoàn tác.} other {Thao tác này sẽ xóa # cấu hình. Không thể hoàn tác.}}",
+        "applyButton": "{count, plural, =1 {Áp dụng cho 1 cấu hình} other {Áp dụng cho # cấu hình}}",
+        "deleteButton": "{count, plural, =1 {Xóa 1 cấu hình} other {Xóa # cấu hình}}",
+        "deleteConfirmTitle": "{count, plural, =1 {Xóa 1 cấu hình?} other {Xóa # cấu hình?}}",
+        "deleteConfirmMessage": "{count, plural, =1 {Thao tác này sẽ xóa 1 cấu hình. Không thể hoàn tác.} other {Thao tác này sẽ xóa # cấu hình. Không thể hoàn tác.}}",
         "applyEnabledLabel": "Thay đổi trạng thái được kích hoạt"
       },
       "categories": {
@@ -6229,8 +6229,8 @@
         "selectCombinationDescription": "Chọn các tổ hợp biến thể muốn thêm. Bất kỳ tổ hợp nào đã tồn tại sẽ được hiển thị ở trạng thái bị vô hiệu hóa.",
         "alreadyExists": "(đã tồn tại)",
         "reviewTitle": "Xem lại cấu hình",
-        "createButton": "{count, plural, one {Tạo 1 cấu hình} other {Tạo # cấu hình}}",
-        "creating": "{count, plural, one {Đang tạo 1 cấu hình...} other {Đang tạo # cấu hình...}}",
+        "createButton": "{count, plural, =1 {Tạo 1 cấu hình} other {Tạo # cấu hình}}",
+        "creating": "{count, plural, =1 {Đang tạo 1 cấu hình...} other {Đang tạo # cấu hình...}}",
         "allExist": "Tất cả các tổ hợp đều đã tồn tại.",
         "selectAtLeast": "Vui lòng chọn ít nhất một sự kết hợp."
       },
@@ -6352,7 +6352,7 @@
       "delete": {
         "confirmMessage": "Bạn có chắc chắn muốn xóa nguyên nhân gốc {name} không?",
         "inUse": "{count, plural, one {# mẫu lỗi sử dụng nó.} other {# mẫu lỗi sử dụng nó.}}",
-        "moveLabel": "{count, plural, one {Di chuyển mẫu đến} other {Di chuyển # mẫu đến}}"
+        "moveLabel": "{count, plural, =1 {Di chuyển mẫu đến} other {Di chuyển # mẫu đến}}"
       }
     },
     "issue_config": {
@@ -6462,18 +6462,18 @@
         "attachedThrough": "Được đính kèm thông qua"
       },
       "selection": {
-        "loadedSelected": "{shown, plural, one {Tệp đính kèm được tải được chọn} other {Tất cả # tệp đính kèm được tải được chọn}}.",
-        "selectAllMatches": "{total, plural, one {Chọn kết quả khớp duy nhất} other {Chọn tất cả # kết quả khớp}}",
-        "allMatchesSelected": "{total, plural, one {Kết quả khớp duy nhất được chọn} other {Tất cả # kết quả khớp được chọn}}.",
+        "loadedSelected": "{shown, plural, =1 {Tệp đính kèm được tải được chọn} other {Tất cả # tệp đính kèm được tải được chọn}}.",
+        "selectAllMatches": "{total, plural, =1 {Chọn kết quả khớp duy nhất} other {Chọn tất cả # kết quả khớp}}",
+        "allMatchesSelected": "{total, plural, =1 {Kết quả khớp duy nhất được chọn} other {Tất cả # kết quả khớp được chọn}}.",
         "tooMany": "Có thể chọn tối đa {max} cùng một lúc. Thu hẹp các bộ lọc để chọn mọi kết quả khớp."
       },
       "actions": {
         "detach": "Tách rời",
         "confirm": {
-          "detach": "{count, plural, =0 {Không có tệp đính kèm nào được đính kèm vào bất cứ thứ gì.} one {Tách rời tệp đính kèm này? Nó được xóa khỏi mục mà nó được đính kèm và ở lại trong danh sách này dưới dạng không được đính kèm.} other {Tách rời # tệp đính kèm? Chúng được xóa khỏi các mục mà chúng được đính kèm và ở lại trong danh sách này dưới dạng không được đính kèm.}}",
-          "softDelete": "{count, plural, =0 {Các tệp đính kèm này đã bị xóa.} one {Xóa tệp đính kèm này? Nó bị ẩn khỏi mục mà nó được đính kèm và có thể được khôi phục từ danh sách này.} other {Xóa # tệp đính kèm? Chúng bị ẩn khỏi các mục mà chúng được đính kèm và có thể được khôi phục từ danh sách này.}}",
-          "restore": "{count, plural, =0 {Không có tệp đính kèm nào bị xóa.} one {Khôi phục tệp đính kèm này?} other {Khôi phục # tệp đính kèm?}}",
-          "purge": "{count, plural, =0 {Chỉ các tệp đính kèm đã xóa mới có thể được xóa vĩnh viễn. Xóa chúng trước.} one {Xóa vĩnh viễn tệp đính kèm này? Điều này không thể được hoàn tác.} other {Xóa vĩnh viễn # tệp đính kèm? Điều này không thể được hoàn tác.}}"
+          "detach": "{count, plural, =0 {Không có tệp đính kèm nào được đính kèm vào bất cứ thứ gì.} =1 {Tách rời tệp đính kèm này? Nó được xóa khỏi mục mà nó được đính kèm và ở lại trong danh sách này dưới dạng không được đính kèm.} other {Tách rời # tệp đính kèm? Chúng được xóa khỏi các mục mà chúng được đính kèm và ở lại trong danh sách này dưới dạng không được đính kèm.}}",
+          "softDelete": "{count, plural, =0 {Các tệp đính kèm này đã bị xóa.} =1 {Xóa tệp đính kèm này? Nó bị ẩn khỏi mục mà nó được đính kèm và có thể được khôi phục từ danh sách này.} other {Xóa # tệp đính kèm? Chúng bị ẩn khỏi các mục mà chúng được đính kèm và có thể được khôi phục từ danh sách này.}}",
+          "restore": "{count, plural, =0 {Không có tệp đính kèm nào bị xóa.} =1 {Khôi phục tệp đính kèm này?} other {Khôi phục # tệp đính kèm?}}",
+          "purge": "{count, plural, =0 {Chỉ các tệp đính kèm đã xóa mới có thể được xóa vĩnh viễn. Xóa chúng trước.} =1 {Xóa vĩnh viễn tệp đính kèm này? Điều này không thể được hoàn tác.} other {Xóa vĩnh viễn # tệp đính kèm? Điều này không thể được hoàn tác.}}"
         },
         "purgeFiles": "{count, plural, =0 {Không có tệp được lưu trữ nào bị xóa.} one {# tệp được lưu trữ ({size}) bị xóa.} other {# tệp được lưu trữ ({size}) bị xóa.}}",
         "purgeShared": "{count, plural, one {# tệp ở lại trong bộ lưu trữ vì một tệp đính kèm khác sử dụng nó.} other {# tệp ở lại trong bộ lưu trữ vì các tệp đính kèm khác sử dụng chúng.}}",
@@ -7282,7 +7282,7 @@
         "mentionedYouInComment": "Tôi đã nhắc đến bạn trong một bình luận trên",
         "inProject": "trong dự án",
         "testRun": "Chạy thử nghiệm:",
-        "casesInProject": "{count, plural, =1 {# trường hợp} other {# trường hợp}} trong",
+        "casesInProject": "{count, plural, =1 {# trường hợp} other {# trường hợp}} trong <project></project>",
         "sentBy": "Được gửi bởi {name}",
         "milestoneDueSoonTitle": "Cột mốc quan trọng sắp đạt được",
         "milestoneOverdueTitle": "Cột mốc bị trì hoãn",
@@ -7372,8 +7372,8 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "Kết quả mất {elapsed}, {deviation}% so với đường cơ sở {baseline} (nhiều hơn {threshold}% được phép).",
-          "CASE_REGRESSED": "Trường hợp thất bại sau khi vượt qua {passedBefore, plural, one {kết quả cuối cùng của nó} other {# kết quả cuối cùng của nó}}.",
-          "CASE_RECOVERED": "Trường hợp vượt qua sau khi thất bại {failedBefore, plural, one {kết quả cuối cùng của nó} other {# kết quả cuối cùng của nó}}.",
+          "CASE_REGRESSED": "Trường hợp thất bại sau khi vượt qua {passedBefore, plural, =1 {kết quả cuối cùng của nó} other {# kết quả cuối cùng của nó}}.",
+          "CASE_RECOVERED": "Trường hợp vượt qua sau khi thất bại {failedBefore, plural, =1 {kết quả cuối cùng của nó} other {# kết quả cuối cùng của nó}}.",
           "RUN_DURATION_DEVIATION": "Lần chạy mất {elapsed}, {deviation}% so với đường cơ sở {baseline} (nhiều hơn {threshold}% được phép).",
           "RUN_NOT_PROGRESSING": "Lần chạy không có kết quả mới trong {idleHours, plural, one {# giờ} other {# giờ}} (ngưỡng {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "Quá trình thực thi tự động trên {target} kết thúc với {status}{error, select, other {: {error}}}",
@@ -10641,7 +10641,7 @@
     "deleteRule": "Xóa Cảnh báo",
     "deleteConfirm": "Xóa cảnh báo \"{name}\"? Những người đăng ký của nó sẽ không còn nhận được thông báo và nó có thể được khôi phục từ thùng rác.",
     "pauseTitle": "Tạm dừng cảnh báo này cho mọi người?",
-    "pauseConfirm": "\"{name}\" ngừng bắt lửa cho {count, plural, =0 {mọi người} one {người đăng ký duy nhất của nó} =2 {cả hai người đăng ký} other {tất cả # người đăng ký}}, không chỉ bạn, cho đến khi ai đó bật nó lại. Để dừng thông báo của riêng bạn, hãy tắt Thông báo cho tôi.",
+    "pauseConfirm": "\"{name}\" ngừng bắt lửa cho {count, plural, =0 {mọi người} =1 {người đăng ký duy nhất của nó} =2 {cả hai người đăng ký} other {tất cả # người đăng ký}}, không chỉ bạn, cho đến khi ai đó bật nó lại. Để dừng thông báo của riêng bạn, hãy tắt Thông báo cho tôi.",
     "columns": {
       "name": "Quy tắc",
       "condition": "Điều kiện",

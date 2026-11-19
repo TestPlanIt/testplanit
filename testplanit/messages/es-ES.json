@@ -703,7 +703,7 @@
       "permissionDenied": "No tienes permiso para acceder a esta página.",
       "resultSubmitPermissionDenied": "No puedes enviar los resultados de este caso. Pídele a un administrador del proyecto que te lo asigne.",
       "dependenciesNotPassed": "Bloqueado por dependencias",
-      "dependenciesNotPassedDescription": "Este caso de prueba no se puede ejecutar hasta que {count, plural, =0 {los casos de los que depende hayan} one {el caso del que depende haya} other {todos los # casos de los que depende hayan}} pasado en esta ejecución.",
+      "dependenciesNotPassedDescription": "Este caso de prueba no se puede ejecutar hasta que {count, plural, =0 {los casos de los que depende hayan} =1 {el caso del que depende haya} other {todos los # casos de los que depende hayan}} pasado en esta ejecución.",
       "justificationRequired": "Se requiere justificación",
       "justificationRequiredDescription": "Para cambiar un resultado ya completado a un resultado diferente, se requieren Detalles del resultado que expliquen el cambio.",
       "requiredFieldMissing": "Falta un valor en un campo de resultado obligatorio.",
@@ -926,9 +926,9 @@
       "attachments": {
         "title": "Subir adjuntos",
         "description": "Arrastre y suelte sus archivos o haga clic en el botón de abajo para seleccionar archivos.",
-        "selectFiles": "{count, plural, =0 {Selecciona Archivos} one {1 Archivo seleccionado} other {# Archivos Seleccionados}}",
+        "selectFiles": "{count, plural, =0 {Selecciona Archivos} =1 {1 Archivo seleccionado} other {# Archivos Seleccionados}}",
         "selectFile": "{count, plural, =0 {Seleccionar archivo} other {1 archivo seleccionado}}",
-        "filesSelected": "{count, plural, one {1 archivo seleccionado} other {# archivos seleccionados}}",
+        "filesSelected": "{count, plural, =1 {1 archivo seleccionado} other {# archivos seleccionados}}",
         "addMoreFiles": "Añadir más archivos...",
         "replaceFile": "Reemplazar archivo...",
         "invalidFileType": "Tipo de archivo no válido. Sólo se permiten archivos {types}.",
@@ -2432,11 +2432,11 @@
           "scanCancelled": "Último escaneo cancelado"
         },
         "bulk": {
-          "label": "{count, plural, one {Su repositorio:} other {Todos los # repositorios:}}",
-          "scanRecentHint": "Vuelva a escanear las confirmaciones recientes en {count, plural, one {el repositorio conectado} other {todos los # repositorios conectados}}.",
-          "scanFullHint": "Recorra cada confirmación en la rama {count, plural, one {del repositorio conectado} other {de todos los # repositorios conectados}} y rellene los pines para tickets existentes.",
-          "scanFullConfirm": "Esto recorre cada confirmación en la rama {count, plural, one {del repositorio conectado} other {de todos los # repositorios conectados}}. Los repositorios se escanean de uno en uno, por lo que esto puede tomar mucho tiempo, y cada recorrido lee confirmaciones a través de la API del proveedor, lo que cuenta para su límite de velocidad.",
-          "checkStaleHint": "Verifique los Code Pins {count, plural, one {del repositorio conectado} other {de todos los # repositorios conectados}} contra cada punta de rama.",
+          "label": "{count, plural, =1 {Su repositorio:} other {Todos los # repositorios:}}",
+          "scanRecentHint": "Vuelva a escanear las confirmaciones recientes en {count, plural, =1 {el repositorio conectado} other {todos los # repositorios conectados}}.",
+          "scanFullHint": "Recorra cada confirmación en la rama {count, plural, =1 {del repositorio conectado} other {de todos los # repositorios conectados}} y rellene los pines para tickets existentes.",
+          "scanFullConfirm": "Esto recorre cada confirmación en la rama {count, plural, =1 {del repositorio conectado} other {de todos los # repositorios conectados}}. Los repositorios se escanean de uno en uno, por lo que esto puede tomar mucho tiempo, y cada recorrido lee confirmaciones a través de la API del proveedor, lo que cuenta para su límite de velocidad.",
+          "checkStaleHint": "Verifique los Code Pins {count, plural, =1 {del repositorio conectado} other {de todos los # repositorios conectados}} contra cada punta de rama.",
           "removeStaleHint": "Eliminar {count, plural, one {# Code Pin obsoleto} other {# Code Pins obsoletos}} en {repos, plural, one {# repositorio} other {# repositorios}}.",
           "removeConfirm": "¿Eliminar {count, plural, one {# Code Pin} other {# Code Pins}} que las últimas verificaciones no pudieron encontrar en la punta de la rama, en {repos, plural, one {# repositorio} other {# repositorios}}?",
           "queued": "En cola para {count, plural, one {# repositorio} other {# repositorios}}.{skipped, plural, =0 {} one { # ya estaba en ejecución.} other { # ya estaban en ejecución.}}",
@@ -3586,7 +3586,7 @@
       "activeRunWarningMessage": "Este caso de prueba es parte de {count, plural, =1 {# ejecución de prueba activa} other {# ejecuciones de prueba activas}}. Eliminarlo lo marcará como eliminado en esas ejecuciones."
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {Eliminar esta carpeta también eliminará todas las subcarpetas. ¿Estás seguro?} one {Eliminar esta carpeta también eliminará 1 caso de prueba en esta carpeta y todas las subcarpetas. ¿Estás seguro?} other {Eliminar esta carpeta también eliminará # casos de prueba en esta carpeta y todas las subcarpetas. ¿Estás seguro?}}",
+      "confirmMessage": "{count, plural, =0 {Eliminar esta carpeta también eliminará todas las subcarpetas. ¿Estás seguro?} =1 {Eliminar esta carpeta también eliminará 1 caso de prueba en esta carpeta y todas las subcarpetas. ¿Estás seguro?} other {Eliminar esta carpeta también eliminará # casos de prueba en esta carpeta y todas las subcarpetas. ¿Estás seguro?}}",
       "warning": "Esta carpeta y todos sus casos de prueba serán eliminados del proyecto. Los datos históricos de estos casos de prueba permanecerán en el proyecto incluyendo los resultados.",
       "confirm": "Confirmar eliminar carpeta",
       "success": "Carpeta y todas las subcarpetas/casos eliminados correctamente."
@@ -4312,7 +4312,7 @@
       "filterAllProjects": "Todos los proyectos",
       "actionRevert": "Revertir decisión",
       "revertedBadge": "Revertida",
-      "revertedBadgeTooltip": "{count, plural, one {Revertida una vez antes} other {Revertida # veces antes}}"
+      "revertedBadgeTooltip": "{count, plural, =1 {Revertida una vez antes} other {Revertida # veces antes}}"
     },
     "requester": {
       "openButton": "Solicitar revisión",
@@ -4415,7 +4415,7 @@
     "dependencies": {
       "blocked": "Bloqueado",
       "blockedBy": "Bloqueado hasta que {count, plural, one {este caso pase} other {estos # casos pasen}} en esta ejecución:",
-      "blockedNotice": "Este caso de prueba no se puede ejecutar hasta que {count, plural, one {el caso del que depende haya} other {todos los # casos de los que depende hayan}} pasado en esta ejecución.",
+      "blockedNotice": "Este caso de prueba no se puede ejecutar hasta que {count, plural, =1 {el caso del que depende haya} other {todos los # casos de los que depende hayan}} pasado en esta ejecución.",
       "notInRun": "{count, plural, one {# caso del que este depende no está en esta ejecución y no bloqueará la ejecución} other {# casos de los que este depende no están en esta ejecución y no bloquearán la ejecución}}:",
       "unblocked": "Todos los casos de los que este depende han pasado en esta ejecución."
     },
@@ -4734,7 +4734,7 @@
         "historyDetail": "{count, plural, one {# ejecución anterior} other {# ejecuciones anteriores}} después de cambios en los mismos archivos",
         "historyFailed": "Falló en una ejecución anterior después de cambios similares",
         "linkedDetail": "Vinculado al caso {caseId}",
-        "issueDetail": "Vinculado a {key}, nombrado en {count, plural, one {confirmación {sha}} other {# confirmaciones}}"
+        "issueDetail": "Vinculado a {key}, nombrado en {count, plural, =1 {confirmación {sha}} other {# confirmaciones}}"
       },
       "stale": {
         "badge": "Duro",
@@ -4789,9 +4789,9 @@
       "description": "Los casos que más merecen una ejecución, riesgo más alto primero por defecto. Los casos ya en esta ejecución se dejan fuera.",
       "minimumScore": "Puntuación de riesgo mínima",
       "showing": "{shown, plural, one {# caso cargado} other {# casos cargados}} de {total, plural, one {# coincidencia} other {# coincidencias}}",
-      "loadedSelected": "{shown, plural, =2 {Ambos casos cargados están seleccionados} one {El caso cargado está seleccionado} other {Todos los # casos cargados están seleccionados}}.",
-      "selectAllMatches": "{total, plural, =2 {Seleccionar ambas coincidencias} one {Seleccionar la única coincidencia} other {Seleccionar todas las # coincidencias}}",
-      "allMatchesSelected": "{total, plural, =2 {Ambas coincidencias están seleccionadas} one {La única coincidencia está seleccionada} other {Todas las # coincidencias están seleccionadas}}.",
+      "loadedSelected": "{shown, plural, =2 {Ambos casos cargados están seleccionados} =1 {El caso cargado está seleccionado} other {Todos los # casos cargados están seleccionados}}.",
+      "selectAllMatches": "{total, plural, =2 {Seleccionar ambas coincidencias} =1 {Seleccionar la única coincidencia} other {Seleccionar todas las # coincidencias}}",
+      "allMatchesSelected": "{total, plural, =2 {Ambas coincidencias están seleccionadas} =1 {La única coincidencia está seleccionada} other {Todas las # coincidencias están seleccionadas}}.",
       "noneMatch": "No hay casos puntuados en o por encima de esta puntuación.",
       "caseColumn": "Caso de prueba",
       "scoreColumn": "Puntuación de riesgo",
@@ -6190,13 +6190,13 @@
       "deselectAllShiftTooltip": "Deseleccionar/Seleccionar todas las configuraciones en todas las páginas.",
       "shiftClickHint": "Mantén pulsada la tecla Mayús para seleccionar/deseleccionar todas las páginas.",
       "bulkEdit": {
-        "button": "{count, plural, one {Editar 1 configuración} other {Editar # configuraciones}}",
-        "title": "{count, plural, one {Editar proyectos en 1 configuración} other {Editar proyectos en # configuraciones}}",
+        "button": "{count, plural, =1 {Editar 1 configuración} other {Editar # configuraciones}}",
+        "title": "{count, plural, =1 {Editar proyectos en 1 configuración} other {Editar proyectos en # configuraciones}}",
         "description": "Reemplace las asignaciones de proyecto en las configuraciones seleccionadas. El nombre de la configuración no se puede editar de forma masiva.",
-        "applyButton": "{count, plural, one {Aplicar a 1 configuración} other {Aplicar a # configuraciones}}",
-        "deleteButton": "{count, plural, one {Eliminar 1 configuración} other {Eliminar # configuraciones}}",
-        "deleteConfirmTitle": "{count, plural, one {¿Eliminar 1 configuración?} other {¿Eliminar # configuraciones?}}",
-        "deleteConfirmMessage": "{count, plural, one {Esto eliminará 1 configuración. Esta acción no se puede deshacer.} other {Esto eliminará # configuraciones. Esta acción no se puede deshacer.}}",
+        "applyButton": "{count, plural, =1 {Aplicar a 1 configuración} other {Aplicar a # configuraciones}}",
+        "deleteButton": "{count, plural, =1 {Eliminar 1 configuración} other {Eliminar # configuraciones}}",
+        "deleteConfirmTitle": "{count, plural, =1 {¿Eliminar 1 configuración?} other {¿Eliminar # configuraciones?}}",
+        "deleteConfirmMessage": "{count, plural, =1 {Esto eliminará 1 configuración. Esta acción no se puede deshacer.} other {Esto eliminará # configuraciones. Esta acción no se puede deshacer.}}",
         "applyEnabledLabel": "Cambiar estado habilitado"
       },
       "categories": {
@@ -6229,8 +6229,8 @@
         "selectCombinationDescription": "Seleccione las combinaciones de variantes que desea agregar. Las combinaciones que ya existen se muestran deshabilitadas.",
         "alreadyExists": "(ya existe)",
         "reviewTitle": "Revisar configuraciones",
-        "createButton": "{count, plural, one {Crear 1 configuración} other {Crear # configuraciones}}",
-        "creating": "{count, plural, one {Creando 1 configuración...} other {Creando # configuraciones...}}",
+        "createButton": "{count, plural, =1 {Crear 1 configuración} other {Crear # configuraciones}}",
+        "creating": "{count, plural, =1 {Creando 1 configuración...} other {Creando # configuraciones...}}",
         "allExist": "Todas las combinaciones ya existen.",
         "selectAtLeast": "Por favor, seleccione al menos una combinación."
       },
@@ -6352,7 +6352,7 @@
       "delete": {
         "confirmMessage": "¿Estás seguro de que quieres eliminar la causa raíz {name}?",
         "inUse": "{count, plural, one {# patrón de fallo lo utiliza.} other {# patrones de fallo lo utilizan.}}",
-        "moveLabel": "{count, plural, one {Mover el patrón a} other {Mover los # patrones a}}"
+        "moveLabel": "{count, plural, =1 {Mover el patrón a} other {Mover los # patrones a}}"
       }
     },
     "issue_config": {
@@ -6443,8 +6443,8 @@
           "ORPHAN": "Huérfano",
           "REFERENCED": "En uso"
         },
-        "loadedSelected": "{shown, plural, one {El archivo cargado está seleccionado} other {Todos los # archivos cargados están seleccionados}}.",
-        "confirmDelete": "{count, plural, =0 {Ninguno de los archivos seleccionados puede ser eliminado.} one {¿Eliminar este archivo ({size}) del almacenamiento? Esto no se puede deshacer.} other {¿Eliminar # archivos ({size}) del almacenamiento? Esto no se puede deshacer.}}",
+        "loadedSelected": "{shown, plural, =1 {El archivo cargado está seleccionado} other {Todos los # archivos cargados están seleccionados}}.",
+        "confirmDelete": "{count, plural, =0 {Ninguno de los archivos seleccionados puede ser eliminado.} =1 {¿Eliminar este archivo ({size}) del almacenamiento? Esto no se puede deshacer.} other {¿Eliminar # archivos ({size}) del almacenamiento? Esto no se puede deshacer.}}",
         "skipped": "{count, plural, one {# archivo seleccionado se deja sin modificar porque está en uso.} other {# archivos seleccionados se dejan sin modificar porque están en uso.}}",
         "deleted": "{count, plural, one {# archivo eliminado del almacenamiento} other {# archivos eliminados del almacenamiento}}"
       },
@@ -6462,18 +6462,18 @@
         "attachedThrough": "Adjunto a través de"
       },
       "selection": {
-        "loadedSelected": "{shown, plural, one {El adjunto cargado está seleccionado} other {Todos los # adjuntos cargados están seleccionados}}.",
-        "selectAllMatches": "{total, plural, one {Selecciona la única coincidencia} other {Selecciona todas las # coincidencias}}",
-        "allMatchesSelected": "{total, plural, one {La única coincidencia está seleccionada} other {Todas las # coincidencias están seleccionadas}}.",
+        "loadedSelected": "{shown, plural, =1 {El adjunto cargado está seleccionado} other {Todos los # adjuntos cargados están seleccionados}}.",
+        "selectAllMatches": "{total, plural, =1 {Selecciona la única coincidencia} other {Selecciona todas las # coincidencias}}",
+        "allMatchesSelected": "{total, plural, =1 {La única coincidencia está seleccionada} other {Todas las # coincidencias están seleccionadas}}.",
         "tooMany": "Se puede seleccionar hasta {max} a la vez. Reduce los filtros para seleccionar todas las coincidencias."
       },
       "actions": {
         "detach": "Desvincular",
         "confirm": {
-          "detach": "{count, plural, =0 {Ninguno de estos adjuntos está vinculado a nada.} one {¿Desvincular este adjunto? Se quita del elemento al que está adjunto y permanece en esta lista como desvinculado.} other {¿Desvincular # adjuntos? Se quitan de los elementos a los que están adjuntos y permanecen en esta lista como desvinculados.}}",
-          "softDelete": "{count, plural, =0 {Estos adjuntos ya están eliminados.} one {¿Eliminar este adjunto? Se oculta del elemento al que está adjunto y se puede restaurar desde esta lista.} other {¿Eliminar # adjuntos? Se ocultan de los elementos a los que están adjuntos y se pueden restaurar desde esta lista.}}",
-          "restore": "{count, plural, =0 {Ninguno de estos adjuntos está eliminado.} one {¿Restaurar este adjunto?} other {¿Restaurar # adjuntos?}}",
-          "purge": "{count, plural, =0 {Solo se pueden purgar los adjuntos eliminados. Elimínalos primero.} one {¿Eliminar permanentemente este adjunto? Esto no se puede deshacer.} other {¿Eliminar permanentemente # adjuntos? Esto no se puede deshacer.}}"
+          "detach": "{count, plural, =0 {Ninguno de estos adjuntos está vinculado a nada.} =1 {¿Desvincular este adjunto? Se quita del elemento al que está adjunto y permanece en esta lista como desvinculado.} other {¿Desvincular # adjuntos? Se quitan de los elementos a los que están adjuntos y permanecen en esta lista como desvinculados.}}",
+          "softDelete": "{count, plural, =0 {Estos adjuntos ya están eliminados.} =1 {¿Eliminar este adjunto? Se oculta del elemento al que está adjunto y se puede restaurar desde esta lista.} other {¿Eliminar # adjuntos? Se ocultan de los elementos a los que están adjuntos y se pueden restaurar desde esta lista.}}",
+          "restore": "{count, plural, =0 {Ninguno de estos adjuntos está eliminado.} =1 {¿Restaurar este adjunto?} other {¿Restaurar # adjuntos?}}",
+          "purge": "{count, plural, =0 {Solo se pueden purgar los adjuntos eliminados. Elimínalos primero.} =1 {¿Eliminar permanentemente este adjunto? Esto no se puede deshacer.} other {¿Eliminar permanentemente # adjuntos? Esto no se puede deshacer.}}"
         },
         "purgeFiles": "{count, plural, =0 {No hay archivos almacenados eliminados.} one {# archivo almacenado ({size}) se elimina.} other {# archivos almacenados ({size}) se eliminan.}}",
         "purgeShared": "{count, plural, one {# archivo permanece en el almacenamiento porque otro adjunto lo utiliza.} other {# archivos permanecen en el almacenamiento porque otros adjuntos los utilizan.}}",
@@ -7282,7 +7282,7 @@
         "mentionedYouInComment": "Te mencioné en un comentario en",
         "inProject": "en proyecto",
         "testRun": "Prueba de ejecución:",
-        "casesInProject": "{count, plural, =1 {# caso} other {# casos}} en",
+        "casesInProject": "{count, plural, =1 {# caso} other {# casos}} en <project></project>",
         "sentBy": "Enviado por {name}",
         "milestoneDueSoonTitle": "Hito que se cumplirá pronto",
         "milestoneOverdueTitle": "Hito atrasado",
@@ -7372,8 +7372,8 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "El resultado tardó {elapsed}, {deviation}% alejado de la línea de base de {baseline} (más de {threshold}% permitido).",
-          "CASE_REGRESSED": "El caso falló después de pasar {passedBefore, plural, one {su último resultado} other {sus últimos # resultados}}.",
-          "CASE_RECOVERED": "El caso pasó después de fallar {failedBefore, plural, one {su último resultado} other {sus últimos # resultados}}.",
+          "CASE_REGRESSED": "El caso falló después de pasar {passedBefore, plural, =1 {su último resultado} other {sus últimos # resultados}}.",
+          "CASE_RECOVERED": "El caso pasó después de fallar {failedBefore, plural, =1 {su último resultado} other {sus últimos # resultados}}.",
           "RUN_DURATION_DEVIATION": "La ejecución tardó {elapsed}, {deviation}% alejado de la línea de base de {baseline} (más de {threshold}% permitido).",
           "RUN_NOT_PROGRESSING": "La ejecución no ha tenido nuevo resultado durante {idleHours, plural, one {# hora} other {# horas}} (umbral {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "La ejecución automatizada en {target} finalizó con {status}{error, select, other {: {error}}}",
@@ -10641,7 +10641,7 @@
     "deleteRule": "Eliminar Alerta",
     "deleteConfirm": "¿Eliminar la alerta \"{name}\"? Sus suscriptores dejarán de recibir notificaciones y se puede restaurar desde la papelera.",
     "pauseTitle": "¿Pausar esta alerta para todos?",
-    "pauseConfirm": "\"{name}\" deja de activarse para {count, plural, =0 {todos} one {su único suscriptor} =2 {sus dos suscriptores} other {todos sus # suscriptores}}, no solo usted, hasta que alguien la habilite de nuevo. Para detener solo sus propias notificaciones, desactive Notificarme en su lugar.",
+    "pauseConfirm": "\"{name}\" deja de activarse para {count, plural, =0 {todos} =1 {su único suscriptor} =2 {sus dos suscriptores} other {todos sus # suscriptores}}, no solo usted, hasta que alguien la habilite de nuevo. Para detener solo sus propias notificaciones, desactive Notificarme en su lugar.",
     "columns": {
       "name": "Regla",
       "condition": "Condición",

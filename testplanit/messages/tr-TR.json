@@ -703,7 +703,7 @@
       "permissionDenied": "Bu sayfaya erişim izniniz yok.",
       "resultSubmitPermissionDenied": "Bu vaka için sonuçları gönderemezsiniz. Lütfen bir proje yöneticisinden size atamasını isteyin.",
       "dependenciesNotPassed": "Bağımlılıklar tarafından engellendi",
-      "dependenciesNotPassedDescription": "Bu test durumu {count, plural, =0 {bağlı olduğu durumlar bu çalıştırmada} one {bağlı olduğu durum bu çalıştırmada} other {bağlı olduğu tüm # durum bu çalıştırmada}} geçilinceye kadar yürütülemez.",
+      "dependenciesNotPassedDescription": "Bu test durumu {count, plural, =0 {bağlı olduğu durumlar bu çalıştırmada} =1 {bağlı olduğu durum bu çalıştırmada} other {bağlı olduğu tüm # durum bu çalıştırmada}} geçilinceye kadar yürütülemez.",
       "justificationRequired": "Gerekçe gerekli",
       "justificationRequiredDescription": "Tamamlanmış bir sonucu farklı bir sonuca dönüştürmek için, değişikliği açıklayan Sonuç Ayrıntıları gereklidir.",
       "requiredFieldMissing": "Gerekli sonuç alanlarından birinde değer eksik.",
@@ -926,9 +926,9 @@
       "attachments": {
         "title": "Ekleri Yükle",
         "description": "Dosyalarınızı sürükleyip bırakın veya dosya seçmek için aşağıdaki düğmeye tıklayın.",
-        "selectFiles": "{count, plural, =0 {Dosya Seç} one {1 Seçili Dosya} other {# Seçili Dosya}}",
+        "selectFiles": "{count, plural, =0 {Dosya Seç} =1 {1 Seçili Dosya} other {# Seçili Dosya}}",
         "selectFile": "{count, plural, =0 {Dosya Seçin} other {1 Dosya Seçildi}}",
-        "filesSelected": "{count, plural, one {1 dosya seçildi} other {# dosya seçildi}}",
+        "filesSelected": "{count, plural, =1 {1 dosya seçildi} other {# dosya seçildi}}",
         "addMoreFiles": "Daha fazla dosya ekle...",
         "replaceFile": "Dosyayı değiştir...",
         "invalidFileType": "Geçersiz dosya türü. Yalnızca {types} dosyalarına izin verilir.",
@@ -2432,11 +2432,11 @@
           "scanCancelled": "Son tarama iptal edildi"
         },
         "bulk": {
-          "label": "{count, plural, one {Deponuz:} other {Tüm # depo:}}",
-          "scanRecentHint": "Son commit'leri {count, plural, one {bağlı depoda} other {tüm # bağlı depoda}} yeniden tara.",
-          "scanFullHint": "{count, plural, one {Bağlı deponun} other {Tüm # bağlı deponun}} dalındaki her commit'i dolaşın ve mevcut biletler için pin'leri geri doldur.",
-          "scanFullConfirm": "{count, plural, one {Bağlı deponun} other {Tüm # bağlı deponun}} dalındaki her commit'i dolaşır. Depolar birer birer taranır, bu nedenle uzun sürebilir ve her yürüyüş, sağlayıcının API'si aracılığıyla commit'leri okur; bu da hız sınırınıza karşılık gelir.",
-          "checkStaleHint": "{count, plural, one {Bağlı deponun} other {Tüm # bağlı deponun}} Kod Pin'lerini her dal ucuna karşı kontrol et.",
+          "label": "{count, plural, =1 {Deponuz:} other {Tüm # depo:}}",
+          "scanRecentHint": "Son commit'leri {count, plural, =1 {bağlı depoda} other {tüm # bağlı depoda}} yeniden tara.",
+          "scanFullHint": "{count, plural, =1 {Bağlı deponun} other {Tüm # bağlı deponun}} dalındaki her commit'i dolaşın ve mevcut biletler için pin'leri geri doldur.",
+          "scanFullConfirm": "{count, plural, =1 {Bağlı deponun} other {Tüm # bağlı deponun}} dalındaki her commit'i dolaşır. Depolar birer birer taranır, bu nedenle uzun sürebilir ve her yürüyüş, sağlayıcının API'si aracılığıyla commit'leri okur; bu da hız sınırınıza karşılık gelir.",
+          "checkStaleHint": "{count, plural, =1 {Bağlı deponun} other {Tüm # bağlı deponun}} Kod Pin'lerini her dal ucuna karşı kontrol et.",
           "removeStaleHint": "{count, plural, one {# eski Kod Pin} other {# eski Kod Pin}} {repos, plural, one {# depo} other {# depo}} genelinde kaldır.",
           "removeConfirm": "{count, plural, one {Son kontrollerin dal ucunda bulamadığı # Kod Pin} other {Son kontrollerin dal ucunda bulamadığı # Kod Pin}}, {repos, plural, one {# depo} other {# depo}} genelinde kaldırılsın mı?",
           "queued": "{count, plural, one {# depo} other {# depo}} için sıraya alındı.{skipped, plural, =0 {} one { # zaten çalışıyordu.} other { # zaten çalışıyordu.}}",
@@ -3586,7 +3586,7 @@
       "activeRunWarningMessage": "Bu test durumu, {count, plural, =1 {# aktif test çalıştırmasının} other {# aktif test çalıştırmasının}} bir parçasıdır. Silinmesi, bu çalıştırmalar içinde silinmiş olarak işaretlenmesine neden olacaktır."
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {Bu klasörü silmek, tüm alt klasörleri de silecektir. Emin misiniz?} one {Bu klasörü silmek, bu klasördeki 1 test senaryosunu ve tüm alt klasörleri de silecektir. Emin misiniz?} other {Bu klasörü silmek, bu klasördeki # test senaryosunu ve tüm alt klasörleri de silecektir. Emin misiniz?}}",
+      "confirmMessage": "{count, plural, =0 {Bu klasörü silmek, tüm alt klasörleri de silecektir. Emin misiniz?} =1 {Bu klasörü silmek, bu klasördeki 1 test senaryosunu ve tüm alt klasörleri de silecektir. Emin misiniz?} other {Bu klasörü silmek, bu klasördeki # test senaryosunu ve tüm alt klasörleri de silecektir. Emin misiniz?}}",
       "warning": "Bu klasör ve içindeki tüm test örnekleri projeden kaldırılacaktır. Bu test örneklerine ait geçmiş veriler, sonuçlar da dahil olmak üzere, projede kalmaya devam edecektir.",
       "confirm": "Klasörü Silme Onayını Ver",
       "success": "Klasör ve tüm alt klasörler/dosyalar başarıyla silindi."
@@ -4312,7 +4312,7 @@
       "filterAllProjects": "Tüm projeler",
       "actionRevert": "Kararı geri al",
       "revertedBadge": "Geri alındı",
-      "revertedBadgeTooltip": "{count, plural, one {Daha önce bir kez geri alındı} other {Daha önce # kez geri alındı}}"
+      "revertedBadgeTooltip": "{count, plural, =1 {Daha önce bir kez geri alındı} other {Daha önce # kez geri alındı}}"
     },
     "requester": {
       "openButton": "İnceleme talebi",
@@ -4415,7 +4415,7 @@
     "dependencies": {
       "blocked": "Engellendi",
       "blockedBy": "Bu çalıştırmada {count, plural, one {bu vaka geçene} other {bu # vaka geçene}} kadar engellendi:",
-      "blockedNotice": "Bu test vakası {count, plural, one {bağlı olduğu vaka geçene} other {bağlı olduğu tüm # vaka geçene}} kadar bu çalıştırmada yürütülemez.",
+      "blockedNotice": "Bu test vakası {count, plural, =1 {bağlı olduğu vaka geçene} other {bağlı olduğu tüm # vaka geçene}} kadar bu çalıştırmada yürütülemez.",
       "notInRun": "{count, plural, one {Bu vakanın bağlı olduğu # vaka} other {Bu vakanın bağlı olduğu # vaka}} bu çalıştırmada değil ve yürütmeyi engellemeyecektir:",
       "unblocked": "Bu vakaya bağlı olan tüm vakalar bu çalıştırmada geçmiştir."
     },
@@ -4734,7 +4734,7 @@
         "historyDetail": "{count, plural, one {# önceki çalıştırma} other {# önceki çalıştırma}} aynı dosyalardaki değişikliklerden sonra",
         "historyFailed": "Benzer değişikliklerden sonra önceki çalıştırmada başarısız",
         "linkedDetail": "{caseId} senaryosuna bağlı",
-        "issueDetail": "{key} ile bağlantılı, {count, plural, one {commit {sha}} other {# commit}} içinde adlandırıldı"
+        "issueDetail": "{key} ile bağlantılı, {count, plural, =1 {commit {sha}} other {# commit}} içinde adlandırıldı"
       },
       "stale": {
         "badge": "Bayat",
@@ -4789,9 +4789,9 @@
       "description": "En yüksek riskin ilk olduğu şekilde, çalıştırılması en çok hak eden durumlar. Bu çalıştırmada zaten olan durumlar hariç tutulur.",
       "minimumScore": "Minimum risk puanı",
       "showing": "{shown, plural, one {# durum yüklendi} other {# durum yüklendi}} / {total, plural, one {# eşleşme} other {# eşleşme}}",
-      "loadedSelected": "{shown, plural, =2 {Her iki yüklenen durum seçilmiştir} one {Yüklenen durum seçilmiştir} other {Yüklenen tüm # durum seçilmiştir}}.",
-      "selectAllMatches": "{total, plural, =2 {Her iki eşleşmeyi seç} one {Tek eşleşmeyi seç} other {Tüm # eşleşmeyi seç}}",
-      "allMatchesSelected": "{total, plural, =2 {Her iki eşleşme seçilmiştir} one {Tek eşleşme seçilmiştir} other {Tüm # eşleşme seçilmiştir}}.",
+      "loadedSelected": "{shown, plural, =2 {Her iki yüklenen durum seçilmiştir} =1 {Yüklenen durum seçilmiştir} other {Yüklenen tüm # durum seçilmiştir}}.",
+      "selectAllMatches": "{total, plural, =2 {Her iki eşleşmeyi seç} =1 {Tek eşleşmeyi seç} other {Tüm # eşleşmeyi seç}}",
+      "allMatchesSelected": "{total, plural, =2 {Her iki eşleşme seçilmiştir} =1 {Tek eşleşme seçilmiştir} other {Tüm # eşleşme seçilmiştir}}.",
       "noneMatch": "Bu puan veya üzeri puanlandırılmış durumlar yok.",
       "caseColumn": "Test durumu",
       "scoreColumn": "Risk puanı",
@@ -6190,13 +6190,13 @@
       "deselectAllShiftTooltip": "Tüm sayfalardaki tüm yapılandırmaların seçimini kaldır/seçimi kaldır",
       "shiftClickHint": "Tüm sayfaları seçmek/seçimi kaldırmak için Shift tuşunu basılı tutun.",
       "bulkEdit": {
-        "button": "{count, plural, one {1 yapılandırmayı düzenle} other {# yapılandırmayı düzenle}}",
-        "title": "{count, plural, one {1 yapılandırmada projeleri düzenle} other {# yapılandırmada projeleri düzenle}}",
+        "button": "{count, plural, =1 {1 yapılandırmayı düzenle} other {# yapılandırmayı düzenle}}",
+        "title": "{count, plural, =1 {1 yapılandırmada projeleri düzenle} other {# yapılandırmada projeleri düzenle}}",
         "description": "Seçilen yapılandırmalardaki proje atamalarını değiştirin. Yapılandırma adı toplu olarak düzenlenemez.",
-        "applyButton": "{count, plural, one {1 yapılandırmaya uygula} other {# yapılandırmaya uygula}}",
-        "deleteButton": "{count, plural, one {1 yapılandırmayı sil} other {# yapılandırmayı sil}}",
-        "deleteConfirmTitle": "{count, plural, one {1 yapılandırma silinsin mi?} other {# yapılandırma silinsin mi?}}",
-        "deleteConfirmMessage": "{count, plural, one {Bu işlem 1 yapılandırmayı silecektir. Bu işlem geri alınamaz.} other {Bu işlem # yapılandırmayı silecektir. Bu işlem geri alınamaz.}}",
+        "applyButton": "{count, plural, =1 {1 yapılandırmaya uygula} other {# yapılandırmaya uygula}}",
+        "deleteButton": "{count, plural, =1 {1 yapılandırmayı sil} other {# yapılandırmayı sil}}",
+        "deleteConfirmTitle": "{count, plural, =1 {1 yapılandırma silinsin mi?} other {# yapılandırma silinsin mi?}}",
+        "deleteConfirmMessage": "{count, plural, =1 {Bu işlem 1 yapılandırmayı silecektir. Bu işlem geri alınamaz.} other {Bu işlem # yapılandırmayı silecektir. Bu işlem geri alınamaz.}}",
         "applyEnabledLabel": "Etkinleştirilmiş durumu değiştir"
       },
       "categories": {
@@ -6229,8 +6229,8 @@
         "selectCombinationDescription": "Eklenecek varyant kombinasyonlarını seçin. Zaten mevcut olan tüm kombinasyonlar devre dışı bırakılmış olarak gösterilir.",
         "alreadyExists": "(zaten mevcut)",
         "reviewTitle": "Yapılandırmaları Gözden Geçirin",
-        "createButton": "{count, plural, one {1 Yapılandırma Oluştur} other {# Yapılandırma Oluştur}}",
-        "creating": "{count, plural, one {1 Yapılandırma Oluşturuluyor...} other {# Yapılandırma Oluşturuluyor...}}",
+        "createButton": "{count, plural, =1 {1 Yapılandırma Oluştur} other {# Yapılandırma Oluştur}}",
+        "creating": "{count, plural, =1 {1 Yapılandırma Oluşturuluyor...} other {# Yapılandırma Oluşturuluyor...}}",
         "allExist": "Tüm kombinasyonlar zaten mevcut.",
         "selectAtLeast": "Lütfen en az bir kombinasyon seçin."
       },
@@ -6352,7 +6352,7 @@
       "delete": {
         "confirmMessage": "{name} temel nedenini silmek istediğinizden emin misiniz?",
         "inUse": "{count, plural, one {# başarısızlık deseni bunu kullanır.} other {# başarısızlık deseni bunu kullanır.}}",
-        "moveLabel": "{count, plural, one {Deseni şuraya taşı} other {# deseni şuraya taşı}}"
+        "moveLabel": "{count, plural, =1 {Deseni şuraya taşı} other {# deseni şuraya taşı}}"
       }
     },
     "issue_config": {
@@ -6443,8 +6443,8 @@
           "ORPHAN": "Yetim",
           "REFERENCED": "Kullanımda"
         },
-        "loadedSelected": "{shown, plural, one {Yüklenen dosya seçildi} other {Yüklenen tüm # dosya seçildi}}.",
-        "confirmDelete": "{count, plural, =0 {Seçilen dosyalardan hiçbiri silinemez.} one {Bu dosya ({size}) depodan silinsin mi? Bu işlem geri alınamaz.} other {# dosya ({size}) depodan silinsin mi? Bu işlem geri alınamaz.}}",
+        "loadedSelected": "{shown, plural, =1 {Yüklenen dosya seçildi} other {Yüklenen tüm # dosya seçildi}}.",
+        "confirmDelete": "{count, plural, =0 {Seçilen dosyalardan hiçbiri silinemez.} =1 {Bu dosya ({size}) depodan silinsin mi? Bu işlem geri alınamaz.} other {# dosya ({size}) depodan silinsin mi? Bu işlem geri alınamaz.}}",
         "skipped": "{count, plural, one {# seçilen dosya kullanımda olduğu için yalnız bırakılmıştır.} other {# seçilen dosya kullanımda olduğu için yalnız bırakılmıştır.}}",
         "deleted": "{count, plural, one {# dosya depodan silindi} other {# dosya depodan silindi}}"
       },
@@ -6462,18 +6462,18 @@
         "attachedThrough": "Ek olarak bağlı"
       },
       "selection": {
-        "loadedSelected": "{shown, plural, one {Yüklenen ek seçilidir} other {Yüklenen tüm # ek seçilidir}}.",
-        "selectAllMatches": "{total, plural, one {Tek eşleşmeyi seçin} other {Tüm # eşleşmeyi seçin}}",
-        "allMatchesSelected": "{total, plural, one {Tek eşleşme seçilidir} other {Tüm # eşleşme seçilidir}}.",
+        "loadedSelected": "{shown, plural, =1 {Yüklenen ek seçilidir} other {Yüklenen tüm # ek seçilidir}}.",
+        "selectAllMatches": "{total, plural, =1 {Tek eşleşmeyi seçin} other {Tüm # eşleşmeyi seçin}}",
+        "allMatchesSelected": "{total, plural, =1 {Tek eşleşme seçilidir} other {Tüm # eşleşme seçilidir}}.",
         "tooMany": "Aynı anda en fazla {max} seçilebilir. Her eşleşmeyi seçmek için filtreleri daraltın."
       },
       "actions": {
         "detach": "Bağlantıyı Kes",
         "confirm": {
-          "detach": "{count, plural, =0 {Bu eklerden hiçbiri hiçbir şeye bağlı değildir.} one {Bu ek ayrılsın mı? Bağlı olduğu öğeden kaldırılır ve bu listede bağlanmamış olarak kalır.} other {# ek ayrılsın mı? Bağlı oldukları öğelerden kaldırılırlar ve bu listede bağlanmamış olarak kalırlar.}}",
-          "softDelete": "{count, plural, =0 {Bu ekler zaten silinmiştir.} one {Bu ek silinsin mi? Bağlı olduğu öğeden gizlenir ve bu listeden geri yüklenebilir.} other {# ek silinsin mi? Bağlı oldukları öğelerden gizlenirler ve bu listeden geri yüklenebilirler.}}",
-          "restore": "{count, plural, =0 {Bu eklerden hiçbiri silinmemiştir.} one {Bu ek geri yüklensin mi?} other {# ek geri yüklensin mi?}}",
-          "purge": "{count, plural, =0 {Yalnızca silinen ekler temizlenebilir. Önce bunları silin.} one {Bu ek kalıcı olarak silinsin mi? Bu geri alınamaz.} other {# ek kalıcı olarak silinsin mi? Bu geri alınamaz.}}"
+          "detach": "{count, plural, =0 {Bu eklerden hiçbiri hiçbir şeye bağlı değildir.} =1 {Bu ek ayrılsın mı? Bağlı olduğu öğeden kaldırılır ve bu listede bağlanmamış olarak kalır.} other {# ek ayrılsın mı? Bağlı oldukları öğelerden kaldırılırlar ve bu listede bağlanmamış olarak kalırlar.}}",
+          "softDelete": "{count, plural, =0 {Bu ekler zaten silinmiştir.} =1 {Bu ek silinsin mi? Bağlı olduğu öğeden gizlenir ve bu listeden geri yüklenebilir.} other {# ek silinsin mi? Bağlı oldukları öğelerden gizlenirler ve bu listeden geri yüklenebilirler.}}",
+          "restore": "{count, plural, =0 {Bu eklerden hiçbiri silinmemiştir.} =1 {Bu ek geri yüklensin mi?} other {# ek geri yüklensin mi?}}",
+          "purge": "{count, plural, =0 {Yalnızca silinen ekler temizlenebilir. Önce bunları silin.} =1 {Bu ek kalıcı olarak silinsin mi? Bu geri alınamaz.} other {# ek kalıcı olarak silinsin mi? Bu geri alınamaz.}}"
         },
         "purgeFiles": "{count, plural, =0 {Hiçbir depolanan dosya silinmez.} one {# depolanan dosya ({size}) silinir.} other {# depolanan dosya ({size}) silinir.}}",
         "purgeShared": "{count, plural, one {# dosya, başka bir ek tarafından kullanıldığı için depolamada kalır.} other {# dosya, diğer ekler tarafından kullanıldığı için depolamada kalır.}}",
@@ -7282,7 +7282,7 @@
         "mentionedYouInComment": "Bir yorumda senden bahsetmiştim.",
         "inProject": "projede",
         "testRun": "Test Çalıştırması:",
-        "casesInProject": "{count, plural, =1 {# durum, proje:} other {# durum, proje:}}",
+        "casesInProject": "<project></project> projesinde {count, plural, =1 {# durum} other {# durum}}",
         "sentBy": "{name} tarafından gönderildi",
         "milestoneDueSoonTitle": "Önemli bir dönüm noktasına yakında ulaşılacak.",
         "milestoneOverdueTitle": "Gecikmiş Dönüm Noktası",
@@ -7372,8 +7372,8 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "Sonuç {elapsed} sürmüş, {baseline} tabanından {deviation}% uzakta ({threshold}%'den fazlası izin verilmiyor).",
-          "CASE_REGRESSED": "Vaka {passedBefore, plural, one {son sonucunda geçtikten} other {son # sonucunda geçtikten}} sonra başarısız oldu.",
-          "CASE_RECOVERED": "Vaka {failedBefore, plural, one {son sonucunda başarısız olduktan} other {son # sonucunda başarısız olduktan}} sonra başarılı oldu.",
+          "CASE_REGRESSED": "Vaka {passedBefore, plural, =1 {son sonucunda geçtikten} other {son # sonucunda geçtikten}} sonra başarısız oldu.",
+          "CASE_RECOVERED": "Vaka {failedBefore, plural, =1 {son sonucunda başarısız olduktan} other {son # sonucunda başarısız olduktan}} sonra başarılı oldu.",
           "RUN_DURATION_DEVIATION": "Çalıştırma {elapsed} sürmüş, {baseline} tabanından {deviation}% uzakta ({threshold}%'den fazlası izin verilmiyor).",
           "RUN_NOT_PROGRESSING": "Çalıştırma {idleHours, plural, one {# saat} other {# saat}} boyunca yeni bir sonuç almadı (eşik {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "{target} üzerinde otomatik yürütme {status} ile sona erdi{error, select, other {: {error}}}",
@@ -10641,7 +10641,7 @@
     "deleteRule": "Uyarıyı Sil",
     "deleteConfirm": "\"{name}\" uyarısı silinsin mi? Aboneleri bildirim almayı bırakacak ve çöp kutusundan geri yüklenebilir.",
     "pauseTitle": "Bu uyarı herkes için duraklatılsın mı?",
-    "pauseConfirm": "\"{name}\" durdurup {count, plural, =0 {herkesi} one {tek abonesini} =2 {her iki abonesini} other {tüm # abonesini}} etkileyecektir, sadece sizi değil, birisi yeniden etkinleştirene kadar. Yalnızca kendi bildirimlerinizi durdurmak için, bunun yerine \"Beni Bilgilendir\"i kapatın.",
+    "pauseConfirm": "\"{name}\" durdurup {count, plural, =0 {herkesi} =1 {tek abonesini} =2 {her iki abonesini} other {tüm # abonesini}} etkileyecektir, sadece sizi değil, birisi yeniden etkinleştirene kadar. Yalnızca kendi bildirimlerinizi durdurmak için, bunun yerine \"Beni Bilgilendir\"i kapatın.",
     "columns": {
       "name": "Kural",
       "condition": "Koşul",

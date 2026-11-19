@@ -703,7 +703,7 @@
       "permissionDenied": "Nemáte oprávnění pro přístup k této stránce.",
       "resultSubmitPermissionDenied": "Nemůžete odesílat výsledky pro tento případ. Požádejte administrátora projektu, aby vám jej přiřadil.",
       "dependenciesNotPassed": "Blokováno závislostmi",
-      "dependenciesNotPassedDescription": "Tento případ testu nelze spustit, dokud {count, plural, =0 {ty případy, na kterých závisí, neprojdou} one {ten případ, na kterém závisí, neprojde} few {všechny # případy, na kterých závisí, neprojdou} many {všech # případů, na kterých závisí, neprojde} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
+      "dependenciesNotPassedDescription": "Tento případ testu nelze spustit, dokud {count, plural, =0 {ty případy, na kterých závisí, neprojdou} =1 {ten případ, na kterém závisí, neprojde} few {všechny # případy, na kterých závisí, neprojdou} many {všech # případů, na kterých závisí, neprojde} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
       "justificationRequired": "Zdůvodnění je povinné",
       "justificationRequiredDescription": "Obrácení dokončeného výsledku na jiný výstup vyžaduje podrobnosti výsledku vysvětlující změnu.",
       "requiredFieldMissing": "Povinnému poli výsledku chybí hodnota.",
@@ -926,9 +926,9 @@
       "attachments": {
         "title": "Nahrát přílohy",
         "description": "Přetáhněte své soubory nebo klikněte na tlačítko níže pro výběr souborů.",
-        "selectFiles": "{count, plural, =0 {Vybrat soubory} one {1 vybraný soubor} few {# vybrané soubory} many {# vybraného souboru} other {# vybraných souborů}}",
+        "selectFiles": "{count, plural, =0 {Vybrat soubory} =1 {1 vybraný soubor} few {# vybrané soubory} many {# vybraného souboru} other {# vybraných souborů}}",
         "selectFile": "{count, plural, =0 {Vybrat soubor} other {1 vybraný soubor}}",
-        "filesSelected": "{count, plural, one {# vybraný soubor} few {# vybrané soubory} many {# vybraného souboru} other {# vybraných souborů}}",
+        "filesSelected": "{count, plural, =1 {# vybraný soubor} few {# vybrané soubory} many {# vybraného souboru} other {# vybraných souborů}}",
         "addMoreFiles": "Přidat další soubory...",
         "replaceFile": "Nahradit soubor...",
         "invalidFileType": "Neplatný typ souboru. Povoleny jsou pouze soubory typu {types}.",
@@ -2432,11 +2432,11 @@
           "scanCancelled": "Poslední skenování zrušeno"
         },
         "bulk": {
-          "label": "{count, plural, one {Vaše úložiště:} few {Všechna # úložiště:} many {Všech # úložišť:} other {Všech # úložišť:}}",
-          "scanRecentHint": "Přeskenovat poslední commity v {count, plural, one {připojeném úložišti} few {připojených # úložištích} many {připojených # úložištích} other {připojených # úložištích}}.",
-          "scanFullHint": "Projít každý commit na větvi {count, plural, one {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}} a doplnit piny pro existující lístky.",
-          "scanFullConfirm": "Toto projde každý commit na větvi {count, plural, one {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}}. Úložiště jsou skenována jedno po druhém, takže to může trvat dlouho a každý průchod čte commity přes API poskytovatele, což se počítá do jeho limitu rychlosti.",
-          "checkStaleHint": "Zkontrolovat Code Pins {count, plural, one {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}} proti špičce každé větve.",
+          "label": "{count, plural, =1 {Vaše úložiště:} few {Všechna # úložiště:} many {Všech # úložišť:} other {Všech # úložišť:}}",
+          "scanRecentHint": "Přeskenovat poslední commity v {count, plural, =1 {připojeném úložišti} few {připojených # úložištích} many {připojených # úložištích} other {připojených # úložištích}}.",
+          "scanFullHint": "Projít každý commit na větvi {count, plural, =1 {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}} a doplnit piny pro existující lístky.",
+          "scanFullConfirm": "Toto projde každý commit na větvi {count, plural, =1 {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}}. Úložiště jsou skenována jedno po druhém, takže to může trvat dlouho a každý průchod čte commity přes API poskytovatele, což se počítá do jeho limitu rychlosti.",
+          "checkStaleHint": "Zkontrolovat Code Pins {count, plural, =1 {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}} proti špičce každé větve.",
           "removeStaleHint": "Odstraní {count, plural, one {# zastaralý Code Pin} few {# zastaralé Code Pins} many {# zastaralých Code Pins} other {# zastaralých Code Pins}} v rámci {repos, plural, one {# úložiště} few {# úložišť} many {# úložišť} other {# úložišť}}.",
           "removeConfirm": "Odstraní {count, plural, one {# Code Pin, který poslední kontroly nemohly najít na špičce větve} few {# Code Pins, které poslední kontroly nemohly najít na špičce větve} many {# Code Pins, které poslední kontroly nemohly najít na špičce větve} other {# Code Pins, které poslední kontroly nemohly najít na špičce větve}}, v rámci {repos, plural, one {# úložiště} few {# úložišť} many {# úložišť} other {# úložišť}}?",
           "queued": "Zařazeno do fronty pro {count, plural, one {# úložiště} few {# úložiště} many {# úložišť} other {# úložišť}}.{skipped, plural, =0 {} one { # již běželo.} few { # již běžela.} many { # již běželo.} other { # již běželo.}}",
@@ -3586,7 +3586,7 @@
       "activeRunWarningMessage": "Tento testovací případ je součástí {count, plural, =1 {# aktivního testovacího běhu} other {# aktivních testovacích běhů}}. Jeho odstraněním bude v těchto bězích označen jako odstraněný."
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {Odstraněním této složky se odstraní i všechny podsložky. Opravdu chcete pokračovat?} one {Odstraněním této složky se odstraní i 1 testovací případ v této složce a všech podsložkách. Opravdu chcete pokračovat?} few {Odstraněním této složky se odstraní i # testovací případy v této složce a všech podsložkách. Opravdu chcete pokračovat?} other {Odstraněním této složky se odstraní i # testovacích případů v této složce a všech podsložkách. Opravdu chcete pokračovat?}}",
+      "confirmMessage": "{count, plural, =0 {Odstraněním této složky se odstraní i všechny podsložky. Opravdu chcete pokračovat?} =1 {Odstraněním této složky se odstraní i 1 testovací případ v této složce a všech podsložkách. Opravdu chcete pokračovat?} few {Odstraněním této složky se odstraní i # testovací případy v této složce a všech podsložkách. Opravdu chcete pokračovat?} other {Odstraněním této složky se odstraní i # testovacích případů v této složce a všech podsložkách. Opravdu chcete pokračovat?}}",
       "warning": "Tato složka a všechny její testovací případy budou z projektu odstraněny. Historická data pro tyto testovací případy v projektu zůstanou zachována, včetně výsledků.",
       "confirm": "Potvrdit odstranění složky",
       "success": "Složka a všechny podsložky/případy byly úspěšně odstraněny."
@@ -4312,7 +4312,7 @@
       "filterAllProjects": "Všechny projekty",
       "actionRevert": "Vrátit rozhodnutí",
       "revertedBadge": "Vráceno",
-      "revertedBadgeTooltip": "{count, plural, one {Vráceno jednou} few {Vráceno # krát} many {Vráceno # krát} other {Vráceno # krát}}"
+      "revertedBadgeTooltip": "{count, plural, =1 {Vráceno jednou} few {Vráceno # krát} many {Vráceno # krát} other {Vráceno # krát}}"
     },
     "requester": {
       "openButton": "Vyžádat kontrolu",
@@ -4415,7 +4415,7 @@
     "dependencies": {
       "blocked": "Blokováno",
       "blockedBy": "Blokováno, dokud {count, plural, one {tento případ neprojde} few {tyto # případy neprojdou} many {těchto # případů neprojde} other {tyto případy neprojdou}} v tomto běhu:",
-      "blockedNotice": "Tento testovací případ nelze spustit, dokud {count, plural, one {ten případ, na kterém závisí, neprojde} few {všechny # případy, na kterých závisí, neprojdou} many {všech # případů, na kterých závisí, neprojde} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
+      "blockedNotice": "Tento testovací případ nelze spustit, dokud {count, plural, =1 {ten případ, na kterém závisí, neprojde} few {všechny # případy, na kterých závisí, neprojdou} many {všech # případů, na kterých závisí, neprojde} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
       "notInRun": "{count, plural, one {# případ, na kterém tento závisí, není v tomto běhu a nebude blokovat spuštění} few {# případy, na kterých tento závisí, nejsou v tomto běhu a nebudou blokovat spuštění} many {# případů, na kterých tento závisí, není v tomto běhu a nebude blokovat spuštění} other {# případů, na kterých tento závisí, není v tomto běhu a nebude blokovat spuštění}}:",
       "unblocked": "Všechny případy, na kterých tento závisí, v tomto běhu prošly."
     },
@@ -4734,7 +4734,7 @@
         "historyDetail": "{count, plural, one {# dřívější běh} few {# dřívější běhy} many {# dřívějšího běhu} other {# dřívějších běhů}} po změnách stejných souborů",
         "historyFailed": "Selhalo v dřívějším běhu po podobných změnách",
         "linkedDetail": "Propojeno s případem {caseId}",
-        "issueDetail": "Propojeno s {key}, pojmenováno v {count, plural, one {commitu {sha}} other {# commitech}}"
+        "issueDetail": "Propojeno s {key}, pojmenováno v {count, plural, =1 {commitu {sha}} other {# commitech}}"
       },
       "stale": {
         "badge": "Zastaralé",
@@ -4789,9 +4789,9 @@
       "description": "Případy, které si nejvíce zaslouží spuštění, nejprve s nejvyšším rizikem. Případy, které se již v tomto běhu nacházejí, jsou vynechány.",
       "minimumScore": "Minimální skóre rizika",
       "showing": "{shown, plural, one {# případ načten} few {# případy načteny} many {# případů načteno} other {# případů načteno}} z {total, plural, one {# shody} few {# shod} many {# shody} other {# shod}}",
-      "loadedSelected": "{shown, plural, =2 {Oba načtené případy jsou vybrány} one {Načtený případ je vybrán} few {Všechny # načtené případy jsou vybrány} other {Všech # načtených případů je vybráno}}.",
-      "selectAllMatches": "{total, plural, =2 {Vybrat obě shody} one {Vybrat jedinou shodu} few {Vybrat všechny # shody} other {Vybrat všech # shod}}",
-      "allMatchesSelected": "{total, plural, =2 {Obě shody jsou vybrány} one {Jediná shoda je vybrána} few {Všechny # shody jsou vybrány} other {Všech # shod je vybráno}}.",
+      "loadedSelected": "{shown, plural, =2 {Oba načtené případy jsou vybrány} =1 {Načtený případ je vybrán} few {Všechny # načtené případy jsou vybrány} other {Všech # načtených případů je vybráno}}.",
+      "selectAllMatches": "{total, plural, =2 {Vybrat obě shody} =1 {Vybrat jedinou shodu} few {Vybrat všechny # shody} other {Vybrat všech # shod}}",
+      "allMatchesSelected": "{total, plural, =2 {Obě shody jsou vybrány} =1 {Jediná shoda je vybrána} few {Všechny # shody jsou vybrány} other {Všech # shod je vybráno}}.",
       "noneMatch": "V tomto skóre nebo vyšší nejsou žádné hodnocené případy.",
       "caseColumn": "Testovací případ",
       "scoreColumn": "Skóre rizika",
@@ -6190,13 +6190,13 @@
       "deselectAllShiftTooltip": "Zrušit výběr/vybrat všechny konfigurace napříč všemi stránkami",
       "shiftClickHint": "Podržte Shift pro výběr/zrušení výběru všech stránek",
       "bulkEdit": {
-        "button": "{count, plural, one {Upravit 1 konfiguraci} few {Upravit # konfigurace} many {Upravit # konfigurace} other {Upravit # konfigurací}}",
-        "title": "{count, plural, one {Upravit projekty u 1 konfigurace} few {Upravit projekty u # konfigurací} many {Upravit projekty u # konfigurací} other {Upravit projekty u # konfigurací}}",
+        "button": "{count, plural, =1 {Upravit 1 konfiguraci} few {Upravit # konfigurace} many {Upravit # konfigurace} other {Upravit # konfigurací}}",
+        "title": "{count, plural, =1 {Upravit projekty u 1 konfigurace} few {Upravit projekty u # konfigurací} many {Upravit projekty u # konfigurací} other {Upravit projekty u # konfigurací}}",
         "description": "Nahraďte přiřazení projektů u vybraných konfigurací. Název konfigurace nelze upravovat hromadně.",
-        "applyButton": "{count, plural, one {Použít na 1 konfiguraci} few {Použít na # konfigurace} many {Použít na # konfigurace} other {Použít na # konfigurací}}",
-        "deleteButton": "{count, plural, one {Smazat 1 konfiguraci} few {Smazat # konfigurace} many {Smazat # konfigurace} other {Smazat # konfigurací}}",
-        "deleteConfirmTitle": "{count, plural, one {Smazat 1 konfiguraci?} few {Smazat # konfigurace?} many {Smazat # konfigurace?} other {Smazat # konfigurací?}}",
-        "deleteConfirmMessage": "{count, plural, one {Tímto se smaže 1 konfigurace. Tuto akci nelze vrátit zpět.} few {Tímto se smažou # konfigurace. Tuto akci nelze vrátit zpět.} many {Tímto se smažou # konfigurace. Tuto akci nelze vrátit zpět.} other {Tímto se smaže # konfigurací. Tuto akci nelze vrátit zpět.}}",
+        "applyButton": "{count, plural, =1 {Použít na 1 konfiguraci} few {Použít na # konfigurace} many {Použít na # konfigurace} other {Použít na # konfigurací}}",
+        "deleteButton": "{count, plural, =1 {Smazat 1 konfiguraci} few {Smazat # konfigurace} many {Smazat # konfigurace} other {Smazat # konfigurací}}",
+        "deleteConfirmTitle": "{count, plural, =1 {Smazat 1 konfiguraci?} few {Smazat # konfigurace?} many {Smazat # konfigurace?} other {Smazat # konfigurací?}}",
+        "deleteConfirmMessage": "{count, plural, =1 {Tímto se smaže 1 konfigurace. Tuto akci nelze vrátit zpět.} few {Tímto se smažou # konfigurace. Tuto akci nelze vrátit zpět.} many {Tímto se smažou # konfigurace. Tuto akci nelze vrátit zpět.} other {Tímto se smaže # konfigurací. Tuto akci nelze vrátit zpět.}}",
         "applyEnabledLabel": "Změnit stav povolení"
       },
       "categories": {
@@ -6229,8 +6229,8 @@
         "selectCombinationDescription": "Vyberte kombinace variant, které chcete přidat. Kombinace, které již existují, jsou zobrazeny jako zakázané.",
         "alreadyExists": "(již existuje)",
         "reviewTitle": "Zkontrolovat konfigurace",
-        "createButton": "{count, plural, one {Vytvořit 1 konfiguraci} few {Vytvořit # konfigurace} many {Vytvořit # konfigurace} other {Vytvořit # konfigurací}}",
-        "creating": "{count, plural, one {Vytváření 1 konfigurace...} few {Vytváření # konfigurací...} many {Vytváření # konfigurací...} other {Vytváření # konfigurací...}}",
+        "createButton": "{count, plural, =1 {Vytvořit 1 konfiguraci} few {Vytvořit # konfigurace} many {Vytvořit # konfigurace} other {Vytvořit # konfigurací}}",
+        "creating": "{count, plural, =1 {Vytváření 1 konfigurace...} few {Vytváření # konfigurací...} many {Vytváření # konfigurací...} other {Vytváření # konfigurací...}}",
         "allExist": "Všechny kombinace již existují.",
         "selectAtLeast": "Vyberte prosím alespoň jednu kombinaci."
       },
@@ -6352,7 +6352,7 @@
       "delete": {
         "confirmMessage": "Opravdu chcete odstranit hlavní příčinu {name}?",
         "inUse": "{count, plural, one {# vzor selhání ji používá.} few {# vzory selhání ji používají.} many {# vzorů selhání ji používá.} other {# vzorů selhání ji používá.}}",
-        "moveLabel": "{count, plural, one {Přesunout vzor na} few {Přesunout # vzory na} many {Přesunout # vzorů na} other {Přesunout # vzorů na}}"
+        "moveLabel": "{count, plural, =1 {Přesunout vzor na} few {Přesunout # vzory na} many {Přesunout # vzorů na} other {Přesunout # vzorů na}}"
       }
     },
     "issue_config": {
@@ -6443,8 +6443,8 @@
           "ORPHAN": "Osiřelý",
           "REFERENCED": "Používáno"
         },
-        "loadedSelected": "{shown, plural, one {Načtený soubor je vybrán} few {Všechny # načtené soubory jsou vybrány} many {Všech # načtených souborů je vybráno} other {Všech # načtených souborů je vybráno}}.",
-        "confirmDelete": "{count, plural, =0 {Žádný z vybraných souborů nelze smazat.} one {Smazat tento soubor ({size}) z úložiště? Tuto akci nelze vrátit zpět.} few {Smazat # soubory ({size}) z úložiště? Tuto akci nelze vrátit zpět.} many {Smazat # souborů ({size}) z úložiště? Tuto akci nelze vrátit zpět.} other {Smazat # souborů ({size}) z úložiště? Tuto akci nelze vrátit zpět.}}",
+        "loadedSelected": "{shown, plural, =1 {Načtený soubor je vybrán} few {Všechny # načtené soubory jsou vybrány} many {Všech # načtených souborů je vybráno} other {Všech # načtených souborů je vybráno}}.",
+        "confirmDelete": "{count, plural, =0 {Žádný z vybraných souborů nelze smazat.} =1 {Smazat tento soubor ({size}) z úložiště? Tuto akci nelze vrátit zpět.} few {Smazat # soubory ({size}) z úložiště? Tuto akci nelze vrátit zpět.} many {Smazat # souborů ({size}) z úložiště? Tuto akci nelze vrátit zpět.} other {Smazat # souborů ({size}) z úložiště? Tuto akci nelze vrátit zpět.}}",
         "skipped": "{count, plural, one {# vybraný soubor je ponechán, protože se používá.} few {# vybrané soubory jsou ponechány, protože se používají.} many {# vybraných souborů je ponecháno, protože se používají.} other {# vybraných souborů je ponecháno, protože se používají.}}",
         "deleted": "{count, plural, one {# soubor smazán z úložiště} few {# soubory smazány z úložiště} many {# souborů smazáno z úložiště} other {# souborů smazáno z úložiště}}"
       },
@@ -6462,18 +6462,18 @@
         "attachedThrough": "Připojeno prostřednictvím"
       },
       "selection": {
-        "loadedSelected": "{shown, plural, one {Načtená příloha je vybrána} few {Všechny # načtené přílohy jsou vybrány} many {Všech # načtených příloh je vybráno} other {Všech # načtených příloh je vybráno}}.",
-        "selectAllMatches": "{total, plural, one {Vyberte jedinou shodu} few {Vyberte všechny # shody} many {Vyberte všech # shod} other {Vyberte všech # shod}}",
-        "allMatchesSelected": "{total, plural, one {Jediná shoda je vybrána} few {Všechny # shody jsou vybrány} many {Všech # shod je vybráno} other {Všech # shod je vybráno}}.",
+        "loadedSelected": "{shown, plural, =1 {Načtená příloha je vybrána} few {Všechny # načtené přílohy jsou vybrány} many {Všech # načtených příloh je vybráno} other {Všech # načtených příloh je vybráno}}.",
+        "selectAllMatches": "{total, plural, =1 {Vyberte jedinou shodu} few {Vyberte všechny # shody} many {Vyberte všech # shod} other {Vyberte všech # shod}}",
+        "allMatchesSelected": "{total, plural, =1 {Jediná shoda je vybrána} few {Všechny # shody jsou vybrány} many {Všech # shod je vybráno} other {Všech # shod je vybráno}}.",
         "tooMany": "Najednou lze vybrat až {max}. Zúžením filtrů vyberete každou shodu."
       },
       "actions": {
         "detach": "Odpojit",
         "confirm": {
-          "detach": "{count, plural, =0 {Žádná z těchto příloh není připojena k ničemu.} one {Odpojit tuto přílohu? Je odstraněna z položky, ke které je připojena, a zůstává v tomto seznamu jako nepřipojená.} few {Odpojit # přílohy? Jsou odstraněny z položek, ke kterým jsou připojeny, a zůstávají v tomto seznamu jako nepřipojené.} many {Odpojit # příloh? Jsou odstraněny z položek, ke kterým jsou připojeny, a zůstávají v tomto seznamu jako nepřipojené.} other {Odpojit # příloh? Jsou odstraněny z položek, ke kterým jsou připojeny, a zůstávají v tomto seznamu jako nepřipojené.}}",
-          "softDelete": "{count, plural, =0 {Tyto přílohy jsou již smazány.} one {Smazat tuto přílohu? Je skryta z položky, ke které je připojena, a lze ji obnovit z tohoto seznamu.} few {Smazat # přílohy? Jsou skryty z položek, ke kterým jsou připojeny, a lze je obnovit z tohoto seznamu.} many {Smazat # příloh? Jsou skryty z položek, ke kterým jsou připojeny, a lze je obnovit z tohoto seznamu.} other {Smazat # příloh? Jsou skryty z položek, ke kterým jsou připojeny, a lze je obnovit z tohoto seznamu.}}",
-          "restore": "{count, plural, =0 {Žádná z těchto příloh není smazána.} one {Obnovit tuto přílohu?} few {Obnovit # přílohy?} many {Obnovit # příloh?} other {Obnovit # příloh?}}",
-          "purge": "{count, plural, =0 {Lze vymazat pouze smazané přílohy. Nejdříve je smažte.} one {Trvale smazat tuto přílohu? Toto nelze vrátit zpět.} few {Trvale smazat # přílohy? Toto nelze vrátit zpět.} many {Trvale smazat # příloh? Toto nelze vrátit zpět.} other {Trvale smazat # příloh? Toto nelze vrátit zpět.}}"
+          "detach": "{count, plural, =0 {Žádná z těchto příloh není připojena k ničemu.} =1 {Odpojit tuto přílohu? Je odstraněna z položky, ke které je připojena, a zůstává v tomto seznamu jako nepřipojená.} few {Odpojit # přílohy? Jsou odstraněny z položek, ke kterým jsou připojeny, a zůstávají v tomto seznamu jako nepřipojené.} many {Odpojit # příloh? Jsou odstraněny z položek, ke kterým jsou připojeny, a zůstávají v tomto seznamu jako nepřipojené.} other {Odpojit # příloh? Jsou odstraněny z položek, ke kterým jsou připojeny, a zůstávají v tomto seznamu jako nepřipojené.}}",
+          "softDelete": "{count, plural, =0 {Tyto přílohy jsou již smazány.} =1 {Smazat tuto přílohu? Je skryta z položky, ke které je připojena, a lze ji obnovit z tohoto seznamu.} few {Smazat # přílohy? Jsou skryty z položek, ke kterým jsou připojeny, a lze je obnovit z tohoto seznamu.} many {Smazat # příloh? Jsou skryty z položek, ke kterým jsou připojeny, a lze je obnovit z tohoto seznamu.} other {Smazat # příloh? Jsou skryty z položek, ke kterým jsou připojeny, a lze je obnovit z tohoto seznamu.}}",
+          "restore": "{count, plural, =0 {Žádná z těchto příloh není smazána.} =1 {Obnovit tuto přílohu?} few {Obnovit # přílohy?} many {Obnovit # příloh?} other {Obnovit # příloh?}}",
+          "purge": "{count, plural, =0 {Lze vymazat pouze smazané přílohy. Nejdříve je smažte.} =1 {Trvale smazat tuto přílohu? Toto nelze vrátit zpět.} few {Trvale smazat # přílohy? Toto nelze vrátit zpět.} many {Trvale smazat # příloh? Toto nelze vrátit zpět.} other {Trvale smazat # příloh? Toto nelze vrátit zpět.}}"
         },
         "purgeFiles": "{count, plural, =0 {Žádné uložené soubory nejsou smazány.} one {# uložený soubor ({size}) je smazán.} few {# uložené soubory ({size}) jsou smazány.} many {# uložených souborů ({size}) je smazáno.} other {# uložených souborů ({size}) je smazáno.}}",
         "purgeShared": "{count, plural, one {# soubor zůstává v úložišti, protože jej používá další příloha.} few {# soubory zůstávají v úložišti, protože je používají další přílohy.} many {# souborů zůstává v úložišti, protože je používají další přílohy.} other {# souborů zůstává v úložišti, protože je používají další přílohy.}}",
@@ -7282,7 +7282,7 @@
         "mentionedYouInComment": "zmínil vás v komentáři u",
         "inProject": "v projektu",
         "testRun": "Testovací běh:",
-        "casesInProject": "{count, plural, =1 {# případ} few {# případy} other {# případů}} v",
+        "casesInProject": "{count, plural, =1 {# případ} few {# případy} other {# případů}} v <project></project>",
         "sentBy": "Odeslal {name}",
         "milestoneDueSoonTitle": "Milník brzy splatný",
         "milestoneOverdueTitle": "Milník po termínu",
@@ -7372,8 +7372,8 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "Výsledek trval {elapsed}, {deviation}% od výchozího {baseline} (více než {threshold}% povoleno).",
-          "CASE_REGRESSED": "Případ selhal po úspěšném průchodu {passedBefore, plural, one {jeho posledního výsledku} few {jeho posledních # výsledků} many {jeho posledních # výsledků} other {jeho posledních # výsledků}}.",
-          "CASE_RECOVERED": "Případ prošel po neúspěšném průchodu {failedBefore, plural, one {jeho posledního výsledku} few {jeho posledních # výsledků} many {jeho posledních # výsledků} other {jeho posledních # výsledků}}.",
+          "CASE_REGRESSED": "Případ selhal po úspěšném průchodu {passedBefore, plural, =1 {jeho posledního výsledku} few {jeho posledních # výsledků} many {jeho posledních # výsledků} other {jeho posledních # výsledků}}.",
+          "CASE_RECOVERED": "Případ prošel po neúspěšném průchodu {failedBefore, plural, =1 {jeho posledního výsledku} few {jeho posledních # výsledků} many {jeho posledních # výsledků} other {jeho posledních # výsledků}}.",
           "RUN_DURATION_DEVIATION": "Běh trval {elapsed}, {deviation}% od výchozího {baseline} (více než {threshold}% povoleno).",
           "RUN_NOT_PROGRESSING": "Běh nemá nový výsledek již {idleHours, plural, one {# hodinu} few {# hodiny} many {# hodiny} other {# hodin}} (prahová hodnota {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "Automatické spuštění na {target} skončilo s {status}{error, select, other {: {error}}}",
@@ -10641,7 +10641,7 @@
     "deleteRule": "Smazat upozornění",
     "deleteConfirm": "Smazat upozornění \"{name}\"? Jeho předplatitelé přestanou dostávat oznámení a může být obnoven z koše.",
     "pauseTitle": "Pozastavit toto upozornění pro všechny?",
-    "pauseConfirm": "\"{name}\" se přestane spouštět pro {count, plural, =0 {všechny} one {jeho jediného předplatitele} =2 {oba jeho předplatitele} few {všechny # jeho předplatitele} other {všech # jeho předplatitelů}}, ne jen pro vás, dokud jej někdo znovu nepovolí. Chcete-li zastavit pouze svá vlastní oznámení, místo toho vypněte Upozornit mě.",
+    "pauseConfirm": "\"{name}\" se přestane spouštět pro {count, plural, =0 {všechny} =1 {jeho jediného předplatitele} =2 {oba jeho předplatitele} few {všechny # jeho předplatitele} other {všech # jeho předplatitelů}}, ne jen pro vás, dokud jej někdo znovu nepovolí. Chcete-li zastavit pouze svá vlastní oznámení, místo toho vypněte Upozornit mě.",
     "columns": {
       "name": "Pravidlo",
       "condition": "Podmínka",
