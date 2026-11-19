@@ -90,7 +90,7 @@ describe("registerRunsCreate", () => {
       arguments: { projectId: 1, name: "Smoke Suite" },
     });
     expect(result.isError).toBeFalsy();
-    const text = JSON.parse((result.content[0] as any).text);
+    const text = JSON.parse((result as { content: Array<{ text: string }> }).content[0].text);
     expect(text.id).toBe(42);
     expect(text.name).toBe("Smoke Suite");
     expect(text.testRunType).toBe("REGULAR");
@@ -169,7 +169,7 @@ describe("registerRunsCreate", () => {
     expect(vi.mocked(postHostJson).mock.calls[0]?.[0]).toBe(
       "/api/test-runs/42/generate-iterations",
     );
-    expect(JSON.parse((result.content[0] as any).text).iterations).toEqual({
+    expect(JSON.parse((result as { content: Array<{ text: string }> }).content[0].text).iterations).toEqual({
       generated: true,
       iterationCount: 6,
       async: false,
@@ -201,7 +201,7 @@ describe("registerRunsCreate", () => {
     });
     const create = (mockZenstack.mock.calls[3]?.[2] as any).data;
     expect(create.testCases.create.map((c: any) => c.repositoryCase.connect.id)).toEqual([10, 30]);
-    expect(JSON.parse((result.content[0] as any).text).skippedNotStartedCaseIds).toEqual([20]);
+    expect(JSON.parse((result as { content: Array<{ text: string }> }).content[0].text).skippedNotStartedCaseIds).toEqual([20]);
   });
 
   it("keeps the run and reports why when iterations cannot be generated", async () => {
@@ -224,7 +224,7 @@ describe("registerRunsCreate", () => {
     });
 
     expect(result.isError).toBeFalsy();
-    const out = JSON.parse((result.content[0] as any).text);
+    const out = JSON.parse((result as { content: Array<{ text: string }> }).content[0].text);
     expect(out.id).toBe(42);
     expect(out.iterations.generated).toBe(false);
     expect(out.iterations.reason).toContain("422");
@@ -296,7 +296,7 @@ describe("registerRunsCreate", () => {
       arguments: { projectId: 1, name: "Run" },
     });
     expect(result.isError).toBe(true);
-    expect((result.content[0] as any).text).toMatch(/Forbidden/);
+    expect((result as { content: Array<{ text: string }> }).content[0].text).toMatch(/Forbidden/);
   });
 
   it("errors when no RUNS-scope state exists", async () => {
@@ -309,7 +309,7 @@ describe("registerRunsCreate", () => {
       arguments: { projectId: 1, name: "Run" },
     });
     expect(result.isError).toBe(true);
-    expect((result.content[0] as any).text).toMatch(/RUNS-scope workflow state/);
+    expect((result as { content: Array<{ text: string }> }).content[0].text).toMatch(/RUNS-scope workflow state/);
   });
 
   it("rejects caseIds exceeding the 250-item cap", async () => {

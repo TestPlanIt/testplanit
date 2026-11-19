@@ -34,12 +34,14 @@ function makeField(opts: {
   displayName: string;
   type?: string | null;
   options?: Array<{ id: number; name: string }>;
+  isRequired?: boolean;
 }) {
   return {
     id: opts.id,
     displayName: opts.displayName,
     type: opts.type !== undefined ? { type: opts.type } : null,
     fieldOptions: (opts.options ?? []).map((o) => ({ fieldOption: o })),
+    ...(opts.isRequired !== undefined && { isRequired: opts.isRequired }),
   };
 }
 
@@ -422,7 +424,7 @@ describe("resolveCustomFields clearing", () => {
   it("refuses to clear a required field, naming the field only", async () => {
     zenstackMock.mockResolvedValueOnce(
       asTemplate([
-        { ...makeField({ id: 1, displayName: "Priority", type: "Dropdown", options: [{ id: 9, name: "High" }] }), isRequired: true },
+        makeField({ id: 1, displayName: "Priority", type: "Dropdown", options: [{ id: 9, name: "High" }], isRequired: true }),
       ]),
     );
     await expect(

@@ -766,7 +766,6 @@ describe("registerCasesList", () => {
     const { client } = await setupClient();
     const result = await client.callTool({
       name: "testplanit_cases_list",
-      // @ts-expect-error — automated must be boolean per zod schema
       arguments: { projectId: 7, automated: "not-a-boolean" },
     });
     expect(result.isError).toBe(true);
