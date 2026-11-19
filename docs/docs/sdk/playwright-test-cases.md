@@ -300,3 +300,47 @@ This applies to cases linked by ID (annotation, tag, or title) **and** to cases 
 
 As a safeguard, a test with **no** `test.step()` calls never clears an existing case's steps — so a test that simply doesn't use `test.step()` can't accidentally wipe a manually authored case. Cleared steps are soft-deleted (recoverable), not permanently removed, and step changes are not recorded as a new case version.
 :::
+
+## Tags
+
+### Copying tags onto new cases
+
+When the reporter creates a new test case, it copies the test's [Playwright tags](https://playwright.dev/docs/test-annotations#tag-tests) onto it. This is on by default whenever `autoCreateTestCases` is enabled.
+
+```typescript
+test('pays with a saved card', { tag: ['@smoke', '@critical'] }, async ({ page }) => {
+  // ...
+});
+```
+
+The case is created with the tags `smoke` and `critical`. The leading `@` is dropped, tags written in the test title (`test('pays @smoke', ...)`) count too, and a tag that does not exist in TestPlanIt yet is created.
+
+A tag that matches `caseIdPattern` links the test to a case and is not copied. Set `captureTags: false` to turn tag copying off.
+
+The `tagIds` option is separate: it puts tags on the test run, not on test cases.
+
+### Keeping tags in sync
+
+By default, only newly created cases receive tags. Enable `overwriteTags` to make an **existing** case's tags match the test's tags on every run:
+
+```typescript
+// playwright.config.ts
+export default defineConfig({
+  reporter: [
+    ['@testplanit/playwright-reporter', {
+      domain: 'https://testplanit.example.com',
+      apiToken: process.env.TESTPLANIT_API_TOKEN,
+      projectId: 1,
+      overwriteTags: true,   // make case tags match the test's tags each run
+    }],
+  ],
+});
+```
+
+This applies to cases linked by ID (annotation, tag, or title) **and** to cases matched by `autoCreateTestCases`. A tag you add in the code is added to the case, and a tag you remove in the code is removed from the case.
+
+:::warning
+`overwriteTags` is **destructive**: after a run the case has exactly the test's tags. A tag added to the case by hand in TestPlanIt is removed the next time the test runs, and a test with no tags clears the case's tags. Use it when the automation is the source of truth for tags.
+
+Tag changes made by the reporter are not recorded as a new case version.
+:::

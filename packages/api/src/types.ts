@@ -537,6 +537,15 @@ export interface UpdateTestCaseOptions {
   automated?: boolean;
 }
 
+/** Options for {@link TestPlanItClient.setTestCaseTags}. */
+export interface SetTestCaseTagsOptions {
+  /**
+   * Remove every tag on the case that is not in the given list, so the case
+   * ends up with exactly those tags. Off by default: tags are only added.
+   */
+  replace?: boolean;
+}
+
 /**
  * A single step on a case created via {@link TestPlanItClient.createTestCases}.
  * Plain-text `text`/`expectedResult` are stored as TipTap rich-text documents

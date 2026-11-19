@@ -186,6 +186,8 @@ export default class TestPlanItReporter implements Reporter {
       caseStepsMap: new Map(),
       folderPathMap: new Map(),
       caseAutomatedMap: new Map(),
+      caseTagsMap: new Map(),
+      tagIdMap: new Map(),
       statusIds: {},
       initialized: false,
       stats: {
@@ -193,6 +195,8 @@ export default class TestPlanItReporter implements Reporter {
         testCasesCreated: 0,
         testCasesMoved: 0,
         testStepsCreated: 0,
+        caseTagsAdded: 0,
+        caseTagsRemoved: 0,
         foldersCreated: 0,
         resultsPassed: 0,
         resultsFailed: 0,
@@ -299,6 +303,13 @@ export default class TestPlanItReporter implements Reporter {
       this.options.overwriteSteps === true;
     const stepTitles = wantSteps ? this.extractStepTitles(result.steps) : undefined;
 
+    // Capture the test's tags when they can be used: seeding created cases
+    // (captureTags) or keeping existing/linked cases in sync (overwriteTags).
+    const wantTags =
+      (this.options.autoCreateTestCases === true && this.options.captureTags !== false) ||
+      this.options.overwriteTags === true;
+    const tags = wantTags ? this.extractCaseTags(test) : undefined;
+
     const tracked: TrackedTestResult = {
       caseId: caseIds[0],
       suiteName,
@@ -326,6 +337,7 @@ export default class TestPlanItReporter implements Reporter {
       systemOut: this.joinOutput(result.stdout),
       systemErr: this.joinOutput(result.stderr),
       stepTitles,
+      tags,
     };
 
     this.state.results.set(uid, tracked);
@@ -481,6 +493,9 @@ export default class TestPlanItReporter implements Reporter {
         if (this.options.overwriteSteps) {
           await this.writeCaseSteps(repositoryCaseId, result.stepTitles, true);
         }
+        if (this.options.overwriteTags) {
+          await this.writeCaseTags(repositoryCaseId, result.tags, true);
+        }
       } else if (this.options.autoCreateTestCases) {
         repositoryCaseId = await this.resolveAutoCreatedCaseId(result);
       }
@@ -577,6 +592,9 @@ export default class TestPlanItReporter implements Reporter {
         if (this.options.captureSteps !== false) {
           await this.writeCaseSteps(testCase.id, result.stepTitles, false);
         }
+        if (this.options.captureTags !== false) {
+          await this.writeCaseTags(testCase.id, result.tags, false);
+        }
       } else {
         // 'found' or 'moved' — an existing case. Only touch its steps when
         // overwriteSteps is enabled.
@@ -584,6 +602,9 @@ export default class TestPlanItReporter implements Reporter {
         else this.state.stats.testCasesMoved++;
         if (this.options.overwriteSteps) {
           await this.writeCaseSteps(testCase.id, result.stepTitles, true);
+        }
+        if (this.options.overwriteTags) {
+          await this.writeCaseTags(testCase.id, result.tags, true);
         }
       }
 
@@ -646,6 +667,58 @@ export default class TestPlanItReporter implements Reporter {
 
     this.state.caseStepsMap.set(testCaseId, promise);
     promise.catch(() => this.state.caseStepsMap.delete(testCaseId));
+    return promise;
+  }
+
+  /**
+   * Put the test's tags on a case (memoized so it runs once per case per
+   * run). Without `replace` the tags are added to what the case has. With
+   * `replace` the case ends up with exactly these tags, so a tag removed in
+   * the code is removed from the case, and a test with no tags clears them.
+   *
+   * Best-effort: failures are logged but never bubble up, so result reporting
+   * is never blocked by tag syncing.
+   */
+  private writeCaseTags(
+    testCaseId: number,
+    tags: string[] | undefined,
+    replace: boolean,
+  ): Promise<void> {
+    if (!tags) return Promise.resolve();
+    if (tags.length === 0 && !replace) return Promise.resolve();
+
+    let promise = this.state.caseTagsMap.get(testCaseId);
+    if (promise) return promise;
+
+    promise = (async () => {
+      try {
+        const tagIds = await Promise.all(tags.map((name) => this.resolveCaseTagId(name)));
+        const { added, removed } = await this.client.setTestCaseTags(testCaseId, tagIds, { replace });
+        this.state.stats.caseTagsAdded += added;
+        this.state.stats.caseTagsRemoved += removed;
+        if (added > 0 || removed > 0) {
+          this.log(`Tags on case ${testCaseId}: added ${added}, removed ${removed}`);
+        }
+      } catch (error) {
+        this.logError(`Failed to set tags on case ${testCaseId}; continuing:`, error);
+      }
+    })();
+
+    this.state.caseTagsMap.set(testCaseId, promise);
+    return promise;
+  }
+
+  /** Resolve (and cache) a tag name to its ID, creating the tag if needed. */
+  private resolveCaseTagId(name: string): Promise<number> {
+    let promise = this.state.tagIdMap.get(name);
+    if (promise) return promise;
+
+    promise = this.client
+      .resolveTagIds(this.options.projectId, [name])
+      .then((ids) => ids[0]);
+    this.state.tagIdMap.set(name, promise);
+    // A failed lookup is retried by the next case that uses the tag.
+    promise.catch(() => this.state.tagIdMap.delete(name));
     return promise;
   }
 
@@ -1278,6 +1351,21 @@ export default class TestPlanItReporter implements Reporter {
     return ids;
   }
 
+  /**
+   * The test's Playwright tags as case tag names: the leading `@` is dropped,
+   * duplicates are removed, and a tag that links the test to a case (it
+   * matches `caseIdPattern`) is left out.
+   */
+  private extractCaseTags(test: TestCase): string[] {
+    const names = new Set<string>();
+    for (const tag of test.tags ?? []) {
+      if (this.parseCaseIds(tag).caseIds.length > 0) continue;
+      const name = tag.replace(/^@+/, '').trim();
+      if (name) names.add(name);
+    }
+    return [...names];
+  }
+
   /** Collect the describe-block titles (outermost first) for a test. */
   private getSuitePath(test: TestCase): string[] {
     const titles: string[] = [];
@@ -1442,6 +1530,13 @@ export default class TestPlanItReporter implements Reporter {
       if (stats.testStepsCreated > 0) {
         console.log(`[TestPlanIt]     Steps created:    ${stats.testStepsCreated}`);
       }
+    }
+
+    if (stats.caseTagsAdded > 0 || stats.caseTagsRemoved > 0) {
+      console.log('[TestPlanIt]');
+      console.log('[TestPlanIt]   Test Case Tags:');
+      console.log(`[TestPlanIt]     Added:   ${stats.caseTagsAdded}`);
+      console.log(`[TestPlanIt]     Removed: ${stats.caseTagsRemoved}`);
     }
 
     if (this.options.uploadAttachments && (stats.attachmentsUploaded > 0 || stats.attachmentsFailed > 0)) {

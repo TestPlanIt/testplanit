@@ -17,6 +17,7 @@ import type {
   CreateTestRunOptions,
   UpdateTestRunOptions,
   CreateTestCaseOptions,
+  SetTestCaseTagsOptions,
   UpdateTestCaseOptions,
   CreateTestCasesOptions,
   CreateTestCasesResult,
@@ -1513,6 +1514,49 @@ export class TestPlanItClient {
       where: { id: caseId },
       data,
     });
+  }
+
+  /**
+   * Put tags on a test case. By default the tags are added to whatever the
+   * case already has. With `replace`, the case ends up with exactly these
+   * tags: any other tag is removed from it, so an empty list clears them all.
+   *
+   * @returns How many tag links were added and removed.
+   */
+  async setTestCaseTags(
+    caseId: number,
+    tagIds: number[],
+    options: SetTestCaseTagsOptions = {}
+  ): Promise<{ added: number; removed: number }> {
+    const links = await this.zenstack<{ tagId: number }[]>(
+      "repositoryCaseTag",
+      "findMany",
+      { where: { caseId }, select: { tagId: true } }
+    );
+    const current = new Set((links ?? []).map((link) => link.tagId));
+    const wanted = new Set(tagIds);
+    const toCreate = [...wanted].filter((id) => !current.has(id));
+    const toDelete = options.replace
+      ? [...current].filter((id) => !wanted.has(id))
+      : [];
+    if (toCreate.length === 0 && toDelete.length === 0) {
+      return { added: 0, removed: 0 };
+    }
+
+    // The two operations touch disjoint rows, so the order the server runs
+    // them in does not matter.
+    const caseTags: Record<string, unknown> = {};
+    if (toDelete.length > 0) {
+      caseTags.deleteMany = { tagId: { in: toDelete } };
+    }
+    if (toCreate.length > 0) {
+      caseTags.create = toCreate.map((id) => ({ tag: { connect: { id } } }));
+    }
+    await this.zenstack<RepositoryCase>("repositoryCases", "update", {
+      where: { id: caseId },
+      data: { caseTags },
+    });
+    return { added: toCreate.length, removed: toDelete.length };
   }
 
   /**
