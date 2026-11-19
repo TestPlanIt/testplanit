@@ -245,6 +245,14 @@ const byExternalId = await client.findTestCaseByCustomField({
 
 // Flip a manually authored case to automated once it receives automated results
 await client.updateTestCase(456, { automated: true });
+
+// Add tags to a case, keeping the tags it already has
+// (setTestCaseTags requires a TestPlanIt server on 1.0.0 or later)
+const [smoke, critical] = await client.resolveTagIds(1, ['smoke', 'critical']);
+await client.setTestCaseTags(456, [smoke, critical]);
+
+// Make the case have exactly these tags, removing any others
+await client.setTestCaseTags(456, [smoke], { replace: true });
 ```
 
 ### Folders

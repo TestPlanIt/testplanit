@@ -223,6 +223,29 @@ export interface TestPlanItReporterOptions {
   overwriteSteps?: boolean;
 
   /**
+   * Whether to copy a test's Playwright tags onto the test case the reporter
+   * creates for it. `@smoke` becomes a `smoke` tag on the case; tags that do
+   * not exist yet are created. A tag that matches `caseIdPattern` links the
+   * test to a case and is not copied. Only applies to newly created cases.
+   * Requires `autoCreateTestCases`.
+   * @default true
+   */
+  captureTags?: boolean;
+
+  /**
+   * Whether to make an **existing** case's tags match the test's Playwright
+   * tags on every run, so a tag added or removed in the code is added or
+   * removed on the case. Applies to cases linked by ID and to cases matched
+   * by auto-create.
+   *
+   * This is **destructive**: the case ends up with exactly the test's tags.
+   * Tags added to the case by hand are removed on the next run, and a test
+   * with no tags clears the case's tags. Off by default.
+   * @default false
+   */
+  overwriteTags?: boolean;
+
+  /**
    * Whether to create folder hierarchy based on the describe-block structure.
    * When enabled, nested `test.describe` blocks create nested folders:
    * describe('Suite A') > describe('Suite B') > test('...')
@@ -397,6 +420,12 @@ export interface TrackedTestResult {
    * authored steps on auto-created cases.
    */
   stepTitles?: string[];
+  /**
+   * The test's Playwright tags as case tag names: no leading `@`, and without
+   * the tags that link the test to a case. Populated only when tag capture is
+   * enabled.
+   */
+  tags?: string[];
 }
 
 /**
@@ -434,6 +463,10 @@ export interface ReporterStats {
   testCasesMoved: number;
   /** Number of authored steps created on auto-created test cases */
   testStepsCreated: number;
+  /** Tag links added to test cases. */
+  caseTagsAdded: number;
+  /** Tag links removed from test cases (overwriteTags). */
+  caseTagsRemoved: number;
   /** Number of folders that were created for hierarchy */
   foldersCreated: number;
   /** Number of test results reported (passed) */
@@ -474,6 +507,10 @@ export interface ReporterState {
   folderPathMap: Map<string, Promise<number>>;
   /** Map of case IDs to an in-flight/settled automated-flip check, so each explicitly linked case is checked once per run */
   caseAutomatedMap: Map<number, Promise<void>>;
+  /** Per-case tag sync, so a case's tags are written once per run. */
+  caseTagsMap: Map<number, Promise<void>>;
+  /** Tag name to tag ID, resolved once per name per run. */
+  tagIdMap: Map<string, Promise<number>>;
   /** Status ID mappings */
   statusIds: {
     passed?: number;

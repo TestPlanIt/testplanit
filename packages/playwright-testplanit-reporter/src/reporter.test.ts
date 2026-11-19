@@ -20,6 +20,7 @@ const clientMock = vi.hoisted(() => ({
   createStep: vi.fn(),
   createSteps: vi.fn(),
   softDeleteCaseSteps: vi.fn(),
+  setTestCaseTags: vi.fn(),
   findOrCreateFolderPath: vi.fn(),
   findTestRunByName: vi.fn(),
   findConfigurationByName: vi.fn(),
@@ -66,6 +67,7 @@ function applyBaseImpls() {
   clientMock.createStep.mockImplementation(async () => ({ id: 1 }));
   clientMock.createSteps.mockImplementation(async (o: any) => ({ count: o?.steps?.length ?? 0 }));
   clientMock.softDeleteCaseSteps.mockImplementation(async () => 3);
+  clientMock.setTestCaseTags.mockImplementation(async () => ({ added: 0, removed: 0 }));
   clientMock.findOrCreateFolderPath.mockImplementation(async () => ({ id: 77, name: 'Folder' }));
   clientMock.findTestRunByName.mockImplementation(async () => ({ id: 555, name: 'By Name' }));
   clientMock.findConfigurationByName.mockImplementation(async () => ({ id: 11, name: 'Config' }));
@@ -740,6 +742,98 @@ describe('TestPlanItReporter (Playwright)', () => {
       await run(r, makeTest('[1234] linked', buildParent({ project: 'chromium' })), makeResult({ steps: [makeStep('S')] }));
       expect(clientMock.createSteps).not.toHaveBeenCalled();
       expect(clientMock.createJUnitTestResult).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  describe('copying Playwright tags onto cases (captureTags / overwriteTags)', () => {
+    const TAG_IDS: Record<string, number> = { smoke: 1, critical: 2, checkout: 3 };
+    const tagged = (title: string, tags: string[]) =>
+      withMeta(makeTest(title, buildParent({ project: 'chromium' })), { tags });
+
+    beforeEach(() => {
+      clientMock.resolveTagIds.mockImplementation(async (_projectId: number, names: string[]) =>
+        names.map((name) => TAG_IDS[name]),
+      );
+      clientMock.setTestCaseTags.mockImplementation(async (_id: number, ids: number[]) => ({
+        added: ids.length,
+        removed: 0,
+      }));
+    });
+
+    it('adds the tags to a case it creates, without the leading @', async () => {
+      const r = new TestPlanItReporter({ ...autoOptions });
+      await run(r, tagged('pays', ['@smoke', '@critical']), makeResult());
+
+      expect(clientMock.resolveTagIds).toHaveBeenCalledWith(defaultOptions.projectId, ['smoke']);
+      expect(clientMock.resolveTagIds).toHaveBeenCalledWith(defaultOptions.projectId, ['critical']);
+      expect(clientMock.setTestCaseTags).toHaveBeenCalledWith(4567, [1, 2], { replace: false });
+      expect(r.getState().stats.caseTagsAdded).toBe(2);
+    });
+
+    it('leaves out a tag that links the test to a case', async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions, caseIdPattern: /C(\d+)/g, overwriteTags: true });
+      await run(r, tagged('pays', ['@smoke', '@C777']), makeResult());
+
+      expect(clientMock.setTestCaseTags).toHaveBeenCalledWith(777, [1], { replace: true });
+    });
+
+    it('does not tag a created case when captureTags is disabled', async () => {
+      const r = new TestPlanItReporter({ ...autoOptions, captureTags: false });
+      await run(r, tagged('pays', ['@smoke']), makeResult());
+      expect(clientMock.setTestCaseTags).not.toHaveBeenCalled();
+    });
+
+    it('does not touch an existing case when overwriteTags is off (default)', async () => {
+      clientMock.findOrCreateTestCase.mockResolvedValueOnce({ testCase: { id: 99, name: 'a' }, action: 'found' });
+      const r = new TestPlanItReporter({ ...autoOptions });
+      await run(r, tagged('existing', ['@smoke']), makeResult());
+      expect(clientMock.setTestCaseTags).not.toHaveBeenCalled();
+
+      await run(reporter, tagged('[1234] linked', ['@smoke']), makeResult());
+      expect(clientMock.setTestCaseTags).not.toHaveBeenCalled();
+    });
+
+    it('replaces the tags of an auto-create match when overwriteTags is on', async () => {
+      clientMock.findOrCreateTestCase.mockResolvedValueOnce({ testCase: { id: 99, name: 'a' }, action: 'found' });
+      const r = new TestPlanItReporter({ ...autoOptions, overwriteTags: true });
+      await run(r, tagged('existing', ['@checkout']), makeResult());
+      expect(clientMock.setTestCaseTags).toHaveBeenCalledWith(99, [3], { replace: true });
+    });
+
+    it('clears the tags of a linked case whose test has none, when overwriteTags is on', async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions, overwriteTags: true });
+      await run(r, tagged('[1234] untagged', []), makeResult());
+      expect(clientMock.setTestCaseTags).toHaveBeenCalledWith(1234, [], { replace: true });
+    });
+
+    it('does not write tags for a created case whose test has none', async () => {
+      const r = new TestPlanItReporter({ ...autoOptions });
+      await run(r, tagged('untagged', []), makeResult());
+      expect(clientMock.setTestCaseTags).not.toHaveBeenCalled();
+    });
+
+    it('syncs a case once across retries and looks each tag up once', async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions, overwriteTags: true });
+      const parent = buildParent({ project: 'chromium' });
+      const flaky = withMeta(makeTest('[1234] flaky', parent), { tags: ['@smoke'] });
+      const other = withMeta(makeTest('[1235] other', parent), { tags: ['@smoke'] });
+      r.onTestEnd(flaky, makeResult({ status: 'failed', retry: 0 }));
+      r.onTestEnd(flaky, makeResult({ status: 'passed', retry: 1 }));
+      r.onTestEnd(other, makeResult());
+      await r.onEnd(FULL_RESULT);
+
+      expect(clientMock.setTestCaseTags).toHaveBeenCalledTimes(2);
+      expect(clientMock.resolveTagIds).toHaveBeenCalledTimes(1);
+    });
+
+    it('still reports the result when setting tags fails', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      clientMock.setTestCaseTags.mockRejectedValueOnce(new Error('boom'));
+      const r = new TestPlanItReporter({ ...autoOptions });
+      await run(r, tagged('resilient', ['@smoke']), makeResult());
+      expect(clientMock.createJUnitTestResult).toHaveBeenCalledTimes(1);
+      expect(r.getState().stats.caseTagsAdded).toBe(0);
     });
   });
 

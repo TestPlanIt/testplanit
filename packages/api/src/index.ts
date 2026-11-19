@@ -88,6 +88,7 @@ export type {
   UpdateTestRunOptions,
   CreateTestCaseOptions,
   UpdateTestCaseOptions,
+  SetTestCaseTagsOptions,
   CreateTestCasesOptions,
   CreateTestCasesResult,
   BulkTestCaseInput,

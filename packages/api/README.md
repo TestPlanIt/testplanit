@@ -262,7 +262,7 @@ user ID needs to be supplied.
 
 The client also covers folders (`listFolders`, `createFolder`,
 `findOrCreateFolderPath`), templates and tags (`findTemplateByName`,
-`findOrCreateTag`, `resolveTagIds`), authored steps (`createSteps`,
+`findOrCreateTag`, `resolveTagIds`, `setTestCaseTags`), authored steps (`createSteps`,
 `softDeleteCaseSteps`, `requestStepDerivation`), name lookups
 (`findConfigurationByName`, `findMilestoneByName`, `findWorkflowStateByName`,
 `findTestRunByName`), QuickScript generation (`generateQuickScript`), the
