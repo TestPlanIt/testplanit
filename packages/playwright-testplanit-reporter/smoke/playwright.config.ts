@@ -40,6 +40,8 @@ export default defineConfig({
         projectId: Number(required('TPI_PROJECT_ID')),
         runName: 'Playwright Smoke - {date} {time} ({browser})',
         verbose: true,
+        // Make existing cases' tags match the tests' tags on this run.
+        overwriteTags: process.env.TPI_OVERWRITE_TAGS === '1',
         ...(autoCreate
           ? {
               autoCreateTestCases: true,

@@ -517,6 +517,54 @@ describe('TestPlanItClient', () => {
     });
   });
 
+  describe('setTestCaseTags', () => {
+    it('adds only the tags the case does not have yet', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse([{ tagId: 1 }, { tagId: 2 }]));
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 7 }));
+
+      const result = await client.setTestCaseTags(7, [2, 3]);
+
+      expect(result).toEqual({ added: 1, removed: 0 });
+      const body = JSON.parse(mockFetch.mock.calls[1][1].body);
+      expect(body).toEqual({
+        where: { id: 7 },
+        data: { caseTags: { create: [{ tag: { connect: { id: 3 } } }] } },
+      });
+    });
+
+    it('with replace, removes the tags that are not in the list', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse([{ tagId: 1 }, { tagId: 2 }]));
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 7 }));
+
+      const result = await client.setTestCaseTags(7, [2, 3], { replace: true });
+
+      expect(result).toEqual({ added: 1, removed: 1 });
+      const body = JSON.parse(mockFetch.mock.calls[1][1].body);
+      expect(body.data.caseTags).toEqual({
+        deleteMany: { tagId: { in: [1] } },
+        create: [{ tag: { connect: { id: 3 } } }],
+      });
+    });
+
+    it('with replace and an empty list, clears every tag', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse([{ tagId: 1 }]));
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 7 }));
+
+      const result = await client.setTestCaseTags(7, [], { replace: true });
+
+      expect(result).toEqual({ added: 0, removed: 1 });
+    });
+
+    it('writes nothing when the case already has exactly these tags', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse([{ tagId: 1 }, { tagId: 2 }]));
+
+      const result = await client.setTestCaseTags(7, [2, 1], { replace: true });
+
+      expect(result).toEqual({ added: 0, removed: 0 });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('findOrCreateTestCase found-flip', () => {
     // findOrCreateTestCase first does a findMany; the returned rows carry a
     // `folder.isDeleted` flag and the case's `automated` value.
