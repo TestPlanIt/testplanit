@@ -1,3 +1,9 @@
+## [1.2.4](https://github.com/TestPlanIt/testplanit/compare/v1.2.3...v1.2.4) (2026-11-19)
+
+### Enhancements
+
+* **playwright-reporter:** copy Playwright tags onto test cases ([#754](https://github.com/TestPlanIt/testplanit/issues/754)) ([8cbe0bd](https://github.com/TestPlanIt/testplanit/commit/8cbe0bd2e58c98a21f99daee8ebcd080906a9dba))
+
 ## [1.2.3](https://github.com/TestPlanIt/testplanit/compare/v1.2.2...v1.2.3) (2026-11-18)
 
 ### Bug Fixes
