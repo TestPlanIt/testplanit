@@ -1144,6 +1144,7 @@
       "case": "{count, plural, =1 {geval} other {gevallen}}",
       "result": "{count, plural, =1 {resultaat} other {resultaten}}",
       "run": "{count, plural, =1 {run} other {runs}}",
+      "session": "{count, plural, =1 {sessie} other {sessies}}",
       "comment": "{count, plural, =1 {# reactie} other {# reacties}}"
     },
     "success": {

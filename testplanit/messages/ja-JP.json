@@ -1144,6 +1144,7 @@
       "case": "{count, plural, =1 {ケース} other {ケース}}",
       "result": "{count, plural, =1 {結果} other {結果}}",
       "run": "{count, plural, =1 {実行} other {実行}}",
+      "session": "{count, plural, =1 {セッション} other {セッション}}",
       "comment": "{count, plural, =1 {# コメント} other {# コメント}}"
     },
     "success": {
@@ -2432,7 +2433,7 @@
           "scanCancelled": "最後のスキャンがキャンセルされました"
         },
         "bulk": {
-          "label": "{count, plural, other {すべての # リポジトリ:}}",
+          "label": "{count, plural, =1 {リポジトリ:} other {すべての # リポジトリ:}}",
           "scanRecentHint": "接続されたリポジトリを再スキャンします（{count, plural, =1 {1 つ} other {# つ}}）。",
           "scanFullHint": "{count, plural, =1 {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のブランチのすべてのコミットをウォークし、既存のチケットのピンをバックフィルします。",
           "scanFullConfirm": "{count, plural, =1 {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のブランチのすべてのコミットをウォークします。リポジトリは一度に 1 つずつスキャンされるため、この処理には長時間かかる可能性があり、各ウォークではプロバイダーの API 経由でコミットを読み取り、このプロセスはレート制限にカウントされます。",
@@ -4312,7 +4313,7 @@
       "filterAllProjects": "すべてのプロジェクト",
       "actionRevert": "決定を取り消す",
       "revertedBadge": "取り消し済み",
-      "revertedBadgeTooltip": "{count, plural, other {# 回前に取り消し済み}}"
+      "revertedBadgeTooltip": "{count, plural, =1 {以前に 1 回取り消し済み} other {以前に # 回取り消し済み}}"
     },
     "requester": {
       "openButton": "レビューを依頼する",
@@ -6352,7 +6353,7 @@
       "delete": {
         "confirmMessage": "{name}根本原因を削除してもよろしいですか？",
         "inUse": "{count, plural, other {# 件の障害パターンがそれを使用しています。}}",
-        "moveLabel": "{count, plural, other {# 件のパターンを}}"
+        "moveLabel": "{count, plural, =1 {パターンを} other {# 件のパターンを}}"
       }
     },
     "issue_config": {
@@ -6462,9 +6463,9 @@
         "attachedThrough": "以下を通じて添付"
       },
       "selection": {
-        "loadedSelected": "{shown, plural, other {読み込まれた # 個の添付ファイルがすべて選択されています}}。",
-        "selectAllMatches": "{total, plural, other {# 個すべての一致を選択}}",
-        "allMatchesSelected": "{total, plural, other {# 個すべての一致が選択されています}}。",
+        "loadedSelected": "{shown, plural, =1 {読み込まれた添付ファイルが選択されています} other {読み込まれた # 個の添付ファイルがすべて選択されています}}。",
+        "selectAllMatches": "{total, plural, =1 {唯一の一致を選択} other {# 個すべての一致を選択}}",
+        "allMatchesSelected": "{total, plural, =1 {唯一の一致が選択されています} other {# 個すべての一致が選択されています}}。",
         "tooMany": "一度に最大 {max} 個を選択できます。すべての一致を選択するには、フィルターを絞り込んでください。"
       },
       "actions": {

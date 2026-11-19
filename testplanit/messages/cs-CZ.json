@@ -1144,6 +1144,7 @@
       "case": "{count, plural, =1 {případ} few {případy} many {případu} other {případů}}",
       "result": "{count, plural, =1 {výsledek} few {výsledky} many {výsledku} other {výsledků}}",
       "run": "{count, plural, =1 {běh} few {běhy} many {běhu} other {běhů}}",
+      "session": "{count, plural, =1 {relace} few {relace} many {relace} other {relací}}",
       "comment": "{count, plural, =1 {# komentář} few {# komentáře} many {# komentáře} other {# komentářů}}"
     },
     "success": {

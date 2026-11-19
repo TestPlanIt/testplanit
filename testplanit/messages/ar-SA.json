@@ -1144,6 +1144,7 @@
       "case": "{count, plural, =1 {حالة} two {حالتان} few {حالات} many {حالة} other {حالة}}",
       "result": "{count, plural, =1 {نتيجة} two {نتيجتان} few {نتائج} many {نتيجة} other {نتيجة}}",
       "run": "{count, plural, =1 {تشغيل} two {تشغيلان} few {تشغيلات} many {تشغيلًا} other {تشغيل}}",
+      "session": "{count, plural, =1 {جلسة} two {جلستان} few {جلسات} many {جلسةً} other {جلسة}}",
       "comment": "{count, plural, =1 {# تعليق} zero {# تعليق} two {تعليقان} few {# تعليقات} many {# تعليقًا} other {# تعليق}}"
     },
     "success": {

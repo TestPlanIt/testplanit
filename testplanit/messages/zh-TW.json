@@ -1144,6 +1144,7 @@
       "case": "{count, plural, =1 {情況} other {情況}}",
       "result": "{count, plural, =1 {結果} other {結果}}",
       "run": "{count, plural, =1 {運行} other {運行}}",
+      "session": "{count, plural, =1 {會話} other {會話}}",
       "comment": "{count, plural, =1 {# 評論} other {# 評論數}}"
     },
     "success": {
@@ -2432,11 +2433,11 @@
           "scanCancelled": "上次掃描已取消"
         },
         "bulk": {
-          "label": "{count, plural, other {所有 # 個儲存庫：}}",
-          "scanRecentHint": "在{count, plural, other {所有 # 個連線的儲存庫}}中重新掃描最近的提交。",
-          "scanFullHint": "逐一檢查{count, plural, other {所有 # 個連線的儲存庫}}的分支上的每個提交，並為現有票證補填腳釘。",
-          "scanFullConfirm": "這將逐一檢查{count, plural, other {所有 # 個連線的儲存庫}}的分支上的每個提交。儲存庫會逐個掃描，因此可能需要很長時間，且每次檢查都會透過提供者的 API 讀取提交，這會佔用其速率限制。",
-          "checkStaleHint": "根據各分支尖端檢查{count, plural, other {所有 # 個連線的儲存庫}}的代碼腳釘。",
+          "label": "{count, plural, =1 {您的儲存庫：} other {所有 # 個儲存庫：}}",
+          "scanRecentHint": "在{count, plural, =1 {連線的儲存庫} other {所有 # 個連線的儲存庫}}中重新掃描最近的提交。",
+          "scanFullHint": "逐一檢查{count, plural, =1 {連線的儲存庫} other {所有 # 個連線的儲存庫}}的分支上的每個提交，並為現有票證補填腳釘。",
+          "scanFullConfirm": "這將逐一檢查{count, plural, =1 {連線的儲存庫} other {所有 # 個連線的儲存庫}}的分支上的每個提交。儲存庫會逐個掃描，因此可能需要很長時間，且每次檢查都會透過提供者的 API 讀取提交，這會佔用其速率限制。",
+          "checkStaleHint": "根據各分支尖端檢查{count, plural, =1 {連線的儲存庫} other {所有 # 個連線的儲存庫}}的代碼腳釘。",
           "removeStaleHint": "移除{repos, plural, other {# 個儲存庫}}中的{count, plural, other {# 個陳舊代碼腳釘}}。",
           "removeConfirm": "移除最後一次檢查無法在分支尖端找到的{count, plural, other {# 個代碼腳釘}}，跨越{repos, plural, other {# 個儲存庫}}？",
           "queued": "已排入{count, plural, other {# 個儲存庫}}的佇列。{skipped, plural, =0 {} other { # 個已在執行中。}}",
@@ -3586,7 +3587,7 @@
       "activeRunWarningMessage": "此測試案例屬於 {count, plural, =1 {# 活動測試運行} other {# 活動測試運行}}。刪除它會將這些運行標記為已刪除。"
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {刪除此資料夾也將刪除所有子資料夾。您確定嗎？} other {刪除此資料夾也將刪除此資料夾及所有子資料夾中的 # 個測試案例。您確定嗎？}}",
+      "confirmMessage": "{count, plural, =0 {刪除此資料夾也將刪除所有子資料夾。您確定嗎？} =1 {刪除此資料夾也將刪除此資料夾及所有子資料夾中的 1 個測試案例。您確定嗎？} other {刪除此資料夾也將刪除此資料夾及所有子資料夾中的 # 個測試案例。您確定嗎？}}",
       "warning": "此資料夾及其所有測試案例將從專案中移除。這些測試案例的歷史資料（包括結果）仍將保留在專案中。",
       "confirm": "確認刪除資料夾",
       "success": "資料夾及其所有子資料夾/案例已成功刪除。"
@@ -4312,7 +4313,7 @@
       "filterAllProjects": "所有項目",
       "actionRevert": "撤銷決定",
       "revertedBadge": "已撤銷",
-      "revertedBadgeTooltip": "{count, plural, other {之前撤銷了 # 次}}"
+      "revertedBadgeTooltip": "{count, plural, =1 {之前撤銷過一次} other {之前撤銷了 # 次}}"
     },
     "requester": {
       "openButton": "請求審核",
@@ -6195,8 +6196,8 @@
         "description": "取代所選配置中的項目分配。配置名稱無法批次編輯。",
         "applyButton": "{count, plural, =1 {應用於 1 個配置} other {應用於 # 個配置}}",
         "deleteButton": "{count, plural, =1 {刪除 1 個設定} other {刪除 # 個設定}}",
-        "deleteConfirmTitle": "{count, plural, other {刪除 # 個設定？}}",
-        "deleteConfirmMessage": "{count, plural, other {這將刪除 # 個設定。此操作無法復原。}}",
+        "deleteConfirmTitle": "{count, plural, =1 {刪除 1 個設定？} other {刪除 # 個設定？}}",
+        "deleteConfirmMessage": "{count, plural, =1 {這將刪除 1 個設定。此操作無法復原。} other {這將刪除 # 個設定。此操作無法復原。}}",
         "applyEnabledLabel": "更改已啟用狀態"
       },
       "categories": {
@@ -6443,7 +6444,7 @@
           "ORPHAN": "孤立",
           "REFERENCED": "正在使用"
         },
-        "loadedSelected": "{shown, plural, other {已選取所有 # 個已載入的檔案}}。",
+        "loadedSelected": "{shown, plural, =1 {已選取已載入的檔案} other {已選取所有 # 個已載入的檔案}}。",
         "confirmDelete": "{count, plural, =0 {選定的檔案都無法刪除。} =1 {從儲存空間中刪除此檔案（{size}）？此操作無法復原。} other {從儲存空間中刪除 # 個檔案（{size}）？此操作無法復原。}}",
         "skipped": "{count, plural, other {# 個選定檔案因正在使用而保留。}}",
         "deleted": "{count, plural, other {已從儲存空間中刪除 # 個檔案}}"
@@ -6462,9 +6463,9 @@
         "attachedThrough": "附加透過"
       },
       "selection": {
-        "loadedSelected": "{shown, plural, other {所有 # 個已加載的附件已選中}}。",
-        "selectAllMatches": "{total, plural, other {選擇全部 # 個符合項}}",
-        "allMatchesSelected": "{total, plural, other {所有 # 個符合項已選中}}。",
+        "loadedSelected": "{shown, plural, =1 {已選取已載入的附件} other {已選取所有 # 個已載入的附件}}。",
+        "selectAllMatches": "{total, plural, =1 {選擇唯一的符合項} other {選擇全部 # 個符合項}}",
+        "allMatchesSelected": "{total, plural, =1 {唯一的符合項已選取} other {所有 # 個符合項已選中}}。",
         "tooMany": "最多可以一次選擇 {max} 個。縮小篩選範圍以選擇每個符合項。"
       },
       "actions": {
@@ -7372,8 +7373,8 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "結果花費 {elapsed}，距離 {baseline} 的基線偏差為 {deviation}%（超過允許的 {threshold}%）。",
-          "CASE_REGRESSED": "案例在通過其上一個 {passedBefore, plural, other {上一個 # 個結果}} 後失敗。",
-          "CASE_RECOVERED": "案例在失敗其上一個 {failedBefore, plural, other {# 個結果}} 後通過。",
+          "CASE_REGRESSED": "此案例在{passedBefore, plural, =1 {上一個結果通過} other {最近 # 個結果均通過}}後失敗。",
+          "CASE_RECOVERED": "此案例在{failedBefore, plural, =1 {上一個結果失敗} other {最近 # 個結果均失敗}}後通過。",
           "RUN_DURATION_DEVIATION": "運行花費 {elapsed}，距離 {baseline} 的基線偏差為 {deviation}%（超過允許的 {threshold}%）。",
           "RUN_NOT_PROGRESSING": "運行已 {idleHours, plural, other {# 小時}} 未有新結果（閾值 {threshold}）。",
           "AUTOMATED_EXECUTION_FAILED": "{target} 上的自動執行以 {status}{error, select, other {： {error}}} 結束",

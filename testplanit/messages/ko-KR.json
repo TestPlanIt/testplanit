@@ -1144,6 +1144,7 @@
       "case": "{count, plural, =1 {경우} other {경우}}",
       "result": "{count, plural, =1 {결과} other {결과}}",
       "run": "{count, plural, =1 {실행} other {실행}}",
+      "session": "{count, plural, =1 {세션} other {세션}}",
       "comment": "{count, plural, =1 {# 댓글} other {# 댓글}}"
     },
     "success": {
@@ -6352,7 +6353,7 @@
       "delete": {
         "confirmMessage": "{name} 근본 원인을 삭제하시겠습니까?",
         "inUse": "{count, plural, other {# 실패 패턴이 사용합니다.}}",
-        "moveLabel": "{count, plural, other {# 패턴을 다음 위치로 이동}}"
+        "moveLabel": "{count, plural, =1 {패턴을 다음 위치로 이동} other {# 패턴을 다음 위치로 이동}}"
       }
     },
     "issue_config": {
@@ -6462,9 +6463,9 @@
         "attachedThrough": "첨부 경로"
       },
       "selection": {
-        "loadedSelected": "{shown, plural, other {로드된 모든 #개의 첨부파일이 선택됨}}.",
-        "selectAllMatches": "{total, plural, other {모든 #개의 일치 항목 선택}}",
-        "allMatchesSelected": "{total, plural, other {모든 #개의 일치 항목이 선택됨}}.",
+        "loadedSelected": "{shown, plural, =1 {로드된 첨부파일이 선택됨} other {로드된 모든 #개의 첨부파일이 선택됨}}.",
+        "selectAllMatches": "{total, plural, =1 {유일한 일치 항목 선택} other {모든 #개의 일치 항목 선택}}",
+        "allMatchesSelected": "{total, plural, =1 {유일한 일치 항목이 선택됨} other {모든 #개의 일치 항목이 선택됨}}.",
         "tooMany": "최대 {max}개까지 한 번에 선택할 수 있습니다. 모든 일치 항목을 선택하려면 필터를 좁히십시오."
       },
       "actions": {

@@ -1144,6 +1144,7 @@
       "case": "{count, plural, =1 {caso} other {casos}}",
       "result": "{count, plural, =1 {resultado} other {resultados}}",
       "run": "{count, plural, =1 {ejecución} other {ejecuciones}}",
+      "session": "{count, plural, =1 {sesión} other {sesiones}}",
       "comment": "{count, plural, =1 {# comentario} other {# comentarios}}"
     },
     "success": {

@@ -1144,6 +1144,7 @@
       "case": "{count, plural, =1 {trường hợp} other {các trường hợp}}",
       "result": "{count, plural, =1 {kết quả} other {kết quả}}",
       "run": "{count, plural, =1 {chạy} other {chạy}}",
+      "session": "{count, plural, =1 {phiên} other {phiên}}",
       "comment": "{count, plural, =1 {# bình luận} other {# bình luận}}"
     },
     "success": {
@@ -4312,7 +4313,7 @@
       "filterAllProjects": "Tất cả các dự án",
       "actionRevert": "Hoàn tác quyết định",
       "revertedBadge": "Đã hoàn tác",
-      "revertedBadgeTooltip": "{count, plural, other {Đã hoàn tác # lần trước}}"
+      "revertedBadgeTooltip": "{count, plural, =1 {Đã hoàn tác một lần trước} other {Đã hoàn tác # lần trước}}"
     },
     "requester": {
       "openButton": "Yêu cầu xem xét",
@@ -6443,8 +6444,8 @@
           "ORPHAN": "Bị mồ côi",
           "REFERENCED": "Đang được sử dụng"
         },
-        "loadedSelected": "{shown, plural, other {Tất cả # tập tin đã tải được chọn}}.",
-        "confirmDelete": "{count, plural, =0 {Không thể xóa bất kỳ tập tin được chọn nào.} other {Xóa # tập tin ({size}) khỏi lưu trữ? Không thể hoàn tác.}}",
+        "loadedSelected": "{shown, plural, =1 {Tập tin đã tải được chọn} other {Tất cả # tập tin đã tải được chọn}}.",
+        "confirmDelete": "{count, plural, =0 {Không thể xóa bất kỳ tập tin được chọn nào.} =1 {Xóa tập tin này ({size}) khỏi lưu trữ? Không thể hoàn tác.} other {Xóa # tập tin ({size}) khỏi lưu trữ? Không thể hoàn tác.}}",
         "skipped": "{count, plural, other {# tập tin được chọn bị bỏ qua vì chúng đang được sử dụng.}}",
         "deleted": "{count, plural, other {# tập tin đã xóa khỏi lưu trữ}}"
       },

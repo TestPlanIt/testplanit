@@ -1144,6 +1144,7 @@
       "case": "{count, plural, =1 {durum} other {durum}}",
       "result": "{count, plural, =1 {sonuç} other {sonuçlar}}",
       "run": "{count, plural, =1 {çalıştırma} other {çalıştırma}}",
+      "session": "{count, plural, =1 {oturum} other {oturum}}",
       "comment": "{count, plural, =1 {# yorum} other {# yorum}}"
     },
     "success": {
