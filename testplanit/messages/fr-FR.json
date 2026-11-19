@@ -3574,6 +3574,13 @@
       "bannerAction": "Reprendre la modification",
       "bannerDiscard": "Les rejeter"
     },
+    "caseChanged": {
+      "title": "Ce cas de test a été modifié",
+      "description": "Quelqu'un a mis à jour ce cas de test pendant que vous le modifiiez. Vous pouvez abandonner vos modifications et recharger le cas de test, ou enregistrer vos modifications pour remplacer la version actuelle.",
+      "keepEditing": "Continuer la modification",
+      "reload": "Abandonner mes modifications et recharger",
+      "overwrite": "Remplacer"
+    },
     "templateSwitch": {
       "title": "Changer de modèle ?",
       "description": "\"{templateName}\" n'inclut pas {count, plural, =1 {ce champ} other {ces champs}}, les modifications que vous {count, plural, =1 {lui} other {leur}} avez apportées seront donc perdues :",

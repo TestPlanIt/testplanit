@@ -3574,6 +3574,13 @@
       "bannerAction": "Düzenlemeye devam edin",
       "bannerDiscard": "Bunları atla"
     },
+    "caseChanged": {
+      "title": "Bu test senaryosu değiştirildi",
+      "description": "Siz bunu düzenlerken birisi bu test senaryosunu güncelledi. Değişikliklerinizi iptal edip test senaryosunu yeniden yükleyebilir veya değişikliklerinizi kaydederek mevcut sürümün üzerine yazabilirsiniz.",
+      "keepEditing": "Düzenlemeye devam et",
+      "reload": "Değişikliklerimi iptal et ve yeniden yükle",
+      "overwrite": "Üzerine yaz"
+    },
     "templateSwitch": {
       "title": "Şablonu değiştir?",
       "description": "\"{templateName}\" {count, plural, =1 {bu alanı} other {bu alanları}} içermez, bu nedenle {count, plural, =1 {buna} other {bunlara}} yapılan değişiklikleriniz iptal edilecektir:",

@@ -3574,6 +3574,13 @@
       "bannerAction": "Pokračovat v úpravách",
       "bannerDiscard": "Zrušit je"
     },
+    "caseChanged": {
+      "title": "Tento testovací případ byl změněn",
+      "description": "Někdo aktualizoval tento testovací případ, zatímco jste jej upravovali. Můžete zahodit své změny a znovu načíst testovací případ, nebo uložit své změny a přepsat aktuální verzi.",
+      "keepEditing": "Pokračovat v úpravě",
+      "reload": "Zrušit moje změny a znovu načíst",
+      "overwrite": "Přepsat"
+    },
     "templateSwitch": {
       "title": "Přepnout šablonu?",
       "description": "\"{templateName}\" neobsahuje {count, plural, =1 {toto pole} other {tato pole}}, takže vaše změny v {count, plural, =1 {něm} other {nich}} budou zahozeny:",

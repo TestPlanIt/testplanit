@@ -3574,6 +3574,13 @@
       "bannerAction": "继续编辑",
       "bannerDiscard": "放弃它们"
     },
+    "caseChanged": {
+      "title": "此测试用例已更改",
+      "description": "在您编辑时，其他人更新了此测试用例。您可以放弃您的更改并重新加载测试用例，或保存您的更改以覆盖当前版本。",
+      "keepEditing": "继续编辑",
+      "reload": "放弃我的更改并重新加载",
+      "overwrite": "覆盖"
+    },
     "templateSwitch": {
       "title": "切换模板？",
       "description": "\"{templateName}\"不包含{count, plural, =1 {此字段} other {这些字段}},因此对{count, plural, =1 {它} other {它们}}的更改将被丢弃:",

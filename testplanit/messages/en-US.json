@@ -3574,6 +3574,13 @@
       "bannerAction": "Resume editing",
       "bannerDiscard": "Discard them"
     },
+    "caseChanged": {
+      "title": "This test case was changed",
+      "description": "Someone updated this test case while you were editing it. You can discard your changes and reload the test case, or save your changes to overwrite the current version.",
+      "keepEditing": "Keep editing",
+      "reload": "Discard my changes and reload",
+      "overwrite": "Overwrite"
+    },
     "templateSwitch": {
       "title": "Switch template?",
       "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",

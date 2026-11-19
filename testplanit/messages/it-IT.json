@@ -3574,6 +3574,13 @@
       "bannerAction": "Riprendi la modifica",
       "bannerDiscard": "Scartali"
     },
+    "caseChanged": {
+      "title": "Questo caso di test è stato modificato",
+      "description": "Qualcuno ha aggiornato questo caso di test mentre lo stavi modificando. Puoi scartare le tue modifiche e ricaricare il caso di test, oppure salvare le tue modifiche per sovrascrivere la versione attuale.",
+      "keepEditing": "Continua a modificare",
+      "reload": "Scarta le mie modifiche e ricarica",
+      "overwrite": "Sovrascrivi"
+    },
     "templateSwitch": {
       "title": "Cambiare modello?",
       "description": "\"{templateName}\" non include {count, plural, =1 {questo campo} other {questi campi}}, quindi le tue modifiche a {count, plural, =1 {esso} other {essi}} verranno scartate:",

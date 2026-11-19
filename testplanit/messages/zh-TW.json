@@ -3574,6 +3574,13 @@
       "bannerAction": "繼續編輯",
       "bannerDiscard": "放棄它們"
     },
+    "caseChanged": {
+      "title": "此測試案例已被更改",
+      "description": "在您編輯時，有人更新了此測試案例。您可以放棄您的變更並重新加載測試案例，或保存您的變更以覆蓋目前的版本。",
+      "keepEditing": "繼續編輯",
+      "reload": "放棄我的變更並重新加載",
+      "overwrite": "覆蓋"
+    },
     "templateSwitch": {
       "title": "切換模板？",
       "description": "\"{templateName}\" 不包括 {count, plural, =1 {此欄位} other {這些欄位}}，所以您對 {count, plural, =1 {它} other {它們}} 的變更將被捨棄:",

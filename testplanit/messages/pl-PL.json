@@ -3574,6 +3574,13 @@
       "bannerAction": "Wznów edycję",
       "bannerDiscard": "Odrzuć je"
     },
+    "caseChanged": {
+      "title": "Ten przypadek testowy został zmieniony",
+      "description": "Ktoś zaktualizował ten przypadek testowy, podczas gdy go edytowałeś. Możesz odrzucić swoje zmiany i ponownie załadować przypadek testowy, lub zapisać swoje zmiany, aby zastąpić bieżącą wersję.",
+      "keepEditing": "Kontynuuj edycję",
+      "reload": "Odrzuć moje zmiany i załaduj ponownie",
+      "overwrite": "Zastąp"
+    },
     "templateSwitch": {
       "title": "Zmienić szablon?",
       "description": "\"{templateName}\" nie zawiera {count, plural, =1 {tego pola} few {tych pól} many {tych pól} other {tych pól}}, dlatego Twoje zmiany {count, plural, =1 {w nim} few {w nich} many {w nich} other {w nich}} będą odrzucone:",

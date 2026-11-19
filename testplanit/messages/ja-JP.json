@@ -3574,6 +3574,13 @@
       "bannerAction": "編集を再開",
       "bannerDiscard": "破棄します"
     },
+    "caseChanged": {
+      "title": "このテストケースが変更されました",
+      "description": "編集中に別のユーザーがこのテストケースを更新しました。変更内容を破棄して再度読み込むか、変更内容を保存して現在のバージョンを上書きすることができます。",
+      "keepEditing": "編集を続ける",
+      "reload": "変更内容を破棄して再度読み込む",
+      "overwrite": "上書き"
+    },
     "templateSwitch": {
       "title": "テンプレートを切り替えますか？",
       "description": "\"{templateName}\"には{count, plural, =1 {このフィールド} other {これらのフィールド}}が含まれていないため、{count, plural, =1 {それ} other {それら}}への変更は破棄されます:",

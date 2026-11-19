@@ -3574,6 +3574,13 @@
       "bannerAction": "Editing hervatten",
       "bannerDiscard": "Gooien ze weg"
     },
+    "caseChanged": {
+      "title": "Deze testcase is gewijzigd",
+      "description": "Iemand heeft deze testcase bijgewerkt terwijl u deze bewerkte. U kunt uw wijzigingen verwerpen en de testcase opnieuw laden, of uw wijzigingen opslaan om de huidige versie te overschrijven.",
+      "keepEditing": "Doorgaan met bewerken",
+      "reload": "Mijn wijzigingen verwerpen en opnieuw laden",
+      "overwrite": "Overschrijven"
+    },
     "templateSwitch": {
       "title": "Template wisselen?",
       "description": "\"{templateName}\" bevat {count, plural, =1 {dit veld} other {deze velden}} niet, dus uw wijzigingen in {count, plural, =1 {dit veld} other {deze velden}} worden verwijderd:",

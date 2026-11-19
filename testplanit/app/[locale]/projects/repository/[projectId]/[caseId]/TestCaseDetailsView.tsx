@@ -115,6 +115,10 @@ import { CaseDraftRecoveryBanner } from "@/components/caseDrafts/CaseDraftRecove
 import { CaseDraftStatus } from "@/components/caseDrafts/CaseDraftStatus";
 import { RestoreCaseDraftDialog } from "@/components/caseDrafts/RestoreCaseDraftDialog";
 import {
+  CaseChangedDialog,
+  hasCaseChangedSinceLoad,
+} from "@/components/cases/CaseChangedDialog";
+import {
   ConfirmTemplateSwitchDialog,
   type PendingTemplateSwitch,
 } from "@/components/cases/ConfirmTemplateSwitchDialog";
@@ -1401,6 +1405,23 @@ export function TestCaseDetailsView({
     }
   }, [searchParams, startInEditMode, canAddEdit, testcase, isEditMode]);
 
+  // The case version the edit session started from. A background refetch
+  // moves `testcase.currentVersion` without resetting the form, so the
+  // comparison at save time needs the version the form was filled from.
+  const editBaseVersionRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!isEditMode) {
+      editBaseVersionRef.current = null;
+    } else if (
+      editBaseVersionRef.current === null &&
+      testcase?.currentVersion != null
+    ) {
+      editBaseVersionRef.current = testcase.currentVersion;
+    }
+  }, [isEditMode, testcase?.currentVersion]);
+  const [caseChangedOpen, setCaseChangedOpen] = useState(false);
+  const overwriteConfirmedRef = useRef(false);
+
   const handleCancel = () => {
     setIsEditMode(false);
     setSelectedTemplateId(testcase.template.id ?? null);
@@ -1568,6 +1589,24 @@ export function TestCaseDetailsView({
       return;
     }
 
+    // Save against the case as the server has it now, not as it was loaded:
+    // someone else may have saved it while this form was open.
+    const overwriteConfirmed = overwriteConfirmedRef.current;
+    overwriteConfirmedRef.current = false;
+    const latest = await refetch();
+    const currentCase = (latest.data as any as ExtendedCases) ?? testcase;
+    if (
+      !overwriteConfirmed &&
+      hasCaseChangedSinceLoad(
+        editBaseVersionRef.current,
+        currentCase.currentVersion
+      )
+    ) {
+      setIsSubmitting(false);
+      setCaseChangedOpen(true);
+      return;
+    }
+
     try {
       // Phase 14 CTX-03: open the logical save group. Every ZenStack write
       // below shares this operationId via the global fetcher's X-Operation-Id
@@ -1592,11 +1631,11 @@ export function TestCaseDetailsView({
           folderId: data.folderId as number,
           estimate: estimateInSeconds,
           automated: data.automated as boolean,
-          currentVersion: testcase.currentVersion + 1,
+          currentVersion: currentCase.currentVersion + 1,
           templateId: data.templateId || undefined,
         },
       });
-      if (data.folderId !== testcase.folderId) {
+      if (data.folderId !== currentCase.folderId) {
         void queryClient.invalidateQueries({ queryKey: ["folderStats"] });
       }
 
@@ -1620,7 +1659,7 @@ export function TestCaseDetailsView({
       // only the links the Issues picker owns — see planCaseIssueLinkWrite for
       // why the rest are held out of the replace rather than resubmitted.
       const { preservedIssueIds, linkedIssueIds } = planCaseIssueLinkWrite(
-        testcase.caseIssues,
+        currentCase.caseIssues,
         issuesArray
       );
 
@@ -1652,7 +1691,7 @@ export function TestCaseDetailsView({
       }
 
       if (data.steps) {
-        const existingSteps = testcase?.steps || [];
+        const existingSteps = currentCase?.steps || [];
         interface FormStepData {
           step: any;
           expectedResult?: any;
@@ -1689,6 +1728,12 @@ export function TestCaseDetailsView({
               );
               const updateData: StepsUpdateArgs["data"] = {};
               let requiresUpdate = false;
+              // Someone else removed this step while the form was open;
+              // overwriting with these edits brings it back.
+              if (!existingDatabaseStep) {
+                updateData.isDeleted = false;
+                requiresUpdate = true;
+              }
               if (index !== existingDatabaseStep?.order) {
                 updateData.order = index;
                 requiresUpdate = true;
@@ -1785,9 +1830,9 @@ export function TestCaseDetailsView({
           }
         );
         await Promise.all(stepPromises);
-      } else if (testcase?.steps && testcase.steps.length > 0) {
+      } else if (currentCase?.steps && currentCase.steps.length > 0) {
         await updateManySteps({
-          where: { id: { in: testcase.steps.map((s) => s.id) } },
+          where: { id: { in: currentCase.steps.map((s) => s.id) } },
           data: { isDeleted: true },
         });
       }
@@ -1881,7 +1926,7 @@ export function TestCaseDetailsView({
 
       // Get existing attachments, applying pending edits and filtering out deleted ones
       // Explicitly pick only primitive fields to avoid relation objects
-      const existingAttachmentsForVersion = (testcase.attachments || [])
+      const existingAttachmentsForVersion = (currentCase.attachments || [])
         .filter((att) => !pendingAttachmentChanges.deletes.includes(att.id))
         .map((att) => {
           const edit = pendingAttachmentChanges.edits.find(
@@ -1932,7 +1977,8 @@ export function TestCaseDetailsView({
         .filter((name: string | undefined): name is string => !!name);
       // Resolve issue details for version snapshot
       // First check existing case issues, then fetch any newly linked ones
-      const knownIssues = testcase.caseIssues?.map((ci: any) => ci.issue) || [];
+      const knownIssues =
+        currentCase.caseIssues?.map((ci: any) => ci.issue) || [];
       const newIssueIds = issuesArray
         .filter((id: any) => id != null)
         .filter((id: number) => !knownIssues.some((iss: any) => iss.id === id));
@@ -1984,7 +2030,7 @@ export function TestCaseDetailsView({
           name: string;
           externalId: string | null;
         }[],
-        testcase.caseIssues
+        currentCase.caseIssues
       );
 
       const resolvedStepsForVersion: any[] = [];
@@ -2143,7 +2189,7 @@ export function TestCaseDetailsView({
       await Promise.all(createCaseFieldVersionValuesPromises);
 
       // Sync CaseFieldValues (the main table that's displayed on the details page)
-      const existingFieldValues = testcase.caseFieldValues || [];
+      const existingFieldValues = currentCase.caseFieldValues || [];
       const caseFieldValuesSyncPromises = formFields.map(
         async ({ fieldId, value }: { fieldId: number; value: any }) => {
           const existingValue = existingFieldValues.find(
@@ -3400,6 +3446,19 @@ export function TestCaseDetailsView({
         isStale={draft.isRestoreStale}
         onRestore={handleRestoreDraft}
         onDiscard={handleDiscardDraft}
+      />
+      <CaseChangedDialog
+        open={caseChangedOpen}
+        onCancel={() => setCaseChangedOpen(false)}
+        onReload={() => {
+          setCaseChangedOpen(false);
+          handleCancel();
+        }}
+        onOverwrite={() => {
+          setCaseChangedOpen(false);
+          overwriteConfirmedRef.current = true;
+          void handleSubmit(handleSave)();
+        }}
       />
       <ConfirmTemplateSwitchDialog
         pending={pendingTemplateSwitch}

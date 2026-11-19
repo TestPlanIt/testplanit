@@ -3574,6 +3574,13 @@
       "bannerAction": "Retomar edição",
       "bannerDiscard": "Descartar"
     },
+    "caseChanged": {
+      "title": "Este caso de teste foi alterado",
+      "description": "Alguém atualizou este caso de teste enquanto você o estava editando. Você pode descartar suas alterações e recarregar o caso de teste, ou salvar suas alterações para sobrescrever a versão atual.",
+      "keepEditing": "Continuar editando",
+      "reload": "Descartar minhas alterações e recarregar",
+      "overwrite": "Sobrescrever"
+    },
     "templateSwitch": {
       "title": "Trocar modelo?",
       "description": "\"{templateName}\" não inclui {count, plural, =1 {este campo} other {estes campos}}, então suas alterações {count, plural, =1 {nele} other {neles}} serão descartadas:",

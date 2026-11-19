@@ -3574,6 +3574,13 @@
       "bannerAction": "Tiếp tục chỉnh sửa",
       "bannerDiscard": "Loại bỏ chúng"
     },
+    "caseChanged": {
+      "title": "Trường hợp kiểm thử này đã được thay đổi",
+      "description": "Ai đó đã cập nhật trường hợp kiểm thử này trong khi bạn đang chỉnh sửa nó. Bạn có thể loại bỏ các thay đổi của mình và tải lại trường hợp kiểm thử, hoặc lưu các thay đổi của mình để ghi đè phiên bản hiện tại.",
+      "keepEditing": "Tiếp tục chỉnh sửa",
+      "reload": "Loại bỏ các thay đổi của tôi và tải lại",
+      "overwrite": "Ghi đè"
+    },
     "templateSwitch": {
       "title": "Chuyển đổi mẫu?",
       "description": "\"{templateName}\" không bao gồm {count, plural, =1 {trường này} other {các trường này}}, do đó những thay đổi của bạn đối với {count, plural, =1 {nó} other {chúng}} sẽ bị loại bỏ:",

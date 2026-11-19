@@ -3574,6 +3574,13 @@
       "bannerAction": "Reanudar edición",
       "bannerDiscard": "Descartalos"
     },
+    "caseChanged": {
+      "title": "Este caso de prueba fue modificado",
+      "description": "Alguien actualizó este caso de prueba mientras lo estabas editando. Puedes descartar tus cambios y recargar el caso de prueba, o guardar tus cambios para sobrescribir la versión actual.",
+      "keepEditing": "Continuar editando",
+      "reload": "Descartar mis cambios y recargar",
+      "overwrite": "Sobrescribir"
+    },
     "templateSwitch": {
       "title": "¿Cambiar plantilla?",
       "description": "\"{templateName}\" no incluye {count, plural, =1 {este campo} other {estos campos}}, por lo que tus cambios en {count, plural, =1 {él} other {ellos}} se descartarán:",

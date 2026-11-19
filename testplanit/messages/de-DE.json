@@ -3574,6 +3574,13 @@
       "bannerAction": "Bearbeitung fortsetzen",
       "bannerDiscard": "Verwerfen Sie diese"
     },
+    "caseChanged": {
+      "title": "Dieser Testfall wurde geändert",
+      "description": "Jemand hat diesen Testfall aktualisiert, während Sie ihn bearbeitet haben. Sie können Ihre Änderungen verwerfen und den Testfall neu laden oder Ihre Änderungen speichern, um die aktuelle Version zu überschreiben.",
+      "keepEditing": "Weiterbearbeiten",
+      "reload": "Meine Änderungen verwerfen und neu laden",
+      "overwrite": "Überschreiben"
+    },
     "templateSwitch": {
       "title": "Vorlage wechseln?",
       "description": "\"{templateName}\" enthält {count, plural, =1 {dieses Feld} other {diese Felder}} nicht, daher werden Ihre Änderungen {count, plural, =1 {daran} other {daran}} verworfen:",
