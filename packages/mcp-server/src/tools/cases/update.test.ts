@@ -67,6 +67,8 @@ const FULL_DETAIL = {
   codeRepository: null,
   lastUpdatedAt: null,
   latestResult: null,
+  hasAutomatedResults: false,
+  lastAutomatedResultAt: null,
 };
 
 function makeClientServer() {
