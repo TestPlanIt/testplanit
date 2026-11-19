@@ -97,9 +97,9 @@
       "resultsAdded": "{count, plural, one {# Resultado Adicionado} other {# Resultados Adicionados}}",
       "resultsAddedDescription": "{count, plural, one {Resultado adicionado a # caso de teste} other {Resultados adicionados a # casos de teste}} com sucesso",
       "addingResultsToMultiple": "Adicionando resultados a {count, plural, one {# caso de teste} other {# casos de teste}}",
-      "addedToTestRun": "Adicionado ao Teste de Rotina",
+      "addedToTestRun": "Adicionado à Execução de Teste",
       "addedToTestRunDescription": "O caso de teste foi adicionado à Execução de Teste.",
-      "noAvailableTestRuns": "Todos os testes ativos já incluem este caso de teste.",
+      "noAvailableTestRuns": "Todas as execuções de teste ativas já incluem este caso de teste.",
       "resultUpdateError": "Falha ao atualizar o resultado do teste",
       "resultDeleteError": "Falha ao excluir o resultado do teste",
       "selectStatus": "Selecionar Status",
@@ -143,7 +143,7 @@
           "title": "Resultados do teste de importação",
           "description": "Faça o upload de arquivos de resultados de testes para importá-los em uma nova execução de testes. Compatível com os formatos JUnit, TestNG, xUnit, NUnit, MSTest, Mocha e Cucumber.",
           "testRun": {
-            "label": "Teste de execução",
+            "label": "Execução de teste",
             "placeholder": "Selecione uma execução de teste."
           },
           "file": {
@@ -170,7 +170,7 @@
           "progress": {
             "initializing": "Inicializando a importação...",
             "validating": "Validação dos dados de entrada...",
-            "creatingRun": "Criando um teste de execução...",
+            "creatingRun": "Criando uma execução de teste...",
             "fetchingTemplate": "Obtendo dados do modelo...",
             "countingTests": "Processando {count} casos de teste de {files} arquivo(s)...",
             "parsingFile": "Analisando o arquivo {current} de {total}...",
@@ -339,7 +339,7 @@
       "isActive": "Ativo",
       "members": "Membros",
       "milestoneTypes": "Tipos de marcos",
-      "milestones": "Conquistas",
+      "milestones": "Marcos",
       "createdAt": "Criado em",
       "stagedAt": "Preparado em",
       "completedOn": "Concluído em",
@@ -367,7 +367,7 @@
       "noAttachments": "Sem Anexos",
       "inReview": "Em Análise",
       "notInReview": "Não Está em Análise",
-      "testRuns": "Testes de execução",
+      "testRuns": "Execuções de teste",
       "title": "Título",
       "project": "Projeto",
       "priority": "Prioridade",
@@ -383,7 +383,7 @@
       "checked": "Verificado",
       "version": "Versão",
       "issues": "Problemas",
-      "internalIssues": "Questões internas",
+      "internalIssues": "Problemas internos",
       "externalIssues": "{provider} Problemas",
       "requirements": "Requisitos",
       "data": "Dados",
@@ -507,10 +507,10 @@
         "description": "Atribua {count, plural, one {# caso de teste selecionado} other {# casos de teste selecionados}} a um usuário"
       },
       "complete": {
-        "title": "Teste completo",
-        "description": "Tem certeza de que deseja concluir este teste?",
+        "title": "Execução de teste completa",
+        "description": "Tem certeza de que deseja concluir esta execução de teste?",
         "allCasesCompletedDescription": "Todos os casos de teste nesta execução agora têm um resultado. Você gostaria de completar esta execução de teste?",
-        "warning": "Uma vez concluído, o teste não poderá ser modificado.",
+        "warning": "Uma vez concluída, a execução de teste não poderá ser modificada.",
         "completing": "Concluindo...",
         "apple": {
           "title": "Configurar o início de sessão da Apple",
@@ -555,10 +555,10 @@
       "copyFailed": "Falha ao copiar o link para a área de transferência",
       "created": "Criado com sucesso",
       "createdItem": "{item} criado com sucesso",
-      "createdDescription": "O teste foi criado e agora está visível na lista de Testes.",
+      "createdDescription": "A execução de teste foi criada e agora está visível na lista de Execuções de teste.",
       "createError": "Ocorreu um erro desconhecido. Por favor, tente novamente.",
-      "emptyActive": "Nenhum teste em andamento",
-      "emptyCompleted": "Nenhum teste concluído",
+      "emptyActive": "Nenhuma execução de teste em andamento",
+      "emptyCompleted": "Nenhuma execução de teste concluída",
       "projectUpdated": "Projeto atualizado com sucesso",
       "projectUpdateError": "Ocorreu um erro ao atualizar o projeto.",
       "noProjects": "Nenhum projeto encontrado"
@@ -604,7 +604,7 @@
       "enterUrl": "Insira o URL",
       "enterUrlPattern": "Digite o padrão de URL...",
       "domainExample": "exemplo.com",
-      "issueIdExample": "EDIÇÃO-123",
+      "issueIdExample": "PROBLEMA-123",
       "selectPriorityValuesOrEmpty": "Selecione os valores de prioridade (ou deixe em branco para todos)."
     },
     "errors": {
@@ -1368,7 +1368,7 @@
       },
       "menu": {
         "repository": "Repositório",
-        "runs": "Testes e Resultados"
+        "runs": "Execuções de Teste e Resultados"
       },
       "dropdown": {
         "selectProject": "Selecione um projeto",
@@ -1394,7 +1394,7 @@
       "latestSessions": "Últimas Sessões",
       "activeTestRuns": "Execuções de teste ativas",
       "seeAllActiveTestRuns": "{count, plural, =1 {Ver # Execução de Teste Ativa} =2 {Ver ambas as Execuções de Teste Ativas} other {Ver todas as # Execuções de Teste Ativas}}",
-      "latestTestRuns": "Últimos testes de execução",
+      "latestTestRuns": "Últimas execuções de teste",
       "testCaseBreakdown": "Análise do caso de teste",
       "noTestCases": "O repositório do projeto está vazio. Adicione casos de teste usando o repositório.",
       "noTestCasesPrefix": "O repositório do projeto está vazio. Adicione casos de teste usando o"
@@ -1491,7 +1491,7 @@
           "projectSelectorLabel": "Projeto",
           "defaultIssueTypeHelp": "Ao criar novas tarefas no TestPlanIt, esse tipo de tarefa será selecionado automaticamente. Isso economiza tempo se você costuma criar sempre o mesmo tipo de tarefa.",
           "automaticSyncHelp": "Quando ativada, a sincronização automática de problemas ocorrerá quando forem detectadas alterações no sistema externo (via webhooks). A sincronização manual estará sempre disponível.",
-          "removeWarningTitle": "A remoção dessa integração problemática irá:",
+          "removeWarningTitle": "A remoção dessa integração de problemas irá:",
           "removeWarning1": "Desconecte todos os problemas vinculados a esta integração de problemas (os problemas permanecem no banco de dados).",
           "removeWarning2": "Remova todas as configurações específicas de integração de problemas para este projeto.",
           "removeWarning3": "Será necessário reconfigurar se desejar usar novamente esta integração de problemas.",
@@ -1655,8 +1655,8 @@
         "adapterLabelGenericHmac": "Webhook HMAC genérico",
         "outboundCreateSubscriptionsTitle": "Assinaturas",
         "outboundCreateSubscriptionsHelp": "Escolha quais eventos serão disparados para este destino. Você poderá alterar isso posteriormente.",
-        "outboundSubsTestRunsAndSessions": "Testes e sessões de avaliação",
-        "outboundSubsTestRuns": "Testes de execução",
+        "outboundSubsTestRunsAndSessions": "Execuções de teste e sessões de avaliação",
+        "outboundSubsTestRuns": "Execuções de teste",
         "outboundSubsSessions": "Sessões",
         "outboundSubsScimUsers": "Usuários do SCIM",
         "outboundSubsScimGroups": "Grupos SCIM",
@@ -1685,7 +1685,7 @@
         "events": {
           "testRunCreated": "Execução de teste criada",
           "testRunStateChanged": "O estado da execução do teste foi alterado.",
-          "testRunCompleted": "Teste concluído",
+          "testRunCompleted": "Execução de teste concluída",
           "testRunDuplicated": "Execução de teste duplicada",
           "testRunResultAdded": "Resultado do teste adicionado",
           "sessionCreated": "Sessão criada",
@@ -2054,7 +2054,7 @@
         "createSuccess": "Criado \"{name}\"",
         "delete": {
           "title": "Apagar \"{name}\"?",
-          "descriptionStage1": "Este conjunto de dados será removido do projeto. Os testes existentes que já capturaram seus valores não serão afetados.",
+          "descriptionStage1": "Este conjunto de dados será removido do projeto. As execuções de teste existentes que já capturaram seus valores não serão afetadas.",
           "descriptionStage2": "Este conjunto de dados é usado por {count, plural, =1 {# caso} other {# casos}}. Excluí-lo removerá a atribuição do conjunto de dados compartilhado desses casos. As execuções de teste existentes não serão afetadas (os snapshots são imutáveis).",
           "confirm": "Excluir conjunto de dados",
           "confirmAnyway": "Excluir mesmo assim ({count, plural, =1 {# caso} other {# casos}})",
@@ -2416,7 +2416,7 @@
           "connect": "Conectar Repositório",
           "allConnected": "Cada repositório registrado já está conectado.",
           "columnCache": "Cache",
-          "pinTotal": "{count, plural, one {# Pino de Código} other {# Pinos de Código}}",
+          "pinTotal": "{count, plural, one {# Code Pin} other {# Code Pins}}",
           "cacheDisabled": "Cache desativado",
           "edit": "Editar conexão",
           "connectTitle": "Conectar um repositório",
@@ -2434,11 +2434,11 @@
         "bulk": {
           "label": "{count, plural, =1 {Seu repositório:} other {Todos os # repositórios:}}",
           "scanRecentHint": "Verificar novamente commits recentes {count, plural, =1 {no repositório conectado} other {em todos os # repositórios conectados}}.",
-          "scanFullHint": "Percorrer cada commit no branch {count, plural, =1 {do repositório conectado} other {de todos os # repositórios conectados}} e preencher pinos para tickets existentes.",
+          "scanFullHint": "Percorrer cada commit no branch {count, plural, =1 {do repositório conectado} other {de todos os # repositórios conectados}} e preencher pins para tickets existentes.",
           "scanFullConfirm": "Isso percorre cada commit no branch {count, plural, =1 {do repositório conectado} other {de todos os # repositórios conectados}}. Os repositórios são verificados um de cada vez, portanto, isso pode levar muito tempo, e cada percurso lê commits através da API do provedor, o que conta contra seu limite de taxa.",
-          "checkStaleHint": "Verificar os Pinos de Código {count, plural, =1 {do repositório conectado} other {de todos os # repositórios conectados}} em relação a cada ponta do branch.",
-          "removeStaleHint": "Remover {count, plural, one {# Pino de Código obsoleto} other {# Pinos de Código obsoletos}} em {repos, plural, one {# repositório} other {# repositórios}}.",
-          "removeConfirm": "Remover {count, plural, one {# Pino de Código} other {# Pinos de Código}} que as últimas verificações não conseguiram encontrar na ponta do branch, em {repos, plural, one {# repositório} other {# repositórios}}?",
+          "checkStaleHint": "Verificar os Code Pins {count, plural, =1 {do repositório conectado} other {de todos os # repositórios conectados}} em relação a cada ponta do branch.",
+          "removeStaleHint": "Remover {count, plural, one {# Code Pin obsoleto} other {# Code Pins obsoletos}} em {repos, plural, one {# repositório} other {# repositórios}}.",
+          "removeConfirm": "Remover {count, plural, one {# Code Pin} other {# Code Pins}} que as últimas verificações não conseguiram encontrar na ponta do branch, em {repos, plural, one {# repositório} other {# repositórios}}?",
           "queued": "Enfileirado para {count, plural, one {# repositório} other {# repositórios}}.{skipped, plural, =0 {} one { # já estava em execução.} other { # já estavam em execução.}}",
           "allRunning": "Já enfileirado ou em execução para cada repositório.",
           "failed": "Não foi possível iniciar para: {names}"
@@ -2547,10 +2547,10 @@
     },
     "empty": {
       "active": "Nenhum marco ativo",
-      "completed": "Nenhuma etapa concluída",
+      "completed": "Nenhum marco concluído",
       "description": "Nenhuma descrição fornecida",
       "documentation": "Nenhuma documentação foi fornecida.",
-      "testRuns": "Sem testes corridos",
+      "testRuns": "Sem execuções de teste",
       "noMatchingTestRuns": "Nenhuma execução de teste corresponde aos seus filtros.",
       "noMatchingSessions": "Nenhuma sessão corresponde aos seus filtros.",
       "forecasts": "Não há dados de previsão disponíveis."
@@ -2585,7 +2585,7 @@
       "pickStartDate": "Selecione a data de início",
       "pickCompletionDate": "Selecione a data de conclusão",
       "selectDate": "Selecione a data...",
-      "completionWarning": "Aviso: Isso marcará a etapa como concluída."
+      "completionWarning": "Aviso: Isso marcará o marco como concluído."
     },
     "toast": {
       "deleted": "Marco {name} excluído",
@@ -2618,8 +2618,8 @@
       }
     },
     "completeDialog": {
-      "confirmTitle": "Confirmação da conclusão da etapa",
-      "confirmDescription": "A conclusão desta etapa também concluirá os seguintes itens relacionados:",
+      "confirmTitle": "Confirmação da conclusão do marco",
+      "confirmDescription": "A conclusão deste marco também concluirá os seguintes itens relacionados:",
       "impactActiveTestRuns": "{count, plural, one {# execução de teste ativa} other {# execuções de teste ativas}}",
       "impactActiveSessions": "{count, plural, one {# sessão ativa} other {# sessões ativas}}",
       "impactDescendantMilestones": "{count, plural, one {# marco descendente} other {# marcos descendentes}}",
@@ -2893,7 +2893,7 @@
       "projects": "Você tem acesso a {count, plural, =1 {# Projeto} other {# Projetos}}",
       "loading": "Carregando painel...",
       "noItems": "Nada que lhe tenha sido atribuído requer atenção neste momento.",
-      "pendingRuns": "Testes pendentes",
+      "pendingRuns": "Execuções de teste pendentes",
       "activeSessions": "Sessões ativas",
       "yourActiveSessions": "{count, plural, =0 {Sem sessões ativas} =1 {# Sessão ativa} other {# Sessões ativas}}",
       "yourPendingRuns": "{count, plural, =0 {Sem execuções de teste pendentes} =1 {# Execução de teste ativa} other {# Execuções de teste ativas}}",
@@ -3287,8 +3287,8 @@
       "noText": "Sem texto",
       "hasLink": "Possui link",
       "noLink": "Sem link",
-      "hasSteps": "Possui degraus",
-      "noSteps": "Sem degraus",
+      "hasSteps": "Possui passos",
+      "noSteps": "Sem passos",
       "unchecked": "Não verificado",
       "linkedCases": "Casos relacionados",
       "clickToViewFullContent": "Clique para ver o conteúdo completo."
@@ -3324,9 +3324,9 @@
       "searchSharedStepsPlaceholder": "Selecione etapas compartilhadas...",
       "stepsCountLabel": "{count, plural, =0 {# etapas} =1 {# etapa} other {# etapas}}",
       "reviewSelectedStepsTitle": "Revisar etapas selecionadas",
-      "noStepsInSelectedGroup": "O grupo selecionado não possui degraus.",
+      "noStepsInSelectedGroup": "O grupo selecionado não possui passos.",
       "sharedGroupSuffix": "(Etapas Compartilhadas)",
-      "unnamedSharedGroup": "Degraus compartilhados sem nome",
+      "unnamedSharedGroup": "Passos compartilhados sem nome",
       "noStepsInSelectedSharedGroup": "O grupo compartilhado selecionado não possui etapas.",
       "layout": {
         "label": "Layout de etapa",
@@ -3400,7 +3400,7 @@
       "rename": "Renomear pasta"
     },
     "cases": {
-      "filter": "Caixas de filtro...",
+      "filter": "Filtrar casos...",
       "selectFolder": "Selecione uma pasta para adicionar ou exibir casos de teste.",
       "selectCases": "Selecionar casos de teste",
       "noTestCases": "Não há casos de teste para exibir.",
@@ -3440,7 +3440,7 @@
         },
         "rowMode": {
           "label": "Linhas de casos de teste",
-          "multi": "Uma única linha por degrau"
+          "multi": "Uma única linha por passo"
         }
       },
       "importWizard": {
@@ -3589,7 +3589,7 @@
       "confirmMessage": "{count, plural, =0 {Excluir esta pasta também excluirá todas as subpastas. Tem certeza?} =1 {Excluir esta pasta também excluirá 1 caso de teste nesta pasta e em todas as subpastas. Tem certeza?} other {Excluir esta pasta também excluirá # casos de teste nesta pasta e em todas as subpastas. Tem certeza?}}",
       "warning": "Esta pasta e todos os seus casos de teste serão removidos do projeto. Os dados históricos desses casos de teste, incluindo os resultados, permanecerão no projeto.",
       "confirm": "Confirme a exclusão da pasta",
-      "success": "Pasta e todas as subpastas/caixas foram excluídas com sucesso."
+      "success": "Pasta e todas as subpastas/casos foram excluídos com sucesso."
     },
     "editFolder": {
       "errors": {
@@ -3609,7 +3609,7 @@
       "anyTag": "Qualquer etiqueta",
       "noTags": "Sem etiquetas",
       "byTag": "Marcação",
-      "byIssue": "Emitir",
+      "byIssue": "Problema",
       "anyIssue": "Algum problema?",
       "noIssues": "Sem problemas"
     },
@@ -3704,8 +3704,8 @@
         "plainText": "Texto simples"
       },
       "rowMode": {
-        "label": "Linhas por caixa",
-        "single": "Uma única fileira por caixa",
+        "label": "Linhas por caso",
+        "single": "Uma única fileira por caso",
         "multi": "Várias linhas por etapa"
       },
       "comingSoon": "Em breve",
@@ -3790,9 +3790,9 @@
       "caseDetailsError": "Não foi possível carregar os detalhes do caso.",
       "sourceLabel": "Fonte",
       "fieldValuesLabel": "Valores de campo",
-      "lastRunLabel": "Última corrida",
+      "lastRunLabel": "Última execução",
       "noFieldValues": "Nenhum valor de campo",
-      "noLastRun": "Nunca corra",
+      "noLastRun": "Nunca executado",
       "stepExpectedResult": "{step} → {result}",
       "runStatusDate": "{status} — {date}",
       "noFolder": "Sem pasta",
@@ -3829,7 +3829,7 @@
         "folderContextEmptyTitle": "Nenhum caso de teste nesta pasta ainda",
         "folderContextEmpty": "\"{folderName}\" e suas pastas pai/filha não têm casos de teste. A IA procurará por casos de teste relacionados em outro lugar neste projeto para aprender seu estilo e evitar duplicatas. Para melhores resultados, inicie o gerador a partir da pasta onde esses casos de teste pertencem.",
         "currentFolder": "pasta atual",
-        "fromIssue": "Da edição",
+        "fromIssue": "Do problema",
         "fromDocument": "Do documento",
         "documentTitle": "Título do documento",
         "documentTitlePlaceholder": "Insira o título do seu documento de requisitos.",
@@ -4034,9 +4034,9 @@
         "saveAllAndStage": "Salvar tudo e preparar",
         "discardAndStage": "Descartar edições e preparar"
       },
-      "linkedIssuesDroppedTitle": "Algumas questões relacionadas não foram incluídas.",
+      "linkedIssuesDroppedTitle": "Alguns problemas relacionados não foram incluídos.",
       "linkedIssuesDropped": "{count, plural, =1 {# problema vinculado foi descartado} other {# problemas vinculados foram descartados}} devido ao orçamento de tokens: {keys}.",
-      "linkedIssuesPreviewHeading": "Questões relacionadas que serão incluídas",
+      "linkedIssuesPreviewHeading": "Problemas relacionados que serão incluídos",
       "contextImages": {
         "pickerHeading": "Imagens para incluir como contexto (até {max})",
         "tooLarge": "Muito grande",
@@ -4182,7 +4182,7 @@
       "editAction": "Editar pin",
       "symbolSearchPlaceholder": "Pesquisar símbolos...",
       "symbolUseTyped": "Usar \"{symbol}\"",
-      "title": "Pinos de Código",
+      "title": "Code Pins",
       "viewerFailed": "Não foi possível carregar o arquivo.",
       "viewerLoading": "Carregando arquivo…",
       "viewerTooLarge": "Este arquivo é muito grande para exibir. Insira os números de linha.",
@@ -4308,7 +4308,7 @@
       "filterAllStatuses": "Todos os status",
       "filterAllEntityTypes": "Todos os tipos de entidade",
       "filterEntityTypeCase": "Casos de teste",
-      "filterEntityTypeRun": "Testes de execução",
+      "filterEntityTypeRun": "Execuções de teste",
       "filterAllProjects": "Todos os projetos",
       "actionRevert": "Reverter decisão",
       "revertedBadge": "Revertido",
@@ -4455,7 +4455,7 @@
     "auditLog": {
       "description": "Todas as alterações registradas para esta execução de teste."
     },
-    "notFound": "Teste de execução não encontrado.",
+    "notFound": "Execução de teste não encontrada.",
     "add": {
       "title": "Adicionar Execução de Teste",
       "description": "Adicione uma nova execução de teste ao projeto.",
@@ -4532,7 +4532,7 @@
     },
     "delete": {
       "title": "Excluir Execução de Teste",
-      "description": "Tem certeza de que deseja excluir este teste? Os resultados serão mantidos para análises históricas.",
+      "description": "Tem certeza de que deseja excluir esta execução de teste? Os resultados serão mantidos para análises históricas.",
       "warning": "Esta ação não pode ser desfeita.",
       "toast": {
         "loading": "Excluindo execução de teste...",
@@ -4546,13 +4546,13 @@
     "summary": {
       "title": "Resumo da Execução do Teste",
       "description": "Veja o resumo da execução do teste.",
-      "activeRunsAndEstTime": "Corridas ativas e tempo estimado",
-      "activeRunsLabel": "Corridas",
+      "activeRunsAndEstTime": "Execuções ativas e tempo estimado",
+      "activeRunsLabel": "Execuções",
       "totalEstTime": "Tempo total estimado",
       "responsibleUsers": "Usuários responsáveis",
-      "allActiveRuns": "Todas as corridas ativas",
+      "allActiveRuns": "Todas as execuções ativas",
       "recentResultsTitle": "Resultados Manuais Recentes",
-      "recentResultsDescription": "Veja os resultados recentes do teste.",
+      "recentResultsDescription": "Veja os resultados recentes da execução de teste.",
       "recentAutomatedResultsTitle": "Resultados automatizados recentes",
       "noRecentAutomatedResults": "Nenhum resultado automatizado recente encontrado.",
       "automationRunsInProgress": "{count, plural, =1 {# Execução Automatizada em Andamento} other {# Execuções Automatizadas em Andamento}}",
@@ -4566,7 +4566,7 @@
       "noWorkDistributionData": "Não há sessões ativas com responsáveis ou estimativas para exibir."
     },
     "details": {
-      "title": "Detalhes do teste de execução",
+      "title": "Detalhes da execução de teste",
       "description": "Veja os detalhes da execução do teste."
     },
     "duplicateDialog": {
@@ -4600,14 +4600,14 @@
     },
     "removeCasesDialog": {
       "title": "Remover Casos de Teste",
-      "description": "Tem certeza de que deseja remover estes casos de teste deste teste?",
-      "warning": "Esta ação não pode ser desfeita. Todos os resultados registrados para esses casos de teste neste teste serão perdidos. Os casos de teste em si permanecerão no repositório."
+      "description": "Tem certeza de que deseja remover estes casos de teste desta execução de teste?",
+      "warning": "Esta ação não pode ser desfeita. Todos os resultados registrados para esses casos de teste nesta execução serão perdidos. Os casos de teste em si permanecerão no repositório."
     },
     "filter": {
       "placeholder": "Execução de testes de filtro..."
     },
     "empty": {
-      "noMatchingCompleted": "Nenhum teste concluído corresponde ao seu filtro.",
+      "noMatchingCompleted": "Nenhuma execução de teste concluída corresponde ao seu filtro.",
       "noMatchingActive": "Nenhuma execução de teste ativa corresponde aos seus filtros."
     },
     "milestoneGroup": {
@@ -4676,7 +4676,7 @@
         "showFullPatch": "Mostrar patch completo",
         "binary": "Arquivo binário",
         "noPatch": "Patch não disponível",
-        "pinnedFiles": "{count, plural, one {# pino} other {# pinos}}",
+        "pinnedFiles": "{count, plural, one {# pin} other {# pins}}",
         "loading": "Comparando commits…"
       },
       "loading": {
@@ -4717,7 +4717,7 @@
         "description": "Nenhum caso de teste correspondia às alterações. Fixe casos aos arquivos alterados para que a próxima análise os encontre."
       },
       "reasons": {
-        "pin": "Pino",
+        "pin": "Pin",
         "issue": "Problema",
         "path": "Palavra-chave",
         "history": "Histórico",
@@ -4931,15 +4931,15 @@
           "repository_cases": "Casos de repositório",
           "repository_case_steps": "Etapas do caso do repositório",
           "repository_case_tags": "Etiquetas de caso do repositório",
-          "milestones": "Conquistas",
-          "runs": "Testes de execução",
+          "milestones": "Marcos",
+          "runs": "Execuções de teste",
           "run_tests": "Casos de teste",
           "run_results": "Resultados do teste",
           "run_result_steps": "Resultados da etapa de execução do teste",
           "run_links": "Links de teste",
           "run_tags": "Tags de execução de teste",
           "issues": "Problemas",
-          "milestone_issues": "Questões importantes",
+          "milestone_issues": "Problemas de marcos",
           "repository_case_issues": "Problemas com casos de repositório",
           "run_issues": "Problemas na execução do teste",
           "run_result_issues": "Problemas com os resultados da execução do teste",
@@ -5579,10 +5579,10 @@
           "title": "Adicionar novo campo de caso"
         },
         "edit": {
-          "title": "Campo Editar Maiúsculas/Minúsculas"
+          "title": "Editar campo de caso"
         },
         "delete": {
-          "title": "Excluir campo Maiúsculas/Minúsculas",
+          "title": "Excluir campo de caso",
           "confirmMessage": "Tem certeza de que deseja excluir <strong>{name}</strong>?",
           "warning": "O campo \"Case\" será removido de todos os modelos. Esta ação é irreversível."
         }
@@ -5699,7 +5699,7 @@
         "groups": {
           "customFields": "Campos personalizados"
         },
-        "stepsBlock": "Bloco de degraus"
+        "stepsBlock": "Bloco de passos"
       }
     },
     "users": {
@@ -6137,7 +6137,7 @@
         "final": "Final",
         "system": "Status do sistema",
         "forTestCase": "Para o caso de teste",
-        "forTestRun": "Para teste de funcionamento",
+        "forTestRun": "Para execução de teste",
         "forSession": "Para Sessão",
         "color": "Cor"
       }
@@ -6412,7 +6412,7 @@
       },
       "syncIssue": "Problema de sincronização com sistema externo",
       "syncSuccess": "Problema sincronizado com sucesso",
-      "syncSuccessDescription": "A questão \"{name}\" foi atualizada com as informações mais recentes do sistema externo.",
+      "syncSuccessDescription": "O problema \"{name}\" foi atualizado com as informações mais recentes do sistema externo.",
       "syncError": "Problema de sincronização",
       "syncErrorDescription": "Não foi possível sincronizar o problema. Tente novamente mais tarde."
     },
@@ -6486,7 +6486,7 @@
     "trash": {
       "itemTypes": {
         "projectLinks": "Links do projeto",
-        "milestoneLinks": "Links importantes",
+        "milestoneLinks": "Links de marcos",
         "icons": "Ícones",
         "fieldOptions": "Opções de campo",
         "configCategories": "Categorias de configuração",
@@ -6682,7 +6682,7 @@
       "filterPlaceholder": "Integrações de filtros...",
       "table": {
         "lastSync": "Última sincronização",
-        "empty": "Nenhuma integração problemática encontrada",
+        "empty": "Nenhuma integração de problemas encontrada",
         "loading": "Carregando integrações de problemas...",
         "configure": "Configurar"
       },
@@ -7281,15 +7281,15 @@
         "assignedSession": "Você foi designado para a sessão",
         "mentionedYouInComment": "te mencionei em um comentário sobre",
         "inProject": "no projeto",
-        "testRun": "Teste de execução:",
+        "testRun": "Execução de teste:",
         "casesInProject": "{count, plural, =1 {# caso} other {# casos}} em <project></project>",
         "sentBy": "Enviado por {name}",
         "milestoneDueSoonTitle": "Marco a ser atingido em breve",
         "milestoneOverdueTitle": "Marco atrasado",
         "milestoneDueSoon": "O marco \"{milestoneName}\" no projeto \"{projectName}\" vence em {dueDate}.",
         "milestoneOverdue": "O marco \"{milestoneName}\" no projeto \"{projectName}\" tinha vencimento em {dueDate} e agora está atrasado.",
-        "milestoneNotificationReason": "Você está recebendo esta notificação porque participou de atividades relacionadas a este marco (testes, sessões ou como criador do marco).",
-        "milestoneNotificationContinue": "Você continuará recebendo lembretes diários até que esta etapa seja marcada como concluída.",
+        "milestoneNotificationReason": "Você está recebendo esta notificação porque participou de atividades relacionadas a este marco (execuções de teste, sessões ou como criador do marco).",
+        "milestoneNotificationContinue": "Você continuará recebendo lembretes diários até que este marco seja marcado como concluído.",
         "shareLinkAccessedTitle": "Link de compartilhamento acessado",
         "shareLinkAccessedAnonymousViewer": "Alguém",
         "shareLinkAccessedMessage": "{viewer} visualizou seu relatório compartilhado: \"{shareTitle}\"",
@@ -7314,7 +7314,7 @@
         "reviewRejectedAction": "Sua solicitação de avaliação foi rejeitada em",
         "reviewCancelledAction": "cancelei o pedido de revisão em",
         "reviewEntityLabelCase": "caso de teste",
-        "reviewEntityLabelRun": "teste de execução",
+        "reviewEntityLabelRun": "execução de teste",
         "reviewEntityLabelSession": "sessão",
         "reviewBulkEntityLabelCase": "casos de teste",
         "reviewBulkEntityLabelRun": "execuções de teste",
@@ -7359,7 +7359,7 @@
         "alertTriggeredReason": "Você está recebendo isto porque está inscrito neste alerta.",
         "alertSubject": {
           "CASE": "caso de teste",
-          "RUN": "teste de execução",
+          "RUN": "execução de teste",
           "MILESTONE": "marco",
           "SESSION": "sessão",
           "PROJECT": "projeto",
@@ -7499,9 +7499,9 @@
     }
   },
   "issues": {
-    "linkedIssues": "Questões relacionadas",
+    "linkedIssues": "Problemas relacionados",
     "linkedIssuesDescription": "Problemas associados a este item",
-    "refreshed": "Edições atualizadas",
+    "refreshed": "Problemas atualizados",
     "refreshedDescription": "A lista de problemas relacionados foi atualizada.",
     "unlinked": "Problema não relacionado",
     "unlinkedDescription": "O problema foi resolvido neste item.",
@@ -7528,7 +7528,7 @@
     "searchIn": "Pesquisar em {provider}",
     "searchPlaceholder": "Problemas de pesquisa...",
     "searchIssues": "Problemas de pesquisa",
-    "searchIssuesDescription": "Procure por edições internas para criar um link para este item.",
+    "searchIssuesDescription": "Procure por problemas internos para criar um link para este item.",
     "searchExternalDescription": "Pesquise por {provider} problemas para criar um link para este item.",
     "error": "Problemas de carregamento",
     "errorDescription": "Falha ao carregar os problemas. Tente novamente.",
@@ -7577,7 +7577,7 @@
     "addLabel": "Adicione uma etiqueta e pressione Enter.",
     "labelHint": "Os espaços serão substituídos por hífenes.",
     "labelFormatNote": "Os rótulos não podem conter espaços. Os espaços serão automaticamente substituídos por hífenes.",
-    "enterIssueKey": "Insira a chave da edição (ex.: PROJ-123)",
+    "enterIssueKey": "Insira a chave do problema (ex.: PROJ-123)",
     "issueLinkHelp": "Insira a chave de um problema existente para criar um link.",
     "searchForIssue": "Procure um problema para vincular.",
     "searchUsers": "Pesquisar usuários",
@@ -7972,11 +7972,11 @@
     },
     "ApplicationArea": {
       "Documentation": "Documentação",
-      "Milestones": "Conquistas",
+      "Milestones": "Marcos",
       "TestCaseRepository": "Repositório de casos de teste",
       "TestCaseRestrictedFields": "Campos restritos do caso de teste",
-      "TestRuns": "Testes de execução",
-      "ClosedTestRuns": "Testes fechados",
+      "TestRuns": "Execuções de teste",
+      "ClosedTestRuns": "Execuções de teste fechadas",
       "TestRunResults": "Resultados do teste",
       "TestRunResultRestrictedFields": "Campos restritos do resultado da execução do teste",
       "AutomatedExecution": "Execução Automatizada",
@@ -8175,10 +8175,10 @@
     "milestone": {
       "name": "## Nome do Marco\nUm nome claro e descritivo que identifique este marco em seu projeto.\n\n- Deve ser único e significativo\n- Ajuda os membros da equipe a entenderem rapidamente o propósito do marco\n- Usado em relatórios e acompanhamento do projeto",
       "type": "## Tipo de Marco\nCategoriza o marco e determina sua aparência e comportamento.\n\n- Diferentes tipos podem ter fluxos de trabalho diferentes\n- Ajuda a organizar e filtrar marcos\n- Pode afetar a geração de relatórios e o acompanhamento",
-      "started": "## Status de Início\nIndica que o trabalho nesta etapa foi iniciado.\n\n- Marca a etapa como em andamento\n- Atualiza a data de início real automaticamente quando ativada\n- Afeta o cronograma do projeto e o acompanhamento do progresso",
-      "completed": "## Status Concluído\nIndica que o trabalho nesta etapa foi finalizado.\n\n- Marca a etapa como concluída\n- Atualiza automaticamente a data de conclusão real\n- Usado para acompanhamento e relatório de progresso\n- Afeta etapas dependentes e cronogramas do projeto",
-      "startDate": "## Data de Início Planejada\nA data prevista para o início do trabalho nesta etapa.\n\n- Auxilia no planejamento e cronograma do projeto\n- Utilizada para projeções de cronograma\n- Auxilia no planejamento de alocação de recursos",
-      "dueDate": "## Data de Vencimento\nA data prevista para a conclusão desta etapa.\n\n- Define as expectativas de prazo\n- Usada para o planejamento do cronograma do projeto\n- Ajuda a acompanhar o progresso da etapa em relação ao cronograma",
+      "started": "## Status de Início\nIndica que o trabalho neste marco foi iniciado.\n\n- Marca o marco como em andamento\n- Atualiza a data de início real automaticamente quando ativada\n- Afeta o cronograma do projeto e o acompanhamento do progresso",
+      "completed": "## Status Concluído\nIndica que o trabalho neste marco foi finalizado.\n\n- Marca o marco como concluído\n- Atualiza automaticamente a data de conclusão real\n- Usado para acompanhamento e relatório de progresso\n- Afeta marcos dependentes e cronogramas do projeto",
+      "startDate": "## Data de Início Planejada\nA data prevista para o início do trabalho neste marco.\n\n- Auxilia no planejamento e cronograma do projeto\n- Utilizada para projeções de cronograma\n- Auxilia no planejamento de alocação de recursos",
+      "dueDate": "## Data de Vencimento\nA data prevista para a conclusão deste marco.\n\n- Define as expectativas de prazo\n- Usada para o planejamento do cronograma do projeto\n- Ajuda a acompanhar o progresso do marco em relação ao cronograma",
       "parent": "## Marco Principal\nVincula este marco a um marco principal, criando uma hierarquia.\n\n- Organiza os marcos em grupos lógicos\n- Mostra dependências e relacionamentos\n- Ajuda a acompanhar o progresso de iniciativas maiores",
       "description": "## Descrição\nInformações detalhadas sobre o propósito, os requisitos e o escopo do marco.\n\n- Fornece contexto para os membros da equipe\n- Documenta os principais requisitos e objetivos\n- Apoia a colaboração e o alinhamento",
       "documentation": "## Documentação\nDetalhes adicionais, referências e materiais de apoio.\n\n- Especificações técnicas\n- Documentos de projeto\n- Referências externas\n- Atas e decisões de reuniões",
@@ -8205,7 +8205,7 @@
     "testRun": {
       "name": "## Nome da Execução de Teste\nInsira um nome descritivo para esta execução de teste para identificá-la facilmente mais tarde.",
       "description": "## Descrição\nForneça um breve resumo ou anotações sobre esta execução de teste.",
-      "configuration": "## Configurações\nSelecione uma ou mais configurações (por exemplo, ambiente, navegador, dispositivo) sob as quais os testes serão executados. Selecionar várias configurações criará testes separados para cada uma.",
+      "configuration": "## Configurações\nSelecione uma ou mais configurações (por exemplo, ambiente, navegador, dispositivo) sob as quais os testes serão executados. Selecionar várias configurações criará execuções de teste separadas para cada uma.",
       "configurationGroup": "## Grupo de configuração\nExecuções em um grupo de configuração abrangem o mesmo teste em diferentes configurações, para que você possa alternar entre elas e comparar seus resultados em um só lugar.\n\nExecuções criadas juntas para várias configurações são agrupadas automaticamente. Vincule uma execução aqui quando ela tiver sido criada isoladamente — por exemplo, uma que você duplicou depois para outra configuração.\n\nVocê se vincula a uma execução, mas se une a tudo com que essa execução já está agrupada — um grupo não tem proprietário, então cada membro está vinculado a todos os outros.\n\nO agrupamento só muda a forma como as execuções são apresentadas juntas. Ele nunca move casos de teste ou resultados.",
       "milestone": "## Marco\nAssocie esta execução de teste a um marco específico do projeto para acompanhar o progresso em direção a objetivos maiores.",
       "docs": "## Documentação\nInclua qualquer documentação, links ou notas detalhadas relevantes para esta execução de teste.",
@@ -8325,10 +8325,10 @@
     },
     "issue": {
       "name": "## Nome do Problema\nUm nome claro e descritivo que é usado em todos os projetos.\n\n- Ajuda a descrever o problema (ex: \"Problema 123\", \"Bug 456\", etc.).",
-      "title": "## Título da Edição\nUm título legível que descreve a edição.\n\n- Fornece contexto sobre o assunto da edição\n- Exibido em listas e visualizações de edições\n- Deve ser claro e descritivo",
+      "title": "## Título do Problema\nUm título legível que descreve o problema.\n\n- Fornece contexto sobre o assunto do problema\n- Exibido em listas e visualizações de problemas\n- Deve ser claro e descritivo",
       "externalKey": "## Chave Externa\nA chave ou identificador exclusivo do sistema externo de rastreamento de problemas.\n\n- Para JIRA: Chave do problema, como \"PROJ-123\"\n- Para GitHub: Número do problema, como \"456\"\n- Para Azure DevOps: ID do item de trabalho\n- Gera automaticamente a URL externa ao salvar",
       "externalId": "## ID externo\nO identificador único para este problema no sistema de rastreamento de problemas (por exemplo, \"Problema-123\", \"Bug456\", etc.).\n\n- Este é usado como marcador de posição do problema no URL base.",
-      "description": "## Descrição\nUma breve visão geral do que esta questão abrange.\n\n- Principais áreas ou funcionalidades que estão sendo testadas\n- Contexto ou histórico importante\n- Considerações ou requisitos especiais",
+      "description": "## Descrição\nUma breve visão geral do que este problema abrange.\n\n- Principais áreas ou funcionalidades que estão sendo testadas\n- Contexto ou histórico importante\n- Considerações ou requisitos especiais",
       "project": "## Projeto\nO projeto ao qual este problema está associado.\n\n- Problemas podem ser vinculados a casos de teste em vários projetos\n- Definir um projeto principal ajuda a organizar os problemas\n- Pode ser deixado em branco para problemas que abrangem vários projetos",
       "state": "## Estado\nIndique o estado atual ou o resultado deste problema de acordo com o fluxo de trabalho do seu projeto.",
       "tags": "## Etiquetas\nAplique etiquetas relevantes para categorizar e filtrar este problema.",
@@ -8579,7 +8579,7 @@
           "content": "Acesse este tour guiado a qualquer momento ou consulte nossa documentação completa para obter ajuda detalhada."
         },
         "notifications": {
-          "content": "Mantenha-se informado sobre a conclusão dos testes, atualizações de problemas e atividades da equipe. Configure suas preferências nas configurações da sua conta."
+          "content": "Mantenha-se informado sobre a conclusão das execuções de teste, atualizações de problemas e atividades da equipe. Configure suas preferências nas configurações da sua conta."
         },
         "account": {
           "title": "Menu da conta",
@@ -8617,7 +8617,7 @@
           "content": "Execute os testes planejados, acompanhe o progresso e gerencie as atribuições de teste em sua equipe. Visualize os resultados detalhados da execução."
         },
         "testRunsPage": {
-          "title": "Painel de Testes",
+          "title": "Painel de Execuções de Teste",
           "content": "Esta é a página de Execuções de Teste, onde você pode criar novas execuções de teste, monitorar o progresso da execução, visualizar resultados e gerenciar atribuições de teste. Acompanhe as atividades de teste da sua equipe em um local centralizado."
         },
         "sessions": {
@@ -8725,7 +8725,7 @@
         },
         "overview": {
           "title": "Visão geral do projeto",
-          "content": "A visão geral é o painel de controle do seu projeto. Ela mostra o progresso das etapas e resumos de casos de teste, execuções ativas, sessões e tags."
+          "content": "A visão geral é o painel de controle do seu projeto. Ela mostra o progresso dos marcos e resumos de casos de teste, execuções ativas, sessões e tags."
         },
         "documentation": {
           "title": "Documentação",
@@ -8736,7 +8736,7 @@
           "content": "A documentação suporta texto formatado com títulos, listas, links e imagens. Experimente editar esta página para ver como funciona."
         },
         "milestones": {
-          "title": "Conquistas",
+          "title": "Marcos",
           "content": "Acompanhe seus testes em relação a sprints, lançamentos e outras metas. Vincule execuções e sessões de teste a marcos para monitorar o progresso."
         },
         "milestonesPage": {
@@ -8748,7 +8748,7 @@
           "content": "Organize os casos de teste em pastas com campos, etapas e prioridades personalizados. Navegue pelas pastas de exemplo para ver como os casos são estruturados."
         },
         "repositoryPanels": {
-          "title": "Pastas e Estojos",
+          "title": "Pastas e Casos",
           "content": "O painel esquerdo exibe as pastas. Clique em uma pasta para ver seus casos de teste. Cada caso possui etapas, descrições e referências de etapas compartilhadas."
         },
         "repositoryCases": {
@@ -8764,7 +8764,7 @@
           "content": "Cada grupo contém um conjunto de etapas ordenadas. Consulte-as em qualquer caso de teste para manter suas etapas DRY (Don't Repeat Yourself - Não Repita, Não Se Instrua) e consistentes."
         },
         "testRuns": {
-          "title": "Testes de execução",
+          "title": "Execuções de teste",
           "content": "Crie execuções de teste para executar casos e registrar os resultados. Atribua as execuções a marcos e acompanhe o progresso de aprovação/reprovação."
         },
         "testRunsPage": {
@@ -8999,8 +8999,8 @@
           "description": "Cada análise de impacto: o que a iniciou, o que mudou, os casos que selecionou e como a execução que compôs resultou"
         },
         "codePinCoverage": {
-          "label": "Cobertura de Fixação de Código",
-          "description": "Onde as Fixações de Código estão, por repositório e diretório, e onde as alterações recentes ficaram sem cobertura"
+          "label": "Cobertura de Code Pin",
+          "description": "Onde os Code Pins estão, por repositório e diretório, e onde as alterações recentes ficaram sem cobertura"
         },
         "resultsTrend": {
           "label": "Tendência da Taxa de Falha de Resultados de Teste",
@@ -9008,7 +9008,7 @@
         }
       },
       "flakyTests": {
-        "consecutiveRuns": "Últimas corridas consecutivas",
+        "consecutiveRuns": "Últimas execuções consecutivas",
         "consecutiveRunsHelp": "Número de execuções de teste recentes a serem analisadas (5-30). Resultados com status 'não testado' são excluídos.",
         "flipThreshold": "Viradas mínimas",
         "flipThresholdHelp": "Número mínimo de transições de aprovação/reprovação necessárias para que um resultado seja considerado instável.",
@@ -9020,7 +9020,7 @@
         "includeFilter": "Incluir",
         "caseTags": "Tags de Caso de Teste",
         "runTags": "Tags de Execução de Teste",
-        "testRunDeleted": "O teste foi excluído.",
+        "testRunDeleted": "A execução de teste foi excluída.",
         "chart": {
           "highPriority": "Precisa de atenção",
           "lowPriority": "Prioridade inferior",
@@ -9197,9 +9197,9 @@
       },
       "issueTestCoverage": {
         "viewMode": "Modo de visualização",
-        "summaryView": "Resumo (por edição)",
+        "summaryView": "Resumo (por problema)",
         "detailView": "Detalhes (por caso de teste)",
-        "issue": "Emitir",
+        "issue": "Problema",
         "testCase": "Caso de teste",
         "testCases": "{count, plural, =1 {Caso de teste} other {Casos de teste}}",
         "linkedTests": "Testes Vinculados",
@@ -9356,8 +9356,8 @@
           "description": "Análises de impacto em todos os projetos com Análise de Impacto habilitada"
         },
         "codePinCoverage": {
-          "label": "Cobertura de Fixação de Código entre Projetos",
-          "description": "Cobertura de Fixação de Código em todos os projetos com Análise de Impacto habilitada"
+          "label": "Cobertura de Code Pin entre Projetos",
+          "description": "Cobertura de Code Pin em todos os projetos com Análise de Impacto habilitada"
         },
         "resultsTrend": {
           "label": "Tendência da Taxa de Falha de Resultados de Teste Entre Projetos",
@@ -9412,23 +9412,23 @@
         "lookbackDaysHelp": "Arquivos sem cobertura vêm de análises iniciadas dentro deste número de dias. Todo o tempo lê cada análise concluída.",
         "directory": "Diretório",
         "rootDirectory": "(raiz do repositório)",
-        "casesWithPins": "Casos com fixações",
-        "stalePins": "Fixações obsoletas",
-        "stalePinsHelp": "Fixações que a análise mais recente da conexão não conseguiu encontrar no commit principal.",
+        "casesWithPins": "Casos com pins",
+        "stalePins": "Pins obsoletos",
+        "stalePinsHelp": "Pins que a análise mais recente da conexão não conseguiu encontrar no commit principal.",
         "uncoveredFiles": "Arquivos alterados sem cobertura",
-        "uncoveredFilesHelp": "Arquivos alterados que nenhuma fixação cobriu, contados uma vez por arquivo nas análises da janela.",
+        "uncoveredFilesHelp": "Arquivos alterados que nenhum pin cobriu, contados uma vez por arquivo nas análises da janela.",
         "coverageFilter": "Mostrar",
-        "coverageGaps": "Alterado sem fixações",
-        "coveragePinned": "Com fixações",
+        "coverageGaps": "Alterado sem pins",
+        "coveragePinned": "Com pins",
         "kindBreakdown": "{file, number} arquivo completo · {range, number} linhas · {symbol, number} símbolo · {glob, number} glob",
         "sourceBreakdown": "{manual, number} manual · {ai, number} IA · {annotation, number} anotação · {mapfile, number} arquivo de mapa · {issue, number} ticket",
         "stats": {
-          "casesWithPinsTooltip": "Casos de teste com pelo menos uma Fixação de Código, como uma parcela dos casos do projeto.",
-          "gapDirectories": "Diretórios alterados sem fixações",
-          "gapDirectoriesTooltip": "Diretórios onde uma análise na janela encontrou arquivos alterados, mas nenhuma fixação cobre nada."
+          "casesWithPinsTooltip": "Casos de teste com pelo menos um Code Pin, como uma parcela dos casos do projeto.",
+          "gapDirectories": "Diretórios alterados sem pins",
+          "gapDirectoriesTooltip": "Diretórios onde uma análise na janela encontrou arquivos alterados, mas nenhum pin cobre nada."
         },
         "chart": {
-          "byDirectory": "Fixações e arquivos sem cobertura por diretório"
+          "byDirectory": "Pins e arquivos sem cobertura por diretório"
         }
       },
       "resultsTrend": {
@@ -9898,7 +9898,7 @@
         "encoding": "Codificação de arquivo",
         "rowMode": {
           "label": "Modo de linha",
-          "single": "Uma única linha por degrau compartilhado",
+          "single": "Uma única linha por passo compartilhado",
           "multi": "Várias linhas para etapas compartilhadas complexas"
         }
       },
@@ -10359,7 +10359,7 @@
     "datasetColumnMenuLabel": "Ações da coluna {name}",
     "datasetColumnDeleteTitle": "Excluir coluna \"{name}\"?",
     "datasetColumnDeleteChecking": "Verificando casos que fazem referência a esta coluna…",
-    "datasetColumnDeleteDescription": "A coluna e seus valores em cada linha serão removidos. Os testes existentes que já capturaram esses valores não serão afetados.",
+    "datasetColumnDeleteDescription": "A coluna e seus valores em cada linha serão removidos. As execuções de teste existentes que já capturaram esses valores não serão afetadas.",
     "datasetColumnDeleteBlocked": "{count, plural, =1 {# caso mapeia um parâmetro para esta coluna} other {# casos mapeiam um parâmetro para esta coluna}}. Atualize esses mapeamentos primeiro e depois exclua a coluna.",
     "datasetColumnDeleteAndMore": "e {count, plural, =1 {mais # caso} other {mais # casos}}",
     "datasetColumnDeleteCheckError": "Não foi possível verificar os casos que fazem referência a esta coluna. Tente novamente.",
@@ -10472,7 +10472,7 @@
     "runProgressDismissAria": "Descartar progresso",
     "runProgressComplete": "{total, plural, =1 {Gerada # iteração} other {Geradas # iterações}} para \"{runName}\"",
     "runProgressFailedToast": "Falha ao gerar iterações para \"{runName}\". {reason}",
-    "runProgressNavAway": "Mostre-me o resto da corrida.",
+    "runProgressNavAway": "Mostre-me o resto da execução.",
     "runGeneratingHeading": "Gerando iterações…",
     "runGeneratingHelper": "Isso pode levar alguns minutos.",
     "iterationsHeaderCount": "{complete}/{total}",
@@ -10894,7 +10894,7 @@
     },
     "subjectType": {
       "CASE": "Caso de teste",
-      "RUN": "Teste de execução",
+      "RUN": "Execução de teste",
       "MILESTONE": "Marco",
       "SESSION": "Sessão",
       "PROJECT": "Projeto",
@@ -11076,7 +11076,7 @@
     },
     "metricGroups": {
       "CASE": "Resultados de casos de teste",
-      "RUN": "Testes de execução",
+      "RUN": "Execuções de teste",
       "SESSION": "Sessões",
       "MILESTONE": "Marcos",
       "PROJECT": "Saúde do projeto",

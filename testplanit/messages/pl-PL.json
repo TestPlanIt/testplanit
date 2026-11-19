@@ -113,7 +113,7 @@
       "selectFile": "Wybierz plik",
       "restore": "Przywrócić",
       "purge": "Oczyszczać",
-      "previousCase": "Poprzednia sprawa",
+      "previousCase": "Poprzedni przypadek",
       "nextCase": "Następny przypadek",
       "startTesting": "Rozpocznij testowanie",
       "expandLeftPanel": "Rozszerz lewy panel",
@@ -143,7 +143,7 @@
           "title": "Importuj wyniki testów",
           "description": "Prześlij pliki z wynikami testów, aby zaimportować je do nowego przebiegu testu. Obsługuje formaty JUnit, TestNG, xUnit, NUnit, MSTest, Mocha i Cucumber.",
           "testRun": {
-            "label": "Test jazdy",
+            "label": "Przebieg testowy",
             "placeholder": "Wybierz przebieg testowy"
           },
           "file": {
@@ -367,7 +367,7 @@
       "noAttachments": "Brak załączników",
       "inReview": "W recenzji",
       "notInReview": "Nie w recenzji",
-      "testRuns": "Testy biegowe",
+      "testRuns": "Przebiegi testowe",
       "title": "Tytuł",
       "project": "Projekt",
       "priority": "Priorytet",
@@ -382,7 +382,7 @@
       "defaultValue": "Wartość domyślna",
       "checked": "Sprawdzony",
       "version": "Wersja",
-      "issues": "Kwestie",
+      "issues": "Problemy",
       "internalIssues": "Problemy wewnętrzne",
       "externalIssues": "{provider} Problemy",
       "requirements": "Wymagania",
@@ -410,7 +410,7 @@
       "JUNIT": "Importowanie JUnit",
       "API": "API",
       "folder": "Falcówka",
-      "parentFolder": "Folder nadrzędny dla nowych spraw",
+      "parentFolder": "Folder nadrzędny dla nowych przypadków",
       "multipleValues": "Wiele wartości",
       "multipleValuesCount": "Wiele wartości ({count, number})",
       "provider": "Dostawca",
@@ -436,7 +436,7 @@
           "systemNameError": "Nazwa systemu jest nieprawidłowa",
           "initialHeightMax": "Wysokość początkowa nie może być większa niż 600px.",
           "displayNameRequiredResult": "Wprowadź nazwę wyświetlaną dla Pola Wyniku.",
-          "displayNameRequiredCase": "Wprowadź nazwę wyświetlaną dla pola sprawy.",
+          "displayNameRequiredCase": "Wprowadź nazwę wyświetlaną dla pola przypadku.",
           "minValueMaxValue": "Wartość minimalna musi być mniejsza od wartości maksymalnej, a jeśli ustawiono jedną, obie muszą zostać ustawione.",
           "minMaxValueInteger": "Minimalna wartość całkowita musi być mniejsza niż maksymalna wartość całkowita, a jeśli ustawiono jedną, obie muszą zostać ustawione.",
           "systemNameRequired": "Nazwa systemu nie może być pusta.",
@@ -465,8 +465,8 @@
         "invalidUrl": "Nieprawidłowy format adresu URL"
       },
       "worker": "Proces roboczy",
-      "hasCodePins": "Posiada kody PIN",
-      "noCodePins": "Brak kodów PIN"
+      "hasCodePins": "Posiada Code Piny",
+      "noCodePins": "Brak Code Pinów"
     },
     "filter": {
       "placeholder": "Filtr {item}..."
@@ -604,7 +604,7 @@
       "enterUrl": "Wprowadź adres URL",
       "enterUrlPattern": "Wprowadź wzorzec adresu URL...",
       "domainExample": "example.com",
-      "issueIdExample": "WYDANIE-123",
+      "issueIdExample": "PROBLEM-123",
       "selectPriorityValuesOrEmpty": "Wybierz wartości priorytetowe (lub pozostaw puste dla wszystkich)"
     },
     "errors": {
@@ -663,7 +663,7 @@
       "projectCreationFailed": "Utworzenie projektu nie powiodło się, nie zwrócono identyfikatora.",
       "invalidRoleId": "Nieprawidłowy identyfikator roli",
       "workflowStateExists": "Stan przepływu pracy już istnieje. Wybierz nową nazwę.",
-      "failedToLoadCaseData": "Nie udało się załadować danych sprawy. Nie można zapisać.",
+      "failedToLoadCaseData": "Nie udało się załadować danych przypadku. Nie można zapisać.",
       "atLeastOneTagRequired": "Wymagany jest co najmniej jeden tag",
       "atLeastOneIssueRequired": "Wymagany jest co najmniej jeden problem",
       "atLeastOneOptionRequired": "Należy wybrać co najmniej jedną opcję",
@@ -701,7 +701,7 @@
       "repositoryDeleted": "Repozytorium zostało usunięte",
       "failedToDeleteRepository": "Nie udało się usunąć repozytorium",
       "permissionDenied": "Nie masz uprawnień dostępu do tej strony.",
-      "resultSubmitPermissionDenied": "Nie możesz przesłać wyników dla tej sprawy. Poproś administratora projektu o jej przypisanie.",
+      "resultSubmitPermissionDenied": "Nie możesz przesłać wyników dla tego przypadku. Poproś administratora projektu o jego przypisanie.",
       "dependenciesNotPassed": "Zablokowane przez zależności",
       "dependenciesNotPassedDescription": "Ten przypadek testowy nie może być wykonany do czasu, aż {count, plural, =0 {przypadki, od których zależy, przejdą} =1 {przypadek, od którego zależy, przejdzie} few {# przypadki, od których zależy, przejdą} many {# przypadków, od których zależy, przejdzie} other {wszystkie # przypadki, od których zależy, przejdą}} w tym przebiegu.",
       "justificationRequired": "Wymagane uzasadnienie",
@@ -1656,7 +1656,7 @@
         "outboundCreateSubscriptionsTitle": "Subskrypcje",
         "outboundCreateSubscriptionsHelp": "Wybierz zdarzenia, które mają być uruchamiane w tym miejscu docelowym. Możesz je później zmienić.",
         "outboundSubsTestRunsAndSessions": "Testy i sesje",
-        "outboundSubsTestRuns": "Testy biegowe",
+        "outboundSubsTestRuns": "Przebiegi testowe",
         "outboundSubsSessions": "Sesje",
         "outboundSubsScimUsers": "Użytkownicy SCIM",
         "outboundSubsScimGroups": "Grupy SCIM",
@@ -1685,7 +1685,7 @@
         "events": {
           "testRunCreated": "Utworzono przebieg testowy",
           "testRunStateChanged": "Zmieniono stan testu",
-          "testRunCompleted": "Zakończono jazdę próbną",
+          "testRunCompleted": "Zakończono przebieg testowy",
           "testRunDuplicated": "Powtórzono przebieg testu",
           "testRunResultAdded": "Dodano wynik testu",
           "sessionCreated": "Sesja utworzona",
@@ -1694,11 +1694,11 @@
           "sessionDuplicated": "Sesja zduplikowana",
           "sessionResultAdded": "Dodano wynik sesji",
           "issueCreated": "Utworzono problem",
-          "issueUpdated": "Zaktualizowano wydanie",
+          "issueUpdated": "Zaktualizowano problem",
           "issueDeleted": "Problem usunięty",
-          "caseCreated": "Utworzono sprawę",
-          "caseUpdated": "Sprawa zaktualizowana",
-          "caseDeleted": "Sprawa usunięta",
+          "caseCreated": "Utworzono przypadek",
+          "caseUpdated": "Przypadek zaktualizowany",
+          "caseDeleted": "Przypadek usunięty",
           "jiraIssueCreated": "Utworzono problem w Jira",
           "jiraIssueUpdated": "Zaktualizowano problem w Jira",
           "jiraIssueDeleted": "Usunięto problem w Jira",
@@ -1711,8 +1711,8 @@
           "adoWorkitemDeleted": "Usunięto element roboczy usługi Azure DevOps",
           "webhookTest": "Wydarzenie testowe"
         },
-        "outboundSubsIssues": "Kwestie",
-        "outboundSubsCases": "Sprawy",
+        "outboundSubsIssues": "Problemy",
+        "outboundSubsCases": "Przypadki",
         "outboundSubsSelectAll": "Zaznacz wszystko w tej sekcji",
         "outboundCreateSubmit": "Utwórz webhook",
         "outboundCreateSuccess": "Utworzono webhook wychodzący.",
@@ -1910,7 +1910,7 @@
           "includeChildIssues": "Uwzględnij problemy potomne",
           "includeChildIssuesHelp": "Również weź przypadki testowe powiązane z problemami potomnymi tego problemu.",
           "caseFilter": "Filtry przypadków testowych",
-          "caseFilterHelp": "Do serii trafiają tylko przypadki testowe spełniające każdy filtr. Pozostaw puste, aby wziąć każdy przypadek testowy wybrany przez akcję.",
+          "caseFilterHelp": "Do przebiegu trafiają tylko przypadki testowe spełniające każdy filtr. Pozostaw puste, aby wziąć każdy przypadek testowy wybrany przez akcję.",
           "notifyHelp": "Kto jest powiadamiany, gdy szkice są gotowe do przeglądu. Preferencje powiadomień każdej osoby nadal mają zastosowanie.",
           "draftFolderNote": "Przypadki testowe opracowane automatycznie przez webhook {webhook}.",
           "draftFolderNoteCases": "Opracowane przez użytkownika System; każdy przypadek jest powiązany z problemem, z którego został opracowany.",
@@ -2263,8 +2263,8 @@
           "label": "Wyklucz projekty przypadków z przebiegów testowych",
           "description": "Po włączeniu tej opcji przypadki testowe w stanie przepływu pracy „Nierozpoczęte” są ukryte w selektorze „Dodaj przypadki” i nie można ich dodać do przebiegu. Jeśli istniejący przypadek zostanie przywrócony do stanu „Nierozpoczęty” (np. przez odrzucenie w ramach przeglądu i zatwierdzenia), zostanie on usunięty z dowolnego otwartego przebiegu, chyba że ma już zarejestrowany wynik. W takim przypadku pozostaje w przebiegu, ale staje się dostępny tylko do odczytu.",
           "enabledToast": "Projekty przypadków będą wyłączone z rozpatrywania",
-          "disabledToast": "Projekty spraw można teraz dodawać do przebiegów",
-          "saveError": "Nie udało się zaktualizować ustawienia wykluczenia wersji roboczej sprawy",
+          "disabledToast": "Projekty przypadków można teraz dodawać do przebiegów",
+          "saveError": "Nie udało się zaktualizować ustawienia wykluczenia wersji roboczej przypadku",
           "skippedToast": "{count, plural, =1 {1 przypadek w wersji roboczej został pominięty, ponieważ ma stan Nierozpoczęty} few {# przypadki w wersji roboczej zostały pominięte, ponieważ mają stan Nierozpoczęty} other {# przypadków w wersji roboczej zostało pominiętych, ponieważ mają stan Nierozpoczęty}}"
         },
         "autoLockComposition": {
@@ -2361,42 +2361,42 @@
           "contentsIncomplete": "Tylko {cached} z {total} zawartości plików jest w pamięci podręcznej. Odśwież ponownie, aby zakończyć."
         },
         "tickets": {
-          "title": "Powiązane bilety",
-          "description": "Commity, które nazywają bilet (PROJ-123, #42, AB#42), stają się Code Pins na każdym przypadku testowym powiązanym z tym biletem — na funkcjach lub klasach, które commit zmienił tam, gdzie to pokazuje diff, w przeciwnym razie na całym pliku — tak że później zmiany tego kodu znajdują przypadki ponownie. Nazwany bilet TestPlanIt nie trzyma jeszcze jest importowany z problemów systemu śledzenia projektu, aby można go było połączyć.",
+          "title": "Powiązane zgłoszenia",
+          "description": "Commity, które nazywają zgłoszenie (PROJ-123, #42, AB#42), stają się Code Pins na każdym przypadku testowym powiązanym z tym zgłoszeniem — na funkcjach lub klasach, które commit zmienił tam, gdzie to pokazuje diff, w przeciwnym razie na całym pliku — tak że później zmiany tego kodu znajdują przypadki ponownie. Nazwane zgłoszenie TestPlanIt nie trzyma jeszcze jest importowane z problemów systemu śledzenia projektu, aby można je było połączyć.",
           "enableLabel": "Pochodnie Code Pins z komunikatów commit",
-          "enableDescription": "Skanuje ostatnie commity na gałęzi przy każdym odświeżeniu pamięci podręcznej. Wyłącz, aby analiz czytały klucze biletów z analizowanych commitów tylko; skanowania ręczne są nadal uruchamiane.",
-          "resultLinksLabel": "Uwzględniaj również bilety dodane do wyników testów",
-          "resultLinksDescription": "Bilet dodany do wyniku testu lub wyniku kroku łączy również przypadek testowy, dla którego ten wynik został zarejestrowany, więc jego commity przypinają i zaznaczają ten przypadek. Wyłączone: tylko bilety bezpośrednio powiązane z przypadkiem testowym się liczą.",
+          "enableDescription": "Skanuje ostatnie commity na gałęzi przy każdym odświeżeniu pamięci podręcznej. Wyłącz, aby analiz czytały klucze zgłoszeń z analizowanych commitów tylko; skanowania ręczne są nadal uruchamiane.",
+          "resultLinksLabel": "Uwzględniaj również zgłoszenia dodane do wyników testów",
+          "resultLinksDescription": "Zgłoszenie dodane do wyniku testu lub wyniku kroku łączy również przypadek testowy, dla którego ten wynik został zarejestrowany, więc jego commity przypinają i zaznaczają ten przypadek. Wyłączone: tylko zgłoszenia bezpośrednio powiązane z przypadkiem testowym się liczą.",
           "skippedLarge": "{count, plural, one {# commit został pominięty jako zbyt duży do przypięcia.} few {# commity zostały pominięte jako zbyt duże do przypięcia.} many {# commitów zostało pominiętych jako zbyt duże do przypięcia.} other {# commitów zostało pominiętych jako zbyt duże do przypięcia.}}",
-          "fetchCapped": "Nie każdy commit, który nazwał powiązany bilet, miał swoje pliki przeczytane w tym przebiegu; reszta jest odbierana w następnym skanowaniu.",
+          "fetchCapped": "Nie każdy commit, który nazwał powiązane zgłoszenie, miał swoje pliki przeczytane w tym przebiegu; reszta jest odbierana w następnym skanowaniu.",
           "scanRecent": "Ponownie zeskanuj ostatnie commity",
           "scanFull": "Skanuj pełną historię",
-          "scanFullHint": "Pełna historia przechodzi przez każdy commit na gałęzi i wypełnia piny dla istniejących biletów. Commity już przeczytane są obsługiwane z pamięci podręcznej, a spacer, który zatrzymał się na limicie, kontynuuje się od tamtego miejsca następnym razem.",
-          "scanStarted": "Skan biletów w kolejce.",
-          "scanStillRunning": "Skan biletów wciąż działa w tle. Ten widok zostanie zaktualizowany po zakończeniu.",
-          "scanFailedToStart": "Nie można było rozpocząć skanowania biletów",
+          "scanFullHint": "Pełna historia przechodzi przez każdy commit na gałęzi i wypełnia piny dla istniejących zgłoszeń. Commity już przeczytane są obsługiwane z pamięci podręcznej, a spacer, który zatrzymał się na limicie, kontynuuje się od tamtego miejsca następnym razem.",
+          "scanStarted": "Skan zgłoszeń w kolejce.",
+          "scanStillRunning": "Skan zgłoszeń wciąż działa w tle. Ten widok zostanie zaktualizowany po zakończeniu.",
+          "scanFailedToStart": "Nie można było rozpocząć skanowania zgłoszeń",
           "runningRecent": "Skanowanie ostatnich commitów…",
           "runningFull": "Skanowanie pełnej historii…",
-          "runningProgress": "{commits, number} commitów przeczytanych · {matched, number} nazwano powiązany bilet · {fetched, number} z nich sprawdzony",
+          "runningProgress": "{commits, number} commitów przeczytanych · {matched, number} nazwano powiązane zgłoszenie · {fetched, number} z nich sprawdzony",
           "fullBadge": "Pełna historia",
-          "imported": "{imported, plural, =0 {Żadne nowe bilety nie zostały importowane z trackera.} one {# bilet został zaimportowany z trackera.} many {# biletów zostało zaimportowanych z trackera.} other {# bilety zostały zaimportowane z trackera.}}",
+          "imported": "{imported, plural, =0 {Żadne nowe zgłoszenia nie zostały importowane z trackera.} one {# zgłoszenie zostało zaimportowane z trackera.} many {# zgłoszeń zostało zaimportowanych z trackera.} other {# zgłoszenia zostały zaimportowane z trackera.}}",
           "fullCapped": "Spacer zatrzymał się na {count, number} commitach, zanim dotarł do początku gałęzi. Uruchom ponownie Skan pełnej historii, aby kontynuować od miejsca, w którym się zatrzymał.",
           "stale": "Skan rozpoczęty {date} nigdy nie zgłosił się — pracownik mógł zostać ponownie uruchomiony. Kolejka go ponownie, aby kontynuować.",
-          "summaryCommits": "{commits, plural, one {# commit przeczytany} few {# commity przeczytane} many {# commitów przeczytanych} other {# commitów przeczytanych}}{cached, plural, =0 {} other { ({cached, number} z pamięci podręcznej commitów)}} · z odwołaniem do biletu: {naming, number} · {tickets, plural, one {# odrębny bilet} many {# odrębnych biletów} other {# odrębne bilety}}",
+          "summaryCommits": "{commits, plural, one {# commit przeczytany} few {# commity przeczytane} many {# commitów przeczytanych} other {# commitów przeczytanych}}{cached, plural, =0 {} other { ({cached, number} z pamięci podręcznej commitów)}} · z odwołaniem do zgłoszenia: {naming, number} · {tickets, plural, one {# odrębne zgłoszenie} many {# odrębnych zgłoszeń} other {# odrębne zgłoszenia}}",
           "summaryPins": "Pinsy: {created, number} utworzone · {updated, number} zaktualizowane · {removed, number} usunięte",
-          "noLinkedHint": "Bilety tylko przypinają przypadki testowe po połączeniu przypadku testowego z nimi. Połącz przypadki z zaimportowanymi biletami, a następnie ponownie zeskanuj.",
+          "noLinkedHint": "Zgłoszenia tylko przypinają przypadki testowe po połączeniu przypadku testowego z nimi. Połącz przypadki z zaimportowanymi zgłoszeniami, a następnie ponownie zeskanuj.",
           "importFailuresTitle": "Klucze nie znalezione w trackerze ({shown} z {total}):",
           "windowCapped": "Przeczytano tylko najnowsze {count, number} commitów (limit okna niedawnego). Użyj Skan pełnej historii, aby przeczytać starsze.",
-          "runningWalk": "Dotychczas przeczytane commity: {commits, number}{cached, plural, =0 {} other { ({cached, number} z pamięci podręcznej commitów)}} — bilety są wyszukiwane, gdy przeglądanie commitów się zakończy",
-          "runningImport": "{commits, number} commitów przeczytanych · importowanie biletów: {lookups, number} szukane w trackerze · {imported, number} zaimportowane",
+          "runningWalk": "Dotychczas przeczytane commity: {commits, number}{cached, plural, =0 {} other { ({cached, number} z pamięci podręcznej commitów)}} — zgłoszenia są wyszukiwane, gdy przeglądanie commitów się zakończy",
+          "runningImport": "{commits, number} commitów przeczytanych · importowanie zgłoszeń: {lookups, number} szukane w trackerze · {imported, number} zaimportowane",
           "summaryCommitsOnly": "{commits, plural, one {# commit przeczytany} few {# commity przeczytane} many {# commitów przeczytanych} other {# commitów przeczytanych}}",
           "importSkipped": "{skipped, plural, one {# klucz nie został jeszcze wyszukany} few {# klucze nie zostały jeszcze wyszukane} many {# kluczy nie zostało jeszcze wyszukanych} other {# kluczy nie zostało jeszcze wyszukanych}}, ponieważ jeden skan wykonuje ograniczoną liczbę wyszukiwań w trackerze. Uruchom skan ponownie, aby kontynuować.",
           "cancelRequested": "Anulowanie zażądane. Skan zatrzymuje się na następnym kroku; commity już przeczytane pozostają buforowane.",
-          "cancelled": "Skan anulowany {date}. Commity przeczytane przed anulowaniem są przechowywane w cache commitów; szpilki nie zostały zaktualizowane.",
-          "importMoved": "{moved, plural, one {# klucz to stara nazwa} many {# kluczy to stare nazwy} other {# klucze to stare nazwy}} biletów już zaimportowanych; zostały przeniesione lub zmieniono ich nazwy w trackerze.",
+          "cancelled": "Skan anulowany {date}. Commity przeczytane przed anulowaniem są przechowywane w cache commitów; piny nie zostały zaktualizowane.",
+          "importMoved": "{moved, plural, one {# klucz to stara nazwa} many {# kluczy to stare nazwy} other {# klucze to stare nazwy}} zgłoszeń już zaimportowanych; zostały przeniesione lub zmieniono ich nazwy w trackerze.",
           "importFailed": "{failed, plural, one {# klucz nie znaleziony w trackerze, wymieniony poniżej.} few {# klucze nie znalezione w trackerze, wymienione poniżej.} many {# kluczy nie znalezionych w trackerze, wymienionych poniżej.} other {# kluczy nie znalezionych w trackerze, wymienionych poniżej.}}",
-          "summaryMatched": "{matched, plural, one {# commit odwołał się do biletu} few {# commity odwołały się do biletu} many {# commitów odwołało się do biletu} other {# commitów odwołało się do biletu}} powiązanego z przypadkiem testowym",
-          "summarySymbolPins": "({count, number} z utworzonych szpilek celuje w funkcję lub klasę, a nie w całą plik.)"
+          "summaryMatched": "{matched, plural, one {# commit odwołał się do zgłoszenia} few {# commity odwołały się do zgłoszenia} many {# commitów odwołało się do zgłoszenia} other {# commitów odwołało się do zgłoszenia}} powiązanego z przypadkiem testowym",
+          "summarySymbolPins": "({count, number} z utworzonych pinów celuje w funkcję lub klasę, a nie w całą plik.)"
         },
         "markers": {
           "title": "Znaczniki repozytorium",
@@ -2423,8 +2423,8 @@
           "editTitle": "Edytuj {name}",
           "view": "Wyświetl połączenie",
           "connectDescription": "Wybierz zarejestrowane repozytorium aplikacji w testowaniu i powiedz, która gałąź i ścieżki mają być czytane.",
-          "editDescription": "Zmień gałąź, wzory ścieżek, pamięć podręczną i skanowanie biletów dla tego połączenia.",
-          "viewDescription": "Jak to repozytorium jest połączone. Odśwież pamięć podręczną lub uruchom skan biletów stąd; użyj Edycji, aby zmienić ustawienia.",
+          "editDescription": "Zmień gałąź, wzory ścieżek, pamięć podręczną i skanowanie zgłoszeń dla tego połączenia.",
+          "viewDescription": "Jak to repozytorium jest połączone. Odśwież pamięć podręczną lub uruchom skan zgłoszeń stąd; użyj Edycji, aby zmienić ustawienia.",
           "empty": "Brak połączonych repozytoriów",
           "emptyDescription": "Połącz repozytorium aplikacji w testowaniu, aby rozpocząć analizę zmian.",
           "lastScan": "{created, plural, one {# pin utworzony} few {# piny utworzone} many {# pinów utworzonych} other {# pinów utworzonych}} przez ostatnie skanowanie",
@@ -2434,7 +2434,7 @@
         "bulk": {
           "label": "{count, plural, =1 {Twoje repozytorium:} few {Wszystkie # repozytoria:} many {Wszystkich # repozytoriów:} other {Wszystkie # repozytoriów:}}",
           "scanRecentHint": "Ponownie przeskanuj ostatnie commity w {count, plural, =1 {połączonym repozytorium} few {# połączonych repozytoriach} many {# połączonych repozytoriach} other {# połączonych repozytoriach}}.",
-          "scanFullHint": "Przejrzyj każdy commit na gałęzi {count, plural, =1 {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych repozytoriów} other {# połączonych repozytoriów}} i uzupełnij wstecznie piny dla istniejących biletów.",
+          "scanFullHint": "Przejrzyj każdy commit na gałęzi {count, plural, =1 {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych repozytoriów} other {# połączonych repozytoriów}} i uzupełnij wstecznie piny dla istniejących zgłoszeń.",
           "scanFullConfirm": "To przejrzy każdy commit na gałęzi {count, plural, =1 {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych repozytoriów} other {# połączonych repozytoriów}}. Repozytoria są skanowane po jednym, więc może to trwać długo, a każde przejście odczytuje commity za pośrednictwem API dostawcy, co liczy się w jego limicie szybkości.",
           "checkStaleHint": "Sprawdź Piny Kodu {count, plural, =1 {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych repozytoriów} other {# połączonych repozytoriów}} względem każdego końca gałęzi.",
           "removeStaleHint": "Usuń {count, plural, one {# nieaktualny Pin Kodu} few {# nieaktualne Piny Kodu} many {# nieaktualnych Pinów Kodu} other {# nieaktualnych Pinów Kodu}} w {repos, plural, one {# repozytorium} few {# repozytoriach} many {# repozytoriach} other {# repozytoriach}}.",
@@ -2443,32 +2443,32 @@
           "allRunning": "Już w kolejce lub uruchomione dla każdego repozytorium.",
           "failed": "Nie można było uruchomić dla: {names}"
         },
-        "initialScanStarted": "Pobieranie plików repozytorium i skanowanie w poszukiwaniu znaczników repozytorium i powiązanych biletów…",
+        "initialScanStarted": "Pobieranie plików repozytorium i skanowanie w poszukiwaniu znaczników repozytorium i powiązanych zgłoszeń…",
         "scanError": "Skanowanie nie powiodło się: {error}",
         "scanLastScan": "Ostatnie skanowanie: {date}",
         "scanNever": "Nie skanowano jeszcze",
         "stalePins": {
-          "title": "Stare kody PIN",
-          "check": "Sprawdź stare szpilki",
-          "checkHint": "Odczytuje każdy przypięty plik na końcu gałęzi i oznacza szpilki, których plik, linie lub symbol nie można już znaleźć.",
-          "remove": "Usuń zabytkowe szpilki",
-          "checkStarted": "Skan starych szpilek w kolejce.",
-          "checkFailedToStart": "Nie można było rozpocząć sprawdzania starych szpilek",
+          "title": "Stare Code Piny",
+          "check": "Sprawdź stare piny",
+          "checkHint": "Odczytuje każdy przypięty plik na końcu gałęzi i oznacza piny, których plik, linie lub symbol nie można już znaleźć.",
+          "remove": "Usuń nieaktualne piny",
+          "checkStarted": "Skan starych pinów w kolejce.",
+          "checkFailedToStart": "Nie można było rozpocząć sprawdzania starych pinów",
           "running": "Sprawdzanie {checked, number} z {total, plural, one {# pliku} other {# plików}}…",
           "neverChecked": "Nie sprawdzono jeszcze",
           "checkFailed": "Ostatnie sprawdzenie nie powiodło się",
           "summary": "{count, plural, =0 {Brak starych pinów} one {# stary pin} few {# stare piny} many {# starych pinów} other {# starych pinów}} · {checked, plural, one {# pin sprawdzono} few {# piny sprawdzono} many {# pinów sprawdzono} other {# pinów sprawdzono}}",
           "unreadable": "{count, plural, one {# pliku} other {# plików}} nie można było przeczytać, więc te piny nie zostały sprawdzone.",
           "removed": "{count, plural, =0 {Nie usunięto żadnych starych pinów} one {# stary pin usunięty} few {# stare piny usunięte} many {# starych pinów usuniętych} other {# starych pinów usuniętych}}",
-          "removeFailed": "Nie można było usunąć starych szpilek",
+          "removeFailed": "Nie można było usunąć starych pinów",
           "removeConfirm": "Usunąć {count, plural, one {# Code Pin, którego} other {# Code Pins, których}} ostatnie sprawdzenie nie mogło znaleźć na górze {name}?",
-          "removeConfirmNote": "Szpilki, których badge Stale został odrzucony i szpilki utrzymywane przez znaczniki repozytorium są przechowywane. Usunięte szpilki można przywrócić z kosza.",
+          "removeConfirmNote": "Piny, których badge Stale został odrzucony i piny utrzymywane przez znaczniki repozytorium są przechowywane. Usunięte piny można przywrócić z kosza.",
           "checkCancelled": "Ostatnia kontrola anulowana",
           "interrupted": "Kontrola rozpoczęta {date} nigdy nie zgłosiła się — pracownik mógł zostać ponownie uruchomiony. Umieść ją w kolejce ponownie, aby kontynuować."
         },
         "jobs": {
           "queued": "W kolejce",
-          "queuedBehind": "{what, select, sweep {Oczekiwanie na zakończenie nocnego odświeżenia pamięci podręcznej.} refresh {Oczekiwanie na zakończenie odświeżenia pamięci podręcznej.} scan {Oczekiwanie na zakończenie skanowania biletów.} stale {Oczekiwanie na zakończenie kontroli nieświeżych pinów.} other {Oczekiwanie na zakończenie innego zadania.}}",
+          "queuedBehind": "{what, select, sweep {Oczekiwanie na zakończenie nocnego odświeżenia pamięci podręcznej.} refresh {Oczekiwanie na zakończenie odświeżenia pamięci podręcznej.} scan {Oczekiwanie na zakończenie skanowania zgłoszeń.} stale {Oczekiwanie na zakończenie kontroli nieświeżych pinów.} other {Oczekiwanie na zakończenie innego zadania.}}",
           "notResponding": "Nie odpowiada",
           "notRespondingHint": "Nadal działa, ale od {date} nie zgłoszono żadnego postępu. Może czekać na dostawcę; anuluj, jeśli nie wznowi pracy.",
           "interruptedRescan": "Przerwane — ponowne skanowanie",
@@ -3035,7 +3035,7 @@
           },
           "COMMENT_MENTION": {
             "label": "Wzmianki w komentarzach",
-            "description": "Ktoś wspomina Cię znakiem @ w komentarzu do sprawy, przebiegu, sesji, kamienia milowego lub recenzji."
+            "description": "Ktoś wspomina Cię znakiem @ w komentarzu do przypadku, przebiegu, sesji, kamienia milowego lub recenzji."
           },
           "REVIEW_REQUESTED": {
             "label": "Poproszono o recenzję",
@@ -3375,7 +3375,7 @@
       "moveError": "{count, plural, =1 {Nie udało się przenieść 1 przypadku do {folder}} other {Nie udało się przenieść # przypadków do {folder}}}{dest, select, samename {} crossProject { w {projectName}} other {}}",
       "copyAlreadyRunning": "Kolejna kopia jest już w trakcie tworzenia. Proszę poczekać na jej zakończenie.",
       "currentSuffix": "(Aktualny)",
-      "moveDisabledSameFolder": "Sprawy już znajdują się w tym folderze",
+      "moveDisabledSameFolder": "Przypadki już znajdują się w tym folderze",
       "dragPreviewCase": "Przypadek testowy",
       "dragPreviewCount": "{count, plural, =1 {# przypadek testowy} many {# przypadków testowych} other {# przypadki testowe}}",
       "modifierHintMac": "Przytrzymaj ⇧, aby przesunąć lub ⌥, aby skopiować, a przeciągając, aby pominąć to menu.",
@@ -3404,7 +3404,7 @@
       "selectFolder": "Wybierz folder, aby dodać lub wyświetlić przypadki testowe.",
       "selectCases": "Wybierz przypadki testowe",
       "noTestCases": "Brak przypadków testowych do wyświetlenia.",
-      "addCase": "Dodaj sprawę",
+      "addCase": "Dodaj przypadek testowy",
       "caseDetails": "Szczegóły przypadku testowego",
       "expandDetails": "Rozwiń na całą szerokość",
       "collapseDetails": "Zwiń do widoku podzielonego",
@@ -3418,7 +3418,7 @@
       "testResultHistoryDescription": "Wyświetl historię wyników testów dla tego przypadku testowego",
       "viewElapsedTimeReport": "Raport czasu upłyniętego",
       "noTestResults": "Nie znaleziono wyników testów dla tego przypadku testowego",
-      "unknownRun": "Nieznany bieg",
+      "unknownRun": "Nieznany przebieg",
       "currentRunBadge": "Aktualny",
       "currentRunTooltip": "Przebieg testu, który przeglądasz",
       "attempt": "Próba",
@@ -3483,9 +3483,9 @@
           "useAiParsing": "Wykorzystaj sztuczną inteligencję do pomocy w mapowaniu terenu",
           "importLocation": {
             "label": "Lokalizacja importu",
-            "singleFolder": "Dodaj wszystkie sprawy do jednego folderu",
-            "rootFolder": "Dodaj wszystkie sprawy i foldery do folderu głównego (wymagane mapowanie)",
-            "topLevel": "Dodaj wszystkie sprawy i foldery do najwyższego poziomu (wymagane mapowanie)"
+            "singleFolder": "Dodaj wszystkie przypadki do jednego folderu",
+            "rootFolder": "Dodaj wszystkie przypadki i foldery do folderu głównego (wymagane mapowanie)",
+            "topLevel": "Dodaj wszystkie przypadki i foldery do najwyższego poziomu (wymagane mapowanie)"
           },
           "selectFolder": "Wybierz folder",
           "selectFolderPlaceholder": "Wybierz folder...",
@@ -3493,7 +3493,7 @@
             "tab": "Patka"
           },
           "hasHeaders": "Pierwszy wiersz zawiera nazwy kolumn",
-          "template": "Szablon sprawy repozytorium",
+          "template": "Szablon przypadku repozytorium",
           "rowMode": {
             "single": "Każdy wiersz to pojedynczy przypadek testowy",
             "multi": "Przypadki testowe mogą obejmować wiele wierszy"
@@ -3528,7 +3528,7 @@
           "multiRow": {
             "aggregated": "Tryb wielowierszowy zgrupował wiersze CSV ({rows, number}) w {cases, plural, one {# przypadek testowy} many {# przypadków testowych} other {# przypadki testowe}}.",
             "noStepColumn": "Tryb wielowierszowy jest włączony, ale nie wykryto kolumny kroków. Oczekiwano jednej z następujących wartości: Zawartość kroku, Krok, Kroki, Akcja, Opis (bez uwzględniania wielkości liter). Każdy wiersz pliku CSV zostanie zaimportowany jako osobny przypadek testowy.",
-            "noKeyColumn": "Tryb wielowierszowy jest włączony, ale kolumna ID lub Nazwa nie jest mapowana. Zmapuj kolumnę ID lub Nazwa w poprzednim kroku, aby wiersze mogły być grupowane w sprawy.",
+            "noKeyColumn": "Tryb wielowierszowy jest włączony, ale kolumna ID lub Nazwa nie jest mapowana. Zmapuj kolumnę ID lub Nazwa w poprzednim kroku, aby wiersze mogły być grupowane w przypadki.",
             "noGrouping": "Tryb wielowierszowy jest włączony, ale żadne wiersze nie zostały zgrupowane. Każdy wiersz ma inny identyfikator/nazwę, więc każdy stanie się oddzielnym przypadkiem testowym. Pozostaw identyfikator i nazwę puste w wierszach kontynuacji lub powtórz ten sam identyfikator/nazwę w wierszach należących do jednego przypadku."
           }
         }
@@ -3566,7 +3566,7 @@
       "confirm": "Zmienić szablon"
     },
     "columns": {
-      "selectCase": "Wybierz sprawę",
+      "selectCase": "Wybierz przypadek",
       "runOrder": "Kolejność wykonania",
       "latestResults": "Najnowsze wyniki",
       "testedOn": "Ostatnio testowane"
@@ -3589,7 +3589,7 @@
       "confirmMessage": "{count, plural, =0 {Usunięcie tego folderu spowoduje również usunięcie wszystkich podfolderów. Czy jesteś pewien?} =1 {Usunięcie tego folderu spowoduje również usunięcie 1 przypadku testowego w tym folderze i wszystkich podfolderach. Czy jesteś pewien?} other {Usunięcie tego folderu spowoduje również usunięcie # przypadków testowych w tym folderze i wszystkich podfolderach. Czy jesteś pewien?}}",
       "warning": "Ten folder i wszystkie jego przypadki testowe zostaną usunięte z projektu. Dane historyczne tych przypadków testowych, w tym wyniki, pozostaną w projekcie.",
       "confirm": "Potwierdź usunięcie folderu",
-      "success": "Folder i wszystkie podfoldery/sprawy zostały pomyślnie usunięte."
+      "success": "Folder i wszystkie podfoldery/przypadki zostały pomyślnie usunięte."
     },
     "editFolder": {
       "errors": {
@@ -3609,7 +3609,7 @@
       "anyTag": "Dowolny tag",
       "noTags": "Brak tagów",
       "byTag": "Etykietka",
-      "byIssue": "Wydanie",
+      "byIssue": "Problem",
       "anyIssue": "Jakikolwiek problem",
       "noIssues": "Brak problemów"
     },
@@ -3627,7 +3627,7 @@
       "warnings": {
         "templateMismatch": {
           "title": "Wybrano wiele szablonów",
-          "description": "Po wybraniu spraw z różnymi szablonami można edytować tylko pola standardowe. Pola dynamiczne można edytować, wybierając sprawy korzystające z tego samego szablonu."
+          "description": "Po wybraniu przypadków z różnymi szablonami można edytować tylko pola standardowe. Pola dynamiczne można edytować, wybierając przypadki korzystające z tego samego szablonu."
         },
         "junitLimitations": {
           "title": "Ograniczenia edycji automatycznych przypadków testowych",
@@ -3639,7 +3639,7 @@
         "fetchErrorDescription": "Nie udało się załadować danych dla wybranych przypadków. Zamknij okno modalne i spróbuj ponownie.",
         "updateErrorTitle": "Aktualizacja nie powiodła się",
         "updateFailed": "Wystąpił błąd podczas zapisywania zmian. Sprawdź dane i spróbuj ponownie.",
-        "fetchError": "Błąd podczas pobierania danych o sprawie."
+        "fetchError": "Błąd podczas pobierania danych o przypadku."
       },
       "success": {
         "casesUpdated": "{count, number} przypadków zaktualizowano pomyślnie"
@@ -3705,7 +3705,7 @@
       },
       "rowMode": {
         "label": "Wierszy na przypadek",
-        "single": "Pojedynczy rząd na skrzynkę",
+        "single": "Pojedynczy rząd na przypadek",
         "multi": "Wiele rzędów na krok"
       },
       "comingSoon": "Już wkrótce",
@@ -3763,7 +3763,7 @@
       "columnMatchedFields": "Dopasowane pola",
       "columnScore": "Wynik",
       "compareButton": "Porównywać",
-      "viewCaseDetails": "Zobacz szczegóły sprawy",
+      "viewCaseDetails": "Zobacz szczegóły przypadku",
       "selectAll": "Zaznacz wszystko",
       "selected": "{count, plural, one {# wybrano} other {# wybrano}}",
       "bulkDismiss": "Nie duplikaty ({count, number})",
@@ -3774,7 +3774,7 @@
       "tableHint": "Kliknij wiersz lub przycisk Porównaj, aby przejrzeć i rozwiązać duplikat pary.",
       "comparisonTitle": "{caseA} kontra {caseB}",
       "comparisonDescription": "Porównaj te potencjalne duplikaty i zdecyduj, jak je rozwiązać.",
-      "selectPrimary": "Kliknij sprawę, aby wybrać ją jako sprawę podstawową do scalenia",
+      "selectPrimary": "Kliknij przypadek, aby wybrać go jako przypadek podstawowy do scalenia",
       "selectedAsPrimary": "Wybrany jako podstawowy",
       "mergeButton": "Zachowaj podstawowe",
       "linkButton": "Link jako powiązany",
@@ -3783,16 +3783,16 @@
       "linking": "Łączenie...",
       "dismissing": "Odrzucenie...",
       "mergeSuccess": "Przypadki zostały pomyślnie połączone. {runsTransferred, plural, =0 {Nie przeniesiono żadnych przebiegów testów} one {Przeniesiono # przebieg testu} few {Przeniesiono # przebiegi testów} many {Przeniesiono # przebiegów testów} other {Przeniesiono # przebiegów testów}}.",
-      "linkSuccess": "Sprawy powiązano jako powiązane.",
+      "linkSuccess": "Przypadki powiązano jako powiązane.",
       "dismissSuccess": "Para odrzucona. Nie pojawi się w przyszłych skanach.",
       "resolveError": "Nie udało się rozwiązać zduplikowanej pary. Spróbuj ponownie.",
-      "loadingDetails": "Ładowanie szczegółów sprawy...",
-      "caseDetailsError": "Nie udało się załadować szczegółów sprawy.",
+      "loadingDetails": "Ładowanie szczegółów przypadku...",
+      "caseDetailsError": "Nie udało się załadować szczegółów przypadku.",
       "sourceLabel": "Źródło",
       "fieldValuesLabel": "Wartości pól",
-      "lastRunLabel": "Ostatni bieg",
+      "lastRunLabel": "Ostatni przebieg",
       "noFieldValues": "Brak wartości pól",
-      "noLastRun": "Nigdy nie biegaj",
+      "noLastRun": "Nigdy nie uruchomiono",
       "stepExpectedResult": "{step} → {result}",
       "runStatusDate": "{status} — {date}",
       "noFolder": "Brak folderu",
@@ -3829,7 +3829,7 @@
         "folderContextEmptyTitle": "W tym folderze nie ma jeszcze żadnych przypadków testowych",
         "folderContextEmpty": "Folder \"{folderName}\" i jego foldery nadrzędne/podrzędne nie zawierają żadnych przypadków testowych. Asystent AI będzie szukać powiązanych przypadków testowych w innym miejscu tego projektu, aby poznać Twój styl i uniknąć duplikatów. Aby uzyskać najlepsze wyniki, uruchom generator z folderu, do którego należą te przypadki testowe.",
         "currentFolder": "bieżący folder",
-        "fromIssue": "Z wydania",
+        "fromIssue": "Z problemu",
         "fromDocument": "Z dokumentu",
         "documentTitle": "Tytuł dokumentu",
         "documentTitlePlaceholder": "Wprowadź tytuł dokumentu wymagań",
@@ -3967,7 +3967,7 @@
         "genericImportError": "Nieudany import: {error}",
         "networkRoutingError": "Problem z trasowaniem sieci lub konfiguracją serwera — zamiast odpowiedzi API otrzymano stronę błędu HTML",
         "invalidSourceConfig": "Nieprawidłowa konfiguracja źródła",
-        "failedToCreateCaseVersion": "Nie udało się utworzyć wersji sprawy",
+        "failedToCreateCaseVersion": "Nie udało się utworzyć wersji przypadku",
         "noUrlProvided": "Proszę podać adres URL, z którego będą generowane przypadki testowe",
         "urlFetchFailed": "Nie udało się pobrać treści z podanego adresu URL. Sprawdź adres URL i spróbuj ponownie.",
         "llm": {
@@ -4127,20 +4127,20 @@
     },
     "codePins": {
       "add": "Dodaj pin",
-      "addDialogDescription": "Szpilki są zakotwiczone na bieżącym końcu gałęzi.",
+      "addDialogDescription": "Piny są zakotwiczone na bieżącym końcu gałęzi.",
       "addDialogTitle": "Przypnij ten przypadek do kodu",
-      "addFailed": "Nie można było dodać szpilki",
-      "addSuccess": "Szpila dodana",
+      "addFailed": "Nie można było dodać pinu",
+      "addSuccess": "Pin dodany",
       "anchoredAt": "Zakotwiczony na {sha}",
       "caseLabel": "Przypadek testowy",
       "contentUnavailable": "Zawartość pliku nie jest dostępna.",
       "description": "Kod, który ten przypadek obejmuje. Zmiana wewnątrz przypięcia bloku wyciąga przypadek do analiz wpływu.",
-      "duplicate": "Ta szpila już istnieje.",
+      "duplicate": "Ten pin już istnieje.",
       "empty": "Brak Code Pins jeszcze.",
       "endLine": "Linia końcowa",
       "errorFileNotFound": "Plik nie znaleziony na końcu gałęzi.",
       "errorLineOutOfRange": "Zakres linii jest poza plikiem.",
-      "errorSnippetTooLarge": "Zapiętowany blok jest zbyt duży.",
+      "errorSnippetTooLarge": "Przypięty blok jest zbyt duży.",
       "errorSymbolNotFound": "Symbol nie znaleziony w pliku.",
       "filePlaceholder": "Szukaj plików...",
       "filesCached": "{count, plural, one {# plik buforowany} few {# pliki buforowane} many {# plików buforowanych} other {# plików buforowanych}} · {date}",
@@ -4159,30 +4159,30 @@
       "noFilesCached": "Brak listy buforowanych plików. Poproś administratora projektu o odświeżenie pamięci podręcznej repozytorium.",
       "notePlaceholder": "Dlaczego ten przypadek obejmuje ten kod (opcjonalnie)",
       "reanchor": "Zakotwicz ponownie",
-      "reanchorFailed": "Nie można było ponownie zakotwić szpilki",
-      "reanchorSuccess": "Szpila ponownie zakotwiona",
-      "removeConfirm": "Usunąć tę szpilkę?",
-      "removeFailed": "Nie można było usunąć szpilki",
-      "removeSuccess": "Szpila usunięta",
+      "reanchorFailed": "Nie można było ponownie zakotwić pinu",
+      "reanchorSuccess": "Pin ponownie zakotwiony",
+      "removeConfirm": "Usunąć ten pin?",
+      "removeFailed": "Nie można było usunąć pinu",
+      "removeSuccess": "Pin usunięty",
       "sourceAnnotation": "Adnotacja",
       "sourceMapfile": "Plik mapy",
       "staleFileDeleted": "plik usunięty",
       "staleSnippetNotFound": "linie nie znalezione",
       "staleSymbolNotFound": "symbol nie znaleziony",
-      "staleTooltip": "Zapiętowany blok nie można było znaleźć na końcu gałęzi: {reason}.",
+      "staleTooltip": "Przypięty blok nie można było znaleźć na końcu gałęzi: {reason}.",
       "startLine": "Linia startowa",
       "symbolHint": "Deklaracja znajduje się według nazwy w pliku.",
       "symbolNoneDetected": "Nie wykryto symboli, wpisz nazwę.",
       "symbolPlaceholder": "functionName",
       "symbolSelectPlaceholder": "Wybierz lub wpisz symbol...",
-      "updateSuccess": "Szpila zaktualizowana",
-      "updateFailed": "Nie można było zaktualizować szpilki",
-      "editDialogTitle": "Edytuj tę szpilkę",
-      "editDialogDescription": "Plik i typ szpilki pozostają takie, jakie są. Aby zmienić jeden, usuń tę szpilkę i dodaj nową.",
+      "updateSuccess": "Pin zaktualizowany",
+      "updateFailed": "Nie można było zaktualizować pinu",
+      "editDialogTitle": "Edytuj ten pin",
+      "editDialogDescription": "Plik i typ pinu pozostają takie, jakie są. Aby zmienić jeden, usuń ten pin i dodaj nowy.",
       "editAction": "Edytuj pin",
       "symbolSearchPlaceholder": "Szukaj symboli...",
       "symbolUseTyped": "Użyj „{symbol}\"",
-      "title": "Kody PIN",
+      "title": "Code Piny",
       "viewerFailed": "Nie można załadować pliku.",
       "viewerLoading": "Ładowanie pliku…",
       "viewerTooLarge": "Ten plik jest zbyt duży do wyświetlenia. Zamiast tego wpisz numery linii.",
@@ -4223,7 +4223,7 @@
       "filters": {
         "hideCompletedSessions": "Ukryj zakończone sesje",
         "hideCompletedTestRuns": "Ukryj ukończone przebiegi testowe",
-        "caseTypeLabel": "Typ sprawy"
+        "caseTypeLabel": "Typ przypadku"
       }
     },
     "manageTags": {
@@ -4547,7 +4547,7 @@
       "title": "Podsumowanie testu",
       "description": "Wyświetl podsumowanie przebiegu testu",
       "activeRunsAndEstTime": "Aktywne przebiegi i szacowany czas",
-      "activeRunsLabel": "Biegi",
+      "activeRunsLabel": "Przebiegi",
       "totalEstTime": "Całkowity szacowany czas",
       "responsibleUsers": "Odpowiedzialni użytkownicy",
       "allActiveRuns": "Wszystkie aktywne przebiegi",
@@ -4604,7 +4604,7 @@
       "warning": "Ta akcja nie może zostać odwrócona. Wszelkie wyniki zapisane dla tych przypadków testowych w tym teście zostaną utracone. Same przypadki testowe pozostaną w repozytorium."
     },
     "filter": {
-      "placeholder": "Przeprowadź testy filtrów..."
+      "placeholder": "Filtruj przebiegi testowe..."
     },
     "empty": {
       "noMatchingCompleted": "Nie znaleziono żadnych zakończonych przebiegów testowych odpowiadających wybranemu filtrowi.",
@@ -4676,7 +4676,7 @@
         "showFullPatch": "Pokaż pełną łatkę",
         "binary": "Plik binarny",
         "noPatch": "Łatka nie jest dostępna",
-        "pinnedFiles": "{count, plural, one {# pinezka} few {# pinezki} many {# pinezek} other {# pinezce}}",
+        "pinnedFiles": "{count, plural, one {# pin} few {# piny} many {# pinów} other {# pinu}}",
         "loading": "Porównywanie commitów…"
       },
       "loading": {
@@ -4684,9 +4684,9 @@
         "resolving_config": "Rozwiązywanie konfiguracji repozytorium…",
         "fetching_diff": "Pobieranie różnicy…",
         "matching_pins": "Pasujące Code Pins…",
-        "matching_issues": "Pasujące bilety nazwane w commitach…",
+        "matching_issues": "Pasujące zgłoszenia nazwane w commitach…",
         "searching_cases": "Wyszukiwanie przypadków testowych po słowie kluczowym…",
-        "scoring_history": "Wyniki historii biegów…",
+        "scoring_history": "Wyniki historii przebiegów…",
         "waiting_for_ai": "Oczekiwanie na sztuczną inteligencję…",
         "merging": "Łączenie wyników…",
         "ranking": "Ranking {current} z {total} przypadków testowych kandydujących",
@@ -4704,10 +4704,10 @@
         "deselectHidden": "Odznacz ukryte",
         "noneShown": "Żadne testy nie spełniają filtrów.",
         "reasons": "Dlaczego",
-        "tierPinned": "Zapiętowany",
+        "tierPinned": "Przypięty",
         "tierAffected": "Dotknięty",
         "tierRelated": "Powiązany",
-        "tierPinnedTooltip": "Kod Pin na tym przypadku przecina zmianę. Zapiętowane przypadki zawsze zajmują pierwsze miejsce.",
+        "tierPinnedTooltip": "Code Pin na tym przypadku przecina zmianę. Przypięte przypadki zawsze zajmują pierwsze miejsce.",
         "tierAffectedTooltip": "Inne sygnały umieszczają ten przypadek na lub powyżej progu wpływu {threshold, number}.",
         "tierRelatedTooltip": "Powiązany z silnie dotknętym przypadkiem, lub jego sygnały uzyskały wynik poniżej {threshold, number}.",
         "excluded": "{count, plural, one {# przypadek już w przebiegu został pominięty} many {# przypadków już w przebiegu zostało pominiętych} other {# przypadki już w przebiegu zostały pominięte}}"
@@ -4717,7 +4717,7 @@
         "description": "Żaden przypadek testowy nie pasuje do zmian. Przypnij przypadki do zmienionych plików, aby następna analiza je znalazła."
       },
       "reasons": {
-        "pin": "Pinezka",
+        "pin": "Pin",
         "issue": "Zgłoszenie",
         "path": "Słowo kluczowe",
         "history": "Historia",
@@ -4727,8 +4727,8 @@
         "pinGlob": "Pasuje {pattern}",
         "pinSymbol": "{path} · {symbol}",
         "pathDetail": "Znaleziono „{term}” w {field}",
-        "fieldName": "nazwa sprawy",
-        "fieldContent": "treść sprawy",
+        "fieldName": "nazwa przypadku",
+        "fieldContent": "treść przypadku",
         "fieldTag": "etykietka",
         "fieldFolder": "folder",
         "historyDetail": "{count, plural, one {# wcześniejszy przebieg} many {# wcześniejszych przebiegów} other {# wcześniejsze przebiegi}} po zmianach do tych samych plików",
@@ -4738,9 +4738,9 @@
       },
       "stale": {
         "badge": "Zabytek",
-        "tooltipAnalysis": "Zapiętowany blok nie można było znaleźć na commit bazowego; dopasowany tylko przez ścieżkę pliku. Zakotwicz ponownie ze strony przypadku testowego.",
+        "tooltipAnalysis": "Przypięty blok nie można było znaleźć na commit bazowego; dopasowany tylko przez ścieżkę pliku. Zakotwicz ponownie ze strony przypadku testowego.",
         "title": "{count, plural, one {# nieaktualny pin} few {# nieaktualne piny} many {# nieaktualnych pinów} other {# nieaktualnego pinu}}",
-        "description": "Te szpilki już nie pasują do kodu. Zakotwicz je ponownie na stronie przypadku testowego."
+        "description": "Te piny już nie pasują do kodu. Zakotwicz je ponownie na stronie przypadku testowego."
       },
       "uncovered": {
         "title": "{count, plural, one {# zmieniony plik nie ma testu} many {# zmienionych plików nie ma testów} other {# zmienione pliki nie mają testów}}",
@@ -4752,12 +4752,12 @@
         "diff_truncated_by_budget": "Tylko część diff zmieściła się w kontekście sztucznej inteligencji; {count, plural, one {# plik był podsumowany} few {# pliki były podsumowane} many {# plików było podsumowanych} other {# plików było podsumowanych}} tylko ścieżką.",
         "llm_not_configured": "Brak aktywnej integracji LLM: ranking AI został pominięty.",
         "search_fallback_db": "Indeks wyszukiwania niedostępny: dopasowywanie słów kluczowych używało bazy danych.",
-        "search_index_empty": "Indeks wyszukiwania nie zawiera przypadków testowych dla tego projektu, więc dopasowywanie słów kluczowych przywróciło się do nazw przypadków testowych w bazie danych i mogło pominąć dopasowania zawartości sprawy. Poproś administratora o odbudowanie indeksu wyszukiwania w administracji → Wyszukiwanie.",
+        "search_index_empty": "Indeks wyszukiwania nie zawiera przypadków testowych dla tego projektu, więc dopasowywanie słów kluczowych przywróciło się do nazw przypadków testowych w bazie danych i mogło pominąć dopasowania zawartości przypadku. Poproś administratora o odbudowanie indeksu wyszukiwania w administracji → Wyszukiwanie.",
         "ai_partial": "Niektóre partie sztucznej inteligencji nie powiodły się; wyniki mogą być niekompletne.",
         "ai_truncated": "{count, plural, one {# partia sztucznej inteligencji była odcięta} few {# partie sztucznej inteligencji były odcięte} many {# partii sztucznej inteligencji było odciętych} other {# partii sztucznej inteligencji było odciętych}} przez model.",
         "no_candidates": "Żaden przypadek testowy nie pasował.",
         "anchor_fetch_capped": "Niektóre przypięte pliki były dopasowywane tylko ścieżką (osiągnięty limit pobierania).",
-        "issue_commit_fetch_capped": "Niektóre commity nazywające bilety nie były przeczytane plik po pliku (osiągnięty limit pobierania); ich przypadki nie obejmują żadnych konkretnych plików.",
+        "issue_commit_fetch_capped": "Niektóre commity nazywające zgłoszenia nie były przeczytane plik po pliku (osiągnięty limit pobierania); ich przypadki nie obejmują żadnych konkretnych plików.",
         "paths_excluded_by_settings": "{count, plural, one {# zmieniony plik został zignorowany} few {# zmienione pliki zostały zignorowane} many {# zmienionych plików zostało zignorowanych} other {# zmienionych plików zostało zignorowanych}} z powodu wykluczonych ścieżek repozytorium."
       },
       "actions": {
@@ -4928,7 +4928,7 @@
           "projects": "Projektowanie",
           "repositories": "Repozytoria",
           "repository_folders": "Foldery repozytorium",
-          "repository_cases": "Sprawy repozytorium",
+          "repository_cases": "Przypadki repozytorium",
           "repository_case_steps": "Kroki postępowania w przypadku repozytorium",
           "repository_case_tags": "Tagi przypadków repozytorium",
           "milestones": "Kamienie milowe",
@@ -4938,9 +4938,9 @@
           "run_result_steps": "Wyniki testu krok po kroku",
           "run_links": "Linki do testów",
           "run_tags": "Tagi testów",
-          "issues": "Kwestie",
-          "milestone_issues": "Kluczowe kwestie",
-          "repository_case_issues": "Problemy ze sprawami repozytorium",
+          "issues": "Problemy",
+          "milestone_issues": "Problemy kamieni milowych",
+          "repository_case_issues": "Problemy z przypadkami repozytorium",
           "run_issues": "Problemy z uruchomieniem testu",
           "run_result_issues": "Problemy z wynikami testów",
           "session_result_issues": "Problemy z wynikami sesji",
@@ -5043,7 +5043,7 @@
           "workflowScope": {
             "default": "Inny",
             "cases": "Przypadki testowe",
-            "runs": "Testy biegowe",
+            "runs": "Przebiegi testowe",
             "sessions": "Sesje"
           },
           "noWorkflowsAvailable": "Brak dostępnych przepływów pracy.",
@@ -5124,7 +5124,7 @@
           "templateCreateLabel": "Utwórz nowy szablon",
           "templateNoMatchingTargets": "Brak pasujących szablonów.",
           "templateNewNameLabel": "Nazwa szablonu",
-          "templateMapHintIncomplete": "Zmapuj wszystkie pola Testmo do istniejących pól sprawy i wyników przed zmapowaniem do istniejącego szablonu.",
+          "templateMapHintIncomplete": "Zmapuj wszystkie pola Testmo do istniejących pól przypadku i wyników przed zmapowaniem do istniejącego szablonu.",
           "templateMapHintDuplicate": "Każde pole Testmo musi być mapowane na unikalne pole TestPlanIt.",
           "templateMapHintNoMatch": "Żaden z istniejących szablonów nie używa tego samego zestawu pól.",
           "templateMapHintAlreadyMapped": "Wszystkie pasujące szablony są już zmapowane. Wyczyść pozostałe mapowanie przed kontynuowaniem.",
@@ -5573,18 +5573,18 @@
         }
       },
       "caseFields": {
-        "description": "Zarządzaj polami sprawy",
+        "description": "Zarządzaj polami przypadku",
         "add": {
-          "button": "Dodaj pole sprawy",
-          "title": "Dodaj nowe pole sprawy"
+          "button": "Dodaj pole przypadku",
+          "title": "Dodaj nowe pole przypadku"
         },
         "edit": {
-          "title": "Edytuj pole sprawy"
+          "title": "Edytuj pole przypadku"
         },
         "delete": {
-          "title": "Usuń pole sprawy",
+          "title": "Usuń pole przypadku",
           "confirmMessage": "Czy na pewno chcesz usunąć <strong>{name}</strong>?",
-          "warning": "Pole „Sprawa” zostanie usunięte ze wszystkich szablonów. Tej czynności nie można cofnąć."
+          "warning": "Pole przypadku zostanie usunięte ze wszystkich szablonów. Tej czynności nie można cofnąć."
         }
       },
       "generateDefaultOn": "Domyślnie uwzględnione w kreatorze generowania przypadków testowych. Kliknij, aby domyślnie je wykluczyć.",
@@ -5699,7 +5699,7 @@
         "groups": {
           "customFields": "Pola niestandardowe"
         },
-        "stepsBlock": "Blok schodów"
+        "stepsBlock": "Blok kroków"
       }
     },
     "users": {
@@ -6493,7 +6493,7 @@
         "configVariants": "Warianty konfiguracji",
         "repositories": "Repozytoria",
         "repositoryFolders": "Foldery repozytorium",
-        "repositoryCaseLinks": "Linki do spraw repozytorium",
+        "repositoryCaseLinks": "Linki do przypadków repozytorium",
         "repositoryCaseVersions": "Wersje przypadków repozytorium",
         "testRunStepResults": "Wyniki testu krok po kroku",
         "issueConfigs": "Konfiguracje problemów",
@@ -7114,7 +7114,7 @@
         "configureDescription": "Aby dostosować współbieżność, ustaw zmienne środowiskowe i uruchom ponownie procesy robocze. Szczegóły znajdziesz w dokumentacji.",
         "envVars": {
           "TESTMO_IMPORT_CONCURRENCY": "Importy Testmo (domyślnie: 1, wymagające dużej ilości pamięci)",
-          "SYNC_CONCURRENCY": "Wydanie synchronizacji (domyślnie: 2, intensywne operacje wejścia/wyjścia)",
+          "SYNC_CONCURRENCY": "Synchronizacja problemów (domyślnie: 2, intensywne operacje wejścia/wyjścia)",
           "EMAIL_CONCURRENCY": "Wysyłanie wiadomości e-mail (domyślnie: 3, intensywne przetwarzanie danych)",
           "NOTIFICATION_CONCURRENCY": "Powiadomienia (domyślne: 5, lekkie)",
           "FORECAST_CONCURRENCY": "Aktualizacje prognoz (domyślnie: 5, wymagające dużej mocy obliczeniowej procesora)"
@@ -7281,7 +7281,7 @@
         "assignedSession": "przypisano cię do sesji",
         "mentionedYouInComment": "wspomniałem o tobie w komentarzu",
         "inProject": "w projekcie",
-        "testRun": "Test biegowy:",
+        "testRun": "Przebieg testowy:",
         "casesInProject": "{count, plural, =1 {# przypadek} many {# przypadków} other {# przypadki}} w <project></project>",
         "sentBy": "Wysłane przez {name}",
         "milestoneDueSoonTitle": "Kamień milowy wkrótce",
@@ -7314,7 +7314,7 @@
         "reviewRejectedAction": "odrzuciłem Twoją prośbę o recenzję",
         "reviewCancelledAction": "anulował prośbę o przegląd",
         "reviewEntityLabelCase": "przypadek testowy",
-        "reviewEntityLabelRun": "przebieg próbny",
+        "reviewEntityLabelRun": "przebieg testowy",
         "reviewEntityLabelSession": "sesja",
         "reviewBulkEntityLabelCase": "przypadki testowe",
         "reviewBulkEntityLabelRun": "przebiegi testowe",
@@ -7359,7 +7359,7 @@
         "alertTriggeredReason": "Otrzymujesz to, ponieważ jesteś zasubskrybowany do tego alertu.",
         "alertSubject": {
           "CASE": "przypadek testowy",
-          "RUN": "przebieg próbny",
+          "RUN": "przebieg testowy",
           "MILESTONE": "kamień milowy",
           "SESSION": "sesja",
           "PROJECT": "projekt",
@@ -7467,15 +7467,15 @@
       "targetFolder": "Folder docelowy",
       "newFolderPlaceholder": "Nowa nazwa folderu...",
       "operation": "Działanie",
-      "operationCopyDesc": "Tworzy kopię wybranych spraw w projekcie docelowym. Oryginały pozostają niezmienione.",
+      "operationCopyDesc": "Tworzy kopię wybranych przypadków w projekcie docelowym. Oryginały pozostają niezmienione.",
       "operationMove": "Przenosić",
-      "operationMoveDesc": "Przenosi wybrane sprawy do projektu docelowego. Oryginały zostaną usunięte ze źródła.",
+      "operationMoveDesc": "Przenosi wybrane przypadki do projektu docelowego. Oryginały zostaną usunięte ze źródła.",
       "checkingCompatibility": "Sprawdzanie zgodności...",
       "noTargetWriteAccess": "Nie masz uprawnień do zapisu w projekcie docelowym.",
-      "noSourceUpdateAccess": "Nie masz uprawnień do edycji projektu źródłowego, aby móc przenosić sprawy.",
+      "noSourceUpdateAccess": "Nie masz uprawnień do edycji projektu źródłowego, aby móc przenosić przypadki.",
       "templateMismatch": "Niedopasowanie szablonu",
       "autoAssignTemplates": "Automatyczne przypisywanie brakujących szablonów do projektu docelowego",
-      "templatesMayNotDisplay": "Brakujące szablony nie będą dostępne w projekcie docelowym. Sprawy zostaną skopiowane, ale pola z tych szablonów mogą nie wyświetlać się poprawnie.",
+      "templatesMayNotDisplay": "Brakujące szablony nie będą dostępne w projekcie docelowym. Przypadki zostaną skopiowane, ale pola z tych szablonów mogą nie wyświetlać się poprawnie.",
       "workflowFallback": "Niektóre stany przepływu pracy nie są dostępne w projekcie docelowym. W takich przypadkach zostanie użyty domyślny stan projektu docelowego.",
       "default": "(domyślny)",
       "conflicts": "Zastosuj do wszystkich konfliktów:",
@@ -7501,7 +7501,7 @@
   "issues": {
     "linkedIssues": "Powiązane problemy",
     "linkedIssuesDescription": "Problemy związane z tym elementem",
-    "refreshed": "Odświeżone wydania",
+    "refreshed": "Odświeżone problemy",
     "refreshedDescription": "Zaktualizowano listę powiązanych problemów",
     "unlinked": "Problem niepowiązany",
     "unlinkedDescription": "Problem został usunięty z tego elementu",
@@ -7529,7 +7529,7 @@
     "searchPlaceholder": "Problemy z wyszukiwaniem...",
     "searchIssues": "Problemy z wyszukiwaniem",
     "searchIssuesDescription": "Wyszukaj problemy wewnętrzne, aby utworzyć link do tego elementu.",
-    "searchExternalDescription": "Wyszukaj {provider} numerów, aby utworzyć link do tego elementu.",
+    "searchExternalDescription": "Wyszukaj problemy w {provider}, aby utworzyć link do tego elementu.",
     "error": "Wystąpił błąd podczas ładowania",
     "errorDescription": "Nie udało się załadować problemów. Spróbuj ponownie.",
     "selectIssues": "Wybierz problemy",
@@ -7975,7 +7975,7 @@
       "Milestones": "Kamienie milowe",
       "TestCaseRepository": "Repozytorium przypadków testowych",
       "TestCaseRestrictedFields": "Pola ograniczone przypadku testowego",
-      "TestRuns": "Testy biegowe",
+      "TestRuns": "Przebiegi testowe",
       "ClosedTestRuns": "Zamknięte testy",
       "TestRunResults": "Wyniki testu",
       "TestRunResultRestrictedFields": "Pola ograniczone wyniku testu",
@@ -7987,7 +7987,7 @@
       "SessionResults": "Wyniki sesji",
       "Tags": "Tagi",
       "SharedSteps": "Wspólne kroki",
-      "Issues": "Kwestie",
+      "Issues": "Problemy",
       "Reporting": "Raportowanie",
       "Settings": "Administracja projektu",
       "Alerts": "Alerty"
@@ -8021,8 +8021,8 @@
     "noLinkedCases": "Brak powiązanych przypadków testowych.",
     "linkedBy": "Połączone przez",
     "on": "Połączone na",
-    "alreadyLinked": "Ta sprawa jest już powiązana.",
-    "cannotLinkSelf": "Nie można połączyć sprawy z samą sobą.",
+    "alreadyLinked": "Ten przypadek jest już powiązany.",
+    "cannotLinkSelf": "Nie można połączyć przypadku z samym sobą.",
     "circularLink": "Wykryto połączenie cykliczne.",
     "dependsOn": "Zależy od",
     "blocks": "Blokuje",
@@ -8375,12 +8375,12 @@
     },
     "case": {
       "name": "## Nazwa przypadku testowego\nJasna, opisowa nazwa przypadku testowego.",
-      "state": "## Stan\nWskaż aktualny stan przepływu pracy dla tej sprawy.",
-      "template": "## Szablon\nWybierz szablon, którego ta sprawa będzie używać dla pól sprawy i pól wyników.",
+      "state": "## Stan\nWskaż aktualny stan przepływu pracy dla tego przypadku.",
+      "template": "## Szablon\nWybierz szablon, którego ten przypadek będzie używać dla pól przypadku i pól wyników.",
       "estimate": "## Oszacowanie\nWprowadzony ręcznie szacowany czas potrzebny na ukończenie tego przypadku testowego.",
       "automated": "## Zautomatyzowany\nWskazuje, czy ten przypadek testowy jest zautomatyzowany, czy nie.",
       "tags": "## Tagi\nZastosuj odpowiednie tagi, aby skategoryzować i filtrować ten przypadek.",
-      "issues": "## Problemy\nPowiąż wszelkie powiązane problemy (błędy, zadania itp.) z tą sprawą."
+      "issues": "## Problemy\nPowiąż wszelkie powiązane problemy (błędy, zadania itp.) z tym przypadkiem."
     },
     "folder": {
       "name": "## Nazwa folderu\nJasna, opisowa nazwa folderu.",
@@ -8401,7 +8401,7 @@
       "generationGuidance": "## Wskazówki generowania AI (opcjonalnie)\nInstrukcje dla AI podczas generowania przypadków testowych, wysyłane z tym polem za każdym razem. Powiedz, co oznacza pole, który koniec skali jest najwyższy i jak wybrać wartość. Na przykład: \"Krytyczne jest najwyższe. Użyj priorytetu źródłowego problemu jako linii bazowej.\"\n\nW przeciwieństwie do podpowiedzi, testery nigdy nie widzą tego tekstu. Nie zmienia typu pola ani dostępnych opcji.",
       "enabled": "## Włączone\nOkreśla, czy to pole jest aktywne i dostępne do użycia w szablonach i przypadkach testowych. Wyłączone pola są ukryte, a ich dane są zachowywane, ale nieużywane.",
       "required": "## Wymagane\nJeśli zaznaczone, użytkownicy muszą podać wartość tego pola podczas tworzenia lub edytowania przypadku testowego przy użyciu szablonu zawierającego to pole.",
-      "restricted": "## Ograniczone\nJeśli zaznaczone, tylko użytkownicy ze specjalnymi uprawnieniami (np. superadministratorzy lub osoby z uprawnieniem „Pola ograniczone w sprawie”) mogą edytować wartość tego pola po utworzeniu sprawy. Inni użytkownicy zobaczą ją jako tylko do odczytu. Jest to przydatne w przypadku pól takich jak „Sprawdzone przez” lub „Data zatwierdzenia”, których zwykli użytkownicy nie powinni zmieniać po pewnym etapie.",
+      "restricted": "## Ograniczone\nJeśli zaznaczone, tylko użytkownicy ze specjalnymi uprawnieniami (np. superadministratorzy lub osoby z uprawnieniem „Pola ograniczone przypadku”) mogą edytować wartość tego pola po utworzeniu przypadku. Inni użytkownicy zobaczą ją jako tylko do odczytu. Jest to przydatne w przypadku pól takich jak „Sprawdzone przez” lub „Data zatwierdzenia”, których zwykli użytkownicy nie powinni zmieniać po pewnym etapie.",
       "fieldType": "## Typ pola\nOkreśla rodzaj danych, które to pole będzie przechowywać i sposób ich wyświetlania (np. tekst, liczba, data, lista rozwijana). Typu pola nie można zmienić po utworzeniu.",
       "defaultValue": "## Wartość domyślna (opcjonalnie)\nUstaw wstępnie wypełnioną wartość dla tego pola. W przypadku typu „Pole wyboru” użyj „prawda” lub „fałsz”. W przypadku typu „Lista rozwijana” lub „Wybór wielokrotny” zazwyczaj odnosi się to do identyfikatorów domyślnych opcji. W przypadku innych typów jest to dosłowny domyślny tekst/liczba. Można to zmienić podczas dodawania pola do szablonu.",
       "isChecked": "## Stan domyślny (dla pola wyboru)\nOkreśla, czy pole wyboru powinno być domyślnie zaznaczone, gdy tworzony jest nowy element (np. przypadek testowy).",
@@ -8748,7 +8748,7 @@
           "content": "Organizuj przypadki testowe w folderach z niestandardowymi polami, krokami i priorytetami. Przejrzyj przykładowe foldery, aby zobaczyć, jak zorganizowane są przypadki."
         },
         "repositoryPanels": {
-          "title": "Teczki i etui",
+          "title": "Teczki i przypadki",
           "content": "Lewy panel pokazuje foldery. Kliknij folder, aby zobaczyć jego przypadki testowe. Każdy przypadek zawiera kroki, opisy i wspólne odniesienia do kroków."
         },
         "repositoryCases": {
@@ -8764,7 +8764,7 @@
           "content": "Każda grupa zawiera zestaw uporządkowanych kroków. Odwołuj się do nich w dowolnym przypadku testowym, aby zachować spójność i spójność kroków."
         },
         "testRuns": {
-          "title": "Testy biegowe",
+          "title": "Przebiegi testowe",
           "content": "Twórz przebiegi testowe, aby wykonywać przypadki i rejestrować wyniki. Przypisuj przebiegi do kamieni milowych i śledź postępy w zakresie zaliczeń/niezaliczeń."
         },
         "testRunsPage": {
@@ -8788,7 +8788,7 @@
           "content": "Twórz, edytuj i przypisuj tagi. Używaj tagów do grupowania i filtrowania treści w całym projekcie."
         },
         "issues": {
-          "title": "Kwestie",
+          "title": "Problemy",
           "content": "Śledź błędy i defekty wykryte podczas testowania. Problemy można powiązać z wynikami nieudanych testów i ustaleniami sesji, aby zapewnić pełne śledzenie."
         },
         "issuesPage": {
@@ -8811,7 +8811,7 @@
     "pathPatterns": "## Wzorce ścieżek\nKażdy wiersz łączy bazową **ścieżkę** ze **wzorem** glob. Wiersze się sumują: plik jest uwzględniany, gdy pasuje do niego dowolny wiersz.\n\n- `src` + `**/*` — wszystko w `src`\n- puste lub `.` + `**/*` — każdy plik w repozytorium\n- `src` + `**/!(*.test|*.spec).ts` — pliki `.ts` z wyjątkiem testów\n\n### Wyklucz\nZaznacz **Wyklucz** w wierszu, aby usunąć jego pliki, nawet jeśli inny wiersz je uwzględnia. Wykluczenia dotyczą selektora plików i pamięci podręcznej, a w przypadku Impact — zmienionych plików analizy, więc plik, który zmienia się przy prawie każdym pull requeście, przestaje ściągać niepowiązane przypadki testowe. Co najmniej jeden wiersz musi pozostać niezaznaczony.\n\n- puste + `**/CHANGELOG*` — każdy changelog, na dowolnej głębokości\n- `app` + `build.gradle.kts` — plik kompilacji, który tylko podnosi wersję",
     "projectAutomation": "## Zautomatyzowane wykonanie\nCele wykonania informują TestPlanIt, gdzie wykonać zautomatyzowane przypadki testowe tego projektu: przepływ pracy GitHub Actions, potok GitLab CI lub podpisany webhook dla każdego innego systemu. Gdy przebieg jest wykonywany, TestPlanIt uruchamia zadanie z ID przebiegu i adresem URL planu; zadanie odczytuje plan, uruchamia pasujące testy i raportuje wyniki z powrotem za pomocą reportera lub CLI przypiętego do tego przebiegu. Cele mogą być wyłączone bez usuwania.",
     "userAlerts": "## Powiadomienia i alerty\n**Preferencje powiadomień** decydują o tym, jak się z Tobą skontaktować (w aplikacji, e-mail, kompilacja) i które typy powiadomień w ogóle otrzymujesz.\n\n**Alerty** monitorują metrykę testowania i powiadamiają ich subskrybentów, gdy przekroczy linię, na przykład wynik zajmujący 50% dłużej niż zwykły czas trwania przypadku, przypadek, który nie powiedzie się trzy razy z rzędu, przebieg, którego współczynnik przejścia spada poniżej 90%, lub kamień milowy, który pozostaje w tyle z biegiem dni. Lista pokazuje każdy alert w Twoich projektach; przełącznik **Powiadom mnie** obserwuje lub opuszcza jeden. **Dodaj alert** tworzy własny w dowolnym projekcie, w którym Twoja rola ma **Alerty** Dodaj/Edytuj; administratorzy projektu zarządzają każdym alertem w swoim projekcie i subskrypcjami innych osób. Alert uruchamia się co najwyżej raz na podmiot w jego okresie chłodzenia i pozostaje cichy, dopóki nie będzie wystarczająco dużo wyników.",
-    "projectTriage": "## Wzorce awarii\nAutomatyczne awarie, które współdzielą ten sam wyjątek, wiadomość i górne ramki stosu, są grupowane w jeden **wzorzec awarii**. Każdy wzorzec pokazuje, jak często się zdarzył, które przypadki testowe i uruchomienia go dotknęły, oraz ocenę sztucznej inteligencji dotyczącą jego przyczyny głównej (błąd produktu, błąd testu, środowisko lub słaby domyślnie). Rozwiąż lub zignoruj wzorzec po jego obsłużeniu; ponownie się otworzy, jeśli awaria powróci.",
+    "projectTriage": "## Wzorce awarii\nAutomatyczne awarie, które współdzielą ten sam wyjątek, wiadomość i górne ramki stosu, są grupowane w jeden **wzorzec awarii**. Każdy wzorzec pokazuje, jak często się zdarzył, które przypadki testowe i uruchomienia go dotknęły, oraz ocenę sztucznej inteligencji dotyczącą jego przyczyny głównej (błąd produktu, błąd testu, środowisko lub niestabilny domyślnie). Rozwiąż lub zignoruj wzorzec po jego obsłużeniu; ponownie się otworzy, jeśli awaria powróci.",
     "projectTriageSettings": "## Ustawienia Wzorców awarii\nGrupowanie uruchomień na każdym automatycznym wyniku, który nadchodzi i nic nie kosztuje. Sugestia przyczyny głównej sztucznej inteligencji używa modelu sztucznej inteligencji przypisanego do funkcji **Wzorce awarii: Przyczyna główna** na stronie Modele sztucznej inteligencji; wyłącz to tutaj, aby kontynuować grupowanie bez żadnych wywołań sztucznej inteligencji. **Analizuj istniejące wyniki** grupuje każdą automatyczną awarię już zarejestrowaną w tym projekcie.",
     "projectQuarantine": "## Kwarantanna przypadków testowych\nPrzypadek testowy w kwarantannie nadal działa i rejestruje wyniki, ale jego awarie są pozostawiane poza przebiegiem pass/fail i pokazywane jako oddzielna liczba. Umieść przypadek w kwarantannie ze wzorca awarii, podczas gdy przyczyna jest naprawiana. Kwarantanna zostaje podniesiona automatycznie po tym, jak przypadek przejdzie tyle razy z rzędu, ile ustawiono w ustawieniach Wzorców awarii, chyba że był oznaczony do ręcznego zwolnienia; zwolnij go tutaj lub ze wzorca w dowolnym momencie.",
     "rootCauses": "## Przyczyny główne\nPrzyczyny główne, które Wzorce awarii przypisuje do zgrupowanych awarii, przez sztuczną inteligencję lub ręcznie. Każda ma opis, który sztuczna inteligencja czyta, aby zdecydować, kiedy ma zastosowanie. Zmień nazwę, ponownie pokoloruj lub zmień kolejność, dodaj własne lub usuń te, których nie używasz; usunięcie jednej pozostawia jej wzorce bez przyczyny głównej.",
@@ -9008,7 +9008,7 @@
         }
       },
       "flakyTests": {
-        "consecutiveRuns": "Ostatnie kolejne biegi",
+        "consecutiveRuns": "Ostatnie kolejne przebiegi",
         "consecutiveRunsHelp": "Liczba ostatnio wykonanych testów do analizy (5–30). Wyniki ze statusem „nieprzetestowane” są pomijane.",
         "flipThreshold": "Minimalna liczba flipów",
         "flipThresholdHelp": "Minimalna liczba przejść zaliczonych/niezaliczonych, aby uznać test za niepewny.",
@@ -9091,13 +9091,13 @@
         }
       },
       "automationCandidates": {
-        "casesToRank": "Sprawy do uszeregowania",
+        "casesToRank": "Przypadki do uszeregowania",
         "casesToRankHelp": "Ile przypadków testowych manualnych przesłać do LLM w celu oceny? Wyższe liczby zapewniają szerszy zakres, ale LLM zajmuje proporcjonalnie więcej czasu (zakres: 5–100; modele myślowe mogą działać nawet kilka minut w górnym zakresie).",
         "selectionStrategy": "Strategia selekcji",
         "selectionStrategyHelp": "Która strategia decyduje, które ręczne przypadki wysłać, gdy projekt ma więcej niż limit na generację? **Najczęściej wykonywane** (domyślnie) wybiera przypadki, które były najczęściej uruchamiane w przebiegach testów — najlepszy zwrot z inwestycji dla automatyzacji. **Najbardziej niepewne najpierw** wybiera przypadki, których wyniki zaliczenia/niezaliczenia najczęściej się zmieniają — głównych kandydatów dla deterministycznej wyroczni automatyzacji. **Najdłuższe do wykonania** wybiera przypadki z najwyższą prognozą ręcznego wykonania (wywodzącą się od testera; powracającą do pierwotnego szacunku) — automatyzacja bezpośrednio odzyskuje najwięcej czasu testera. **Najstarsze najpierw** wybiera długotrwałe ręczne przypadki (stabilne, dojrzałe). **Najnowsze najpierw** wybiera ostatnio utworzone przypadki. **Losowe** to bezstronna próbka. Kwalifikują się tylko ręczne przypadki, których stan przepływu pracy to *W toku* lub *Zakończone*.",
         "strategies": {
           "most_executed": "Najczęściej wykonywane (najwyższy zwrot z inwestycji)",
-          "flakiest_first": "Najpierw najsłabsze (zdjęcia zaliczone/niezaliczone)",
+          "flakiest_first": "Najpierw najbardziej niestabilne (zdjęcia zaliczone/niezaliczone)",
           "longest_first": "Najdłuższy do wykonania (zaoszczędzony czas)",
           "oldest_first": "Najstarsze na pierwszym miejscu (sprawdzona stabilność)",
           "newest_first": "Najnowsze na początku (najnowsze)",
@@ -9118,20 +9118,20 @@
         },
         "heuristic": {
           "intro": "W tym projekcie nie skonfigurowano integracji LLM, dlatego ranking jest tworzony bezpośrednio na podstawie metryki strategii selekcji. Skonfiguruj integrację LLM (Administrator → Modele AI), aby umożliwić bogatsze rozumowanie, uwzględniające pola niestandardowe, kontekst powiązanego zagadnienia i treść przypadku, a także metrykę.",
-          "rankedSummary": "{ranked} z {totalEligible} kwalifikujących się spraw manualnych zostało uszeregowanych.",
+          "rankedSummary": "{ranked} z {totalEligible} kwalifikujących się przypadków manualnych zostało uszeregowanych.",
           "strategyExplanation": {
             "most_executed": "Przypadki są uporządkowane według liczby ręcznych wykonań (od najwyższych) — jest to wskaźnik częstotliwości regresji, w którym automatyzacja bezpośrednio odzyskuje najwięcej czasu testera.",
             "flakiest_first": "Przypadki są uporządkowane według przybliżonej niestabilności (stosunek zaliczonych/niezaliczonych testów) — niestabilne testy ręczne są najlepszymi kandydatami do deterministycznej wyroczni automatyzacji.",
             "longest_first": "Przypadki są sortowane według prognozy wykonania ręcznego (najdłuższe na początku; forecastManual, jeśli występuje, wraca do szacunku) — automatyzacja odzyskuje w tych przypadkach najwięcej czasu testerów.",
-            "oldest_first": "Sprawy są sortowane według daty utworzenia (najstarsze na początku) — długotrwałe sprawy ręczne to z reguły dojrzałe, stabilne zachowania, które można bezpiecznie zautomatyzować bez konieczności przeróbek.",
-            "newest_first": "Sprawy są uporządkowane według daty utworzenia (najnowsze na górze) — sprawy nowo utworzone najprawdopodobniej wymagają obecnie objęcia kontrolą wykonania.",
+            "oldest_first": "Przypadki są sortowane według daty utworzenia (najstarsze na początku) — długotrwałe przypadki ręczne to z reguły dojrzałe, stabilne zachowania, które można bezpiecznie zautomatyzować bez konieczności przeróbek.",
+            "newest_first": "Przypadki są uporządkowane według daty utworzenia (najnowsze na górze) — przypadki nowo utworzone najprawdopodobniej wymagają obecnie objęcia kontrolą wykonania.",
             "random": "Przypadki stanowią obiektywną losową próbkę kwalifikującego się zbioru."
           },
           "rationale": {
             "mostExecutedWithCount": "Wykonano {count, plural, =1 {1 raz} other {# razy}} ręcznie w przebiegu testów tego projektu — automatyzacja pozwala na bezpośrednie odzyskanie czasu testera przy każdym przyszłym przebiegu.",
             "mostExecutedNone": "Brak historii wykonań — heurystyka „Najczęściej wykonywane” nie otrzymała sygnału pozwalającego ocenić ten przypadek w porównaniu z innymi.",
             "flakiestWithScore": "Niestabilność {percent}% (wyniki zaliczenia/niezaliczenia zmieniają się co {description} wykonań) — niestabilne testy ręczne marnują czas testerów przy każdym uruchomieniu i najwięcej zyskują na deterministycznej wyroczni automatyzacji.",
-            "flakiestNone": "Jak dotąd nie uzyskano zróżnicowanych wyników — heurystyka „najpierw najsłabszy” nie jest jeszcze w stanie zmierzyć współczynnika zaliczony/niezaliczony w tym przypadku.",
+            "flakiestNone": "Jak dotąd nie uzyskano zróżnicowanych wyników — heurystyka „najpierw najbardziej niestabilne” nie jest jeszcze w stanie zmierzyć współczynnika zaliczony/niezaliczony w tym przypadku.",
             "longestWithDuration": "Prognoza wykonania ręcznego {duration} — automatyzacja długotrwałych testów ręcznych pozwala proporcjonalnie zaoszczędzić więcej czasu testerów przy każdym uruchomieniu.",
             "longestNone": "Nie ustawiono prognozy ani szacunku — heurystyka „Najdłuższy do wykonania” nie dysponuje danymi dotyczącymi czasu trwania w tym przypadku.",
             "oldest": "Autor: {age} — długotrwałe przypadki ręczne to z reguły dojrzałe, stabilne zachowania, które można bezpiecznie zautomatyzować bez konieczności przerabiania.",
@@ -9197,9 +9197,9 @@
       },
       "issueTestCoverage": {
         "viewMode": "Tryb widoku",
-        "summaryView": "Podsumowanie (według wydania)",
+        "summaryView": "Podsumowanie (według problemu)",
         "detailView": "Szczegóły (według przypadku testowego)",
-        "issue": "Wydanie",
+        "issue": "Problem",
         "testCase": "Przypadek testowy",
         "testCases": "{count, plural, =1 {Przypadek testowy} other {Przypadki testowe}}",
         "linkedTests": "Powiązane testy",
@@ -9210,15 +9210,15 @@
         "lastExecuted": "Ostatnio wykonane",
         "notTested": "Nie testowano",
         "noData": "Nie znaleziono problemów z powiązanymi przypadkami testowymi",
-        "noIssuesNeedingAttention": "Wszystkie wydania przeszły testy pozytywne - świetna robota!",
+        "noIssuesNeedingAttention": "Wszystkie problemy przeszły testy pozytywne - świetna robota!",
         "stats": {
-          "totalIssues": "Łączna liczba wydań",
+          "totalIssues": "Łączna liczba problemów",
           "issuesWithFailures": "Z porażkami",
           "issuesWithFailuresTooltip": "Problemy z co najmniej jednym nieudanym przypadkiem testowym",
           "issuesWithUntested": "Z nieprzetestowanym",
           "issuesWithUntestedTooltip": "Problemy z co najmniej jednym przypadkiem testowym, który nie został wykonany",
           "issuesAllPassing": "Wszystkie podania",
-          "numberOfIssues": "Liczba wydań"
+          "numberOfIssues": "Liczba problemów"
         },
         "charts": {
           "passRateDistribution": "Dystrybucja wskaźnika zdawalności testu",
@@ -9421,7 +9421,7 @@
         "coverageGaps": "Zmienione bez pinów",
         "coveragePinned": "Z pinami",
         "kindBreakdown": "{file, number} cały plik · {range, number} linie · {symbol, number} symbol · {glob, number} glob",
-        "sourceBreakdown": "{manual, number} ręczne · {ai, number} AI · {annotation, number} adnotacja · {mapfile, number} plik mapy · {issue, number} bilet",
+        "sourceBreakdown": "{manual, number} ręczne · {ai, number} AI · {annotation, number} adnotacja · {mapfile, number} plik mapy · {issue, number} zgłoszenie",
         "stats": {
           "casesWithPinsTooltip": "Przypadki testowe z co najmniej jednym Code Pin, jako udział przypadków projektu.",
           "gapDirectories": "Katalogi zmienione bez pinów",
@@ -9532,7 +9532,7 @@
       "automationStatus": "Status automatyzacji",
       "issueType": "Typ problemu",
       "issueTracker": "Śledzenie problemów",
-      "issueStatus": "Status wydania",
+      "issueStatus": "Status problemu",
       "issue": "Problem",
       "resultSource": "Źródło wyniku",
       "rootCause": "Przyczyna źródłowa",
@@ -9559,7 +9559,7 @@
       "testRunCount": "Liczba przebiegów testowych",
       "testCaseCount": "Liczba przypadków testowych",
       "automationRate": "Współczynnik automatyzacji (%)",
-      "avgStepsPerCase": "Średnia liczba kroków na sprawę",
+      "avgStepsPerCase": "Średnia liczba kroków na przypadek",
       "averageSteps": "Średnia liczba kroków na przypadek",
       "automatedCount": "Zautomatyzowane przypadki",
       "manualCount": "Przypadki ręczne",
@@ -9572,7 +9572,7 @@
       "sessionParticipation": "Udział w sesji",
       "averageElapsed": "Średni czas wykonania",
       "lastActiveDate": "Data ostatniej aktywności",
-      "issueCount": "Liczba wydań",
+      "issueCount": "Liczba problemów",
       "linkedCaseCount": "Powiązane przypadki",
       "firstCaseCreated": "Pierwszy przypadek utworzony",
       "lastCaseCreated": "Ostatni przypadek utworzony",
@@ -9930,7 +9930,7 @@
       "pageTitle": "Duplikaty sekwencji kroków",
       "noResultsFound": "Nie znaleziono duplikatów sekwencji kroków",
       "noResultsDescription": "Uruchom skanowanie w celu wykrycia powtarzających się sekwencji kroków w przypadkach testowych.",
-      "filterPlaceholder": "Filtruj według nazwy sprawy...",
+      "filterPlaceholder": "Filtruj według nazwy przypadku...",
       "minCasesLabel": "Min. przypadków",
       "minStepsLabel": "Min. kroków",
       "minThresholdOption": "{count, number}+",
@@ -9943,7 +9943,7 @@
       "matchedStepsCount": "{count, plural, one {# dopasowany krok} few {# dopasowane kroki} many {# dopasowanych kroków} other {# dopasowanego kroku}}",
       "columns": {
         "matchedSteps": "Dopasowane kroki",
-        "casesCount": "Sprawy",
+        "casesCount": "Przypadki",
         "review": "Recenzja"
       },
       "scanning": "Łów...",
@@ -10013,7 +10013,7 @@
     "currentProjectOnly": "Tylko bieżący projekt",
     "allTypes": "Wszystkie typy",
     "entityTypes": {
-      "repositoryCase": "Sprawy repozytorium"
+      "repositoryCase": "Przypadki repozytorium"
     },
     "results": {
       "tryAdjusting": "Spróbuj dostosować warunki wyszukiwania lub filtry",
@@ -10458,7 +10458,7 @@
     "iterationAllComplete": "Wszystkie iteracje ukończone",
     "hardRefuseTitle": "Nie można utworzyć — zbyt wiele iteracji",
     "hardRefuseDescription": "Liczba iteracji tworzenia testów jest ograniczona do {cap} , aby system reagował na zmiany. Zmniejsz liczbę współautorów poniżej.",
-    "hardRefuseColumnCase": "Sprawa",
+    "hardRefuseColumnCase": "Przypadek",
     "hardRefuseColumnRows": "Wiersze zestawu danych",
     "hardRefuseColumnConfigs": "Konfiguracje",
     "hardRefuseSuggestionsHeading": "Sugerowane działania",
@@ -10472,7 +10472,7 @@
     "runProgressDismissAria": "Odrzuć postęp",
     "runProgressComplete": "Wygenerowano {total, plural, =1 {# iterację} many {# iteracji} other {# iteracje}} dla \"{runName}\"",
     "runProgressFailedToast": "Nie udało się wygenerować iteracji dla „{runName}”. {reason}",
-    "runProgressNavAway": "Pokaż mi resztę biegu",
+    "runProgressNavAway": "Pokaż mi resztę przebiegu",
     "runGeneratingHeading": "Generowanie iteracji…",
     "runGeneratingHelper": "Może to potrwać kilka minut.",
     "iterationsHeaderCount": "{complete}/{total}",
@@ -10830,8 +10830,8 @@
     },
     "scopeType": {
       "PROJECT": "Całość projektu",
-      "FOLDER": "Sprawy w folderze",
-      "TAG": "Sprawy ze znacznikiem",
+      "FOLDER": "Przypadki w folderze",
+      "TAG": "Przypadki ze znacznikiem",
       "CASE": "Jeden przypadek testowy",
       "RUN_NAME": "Przebiegi, których nazwa zawiera",
       "MILESTONE": "Jeden kamień milowy",
@@ -10894,7 +10894,7 @@
     },
     "subjectType": {
       "CASE": "Przypadek testowy",
-      "RUN": "Przebieg próbny",
+      "RUN": "Przebieg testowy",
       "MILESTONE": "Kamień milowy",
       "SESSION": "Sesja",
       "PROJECT": "Projekt",
@@ -10903,27 +10903,27 @@
     "metrics": {
       "RESULT_DURATION_DEVIATION": {
         "label": "Czas trwania wyniku odbiega od linii bazowej",
-        "description": "Wynik trwa znacznie dłużej lub krócej niż ostatnie wyniki sprawy. Wyniki bez czasu, który upłynął, są ignorowane.",
-        "summary": "Czas trwania wyniku jest większy niż {threshold}% {direction, select, ABOVE {powyżej} BELOW {poniżej} other {powyżej lub poniżej}} {baseline, select, MEAN {średnia} other {mediana}} z ostatnich {window} wyników sprawy, po co najmniej {minSamples} wynikach"
+        "description": "Wynik trwa znacznie dłużej lub krócej niż ostatnie wyniki przypadku. Wyniki bez czasu, który upłynął, są ignorowane.",
+        "summary": "Czas trwania wyniku jest większy niż {threshold}% {direction, select, ABOVE {powyżej} BELOW {poniżej} other {powyżej lub poniżej}} {baseline, select, MEAN {średnia} other {mediana}} z ostatnich {window} wyników przypadku, po co najmniej {minSamples} wynikach"
       },
       "CASE_REGRESSED": {
-        "label": "Sprawa się pogorszyła",
-        "description": "Sprawa, która przeszła swoje ostatnie wyniki, teraz się nie powiedzie. Chwyta świeże niepowodzenie na stabilnej sprawie.",
-        "summary": "Sprawa nie powiedzie się po przejściu swoich ostatnich {window} wyników"
+        "label": "Przypadek się pogorszył",
+        "description": "Przypadek, który przeszedł swoje ostatnie wyniki, teraz się nie powiedzie. Chwyta świeże niepowodzenie na stabilnym przypadku.",
+        "summary": "Przypadek nie powiedzie się po przejściu swoich ostatnich {window} wyników"
       },
       "CASE_RECOVERED": {
-        "label": "Sprawa się wyzdrowiała",
-        "description": "Sprawa przechodzi po tym, jak każdy z ostatnich wyników nie powiedzie się.",
+        "label": "Przypadek się wyzdrowiał",
+        "description": "Przypadek przechodzi po tym, jak każdy z ostatnich wyników nie powiedzie się.",
         "summary": "Przypadek przechodzi po {window, plural, one {# ostatnim nieudanym wyniku} other {# ostatnich nieudanych wynikach}}"
       },
       "CONSECUTIVE_FAILURES": {
         "label": "Kolejne niepowodzenia",
-        "description": "Sprawa nie powiedzie się daną ilość razy z rzędu.",
+        "description": "Przypadek nie powiedzie się daną ilość razy z rzędu.",
         "summary": "Przypadek nie powiedzie się {threshold, plural, one {# raz} few {# razy} many {# razy} other {# raz}} z rzędu"
       },
       "CASE_FLAKY": {
-        "label": "Sprawa stała się niestabilna",
-        "description": "Sprawa przełącza się między przejściem a niepowodzeniem wielokrotnie w ramach swoich ostatnich wyników. Używa tych samych danych wejściowych co raport Testy niestabilne.",
+        "label": "Przypadek stał się niestabilny",
+        "description": "Przypadek przełącza się między przejściem a niepowodzeniem wielokrotnie w ramach swoich ostatnich wyników. Używa tych samych danych wejściowych co raport Testy niestabilne.",
         "summary": "Przypadek przełącza się między przejściem a niepowodzeniem co najmniej {threshold, plural, one {# raz} few {# razy} many {# razy} other {# raz}} w ostatnich {window} wynikach"
       },
       "RUN_PASS_RATE_BELOW": {
@@ -10973,7 +10973,7 @@
       },
       "MILESTONE_BEHIND": {
         "label": "Ukończenie kamienia milowego w tyle",
-        "description": "Sprawy kamienia milowego nie są wystarczająco ukończone z kilkoma dniami do terminu. Sprawdzane codziennie.",
+        "description": "Przypadki kamienia milowego nie są wystarczająco ukończone z kilkoma dniami do terminu. Sprawdzane codziennie.",
         "summary": "Kamień milowy jest ukończony poniżej {threshold}% z {days, plural, one {# dniem} few {# dniami} many {# dniami} other {# dniem}} lub mniej pozostałym"
       },
       "MILESTONE_OVERDUE": {
@@ -10987,14 +10987,14 @@
         "summary": "Mniej niż {threshold}% wymagań {basis, select, PASSING {mają przechodzący ostatni wynik} other {są powiązane z co najmniej jednym przypadkiem testowym}}"
       },
       "STALE_CASES": {
-        "label": "Stare sprawy",
-        "description": "Więcej niż dana liczba spraw nie miała wyniku przez określoną liczbę dni. Sprawdzane codziennie.",
+        "label": "Stare przypadki",
+        "description": "Więcej niż dana liczba przypadków nie miała wyniku przez określoną liczbę dni. Sprawdzane codziennie.",
         "summary": "Więcej niż {threshold, plural, one {# przypadek nie miał} few {# przypadki nie miały} many {# przypadków nie miało} other {# przypadków nie miało}} żadnego wyniku w {days, plural, one {# dzień} few {# dni} many {# dni} other {# dzień}}"
       },
       "AUTOMATION_SHARE_BELOW": {
         "label": "Udział automatyzacji poniżej progu",
-        "description": "Mniej niż dana część spraw w zakresie jest zautomatyzowana. Sprawdzane codziennie.",
-        "summary": "Mniej niż {threshold}% spraw jest zautomatyzowanych"
+        "description": "Mniej niż dana część przypadków w zakresie jest zautomatyzowana. Sprawdzane codziennie.",
+        "summary": "Mniej niż {threshold}% przypadków jest zautomatyzowanych"
       },
       "WEBHOOK_FAILURE_RATE": {
         "label": "Współczynnik niepowodzenia webhooka",
@@ -11109,7 +11109,7 @@
     },
     "filters": {
       "searchPlaceholder": "Wyszukaj wzorce awarii...",
-      "flakyOnly": "Kandydaci na zmienność",
+      "flakyOnly": "Potencjalnie niestabilne",
       "sourceAll": "Ustawione przez kogokolwiek",
       "sourceAi": "Ustawione przez sztuczną inteligencję",
       "sourceManual": "Ustawione ręcznie",
@@ -11140,7 +11140,7 @@
       "signatureLabel": "Wzorzec awarii",
       "affectedCasesLabel": "Dotknięte przypadki testowe"
     },
-    "flakyCandidate": "Kandydat na zmienność",
+    "flakyCandidate": "Potencjalnie niestabilny",
     "flakyCandidateHint": "Dotknięte przypadki testowe przechodzą między pozytywnym i negatywnym wynikiem w ich niedawnej historii.",
     "knownIssue": "Znany problem",
     "notGrouped": "{count, plural, one {# awaria nie jest jeszcze pogrupowana} few {# awarie nie są jeszcze pogrupowane} many {# awarii nie jest jeszcze pogrupowanych} other {# awarii nie jest jeszcze pogrupowanych}}",

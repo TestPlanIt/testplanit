@@ -11,7 +11,7 @@
       "restoreAction": "Restaurer ({count})",
       "editTitle": "Modification en masse ({count})",
       "applyToCount": "Les modifications s'appliquent à {count, plural, one {# élément} other {# éléments}}.",
-      "tagsAdditiveHint": "Les balises sélectionnées sont ajoutées à chaque élément ; les balises existantes sont conservées.",
+      "tagsAdditiveHint": "Les étiquettes sélectionnées sont ajoutées à chaque élément ; les étiquettes existantes sont conservées.",
       "completeSuccess": "{count, plural, one {# élément terminé} other {# éléments terminés}}",
       "deleteSuccess": "{count, plural, one {# élément supprimé} other {# éléments supprimés}}",
       "partialFailure": "{failedCount} élément(s) sur {totalCount} n'ont pas pu être mis à jour"
@@ -32,7 +32,7 @@
     "searchTags": "Rechercher des étiquettes...",
     "searchRuns": "{count, plural, =0 {Rechercher les exécutions de test} one {Rechercher # exécution de test} other {Rechercher # exécutions de test}}",
     "searchSessions": "{count, plural, =0 {Recherche de sessions} one {Rechercher # session} other {Rechercher # sessions}}",
-    "searchMilestones": "{count, plural, =0 {Rechercher des étapes} one {Rechercher # étape} other {Rechercher # étapes}}",
+    "searchMilestones": "{count, plural, =0 {Rechercher des jalons} one {Rechercher # jalon} other {Rechercher # jalons}}",
     "search": "Recherche...",
     "defaultOption": "Option par défaut",
     "yes": "Oui",
@@ -120,7 +120,7 @@
       "collapseLeftPanel": "Réduire le panneau de gauche",
       "expandRightPanel": "Développer le panneau de droite",
       "collapseRightPanel": "Réduire le panneau de droite",
-      "createTag": "Créer une balise \"{name}\"",
+      "createTag": "Créer une étiquette \"{name}\"",
       "noTagsFound": "Aucune étiquette trouvée",
       "duplicate": "Double",
       "exportPdf": "Exporter le PDF",
@@ -144,7 +144,7 @@
           "description": "Importez les fichiers de résultats de test dans une nouvelle exécution. Formats pris en charge : JUnit, TestNG, xUnit, NUnit, MSTest, Mocha et Cucumber.",
           "testRun": {
             "label": "Essai",
-            "placeholder": "Sélectionnez un test d'exécution"
+            "placeholder": "Sélectionnez une exécution de test"
           },
           "file": {
             "label": "Fichiers de résultats de test"
@@ -294,7 +294,7 @@
       "token": "Jeton",
       "access": "Accéder",
       "avatar": "Avatar",
-      "steps": "Mesures",
+      "steps": "Étapes",
       "step": "Étape",
       "expectedResult": "Résultat attendu",
       "notes": "Notes",
@@ -338,8 +338,8 @@
       "configurationDetails": "Détails de configuration",
       "isActive": "Actif",
       "members": "Membres",
-      "milestoneTypes": "Types d'étapes clés",
-      "milestones": "Étapes clés",
+      "milestoneTypes": "Types de jalons",
+      "milestones": "Jalons",
       "createdAt": "Créé à",
       "stagedAt": "Mis en scène le",
       "completedOn": "Terminé le",
@@ -436,7 +436,7 @@
           "systemNameError": "Le nom du système est invalide.",
           "initialHeightMax": "La hauteur initiale ne peut pas dépasser 600px.",
           "displayNameRequiredResult": "Saisissez un nom d'affichage pour le champ Résultat.",
-          "displayNameRequiredCase": "Saisissez un nom d'affichage pour le champ « Dossier ».",
+          "displayNameRequiredCase": "Saisissez un nom d'affichage pour le champ « Cas ».",
           "minValueMaxValue": "La valeur minimale doit être inférieure à la valeur maximale, et les deux doivent être définies si l'une d'elles l'est déjà.",
           "minMaxValueInteger": "La valeur entière minimale doit être inférieure à la valeur entière maximale, et les deux doivent être définies si l'une d'elles l'est déjà.",
           "systemNameRequired": "Le nom du système ne peut pas être vide.",
@@ -567,7 +567,7 @@
       "email": "Adresse email",
       "name": "Entrez le nom",
       "mission": "Décrivez votre mission...",
-      "selectMilestone": "Sélectionner l'étape importante",
+      "selectMilestone": "Sélectionner le jalon",
       "selectStatus": "Sélectionnez un statut",
       "selectTemplate": "Sélectionner un modèle",
       "duration": "par exemple 1h 30m ou 90m",
@@ -576,8 +576,8 @@
       "selectConfiguration": "Sélectionnez la configuration",
       "selectConfigurations": "Sélectionner les configurations",
       "selectFolders": "Sélectionner des dossiers",
-      "selectIssues": "Sélectionner des numéros",
-      "selectMilestones": "Sélectionner des étapes importantes",
+      "selectIssues": "Sélectionner des problèmes",
+      "selectMilestones": "Sélectionner des jalons",
       "selectProjects": "Sélectionner des projets",
       "selectStates": "Sélectionner des états",
       "selectTags": "Sélectionner des étiquettes",
@@ -599,12 +599,12 @@
       "filterByValue": "Filtrer par valeur...",
       "selectOperator": "Sélectionner l'opérateur",
       "searchIcons": "Icônes de recherche...",
-      "stepCount": "Nombre de pas",
+      "stepCount": "Nombre d'étapes",
       "enterText": "Saisissez du texte...",
       "enterUrl": "Saisissez l'URL",
       "enterUrlPattern": "Saisir un modèle d'URL...",
       "domainExample": "exemple.com",
-      "issueIdExample": "NUMÉRO 123",
+      "issueIdExample": "PROBLÈME 123",
       "selectPriorityValuesOrEmpty": "Sélectionnez les valeurs de priorité (ou laissez vide pour tout)"
     },
     "errors": {
@@ -663,7 +663,7 @@
       "projectCreationFailed": "La création du projet a échoué, aucun identifiant n'a été renvoyé.",
       "invalidRoleId": "ID de rôle invalide",
       "workflowStateExists": "L'état du flux de travail existe déjà. Veuillez choisir un nouveau nom.",
-      "failedToLoadCaseData": "Impossible de charger les données du dossier. Impossible d'enregistrer.",
+      "failedToLoadCaseData": "Impossible de charger les données du cas. Impossible d'enregistrer.",
       "atLeastOneTagRequired": "Au moins une étiquette est requise",
       "atLeastOneIssueRequired": "Au moins un problème est requis",
       "atLeastOneOptionRequired": "Au moins une option doit être sélectionnée.",
@@ -689,11 +689,11 @@
       "caseStateInvalid": "Veuillez sélectionner un État valide",
       "caseTemplateRequired": "Veuillez sélectionner un modèle",
       "invalidContent": "Contenu invalide",
-      "milestoneNameRequired": "Veuillez saisir un nom pour l'étape importante.",
-      "milestoneTypeRequired": "Veuillez sélectionner un type d'étape importante",
+      "milestoneNameRequired": "Veuillez saisir un nom pour le jalon.",
+      "milestoneTypeRequired": "Veuillez sélectionner un type de jalon",
       "testRunNameMinLength": "Le nom doit comporter au moins 2 caractères.",
       "stateRequiredDot": "L'État est requis.",
-      "milestoneTypeNameMinLength": "Le nom du type d'étape doit comporter au moins 2 caractères.",
+      "milestoneTypeNameMinLength": "Le nom du type de jalon doit comporter au moins 2 caractères.",
       "projectNameRequired": "Le nom du projet est requis.",
       "workflowScopeRequired": "Veuillez choisir un flux de travail pour l'État",
       "workflowTypeRequired": "Veuillez sélectionner un type de flux de travail",
@@ -701,7 +701,7 @@
       "repositoryDeleted": "Dépôt supprimé",
       "failedToDeleteRepository": "Échec de la suppression du dépôt",
       "permissionDenied": "Vous n'êtes pas autorisé à accéder à cette page.",
-      "resultSubmitPermissionDenied": "Vous ne pouvez pas soumettre de résultats pour ce dossier. Veuillez demander à un administrateur de projet de vous l'attribuer.",
+      "resultSubmitPermissionDenied": "Vous ne pouvez pas soumettre de résultats pour ce cas. Veuillez demander à un administrateur de projet de vous l'attribuer.",
       "dependenciesNotPassed": "Bloqué par des dépendances",
       "dependenciesNotPassedDescription": "Ce cas de test ne peut pas être exécuté jusqu'à ce que {count, plural, =0 {les cas dont il dépend aient} =1 {le cas dont il dépend ait} other {les # cas dont il dépend aient}} réussi dans cette exécution.",
       "justificationRequired": "Justification requise",
@@ -872,7 +872,7 @@
     "empty": {
       "description": "Aucune description",
       "documentation": "Aucune documentation",
-      "childMilestones": "Pas d'étapes importantes pour l'enfant",
+      "childMilestones": "Aucun jalon enfant",
       "sessions": "Aucune séance",
       "activeSessions": "Aucune session active",
       "completedSessions": "Aucune séance terminée",
@@ -1384,8 +1384,8 @@
     },
     "overview": {
       "title": "Aperçu",
-      "currentMilestones": "Étapes clés actuelles",
-      "seeAllMilestones": "{count, plural, =1 {Voir # étape} =2 {Voir les 2 étapes} other {Voir toutes les # étapes}}",
+      "currentMilestones": "Jalons actuels",
+      "seeAllMilestones": "{count, plural, =1 {Voir # jalon} =2 {Voir les 2 jalons} other {Voir tous les # jalons}}",
       "seeAllTestCases": "{count, plural, =1 {Voir # cas de test} =2 {Voir les 2 cas de test} other {Voir tous les # cas de test}}",
       "latestTestCases": "Derniers cas de test",
       "createdOn": "Créé le",
@@ -1435,7 +1435,7 @@
         "availableIntegrations": "Intégrations de problèmes disponibles",
         "availableDescription": "Sélectionnez une intégration de problèmes pour vous connecter à ce projet.",
         "configuredIntegration": "Intégration configurée",
-        "noIntegrationAssigned": "Aucune intégration problématique assignée",
+        "noIntegrationAssigned": "Aucune intégration de problèmes assignée",
         "noIntegrationDescription": "Sélectionnez une intégration de problème parmi les options disponibles pour commencer",
         "selectIntegration": "Sélectionnez une intégration de problème à configurer",
         "integration": {
@@ -1518,16 +1518,16 @@
           "importFailed": "L'importation a échoué",
           "importPreviewFailed": "Impossible d'estimer les correspondances",
           "milestoneSync": {
-            "title": "Synchronisation des étapes",
-            "description": "Synchronisez les étapes TestPlanIt à partir des artefacts temporels de cet outil de suivi.",
-            "enableLabel": "Activer la synchronisation des étapes",
+            "title": "Synchronisation des jalons",
+            "description": "Synchronisez les jalons TestPlanIt à partir des artefacts temporels de cet outil de suivi.",
+            "enableLabel": "Activer la synchronisation des jalons",
             "releasesLabel": "Versions",
             "sprintsLabel": "Sprints",
             "kindsLabel": "Types à synchroniser",
             "autoTrackLabel": "Ajouter automatiquement les nouveaux",
-            "autoTrackProjectsLabel": "Analyser ces projets connectés pour détecter de nouvelles étapes",
-            "settingsSaved": "Paramètres de synchronisation des étapes enregistrés",
-            "saveError": "Impossible d'enregistrer les paramètres de synchronisation des étapes"
+            "autoTrackProjectsLabel": "Analyser ces projets connectés pour détecter de nouveaux jalons",
+            "settingsSaved": "Paramètres de synchronisation des jalons enregistrés",
+            "saveError": "Impossible d'enregistrer les paramètres de synchronisation des jalons"
           },
           "requirementsConfig": {
             "title": "Synchronisation des exigences",
@@ -1697,8 +1697,8 @@
           "issueUpdated": "Problème mis à jour",
           "issueDeleted": "Problème supprimé",
           "caseCreated": "Cas créé",
-          "caseUpdated": "Dossier mis à jour",
-          "caseDeleted": "Affaire supprimée",
+          "caseUpdated": "Cas mis à jour",
+          "caseDeleted": "Cas supprimé",
           "jiraIssueCreated": "Problème Jira créé",
           "jiraIssueUpdated": "Problème Jira mis à jour",
           "jiraIssueDeleted": "Problème Jira supprimé",
@@ -1783,7 +1783,7 @@
         "setupStepsAdoStep5": "Enregistrez l'abonnement. Utilisez la fonction « Envoyer un webhook de test » ci-dessous pour vérifier le pipeline.",
         "setupStepsGitlabStep1": "Dans GitLab, accédez à votre projet → Paramètres → Webhooks.",
         "setupStepsGitlabStep2": "Collez l'URL ci-dessous dans le champ URL. Collez le code secret ci-dessous dans le champ Jeton secret.",
-        "setupStepsGitlabStep3": "Sous Déclencheur, cochez « Événements liés aux émissions ».",
+        "setupStepsGitlabStep3": "Sous Déclencheur, cochez « Événements liés aux problèmes ».",
         "setupStepsGitlabStep4": "Cliquez sur « Ajouter un webhook ». Utilisez l’option « Envoyer un webhook de test » ci-dessous pour vérifier le pipeline.",
         "setupStepsGiteaStep1": "Dans Gitea, accédez à votre dépôt → Paramètres → Webhooks.",
         "setupStepsGiteaStep2": "Cliquez sur « Ajouter un webhook » et choisissez « Gitea ».",
@@ -2263,7 +2263,7 @@
           "label": "Exclure les cas provisoires des tests.",
           "description": "Lorsque cette option est activée, les cas de test dont le workflow est à l'état « Non démarré » sont masqués dans le sélecteur « Ajouter des cas » et ne peuvent pas être ajoutés à une exécution. Si un cas existant repasse à l'état « Non démarré » (par exemple, suite à un rejet lors de la révision et de l'approbation), il sera supprimé de toute exécution en cours, sauf s'il possède déjà un résultat enregistré ; dans ce cas, il restera dans l'exécution, mais en lecture seule.",
           "enabledToast": "Les cas provisoires seront exclus des essais",
-          "disabledToast": "Il est désormais possible d'ajouter des brouillons de dossiers aux séries.",
+          "disabledToast": "Il est désormais possible d'ajouter des brouillons de cas aux séries.",
           "saveError": "Échec de la mise à jour du paramètre d'exclusion des brouillons",
           "skippedToast": "{count, plural, =1 {1 brouillon a été ignoré car il est à l'état « Non démarré »} other {# brouillons ont été ignorés car ils sont à l'état « Non démarré »}}"
         },
@@ -2520,12 +2520,12 @@
     }
   },
   "milestones": {
-    "title": "Détails des étapes importantes",
+    "title": "Détails des jalons",
     "auditLog": {
-      "description": "Toutes les modifications enregistrées pour cette étape."
+      "description": "Toutes les modifications enregistrées pour ce jalon."
     },
     "fields": {
-      "parent": "Étape importante pour les parents",
+      "parent": "Jalon parent",
       "dueDate": "Date d'échéance",
       "automaticCompletion": "Saisie automatique à la date d'échéance",
       "notifyDaysBefore": "Prévenez quelques jours avant la date d'échéance",
@@ -2533,21 +2533,21 @@
       "dueDateNotifications": "notifications de date d'échéance"
     },
     "labels": {
-      "childMilestones": "Étapes importantes de l'enfance"
+      "childMilestones": "Jalons enfants"
     },
     "placeholders": {
-      "description": "Saisissez la description de l'étape clé...",
-      "documentation": "Saisir la documentation relative aux étapes clés...",
-      "selectType": "Sélectionnez le type d'étape...",
-      "selectParent": "Sélectionnez l'étape parente..."
+      "description": "Saisissez la description du jalon...",
+      "documentation": "Saisir la documentation relative aux jalons...",
+      "selectType": "Sélectionnez le type de jalon...",
+      "selectParent": "Sélectionnez le jalon parent..."
     },
     "noTypes": {
-      "title": "Aucun type d'étape disponible",
-      "description": "Ce projet n'a aucun type d'étape assigné. Demandez à un administrateur d'assigner un type d'étape au projet ou de définir un type d'étape par défaut."
+      "title": "Aucun type de jalon disponible",
+      "description": "Ce projet n'a aucun type de jalon assigné. Demandez à un administrateur d'assigner un type de jalon au projet ou de définir un type de jalon par défaut."
     },
     "empty": {
       "active": "Aucun jalon actif",
-      "completed": "Aucune étape franchie",
+      "completed": "Aucun jalon franchi",
       "description": "Aucune description fournie",
       "documentation": "Aucune documentation fournie",
       "testRuns": "Aucun essai.",
@@ -2560,7 +2560,7 @@
       "labelSessions": "Filtrer les sessions"
     },
     "browser": {
-      "kindAll": "Toutes les étapes",
+      "kindAll": "Tous les jalons",
       "kindReleases": "Versions synchronisées",
       "kindSprints": "Sprints synchronisés"
     },
@@ -2585,44 +2585,44 @@
       "pickStartDate": "Choisir une date de début",
       "pickCompletionDate": "Choisir la date d'achèvement",
       "selectDate": "Sélectionnez une date...",
-      "completionWarning": "Avertissement : Ceci marquera l'étape comme étant terminée."
+      "completionWarning": "Avertissement : Ceci marquera le jalon comme étant terminé."
     },
     "toast": {
-      "deleted": "Étape {name} supprimée",
-      "updated": "Étape importante mise à jour",
+      "deleted": "Jalon {name} supprimé",
+      "updated": "Jalon mis à jour",
       "updatedWithName": "{name} mis à jour",
-      "updateFailed": "Échec de la mise à jour de l'étape clé",
-      "completed": "Étape importante «{name}» terminée.",
+      "updateFailed": "Échec de la mise à jour du jalon",
+      "completed": "Jalon «{name}» terminé.",
       "completedWithDependencies": "{name} et les dépendances ont été exécutées avec succès."
     },
     "errors": {
       "nameExists": "Un jalon portant ce nom existe déjà.",
-      "nameRequired": "Le nom de l'étape est requis.",
-      "notFound": "Étape introuvable"
+      "nameRequired": "Le nom du jalon est requis.",
+      "notFound": "Jalon introuvable"
     },
     "actions": {
-      "add": "Ajouter une étape importante"
+      "add": "Ajouter un jalon"
     },
     "delete": {
-      "title": "Supprimer l'étape importante",
-      "confirmMessage": "Êtes-vous sûr de vouloir supprimer l'étape {name}?",
+      "title": "Supprimer le jalon",
+      "confirmMessage": "Êtes-vous sûr de vouloir supprimer le jalon {name}?",
       "childrenWarning": "{count, plural, one {Son # jalon enfant sera également supprimé.} other {Ses # jalons enfants et descendants seront également supprimés.}}",
-      "warning": "Cette étape sera supprimée du projet. Les données historiques relatives à cette étape resteront toutefois disponibles dans le projet.",
+      "warning": "Ce jalon sera supprimé du projet. Les données historiques relatives à ce jalon resteront toutefois disponibles dans le projet.",
       "toast": {
-        "loading": "Suppression de l'étape importante...",
-        "success": "Étape supprimée avec succès",
+        "loading": "Suppression du jalon...",
+        "success": "Jalon supprimé avec succès",
         "error": {
-          "title": "Échec de la suppression de l'étape clé",
-          "description": "Une erreur s'est produite lors de la suppression de l'étape importante."
+          "title": "Échec de la suppression du jalon",
+          "description": "Une erreur s'est produite lors de la suppression du jalon."
         }
       }
     },
     "completeDialog": {
-      "confirmTitle": "Confirmer l'achèvement de l'étape",
-      "confirmDescription": "La réalisation de cette étape permettra également de finaliser les éléments connexes suivants :",
+      "confirmTitle": "Confirmer l'achèvement du jalon",
+      "confirmDescription": "La réalisation de ce jalon permettra également de finaliser les éléments connexes suivants :",
       "impactActiveTestRuns": "{count, plural, one {# exécution de test active} other {# exécutions de test actives}}",
       "impactActiveSessions": "{count, plural, one {# session active} other {# sessions actives}}",
-      "impactDescendantMilestones": "{count, plural, one {# étape descendante} other {# étapes descendantes}}",
+      "impactDescendantMilestones": "{count, plural, one {# jalon descendant} other {# jalons descendants}}",
       "completeTestRunsLabel": "Terminer les exécutions de test associées ({count, plural, one {# active} other {# actives}})",
       "completeSessionsLabel": "Terminer les sessions associées ({count, plural, one {# active} other {# actives}})",
       "testRunStateLabel": "État d'achèvement de l'exécution des tests",
@@ -2632,8 +2632,8 @@
       "confirmAndCompleteAll": "Confirmer et compléter tout"
     },
     "notifications": {
-      "dueSoon": "L'étape importante «{name}» est prévue pour le {dueDate}",
-      "overdue": "L'étape importante «{name}» était prévue pour le {dueDate}"
+      "dueSoon": "Le jalon «{name}» est prévu pour le {dueDate}",
+      "overdue": "Le jalon «{name}» était prévu pour le {dueDate}"
     },
     "import": {
       "importTitle": "Importer depuis {provider}",
@@ -2642,10 +2642,10 @@
       "alreadyLinked": "Déjà lié",
       "selectedCount": "{count, plural, one {# sélectionné} other {# sélectionnés}}",
       "confirmSelection": "Importer la sélection",
-      "confirmSelectionCount": "{count, plural, one {Importer # Étape importante} other {Importer # Étapes importantes}}",
-      "empty": "Aucune étape trouvée",
+      "confirmSelectionCount": "{count, plural, one {Importer # Jalon} other {Importer # Jalons}}",
+      "empty": "Aucun jalon trouvé",
       "previewFailed": "Impossible de charger les jalons depuis {provider}",
-      "importFailed": "Échec de l'importation des étapes sélectionnées",
+      "importFailed": "Échec de l'importation des jalons sélectionnés",
       "requestTimedOut": "{provider} a mis trop de temps à répondre et la requête a expiré. Cela signifie généralement que les projets {provider} liés ont un grand nombre de versions ou de tableaux. Réessayez et laissez « Afficher les éléments fermés » désactivé pour réduire la portée de la requête.",
       "serviceUnavailable": "Le serveur est temporairement indisponible. Veuillez réessayer dans un instant.",
       "unexpectedResponse": "Réponse inattendue du serveur (HTTP {status}). Veuillez réessayer, et contactez votre administrateur si cela persiste.",
@@ -2653,11 +2653,11 @@
       "kindRelease": "Version",
       "kindSprint": "Sprint",
       "searchPlaceholder": "Rechercher des versions et des sprints...",
-      "emptyFiltered": "Aucune étape ne correspond à vos filtres.",
+      "emptyFiltered": "Aucun jalon ne correspond à vos filtres.",
       "partialWarning": "Certains projets {provider} n'ont pas pu être récupérés :",
       "importing": "Importation de {count, plural, one {# jalon} other {# jalons}} depuis {provider}…",
       "completed": "{count, plural, one {# jalon importé} other {# jalons importés}} depuis {provider}",
-      "stillRunning": "L'importation est toujours en cours en arrière-plan — les étapes apparaîtront une fois terminée."
+      "stillRunning": "L'importation est toujours en cours en arrière-plan — les jalons apparaîtront une fois terminée."
     },
     "sync": {
       "managedByJira": "Géré par {provider}",
@@ -2667,17 +2667,17 @@
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Synchroniser maintenant",
       "unlinkMenuItem": "Dissocier de {provider}",
-      "unlinkConfirmTitle": "Dissocier l'étape ?",
+      "unlinkConfirmTitle": "Dissocier le jalon ?",
       "unlinkConfirmDescription": "Cela arrête la synchronisation avec l'outil de suivi : les champs deviennent à nouveau modifiables, les liens de tickets synchronisés deviennent manuels (à vous de les conserver ou de les supprimer), et une nouvelle liaison est possible ultérieurement en important à nouveau cet artefact.",
-      "unlinkSuccess": "Étape dissociée de l'outil de suivi.",
-      "unlinkError": "Échec de la dissociation de l'étape.",
+      "unlinkSuccess": "Jalon dissocié de l'outil de suivi.",
+      "unlinkError": "Échec de la dissociation du jalon.",
       "sourceRemoved": "source supprimée dans {provider}",
       "mergedInto": "fusionné dans {target}"
     },
     "summary": {
       "inScope": "{count, plural, one {# dans le périmètre} other {# dans le périmètre}}",
       "foundInTesting": "{count, plural, one {# trouvé en test} other {# trouvés en test}}",
-      "includesChildMilestones": "Inclut les étapes enfants"
+      "includesChildMilestones": "Inclut les jalons enfants"
     },
     "burndown": {
       "title": "Burndown",
@@ -2709,13 +2709,13 @@
       "filterAllCoverage": "Toutes les couvertures",
       "filterAllSources": "Toutes les sources",
       "filterAllTypes": "Tous types",
-      "empty": "Aucun problème lié à cette étape pour le moment.",
+      "empty": "Aucun problème lié à ce jalon pour le moment.",
       "emptyFiltered": "Aucun problème ne correspond aux filtres actuels.",
       "managedByJira": "Géré par Jira — supprimez-le de la version/du sprint dans Jira",
-      "linkSuccess": "Problème lié à cette étape.",
-      "linkError": "Échec de la liaison du problème à cette étape.",
-      "unlinkSuccess": "Problème supprimé de cette étape.",
-      "unlinkError": "Échec de la suppression du problème de cette étape.",
+      "linkSuccess": "Problème lié à ce jalon.",
+      "linkError": "Échec de la liaison du problème à ce jalon.",
+      "unlinkSuccess": "Problème supprimé de ce jalon.",
+      "unlinkError": "Échec de la suppression du problème de ce jalon.",
       "overflowTitle": "Plus de problèmes dans Jira",
       "overflowDescription": "Ces problèmes se trouvent dans la version/le sprint Jira lié mais ne sont pas encore liés ici.",
       "overflowCapped": "Limité à {cap, number} — {overflowTotal, number} de plus dans Jira",
@@ -2725,7 +2725,7 @@
       "overflowImportError": "Échec de l'importation des problèmes des membres depuis Jira.",
       "emptyCta": "Liez un problème pour commencer.",
       "unlinkConfirmTitle": "Dissocier le problème ?",
-      "unlinkConfirmDescription": "Cela supprime le problème de cette étape. Le problème lui-même est conservé et peut être lié à nouveau ultérieurement.",
+      "unlinkConfirmDescription": "Cela supprime le problème de ce jalon. Le problème lui-même est conservé et peut être lié à nouveau ultérieurement.",
       "totalsUncovered": "{count, plural, one {# problème non couvert} other {# problèmes non couverts}}",
       "percentReady": "{percent, number} % prêt",
       "readinessSummary": "{passed, number} réussis · {failed, number} échoués · {inProgress, number} en cours · {notRun, number} non exécutés · {uncovered, number} non couverts (sur {total, number} problèmes)",
@@ -2838,7 +2838,7 @@
       "noRecentResults": "Aucun résultat de session enregistré récemment.",
       "completionTrendTitle": "Tendances d'achèvement",
       "completionTrendDescription": "Séances effectuées par mois.",
-      "noCompletedRuns": "Aucune course terminée n'a été trouvée au cours des 6 derniers mois.",
+      "noCompletedRuns": "Aucune exécution terminée n'a été trouvée au cours des 6 derniers mois.",
       "completionTrendTitle6Mo": "Tendances d'achèvement (6 derniers mois)",
       "noCompletedSessions6Mo": "Aucune séance n'a été effectuée au cours des 6 derniers mois."
     },
@@ -2932,7 +2932,7 @@
     },
     "counts": {
       "testCases": "{count, plural, =0 {# Cas de test} =1 {# Cas de test} other {# Cas de test}}",
-      "activeMilestones": "{count, plural, =0 {# Étapes actives} =1 {# Étape active} other {# Étapes actives}}",
+      "activeMilestones": "{count, plural, =0 {# Jalons actifs} =1 {# Jalon actif} other {# Jalons actifs}}",
       "activeRuns": "{count, plural, =0 {# Exécutions actives} =1 {# Exécution active} other {# Exécutions actives}}",
       "automationRunsInProgress": "{count, plural, =0 {# exécution automatisée en cours} =1 {# exécution automatisée en cours} other {# exécutions automatisées en cours}}",
       "activeSessions": "{count, plural, =0 {# Sessions actives} =1 {# Session active} other {# Sessions actives}}",
@@ -3013,7 +3013,7 @@
           "assignments": "Affectations",
           "comments": "Commentaires",
           "reviews": "Avis",
-          "runsAndMilestones": "Exécutions et étapes clés",
+          "runsAndMilestones": "Exécutions et jalons",
           "sharing": "Partage",
           "aiAndJobs": "IA et tâches",
           "integrations": "Intégrations",
@@ -3023,7 +3023,7 @@
         "types": {
           "WORK_ASSIGNED": {
             "label": "Travail qui m'est assigné",
-            "description": "Un cas de test d'exécution vous est assigné, individuellement ou en masse."
+            "description": "Un cas d'exécution de test vous est assigné, individuellement ou en masse."
           },
           "SESSION_ASSIGNED": {
             "label": "Session qui m'est assignée",
@@ -3035,7 +3035,7 @@
           },
           "COMMENT_MENTION": {
             "label": "Mentions dans les commentaires",
-            "description": "Quelqu'un vous @-mentionne dans un commentaire sur un cas, une exécution, une session, une étape clé ou un avis."
+            "description": "Quelqu'un vous @-mentionne dans un commentaire sur un cas, une exécution, une session, un jalon ou un avis."
           },
           "REVIEW_REQUESTED": {
             "label": "Avis demandé",
@@ -3066,8 +3066,8 @@
             "description": "Tous les cas d'une exécution que vous pouvez terminer ont un résultat."
           },
           "MILESTONE_DUE_REMINDER": {
-            "label": "Rappels d'échéance d'étape clé",
-            "description": "Une étape clé dont vous êtes impliqué arrive bientôt à échéance ou est en retard."
+            "label": "Rappels d'échéance de jalon",
+            "description": "Un jalon dont vous êtes impliqué arrive bientôt à échéance ou est en retard."
           },
           "SHARE_LINK_ACCESSED": {
             "label": "Lien de partage consulté",
@@ -3287,8 +3287,8 @@
       "noText": "Aucun texte",
       "hasLink": "A un lien",
       "noLink": "Aucun lien",
-      "hasSteps": "Comporte des marches",
-      "noSteps": "Pas de marches",
+      "hasSteps": "Comporte des étapes",
+      "noSteps": "Pas d'étapes",
       "unchecked": "Non vérifié",
       "linkedCases": "Cas liés",
       "clickToViewFullContent": "Cliquez pour afficher le contenu complet"
@@ -3308,7 +3308,7 @@
         "sharedStepGroupCreatedSuccess": "Étapes partagées créées avec succès !",
         "genericSharedStepCreationError": "Une erreur inconnue s'est produite lors de la création des étapes partagées. Veuillez réessayer.",
         "errorCreatingSharedGroup": "Impossible de créer les étapes partagées. Veuillez réessayer.",
-        "sharedGroupCreatedSuccess": "Groupe de partage de pas créé avec succès !",
+        "sharedGroupCreatedSuccess": "Groupe de partage d'étapes créé avec succès !",
         "failedToCreateSharedGroupError": "Impossible de créer le groupe partagé. Veuillez réessayer."
       },
       "selectSharedStepsTitle": "Sélectionner les étapes partagées",
@@ -3375,7 +3375,7 @@
       "moveError": "{count, plural, =1 {Échec du déplacement de 1 cas vers {folder}} other {Échec du déplacement de # cas vers {folder}}}{dest, select, samename {} crossProject { dans {projectName}} other {}}",
       "copyAlreadyRunning": "Une autre copie est déjà en cours de traitement. Veuillez patienter jusqu'à la fin.",
       "currentSuffix": "(Actuel)",
-      "moveDisabledSameFolder": "Les dossiers sont déjà dans ce dossier",
+      "moveDisabledSameFolder": "Les cas sont déjà dans ce dossier",
       "dragPreviewCase": "Cas de test",
       "dragPreviewCount": "{count, plural, =1 {# cas de test} other {# cas de test}}",
       "modifierHintMac": "Maintenez ⇧ pour déplacer ou ⌥ pour copier tout en faisant glisser pour ignorer ce menu.",
@@ -3400,7 +3400,7 @@
       "rename": "Renommer le dossier"
     },
     "cases": {
-      "filter": "Boîtiers de filtre...",
+      "filter": "Filtrer les cas...",
       "selectFolder": "Sélectionnez un dossier pour ajouter ou afficher des cas de test.",
       "selectCases": "Sélectionner les cas de test",
       "noTestCases": "Aucun cas de test à afficher.",
@@ -3418,14 +3418,14 @@
       "testResultHistoryDescription": "Consultez l'historique des résultats de ce test.",
       "viewElapsedTimeReport": "Rapport de temps écoulé",
       "noTestResults": "Aucun résultat de test trouvé pour ce cas de test",
-      "unknownRun": "Course inconnue",
+      "unknownRun": "Exécution inconnue",
       "currentRunBadge": "Actuel",
       "currentRunTooltip": "Le cycle de test que vous consultez",
       "attempt": "Tentative",
       "invalidProject": "Projet invalide",
-      "noSearchResults": "Aucun dossier ne correspond à vos critères de recherche.",
+      "noSearchResults": "Aucun cas ne correspond à vos critères de recherche.",
       "bulkEdit": "Modification en masse",
-      "createTestRun": "Créer un test d'exécution",
+      "createTestRun": "Créer une exécution de test",
       "addToRunDraftBlocked": "Il est impossible d'ajouter des cas provisoires aux exécutions tant que l'option « Exclure les cas provisoires des exécutions de test » est activée pour ce projet.",
       "copyMoveToProject": "Copier / Déplacer",
       "export": "Exporter",
@@ -3483,8 +3483,8 @@
           "useAiParsing": "Utiliser l'IA pour faciliter la cartographie des champs",
           "importLocation": {
             "label": "Emplacement d'importation",
-            "singleFolder": "Ajouter tous les dossiers à un seul dossier",
-            "rootFolder": "Ajouter tous les dossiers et les fichiers à un dossier racine (association requise)",
+            "singleFolder": "Ajouter tous les cas à un seul dossier",
+            "rootFolder": "Ajouter tous les dossiers et les cas à un dossier racine (association requise)",
             "topLevel": "Ajouter tous les dossiers et les cas au niveau supérieur (association requise)"
           },
           "selectFolder": "Sélectionner un dossier",
@@ -3493,7 +3493,7 @@
             "tab": "Languette"
           },
           "hasHeaders": "La première ligne contient les noms des colonnes",
-          "template": "Modèle de dossier de dépôt",
+          "template": "Modèle de cas de dépôt",
           "rowMode": {
             "single": "Chaque ligne représente un cas de test unique",
             "multi": "Les cas de test peuvent s'étendre sur plusieurs lignes."
@@ -3623,7 +3623,7 @@
       "defineStepsTitle": "Définir les étapes pour une mise à jour en masse",
       "saveNewSteps": "Enregistrer les nouvelles étapes",
       "newStepsDefined": "Nouvelles étapes définies ({count, number}) - Cliquez sur le bouton pour modifier",
-      "clearExistingStepsWarning": "Les marches existantes seront supprimées.",
+      "clearExistingStepsWarning": "Les étapes existantes seront supprimées.",
       "warnings": {
         "templateMismatch": {
           "title": "Plusieurs modèles sélectionnés",
@@ -3639,10 +3639,10 @@
         "fetchErrorDescription": "Impossible de charger les données pour les cas sélectionnés. Veuillez fermer la fenêtre modale et réessayer.",
         "updateErrorTitle": "Échec de la mise à jour",
         "updateFailed": "Une erreur s'est produite lors de l'enregistrement des modifications. Veuillez vérifier les données et réessayer.",
-        "fetchError": "Erreur lors de la récupération des données du dossier."
+        "fetchError": "Erreur lors de la récupération des données du cas."
       },
       "success": {
-        "casesUpdated": "{count, number} dossiers mis à jour avec succès"
+        "casesUpdated": "{count, number} cas mis à jour avec succès"
       },
       "validationError": "Erreur de validation",
       "stepsCannotBeBulkEdited": "Les étapes ne peuvent pas être modifiées en masse.",
@@ -3705,7 +3705,7 @@
       },
       "rowMode": {
         "label": "Lignes par cas",
-        "single": "Une seule rangée par étui",
+        "single": "Une seule rangée par cas",
         "multi": "Plusieurs lignes par étape"
       },
       "comingSoon": "À venir",
@@ -3763,7 +3763,7 @@
       "columnMatchedFields": "Champs appariés",
       "columnScore": "Score",
       "compareButton": "Comparer",
-      "viewCaseDetails": "Voir les détails de l'affaire",
+      "viewCaseDetails": "Voir les détails du cas",
       "selectAll": "Tout sélectionner",
       "selected": "{count, plural, one {# sélectionné} other {# sélectionnés}}",
       "bulkDismiss": "Pas de doublons ({count, number})",
@@ -3774,7 +3774,7 @@
       "tableHint": "Cliquez sur une ligne ou sur le bouton Comparer pour examiner et résoudre les doublons.",
       "comparisonTitle": "{caseA} contre {caseB}",
       "comparisonDescription": "Comparez ces doublons potentiels et choisissez comment les résoudre.",
-      "selectPrimary": "Cliquez sur un dossier pour le sélectionner comme dossier principal à fusionner.",
+      "selectPrimary": "Cliquez sur un cas pour le sélectionner comme cas principal à fusionner.",
       "selectedAsPrimary": "Sélectionné comme principal",
       "mergeButton": "Conserver le primaire",
       "linkButton": "Lien associé",
@@ -3783,16 +3783,16 @@
       "linking": "Enchaînement...",
       "dismissing": "Rejeter...",
       "mergeSuccess": "Les cas ont été fusionnés avec succès. {runsTransferred, plural, =0 {Aucune exécution de test transférée} one {# exécution de test transférée} other {# exécutions de test transférées}}.",
-      "linkSuccess": "Dossiers liés.",
+      "linkSuccess": "Cas liés.",
       "dismissSuccess": "Paire rejetée. Elle n'apparaîtra pas dans les prochains scans.",
       "resolveError": "Impossible de résoudre la paire en double. Veuillez réessayer.",
-      "loadingDetails": "Chargement des détails de l'affaire...",
-      "caseDetailsError": "Impossible de charger les détails du dossier.",
+      "loadingDetails": "Chargement des détails du cas...",
+      "caseDetailsError": "Impossible de charger les détails du cas.",
       "sourceLabel": "Source",
       "fieldValuesLabel": "Valeurs du champ",
-      "lastRunLabel": "Dernière course",
+      "lastRunLabel": "Dernière exécution",
       "noFieldValues": "Aucune valeur de champ",
-      "noLastRun": "Ne jamais courir",
+      "noLastRun": "Jamais exécuté",
       "stepExpectedResult": "{step} → {result}",
       "runStatusDate": "{status} — {date}",
       "noFolder": "Aucun dossier",
@@ -3829,7 +3829,7 @@
         "folderContextEmptyTitle": "Aucun cas de test dans ce dossier pour le moment",
         "folderContextEmpty": "\"{folderName}\" et ses dossiers parents/enfants n'ont aucun cas de test. L'IA recherchera les cas de test connexes ailleurs dans ce projet pour apprendre votre style et éviter les doublons. Pour de meilleurs résultats, lancez le générateur à partir du dossier auquel appartiennent ces cas de test.",
         "currentFolder": "dossier actuel",
-        "fromIssue": "Extrait du numéro",
+        "fromIssue": "Extrait du problème",
         "fromDocument": "Extrait du document",
         "documentTitle": "Titre du document",
         "documentTitlePlaceholder": "Saisissez le titre de votre document de spécifications.",
@@ -3967,7 +3967,7 @@
         "genericImportError": "Échec de l'importation : {error}",
         "networkRoutingError": "Problème de routage réseau ou de configuration du serveur : réception d’une page d’erreur HTML au lieu d’une réponse API.",
         "invalidSourceConfig": "Configuration source invalide",
-        "failedToCreateCaseVersion": "Échec de la création de la version du dossier",
+        "failedToCreateCaseVersion": "Échec de la création de la version du cas",
         "noUrlProvided": "Veuillez saisir une URL pour générer des cas de test à partir de",
         "urlFetchFailed": "Impossible de récupérer le contenu à partir de l'URL fournie. Veuillez vérifier l'URL et réessayer.",
         "llm": {
@@ -4199,7 +4199,7 @@
   "tags": {
     "add": {
       "button": "Ajouter une étiquette",
-      "title": "Ajouter une nouvelle balise",
+      "title": "Ajouter une nouvelle étiquette",
       "fields": {
         "name_error": "Le nom de l'étiquette est requis."
       },
@@ -4212,7 +4212,7 @@
         "nameExists": "Une étiquette portant ce nom existe déjà."
       }
     },
-    "filterPlaceholder": "Filtrer les balises...",
+    "filterPlaceholder": "Filtrer les étiquettes...",
     "defaultName": "Étiquette sans nom",
     "noProject": "Aucun projet",
     "description": "Gérez et organisez vos cas de test et vos sessions à l'aide d'étiquettes.",
@@ -4227,7 +4227,7 @@
       }
     },
     "manageTags": {
-      "searchPlaceholder": "Mots clés de recherche...",
+      "searchPlaceholder": "Rechercher des étiquettes...",
       "searchOrAddPlaceholder": "Rechercher ou ajouter des étiquettes...",
       "noOptions": "Aucune option"
     }
@@ -4457,7 +4457,7 @@
     },
     "notFound": "Exécution de test introuvable.",
     "add": {
-      "title": "Ajouter un test d'exécution",
+      "title": "Ajouter une exécution de test",
       "description": "Ajouter un nouveau test au projet",
       "success": {
         "title": "Test effectué avec succès",
@@ -4546,11 +4546,11 @@
     "summary": {
       "title": "Résumé de l'essai",
       "description": "Consultez le résumé de l'exécution du test.",
-      "activeRunsAndEstTime": "Courses actives et temps estimé",
-      "activeRunsLabel": "Courses",
+      "activeRunsAndEstTime": "Exécutions actives et temps estimé",
+      "activeRunsLabel": "Exécutions",
       "totalEstTime": "Durée totale estimée",
       "responsibleUsers": "Utilisateurs responsables",
-      "allActiveRuns": "Toutes les courses actives",
+      "allActiveRuns": "Toutes les exécutions actives",
       "recentResultsTitle": "Résultats manuels récents",
       "recentResultsDescription": "Consultez les résultats récents de l'essai.",
       "recentAutomatedResultsTitle": "Résultats automatisés récents",
@@ -4910,12 +4910,12 @@
           "repository_case_values": "Valeurs de cas du référentiel",
           "configs": "Paramètres de configuration",
           "session_issues": "Problèmes de session",
-          "session_tags": "Balises de session",
+          "session_tags": "Étiquettes de session",
           "states": "États du flux de travail",
           "statuses": "Statuts",
           "templates": "Modèles",
           "template_fields": "Champs de modèle",
-          "milestone_types": "Types d'étapes clés",
+          "milestone_types": "Types de jalons",
           "roles": "Rôles",
           "users": "Utilisateurs",
           "groups": "Groupes",
@@ -4929,17 +4929,17 @@
           "repositories": "Dépôts",
           "repository_folders": "Dossiers du dépôt",
           "repository_cases": "Cas de dépôt",
-          "repository_case_steps": "Étapes du dossier de dépôt",
+          "repository_case_steps": "Étapes du cas de dépôt",
           "repository_case_tags": "Étiquettes de cas du dépôt",
-          "milestones": "Étapes clés",
+          "milestones": "Jalons",
           "runs": "essais",
           "run_tests": "Cas d'exécution de test",
           "run_results": "Résultats des essais",
           "run_result_steps": "Résultats de l'étape d'exécution du test",
           "run_links": "Liens d'essai",
-          "run_tags": "Balises d'exécution de test",
+          "run_tags": "Étiquettes d'exécution de test",
           "issues": "Problèmes",
-          "milestone_issues": "Problèmes liés aux étapes clés",
+          "milestone_issues": "Problèmes liés aux jalons",
           "repository_case_issues": "Problèmes liés au dépôt",
           "run_issues": "Problèmes rencontrés lors des tests",
           "run_result_issues": "Problèmes liés aux résultats des tests",
@@ -4949,7 +4949,7 @@
           "automation_run_tests": "Exécution automatisée des tests",
           "automation_run_test_fields": "Exécution automatisée des champs de test",
           "automation_run_links": "Liens d'exécution d'automatisation",
-          "automation_run_tags": "balises d'exécution d'automatisation",
+          "automation_run_tags": "étiquettes d'exécution d'automatisation",
           "session_values": "Valeurs de session"
         },
         "mappingDatasetDescriptions": {
@@ -4959,17 +4959,17 @@
           "template_fields": "Examinez les définitions des champs du modèle incluses dans l'exportation.",
           "fields": "Examinez les enregistrements des champs personnalisés exportés depuis Testmo.",
           "field_values": "Examinez les définitions des valeurs de champ capturées dans l'exportation.",
-          "milestone_types": "Examinez les définitions de type d'étape capturées dans l'exportation.",
+          "milestone_types": "Examinez les définitions de type de jalon capturées dans l'exportation.",
           "roles": "Consultez les définitions des rôles pour comprendre les autorisations Testmo.",
           "users": "Consultez les comptes utilisateurs détectés dans l'export Testmo.",
           "groups": "Révision des travaux de groupe reportés de Testmo.",
           "configs": "Associer les noms de configuration aux catégories et variantes de TestPlanIt.",
-          "tags": "Examinez les valeurs des balises qui apparaissent dans les données Testmo.",
+          "tags": "Examinez les valeurs des étiquettes qui apparaissent dans les données Testmo.",
           "repository_case_values": "Valeurs à sélection multiple attribuées aux cas de test.",
           "sessions": "Les sessions sont toujours créées en tant que nouvelles sessions.",
           "session_results": "Les résultats des sessions sont liés aux sessions.",
           "session_issues": "Les problèmes de session sont liés aux sessions.",
-          "session_tags": "Les balises de session sont liées aux sessions.",
+          "session_tags": "Les étiquettes de session sont liées aux sessions.",
           "issue_targets": "Associer les cibles des problèmes Testmo aux intégrations TestPlanIt (Jira, GitHub, etc.)."
         },
         "mappingDatasetDefaultDescription": "Avis {dataset} détecté dans l'export Testmo.",
@@ -5139,14 +5139,14 @@
           "roleNamePlaceholder": "Saisissez un nom de rôle",
           "rolePermissionsEmpty": "Aucune autorisation attribuée",
           "rolePermissionAddEdit": "Ajouter / Modifier",
-          "noMilestoneTypesAvailable": "Aucun type d'étape n'est disponible.",
-          "milestoneSelectPlaceholder": "Sélectionner le type d'étape",
-          "milestoneNamePlaceholder": "Saisissez le nom d'un type d'étape.",
-          "milestoneDefaultLabel": "type d'étape par défaut",
+          "noMilestoneTypesAvailable": "Aucun type de jalon n'est disponible.",
+          "milestoneSelectPlaceholder": "Sélectionner le type de jalon",
+          "milestoneNamePlaceholder": "Saisissez le nom d'un type de jalon.",
+          "milestoneDefaultLabel": "type de jalon par défaut",
           "milestoneIconRequired": "Sélectionnez une icône",
           "statusColorPlaceholder": "Code hexadécimal de couleur (facultatif)",
           "issueTargetSelectPlaceholder": "Sélectionnez l'intégration...",
-          "noIssueTargetsAvailable": "Aucune intégration problématique disponible",
+          "noIssueTargetsAvailable": "Aucune intégration de problèmes disponible",
           "issueTargetNamePlaceholder": "Nom de l'intégration...",
           "templateFieldsHeading": "Champs de modèle",
           "roleAreaColumn": "Zone",
@@ -5447,7 +5447,7 @@
       "add": {
         "button": "Ajouter un projet",
         "title": "Ajouter un nouveau projet",
-        "defaultFields": "Le modèle par défaut, le type d'étape par défaut, ainsi que tous les flux de travail et statuts seront ajoutés au projet lors de sa création.",
+        "defaultFields": "Le modèle par défaut, le type de jalon par défaut, ainsi que tous les flux de travail et statuts seront ajoutés au projet lors de sa création.",
         "selectIssueTracker": "Suivi des problèmes sélectionnés",
         "issueTrackerRequired": "L'outil de suivi des problèmes est requis."
       },
@@ -5456,7 +5456,7 @@
         "description": "Créez un nouveau projet avec toutes les configurations nécessaires.",
         "steps": {
           "details": "Détails du projet",
-          "workflows": "Flux de travail, statuts et types d'étapes clés",
+          "workflows": "Flux de travail, statuts et types de jalons",
           "permissions": "Utilisateurs et autorisations"
         },
         "labels": {
@@ -5470,12 +5470,12 @@
         },
         "descriptions": {
           "templates": "Sélectionnez au moins un modèle pour définir la structure des cas de test dans ce projet.",
-          "workflows": "Configurez les flux de travail, les statuts et les types d'étapes clés pour la gestion des activités du projet.",
+          "workflows": "Configurez les flux de travail, les statuts et les types de jalons pour la gestion des activités du projet.",
           "integrations": "Facultatif : Connectez des outils de suivi des problèmes externes et des modèles d’IA pour des fonctionnalités améliorées.",
           "noIntegrations": "Aucune intégration n'est actuellement configurée. Vous pouvez ignorer cette étape ou configurer les intégrations ultérieurement.",
           "aiModels": "Activer les modèles d'IA pour la génération de cas de test et les suggestions intelligentes.",
           "permissions": "Configurez les autorisations d'accès des utilisateurs et des groupes pour ce projet.",
-          "milestoneTypes": "Sélectionnez les types d'étapes clés pour suivre l'avancement du projet et les échéances.",
+          "milestoneTypes": "Sélectionnez les types de jalons pour suivre l'avancement du projet et les échéances.",
           "configurations": "Sélectionnez les configurations disponibles pour ce projet. Les projets commencent sans aucune configuration et ajoutent ensuite celles dont ils ont besoin.",
           "noConfigurations": "Aucune configuration n'est définie pour le moment. Vous pourrez les ajouter ultérieurement dans l'Administration."
         },
@@ -5699,7 +5699,7 @@
         "groups": {
           "customFields": "Champs personnalisés"
         },
-        "stepsBlock": "Bloc d'escaliers"
+        "stepsBlock": "Bloc d'étapes"
       }
     },
     "users": {
@@ -5964,14 +5964,14 @@
       },
       "delete": {
         "title": "Supprimer l'étiquette",
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer la balise {name}?",
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer l'étiquette {name}?",
         "warning": "Cette étiquette sera supprimée de tous les cas de test et des sessions.",
         "errors": {
           "unknown": "Une erreur s'est produite lors de la suppression de l'étiquette"
         }
       },
       "edit": {
-        "title": "Modifier la balise"
+        "title": "Modifier l'étiquette"
       }
     },
     "workflows": {
@@ -6302,33 +6302,33 @@
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
-      "description": "Gérer les types d'étapes clés",
-      "filterPlaceholder": "Filtrer les types d'étapes clés...",
-      "addMilestones": "Ajout en masse d'étapes clés",
+      "description": "Gérer les types de jalons",
+      "filterPlaceholder": "Filtrer les types de jalons...",
+      "addMilestones": "Ajout en masse de jalons",
       "confirmDefault": "Confirmer par défaut",
-      "confirmDefaultDescription": "Êtes-vous sûr de vouloir définir ce type d'étape comme type par défaut ?",
-      "warning": "Ce type d'étape sera ajouté à tous les projets.",
-      "defaultLockedTitle": "Type d'étape par défaut",
-      "defaultLockedDescription": "Pour changer le type par défaut, modifiez un autre type d'étape et définissez-le comme type par défaut.",
+      "confirmDefaultDescription": "Êtes-vous sûr de vouloir définir ce type de jalon comme type par défaut ?",
+      "warning": "Ce type de jalon sera ajouté à tous les projets.",
+      "defaultLockedTitle": "Type de jalon par défaut",
+      "defaultLockedDescription": "Pour changer le type par défaut, modifiez un autre type de jalon et définissez-le comme type par défaut.",
       "wizard": {
         "selectProjects": "Sélectionner les projets",
         "projectsSelected": "{count, plural, =0 {Aucun projet sélectionné} one {# projet sélectionné} other {# projets sélectionnés}}",
-        "createMilestone": "Créer une étape importante",
-        "noCommonTypesTitle": "Aucun type d'étapes communes",
-        "noCommonTypesDescription": "Les projets sélectionnés ne partagent aucun type d'étape clé. Veuillez vous assurer que tous les projets sélectionnés ont au moins une étape clé commune, ou sélectionnez des projets différents."
+        "createMilestone": "Créer un jalon",
+        "noCommonTypesTitle": "Aucun type de jalons communs",
+        "noCommonTypesDescription": "Les projets sélectionnés ne partagent aucun type de jalon. Veuillez vous assurer que tous les projets sélectionnés ont au moins un jalon commun, ou sélectionnez des projets différents."
       },
       "add": {
-        "button": "Ajouter un type d'étape",
-        "title": "Ajouter un nouveau type d'étape",
+        "button": "Ajouter un type de jalon",
+        "title": "Ajouter un nouveau type de jalon",
         "errors": {
-          "nameExists": "Un type d'étape portant ce nom existe déjà."
+          "nameExists": "Un type de jalon portant ce nom existe déjà."
         }
       },
       "edit": {
-        "title": "Modifier le type d'étape"
+        "title": "Modifier le type de jalon"
       },
       "delete": {
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer le type d'étape {name} ?"
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer le type de jalon {name} ?"
       }
     },
     "rootCauses": {
@@ -6486,18 +6486,18 @@
     "trash": {
       "itemTypes": {
         "projectLinks": "Liens du projet",
-        "milestoneLinks": "Liens clés",
+        "milestoneLinks": "Liens de jalons",
         "icons": "Icônes",
         "fieldOptions": "Options de terrain",
         "configCategories": "Catégories de configuration",
         "configVariants": "Variantes de configuration",
         "repositories": "Dépôts",
         "repositoryFolders": "Dossiers du dépôt",
-        "repositoryCaseLinks": "Liens vers les dossiers du référentiel",
-        "repositoryCaseVersions": "Versions du dossier de dépôt",
+        "repositoryCaseLinks": "Liens vers les cas du référentiel",
+        "repositoryCaseVersions": "Versions du cas de dépôt",
         "testRunStepResults": "Résultats de l'étape d'exécution du test",
         "issueConfigs": "Configurations des problèmes",
-        "sharedStepGroups": "Groupes de pas partagés",
+        "sharedStepGroups": "Groupes d'étapes partagés",
         "dataSets": "Ensembles de données",
         "impactAnalyses": "Analyses d'impact",
         "dataSetRows": "Lignes de l'ensemble de données",
@@ -6604,7 +6604,7 @@
         "awaitingAuthorization": "En attente d'autorisation"
       },
       "connectedProjects": "Projets connectés",
-      "noIntegrations": "Aucune intégration problématique configurée",
+      "noIntegrations": "Aucune intégration de problèmes configurée",
       "testConnection": "Test de connexion",
       "testSuccess": "Connexion réussie",
       "testSuccessDescription": "L'intégration du problème est correctement configurée et connectée.",
@@ -6682,7 +6682,7 @@
       "filterPlaceholder": "Intégrations de filtres...",
       "table": {
         "lastSync": "Dernière synchronisation",
-        "empty": "Aucune intégration problématique trouvée",
+        "empty": "Aucune intégration de problèmes trouvée",
         "loading": "Chargement des intégrations de problèmes...",
         "configure": "Configure"
       },
@@ -6697,7 +6697,7 @@
       "config": {
         "name": "Nom de l'intégration du problème",
         "namePlaceholder": "Saisissez un nom pour cette intégration de problème",
-        "nameHelp": "Un nom descriptif pour identifier cette intégration problématique",
+        "nameHelp": "Un nom descriptif pour identifier cette intégration de problèmes",
         "authType": "Type d'authentification",
         "authTypeHelp": "Choisissez le mode d'authentification auprès du service externe",
         "emailPlaceholder": "votre-email@exemple.com",
@@ -7006,7 +7006,7 @@
         "editor_assistant": "Assistant de rédaction",
         "llm_test": "Test de connexion LLM",
         "export_code_generation": "Génération du code d'exportation",
-        "auto_tag": "Suggestions de balises IA",
+        "auto_tag": "Suggestions d'étiquettes IA",
         "duplicate_detection": "Détection des doublons",
         "generate_from_url": "Générer des cas de test à partir d'une URL (exigences)",
         "generate_from_url_app": "Générer des cas de test à partir d'une URL (tests d'application)",
@@ -7284,12 +7284,12 @@
         "testRun": "Essai :",
         "casesInProject": "{count, plural, =1 {# cas} other {# cas}} dans <project></project>",
         "sentBy": "Envoyé par {name}",
-        "milestoneDueSoonTitle": "Étape importante à venir",
-        "milestoneOverdueTitle": "Étape importante en retard",
-        "milestoneDueSoon": "L'étape \"{milestoneName}\" du projet \"{projectName}\" est prévue pour le {dueDate}.",
-        "milestoneOverdue": "L'étape «{milestoneName}» du projet «{projectName}» était prévue pour le {dueDate} et est maintenant en retard.",
-        "milestoneNotificationReason": "Vous recevez cette notification car vous avez participé aux travaux liés à cette étape importante (tests, sessions ou en tant que créateur de l'étape).",
-        "milestoneNotificationContinue": "Vous continuerez à recevoir des rappels quotidiens jusqu'à ce que cette étape soit franchie.",
+        "milestoneDueSoonTitle": "Jalon à venir",
+        "milestoneOverdueTitle": "Jalon en retard",
+        "milestoneDueSoon": "Le jalon \"{milestoneName}\" du projet \"{projectName}\" est prévu pour le {dueDate}.",
+        "milestoneOverdue": "Le jalon «{milestoneName}» du projet «{projectName}» était prévu pour le {dueDate} et est maintenant en retard.",
+        "milestoneNotificationReason": "Vous recevez cette notification car vous avez participé aux travaux liés à ce jalon (tests, sessions ou en tant que créateur du jalon).",
+        "milestoneNotificationContinue": "Vous continuerez à recevoir des rappels quotidiens jusqu'à ce que ce jalon soit franchi.",
         "shareLinkAccessedTitle": "Lien de partage consulté",
         "shareLinkAccessedAnonymousViewer": "Quelqu'un",
         "shareLinkAccessedMessage": "{viewer} a consulté votre rapport partagé : « {shareTitle} »",
@@ -7469,10 +7469,10 @@
       "operation": "Opération",
       "operationCopyDesc": "Crée une copie du ou des cas sélectionnés dans le projet cible. Les originaux restent inchangés.",
       "operationMove": "Se déplacer",
-      "operationMoveDesc": "Déplace le ou les dossiers sélectionnés vers le projet cible. Les dossiers originaux seront supprimés du projet source.",
+      "operationMoveDesc": "Déplace le ou les cas sélectionnés vers le projet cible. Les cas originaux seront supprimés du projet source.",
       "checkingCompatibility": "Vérification de la compatibilité...",
       "noTargetWriteAccess": "Vous ne disposez pas des droits d'écriture sur le projet cible.",
-      "noSourceUpdateAccess": "Vous ne disposez pas des autorisations de modification sur le projet source pour déplacer les dossiers.",
+      "noSourceUpdateAccess": "Vous ne disposez pas des autorisations de modification sur le projet source pour déplacer les cas.",
       "templateMismatch": "Incompatibilité de modèle",
       "autoAssignTemplates": "Attribuer automatiquement les modèles manquants au projet cible",
       "templatesMayNotDisplay": "Les modèles manquants ne seront pas disponibles dans le projet cible. Les cas seront copiés, mais les champs de ces modèles risquent de ne pas s'afficher correctement.",
@@ -7485,7 +7485,7 @@
       "sharedStepGroupReuse": "Réutiliser les éléments existants",
       "sharedStepGroupReuseDesc": "Les cas feront référence au groupe d'étapes partagé existant.",
       "sharedStepGroupCreateNew": "Créer un nouveau",
-      "sharedStepGroupCreateNewDesc": "Un nouveau groupe de partage de pas sera créé.",
+      "sharedStepGroupCreateNewDesc": "Un nouveau groupe de partage d'étapes sera créé.",
       "go": "Aller",
       "processing": "Traitement...",
       "progressText": "{processed, number} de {total, number} cas traités",
@@ -7501,7 +7501,7 @@
   "issues": {
     "linkedIssues": "Problèmes liés",
     "linkedIssuesDescription": "Problèmes liés à cet article",
-    "refreshed": "Numéros mis à jour",
+    "refreshed": "Problèmes mis à jour",
     "refreshedDescription": "La liste des problèmes liés a été mise à jour.",
     "unlinked": "Problème non lié",
     "unlinkedDescription": "Le problème a été résolu pour cet article.",
@@ -7529,10 +7529,10 @@
     "searchPlaceholder": "Problèmes de recherche...",
     "searchIssues": "Problèmes de recherche",
     "searchIssuesDescription": "Recherchez les problèmes internes liés à cet élément.",
-    "searchExternalDescription": "Recherchez les numéros {provider} à lier à cet élément.",
+    "searchExternalDescription": "Recherchez les problèmes {provider} à lier à cet élément.",
     "error": "Problèmes de chargement d'erreur",
     "errorDescription": "Impossible de charger les problèmes. Veuillez réessayer.",
-    "selectIssues": "Sélection de numéros",
+    "selectIssues": "Sélection de problèmes",
     "authRequiredDescription": "Veuillez vous authentifier pour rechercher les problèmes",
     "integrationNotConfigured": "Intégration non configurée",
     "integrationNotConfiguredDescription": "Cette intégration n'est pas entièrement configurée. Veuillez contacter votre administrateur de projet pour configurer le projet externe dans les paramètres du projet.",
@@ -7972,7 +7972,7 @@
     },
     "ApplicationArea": {
       "Documentation": "Documentation",
-      "Milestones": "Étapes clés",
+      "Milestones": "Jalons",
       "TestCaseRepository": "Référentiel de cas de test",
       "TestCaseRestrictedFields": "Champs restreints du cas de test",
       "TestRuns": "Essais",
@@ -8021,7 +8021,7 @@
     "noLinkedCases": "Aucun cas de test lié.",
     "linkedBy": "Lié par",
     "on": "Lié à",
-    "alreadyLinked": "Ce dossier est déjà lié.",
+    "alreadyLinked": "Ce cas est déjà lié.",
     "cannotLinkSelf": "Impossible de lier un cas à lui-même.",
     "circularLink": "Lien circulaire détecté.",
     "dependsOn": "Dépend de",
@@ -8039,7 +8039,7 @@
   },
   "ganttTooltip": {
     "task": "Tâche",
-    "group": "Course/Session :",
+    "group": "Exécution/Session :",
     "project": "Projet:",
     "starts": "Début :",
     "scheduledCompletion": "Achèvement prévu :",
@@ -8049,7 +8049,7 @@
   },
   "help": {
     "webhookAction": {
-      "labels": "## Étiquettes\nLes balises que le problème porte dans votre suivi. L'action ne prend qu'un problème qui en a au moins une ; laissez-le vide pour prendre les problèmes quelles que soient leurs étiquettes.\n\n- Jira, GitHub, GitLab et Gitea : les étiquettes du problème\n- Azure DevOps, ClickUp et MantisBT : les balises du problème\n- Redmine : la catégorie du problème\n- La correspondance ignore la casse"
+      "labels": "## Étiquettes\nLes étiquettes que le problème porte dans votre suivi. L'action ne prend qu'un problème qui en a au moins une ; laissez-le vide pour prendre les problèmes quelles que soient leurs étiquettes.\n\n- Jira, GitHub, GitLab et Gitea : les étiquettes du problème\n- Azure DevOps, ClickUp et MantisBT : les étiquettes du problème\n- Redmine : la catégorie du problème\n- La correspondance ignore la casse"
     },
     "auditLogs": "## Journaux d'audit\nConsultez l'historique d'audit à l'échelle du système pour le suivi de la sécurité et de la conformité",
     "statuses": "## Statuts\nGérez les statuts que les testeurs attribuent lors de l'enregistrement d'un résultat de test, tels que Réussi, Échoué et Bloqué.",
@@ -8059,24 +8059,24 @@
     "templates": "## Modèles\nGérer les modèles et les champs des cas de test",
     "caseFields": "## Champs de cas\nChamps personnalisés disponibles sur les cas de test, attribués à des modèles pour contrôler quels cas les utilisent.",
     "resultFields": "## Champs de résultat\nChamps personnalisés saisis lors de l'enregistrement d'un résultat de test, attribués à des modèles pour contrôler où ils s'appliquent.",
-    "milestoneTypes": "## Types d'étape\nLes types d'étape catégorisent les étapes — comme Sprint, Publication ou Version — et peuvent être réutilisés dans plusieurs projets.",
-    "tags": "## Balises\nLes balises étiquettent et organisent les cas de test et les sessions afin que vous puissiez regrouper et retrouver les travaux associés dans tous les projets.",
+    "milestoneTypes": "## Types de jalon\nLes types de jalon catégorisent les jalons — comme Sprint, Publication ou Version — et peuvent être réutilisés dans plusieurs projets.",
+    "tags": "## Étiquettes\nLes étiquettes classent et organisent les cas de test et les sessions afin que vous puissiez regrouper et retrouver les travaux associés dans tous les projets.",
     "issues": "## Problèmes\nLes problèmes sont des éléments de suivi externes — provenant de Jira, GitHub, Azure DevOps et d'autres intégrations — synchronisés dans TestPlanIt afin de pouvoir être liés aux cas de test, exécutions et sessions.",
     "crossProjectReports": "## Rapports multi-projets\nCréez, exécutez et analysez des rapports couvrant plusieurs projets, comme les tendances d'automatisation à travers l'ensemble de votre suite de tests.",
     "users": "## Utilisateurs\nUn répertoire des personnes avec lesquelles vous collaborez — les utilisateurs qui partagent au moins un projet avec vous — et les projets que vous partagez avec chacun d'eux. Les administrateurs voient tous les utilisateurs et leur liste complète de projets.",
     "documentation": "## Documentation\nDocumentation libre pour ce projet — notes, références et informations d'intégration.",
-    "projectMilestones": "## Étapes\nLes étapes regroupent et suivent le travail de ce projet par objectif — publications, sprints ou types personnalisés — à travers les états actifs et terminés.",
+    "projectMilestones": "## Jalons\nLes jalons regroupent et suivent le travail de ce projet par objectif — publications, sprints ou types personnalisés — à travers les états actifs et terminés.",
     "projectRepository": "## Référentiel de cas de test\nLa bibliothèque de cas de test de ce projet, organisée en dossiers.",
     "repositoryDuplicates": "## Doublons potentiels\nDoublons potentiels de cas de test détectés lors du dernier scan du référentiel de ce projet. La relance du scan analyse à nouveau le référentiel et actualise la liste avec les candidats les plus récents.",
     "projectSharedSteps": "## Étapes partagées\nGroupes réutilisables d'étapes de test que plusieurs cas de test peuvent partager — la mise à jour d'un groupe met à jour tous les cas qui le référencent.",
     "projectRuns": "## Exécutions de tests\nLes exécutions de tests exécutent un ensemble choisi de cas de test et enregistrent leurs résultats, suivant la progression du début à la fin.",
     "projectSessions": "## Sessions\nLes sessions de tests exploratoires — des tests limités dans le temps et non scriptés, capturés sous forme de notes et de résultats à travers les états actifs et terminés.",
-    "projectTags": "## Balises\nLes balises étiquettent et regroupent les cas de test, sessions et exécutions de ce projet afin de faciliter la recherche des travaux associés.",
+    "projectTags": "## Étiquettes\nLes étiquettes classent et regroupent les cas de test, sessions et exécutions de ce projet afin de faciliter la recherche des travaux associés.",
     "projectIssues": "## Problèmes\nLes problèmes provenant des trackers connectés à ce projet, liés aux cas de test, exécutions et sessions où ils ont été trouvés ou référencés.",
     "projectRequirements": "## Exigences\nLes exigences du projet organisées en hiérarchie — créées nativement dans TestPlanIt ou synchronisées depuis un système de suivi connecté — avec les cas de test liés et la couverture agrégée à travers l'arborescence.",
     "projectReports": "## Rapports\nLes rapports résument les tests de ce projet — exécutions, sessions et résultats — sous forme de graphiques et de tableaux que vous pouvez filtrer et exporter.",
     "projectAuditLogs": "## Journaux d'audit\nL'historique d'audit des actions effectuées dans ce projet — qui a modifié quoi et quand — pour le suivi de la sécurité et de la conformité.",
-    "projectIntegrations": "## Intégrations de suivi des problèmes\nConnectez ce projet à un système de suivi des problèmes afin que ses cas de test, exécutions et sessions puissent être liés et synchronisés avec des problèmes et des étapes externes.",
+    "projectIntegrations": "## Intégrations de suivi des problèmes\nConnectez ce projet à un système de suivi des problèmes afin que ses cas de test, exécutions et sessions puissent être liés et synchronisés avec des problèmes et des jalons externes.",
     "projectWebhooks": "## Webhooks\nEnvoyez et recevez des notifications d'événements pour ce projet — les webhooks entrants importent les modifications externes, les webhooks sortants transmettent les événements de test, et les livraisons enregistrent ce qui a été envoyé.",
     "webhookAllowUnsigned": "## Accepter les livraisons non signées\nActivez cette option pour une version Jira Server ou Data Center dont les webhooks n'ont pas de champ Secret. L'URL du webhook est alors le seul identifiant, gardez-la privée. Les livraisons signées sont toujours vérifiées.",
     "projectAiModels": "## Modèles d'IA\nChoisissez le modèle d'IA et la configuration d'invite utilisés par ce projet pour ses fonctionnalités assistées par IA, telles que la génération de cas de test et l'étiquetage automatique.",
@@ -8142,7 +8142,7 @@
       "issueTracker": "## Configuration du système de suivi des problèmes\nSélectionnez la configuration du système de suivi des problèmes à utiliser pour gérer les problèmes liés à ce projet."
     },
     "projects": {
-      "overview": "## Projets\nLes projets sont les conteneurs de premier niveau pour vos cas de test, exécutions, sessions et étapes. Créez et gérez tous les projets à partir d'ici.",
+      "overview": "## Projets\nLes projets sont les conteneurs de premier niveau pour vos cas de test, exécutions, sessions et jalons. Créez et gérez tous les projets à partir d'ici.",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## Projet externe\nSélectionnez le projet ou le dépôt du système externe à lier à ce projet TestPlanIt.\n\n- Les tickets créés depuis TestPlanIt seront créés dans ce projet.\n- Active l'intégration du suivi des tickets entre les systèmes.\n- Nécessite les autorisations appropriées dans le système externe.",
@@ -8173,17 +8173,17 @@
       "notificationMode": "## Préférences de notification\nContrôle la façon dont vous recevez les notifications concernant vos tâches et mises à jour.\n\n- **Utiliser les paramètres globaux :** Suivre les paramètres par défaut définis par les administrateurs.\n- **Aucune notification :** Désactiver toutes les notifications.\n- **Dans l'application uniquement :** Recevoir les notifications uniquement dans l'application.\n- **Dans l'application + E-mail (immédiat) :** Recevoir à la fois les notifications dans l'application et des alertes par e-mail immédiates.\n- **Dans l'application + E-mail (Résumé quotidien) :** Recevoir les notifications dans l'application et un récapitulatif quotidien par e-mail.\n\nVous pouvez modifier cette préférence à tout moment pour l'adapter à votre flux de travail."
     },
     "milestone": {
-      "name": "## Nom de l'étape clé\nUn nom clair et descriptif qui identifie cette étape clé de votre projet.\n\n- Doit être unique et significatif.\n- Aide les membres de l'équipe à comprendre rapidement l'objectif de l'étape clé.\n- Utilisé dans les rapports et le suivi de projet.",
-      "type": "## Type d'étape\nCatégorise l'étape et détermine son apparence et son comportement.\n\n- Différents types peuvent avoir des flux de travail différents.\n- Permet d'organiser et de filtrer les étapes.\n- Peut affecter les rapports et le suivi.",
-      "started": "## Statut « Démarré »\nIndique que le travail sur cette étape a commencé.\n\n- Marque l'étape comme étant en cours.\n- Met à jour automatiquement la date de début réelle lorsqu'elle est activée.\n- Affecte le calendrier du projet et le suivi de l'avancement.",
-      "completed": "## Statut Terminé\nIndique que le travail sur cette étape est terminé.\n\n- Marque l'étape comme terminée.\n- Met à jour automatiquement la date d'achèvement réelle.\n- Utilisé pour le suivi et le reporting de l'avancement.\n- Affecte les étapes dépendantes et le calendrier du projet.",
-      "startDate": "## Date de début prévue\nDate à laquelle les travaux relatifs à cette étape devraient commencer.\n\n- Aide à la planification et à l'ordonnancement du projet.\n- Utilisé pour les projections de l'échéancier.\n- Aide à la planification de l'allocation des ressources.",
-      "dueDate": "## Date d'échéance\nDate cible pour la réalisation de cette étape.\n\n- Définit les attentes en matière de délai.\n- Utilisé pour la planification du calendrier du projet.\n- Permet de suivre l'avancement de l'étape par rapport au calendrier.",
+      "name": "## Nom du jalon\nUn nom clair et descriptif qui identifie ce jalon de votre projet.\n\n- Doit être unique et significatif.\n- Aide les membres de l'équipe à comprendre rapidement l'objectif du jalon.\n- Utilisé dans les rapports et le suivi de projet.",
+      "type": "## Type de jalon\nCatégorise le jalon et détermine son apparence et son comportement.\n\n- Différents types peuvent avoir des flux de travail différents.\n- Permet d'organiser et de filtrer les jalons.\n- Peut affecter les rapports et le suivi.",
+      "started": "## Statut « Démarré »\nIndique que le travail sur ce jalon a commencé.\n\n- Marque le jalon comme étant en cours.\n- Met à jour automatiquement la date de début réelle lorsqu'elle est activée.\n- Affecte le calendrier du projet et le suivi de l'avancement.",
+      "completed": "## Statut Terminé\nIndique que le travail sur ce jalon est terminé.\n\n- Marque le jalon comme terminé.\n- Met à jour automatiquement la date d'achèvement réelle.\n- Utilisé pour le suivi et le reporting de l'avancement.\n- Affecte les jalons dépendants et le calendrier du projet.",
+      "startDate": "## Date de début prévue\nDate à laquelle les travaux relatifs à ce jalon devraient commencer.\n\n- Aide à la planification et à l'ordonnancement du projet.\n- Utilisé pour les projections de l'échéancier.\n- Aide à la planification de l'allocation des ressources.",
+      "dueDate": "## Date d'échéance\nDate cible pour la réalisation de ce jalon.\n\n- Définit les attentes en matière de délai.\n- Utilisé pour la planification du calendrier du projet.\n- Permet de suivre l'avancement du jalon par rapport au calendrier.",
       "parent": "## Jalon parent\nRelie ce jalon à un jalon parent, créant ainsi une hiérarchie.\n\n- Organise les jalons en groupes logiques.\n- Affiche les dépendances et les relations.\n- Permet de suivre l'avancement des initiatives de plus grande envergure.",
-      "description": "## Description\nInformations détaillées sur l'objectif, les exigences et la portée de l'étape.\n\n- Fournit le contexte aux membres de l'équipe.\n- Documente les exigences et les objectifs clés.\n- Favorise la collaboration et l'alignement.",
+      "description": "## Description\nInformations détaillées sur l'objectif, les exigences et la portée du jalon.\n\n- Fournit le contexte aux membres de l'équipe.\n- Documente les exigences et les objectifs clés.\n- Favorise la collaboration et l'alignement.",
       "documentation": "## Documentation\nInformations complémentaires, références et documents justificatifs.\n\n- Spécifications techniques\n- Documents de conception\n- Références externes\n- Comptes rendus de réunion et décisions",
-      "automaticCompletion": "## Clôture automatique à l'échéance\nMarque automatiquement cette étape comme terminée lorsque sa date d'échéance est atteinte.\n\n- L'étape sera terminée à l'heure prévue à la date d'échéance.\n- Utile pour les étapes à durée limitée qui doivent se clôturer quel que soit leur état d'achèvement.\n- Peut être annulé en clôturant manuellement l'étape avant la date d'échéance.\n- Nécessite la définition d'une date d'échéance.",
-      "notifyDaysBefore": "## Notifications avant l'échéance\nEnvoyer des notifications aux membres de l'équipe concernés lorsque la date d'échéance approche.\n\n- Activer les notifications, désactiver pour les désactiver.\n- Saisir le nombre de jours avant l'échéance pour commencer l'envoi de rappels.\n- Les notifications sont envoyées aux utilisateurs affectés aux tests et sessions de cette étape.\n- Les étapes en retard continueront d'envoyer des rappels jusqu'à leur réalisation.",
+      "automaticCompletion": "## Clôture automatique à l'échéance\nMarque automatiquement ce jalon comme terminé lorsque sa date d'échéance est atteinte.\n\n- Le jalon sera terminé à l'heure prévue à la date d'échéance.\n- Utile pour les jalons à durée limitée qui doivent se clôturer quel que soit leur état d'achèvement.\n- Peut être annulé en clôturant manuellement le jalon avant la date d'échéance.\n- Nécessite la définition d'une date d'échéance.",
+      "notifyDaysBefore": "## Notifications avant l'échéance\nEnvoyer des notifications aux membres de l'équipe concernés lorsque la date d'échéance approche.\n\n- Activer les notifications, désactiver pour les désactiver.\n- Saisir le nombre de jours avant l'échéance pour commencer l'envoi de rappels.\n- Les notifications sont envoyées aux utilisateurs affectés aux tests et sessions de ce jalon.\n- Les jalons en retard continueront d'envoyer des rappels jusqu'à leur réalisation.",
       "managedByJira": "## Géré par le suivi\nLe nom, les dates et le statut de ce jalon sont gérés par le suivi des tickets à partir duquel il a été importé. Apportez des modifications là-bas pour les mettre à jour ici."
     },
     "session": {
@@ -8191,14 +8191,14 @@
       "template": "## Modèle\nLes modèles définissent la structure et le contenu de votre session de test.\n\n- Fournit un format cohérent pour la documentation des tests\n- Inclut des sections et des champs prédéfinis\n- Contribue au maintien des normes de test dans l'ensemble de votre projet",
       "configuration": "## Configuration\nEnvironnement ou configuration spécifique requis pour cette session de test.\n\n- Environnement de test (ex. : Préproduction, Production)\n- Configurations ou paramètres spéciaux\n- Données ou conditions de test requises",
       "configurationGroup": "## Groupe de configuration\nLes sessions d'un groupe de configuration couvrent les mêmes tests sous différentes configurations, ce qui vous permet de passer de l'une à l'autre et de comparer leurs résultats au même endroit.\n\nLes sessions créées ensemble pour plusieurs configurations sont regroupées automatiquement. Liez une session ici lorsqu'elle a été créée séparément.\n\nVous vous liez à une session, mais vous rejoignez tout ce à quoi cette session est déjà regroupée — un groupe n'a pas de propriétaire, donc chaque membre est lié à tous les autres.\n\nLe regroupement modifie uniquement la façon dont les sessions sont présentées ensemble. Il ne déplace jamais les cas de test ni les résultats.",
-      "milestone": "## Étape importante\nAssocie cette session à une étape importante du projet.\n\n- Permet de suivre l'avancement des tests par rapport aux objectifs du projet.\n- Regroupe les sessions de test associées.\n- Prend en charge la génération de rapports basés sur les étapes importantes.",
+      "milestone": "## Jalon\nAssocie cette session à un jalon du projet.\n\n- Permet de suivre l'avancement des tests par rapport aux objectifs du projet.\n- Regroupe les sessions de test associées.\n- Prend en charge la génération de rapports basés sur les jalons.",
       "description": "## Description\nUn bref aperçu du contenu de cette session de test.\n\n- Domaines ou fonctionnalités clés testés\n- Contexte ou informations générales importantes\n- Considérations ou exigences particulières",
       "mission": "## Mission\nLa mission définit les objectifs spécifiques de cette session de test.\n\n- Que testez-vous ?\n- Quels sont les principaux axes de test ?\n- Quels sont les résultats attendus ?\n\nUne mission claire permet de maintenir des tests ciblés et productifs.",
       "estimate": "## Estimation du temps\nTemps estimé pour terminer cette session de test.\n\nExemples :\n- « 30 min » pour 30 minutes\n- « 1 h 30 min » pour 1 heure et 30 minutes\n- « 2 jours » pour 2 jours\n- « 1 semaine » pour 1 semaine",
       "elapsed": "## Temps écoulé\nLe temps réel passé sur cette session de test.\n\nExemples :\n- « 45 min » pour 45 minutes\n- « 2 h 15 min » pour 2 heures et 15 minutes\n- « 3 jours » pour 3 jours\n\nUn suivi précis du temps permet d’améliorer les estimations futures.",
       "state": "## État du flux de travail\nL'état actuel de cette session de test dans votre flux de travail.\n\n- Permet de suivre la progression de la session\n- Prend en charge la gestion du flux de travail\n- Utilisé pour la création de rapports et le suivi",
       "assignedTo": "## Assigné à\nLe membre de l'équipe responsable de cette session de test.\n\n- Identifie la personne qui effectue le test.\n- Contribue à la gestion des ressources.\n- Assure la responsabilisation et le suivi.",
-      "tags": "## Balises\nMots clés ou étiquettes permettant de catégoriser et d'organiser les sessions de test.\n\n- Facilite la recherche des sessions\n- Regroupe les activités de test connexes\n- Permet le filtrage et la génération de rapports",
+      "tags": "## Étiquettes\nMots clés ou étiquettes permettant de catégoriser et d'organiser les sessions de test.\n\n- Facilite la recherche des sessions\n- Regroupe les activités de test connexes\n- Permet le filtrage et la génération de rapports",
       "attachments": "## Pièces jointes\nFichiers, captures d'écran ou autres documents relatifs à cette session de test.\n\n- Fichiers de données de test\n- Captures d'écran ou enregistrements\n- Documentation complémentaire\n- Documents de référence",
       "issues": "## Problèmes\nLier les problèmes pertinents à cette session."
     },
@@ -8207,10 +8207,10 @@
       "description": "## Description\nVeuillez fournir un bref résumé ou des notes concernant cette exécution de test.",
       "configuration": "## Configurations\nSélectionnez une ou plusieurs configurations (par exemple, environnement, navigateur, appareil) sous lesquelles les tests seront exécutés. La sélection de plusieurs configurations créera des tests distincts pour chacune d'elles.",
       "configurationGroup": "## Groupe de configuration\nLes exécutions d'un groupe de configuration couvrent les mêmes tests sous différentes configurations, ce qui vous permet de passer de l'une à l'autre et de comparer leurs résultats au même endroit.\n\nLes exécutions créées ensemble pour plusieurs configurations sont regroupées automatiquement. Liez une exécution ici lorsqu'elle a été créée séparément — par exemple, une que vous avez dupliquée plus tard pour une autre configuration.\n\nVous vous liez à une exécution, mais vous rejoignez tout ce à quoi cette exécution est déjà regroupée — un groupe n'a pas de propriétaire, donc chaque membre est lié à tous les autres.\n\nLe regroupement modifie uniquement la façon dont les exécutions sont présentées ensemble. Il ne déplace jamais les cas de test ni les résultats.",
-      "milestone": "## Étape importante\nAssociez cette exécution de test à une étape importante spécifique du projet pour suivre les progrès vers des objectifs plus larges.",
+      "milestone": "## Jalon\nAssociez cette exécution de test à un jalon spécifique du projet pour suivre les progrès vers des objectifs plus larges.",
       "docs": "## Documentation\nIncluez toute documentation pertinente, tous liens ou toutes notes détaillées pour cette exécution de test.",
       "state": "## État\nIndiquez l'état actuel ou le résultat de cette exécution de test en fonction du flux de travail de votre projet.",
-      "tags": "## Balises\nAppliquez des balises pertinentes pour catégoriser et filtrer cette exécution de test.",
+      "tags": "## Étiquettes\nAppliquez des étiquettes pertinentes pour catégoriser et filtrer cette exécution de test.",
       "issues": "## Problèmes\nLiez tous les problèmes connexes (bugs, tâches, etc.) à cette exécution de test.",
       "attachments": "## Pièces jointes\nVeuillez télécharger tous les fichiers, captures d'écran ou journaux de support relatifs à cette exécution de test.",
       "duplicate": {
@@ -8224,13 +8224,13 @@
       "value": "## Valeur\nLa valeur de cette configuration."
     },
     "milestoneType": {
-      "icon": "## Icône de type d'étape\nIdentifiant visuel de ce type d'étape.\n\n- Permet d'identifier rapidement l'étape dans les listes et les tableaux de bord.\n- Choisissez parmi une variété d'icônes prédéfinies.\n- Peut être modifié à tout moment.\n- Apparaît dans la navigation du projet et les rapports.",
-      "name": "## Nom du type d'étape\nUn nom clair et descriptif qui identifie ce type d'étape dans votre projet.\n\n- Aide les membres de l'équipe à comprendre rapidement l'objectif de ce type d'étape.\n- Utilisé dans les rapports et le suivi de projet.",
+      "icon": "## Icône de type de jalon\nIdentifiant visuel de ce type de jalon.\n\n- Permet d'identifier rapidement le jalon dans les listes et les tableaux de bord.\n- Choisissez parmi une variété d'icônes prédéfinies.\n- Peut être modifié à tout moment.\n- Apparaît dans la navigation du projet et les rapports.",
+      "name": "## Nom du type de jalon\nUn nom clair et descriptif qui identifie ce type de jalon dans votre projet.\n\n- Aide les membres de l'équipe à comprendre rapidement l'objectif de ce type de jalon.\n- Utilisé dans les rapports et le suivi de projet.",
       "isDefault": "## Type de jalon par défaut\nIndique si ce type de jalon est celui par défaut pour votre projet.\n\n- Le type de jalon par défaut est présélectionné pour les nouveaux jalons.\n- Peut être modifié à tout moment.",
-      "projects": "## Projets associés\nSélectionnez les projets pour lesquels ce type d'étape sera disponible.\n\n- Si aucun projet n'est sélectionné, l'étape sera disponible globalement.\n- L'attribution à des projets spécifiques limite son utilisation à ces seuls projets."
+      "projects": "## Projets associés\nSélectionnez les projets pour lesquels ce type de jalon sera disponible.\n\n- Si aucun projet n'est sélectionné, le jalon sera disponible globalement.\n- L'attribution à des projets spécifiques limite son utilisation à ces seuls projets."
     },
     "tag": {
-      "name": "## Nom de la balise\nUn nom ou des mots-clés clairs, concis et descriptifs, utilisés dans tous les projets.\n\n- Permet aux membres de l'équipe de trouver rapidement les cas de test, les exécutions de test et les sessions associés."
+      "name": "## Nom de l'étiquette\nUn nom ou des mots-clés clairs, concis et descriptifs, utilisés dans tous les projets.\n\n- Permet aux membres de l'équipe de trouver rapidement les cas de test, les exécutions de test et les sessions associés."
     },
     "role": {
       "name": "## Nom du rôle\nUn nom ou des mots-clés clairs, concis et descriptifs, utilisés dans tous les projets.\n\n- Permet aux membres de l'équipe de trouver rapidement les cas de test, les exécutions de test et les sessions associés.",
@@ -8331,7 +8331,7 @@
       "description": "## Description\nUn bref aperçu du contenu de ce problème.\n\n- Principaux domaines ou fonctionnalités testés\n- Contexte ou informations générales importantes\n- Considérations ou exigences particulières",
       "project": "## Projet\nLe projet auquel ce problème est associé.\n\n- Les problèmes peuvent être liés à des cas de test dans plusieurs projets.\n- Définir un projet principal permet d'organiser les problèmes.\n- Peut être laissé vide pour les problèmes inter-projets.",
       "state": "## État\nIndiquez l'état actuel ou le résultat de ce problème en fonction du flux de travail de votre projet.",
-      "tags": "## Balises\nAppliquez des balises pertinentes pour catégoriser et filtrer ce problème.",
+      "tags": "## Étiquettes\nAppliquez des étiquettes pertinentes pour catégoriser et filtrer ce problème.",
       "issues": "## Problèmes\nLiez tous les problèmes connexes (bugs, tâches, etc.) à ce problème."
     },
     "status": {
@@ -8379,7 +8379,7 @@
       "template": "## Modèle\nSélectionnez le modèle que ce cas utilisera pour ses champs de cas et ses champs de résultat.",
       "estimate": "## Estimation\nLe temps estimé saisi manuellement pour terminer ce cas de test.",
       "automated": "## Automatisé\nIndique si ce cas de test est automatisé ou non.",
-      "tags": "## Balises\nAppliquez les balises pertinentes pour catégoriser et filtrer ce cas.",
+      "tags": "## Étiquettes\nAppliquez les étiquettes pertinentes pour catégoriser et filtrer ce cas.",
       "issues": "## Problèmes\nLiez tous les problèmes connexes (bugs, tâches, etc.) à ce cas."
     },
     "folder": {
@@ -8462,9 +8462,9 @@
       "firstCaseCreated": "## Premier cas créé\nQuand le cas de test le plus ancien de ce groupe a été créé.",
       "lastCaseCreated": "## Dernier cas créé\nQuand le cas de test le plus récent de ce groupe a été créé.",
       "caseCreationSpan": "## Période de création de cas\nJours entre la création du cas de test le plus ancien et le plus récent du groupe — durée nécessaire pour rédiger les cas du groupe.",
-      "milestoneCount": "## Nombre d'étapes\nNombre total d'étapes.",
+      "milestoneCount": "## Nombre de jalons\nNombre total de jalons.",
       "milestoneCompletionRate": "## Taux d'achèvement des jalons\nPourcentage de jalons achevés.",
-      "averageMilestoneDuration": "## Durée moyenne des étapes clés\nDurée moyenne des étapes clés en jours.",
+      "averageMilestoneDuration": "## Durée moyenne des jalons\nDurée moyenne des jalons en jours.",
       "llmCallCount": "## Appels LLM\nNombre de requêtes LLM effectuées dans ce groupe, y compris les appels échoués.",
       "promptTokens": "## Jetons d'invite\nJetons envoyés au modèle en entrée pour tous les appels de ce groupe.",
       "completionTokens": "## Jetons de complétion\nJetons générés par le modèle pour tous les appels de ce groupe.",
@@ -8486,7 +8486,7 @@
       "project": "## Dimension du projet\nRegroupe les résultats par projet pour une analyse inter-projets.",
       "testRun": "## Dimension d'exécution de test\nRegroupe les résultats par l'exécution de test qui contient les cas de test exécutés.",
       "testCase": "## Dimension des cas de test\nRegroupe les résultats par cas de test individuels pour une analyse détaillée.",
-      "milestone": "## Dimension d'étape\nRegroupe les résultats par étapes de projet pour suivre les progrès vers les objectifs.",
+      "milestone": "## Dimension de jalon\nRegroupe les résultats par jalons de projet pour suivre les progrès vers les objectifs.",
       "configuration": "## Dimension de configuration\nRegroupe les résultats par configuration d'environnement de test (par exemple, navigateur, système d'exploitation).",
       "template": "## Dimension du modèle\nRegroupe les résultats selon le modèle utilisé pour la structure du cas de test.",
       "creator": "## Dimension Créateur\nRegroupe les résultats par l'utilisateur qui a créé les cas de test ou les exécutions de test.",
@@ -8596,7 +8596,7 @@
         },
         "projectSections": {
           "title": "Sections du projet",
-          "content": "Naviguez dans la section Vue d'ensemble pour accéder au tableau de bord du projet, dans la section Documentation pour consulter les guides du projet et dans la section Étapes pour suivre l'avancement."
+          "content": "Naviguez dans la section Vue d'ensemble pour accéder au tableau de bord du projet, dans la section Documentation pour consulter les guides du projet et dans la section Jalons pour suivre l'avancement."
         },
         "repository": {
           "content": "Gérez vos cas de test, organisez-les dans des dossiers et créez de nouveaux scénarios de test pour une couverture de test exhaustive."
@@ -8629,7 +8629,7 @@
           "content": "Voici la page Sessions où vous pouvez créer et gérer des sessions de tests exploratoires. Documentez vos résultats, suivez le temps passé et conservez un historique de toutes vos activités de tests ad hoc pour une meilleure couverture des tests."
         },
         "tags": {
-          "title": "Gestion des balises",
+          "title": "Gestion des étiquettes",
           "content": "Organisez et catégorisez vos cas de test à l'aide d'étiquettes. Créez des étiquettes personnalisées pour améliorer l'organisation et le filtrage des cas de test."
         },
         "issues": {
@@ -8725,7 +8725,7 @@
         },
         "overview": {
           "title": "Aperçu du projet",
-          "content": "La vue d'ensemble est le tableau de bord de votre projet. Elle affiche la progression des étapes clés et des résumés des cas de test, des exécutions en cours, des sessions et des étiquettes."
+          "content": "La vue d'ensemble est le tableau de bord de votre projet. Elle affiche la progression des jalons et des résumés des cas de test, des exécutions en cours, des sessions et des étiquettes."
         },
         "documentation": {
           "title": "Documentation",
@@ -8736,19 +8736,19 @@
           "content": "La documentation prend en charge le texte enrichi avec des titres, des listes, des liens et des images. Essayez de modifier cette page pour voir comment cela fonctionne."
         },
         "milestones": {
-          "title": "Étapes clés",
-          "content": "Suivez vos tests par rapport aux sprints, aux versions et aux autres objectifs. Associez les exécutions et les sessions de test aux étapes clés pour un suivi optimal."
+          "title": "Jalons",
+          "content": "Suivez vos tests par rapport aux sprints, aux versions et aux autres objectifs. Associez les exécutions et les sessions de test aux jalons pour un suivi optimal."
         },
         "milestonesPage": {
-          "title": "Chronologie des étapes clés",
-          "content": "Consultez toutes les étapes clés de ce projet. Chaque étape indique son statut et son avancement vers la réalisation."
+          "title": "Chronologie des jalons",
+          "content": "Consultez tous les jalons de ce projet. Chaque jalon indique son statut et son avancement vers la réalisation."
         },
         "repository": {
           "title": "Référentiel de cas de test",
           "content": "Organisez vos cas de test dans des dossiers avec des champs, des étapes et des priorités personnalisés. Consultez les exemples de dossiers pour voir comment les cas sont structurés."
         },
         "repositoryPanels": {
-          "title": "Chemises et étuis",
+          "title": "Dossiers et cas",
           "content": "Le panneau de gauche affiche les dossiers. Cliquez sur un dossier pour consulter ses cas de test. Chaque cas comporte des étapes, des descriptions et des références partagées."
         },
         "repositoryCases": {
@@ -8760,16 +8760,16 @@
           "content": "Définissez des groupes d'étapes réutilisables pouvant être référencés dans plusieurs cas de test. Cela garantit la cohérence des étapes communes et facilite la maintenance."
         },
         "sharedStepsPage": {
-          "title": "Groupes de pas partagés",
+          "title": "Groupes d'étapes partagés",
           "content": "Chaque groupe contient une série d'étapes ordonnées. Référencez-les dans n'importe quel cas de test pour que vos étapes restent concises et cohérentes."
         },
         "testRuns": {
           "title": "Essais",
-          "content": "Créez des séries de tests pour exécuter les cas et enregistrer les résultats. Attribuez ces séries aux étapes clés et suivez leur progression (réussite/échec)."
+          "content": "Créez des séries de tests pour exécuter les cas et enregistrer les résultats. Attribuez ces séries aux jalons et suivez leur progression (réussite/échec)."
         },
         "testRunsPage": {
           "title": "Résultats des essais",
-          "content": "Consultez les résultats et la progression des tests. Chaque test affiche son statut, l'étape assignée et le détail des réussites et des échecs."
+          "content": "Consultez les résultats et la progression des tests. Chaque test affiche son statut, le jalon assigné et le détail des réussites et des échecs."
         },
         "sessions": {
           "title": "Séances exploratoires",
@@ -8781,10 +8781,10 @@
         },
         "tags": {
           "title": "Étiquettes",
-          "content": "Les balises permettent d'organiser et de filtrer les cas de test, les exécutions et les sessions. Consultez les exemples de balises pour voir comment elles catégorisent le contenu."
+          "content": "Les étiquettes permettent d'organiser et de filtrer les cas de test, les exécutions et les sessions. Consultez les exemples d'étiquettes pour voir comment elles catégorisent le contenu."
         },
         "tagsPage": {
-          "title": "Gestion des balises",
+          "title": "Gestion des étiquettes",
           "content": "Créez, modifiez et attribuez des étiquettes à partir d'ici. Utilisez les étiquettes pour regrouper et filtrer le contenu de votre projet."
         },
         "issues": {
@@ -8940,11 +8940,11 @@
         },
         "projectHealth": {
           "label": "Projet Santé",
-          "description": "État d'avancement, étapes clés et achèvement du projet"
+          "description": "État d'avancement, jalons et achèvement du projet"
         },
         "milestoneReadiness": {
-          "label": "Préparation de l'étape",
-          "description": "Préparation à la mise en production par étape : % de problèmes dans le périmètre entièrement réussis, et le nombre par état"
+          "label": "Préparation du jalon",
+          "description": "Préparation à la mise en production par jalon : % de problèmes dans le périmètre entièrement réussis, et le nombre par état"
         },
         "sessionAnalysis": {
           "label": "Analyse de session",
@@ -9008,7 +9008,7 @@
         }
       },
       "flakyTests": {
-        "consecutiveRuns": "Dernières courses consécutives",
+        "consecutiveRuns": "Dernières exécutions consécutives",
         "consecutiveRunsHelp": "Nombre d'exécutions de tests récentes à analyser (5-30). Les résultats dont le statut est « non testé » sont exclus.",
         "flipThreshold": "Retournements minimums",
         "flipThresholdHelp": "Nombre minimal de transitions réussite/échec requis pour être considéré comme instable.",
@@ -9016,10 +9016,10 @@
         "lastNResults": "{count, plural, one {Dernier # Résultat} other {Derniers # Résultats}}",
         "newest": "Nouveau",
         "oldest": "Vieux",
-        "noFlakyTests": "Aucun test non concluant correspondant aux critères n'a été trouvé.",
+        "noFlakyTests": "Aucun test instable correspondant aux critères n'a été trouvé.",
         "includeFilter": "Inclure",
-        "caseTags": "Balises des cas de test",
-        "runTags": "Balises d'exécution de test",
+        "caseTags": "Étiquettes des cas de test",
+        "runTags": "Étiquettes d'exécution de test",
         "testRunDeleted": "L'essai a été supprimé.",
         "chart": {
           "highPriority": "Nécessite une attention particulière",
@@ -9110,7 +9110,7 @@
         "sourcedFromNewestN": "Top {ranked} des {total} cas manuels éligibles via {strategy}",
         "sourcedFromAll": "Classement {total, plural, one {de # cas manuel éligible} =2 {des deux cas manuels éligibles} other {de tous les # cas manuels éligibles}} via {strategy}",
         "metric": {
-          "executions": "{count} court",
+          "executions": "{count} exécutions",
           "forecast": "{value} prévision",
           "forecastUnset": "Aucune prévision",
           "flakiness": "Bascule {value} %",
@@ -9121,10 +9121,10 @@
           "rankedSummary": "{ranked} de {totalEligible} cas manuels éligibles classés.",
           "strategyExplanation": {
             "most_executed": "Les cas sont classés par nombre d'exécutions manuelles (du plus élevé au plus bas) — l'indicateur de fréquence de régression où l'automatisation récupère directement le plus de temps de test.",
-            "flakiest_first": "Les cas sont classés par ordre de fiabilité approximatif (réussite/échec) — les tests manuels peu fiables sont d'excellents candidats pour un oracle d'automatisation déterministe.",
+            "flakiest_first": "Les cas sont classés par ordre d'instabilité approximatif (réussite/échec) — les tests manuels peu fiables sont d'excellents candidats pour un oracle d'automatisation déterministe.",
             "longest_first": "Les cas sont classés par prévision d'exécution manuelle (la plus longue en premier ; forecastManual lorsqu'elle est présente, sinon l'estimation est utilisée) — l'automatisation permet de récupérer le plus de temps de test sur ces cas.",
             "oldest_first": "Les cas sont classés par date de création (du plus ancien au plus récent) — les cas manuels de longue durée ont tendance à correspondre à des comportements matures et stables qui peuvent être automatisés sans risque sans retouche.",
-            "newest_first": "Les dossiers sont classés par date de création (du plus récent au plus ancien) — les dossiers nouvellement créés sont les plus susceptibles d'avoir besoin d'une couverture d'exécution immédiatement.",
+            "newest_first": "Les cas sont classés par date de création (du plus récent au plus ancien) — les cas nouvellement créés sont les plus susceptibles d'avoir besoin d'une couverture d'exécution immédiatement.",
             "random": "Les cas constituent un échantillon aléatoire non biaisé de l'ensemble admissible."
           },
           "rationale": {
@@ -9197,7 +9197,7 @@
       },
       "issueTestCoverage": {
         "viewMode": "Mode d'affichage",
-        "summaryView": "Résumé (par numéro)",
+        "summaryView": "Résumé (par problème)",
         "detailView": "Détail (par cas de test)",
         "issue": "Problème",
         "testCase": "Cas de test",
@@ -9212,7 +9212,7 @@
         "noData": "Aucun problème n'a été détecté avec les cas de test liés.",
         "noIssuesNeedingAttention": "Tous les problèmes ont été testés avec succès - excellent travail !",
         "stats": {
-          "totalIssues": "Numéros totaux",
+          "totalIssues": "Problèmes totaux",
           "issuesWithFailures": "Avec des échecs",
           "issuesWithFailuresTooltip": "Problèmes avec au moins un cas de test défaillant",
           "issuesWithUntested": "Avec des tests non effectués",
@@ -9561,8 +9561,8 @@
       "automationRate": "Taux d'automatisation (%)",
       "avgStepsPerCase": "Nombre moyen d'étapes par cas",
       "averageSteps": "Nombre moyen d'étapes par cas",
-      "automatedCount": "Dossiers automatisés",
-      "manualCount": "Étuis manuels",
+      "automatedCount": "Cas automatisés",
+      "manualCount": "Cas manuels",
       "totalCount": "Nombre total de cas",
       "totalSteps": "Nombre total d'étapes",
       "executionCount": "Exécutions de tests",
@@ -9572,7 +9572,7 @@
       "sessionParticipation": "Participation à la session",
       "averageElapsed": "Temps moyen par exécution",
       "lastActiveDate": "Dernière date d'activité",
-      "issueCount": "Nombre de numéros",
+      "issueCount": "Nombre de problèmes",
       "linkedCaseCount": "Cas liés",
       "firstCaseCreated": "Premier cas créé",
       "lastCaseCreated": "Dernier cas créé",
@@ -9581,12 +9581,12 @@
       "sessionCount": "Nombre de sessions",
       "activeSessions": "Sessions actives",
       "averageTimeSpent": "Temps moyen passé (minutes)",
-      "milestoneCount": "Nombre d'étapes",
-      "milestoneCompletionRate": "Taux d'achèvement des étapes clés (%)",
-      "averageMilestoneDuration": "Durée moyenne des étapes clés (jours)",
-      "totalMilestones": "Étapes clés totales",
-      "activeMilestones": "Étapes clés actives",
-      "milestoneCompletion": "Achèvement des étapes clés (%)",
+      "milestoneCount": "Nombre de jalons",
+      "milestoneCompletionRate": "Taux d'achèvement des jalons (%)",
+      "averageMilestoneDuration": "Durée moyenne des jalons (jours)",
+      "totalMilestones": "Jalons totaux",
+      "activeMilestones": "Jalons actifs",
+      "milestoneCompletion": "Achèvement des jalons (%)",
       "averageDuration": "Durée moyenne",
       "totalDuration": "Durée totale",
       "llmCallCount": "Appels LLM",
@@ -9918,7 +9918,7 @@
     "manualEntry": {
       "buttonLabel": "Ajouter manuellement",
       "description": "Créer un nouveau groupe d'étapes partagé avec saisie manuelle",
-      "groupNamePlaceholder": "Saisissez un nom pour ce groupe de pas partagé",
+      "groupNamePlaceholder": "Saisissez un nom pour ce groupe d'étapes partagé",
       "success": "Étapes partagées créées avec succès",
       "errors": {
         "groupNameRequired": "Le nom du groupe est requis.",
@@ -9930,7 +9930,7 @@
       "pageTitle": "Duplicata de séquence d'étapes",
       "noResultsFound": "Aucune séquence d'étapes en double n'a été trouvée.",
       "noResultsDescription": "Effectuez une analyse pour détecter les séquences d'étapes répétées dans vos cas de test.",
-      "filterPlaceholder": "Filtrer par nom de dossier...",
+      "filterPlaceholder": "Filtrer par nom de cas...",
       "minCasesLabel": "Cas min",
       "minStepsLabel": "Étapes min",
       "minThresholdOption": "{count, number}+",
@@ -9960,12 +9960,12 @@
         "previewTitle": "Séquence d'étapes correspondante",
         "casesTitle": "Cas de test concernés",
         "casesDescription": "Décochez les cas que vous souhaitez exclure de la conversion.",
-        "nameLabel": "Nom du groupe de pas partagé",
+        "nameLabel": "Nom du groupe d'étapes partagé",
         "namePlaceholder": "Saisissez un nom pour le groupe d'étapes partagé...",
         "converting": "Conversion en cours...",
         "dismissMatch": "Rejeter le match",
         "dismissing": "Rejeter...",
-        "convertSuccess": "Groupe de partage de pas créé avec succès !",
+        "convertSuccess": "Groupe de partage d'étapes créé avec succès !",
         "convertError": "La conversion a échoué. Veuillez réessayer.",
         "dismissSuccess": "Match annulé.",
         "dismissError": "Impossible de fermer. Veuillez réessayer.",
@@ -10013,7 +10013,7 @@
     "currentProjectOnly": "Projet en cours uniquement",
     "allTypes": "Tous types",
     "entityTypes": {
-      "repositoryCase": "Dossiers de dépôt"
+      "repositoryCase": "Cas de dépôt"
     },
     "results": {
       "tryAdjusting": "Essayez de modifier vos termes de recherche ou vos filtres.",
@@ -10102,7 +10102,7 @@
       "minValue": "Min",
       "maxValue": "Max",
       "dueDateRange": "Plage de dates d'échéance",
-      "milestoneType": "Type d'étape",
+      "milestoneType": "Type de jalon",
       "minutes": "minutes",
       "hours": "heures",
       "days": "jours",
@@ -10209,7 +10209,7 @@
       "aiTag": "Étiquette IA",
       "tagAll": "Étiqueter tout",
       "aiAutoTag": "Étiquette automatique",
-      "tagActions": "Actions des balises",
+      "tagActions": "Actions des étiquettes",
       "startTagging": "Commencez à étiqueter",
       "selectEntityType": "Sélectionnez le type d'entité",
       "selectProject": "Sélectionnez un projet",
@@ -10220,9 +10220,9 @@
       }
     },
     "review": {
-      "title": "Suggestions de balises pour les avis",
+      "title": "Suggestions d'étiquettes pour les avis",
       "description": "Cliquez sur les étiquettes pour les autoriser ou les désactiver. Double-cliquez pour modifier le nom d'une étiquette.",
-      "selectEntity": "Sélectionnez une entité pour afficher les suggestions de balises.",
+      "selectEntity": "Sélectionnez une entité pour afficher les suggestions d'étiquettes.",
       "noTagsSelected": "Aucune étiquette sélectionnée",
       "footerSummary": "{assignCount, plural, one {# étiquette sera attribuée} other {# étiquettes seront attribuées}}, {newCount, plural, one {# nouvelle étiquette sera créée} other {# nouvelles étiquettes seront créées}}",
       "footerAssignCount": "{assignCount, plural, one {# étiquette sera attribuée} other {# étiquettes seront attribuées}}",
@@ -10231,18 +10231,18 @@
       "applying": "Candidature...",
       "applySuccess": "{tagCount, plural, one {# étiquette appliquée} other {# étiquettes appliquées}} à {entityCount, plural, one {# entité} other {# entités}}",
       "applySuccessNewTags": "{tagCount, plural, one {# étiquette appliquée} other {# étiquettes appliquées}} à {entityCount, plural, one {# entité} other {# entités}}, {newCount, plural, one {# nouvelle étiquette créée} other {# nouvelles étiquettes créées}}",
-      "applyError": "Impossible d'appliquer les balises. Veuillez réessayer.",
-      "suggestedTags": "Suggestions de balises",
+      "applyError": "Impossible d'appliquer les étiquettes. Veuillez réessayer.",
+      "suggestedTags": "Suggestions d'étiquettes",
       "noSuggestions": "L'IA n'a pu générer aucune étiquette.",
       "alreadyApplied": "Déjà postulé",
       "filterEntities": "Entités de filtrage...",
       "noEntitiesMatch": "Aucun résultat ne correspond à votre recherche.",
-      "tagCount": "{count, plural, one {# balise} other {# balises}}",
+      "tagCount": "{count, plural, one {# étiquette} other {# étiquettes}}",
       "noTags": "aucun",
       "failed": "Échoué",
       "analysisFailed": "Impossible d'analyser cette entité",
       "responseTruncated": "Réponse tronquée — augmentez le nombre maximal de jetons de sortie dans les paramètres LLM",
-      "tooltipExisting": "Balise existante",
+      "tooltipExisting": "Étiquette existante",
       "tooltipNew": "Nouvelle étiquette — sera créée",
       "tooltipAssign": "Attribuer une étiquette existante",
       "toggleFailed": "Afficher/masquer les entités défaillantes",
@@ -10259,13 +10259,13 @@
       "failed": "L'analyse a échoué"
     },
     "wizard": {
-      "description": "L'IA analysera l'ensemble des cas de test, des exécutions de test et des sessions de votre projet afin de suggérer des balises pertinentes en fonction de leur contenu.",
+      "description": "L'IA analysera l'ensemble des cas de test, des exécutions de test et des sessions de votre projet afin de suggérer des étiquettes pertinentes en fonction de leur contenu.",
       "entityLine": "{count, number} {type}",
       "startAnalysis": "Lancer l'analyse",
-      "untaggedOnly": "Analyser uniquement les enregistrements sans balises existantes",
-      "allowNewTags": "Autoriser la création de nouvelles balises",
+      "untaggedOnly": "Analyser uniquement les enregistrements sans étiquettes existantes",
+      "allowNewTags": "Autoriser la création de nouvelles étiquettes",
       "noLlmConfigured": "(Aucun LLM configuré)",
-      "analyzingDescription": "L'IA analyse vos entités et génère des suggestions de balises. Cela peut prendre quelques instants."
+      "analyzingDescription": "L'IA analyse vos entités et génère des suggestions d'étiquettes. Cela peut prendre quelques instants."
     },
     "entityDetail": {
       "customFields": "Champs personnalisés",
@@ -10472,7 +10472,7 @@
     "runProgressDismissAria": "Rejeter les progrès",
     "runProgressComplete": "{total, plural, =1 {# itération générée} other {# itérations générées}} pour \"{runName}\"",
     "runProgressFailedToast": "Impossible de générer les itérations pour «{runName}». {reason}",
-    "runProgressNavAway": "Montrez-moi le reste du parcours",
+    "runProgressNavAway": "Montrez-moi le reste de l'exécution",
     "runGeneratingHeading": "Génération d'itérations…",
     "runGeneratingHelper": "Cela peut prendre quelques minutes.",
     "iterationsHeaderCount": "{complete}/{total}",
@@ -10554,7 +10554,7 @@
     "assignSharedDescription": "Choisissez un jeu de données partagé, définissez le mode de suivi des versions et associez les colonnes aux paramètres de ce cas.",
     "assignSharedHasOwnerInfo": "Ce cas utilise un jeu de données local. L'enregistrement créera une référence à un jeu de données partagé, mais l'itération continuera d'utiliser les lignes locales jusqu'à ce que vous supprimiez le jeu de données local.",
     "assignSharedSection1": "1. Choisir l'ensemble de données",
-    "assignSharedSection2": "2. Version à broches",
+    "assignSharedSection2": "2. Épingler la version",
     "assignSharedSection3": "3. Associer les colonnes aux paramètres",
     "assignSharedDatasetPlaceholder": "Sélectionnez un jeu de données partagé…",
     "assignSharedNoDatasets": "Aucun jeu de données partagé n'existe encore dans ce projet. Veuillez en créer un dans les paramètres du projet avant de l'attribuer.",

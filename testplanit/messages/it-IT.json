@@ -99,11 +99,11 @@
       "addingResultsToMultiple": "Aggiunta dei risultati a {count, plural, one {# caso di test} other {# casi di test}}",
       "addedToTestRun": "Aggiunto al test di esecuzione",
       "addedToTestRunDescription": "Il caso di test è stato aggiunto al Test Run.",
-      "noAvailableTestRuns": "Tutti i test attivi includono già questo caso di test.",
+      "noAvailableTestRuns": "Tutte le esecuzioni di test attive includono già questo caso di test.",
       "resultUpdateError": "Impossibile aggiornare il risultato del test",
       "resultDeleteError": "Impossibile eliminare il risultato del test",
       "selectStatus": "Seleziona Stato",
-      "addToTestRun": "Aggiungi al test",
+      "addToTestRun": "Aggiungi all'esecuzione di test",
       "status": "Stato",
       "resultDetailsPlaceholder": "Inserisci i dettagli del risultato...",
       "select": "Selezionare",
@@ -144,7 +144,7 @@
           "description": "Carica i file dei risultati dei test per importarli in una nuova esecuzione del test. Supporta i formati JUnit, TestNG, xUnit, NUnit, MSTest, Mocha e Cucumber.",
           "testRun": {
             "label": "Esecuzione di prova",
-            "placeholder": "Seleziona un test"
+            "placeholder": "Seleziona un'esecuzione di test"
           },
           "file": {
             "label": "File dei risultati dei test"
@@ -170,7 +170,7 @@
           "progress": {
             "initializing": "Inizializzazione dell'importazione...",
             "validating": "Convalida dei dati di input...",
-            "creatingRun": "Creazione di un test...",
+            "creatingRun": "Creazione di un'esecuzione di test...",
             "fetchingTemplate": "Recupero dei dati del modello in corso...",
             "countingTests": "Elaborazione di {count} casi di test da {files} file...",
             "parsingFile": "Analisi del file {current} di {total}...",
@@ -295,7 +295,7 @@
       "access": "Accesso",
       "avatar": "Avatar",
       "steps": "Passi",
-      "step": "Fare un passo",
+      "step": "Passaggio",
       "expectedResult": "Risultato atteso",
       "notes": "Note",
       "estimate": "Stima",
@@ -510,7 +510,7 @@
         "title": "Esecuzione del test completo",
         "description": "Sei sicuro di voler completare questa prova?",
         "allCasesCompletedDescription": "Ogni caso di test in questa esecuzione ora ha un risultato. Desideri completare questa esecuzione di test?",
-        "warning": "Una volta completato, il test non potrà essere modificato.",
+        "warning": "Una volta completata, l'esecuzione di test non potrà essere modificata.",
         "completing": "Completamento in corso...",
         "apple": {
           "title": "Configurare l'accesso Apple",
@@ -557,8 +557,8 @@
       "createdItem": "{item} creato con successo",
       "createdDescription": "L'esecuzione del test è stata creata ed è ora visibile nell'elenco Esecuzioni del test.",
       "createError": "Si è verificato un errore sconosciuto. Riprova.",
-      "emptyActive": "Nessun test attivo",
-      "emptyCompleted": "Nessun test completato",
+      "emptyActive": "Nessuna esecuzione di test attiva",
+      "emptyCompleted": "Nessuna esecuzione di test completata",
       "projectUpdated": "Progetto aggiornato con successo",
       "projectUpdateError": "Si è verificato un errore durante l'aggiornamento del progetto",
       "noProjects": "Nessun progetto trovato"
@@ -604,7 +604,7 @@
       "enterUrl": "Inserisci URL",
       "enterUrlPattern": "Inserisci modello URL...",
       "domainExample": "esempio.com",
-      "issueIdExample": "NUMERO 123",
+      "issueIdExample": "PROBLEMA 123",
       "selectPriorityValuesOrEmpty": "Seleziona i valori di priorità (oppure lascia vuoto per tutte le priorità)"
     },
     "errors": {
@@ -872,7 +872,7 @@
     "empty": {
       "description": "Nessuna descrizione",
       "documentation": "Nessuna documentazione",
-      "childMilestones": "Nessuna pietra miliare per i bambini",
+      "childMilestones": "Nessun traguardo figlio",
       "sessions": "Nessuna sessione",
       "activeSessions": "Nessuna sessione attiva",
       "completedSessions": "Nessuna sessione completata",
@@ -1368,7 +1368,7 @@
       },
       "menu": {
         "repository": "Deposito",
-        "runs": "Test e risultati"
+        "runs": "Esecuzioni di test e risultati"
       },
       "dropdown": {
         "selectProject": "Seleziona un progetto",
@@ -1656,7 +1656,7 @@
         "outboundCreateSubscriptionsTitle": "Abbonamenti",
         "outboundCreateSubscriptionsHelp": "Scegli quali eventi vengono inviati a questa destinazione. Potrai modificarli in seguito.",
         "outboundSubsTestRunsAndSessions": "Prove e sessioni",
-        "outboundSubsTestRuns": "Prove di funzionamento",
+        "outboundSubsTestRuns": "Esecuzioni di test",
         "outboundSubsSessions": "Sessioni",
         "outboundSubsScimUsers": "Utenti SCIM",
         "outboundSubsScimGroups": "Gruppi SCIM",
@@ -1685,7 +1685,7 @@
         "events": {
           "testRunCreated": "Esecuzione di prova creata",
           "testRunStateChanged": "Lo stato di esecuzione del test è cambiato",
-          "testRunCompleted": "Test completato",
+          "testRunCompleted": "Esecuzione di test completata",
           "testRunDuplicated": "Esecuzione del test duplicata",
           "testRunResultAdded": "Risultato del test aggiunto",
           "sessionCreated": "Sessione creata",
@@ -2206,7 +2206,7 @@
           "generalDescription": "L'identità e i valori predefiniti del progetto: il codice utilizzato nelle chiavi di record, il modello con cui iniziano i nuovi casi di test e le sessioni, e se il progetto ha un'area Requisiti.",
           "reviews": "Recensioni",
           "reviewsDescription": "Come la Revisione e l'Approvazione si applicano a questo progetto: se le transizioni che richiedono revisione sono bloccate da una richiesta approvata, e quanto tempo ha un revisore per annullare una decisione.",
-          "runs": "Prove di corsa",
+          "runs": "Esecuzioni di test",
           "runsDescription": "Cosa può rientrare in un'esecuzione di test e come le esecuzioni vengono mantenute ordinate: escludendo i casi in bozza, bloccando la composizione di un'esecuzione una volta iniziata l'esecuzione, applicando i casi in base alle loro dipendenze, e chiudendo le esecuzioni automatizzate che hanno smesso di segnalare.",
           "results": "Risultati",
           "resultsDescription": "Governance per i risultati registrati: una giustificazione quando un risultato cambia, un problema collegato su errori, e quanto tempo rimane modificabile un risultato in loco."
@@ -2262,7 +2262,7 @@
         "excludeNotStarted": {
           "label": "Escludi i casi di bozza dalle esecuzioni di prova",
           "description": "Quando questa opzione è abilitata, i casi di test nello stato \"Non avviato\" del flusso di lavoro sono nascosti dal selettore \"Aggiungi casi\" e non possono essere aggiunti a un'esecuzione. Se un caso esistente viene riportato allo stato \"Non avviato\" (ad esempio, a seguito di un rifiuto da parte del team di revisione e approvazione), verrà rimosso da qualsiasi esecuzione aperta, a meno che non abbia già un risultato registrato; in tal caso, rimane nell'esecuzione ma diventa di sola lettura.",
-          "enabledToast": "I casi di bozza saranno esclusi dalle corse",
+          "enabledToast": "I casi di bozza saranno esclusi dalle esecuzioni",
           "disabledToast": "Ora è possibile aggiungere casi di bozza alle esecuzioni",
           "saveError": "Impossibile aggiornare l'impostazione di esclusione del caso di bozza.",
           "skippedToast": "{count, plural, =1 {1 caso di bozza è stato saltato perché si trova nello stato Non avviato} other {# casi di bozza sono stati saltati perché si trovano nello stato Non avviato}}"
@@ -2525,7 +2525,7 @@
       "description": "Tutte le modifiche registrate per questo traguardo."
     },
     "fields": {
-      "parent": "Traguardo dei genitori",
+      "parent": "Traguardo padre",
       "dueDate": "Scadenza",
       "automaticCompletion": "Completamento automatico alla data di scadenza",
       "notifyDaysBefore": "Avvisare con qualche giorno di anticipo rispetto alla data di scadenza.",
@@ -2533,7 +2533,7 @@
       "dueDateNotifications": "Notifiche di scadenza"
     },
     "labels": {
-      "childMilestones": "Tappe fondamentali del bambino"
+      "childMilestones": "Traguardi figli"
     },
     "placeholders": {
       "description": "Inserisci la descrizione della pietra miliare...",
@@ -2838,7 +2838,7 @@
       "noRecentResults": "Nessun risultato di sessione registrato di recente.",
       "completionTrendTitle": "Tendenza al completamento",
       "completionTrendDescription": "Sessioni completate al mese.",
-      "noCompletedRuns": "Nessuna corsa completata trovata negli ultimi 6 mesi.",
+      "noCompletedRuns": "Nessuna esecuzione completata trovata negli ultimi 6 mesi.",
       "completionTrendTitle6Mo": "Tendenza al completamento (ultimi 6 mesi)",
       "noCompletedSessions6Mo": "Nessuna sessione completata negli ultimi 6 mesi."
     },
@@ -3287,7 +3287,7 @@
       "noText": "Nessun testo",
       "hasLink": "Ha un collegamento",
       "noLink": "Nessun collegamento",
-      "hasSteps": "Ha dei gradini",
+      "hasSteps": "Ha dei passaggi",
       "noSteps": "Nessun passo",
       "unchecked": "Non selezionato",
       "linkedCases": "Casi collegati",
@@ -3418,7 +3418,7 @@
       "testResultHistoryDescription": "Visualizza la cronologia dei risultati dei test per questo caso di test",
       "viewElapsedTimeReport": "Report tempo trascorso",
       "noTestResults": "Nessun risultato di test trovato per questo caso di test",
-      "unknownRun": "Corsa sconosciuta",
+      "unknownRun": "Esecuzione sconosciuta",
       "currentRunBadge": "Attuale",
       "currentRunTooltip": "L'esecuzione del test che stai visualizzando",
       "attempt": "Tentativo",
@@ -3704,8 +3704,8 @@
         "plainText": "Testo normale"
       },
       "rowMode": {
-        "label": "Righe per cassa",
-        "single": "Fila singola per cassa",
+        "label": "Righe per caso di test",
+        "single": "Fila singola per caso di test",
         "multi": "Più righe per passaggio"
       },
       "comingSoon": "Prossimamente",
@@ -3790,9 +3790,9 @@
       "caseDetailsError": "Impossibile caricare i dettagli del caso.",
       "sourceLabel": "Fonte",
       "fieldValuesLabel": "Valori di campo",
-      "lastRunLabel": "Ultima corsa",
+      "lastRunLabel": "Ultima esecuzione",
       "noFieldValues": "Nessun valore di campo",
-      "noLastRun": "Non correre mai",
+      "noLastRun": "Mai eseguito",
       "stepExpectedResult": "{step} → {result}",
       "runStatusDate": "{status} — {date}",
       "noFolder": "Nessuna cartella",
@@ -4308,7 +4308,7 @@
       "filterAllStatuses": "Tutti gli stati",
       "filterAllEntityTypes": "Tutti i tipi di entità",
       "filterEntityTypeCase": "Casi di prova",
-      "filterEntityTypeRun": "Prove di corsa",
+      "filterEntityTypeRun": "Esecuzioni di test",
       "filterAllProjects": "Tutti i progetti",
       "actionRevert": "Annulla decisione",
       "revertedBadge": "Annullato",
@@ -4546,11 +4546,11 @@
     "summary": {
       "title": "Riepilogo dell'esecuzione del test",
       "description": "Visualizza il riepilogo dell'esecuzione del test",
-      "activeRunsAndEstTime": "Corse attive e tempo stimato",
-      "activeRunsLabel": "Corre",
+      "activeRunsAndEstTime": "Esecuzioni attive e tempo stimato",
+      "activeRunsLabel": "Esecuzioni",
       "totalEstTime": "Tempo stimato totale",
       "responsibleUsers": "Utenti responsabili",
-      "allActiveRuns": "Tutte le corse attive",
+      "allActiveRuns": "Tutte le esecuzioni attive",
       "recentResultsTitle": "Risultati manuali recenti",
       "recentResultsDescription": "Visualizza i risultati recenti del test eseguito",
       "recentAutomatedResultsTitle": "Risultati automatizzati recenti",
@@ -4607,7 +4607,7 @@
       "placeholder": "Esecuzione del test del filtro..."
     },
     "empty": {
-      "noMatchingCompleted": "Nessun test completato corrisponde al filtro.",
+      "noMatchingCompleted": "Nessuna esecuzione di test completata corrisponde al filtro.",
       "noMatchingActive": "Nessuna esecuzione di test attiva corrisponde ai tuoi filtri."
     },
     "milestoneGroup": {
@@ -4717,7 +4717,7 @@
         "description": "Nessun caso di test corrisponde alle modifiche. Fissa i casi ai file modificati in modo che l'analisi successiva li trovi."
       },
       "reasons": {
-        "pin": "Spilla",
+        "pin": "Pin",
         "issue": "Problema",
         "path": "Parola chiave",
         "history": "Cronologia",
@@ -4932,14 +4932,14 @@
           "repository_case_steps": "Passaggi del caso del repository",
           "repository_case_tags": "Tag dei casi del repository",
           "milestones": "Traguardi",
-          "runs": "Prove di corsa",
+          "runs": "Esecuzioni di test",
           "run_tests": "Casi di esecuzione del test",
           "run_results": "Risultati della prova",
-          "run_result_steps": "Risultati della fase di esecuzione del test",
+          "run_result_steps": "Risultati dei passaggi dell'esecuzione del test",
           "run_links": "collegamenti alle esecuzioni di prova",
           "run_tags": "Tag di esecuzione del test",
           "issues": "Problemi",
-          "milestone_issues": "Questioni fondamentali",
+          "milestone_issues": "Problemi del traguardo",
           "repository_case_issues": "Problemi relativi al caso del repository",
           "run_issues": "Problemi durante l'esecuzione del test",
           "run_result_issues": "Problemi relativi ai risultati dell'esecuzione del test",
@@ -5442,7 +5442,7 @@
       },
       "complete": {
         "title": "Progetto completo",
-        "description": "Questa azione completerà il progetto e impedirà l'aggiunta di ulteriori test."
+        "description": "Questa azione completerà il progetto e impedirà l'aggiunta di ulteriori esecuzioni di test."
       },
       "add": {
         "button": "Aggiungi progetto",
@@ -5699,7 +5699,7 @@
         "groups": {
           "customFields": "Campi personalizzati"
         },
-        "stepsBlock": "Blocco dei gradini"
+        "stepsBlock": "Blocco dei passaggi"
       }
     },
     "users": {
@@ -6137,7 +6137,7 @@
         "final": "Finale",
         "system": "Stato del sistema",
         "forTestCase": "Per il caso di prova",
-        "forTestRun": "Per la prova di funzionamento",
+        "forTestRun": "Per l'esecuzione di test",
         "forSession": "Per la sessione",
         "color": "Colore"
       }
@@ -6486,7 +6486,7 @@
     "trash": {
       "itemTypes": {
         "projectLinks": "Link al progetto",
-        "milestoneLinks": "Link importanti",
+        "milestoneLinks": "Link al traguardo",
         "icons": "Icone",
         "fieldOptions": "Opzioni campo",
         "configCategories": "Categorie di configurazione",
@@ -6495,7 +6495,7 @@
         "repositoryFolders": "Cartelle del repository",
         "repositoryCaseLinks": "Collegamenti ai casi del repository",
         "repositoryCaseVersions": "Versioni del caso del repository",
-        "testRunStepResults": "Risultati della fase di esecuzione del test",
+        "testRunStepResults": "Risultati dei passaggi dell'esecuzione del test",
         "issueConfigs": "Configurazioni dei problemi",
         "sharedStepGroups": "Gruppi di passi condivisi",
         "dataSets": "Set di dati",
@@ -7529,7 +7529,7 @@
     "searchPlaceholder": "Problemi di ricerca...",
     "searchIssues": "Problemi di ricerca",
     "searchIssuesDescription": "Cerca problemi interni da collegare a questo elemento.",
-    "searchExternalDescription": "Cerca {provider} numeri da collegare a questo elemento.",
+    "searchExternalDescription": "Cerca problemi {provider} da collegare a questo elemento.",
     "error": "Errore durante il caricamento dei problemi",
     "errorDescription": "Impossibile caricare i problemi. Riprova.",
     "selectIssues": "Seleziona problemi",
@@ -7975,7 +7975,7 @@
       "Milestones": "Traguardi",
       "TestCaseRepository": "Archivio dei casi di test",
       "TestCaseRestrictedFields": "Campi riservati del caso di prova",
-      "TestRuns": "Prove di funzionamento",
+      "TestRuns": "Esecuzioni di test",
       "ClosedTestRuns": "Esecuzioni di test chiuse",
       "TestRunResults": "Risultati del test",
       "TestRunResultRestrictedFields": "Campi riservati del risultato dell'esecuzione del test",
@@ -8082,7 +8082,7 @@
     "projectAiModels": "## Modelli IA\nScegli il modello di IA e la configurazione dei prompt che questo progetto utilizza per le sue funzionalità basate sull'IA, come la generazione di casi di test e l'assegnazione automatica dei tag.",
     "projectQuickScript": "## QuickScript\nCollega un repository di codice in modo che questo progetto possa generare casi di test dai tuoi file di test automatizzati, scegliendo quale branch e percorsi includere.",
     "projectParameters": "## Parametri dei casi di test\nConfigura i test basati sui dati di questo progetto: nomi delle proprietà di iterazione JUnit per i risultati importati e set di dati riutilizzabili per i casi parametrizzati.",
-    "projectAdvanced": "## Avanzate\nImpostazioni per progetto, raggruppate in Generale, Recensioni, Prove di corsa e Risultati. Apri l'icona ? di un'impostazione per sapere cosa fa. Le opzioni si salvano non appena vengono modificate; il codice del progetto e le impostazioni della finestra temporale si salvano con il pulsante Salva dedicato.",
+    "projectAdvanced": "## Avanzate\nImpostazioni per progetto, raggruppate in Generale, Recensioni, Esecuzioni di test e Risultati. Apri l'icona ? di un'impostazione per sapere cosa fa. Le opzioni si salvano non appena vengono modificate; il codice del progetto e le impostazioni della finestra temporale si salvano con il pulsante Salva dedicato.",
     "projectShares": "## Gestisci condivisioni\nLink condivisibili ai report di questo progetto, ciascuno con il proprio livello di accesso: pubblico, con accesso richiesto o protetto da password. Revocare un link ne interrompe l'accesso.",
     "projectAccess": "## Accesso\nOgni utente che può aprire questo progetto e il ruolo che decide cosa può fare qui. Il ruolo di un utente proviene dalla sua impostazione di accesso al progetto, da un gruppo a cui appartiene o dall'accesso predefinito del progetto, in questo ordine. Gli amministratori di sistema e gli amministratori di progetto hanno accesso completo indipendentemente dal ruolo. L'accesso viene modificato da un amministratore in Amministrazione › Progetti › Modifica progetto.",
     "groups": "## Gruppi\nI gruppi permettono di assegnare l'accesso ai progetti e i ruoli a più utenti contemporaneamente. Aggiungi membri direttamente, oppure associa un gruppo dal tuo provider di identità.",
@@ -8579,7 +8579,7 @@
           "content": "Accedi a questa visita guidata in qualsiasi momento oppure consulta la nostra documentazione completa per un aiuto dettagliato."
         },
         "notifications": {
-          "content": "Rimani informato sul completamento dei test, sugli aggiornamenti dei problemi e sulle attività del team. Configura le preferenze nelle impostazioni del tuo account."
+          "content": "Rimani informato sul completamento delle esecuzioni di test, sugli aggiornamenti dei problemi e sulle attività del team. Configura le preferenze nelle impostazioni del tuo account."
         },
         "account": {
           "title": "Menu Account",
@@ -8748,7 +8748,7 @@
           "content": "Organizza i casi di test in cartelle con campi, passaggi e priorità personalizzati. Esplora le cartelle di esempio per vedere come sono strutturati i casi."
         },
         "repositoryPanels": {
-          "title": "Cartelle e custodie",
+          "title": "Cartelle e casi di test",
           "content": "Il pannello di sinistra mostra le cartelle. Fai clic su una cartella per visualizzare i relativi casi di test. Ogni caso contiene passaggi, descrizioni e riferimenti a passaggi condivisi."
         },
         "repositoryCases": {
@@ -8764,8 +8764,8 @@
           "content": "Ogni gruppo contiene una serie di passaggi ordinati. Fate riferimento a questi passaggi in qualsiasi caso di test per mantenerli coerenti e conformi al principio DRY (Don't Repeat Yourself)."
         },
         "testRuns": {
-          "title": "Prove di funzionamento",
-          "content": "Crea delle sessioni di test per eseguire i casi e registra i risultati. Assegna le sessioni alle tappe fondamentali e monitora l'andamento (superato/non superato)."
+          "title": "Esecuzioni di test",
+          "content": "Crea delle esecuzioni di test per eseguire i casi e registra i risultati. Assegna le esecuzioni alle tappe fondamentali e monitora l'andamento (superato/non superato)."
         },
         "testRunsPage": {
           "title": "Risultati della prova",
@@ -9008,7 +9008,7 @@
         }
       },
       "flakyTests": {
-        "consecutiveRuns": "Ultime corse consecutive",
+        "consecutiveRuns": "Ultime esecuzioni consecutive",
         "consecutiveRunsHelp": "Numero di esecuzioni di test recenti da analizzare (5-30). I risultati con stato \"non testato\" sono esclusi.",
         "flipThreshold": "Ribaltazioni minime",
         "flipThresholdHelp": "Numero minimo di transizioni di successo/fallimento richiesto per essere considerato inaffidabile.",
@@ -9094,7 +9094,7 @@
         "casesToRank": "Casi da classificare",
         "casesToRankHelp": "Quanti casi di test manuali inviare al LLM per la classificazione. Un numero maggiore offre una copertura più ampia, ma il LLM impiega proporzionalmente più tempo (intervallo: 5-100; i modelli di pensiero possono impiegare diversi minuti per i valori più elevati).",
         "selectionStrategy": "Strategia di selezione",
-        "selectionStrategyHelp": "Quale strategia decide quali casi manuali inviare quando il progetto ha più del limite per generazione. **Più eseguiti** (impostazione predefinita) seleziona i casi che sono stati eseguiti più frequentemente nelle sessioni di test: il miglior ROI per l'automazione. **Più instabili per primi** seleziona i casi i cui risultati di superamento/fallimento cambiano più spesso: candidati ideali per un oracolo di automazione deterministico. **Più lunghi da eseguire** seleziona i casi con la previsione di esecuzione manuale più alta (derivata dal tester; si basa sulla stima originale): l'automazione recupera direttamente la maggior parte del tempo del tester. **Più vecchi per primi** seleziona i casi manuali di lunga durata (stabili, maturi). **Più recenti per primi** seleziona i casi creati più di recente. **Casuale** è un campione imparziale. Sono idonei solo i casi manuali il cui stato del flusso di lavoro è *In corso* o *Completato*.",
+        "selectionStrategyHelp": "Quale strategia decide quali casi manuali inviare quando il progetto ha più del limite per generazione. **Più eseguiti** (impostazione predefinita) seleziona i casi che sono stati eseguiti più frequentemente nelle esecuzioni di test: il miglior ROI per l'automazione. **Più instabili per primi** seleziona i casi i cui risultati di superamento/fallimento cambiano più spesso: candidati ideali per un oracolo di automazione deterministico. **Più lunghi da eseguire** seleziona i casi con la previsione di esecuzione manuale più alta (derivata dal tester; si basa sulla stima originale): l'automazione recupera direttamente la maggior parte del tempo del tester. **Più vecchi per primi** seleziona i casi manuali di lunga durata (stabili, maturi). **Più recenti per primi** seleziona i casi creati più di recente. **Casuale** è un campione imparziale. Sono idonei solo i casi manuali il cui stato del flusso di lavoro è *In corso* o *Completato*.",
         "strategies": {
           "most_executed": "Più eseguite (con il ROI più elevato)",
           "flakiest_first": "Il più instabile per primo (promosso/bocciato)",
@@ -9110,7 +9110,7 @@
         "sourcedFromNewestN": "I primi {ranked} casi manuali idonei su {total} tramite {strategy}",
         "sourcedFromAll": "{total, plural, one {# caso manuale idoneo classificato} =2 {entrambi i casi manuali idonei classificati} other {tutti i # casi manuali idonei classificati}} tramite {strategy}",
         "metric": {
-          "executions": "{count} corse",
+          "executions": "{count} esecuzioni",
           "forecast": "{value} previsione",
           "forecastUnset": "Nessuna previsione",
           "flakiness": "Capovolgimenti {value}%",
@@ -9131,7 +9131,7 @@
             "mostExecutedWithCount": "Eseguito {count, plural, =1 {1 volta} other {# volte}} manualmente durante le esecuzioni di test di questo progetto: automatizzandolo si recupera direttamente il tempo del tester in ogni esecuzione futura.",
             "mostExecutedNone": "Nessuna cronologia di esecuzione ancora disponibile: l'euristica \"Più eseguiti\" non ha fornito alcun segnale per confrontare questo caso con gli altri.",
             "flakiestWithScore": "Instabilità {percent}% (i risultati di superamento/fallimento si invertono in {description} delle esecuzioni) — i test manuali instabili sprecano tempo del tester ad ogni esecuzione e traggono maggior beneficio da un oracolo di automazione deterministico.",
-            "flakiestNone": "Nessun risultato variabile finora: l'euristica Flakiest First non è ancora in grado di misurare il passaggio da superato a non superato in questo caso.",
+            "flakiestNone": "Nessun risultato variabile finora: l'euristica Flakiest First non è ancora in grado di misurare il passaggio da superato a non superato in questo caso di test.",
             "longestWithDuration": "Previsione dell'esecuzione manuale {duration} — l'automazione dei test manuali di lunga durata recupera una quantità di tempo del tester proporzionalmente maggiore ad ogni esecuzione.",
             "longestNone": "Nessuna previsione o stima impostata: l'euristica Longest to Execute non dispone di dati sulla durata per questo caso.",
             "oldest": "Creato {age} — i casi manuali di lunga data tendono a rappresentare comportamenti maturi e stabili, sicuri da automatizzare senza necessità di modifiche.",
@@ -9167,7 +9167,7 @@
           "regenerate": "Rigenerare"
         },
         "status": {
-          "running": "Corsa",
+          "running": "In esecuzione",
           "complete": "Completare",
           "failed": "Fallito"
         },
@@ -9197,7 +9197,7 @@
       },
       "issueTestCoverage": {
         "viewMode": "Modalità di visualizzazione",
-        "summaryView": "Riepilogo (per numero)",
+        "summaryView": "Riepilogo (per problema)",
         "detailView": "Dettagli (per caso di test)",
         "issue": "Problema",
         "testCase": "Caso di prova",
@@ -9212,7 +9212,7 @@
         "noData": "Nessun problema riscontrato con i casi di test collegati",
         "noIssuesNeedingAttention": "Tutti i problemi sono stati testati con successo: ottimo lavoro!",
         "stats": {
-          "totalIssues": "Numero totale di emissioni",
+          "totalIssues": "Numero totale di problemi",
           "issuesWithFailures": "Con guasti",
           "issuesWithFailuresTooltip": "Problemi con almeno un caso di test fallito",
           "issuesWithUntested": "Con non testato",
@@ -9871,7 +9871,7 @@
       "title": "Importa passaggi condivisi",
       "fields": {
         "order": "Ordine",
-        "stepNumber": "Fare un passo #",
+        "stepNumber": "Passaggio #",
         "stepContent": "Contenuto del passaggio",
         "expectedResultContent": "Contenuto del risultato atteso",
         "combinedStepData": "Dati combinati dei passaggi",
@@ -10306,7 +10306,7 @@
     "configureButtonSet": "Parametri ({count})",
     "hasParametersBadgeTooltip": "Ha passaggi parametrizzati",
     "sheetTitle": "Configura i parametri",
-    "sheetDescription": "Dichiarare i parametri denominati da utilizzare nelle fasi di test per questo caso di test e (facoltativamente) allegare un set di dati di valori da utilizzare durante l'esecuzione.",
+    "sheetDescription": "Dichiarare i parametri denominati da utilizzare nei passaggi di test per questo caso di test e (facoltativamente) allegare un set di dati di valori da utilizzare durante l'esecuzione.",
     "tabParameters": "Parametri",
     "tabDataset": "Set di dati",
     "tabDatasetDisabledTooltip": "Aggiungi almeno un parametro prima di modificare le righe del dataset.",
@@ -10464,7 +10464,7 @@
     "hardRefuseSuggestionsHeading": "Azioni suggerite",
     "hardRefuseSuggestion1": "ridurre le righe del dataset relative al caso che contribuisce maggiormente.",
     "hardRefuseSuggestion2": "Deselezionare una o più configurazioni.",
-    "hardRefuseSuggestion3": "Suddividi il lavoro in più sessioni di prova.",
+    "hardRefuseSuggestion3": "Suddividi il lavoro in più esecuzioni di test.",
     "softConfirmTitle": "Genera {n, plural, =1 {# iterazione} other {# iterazioni}}?",
     "softConfirmDescription": "{n, plural, =1 {# iterazione} other {# iterazioni}} da {cases, plural, =1 {# caso} other {# casi}} × {configs, plural, =1 {# configurazione} other {# configurazioni}}.",
     "softConfirmGo": "Genera iterazioni",
@@ -10472,7 +10472,7 @@
     "runProgressDismissAria": "Ignora progressi",
     "runProgressComplete": "{total, plural, =1 {Generata # iterazione} other {Generate # iterazioni}} per \"{runName}\"",
     "runProgressFailedToast": "Impossibile generare iterazioni per \"{runName}\". {reason}",
-    "runProgressNavAway": "Mostrami il resto della corsa",
+    "runProgressNavAway": "Mostrami il resto dell'esecuzione",
     "runGeneratingHeading": "Generazione delle iterazioni…",
     "runGeneratingHelper": "Potrebbero essere necessari alcuni minuti.",
     "iterationsHeaderCount": "{complete}/{total}",
@@ -10498,7 +10498,7 @@
     "iterationPrevAria": "Iterazione precedente",
     "iterationNextAria": "Iterazione successiva",
     "iterationResultRowIcon": "Risultato dell'iterazione parametrizzata",
-    "iterationResultRunDetails": "Dettagli della corsa",
+    "iterationResultRunDetails": "Dettagli dell'esecuzione",
     "iterationResultLabelHeading": "Iterazione",
     "iterationResultNoValue": "(nessun valore)",
     "iterationValuesLabel": "Valori:",
@@ -10543,8 +10543,8 @@
     "datasetSharedVersionFollowLatest": "v{version} (segui gli ultimi)",
     "datasetSharedEditAssignment": "Modifica l'assegnazione",
     "datasetSharedReadOnly": "Nella visualizzazione condivisa, la modifica è disabilitata. Per apportare modifiche, utilizzare il dataset di origine.",
-    "datasetOwnerWinsLocal": "In questo caso sono presenti sia un dataset locale che un riferimento a un dataset condiviso. L'iterazione utilizza le righe locali. L'assegnazione condivisa viene conservata come riferimento e diventerà attiva se il dataset locale viene rimosso.",
-    "datasetOwnerWinsShared": "Questa vista mostra le righe del dataset condiviso a scopo di riferimento. L'iterazione in questo caso utilizza il dataset locale (visibile in Locale). Rimuovere il dataset locale per rendere questa assegnazione condivisa la sorgente dell'iterazione.",
+    "datasetOwnerWinsLocal": "In questo caso di test sono presenti sia un dataset locale che un riferimento a un dataset condiviso. L'iterazione utilizza le righe locali. L'assegnazione condivisa viene conservata come riferimento e diventerà attiva se il dataset locale viene rimosso.",
+    "datasetOwnerWinsShared": "Questa vista mostra le righe del dataset condiviso a scopo di riferimento. L'iterazione in questo caso di test utilizza il dataset locale (visibile in Locale). Rimuovere il dataset locale per rendere questa assegnazione condivisa la sorgente dell'iterazione.",
     "datasetViewSharedRef": "Visualizza il riferimento condiviso",
     "datasetSwitchToLocal": "Passa a Locale",
     "datasetSwitchToLocalTitle": "Passare alla modalità locale?",
@@ -10552,9 +10552,9 @@
     "datasetSwitchToLocalConfirm": "Rimuovere l'assegnazione condivisa",
     "assignSharedTitle": "Assegna il set di dati condiviso",
     "assignSharedDescription": "Seleziona un set di dati condiviso, scegli come vengono tracciate le versioni e associa le colonne ai parametri di questo caso.",
-    "assignSharedHasOwnerInfo": "In questo caso è presente un dataset locale. Il salvataggio creerà un riferimento al dataset condiviso, ma l'iterazione continuerà a utilizzare le righe locali finché non si rimuove il dataset locale.",
+    "assignSharedHasOwnerInfo": "In questo caso di test è presente un dataset locale. Il salvataggio creerà un riferimento al dataset condiviso, ma l'iterazione continuerà a utilizzare le righe locali finché non si rimuove il dataset locale.",
     "assignSharedSection1": "1. Scegli il set di dati",
-    "assignSharedSection2": "2. Versione con spilla",
+    "assignSharedSection2": "2. Fissa la versione",
     "assignSharedSection3": "3. Mappa le colonne ai parametri",
     "assignSharedDatasetPlaceholder": "Seleziona un set di dati condiviso…",
     "assignSharedNoDatasets": "In questo progetto non sono ancora presenti set di dati condivisi. Creane uno nelle impostazioni del progetto prima di assegnarlo.",
@@ -11076,7 +11076,7 @@
     },
     "metricGroups": {
       "CASE": "Risultati dei casi di test",
-      "RUN": "Prove di corsa",
+      "RUN": "Esecuzioni di test",
       "SESSION": "Sessioni",
       "MILESTONE": "Pietre miliari",
       "PROJECT": "Salute del progetto",
