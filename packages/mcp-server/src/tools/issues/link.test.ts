@@ -75,7 +75,7 @@ describe("registerIssuesLink", () => {
       data: [{ issueId: 7978, caseId: 101 }],
       skipDuplicates: true,
     });
-    const text = JSON.parse((result.content[0] as any).text);
+    const text = JSON.parse((result as { content: Array<{ text: string }> }).content[0].text);
     expect(text.linked).toBe(1);
     expect(text.entityIds).toEqual([101]);
   });
@@ -92,7 +92,7 @@ describe("registerIssuesLink", () => {
     expect(result.isError).toBeFalsy();
     const { body } = getCallArgs();
     expect(body.data as unknown[]).toHaveLength(9);
-    const text = JSON.parse((result.content[0] as any).text);
+    const text = JSON.parse((result as { content: Array<{ text: string }> }).content[0].text);
     expect(text.linked).toBe(9);
   });
 
@@ -131,7 +131,7 @@ describe("registerIssuesLink", () => {
       arguments: { issueId: 9999, entityType: "testCase", entityIds: [1] },
     });
     expect(result.isError).toBe(true);
-    expect((result.content[0] as any).text).toMatch(/Not found/);
+    expect((result as { content: Array<{ text: string }> }).content[0].text).toMatch(/Not found/);
   });
 
   // 6. Empty entityIds → schema validation error (isError, no zenstack call)
@@ -183,7 +183,7 @@ describe("registerIssuesLink by externalKey", () => {
     expect(mockResolve).toHaveBeenCalledWith(3, ["PROJ-1"], deps.env, undefined);
     const { body } = getCallArgs();
     expect(body.data).toEqual([{ issueId: 4242, caseId: 101 }]);
-    const text = JSON.parse((result.content[0] as any).text);
+    const text = JSON.parse((result as { content: Array<{ text: string }> }).content[0].text);
     expect(text.issueId).toBe(4242);
   });
 
@@ -301,7 +301,7 @@ describe("registerIssuesUnlink", () => {
     expect(model).toBe("repositoryCaseIssue");
     expect(op).toBe("deleteMany");
     expect(body).toEqual({ where: { issueId: 7978, caseId: { in: [101] } } });
-    const text = JSON.parse((result.content[0] as any).text);
+    const text = JSON.parse((result as { content: Array<{ text: string }> }).content[0].text);
     expect(text.unlinked).toBe(1);
   });
 
@@ -320,7 +320,7 @@ describe("registerIssuesUnlink", () => {
     expect(result.isError).toBeFalsy();
     const { body } = getCallArgs();
     expect(body).toEqual({ where: { issueId: 1, caseId: { in: [10, 11, 12] } } });
-    const text = JSON.parse((result.content[0] as any).text);
+    const text = JSON.parse((result as { content: Array<{ text: string }> }).content[0].text);
     expect(text.unlinked).toBe(3);
   });
 
