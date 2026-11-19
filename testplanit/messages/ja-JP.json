@@ -27,7 +27,7 @@
     "selectMultiple": "複数選択…",
     "searchUsers": "ユーザーを検索…",
     "searchGroups": "グループを検索…",
-    "searchCases": "{count, plural, =0 {症例を検索} one {症例を検索 #} other {症例を検索 #}}",
+    "searchCases": "{count, plural, =0 {テストケースを検索} one {テストケースを検索 #} other {テストケースを検索 #}}",
     "searchProjects": "{count, plural, =0 {プロジェクトを検索} one {プロジェクト#を検索} other {プロジェクト#を検索}}",
     "searchTags": "タグを検索…",
     "searchRuns": "{count, plural, =0 {テスト実行を検索} one {テスト実行#を検索} other {テスト実行#を検索}}",
@@ -113,7 +113,7 @@
       "selectFile": "ファイルを選択",
       "restore": "復元する",
       "purge": "パージ",
-      "previousCase": "前回の事例",
+      "previousCase": "前回のテストケース",
       "nextCase": "次のケース",
       "startTesting": "テストを開始する",
       "expandLeftPanel": "左パネルを展開",
@@ -143,7 +143,7 @@
           "title": "輸入テスト結果",
           "description": "テスト結果ファイルをアップロードして、新しいテスト実行にインポートします。JUnit、TestNG、xUnit、NUnit、MSTest、Mocha、Cucumberのフォーマットに対応しています。",
           "testRun": {
-            "label": "試運転",
+            "label": "テスト実行",
             "placeholder": "テスト実行を選択"
           },
           "file": {
@@ -599,12 +599,12 @@
       "filterByValue": "値で絞り込む...",
       "selectOperator": "演算子を選択",
       "searchIcons": "アイコンを検索...",
-      "stepCount": "歩数",
+      "stepCount": "ステップ数",
       "enterText": "テキストを入力してください...",
       "enterUrl": "URLを入力してください",
       "enterUrlPattern": "URLパターンを入力…",
       "domainExample": "example.com",
-      "issueIdExample": "第123号",
+      "issueIdExample": "問題-123",
       "selectPriorityValuesOrEmpty": "優先度を選択してください（すべて選択する場合は空欄のままにしてください）。"
     },
     "errors": {
@@ -701,7 +701,7 @@
       "repositoryDeleted": "リポジトリが削除されました",
       "failedToDeleteRepository": "リポジトリの削除に失敗しました",
       "permissionDenied": "このページにアクセスする権限がありません。",
-      "resultSubmitPermissionDenied": "この案件については、結果を提出できません。プロジェクト管理者に依頼して、あなたに割り当ててもらってください。",
+      "resultSubmitPermissionDenied": "このテストケースについては、結果を提出できません。プロジェクト管理者に依頼して、あなたに割り当ててもらってください。",
       "dependenciesNotPassed": "依存関係によってブロックされています",
       "dependenciesNotPassedDescription": "このテストケースは、{count, plural, =0 {依存している全てのケースが} =1 {依存しているケースが} other {依存している全て # つのケースが}}このラン内でパスするまで実行できません。",
       "justificationRequired": "正当化が必要",
@@ -872,7 +872,7 @@
     "empty": {
       "description": "説明なし",
       "documentation": "文書化なし",
-      "childMilestones": "子どもの成長の節目がない",
+      "childMilestones": "子マイルストーンがない",
       "sessions": "セッションなし",
       "activeSessions": "アクティブなセッションはありません",
       "completedSessions": "完了したセッションはありません",
@@ -1713,7 +1713,7 @@
           "webhookTest": "テストイベント"
         },
         "outboundSubsIssues": "問題",
-        "outboundSubsCases": "事例",
+        "outboundSubsCases": "テストケース",
         "outboundSubsSelectAll": "このセクションのすべてを選択してください",
         "outboundCreateSubmit": "ウェブフックを作成する",
         "outboundCreateSuccess": "送信用ウェブフックが作成されました。",
@@ -2516,7 +2516,7 @@
       "cellCapSuggestionFilterDates": "日付範囲を絞り込んでみてください。パラメータの反復処理がセル数の大部分を占めています。",
       "cellCapAxisCases": "テストケース: {count, number}",
       "cellCapAxisConfigs": "設定: {count, number}",
-      "cellCapAxisMaxIters": "いずれの場合も、パラメータ行の最大数: {count, number}",
+      "cellCapAxisMaxIters": "いずれのテストケースでも、パラメータ行の最大数: {count, number}",
       "cellCapResetFilters": "フィルターをリセットしてもう一度お試しください"
     }
   },
@@ -2534,7 +2534,7 @@
       "dueDateNotifications": "期日通知"
     },
     "labels": {
-      "childMilestones": "子どもの成長の節目"
+      "childMilestones": "子マイルストーン"
     },
     "placeholders": {
       "description": "マイルストーンの説明を入力してください...",
@@ -3080,7 +3080,7 @@
           },
           "CASES_DRAFTED": {
             "label": "AI生成テストケース",
-            "description": "ウェブフックアクションがあるイベントのテストケースをドラフトし、レビューアーとしてあなたの名前を入れました。"
+            "description": "ウェブフックアクションがある問題のテストケースをドラフトし、レビューアーとしてあなたの名前を入れました。"
           },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "統合の再認可が必要",
@@ -3288,10 +3288,10 @@
       "noText": "テキストなし",
       "hasLink": "リンクあり",
       "noLink": "リンクなし",
-      "hasSteps": "階段あり",
+      "hasSteps": "ステップあり",
       "noSteps": "ステップなし",
       "unchecked": "未チェック",
-      "linkedCases": "関連症例",
+      "linkedCases": "関連テストケース",
       "clickToViewFullContent": "全文を見るにはクリックしてください"
     },
     "steps": {
@@ -3569,7 +3569,7 @@
     "columns": {
       "selectCase": "ケースを選択",
       "runOrder": "実行順序",
-      "latestResults": "最新の検査結果",
+      "latestResults": "最新のテスト結果",
       "testedOn": "最終テスト"
     },
     "actions": {
@@ -3764,7 +3764,7 @@
       "columnMatchedFields": "一致するフィールド",
       "columnScore": "スコア",
       "compareButton": "比較する",
-      "viewCaseDetails": "事件の詳細を見る",
+      "viewCaseDetails": "テストケースの詳細を見る",
       "selectAll": "すべて選択",
       "selected": "{count, plural, one {# 選択済み} other {# 選択済み}}",
       "bulkDismiss": "重複なし ({count, number})",
@@ -3784,16 +3784,16 @@
       "linking": "リンク中...",
       "dismissing": "却下中...",
       "mergeSuccess": "ケースは正常にマージされました。 {runsTransferred, plural, =0 {テスト実行は転送されませんでした} one {# テスト実行が転送されました} other {# テスト実行が転送されました}}。",
-      "linkSuccess": "関連する事例としてリンクされています。",
+      "linkSuccess": "関連するテストケースとしてリンクされています。",
       "dismissSuccess": "該当ペアは除外されました。今後のスキャンには表示されません。",
       "resolveError": "重複するペアの解決に失敗しました。もう一度お試しください。",
-      "loadingDetails": "事件の詳細を読み込んでいます...",
-      "caseDetailsError": "事件の詳細の読み込みに失敗しました。",
+      "loadingDetails": "テストケースの詳細を読み込んでいます...",
+      "caseDetailsError": "テストケースの詳細の読み込みに失敗しました。",
       "sourceLabel": "ソース",
       "fieldValuesLabel": "フィールド値",
       "lastRunLabel": "ラストラン",
       "noFieldValues": "フィールド値なし",
-      "noLastRun": "決して走ってはいけない",
+      "noLastRun": "一度も実行されていない",
       "stepExpectedResult": "{step} → {result}",
       "runStatusDate": "{status} — {date}",
       "noFolder": "フォルダなし",
@@ -3830,7 +3830,7 @@
         "folderContextEmptyTitle": "このフォルダにはまだテストケースがありません",
         "folderContextEmpty": "\"{folderName}\" とその親/子フォルダにはテストケースがありません。AIはこのプロジェクト内の他の場所から関連するテストケースを探して、あなたのスタイルを学び、重複を避けます。最良の結果を得るために、これらのテストケースが属するフォルダからジェネレータを起動してください。",
         "currentFolder": "現在のフォルダ",
-        "fromIssue": "発行元",
+        "fromIssue": "問題から",
         "fromDocument": "文書から",
         "documentTitle": "文書タイトル",
         "documentTitlePlaceholder": "要件ドキュメントのタイトルを入力してください",
@@ -4711,7 +4711,7 @@
         "tierPinnedTooltip": "このケースのコードピンが変更と交差しています。ピン止めされたケースは常に最初にランク付けされます。",
         "tierAffectedTooltip": "他の信号はこのケースを{threshold, number}の影響を受けたしきい値以上に置きます。",
         "tierRelatedTooltip": "強く影響を受けたケースにリンクされているか、そのシグナルが{threshold, number}以下のスコアされました。",
-        "excluded": "{count, plural, one {# 実行済みの場合はスキップされた} other {# 実行済みの場合はスキップされた}}"
+        "excluded": "{count, plural, one {# 実行済みのテストケースはスキップされた} other {# 実行済みのテストケースはスキップされた}}"
       },
       "noAffected": {
         "title": "影響を受けたテストが見つかりません",
@@ -6870,8 +6870,8 @@
         "defaultModelPlaceholder": "gpt-4o、claude-3-5-sonnet-20241022 など。",
         "defaultModelDescription": "デフォルトで使用するモデル",
         "maxTokensPerRequest": "リクエストあたりの最大トークン数",
-        "costPerInputToken": "100万トークンあたりのコスト（ドル）",
-        "costPerOutputToken": "100万トークンあたりのコスト（ドル）",
+        "costPerInputToken": "100万入力トークンあたりのコスト（ドル）",
+        "costPerOutputToken": "100万出力トークンあたりのコスト（ドル）",
         "monthlyBudget": "月間予算（$）",
         "monthlyBudgetPlaceholder": "100.00",
         "monthlyBudgetDescription": "通知に関するオプションの支出目標（利用を妨げません）",
@@ -7282,7 +7282,7 @@
         "assignedSession": "セッションに割り当てました",
         "mentionedYouInComment": "コメントであなたに言及しました",
         "inProject": "プロジェクト中",
-        "testRun": "試運転：",
+        "testRun": "テスト実行：",
         "casesInProject": "{count, plural, =1 {# 件} other {# 件}} 内 <project></project>",
         "sentBy": "{name}から送信",
         "milestoneDueSoonTitle": "マイルストーンは間もなく達成",
@@ -7315,7 +7315,7 @@
         "reviewRejectedAction": "レビューリクエストを拒否しました",
         "reviewCancelledAction": "レビューリクエストをキャンセルしました",
         "reviewEntityLabelCase": "テストケース",
-        "reviewEntityLabelRun": "試運転",
+        "reviewEntityLabelRun": "テスト実行",
         "reviewEntityLabelSession": "セッション",
         "reviewBulkEntityLabelCase": "テストケース",
         "reviewBulkEntityLabelRun": "テスト実行",
@@ -7477,14 +7477,14 @@
       "templateMismatch": "テンプレートの不一致",
       "autoAssignTemplates": "不足しているテンプレートを対象プロジェクトに自動割り当てする",
       "templatesMayNotDisplay": "不足しているテンプレートは、対象プロジェクトでは利用できません。ケースはコピーされますが、それらのテンプレートのフィールドが正しく表示されない場合があります。",
-      "workflowFallback": "ワークフローの状態の中には、対象プロジェクトで利用できないものがあります。そのような場合は、対象プロジェクトのデフォルトの状態が使用されます。",
+      "workflowFallback": "ワークフローの状態の中には、対象プロジェクトで利用できないものがあります。そのようなテストケースには、対象プロジェクトのデフォルトの状態が使用されます。",
       "default": "（デフォルト）",
       "conflicts": "すべての紛争に適用：",
       "conflictSkip": "スキップ",
       "conflictRename": "名前を変更する",
       "sharedStepGroups": "ターゲットに共有ステップグループが既に存在する場合：",
       "sharedStepGroupReuse": "既存のものを再利用する",
-      "sharedStepGroupReuseDesc": "事例は、既存の共有ステップグループを参照します。",
+      "sharedStepGroupReuseDesc": "テストケースは、既存の共有ステップグループを参照します。",
       "sharedStepGroupCreateNew": "新規作成",
       "sharedStepGroupCreateNewDesc": "新しい共有ステップグループが作成されます。",
       "go": "行く",
@@ -8036,7 +8036,7 @@
     "DUPLICATED_FROM": "複製元",
     "SAME_TEST_DIFFERENT_SOURCE": "同じテスト（異なるソース）",
     "status": "最新の状況",
-    "at": "処刑された"
+    "at": "実行された"
   },
   "ganttTooltip": {
     "task": "タスク",
@@ -8901,7 +8901,7 @@
       "dateGrouping": {
         "label": "グループ化",
         "daily": "毎日",
-        "weekly": "週刊",
+        "weekly": "毎週",
         "monthly": "毎月",
         "quarterly": "四半期ごと",
         "annually": "毎年"
@@ -9009,7 +9009,7 @@
         }
       },
       "flakyTests": {
-        "consecutiveRuns": "直近の連続記録",
+        "consecutiveRuns": "直近の連続テスト実行",
         "consecutiveRunsHelp": "分析対象となる最近のテスト実行回数（5～30）。「未テスト」ステータスの結果は除外されます。",
         "flipThreshold": "最小フリップ数",
         "flipThresholdHelp": "不安定とみなされるために必要な合格／不合格の遷移の最小回数。",
@@ -9027,11 +9027,11 @@
           "lowPriority": "優先度が低い",
           "recencyAxis": "故障発生時期",
           "flipsAxis": "フリップカウント",
-          "oldFailures": "年配の方",
+          "oldFailures": "以前の",
           "recentFailures": "最近の",
-          "failureRate": "故障率",
+          "failureRate": "失敗率",
           "recency": "最近性スコア",
-          "backlogTitle": "優先度の低い検査",
+          "backlogTitle": "優先度の低いテスト",
           "backlogDescription": "{count, plural, one {# 追加の不安定なテスト} other {# 追加の不安定なテスト}} 表示されません"
         }
       },
@@ -9048,11 +9048,11 @@
         "notStale": "鮮度が落ちていない",
         "status": "健康状態",
         "healthScore": "スコア",
-        "lastExecuted": "最後に処刑された",
-        "executions": "処刑",
+        "lastExecuted": "最後に実行された",
+        "executions": "実行",
         "passCount": "パス",
         "failCount": "失敗",
-        "daysSince": "処刑からの日数",
+        "daysSince": "実行からの日数",
         "count": "カウント",
         "totalTests": "テストケース",
         "noData": "テストケースが見つかりませんでした",
@@ -9060,7 +9060,7 @@
         "healthStatus": {
           "healthy": "健康",
           "stale": "古くなった",
-          "neverExecuted": "処刑されなかった",
+          "neverExecuted": "一度も実行されていない",
           "alwaysPassing": "常に過ぎ去っていく",
           "alwaysFailing": "常に失敗している"
         },
@@ -9068,11 +9068,11 @@
           "distribution": "ステータス分布",
           "healthyRecent": "健康で最新の",
           "unhealthyStale": "注意が必要",
-          "daysAxis": "前回の処刑からの日数",
+          "daysAxis": "前回の実行からの日数",
           "healthScoreAxis": "健康スコア"
         },
         "stats": {
-          "totalTests": "総検査数",
+          "totalTests": "総テスト数",
           "needsAttention": "注意が必要",
           "needsAttentionTooltip": "常に失敗する + 実行されない + 古くなったテスト",
           "healthy": "健康",
@@ -9088,11 +9088,11 @@
           "alwaysPassing": "常に合格（100％）：-5",
           "alwaysFailing": "常に失敗（0％）：-30",
           "lowPassRate": "合格率が低い（50%未満）：-20",
-          "lowExecutions": "処刑回数が少ない（3回未満）：-10"
+          "lowExecutions": "実行回数が少ない（3回未満）：-10"
         }
       },
       "automationCandidates": {
-        "casesToRank": "順位付けすべき事例",
+        "casesToRank": "順位付けすべきテストケース",
         "casesToRankHelp": "ランキングのためにLLMに送信する手動テストケースの数。数が多いほど対象範囲は広くなりますが、LLMの実行時間も比例して長くなります（範囲：5～100。思考モデルは最大数の場合、数分かかることがあります）。",
         "selectionStrategy": "選抜戦略",
         "selectionStrategyHelp": "プロジェクトが世代ごとの上限を超えた場合に、どの手動ケースを送信するかを決定する戦略はどれですか。**最も実行されたケース**（デフォルト）は、テスト実行全体で最も多く実行されたケースを選択します。これは自動化のROIが最も高くなります。**不安定なケース優先**は、合否結果が最も大きく変動するケースを選択します。これは決定論的な自動化オラクルの有力候補です。**実行に最も時間がかかるケース**は、手動実行予測が最も高いケースを選択します（テスターによる推定値。元の推定値に戻ります）。自動化によってテスターの時間が最も多く節約されます。**古いケース優先**は、長期間存続する手動ケース（安定していて成熟しているケース）を選択します。**新しいケース優先**は、最近作成されたケースを選択します。**ランダム**は、偏りのないサンプルです。ワークフローの状態が*進行中*または*完了*の手動ケースのみが対象となります。",
@@ -9125,12 +9125,12 @@
             "flakiest_first": "ケースは、おおよその不安定さ（合格/不合格の反転）に基づいて順序付けられます。不安定な手動テストは、決定論的な自動化オラクルの最適な候補です。",
             "longest_first": "ケースは手動実行予測（実行時間が長いものから順。forecastManual が存在する場合は、予測がない場合は推定値にフォールバック）の順に並べられています。これらのケースでは、自動化によってテスターの時間を最大限に節約できます。",
             "oldest_first": "ケースは作成日順（古い順）に並べられています。長期間放置されている手動ケースは、成熟していて安定した挙動を示す傾向があり、手直しなしで自動化しても安全です。",
-            "newest_first": "事例は作成日順（新しい順）に並べられています。新しく作成された事例は、現時点で執行対応が必要となる可能性が最も高いものです。",
-            "random": "対象となる症例は、対象となる集団から無作為に抽出された偏りのないサンプルである。"
+            "newest_first": "テストケースは作成日順（新しい順）に並べられています。新しく作成されたテストケースは、現時点で実行が必要となる可能性が最も高いものです。",
+            "random": "対象となるテストケースは、対象となる集団から無作為に抽出された偏りのないサンプルである。"
           },
           "rationale": {
             "mostExecutedWithCount": "このプロジェクトのテスト実行全体で、手動で {count, plural, =1 {1 回} other {# 回}} 実行されました。これを自動化することで、今後のすべての実行でテスターの時間を節約できます。",
-            "mostExecutedNone": "実行履歴がまだないため、最も実行された事例というヒューリスティックは、この事例を他の事例と比較して評価するためのシグナルを持っていません。",
+            "mostExecutedNone": "実行履歴がまだないため、最も実行されたテストケースというヒューリスティックは、このテストケースを他のテストケースと比較して評価するためのシグナルを持っていません。",
             "flakiestWithScore": "不安定性 {percent}% (実行の {description} で合格/不合格の結果が反転) — 不安定な手動テストは、実行のたびにテスターの時間を無駄にし、決定論的な自動化オラクルから最も恩恵を受けます。",
             "flakiestNone": "現時点では結果にばらつきは見られません。このケースでは、最も不安定な結果を優先するヒューリスティックでは、合格/不合格の反転を測定できません。",
             "longestWithDuration": "手動実行予測 {duration} — 長時間実行される手動テストを自動化すると、実行ごとに比例してより多くのテスター時間を節約できます。",
@@ -9168,7 +9168,7 @@
           "regenerate": "再生する"
         },
         "status": {
-          "running": "ランニング",
+          "running": "実行中",
           "complete": "完了",
           "failed": "失敗した"
         },
@@ -9198,7 +9198,7 @@
       },
       "issueTestCoverage": {
         "viewMode": "表示モード",
-        "summaryView": "概要（号別）",
+        "summaryView": "概要（問題別）",
         "detailView": "詳細（テストケース別）",
         "issue": "問題",
         "testCase": "テストケース",
@@ -9208,18 +9208,18 @@
         "passed": "合格した",
         "failed": "失敗した",
         "lastStatus": "最終ステータス",
-        "lastExecuted": "最後に処刑された",
+        "lastExecuted": "最後に実行された",
         "notTested": "未テスト",
         "noData": "関連付けられたテストケースに問題は見つかりませんでした。",
         "noIssuesNeedingAttention": "すべての問題がテストに合格しました。素晴らしい！",
         "stats": {
-          "totalIssues": "総発行号数",
+          "totalIssues": "総問題数",
           "issuesWithFailures": "失敗と共に",
           "issuesWithFailuresTooltip": "少なくとも1つのテストケースが失敗するという問題",
           "issuesWithUntested": "未検証",
           "issuesWithUntestedTooltip": "少なくとも1つのテストケースが実行されていないという問題があります。",
           "issuesAllPassing": "通過するすべての人",
-          "numberOfIssues": "発行件数"
+          "numberOfIssues": "問題件数"
         },
         "charts": {
           "passRateDistribution": "テスト合格率分布",
@@ -9520,7 +9520,7 @@
       "unexpectedError": "予期しないエラーが発生しました。"
     },
     "dimensions": {
-      "executor": "執行者",
+      "executor": "実行者",
       "assignedTo": "担当者",
       "executionDate": "実行日",
       "creationDate": "作成日",
@@ -9552,7 +9552,7 @@
       "notRun": "未実行",
       "uncovered": "未カバー",
       "totalIssues": "問題の総数",
-      "testResults": "検査結果",
+      "testResults": "テスト結果",
       "testResultCount": "テスト結果の数",
       "passRate": "合格率（％）",
       "avgElapsed": "平均経過時間",
@@ -9564,8 +9564,8 @@
       "averageSteps": "ケースあたりの平均ステップ数",
       "automatedCount": "自動化されたケース",
       "manualCount": "マニュアルケース",
-      "totalCount": "合計症例数",
-      "totalSteps": "合計歩数",
+      "totalCount": "合計テストケース数",
+      "totalSteps": "合計ステップ数",
       "executionCount": "テスト実行",
       "createdCaseCount": "作成されたテストケース数",
       "sessionResultCount": "セッション結果数",
@@ -9573,7 +9573,7 @@
       "sessionParticipation": "セッション参加",
       "averageElapsed": "実行あたりの平均時間",
       "lastActiveDate": "最終アクティブ日",
-      "issueCount": "発行数",
+      "issueCount": "問題数",
       "linkedCaseCount": "リンクされたケース",
       "firstCaseCreated": "最初のケース作成",
       "lastCaseCreated": "最後のケース作成",
@@ -9875,8 +9875,8 @@
         "stepNumber": "ステップ ＃",
         "stepContent": "ステップ内容",
         "expectedResultContent": "期待される結果の内容",
-        "combinedStepData": "統合された歩数データ",
-        "stepsData": "歩数データ"
+        "combinedStepData": "統合されたステップデータ",
+        "stepsData": "ステップデータ"
       },
       "success": {
         "description": "{count, plural, one {# 共有ステップ} other {# 共有ステップ}} 正常にインポートされました"
@@ -9944,7 +9944,7 @@
       "matchedStepsCount": "{count, plural, other {一致するステップ #件}}",
       "columns": {
         "matchedSteps": "一致するステップ",
-        "casesCount": "事例",
+        "casesCount": "テストケース",
         "review": "レビュー"
       },
       "scanning": "走査...",
@@ -10459,7 +10459,7 @@
     "iterationAllComplete": "すべての反復処理が完了しました",
     "hardRefuseTitle": "作成できません - 反復回数が多すぎます",
     "hardRefuseDescription": "システムの応答性を維持するため、テスト実行の作成回数は {cap} 回に制限されています。以下の要因のうち1つを減らしてください。",
-    "hardRefuseColumnCase": "場合",
+    "hardRefuseColumnCase": "テストケース",
     "hardRefuseColumnRows": "データセットの行",
     "hardRefuseColumnConfigs": "設定",
     "hardRefuseSuggestionsHeading": "推奨される行動",
@@ -10473,7 +10473,7 @@
     "runProgressDismissAria": "進捗状況を無視する",
     "runProgressComplete": "{total, plural, =1 {# 反復} other {# 反復}} を \"{runName} \" 用に生成しました",
     "runProgressFailedToast": "\"{runName}\" の反復処理の生成に失敗しました。 {reason}",
-    "runProgressNavAway": "残りのランニングを見せてください",
+    "runProgressNavAway": "残りのテスト実行を見せてください",
     "runGeneratingHeading": "反復処理を生成中…",
     "runGeneratingHelper": "これには数分かかる場合があります。",
     "iterationsHeaderCount": "{complete}/{total}",
