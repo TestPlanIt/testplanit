@@ -303,7 +303,7 @@ As a safeguard, a test with **no** `test.step()` calls never clears an existing 
 
 ## Tags
 
-Copying tags onto test cases requires TestPlanIt 1.2.0 or later. Against an older server the reporter logs a warning for each case and reports results as usual.
+Copying tags onto test cases requires a TestPlanIt server on 1.0.0 or later. `captureTags` is on by default, so against an older server the reporter logs an error for each new case that has tags and reports results as usual; set `captureTags: false` to stop the attempts.
 
 ### Copying tags onto new cases
 

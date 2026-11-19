@@ -114,7 +114,7 @@ caseIdPattern: /TEST-(\d+)/g  // JIRA-style:         "TEST-12345 should work"
 | `maxRetries` | `number` | No | `3` | Number of retries for failed API requests |
 | `verbose` | `boolean` | No | `false` | Enable verbose logging |
 
-`captureTags` and `overwriteTags` require TestPlanIt 1.2.0 or later.
+`captureTags` and `overwriteTags` require a TestPlanIt server on 1.0.0 or later.
 
 > **Tip:** Options like `configId`, `milestoneId`, `stateId`, `parentFolderId`, and `templateId` accept either numeric IDs or string names. When a string is provided, the resource is looked up by exact name match.
 
@@ -383,6 +383,8 @@ When the run completes, the reporter prints a summary:
 | 1.44+ | Yes |
 
 Requires `@playwright/test` 1.44 or later (the reporter uses the `Suite.type` API) and Node.js 20 or later.
+
+Copying tags onto test cases (`captureTags`, `overwriteTags`) requires a TestPlanIt server on 1.0.0 or later. `captureTags` is on by default, so against an older server the reporter logs an error for each new case that has tags and reports results as usual; set `captureTags: false` to stop the attempts.
 
 ## Related Packages
 
