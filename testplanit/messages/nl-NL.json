@@ -30,8 +30,8 @@
     "searchCases": "{count, plural, =0 {Zoek gevallen} one {Zoek # geval} other {Zoek # gevallen}}",
     "searchProjects": "{count, plural, =0 {Zoek projecten} one {Zoek # project} other {Zoek # projecten}}",
     "searchTags": "Zoeken naar tags...",
-    "searchRuns": "{count, plural, =0 {Zoektestruns} one {Zoek # testrun} other {Zoek # testruns}}",
-    "searchSessions": "{count, plural, =0 {Zoeksessies} one {Zoek # sessie} other {Zoek # sessies}}",
+    "searchRuns": "{count, plural, =0 {Zoek testruns} one {Zoek # testrun} other {Zoek # testruns}}",
+    "searchSessions": "{count, plural, =0 {Zoek sessies} one {Zoek # sessie} other {Zoek # sessies}}",
     "searchMilestones": "{count, plural, =0 {Zoek mijlpalen} one {Zoek # mijlpaal} other {Zoek # mijlpalen}}",
     "search": "Zoekopdracht...",
     "defaultOption": "Standaardoptie",
@@ -91,7 +91,7 @@
       "actionsLabel": "Acties",
       "actionsWithAlerts": "Acties ({count, number} ongelezen)",
       "assign": "Toewijzen",
-      "assignSelected": "Wijs {count, plural, one {toe # geval} other {# gevallen}}",
+      "assignSelected": "Wijs {count, plural, one {# geval} other {# gevallen}} toe",
       "refresh": "Vernieuwen",
       "addResultSelected": "Voeg het resultaat toe aan {count, plural, one {# geval} other {# gevallen}}",
       "resultsAdded": "{count, plural, one {# Resultaat} other {# Resultaten}} Toegevoegd",
@@ -915,7 +915,7 @@
       "entries": "{count, plural, =1 {# onderdeel} other {# onderdelen}}",
       "pageSize": "Paginaformaat",
       "showing": "Tonen",
-      "total": "totaal {count, plural, =1 {# items} other {# items}}",
+      "total": "totaal {count, plural, =1 {# item} other {# items}}",
       "filtered": "gefilterd van",
       "pageOfPages": "Pagina {current} van {total}",
       "loadedOfTotal": "{loaded, number} van {total, number}"
@@ -1143,7 +1143,7 @@
     "plural": {
       "case": "{count, plural, =1 {geval} other {gevallen}}",
       "result": "{count, plural, =1 {resultaat} other {resultaten}}",
-      "run": "{count, plural, =1 {loopt} other {loopt}}",
+      "run": "{count, plural, =1 {run} other {runs}}",
       "comment": "{count, plural, =1 {# reactie} other {# reacties}}"
     },
     "success": {
@@ -1546,8 +1546,8 @@
             "detachedCallout": "{count, plural, one {{count} daarvan is losgekoppeld van de tracker of lokaal bewerkt en verliest de vereistenstatus} other {{count} daarvan zijn losgekoppeld van de tracker of lokaal bewerkt en verliezen de vereistenstatus}}",
             "reversibilityNote": "Door een type opnieuw toe te voegen, wordt de classificatie hersteld. Er wordt niets verwijderd.",
             "noChanges": "Geen classificatiewijzigingen om toe te passen.",
-            "importOfferBodyExact": "{count, plural, one {{count} issue} other {{count} issues}} van de geselecteerde typen bevinden zich in de tracker.",
-            "importOfferBodyFloor": "Ten minste {count, plural, one {{count} issue} other {{count} issues}} van de geselecteerde typen bevinden zich in de tracker — de import is niet beperkt tot dit aantal.",
+            "importOfferBodyExact": "{count, plural, one {{count} issue van de geselecteerde typen bevindt zich in de tracker.} other {{count} issues van de geselecteerde typen bevinden zich in de tracker.}}",
+            "importOfferBodyFloor": "Ten minste {count, plural, one {{count} issue van de geselecteerde typen bevindt zich in de tracker} other {{count} issues van de geselecteerde typen bevinden zich in de tracker}} — de import is niet beperkt tot dit aantal.",
             "importOfferBodyUnknown": "Kon niet precies bepalen hoeveel issues van de geselecteerde typen zich in de tracker bevinden. De import kan nog steeds doorgaan en zal elke overeenkomst ophalen.",
             "importOfferConfirm": "Nu importeren",
             "importStarted": "Import gestart. Issues verschijnen naarmate ze worden geïmporteerd.",
@@ -2061,7 +2061,7 @@
           "error": "Kon de dataset niet verwijderen."
         },
         "deleteSuccess": "Verwijderd \"{name}\"",
-        "deleteSuccessWithAssignments": "Verwijderd \"{name}\" en niet toegewezen {count, plural, =1 {# geval} other {# gevallen}}",
+        "deleteSuccessWithAssignments": "\"{name}\" verwijderd en toewijzing van {count, plural, =1 {# geval} other {# gevallen}} ongedaan gemaakt",
         "editor": {
           "back": "Terug naar datasets",
           "loadError": "Deze dataset kon niet worden geladen.",
@@ -2622,7 +2622,7 @@
       "confirmDescription": "Als u deze mijlpaal bereikt, worden ook de volgende gerelateerde items voltooid:",
       "impactActiveTestRuns": "{count, plural, one {# actieve testrun} other {# actieve testruns}}",
       "impactActiveSessions": "{count, plural, one {# actieve sessie} other {# actieve sessies}}",
-      "impactDescendantMilestones": "{count, plural, one {# afstammeling mijlpaal} other {# afstammeling mijlpalen}}",
+      "impactDescendantMilestones": "{count, plural, one {# afstammende mijlpaal} other {# afstammende mijlpalen}}",
       "completeTestRunsLabel": "Voltooi de bijbehorende testruns ({count, plural, one {# actief} other {# actief}})",
       "completeSessionsLabel": "Voltooi de bijbehorende sessies ({count, plural, one {# actief} other {# actief}})",
       "testRunStateLabel": "Testuitvoering voltooid",
@@ -2888,7 +2888,7 @@
   "home": {
     "dashboard": {
       "title": "Uw dashboard",
-      "users": "Er zijn {count, plural, =1 {# Gebruiker} other {en # Gebruikers}}",
+      "users": "Er {count, plural, =1 {is # Gebruiker} other {zijn # Gebruikers}}",
       "yourProjects": "Uw projecten",
       "projects": "Je hebt toegang tot {count, plural, =1 {# Project} other {# Projecten}}",
       "loading": "Dashboard wordt geladen...",
@@ -2933,10 +2933,10 @@
     "counts": {
       "testCases": "{count, plural, =0 {# Testgevallen} =1 {# Testgeval} other {# Testgevallen}}",
       "activeMilestones": "{count, plural, =0 {# Actieve mijlpalen} =1 {# Actieve mijlpaal} other {# Actieve mijlpalen}}",
-      "activeRuns": "{count, plural, =0 {# Actieve uitvoeringen} =1 {# Actieve uitvoeringen} other {# Actieve uitvoeringen}}",
+      "activeRuns": "{count, plural, =0 {# Actieve uitvoeringen} =1 {# Actieve uitvoering} other {# Actieve uitvoeringen}}",
       "automationRunsInProgress": "{count, plural, =0 {# Automatiseringsruns in uitvoering} =1 {# Automatiseringsrun in uitvoering} other {# Automatiseringsruns in uitvoering}}",
       "activeSessions": "{count, plural, =0 {# Actieve sessies} =1 {# Actieve sessie} other {# Actieve sessies}}",
-      "issues": "{count, plural, =0 {# Problemen} =1 {# Problemen} other {# Problemen}}",
+      "issues": "{count, plural, =0 {# Problemen} =1 {# Probleem} other {# Problemen}}",
       "assignedToYou": "{count, plural, =1 {# testgeval dat aan u is toegewezen wacht} other {# testgevallen die aan u zijn toegewezen wachten}}"
     },
     "lastActivity": "Laatst actief",
@@ -3299,7 +3299,7 @@
       "delete": "Stap verwijderen",
       "removedFromCase": "Verwijderd uit testgeval",
       "confirmDelete": "Bevestig verwijderingsstap {number, number}?",
-      "createSharedSteps": "Gedeelde {number, plural, one {Stap} other {Stappen}}maken",
+      "createSharedSteps": "Gedeelde {number, plural, one {Stap} other {Stappen}} maken",
       "sharedStepsName": "Naam gedeelde stappen",
       "sharedStepsDescription": "Voer een naam in voor je nieuwe gedeelde {number, plural, one {stap} other {stappen}}. Dit omvat {number, plural, one {# geselecteerde stap} other {# geselecteerde stappen}}.",
       "notifications": {
@@ -3341,16 +3341,16 @@
     },
     "templateNotAssignedWarning": "Deze testcase gebruikt de sjabloon \"{templateName}\", die momenteel niet is toegewezen aan het project \"{projectName}\". Mogelijk moet u deze sjabloon aan het project toewijzen of de testcase aanpassen om een andere sjabloon te gebruiken.",
     "orphanedStepsWarning": "Deze testcase heeft stappen, maar de huidige sjabloon \"{templateName}\" bevat geen veld voor stappen. De stappen kunnen pas worden bewerkt als de testcase een sjabloon met een veld voor stappen heeft.",
-    "orphanedFieldsWarning": "Deze testcase heeft {count, plural, =1 {# veldwaarde} other {# veldwaarden}} die {count, plural, =1 {is} other {zijn}} niet opgenomen in de huidige sjabloon \"{templateName}\". {count, plural, =1 {Dit veld is hieronder weergegeven, maar kan mogelijk pas worden bewerkt nadat het aan de sjabloon is toegevoegd.} other {Deze velden zijn hieronder weergegeven, maar kunnen mogelijk pas worden bewerkt nadat ze aan de sjabloon zijn toegevoegd.}}",
+    "orphanedFieldsWarning": "Deze testcase heeft {count, plural, =1 {# veldwaarde} other {# veldwaarden}} die niet {count, plural, =1 {is} other {zijn}} opgenomen in de huidige sjabloon \"{templateName}\". {count, plural, =1 {Dit veld is hieronder weergegeven, maar kan mogelijk pas worden bewerkt nadat het aan de sjabloon is toegevoegd.} other {Deze velden zijn hieronder weergegeven, maar kunnen mogelijk pas worden bewerkt nadat ze aan de sjabloon zijn toegevoegd.}}",
     "title": "Testcase-repository",
     "folders": "Mappen",
     "showDescendants": "Toon alle afstammelingen",
     "addFolder": "Map toevoegen",
     "emptyFolders": "Klik hierboven op de knop Map toevoegen om de eerste map toe te voegen.",
-    "selectedAllCases": "{count, plural, =0 {Alle gevallen geselecteerd} one {# gevallen geselecteerd op alle pagina's} other {# gevallen geselecteerd op alle pagina's}}",
+    "selectedAllCases": "{count, plural, =0 {Alle gevallen geselecteerd} one {# geval geselecteerd op alle pagina's} other {# gevallen geselecteerd op alle pagina's}}",
     "deselectedAllCases": "Alle cases op alle pagina's zijn gedeselecteerd.",
     "selectAllTooltip": "Selecteer/deselecteer alle cases op deze pagina",
-    "selectAllShiftTooltip": "{count, plural, =0 {Selecteer/deselecteer alle gevallen op alle pagina's} one {Selecteer/deselecteer # gevallen op alle pagina's} other {Selecteer/deselecteer # gevallen op alle pagina's}}",
+    "selectAllShiftTooltip": "{count, plural, =0 {Selecteer/deselecteer alle gevallen op alle pagina's} one {Selecteer/deselecteer # geval op alle pagina's} other {Selecteer/deselecteer # gevallen op alle pagina's}}",
     "deselectAllShiftTooltip": "Alle gevallen op alle pagina's deselecteren/selecteren",
     "shiftClickHint": "Houd Shift ingedrukt om alle pagina's te selecteren/deselecteren.",
     "treeView": {
@@ -3371,8 +3371,8 @@
       "copying": "… kopiëren",
       "copyComplete": "{count, plural, =1 {1 case gekopieerd naar {folder}} other {# cases gekopieerd naar {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "moveComplete": "{count, plural, =1 {1 case verplaatst naar {folder}} other {# cases verplaatst naar {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
-      "copyError": "{count, plural, =1 {Het kopiëren van 1 case naar {folder}is mislukt.} other {Het kopiëren van # cases naar {folder}is mislukt.}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
-      "moveError": "{count, plural, =1 {Het verplaatsen van 1 case naar {folder}is mislukt.} other {Het verplaatsen van # cases naar {folder}is mislukt.}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
+      "copyError": "{count, plural, =1 {Kan 1 case niet kopiëren naar {folder}} other {Kan # cases niet kopiëren naar {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
+      "moveError": "{count, plural, =1 {Kan 1 case niet verplaatsen naar {folder}} other {Kan # cases niet verplaatsen naar {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "copyAlreadyRunning": "Een andere kopie is al in bewerking. Wacht alstublieft tot deze klaar is.",
       "currentSuffix": "(Huidig)",
       "moveDisabledSameFolder": "De dossiers bevinden zich al in deze map.",
@@ -3526,7 +3526,7 @@
           "showing": "Toont {start, number}-{end, number} van {total, number} gevallen",
           "case": "Geval {number, number}",
           "multiRow": {
-            "aggregated": "Meerdere rijen in de modus gegroepeerd {rows, number} CSV-rijen in {cases, plural, one {# testgeval} other {# testgevallen}}.",
+            "aggregated": "De modus voor meerdere rijen heeft {rows, number} CSV-rijen gegroepeerd in {cases, plural, one {# testgeval} other {# testgevallen}}.",
             "noStepColumn": "De modus voor meerdere rijen is ingeschakeld, maar er is geen kolom voor stappen gedetecteerd. Verwacht wordt een van de volgende kolommen: Stapinhoud, Stap, Stappen, Actie, Beschrijving (hoofdlettergevoeligheid speelt geen rol). Elke rij in het CSV-bestand wordt als een aparte testcase geïmporteerd.",
             "noKeyColumn": "De modus voor meerdere rijen is ingeschakeld, maar er is geen ID- of Naam-kolom toegewezen. Wijs in de vorige stap een ID- of Naam-kolom toe, zodat rijen in cases kunnen worden gegroepeerd.",
             "noGrouping": "De modus voor meerdere rijen is ingeschakeld, maar er zijn geen rijen gegroepeerd. Elke rij heeft een andere ID/naam, dus elke rij wordt een afzonderlijk testgeval. Laat de ID en naam leeg in vervolgrijen, of herhaal dezelfde ID/naam in alle rijen die bij één testgeval horen."
@@ -3619,7 +3619,7 @@
     "createFirstFolder": "Maak uw eerste map aan",
     "bulkEdit": {
       "title": "Bulk bewerken {count, plural, one {# Geval} other {# Gevallen}}",
-      "description": "Bewerken {count, plural, one {# geselecteerde zaak} other {# geselecteerde zaken}}. Vink een veld aan om bewerken mogelijk te maken.",
+      "description": "Bewerken {count, plural, one {# geselecteerd geval} other {# geselecteerde gevallen}}. Vink een veld aan om bewerken mogelijk te maken.",
       "defineStepsTitle": "Stappen voor bulkupdate definiëren",
       "saveNewSteps": "Nieuwe stappen opslaan",
       "newStepsDefined": "Nieuwe stappen gedefinieerd ({count, number}) - Klik op de knop om te bewerken",
@@ -3648,7 +3648,7 @@
       "stepsCannotBeBulkEdited": "Stappen kunnen niet in bulk worden bewerkt",
       "stepsInfoTitle": "Stappen Info",
       "stepsCannotBeBulkEditedInfo": "Stappen kunnen niet in bulk worden bewerkt. Bewerk stappen door de cases afzonderlijk te bewerken.",
-      "confirmDeleteCases": "Weet u zeker dat u {count, plural, one {# geselecteerde case} other {# geselecteerde cases}}wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+      "confirmDeleteCases": "Weet u zeker dat u {count, plural, one {# geselecteerde case} other {# geselecteerde cases}} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
       "replaceAll": "Alles vervangen",
       "searchReplace": "Zoeken en vervangen",
       "searchFor": "Zoeken naar",
@@ -3746,7 +3746,7 @@
       "retryScan": "Scan opnieuw uitvoeren",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Resultaten verbeteren met AI...",
-      "scanComplete": "Analyse van duplicaten voltooid — {count, plural, =0 {geen duplicaten gevonden} one {# potentieel duplicaat gevonden} other {# potentieel duplicaten gevonden}}",
+      "scanComplete": "Analyse van duplicaten voltooid — {count, plural, =0 {geen duplicaten gevonden} one {# potentieel duplicaat gevonden} other {# potentiële duplicaten gevonden}}",
       "scanFailed": "Dubbele analyse mislukt",
       "scanFailedDescription": "Er is een onverwachte fout opgetreden.",
       "pageTitle": "Dubbele kandidaten",
@@ -3843,7 +3843,7 @@
         "recentJobInfo": "{pages, plural, one {# pagina} other {# pagina's}}{hasTestCases, select, true { · {testCases, plural, one {# testgeval} other {# testgevallen}}} other {}}",
         "recentJobHasResults": "Klaar om te beoordelen",
         "recentJobClickToGenerate": "Klik om testgevallen te genereren",
-        "recentJobCrawling": "Aan het kruipen... {pages, plural, one {# pagina} other {# pagina's}} tot nu toe",
+        "recentJobCrawling": "Bezig met crawlen... {pages, plural, one {# pagina} other {# pagina's}} tot nu toe",
         "removeJobTitle": "Generatie verwijderen",
         "confirmRemoveJob": "Hiermee worden de in de cache opgeslagen crawlgegevens en alle gegenereerde testcases verwijderd. Je kunt ze altijd opnieuw genereren via dezelfde URL.",
         "loadingRecentJobs": "Recente vacatures worden geladen...",
@@ -3858,7 +3858,7 @@
         "followLinksHint": "Alleen pagina's op hetzelfde domein als de URL die u invoert, worden geïndexeerd.",
         "maxDepth": "Maximale diepte",
         "maxPages": "Max pagina's",
-        "crawlProgress": "{current, plural, one {Pagina # opgehaald tot nu toe...} other {Pagina # opgehaald tot nu toe...}}",
+        "crawlProgress": "{current, plural, one {# pagina opgehaald tot nu toe...} other {# pagina's opgehaald tot nu toe...}}",
         "generatingSinglePage": "Testgevallen genereren...",
         "generatingSetup": "Voorbereidingen treffen om testgevallen te genereren...",
         "robotsSkipped": "{count, plural, one {# pagina overgeslagen} other {# pagina's overgeslagen}} (robots.txt)"
@@ -3905,8 +3905,8 @@
         "selected": "{count, number} van {total, number} geselecteerd",
         "moreSteps": "... en {count, plural, one {# volgende stap} other {# volgende stappen}}",
         "templateFields": "Sjabloonvelden:",
-        "moreFields": "... en {count, plural, one {# meer veld} other {# meer velden}}",
-        "crawledUrls": "{count, plural, one {# pagina's gecrawld} other {# pagina's gecrawld}}",
+        "moreFields": "... en nog {count, plural, one {# veld} other {# velden}}",
+        "crawledUrls": "{count, plural, one {# pagina gecrawld} other {# pagina's gecrawld}}",
         "spaWarning": "Deze pagina vereist mogelijk JavaScript voor weergave. De resultaten kunnen onvolledig zijn.",
         "filterByPage": "Filteren op pagina",
         "allPages": "Alle pagina's ({pages, plural, one {# pagina} other {# pagina's}}, {cases, plural, one {# geval} other {# gevallen}})"
@@ -3914,7 +3914,7 @@
       "generatingLegacy": "Testgevallen genereren met AI...",
       "expandProgress": "{done, number} van {total, number} gegenereerd",
       "import": "{count, plural, =0 {Testcases importeren} =1 {1 testcase importeren} other {# Testcases importeren}}",
-      "stage": "{count, plural, =0 {Staging testcases} =1 {Staging 1 testcase} other {Staging # testcases}}",
+      "stage": "{count, plural, =0 {Testcases voorbereiden} =1 {1 testcase voorbereiden} other {# testcases voorbereiden}}",
       "stageDescription": "Faseringsgestelde testcases zijn privé voor u. Controleer ze in Mijn gefaseerde zaken en maak ze daar aan; niets wordt aan de repository toegevoegd totdat u dat doet.",
       "importing": "{count, plural, =0 {Testgevallen importeren...} =1 {1 testgeval importeren...} other {# testgevallen importeren...}}",
       "externalSystem": "Extern systeem",
@@ -3926,11 +3926,11 @@
       "datasetTruncatedWarning": "De dataset is door de AI ingekort. U kunt na het opslaan handmatig rijen toevoegen in de parametereditor.",
       "datasetCappedWarning": "De dataset werd beperkt tot het maximale aantal rijen. Overtollige rijen werden verwijderd.",
       "invalidParameterWarning": "Een of meer voorgestelde parameters waren ongeldig en werden daarom verwijderd.",
-      "datasetMoreRows": "...en {count, plural, one {# meer rij} other {# meer rijen}}",
+      "datasetMoreRows": "...en nog {count, plural, one {# rij} other {# rijen}}",
       "parameterChipSensitive": "gevoelig",
       "success": {
         "imported": "{count, plural, =1 {1 testcase succesvol geïmporteerd} other {# testcases succesvol geïmporteerd}}",
-        "staged": "{count, plural, =1 {1 testcase gefaseerd} other {# testcases gefaseerd}}"
+        "staged": "{count, plural, =1 {1 testcase voorbereid} other {# testcases voorbereid}}"
       },
       "importData": {
         "issueDescription": "Externe kwestie gekoppeld aan het genereren van testgevallen",
@@ -4499,14 +4499,14 @@
         "analyzing": "Testgevallen analyseren...",
         "progress": "Geanalyseerde {analyzed, number} van {total, number} testgevallen...",
         "waitingForAi": "Wachten op AI-reactie (batch {batch} van {total})...",
-        "selectedSoFar": "{count, plural, =1 {# tot nu toe geselecteerde testgevallen} other {# tot nu toe geselecteerde testgevallen}}",
+        "selectedSoFar": "{count, plural, =1 {# tot nu toe geselecteerd testgeval} other {# tot nu toe geselecteerde testgevallen}}",
         "resolving_integration": "Het oplossen van AI-integratieproblemen...",
         "fetching_cases": "Testgevallen ophalen..."
       },
       "success": {
         "title": "Voorgestelde testgevallen",
         "description": "{count, plural, =1 {# testgeval geselecteerd} other {# testgevallen geselecteerd}} op basis van uw testuitvoeringscontext",
-        "linkedCasesAdded": "{count, plural, =1 {# gekoppelde gevallen automatisch opgenomen} other {# gekoppelde gevallen automatisch opgenomen}}",
+        "linkedCasesAdded": "{count, plural, =1 {# gekoppeld geval automatisch opgenomen} other {# gekoppelde gevallen automatisch opgenomen}}",
         "truncationWarningTitle": "Gedeeltelijke resultaten",
         "truncationWarning": "{count, plural, =1 {# batch werd afgekapt} other {# batches werden afgekapt}} door het AI-model — sommige testgevallen zijn mogelijk niet geëvalueerd."
       },
@@ -4700,7 +4700,7 @@
         "minScore": "Minimale impactscore",
         "selectShown": "Selecteer weergegeven ({count, number})",
         "deselectShown": "Deselecteer weergegeven ({count, number})",
-        "hiddenSelected": "{count, plural, one {# geselecteerde testgeval is verborgen door uw filters} other {# geselecteerde testgevallen zijn verborgen door uw filters}}.",
+        "hiddenSelected": "{count, plural, one {# geselecteerd testgeval is verborgen door uw filters} other {# geselecteerde testgevallen zijn verborgen door uw filters}}.",
         "deselectHidden": "Verborgen deselecteren",
         "noneShown": "Geen tests komen overeen met de filters.",
         "reasons": "Waarom",
@@ -5031,7 +5031,7 @@
         "mappingImportInProgress": "Achtergrondimport bezig",
         "mappingImportInProgressDescription": "De importworker verwerkt de configuratie. U kunt de status hierboven bekijken.",
         "mapping": {
-          "datasetTotalLabel": "{count, plural, =1 {# opnemen} other {# opnemen}} ",
+          "datasetTotalLabel": "{count, plural, =1 {# record} other {# records}} ",
           "columnSource": "Testmo-entiteit",
           "columnSourceDetails": "Details",
           "columnSuggestedWorkflowType": "Voorgesteld type",
@@ -6445,15 +6445,15 @@
         },
         "loadedSelected": "{shown, plural, one {Het geladen bestand is geselecteerd} other {Alle # geladen bestanden zijn geselecteerd}}.",
         "confirmDelete": "{count, plural, =0 {Geen van de geselecteerde bestanden kan worden verwijderd.} one {Dit bestand ({size}) uit de opslag verwijderen? Dit kan niet ongedaan worden gemaakt.} other {# bestanden ({size}) uit de opslag verwijderen? Dit kan niet ongedaan worden gemaakt.}}",
-        "skipped": "{count, plural, one {# geselecteerd bestand wordt alleen gelaten omdat het in gebruik is.} other {# geselecteerde bestanden worden alleen gelaten omdat ze in gebruik zijn.}}",
+        "skipped": "{count, plural, one {# geselecteerd bestand wordt met rust gelaten omdat het in gebruik is.} other {# geselecteerde bestanden worden met rust gelaten omdat ze in gebruik zijn.}}",
         "deleted": "{count, plural, one {# bestand verwijderd uit opslag} other {# bestanden verwijderd uit opslag}}"
       },
       "columns": {
         "sharedFile": "Gedeeld bestand"
       },
       "sharedFile": {
-        "count": "{count, plural, one {# ander bijlage} other {# andere bijlagen}}",
-        "hint": "Dit bestand wordt ook opgeslagen voor {count, plural, one {# ander bijlage} other {# andere bijlagen}}, meestal omdat het record waaraan het was gekoppeld, is gekopieerd. Selecteer om deze weer te geven.",
+        "count": "{count, plural, one {# andere bijlage} other {# andere bijlagen}}",
+        "hint": "Dit bestand wordt ook opgeslagen voor {count, plural, one {# andere bijlage} other {# andere bijlagen}}, meestal omdat het record waaraan het was gekoppeld, is gekopieerd. Selecteer om deze weer te geven.",
         "showing": "Bijlagen die het bestand van {name} delen"
       },
       "detail": {
@@ -6476,7 +6476,7 @@
           "purge": "{count, plural, =0 {Alleen verwijderde bijlagen kunnen definitief worden verwijderd. Verwijder ze eerst.} one {Deze bijlage definitief verwijderen? Dit kan niet ongedaan worden gemaakt.} other {# bijlagen definitief verwijderen? Dit kan niet ongedaan worden gemaakt.}}"
         },
         "purgeFiles": "{count, plural, =0 {Er worden geen opgeslagen bestanden verwijderd.} one {# opgeslagen bestand ({size}) is verwijderd.} other {# opgeslagen bestanden ({size}) zijn verwijderd.}}",
-        "purgeShared": "{count, plural, one {# bestand blijft in opslag omdat een ander bijlage het gebruikt.} other {# bestanden blijven in opslag omdat andere bijlagen ze gebruiken.}}",
+        "purgeShared": "{count, plural, one {# bestand blijft in opslag omdat een andere bijlage het gebruikt.} other {# bestanden blijven in opslag omdat andere bijlagen ze gebruiken.}}",
         "purgeInVersions": "{count, plural, one {# bestand wordt weergegeven in een opgeslagen versie, die dit niet meer kan openen.} other {# bestanden worden weergegeven in opgeslagen versies, die deze niet meer kunnen openen.}}",
         "skipped": "{count, plural, one {# geselecteerde bijlage blijft ongewijzigd omdat deze actie niet van toepassing is.} other {# geselecteerde bijlagen blijven ongewijzigd omdat deze actie niet van toepassing is op hen.}}",
         "done": "{count, plural, one {# bijlage bijgewerkt} other {# bijlagen bijgewerkt}}",
@@ -7277,7 +7277,7 @@
         "commentMentionTitle": "Je werd genoemd in een reactie",
         "systemAnnouncementTitle": "Systeemaankondiging",
         "assignedTestCase": "heeft u toegewezen aan de testcase",
-        "assignedMultipleTestCases": "toegewezen aan jou {count, plural, one {# testgeval} other {# testgevallen}}",
+        "assignedMultipleTestCases": "heeft {count, plural, one {# testgeval} other {# testgevallen}} aan je toegewezen",
         "assignedSession": "je toegewezen aan sessie",
         "mentionedYouInComment": "noemde je in een reactie op",
         "inProject": "in het project",
@@ -7372,8 +7372,8 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "Het resultaat duurde {elapsed}, {deviation}% afwijking van de basislijn van {baseline} (meer dan {threshold}% toegestaan).",
-          "CASE_REGRESSED": "De zaak mislukte na het slagen van {passedBefore, plural, one {het laatste resultaat} other {zijn laatste # resultaten}}.",
-          "CASE_RECOVERED": "De zaak slaagde na het mislukken van {failedBefore, plural, one {het laatste resultaat} other {zijn laatste # resultaten}}.",
+          "CASE_REGRESSED": "Het testgeval mislukte na het slagen van {passedBefore, plural, one {het laatste resultaat} other {zijn laatste # resultaten}}.",
+          "CASE_RECOVERED": "Het testgeval slaagde na het mislukken van {failedBefore, plural, one {het laatste resultaat} other {zijn laatste # resultaten}}.",
           "RUN_DURATION_DEVIATION": "De run duurde {elapsed}, {deviation}% afwijking van de basislijn van {baseline} (meer dan {threshold}% toegestaan).",
           "RUN_NOT_PROGRESSING": "De run heeft {idleHours, plural, one {# uur} other {# uren}} lang geen nieuw resultaat gehad (drempel {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "De geautomatiseerde uitvoering op {target} eindigd met {status}{error, select, other {: {error}}}",
@@ -7382,10 +7382,10 @@
           "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# foutpatroon verscheen} other {# foutpatronen verschenen}} voor het eerst in de run (drempel {threshold}).",
           "SESSION_OVERRUN": "De sessie duurde {elapsed} tegen een schatting van {estimate}, {overrun}% voorbij (meer dan {threshold}% toegestaan).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} van {total} vereisten ({coverage}%) {basis, select, PASSING {hebben een succesvol laatste resultaat} other {zijn gekoppeld aan een testgeval}} (drempel {threshold}%).",
-          "STALE_CASES": "{stale, plural, one {# zaak heeft} other {# zaken hebben}} {days, plural, one {# dag} other {# dagen}} lang geen resultaat gehad (drempel {threshold}).",
+          "STALE_CASES": "{stale, plural, one {# testgeval heeft} other {# testgevallen hebben}} {days, plural, one {# dag} other {# dagen}} lang geen resultaat gehad (drempel {threshold}).",
           "AUTOMATION_SHARE_BELOW": "{automated} van {total} gevallen ({automatedPercent}%) zijn geautomatiseerd (drempel {threshold}%).",
           "WEBHOOK_FAILURE_RATE": "{failed} van de laatste {sampleCount} leveringen mislukt ({failureRate}%, drempel {threshold}%).",
-          "CONSECUTIVE_FAILURES": "De zaak is {streak, plural, one {# keer} other {# keer}} achter elkaar mislukt (drempel {threshold}).",
+          "CONSECUTIVE_FAILURES": "Het testgeval is {streak, plural, one {# keer} other {# keer}} achter elkaar mislukt (drempel {threshold}).",
           "CASE_FLAKY": "De uitkomst flipte {flips, plural, one {# keer} other {# keer}} in de laatste {sampleCount} resultaten (drempel {threshold}).",
           "RUN_PASS_RATE_BELOW": "Het slagingspercentage is {passRate}% in {sampleCount} resultaten (drempel {threshold}%).",
           "RUN_FAILURE_COUNT": "{failed, plural, one {# resultaat heeft} other {# resultaten hebben}} gefaald (drempel {threshold}).",
@@ -7394,13 +7394,13 @@
           "LLM_BUDGET_USED": "Uitgaven voor de factuurperiode bedragen {spend} van het {budget} maandelijkse budget ({percent}%, drempel {threshold}%).",
           "LLM_ERROR_RATE": "{failed} van de laatste {sampleCount} verzoeken mislukt ({failureRate}%, drempel {threshold}%).",
           "LLM_RATE_LIMITED": "De provider beperkte {blocked, plural, one {# verzoek} other {# verzoeken}} in de laatste {hours, plural, one {# uur} other {# uren}} (drempel {threshold}).",
-          "CODE_REPOSITORY_CACHE_FAILING": "De repository-cache is {hours, plural, one {# uur} other {# uren}} lang niet aan het falen (drempel {threshold}){error, select, other {: {error}}}",
+          "CODE_REPOSITORY_CACHE_FAILING": "De repository-cache faalt al {hours, plural, one {# uur} other {# uren}} (drempel {threshold}){error, select, other {: {error}}}",
           "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# gebruiker moet} other {# gebruikers moeten}} de integratie opnieuw autoriseren (drempel {threshold}).",
           "QUEUE_FAILED_JOBS": "{failed, plural, one {# taak is} other {# taken zijn}} in de wachtrij mislukt (drempel {threshold}).",
           "QUEUE_BACKLOG": "De oudste van {waiting, plural, one {# wachtende taak} other {# wachtende taken}} heeft {minutes, plural, one {# minuut} other {# minuten}} gewacht (drempel {threshold}).",
           "AUDIT_BACKLOG": "De oudste onverwerkte auditwijziging is {minutes, plural, one {# minuut} other {# minuten}} oud (drempel {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# account is} other {# accounts zijn}} vergrendeld na mislukte aanmeldingen (drempel {threshold}).",
-          "NO_AUTOMATED_RESULTS": "Geen geautomatiseerd resultaat is ontvangen voor {hours, plural, one {# uur} other {# uren}} (drempel {threshold})."
+          "NO_AUTOMATED_RESULTS": "Geen geautomatiseerd resultaat is ontvangen gedurende {hours, plural, one {# uur} other {# uren}} (drempel {threshold})."
         },
         "reviewDecisionRevertedAction": "hun beslissing op teruggedraaid",
         "reviewDecisionRevertedEmailMessage": "{actorName} heeft hun beslissing op {entityLabel} \"{entityName}\" in project \"{projectName}\" teruggedraaid — het wacht nu opnieuw op beoordeling.",
@@ -9906,7 +9906,7 @@
         "title": "CSV-kolommen toewijzen aan gedeelde stapvelden",
         "description": "Koppel uw CSV-kolommen aan gedeelde stapvelden. Verplichte velden moeten worden gekoppeld.",
         "ignoreColumn": "Negeer deze kolom",
-        "requiredFieldsWarning": "{count, plural, one {# Vereist veld is} other {# Vereist veld is}} niet toegewezen. Wijs alle vereiste velden toe om verder te gaan."
+        "requiredFieldsWarning": "{count, plural, one {# Vereist veld is} other {# Vereiste velden zijn}} niet toegewezen. Wijs alle vereiste velden toe om verder te gaan."
       },
       "page3": {
         "title": "Voorbeeld importeren van gegevens",
@@ -9937,7 +9937,7 @@
       "noMatchesForFilters": "Geen overeenkomsten voldoen aan de huidige filters. Verlaag de minimums om de resultaten te verbreden.",
       "selected": "{count, plural, one {# geselecteerd} other {# geselecteerd}}",
       "bulkDismiss": "Afwijzen ({count, number})",
-      "bulkDismissSuccess": "{count, plural, one {# wedstrijd beëindigd} other {# wedstrijden beëindigd}}",
+      "bulkDismissSuccess": "{count, plural, one {# overeenkomst afgewezen} other {# overeenkomsten afgewezen}}",
       "bulkError": "Sommige bewerkingen zijn mislukt. Probeer het opnieuw.",
       "tableHint": "Klik op een rij om een voorbeeld van de overeenkomende stappen te bekijken. Selecteer rijen met selectievakjes voor bulkacties.",
       "matchedStepsCount": "{count, plural, one {# overeenkomende stap} other {# overeenkomende stappen}}",
@@ -10054,7 +10054,7 @@
       "exists": "Bestaat",
       "not_exists": "Bestaat niet"
     },
-    "recordMatches": "{count, plural, one {# record afgestemd op ID} other {# records afgestemd op ID}}",
+    "recordMatches": "{count, plural, one {# record gevonden op ID} other {# records gevonden op ID}}",
     "help": {
       "exactPhrases": "Exacte formuleringen",
       "exactPhrasesDesc": "Plaats termen tussen aanhalingstekens zodat ze exact overeenkomen met de formulering:",
@@ -10361,7 +10361,7 @@
     "datasetColumnDeleteChecking": "Controleren op gevallen die naar deze kolom verwijzen…",
     "datasetColumnDeleteDescription": "De kolom en de bijbehorende waarden in elke rij worden verwijderd. Bestaande testruns die deze waarden al hebben vastgelegd, blijven ongewijzigd.",
     "datasetColumnDeleteBlocked": "{count, plural, =1 {# geval koppelt een parameter aan deze kolom} other {# gevallen koppelen een parameter aan deze kolom}}. Werk eerst deze koppelingen bij en verwijder vervolgens de kolom.",
-    "datasetColumnDeleteAndMore": "en {count, plural, =1 {# meer gevallen} other {# meer gevallen}}",
+    "datasetColumnDeleteAndMore": "en nog {count, plural, =1 {# geval} other {# gevallen}}",
     "datasetColumnDeleteCheckError": "Kon geen gevallen vinden die naar deze kolom verwijzen. Probeer het opnieuw.",
     "datasetRowDefaultLabel": "Rij {number}",
     "datasetPasteCsv": "Plak het CSV-bestand",
@@ -10434,14 +10434,14 @@
     "chipTooltipUndeclared": "\"@{name}\" is geen gedeclareerde parameter. Open Parameters configureren om deze toe te voegen.",
     "editorUndeclaredWarning": "Niet-gedeclareerde referenties: {names}. Voeg ze toe via de configuratieparameters om iteratievervanging mogelijk te maken.",
     "runProgressTitle": "Iteraties genereren voor \"{runName}\"",
-    "runProgressDescriptionAsync": "Er wordt momenteel een iteratie uitgevoerd van {count, plural, =1 {# iteratie} other {# iteratie}} op de achtergrond. U kunt gewoon doorwerken; we laten u weten wanneer dit klaar is.",
+    "runProgressDescriptionAsync": "{count, plural, =1 {# iteratie wordt} other {# iteraties worden}} op de achtergrond aangemaakt. U kunt gewoon doorwerken; we laten u weten wanneer dit klaar is.",
     "runProgressDescriptionSync": "Gemaakt {count, plural, =1 {# iteratie} other {# iteraties}}.",
     "runProgressFailed": "Iteratiegeneratie kon niet worden gestart.",
     "runHardRefuseTitle": "Te veel iteraties om te creëren",
     "runHardRefuseDescription": "Deze run zou {count} iteraties genereren, waarmee de limiet van {cap}wordt overschreden. Verminder het aantal rijen in de dataset, deselecteer gevallen of splits de dataset op in meerdere runs.",
     "runPreflightSync": "Zal {n, plural, =1 {# iteratie} other {# iteraties}} direct creëren",
-    "runPreflightAsync": "Er wordt {n, plural, =1 {# iteratie} other {# iteraties}} aangemaakt (achtergrondtaak)",
-    "runPreflightSoftConfirm": "Er worden {n, plural, =1 {# iteraties} other {# iteraties}} aangemaakt — bevestiging vereist",
+    "runPreflightAsync": "{n, plural, =1 {Er wordt # iteratie aangemaakt} other {Er worden # iteraties aangemaakt}} (achtergrondtaak)",
+    "runPreflightSoftConfirm": "{n, plural, =1 {Er wordt # iteratie aangemaakt} other {Er worden # iteraties aangemaakt}} — bevestiging vereist",
     "runPreflightHardRefuse": "Kan niet aanmaken — {n} overschrijdt de limiet van {cap}",
     "runPreflightTooltip": "{iterations, plural, =1 {# iteratie} other {# iteraties}} = {cases, plural, =1 {# geval} other {# gevallen}} × {configs, plural, =1 {# configuratie} other {# configuraties}} × rijen in de dataset",
     "runPreflightTooltipHeader": "{iterations, plural, =1 {# iteratie} other {# iteraties}} over {cases, plural, =1 {# geparameteriseerd geval} other {# geparameteriseerde gevallen}} × {configs, plural, =1 {# configuratie} other {# configuraties}}",
@@ -10470,7 +10470,7 @@
     "softConfirmGo": "Iteraties genereren",
     "runProgressCounter": "{done} / {total}",
     "runProgressDismissAria": "Voortgang afwijzen",
-    "runProgressComplete": "Generatie {total, plural, =1 {# iteratie} other {# iteraties}} voor \"{runName}\"",
+    "runProgressComplete": "{total, plural, =1 {# iteratie} other {# iteraties}} gegenereerd voor \"{runName}\"",
     "runProgressFailedToast": "Het genereren van iteraties voor \"{runName}is mislukt. {reason}",
     "runProgressNavAway": "Laat me de rest van de run zien",
     "runGeneratingHeading": "Iteraties genereren…",
@@ -10522,7 +10522,7 @@
     "iterationBulkConfirmDescription": "Elke geselecteerde iteratie ontvangt een nieuw resultaat met de status \"{statusName}\".",
     "iterationBulkConfirm": "Markeer {action}",
     "iterationBulkConfirmReplace": "Vervangen door {action}",
-    "iterationBulkOverwriteWarning": "{count, plural, =1 {# van de geselecteerde iteraties heeft al} other {# van de geselecteerde iteraties heeft al}} een resultaat. Een nieuw resultaat wordt vastgelegd en het meest recente resultaat vervangt het huidige.",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {# van de geselecteerde iteraties heeft al} other {# van de geselecteerde iteraties hebben al}} een resultaat. Een nieuw resultaat wordt vastgelegd en het meest recente resultaat vervangt het huidige.",
     "iterationBulkReasonLabel": "Reden (optioneel)",
     "iterationBulkReasonHelp": "Bij elk resultaat vastgelegd.",
     "iterationBulkSuccess": "{count, plural, =1 {# iteratie} other {# iteraties}} gemarkeerd {action}",
@@ -10914,17 +10914,17 @@
       "CASE_RECOVERED": {
         "label": "Zaak hersteld",
         "description": "Een zaak slaagt na het mislukken van elk van zijn laatste resultaten.",
-        "summary": "Een zaak slaagt na het mislukken van zijn laatste {window, plural, one {# resultaat} other {# resultaten}}"
+        "summary": "Een testgeval slaagt na het mislukken van zijn laatste {window, plural, one {# resultaat} other {# resultaten}}"
       },
       "CONSECUTIVE_FAILURES": {
         "label": "Opeenvolgende mislukkingen",
         "description": "Een zaak mislukt een bepaald aantal keren achter elkaar.",
-        "summary": "Een zaak mislukt {threshold, plural, one {# keer} other {# keer}} achter elkaar"
+        "summary": "Een testgeval mislukt {threshold, plural, one {# keer} other {# keer}} achter elkaar"
       },
       "CASE_FLAKY": {
         "label": "Zaak werd wispelturig",
         "description": "Een zaak flipt herhaaldelijk tussen slagen en mislukken binnen zijn recente resultaten. Gebruikt dezelfde invoer als het rapport Wispelturige tests.",
-        "summary": "Een zaak flipt tussen slagen en mislukken minstens {threshold, plural, one {# keer} other {# keer}} in zijn laatste {window} resultaten"
+        "summary": "Een testgeval flipt tussen slagen en mislukken minstens {threshold, plural, one {# keer} other {# keer}} in zijn laatste {window} resultaten"
       },
       "RUN_PASS_RATE_BELOW": {
         "label": "Slagingspercentage run onder drempel",
@@ -10989,7 +10989,7 @@
       "STALE_CASES": {
         "label": "Verouderde zaken",
         "description": "Meer dan een bepaald aantal zaken zijn {days, plural, one {# dag} other {# dagen}} lang zonder resultaat gebleven. Dagelijks gecontroleerd.",
-        "summary": "Meer dan {threshold, plural, one {# zaak is} other {# zaken zijn}} {days, plural, one {# dag} other {# dagen}} zonder resultaat gebleven"
+        "summary": "Meer dan {threshold, plural, one {# testgeval is} other {# testgevallen zijn}} {days, plural, one {# dag} other {# dagen}} zonder resultaat gebleven"
       },
       "AUTOMATION_SHARE_BELOW": {
         "label": "Geautomatiseerd aandeel onder drempel",
@@ -11049,7 +11049,7 @@
       "NO_AUTOMATED_RESULTS": {
         "label": "Geen geautomatiseerde resultaten",
         "description": "Al een tijd lang is geen geautomatiseerde testresultaat van enige pijplijn binnengekomen. Dagelijks gecontroleerd.",
-        "summary": "Geen geautomatiseerd resultaat is ontvangen voor {threshold, plural, one {# uur} other {# uren}}"
+        "summary": "Geen geautomatiseerd resultaat is ontvangen gedurende {threshold, plural, one {# uur} other {# uren}}"
       }
     },
     "sourceSummary": "Resultaten: {source, select, MANUAL {handmatig} AUTOMATED {geautomatiseerd} other {handmatig en geautomatiseerd}}",
@@ -11127,7 +11127,7 @@
       "frames": "Bovenste stackframes",
       "sampleTrace": "Nieuwste fout",
       "affectedCases": "{count, plural, one {# betrokken testcase} other {# betrokken testcases}}",
-      "recentOccurrences": "{count, plural, one {# recent voorkomen} other {# recente voorvallen}}",
+      "recentOccurrences": "{count, plural, one {# recent voorval} other {# recente voorvallen}}",
       "rationale": "Motivering",
       "suggestedIssueTitle": "Voorgestelde paginatitel",
       "nextStep": "Voorgestelde volgende stap",
@@ -11235,8 +11235,8 @@
       },
       "lastExecuted": "Laatst uitgevoerd",
       "neverExecuted": "Nooit uitgevoerd",
-      "verdicts": "{failed} van {sampled, plural, one {# recent geautomatiseerd resultaat} other {# recent geautomatiseerde resultaten}} mislukt",
-      "flips": "{flips, plural, one {# slaag-/faalomslag} other {# slaag-/faalomslag}}",
+      "verdicts": "{failed} van {sampled, plural, one {# recent geautomatiseerd resultaat} other {# recente geautomatiseerde resultaten}} mislukt",
+      "flips": "{flips, plural, one {# slaag-/faalomslag} other {# slaag-/faalomslagen}}",
       "requirements": "{count, plural, one {# gekoppelde vereiste} other {# gekoppelde vereisten}} · topprioriteit {priority}",
       "suspect": "{count, plural, one {# vereiste gewijzigd} other {# vereisten gewijzigd}} sinds de laatste run",
       "defects": "{count, plural, one {# gekoppeld defect} other {# gekoppelde defecten}} · topprioriteit {priority}",

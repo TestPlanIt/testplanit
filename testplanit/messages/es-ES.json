@@ -94,8 +94,8 @@
       "assignSelected": "Asignar {count, plural, one {# caso} other {# casos}}",
       "refresh": "Refrescar",
       "addResultSelected": "Agregar resultado a {count, plural, one {# caso} other {# casos}}",
-      "resultsAdded": "{count, plural, one {# Resultado} other {# Resultados}} Añadido",
-      "resultsAddedDescription": "{count, plural, one {El resultado se ha añadido al caso de prueba #} other {Los resultados se han añadido a los casos de prueba #}} correctamente",
+      "resultsAdded": "{count, plural, one {# Resultado añadido} other {# Resultados añadidos}}",
+      "resultsAddedDescription": "{count, plural, one {El resultado se ha añadido a # caso de prueba} other {Los resultados se han añadido a # casos de prueba}} correctamente",
       "addingResultsToMultiple": "Añadiendo resultados a {count, plural, one {# caso de prueba} other {# casos de prueba}}",
       "addedToTestRun": "Añadido a Test Run",
       "addedToTestRunDescription": "El caso de prueba se ha añadido a la versión de prueba.",
@@ -832,7 +832,7 @@
       "editToModifyCases": "Edite la Prueba y haga clic en Casos de Prueba Seleccionados para modificar la lista.",
       "noTestCasesSelected": "Ningún caso de prueba seleccionado",
       "editToSelectTestCases": "Editar el Test Run para seleccionar los casos de prueba.",
-      "casesInRun": "{count, plural, =0 {No hay casos de prueba en la prueba} =1 {1 caso de prueba en la prueba} other {# casos de prueba en la prueba}}",
+      "casesInRun": "{count, plural, =0 {No hay casos de prueba en la ejecución de prueba} =1 {1 caso de prueba en la ejecución de prueba} other {# casos de prueba en la ejecución de prueba}}",
       "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 caso único} other {# Casos únicos}} en {configCount, plural, =1 {1 configuración} other {# Configuraciones}} ({totalCount, number} casos totales)",
       "viewTestRunDetails": "Ver detalles de la prueba",
       "sortByStatus": "Agrupar por estado",
@@ -840,7 +840,7 @@
       "estimateFromCases": "Tiempo estimado restante: {value} (basado en las estimaciones ingresadas en los casos)",
       "estimateEntered": "Estimación: {value} (ingresada en el caso)",
       "forecastFromHistory": "Pronóstico: {value} (basado en los tiempos de ejecución anteriores)",
-      "testRuns": "{count, plural, =0 {No hay ejecuciones de prueba} =1 {1 Prueba de ejecución} other {# Prueba de ejecuciones}}",
+      "testRuns": "{count, plural, =0 {No hay ejecuciones de prueba} =1 {1 Ejecución de prueba} other {# Ejecuciones de prueba}}",
       "sessions": "{count, plural, =0 {Sin Sesiones} =1 {1 Sesión} other {# Sesiones}}",
       "issues": "{count, plural, =0 {Sin Problemas} =1 {1 Problema} other {# Problemas}}",
       "noOptions": "No hay opciones disponibles",
@@ -915,7 +915,7 @@
       "entries": "{count, plural, =1 {# elemento} other {# elementos}}",
       "pageSize": "Tamaño de página",
       "showing": "Mostrar",
-      "total": "total {count, plural, =1 {# artículo} other {# artículos}}",
+      "total": "total {count, plural, =1 {# elemento} other {# elementos}}",
       "filtered": "filtrado desde",
       "pageOfPages": "Página {current} de {total}",
       "loadedOfTotal": "{loaded, number} de {total, number}"
@@ -1143,7 +1143,7 @@
     "plural": {
       "case": "{count, plural, =1 {caso} other {casos}}",
       "result": "{count, plural, =1 {resultado} other {resultados}}",
-      "run": "{count, plural, =1 {corre} other {corre}}",
+      "run": "{count, plural, =1 {ejecución} other {ejecuciones}}",
       "comment": "{count, plural, =1 {# comentario} other {# comentarios}}"
     },
     "success": {
@@ -1546,8 +1546,8 @@
             "detachedCallout": "{count, plural, one {{count} de esos está desconectado del rastreador o se editó localmente y perderá su estado de requisito} other {{count} de esos están desconectados del rastreador o se editaron localmente y perderán su estado de requisito}}",
             "reversibilityNote": "Volver a agregar un tipo restaura la clasificación. No se elimina nada.",
             "noChanges": "No hay cambios de clasificación que aplicar.",
-            "importOfferBodyExact": "{count, plural, one {{count} problema} other {{count} problemas}} de los tipos seleccionados están en el rastreador.",
-            "importOfferBodyFloor": "Al menos {count, plural, one {{count} problema} other {{count} problemas}} de los tipos seleccionados están en el rastreador — la importación no está limitada a este número.",
+            "importOfferBodyExact": "{count, plural, one {{count} problema de los tipos seleccionados está en el rastreador} other {{count} problemas de los tipos seleccionados están en el rastreador}}.",
+            "importOfferBodyFloor": "Al menos {count, plural, one {{count} problema de los tipos seleccionados está en el rastreador} other {{count} problemas de los tipos seleccionados están en el rastreador}} — la importación no está limitada a este número.",
             "importOfferBodyUnknown": "No se pudo determinar exactamente cuántos problemas de los tipos seleccionados hay en el rastreador. La importación puede continuar y traerá todas las coincidencias.",
             "importOfferConfirm": "Importar ahora",
             "importStarted": "Importación iniciada. Los problemas aparecerán a medida que se importen.",
@@ -2061,7 +2061,7 @@
           "error": "No se pudo eliminar el conjunto de datos."
         },
         "deleteSuccess": "Eliminado \"{name}\"",
-        "deleteSuccessWithAssignments": "Se eliminó \"{name}\" y se dejó sin asignar {count, plural, =1 {# caso} other {# casos}}",
+        "deleteSuccessWithAssignments": "Se eliminó \"{name}\" y {count, plural, =1 {se dejó sin asignar # caso} other {se dejaron sin asignar # casos}}",
         "editor": {
           "back": "Volver a los conjuntos de datos",
           "loadError": "No se pudo cargar este conjunto de datos.",
@@ -2379,23 +2379,23 @@
           "runningFull": "Escaneando el historial completo…",
           "runningProgress": "{commits, number} confirmaciones leídas · {matched, number} nombraron una entrada vinculada · {fetched, number} de esas inspeccionadas",
           "fullBadge": "Historial completo",
-          "imported": "{imported, plural, =0 {Ninguna entrada nueva fue importada desde el rastreador.} one {Se importó # entrada desde el rastreador.} other {Se importaron # entradas desde el rastreador.}}",
+          "imported": "{imported, plural, =0 {No se importó ningún ticket nuevo desde el rastreador.} one {Se importó # ticket desde el rastreador.} other {Se importaron # tickets desde el rastreador.}}",
           "fullCapped": "El recorrido se detuvo en {count, number} confirmaciones antes de llegar al inicio de la rama. Ejecute Escanear historial completo de nuevo para continuar desde donde se detuvo.",
           "stale": "Un escaneo iniciado {date} nunca reportó — el trabajador puede haber sido reiniciado. Póngalo en cola de nuevo para continuar.",
-          "summaryCommits": "{commits, plural, one {# confirmación leída} other {# confirmaciones leídas}}{cached, plural, =0 {} other { ({cached, number} del caché de confirmación)}} · {naming, number} nombró una entrada · {tickets, plural, one {# entrada distinta} other {# entradas distintas}}",
+          "summaryCommits": "{commits, plural, one {# confirmación leída} other {# confirmaciones leídas}}{cached, plural, =0 {} other { ({cached, number} del caché de confirmación)}} · {naming, number} con ticket nombrado · {tickets, plural, one {# ticket distinto} other {# tickets distintos}}",
           "summaryPins": "Entradas: {created, number} creadas · {updated, number} actualizadas · {removed, number} eliminadas",
           "noLinkedHint": "Las entradas solo anclan casos de prueba una vez que un caso de prueba está vinculado a ellas. Vincule casos a las entradas importadas, luego vuelva a escanear.",
           "importFailuresTitle": "Claves no encontradas en el rastreador ({shown} de {total}):",
           "windowCapped": "Solo se leyeron las {count, number} confirmaciones más recientes (el límite de ventana reciente). Use Escanear historial completo para leer las más antiguas.",
-          "runningWalk": "{commits, number} confirmaciones leídas hasta ahora{cached, plural, =0 {} other { ({cached, number} del caché de confirmación)}} — las entradas se buscan una vez que finaliza el recorrido",
+          "runningWalk": "{commits, number} confirmaciones leídas hasta ahora{cached, plural, =0 {} other { ({cached, number} del caché de confirmación)}} — los tickets se buscan una vez que finaliza el recorrido",
           "runningImport": "{commits, number} confirmaciones leídas · importación de entradas: {lookups, number} buscadas en el rastreador · {imported, number} importadas",
           "summaryCommitsOnly": "{commits, plural, one {# confirmación leída} other {# confirmaciones leídas}}",
           "importSkipped": "{skipped, plural, one {# clave no fue buscada} other {# claves no fueron buscadas}} aún porque un escaneo realiza un número limitado de búsquedas en el rastreador. Ejecute el escaneo nuevamente para continuar.",
           "cancelRequested": "Cancelación solicitada. El escaneo se detiene en su siguiente paso; las confirmaciones ya leídas se mantienen en caché.",
           "cancelled": "Escaneo cancelado {date}. Las confirmaciones leídas antes de la cancelación se conservan en el caché de confirmación; las entradas no se actualizaron.",
-          "importMoved": "{moved, plural, one {# clave es un nombre antiguo} other {# claves son nombres antiguos}} de entradas ya importadas; se movieron o cambiaron de nombre en el rastreador.",
+          "importMoved": "{moved, plural, one {# clave es un nombre antiguo} other {# claves son nombres antiguos}} de tickets ya importados; se movieron o cambiaron de nombre en el rastreador.",
           "importFailed": "{failed, plural, one {# clave no fue encontrada en el rastreador, listada a continuación} other {# claves no fueron encontradas en el rastreador, listadas a continuación}}.",
-          "summaryMatched": "{matched, plural, one {# confirmación nombró} other {# confirmaciones nombraron}} una entrada vinculada a un caso de prueba",
+          "summaryMatched": "{matched, plural, one {# confirmación nombró} other {# confirmaciones nombraron}} un ticket vinculado a un caso de prueba",
           "summarySymbolPins": "({count, number} de las entradas creadas apuntan a una función o clase en lugar de un archivo completo.)"
         },
         "markers": {
@@ -2403,7 +2403,7 @@
           "description": "Las anotaciones de comentarios como @testplanit case:123 y las entradas en .testplanit/testmap.yml se convierten en Code Pins en cada actualización de caché.",
           "skippedPrivacy": "Omitido: el almacenamiento en caché de archivos está deshabilitado.",
           "skippedPartial": "Omitido: solo se almacenaron parcialmente en caché los contenidos del archivo.",
-          "summary": "{annotations, plural, one {# anotación} other {# anotaciones}} · {mapEntries, plural, one {# entrada de mapa} other {# entradas de mapa}} · {created} creada · {updated} actualizada · {removed} eliminada",
+          "summary": "{annotations, plural, one {# anotación} other {# anotaciones}} · {mapEntries, plural, one {# entrada de mapa} other {# entradas de mapa}} · creados: {created} · actualizados: {updated} · eliminados: {removed}",
           "problems": "{count, plural, one {# problema} other {# problemas}}"
         },
         "saved": "Configuración de Impact Analysis guardada",
@@ -2427,16 +2427,16 @@
           "viewDescription": "Cómo está conectado este repositorio. Actualice el caché o ejecute un escaneo de entrada desde aquí; use Editar para cambiar la configuración.",
           "empty": "Aún no hay repositorios conectados",
           "emptyDescription": "Conecte el repositorio de la aplicación en prueba para comenzar a analizar cambios.",
-          "lastScan": "{created, plural, one {# entrada creada} other {# entradas creadas}} por el último escaneo",
+          "lastScan": "{created, plural, one {# pin creado} other {# pines creados}} por el último escaneo",
           "scanFailed": "Error en el último escaneo",
           "scanCancelled": "Último escaneo cancelado"
         },
         "bulk": {
           "label": "{count, plural, one {Su repositorio:} other {Todos los # repositorios:}}",
           "scanRecentHint": "Vuelva a escanear las confirmaciones recientes en {count, plural, one {el repositorio conectado} other {todos los # repositorios conectados}}.",
-          "scanFullHint": "Recorra cada confirmación en la rama de {count, plural, one {el repositorio conectado} other {todos los # repositorios conectados}} y rellene los pines para tickets existentes.",
-          "scanFullConfirm": "Esto recorre cada confirmación en la rama de {count, plural, one {el repositorio conectado} other {todos los # repositorios conectados}}. Los repositorios se escanean de uno en uno, por lo que esto puede tomar mucho tiempo, y cada recorrido lee confirmaciones a través de la API del proveedor, lo que cuenta con su límite de velocidad.",
-          "checkStaleHint": "Verifique los Code Pins de {count, plural, one {el repositorio conectado} other {todos los # repositorios conectados}} contra cada punta de rama.",
+          "scanFullHint": "Recorra cada confirmación en la rama {count, plural, one {del repositorio conectado} other {de todos los # repositorios conectados}} y rellene los pines para tickets existentes.",
+          "scanFullConfirm": "Esto recorre cada confirmación en la rama {count, plural, one {del repositorio conectado} other {de todos los # repositorios conectados}}. Los repositorios se escanean de uno en uno, por lo que esto puede tomar mucho tiempo, y cada recorrido lee confirmaciones a través de la API del proveedor, lo que cuenta para su límite de velocidad.",
+          "checkStaleHint": "Verifique los Code Pins {count, plural, one {del repositorio conectado} other {de todos los # repositorios conectados}} contra cada punta de rama.",
           "removeStaleHint": "Eliminar {count, plural, one {# Code Pin obsoleto} other {# Code Pins obsoletos}} en {repos, plural, one {# repositorio} other {# repositorios}}.",
           "removeConfirm": "¿Eliminar {count, plural, one {# Code Pin} other {# Code Pins}} que las últimas verificaciones no pudieron encontrar en la punta de la rama, en {repos, plural, one {# repositorio} other {# repositorios}}?",
           "queued": "En cola para {count, plural, one {# repositorio} other {# repositorios}}.{skipped, plural, =0 {} one { # ya estaba en ejecución.} other { # ya estaban en ejecución.}}",
@@ -2457,9 +2457,9 @@
           "running": "Comprobando {checked, number} de {total, plural, one {# archivo} other {# archivos}}…",
           "neverChecked": "Aún no se ha comprobado",
           "checkFailed": "Error en la última verificación",
-          "summary": "{count, plural, =0 {Sin entradas obsoletas} one {# entrada obsoleta} other {# entradas obsoletas}} · {checked, plural, one {# entrada verificada} other {# entradas verificadas}}",
-          "unreadable": "{count, plural, one {# archivo no se pudo leer} other {# archivos no se pudieron leer}}, por lo que esas entradas no se comprobaron.",
-          "removed": "{count, plural, =0 {Ninguna entrada obsoleta fue eliminada} one {# entrada obsoleta eliminada} other {# entradas obsoletas eliminadas}}",
+          "summary": "{count, plural, =0 {Sin pines obsoletos} one {# pin obsoleto} other {# pines obsoletos}} · {checked, plural, one {# pin verificado} other {# pines verificados}}",
+          "unreadable": "{count, plural, one {# archivo no se pudo leer} other {# archivos no se pudieron leer}}, por lo que esos pines no se comprobaron.",
+          "removed": "{count, plural, =0 {Ningún pin obsoleto fue eliminado} one {# pin obsoleto eliminado} other {# pines obsoletos eliminados}}",
           "removeFailed": "No se pudieron eliminar las entradas obsoletas",
           "removeConfirm": "¿Eliminar {count, plural, one {# Code Pin} other {# Code Pins}} que la última verificación no pudo encontrar en la punta de {name}?",
           "removeConfirmNote": "Se mantienen las entradas cuya insignia Stale fue descartada y las entradas mantenidas por marcadores de repositorio. Las entradas eliminadas se pueden restaurar desde la Papelera.",
@@ -2620,11 +2620,11 @@
     "completeDialog": {
       "confirmTitle": "Confirmar finalización del hito",
       "confirmDescription": "Completar este hito también completará los siguientes elementos relacionados:",
-      "impactActiveTestRuns": "{count, plural, one {# prueba activa ejecutada} other {# prueba activa se ejecuta}}",
+      "impactActiveTestRuns": "{count, plural, one {# ejecución de prueba activa} other {# ejecuciones de prueba activas}}",
       "impactActiveSessions": "{count, plural, one {# sesión activa} other {# sesiones activas}}",
-      "impactDescendantMilestones": "{count, plural, one {# hito descendiente} other {# hitos descendentes}}",
-      "completeTestRunsLabel": "Ejecuciones de pruebas asociadas completas ({count, plural, one {# activas} other {# activas}})",
-      "completeSessionsLabel": "Sesiones asociadas completas ({count, plural, one {# activas} other {# activas}})",
+      "impactDescendantMilestones": "{count, plural, one {# hito descendiente} other {# hitos descendientes}}",
+      "completeTestRunsLabel": "Completar las ejecuciones de prueba asociadas ({count, plural, one {# activa} other {# activas}})",
+      "completeSessionsLabel": "Completar las sesiones asociadas ({count, plural, one {# activa} other {# activas}})",
       "testRunStateLabel": "Estado de finalización de la ejecución de prueba",
       "sessionStateLabel": "Estado de finalización de la sesión",
       "itemsRemaining": "Los siguientes elementos permanecerán activos:",
@@ -2656,7 +2656,7 @@
       "emptyFiltered": "Ningún hito coincide con sus filtros.",
       "partialWarning": "No se pudieron obtener algunos proyectos de {provider}:",
       "importing": "Importando {count, plural, one {# hito} other {# hitos}} desde {provider}…",
-      "completed": "Se importaron {count, plural, one {# hito} other {# hitos}} desde {provider}",
+      "completed": "{count, plural, one {Se importó # hito} other {Se importaron # hitos}} desde {provider}",
       "stillRunning": "La importación todavía se está ejecutando en segundo plano — los hitos aparecerán cuando finalice."
     },
     "sync": {
@@ -2888,7 +2888,7 @@
   "home": {
     "dashboard": {
       "title": "Tu panel de control",
-      "users": "¡Hay {count, plural, =1 {¡# Usuario} other {¡Son # Usuarios}}",
+      "users": "Hay {count, plural, =1 {# Usuario} other {# Usuarios}}",
       "yourProjects": "Tus proyectos",
       "projects": "Tienes acceso a {count, plural, =1 {# Proyecto} other {# Proyectos}}",
       "loading": "Cargando panel...",
@@ -2896,7 +2896,7 @@
       "pendingRuns": "Pruebas pendientes",
       "activeSessions": "Sesiones activas",
       "yourActiveSessions": "{count, plural, =0 {No hay sesiones activas} =1 {# Sesión activa} other {# Sesiones activas}}",
-      "yourPendingRuns": "{count, plural, =0 {No hay ejecuciones de prueba pendientes} =1 {# Prueba activa de ejecución} other {# Ejecución de prueba activa}}",
+      "yourPendingRuns": "{count, plural, =0 {No hay ejecuciones de prueba pendientes} =1 {# Ejecución de prueba activa} other {# Ejecuciones de prueba activas}}",
       "yourAssignments": "Sus tareas",
       "totalTime": "Tiempo total estimado: ",
       "totalWorkEffort": "Total de trabajo Effort: ",
@@ -3156,7 +3156,7 @@
         "bulkConfirmDescription": "Cada uno de los {count} elementos seleccionados se restaurará en su proyecto, junto con todo lo que fue eliminado con él.",
         "restored": "\"{name}\" restaurado.",
         "restoreFailed": "No se pudo restaurar \"{name}\": {message}",
-        "bulkResult": "{restored, plural, one {# elemento restaurado} other {# elementos restaurados}}, {failed} falló.",
+        "bulkResult": "{restored, plural, one {# elemento restaurado} other {# elementos restaurados}}, {failed} con error.",
         "failure": {
           "parent_deleted": "su carpeta o elemento principal aún está eliminado — restaura ese primero",
           "name_conflict": "ya existe un elemento con el mismo nombre",
@@ -3299,9 +3299,9 @@
       "delete": "Eliminar paso",
       "removedFromCase": "Eliminado del caso de prueba",
       "confirmDelete": "Confirmar eliminación Paso {number, number}?",
-      "createSharedSteps": "¡Crear compartido {number, plural, one {Paso} other {¡Pasos}}",
+      "createSharedSteps": "Crear {number, plural, one {Paso compartido} other {Pasos compartidos}}",
       "sharedStepsName": "Nombre de pasos compartidos",
-      "sharedStepsDescription": "¡Introduce un nombre para tu nuevo {number, plural, one {paso} other {pasos}}. ¡Esto incluirá {number, plural, one {# paso seleccionado} other {# ¡pasos seleccionados}}.",
+      "sharedStepsDescription": "Introduce un nombre para {number, plural, one {tu nuevo paso compartido} other {tus nuevos pasos compartidos}}. Esto incluirá {number, plural, one {# paso seleccionado} other {# pasos seleccionados}}.",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "Por favor, seleccione pasos e introduzca un nombre para crear pasos compartidos.",
         "failedToCreateSharedStepGroupError": "Error al crear los pasos compartidos. Por favor, inténtalo de nuevo.",
@@ -3341,7 +3341,7 @@
     },
     "templateNotAssignedWarning": "Este caso de prueba utiliza la plantilla \"{templateName}\", que actualmente no está asignada al proyecto \"{projectName}\". Es posible que deba asignar esta plantilla al proyecto o modificar el caso de prueba para usar una plantilla diferente.",
     "orphanedStepsWarning": "Este caso de prueba tiene pasos, pero la plantilla actual \"{templateName}\" no incluye el campo \"Pasos\". Los pasos no se pueden editar hasta que el caso de prueba tenga una plantilla con dicho campo.",
-    "orphanedFieldsWarning": "Este caso de prueba tiene {count, plural, =1 {# valor de campo} other {# valores de campo}} que {count, plural, =1 {es no incluido} other {son no incluidos}} en la plantilla actual \"{templateName}\". {count, plural, =1 {Este campo es mostrado a continuación, pero es posible que no se pueda editar hasta que se agregue a la plantilla} other {Estos campos son mostrados a continuación, pero es posible que no se puedan editar hasta que se agreguen a la plantilla}}.",
+    "orphanedFieldsWarning": "Este caso de prueba tiene {count, plural, =1 {# valor de campo} other {# valores de campo}} que {count, plural, =1 {no está incluido} other {no están incluidos}} en la plantilla actual \"{templateName}\". {count, plural, =1 {Este campo es mostrado a continuación, pero es posible que no se pueda editar hasta que se agregue a la plantilla} other {Estos campos son mostrados a continuación, pero es posible que no se puedan editar hasta que se agreguen a la plantilla}}.",
     "title": "Repositorio de Casos de Prueba",
     "folders": "Carpetas",
     "showDescendants": "Mostrar todos los descendientes",
@@ -3503,7 +3503,7 @@
           "title": "Mapear columnas CSV a campos",
           "description": "Mapear cada columna CSV a un campo en la plantilla o elegir ignorarlo.",
           "ignoreColumn": "Ignorar Columna",
-          "requiredFieldsWarning": "{count, plural, one {# el campo requerido no está mapeado} other {# los campos requeridos no están mapeados}}",
+          "requiredFieldsWarning": "{count, plural, one {# campo requerido no está mapeado} other {# campos requeridos no están mapeados}}",
           "caseIdHint": "Debe ser el ID numérico del caso; los casos coincidentes se sobrescriben."
         },
         "page3": {
@@ -3583,7 +3583,7 @@
       "confirmMessageStart": "¿Está seguro que desea eliminar el caso de prueba ",
       "confirmMessageEnd": "?",
       "warning": "Este caso de prueba se eliminará del proyecto. Los datos históricos de este caso de prueba permanecerán en el proyecto incluyendo los resultados.",
-      "activeRunWarningMessage": "¡Este caso de prueba es parte de {count, plural, =1 {# ejecución de prueba activa} other {# ejecución de prueba activa}}Eliminarlo marcará como eliminado en esas ejecuciones."
+      "activeRunWarningMessage": "Este caso de prueba es parte de {count, plural, =1 {# ejecución de prueba activa} other {# ejecuciones de prueba activas}}. Eliminarlo lo marcará como eliminado en esas ejecuciones."
     },
     "deleteFolder": {
       "confirmMessage": "{count, plural, =0 {Eliminar esta carpeta también eliminará todas las subcarpetas. ¿Estás seguro?} one {Eliminar esta carpeta también eliminará 1 caso de prueba en esta carpeta y todas las subcarpetas. ¿Estás seguro?} other {Eliminar esta carpeta también eliminará # casos de prueba en esta carpeta y todas las subcarpetas. ¿Estás seguro?}}",
@@ -3618,8 +3618,8 @@
     "noFoldersOrCasesNoPermission": "No hay carpetas ni casos de prueba para mostrar.",
     "createFirstFolder": "Crear su primera carpeta",
     "bulkEdit": {
-      "title": "Edición masiva {count, plural, one {# Caso} other {# Casos}}",
-      "description": "Editando {count, plural, one {# el caso seleccionado} other {# los casos seleccionados}}. Revisa un campo para activar la edición.",
+      "title": "Edición masiva de {count, plural, one {# Caso} other {# Casos}}",
+      "description": "Editando {count, plural, one {# caso seleccionado} other {# casos seleccionados}}. Marca un campo para activar la edición.",
       "defineStepsTitle": "Definir pasos para la actualización masiva",
       "saveNewSteps": "Guardar nuevos pasos",
       "newStepsDefined": "Nuevos pasos definidos ({count, number}) - Haga clic en el botón para editar",
@@ -3648,7 +3648,7 @@
       "stepsCannotBeBulkEdited": "Los pasos no pueden ser editados en masa",
       "stepsInfoTitle": "Información de pasos",
       "stepsCannotBeBulkEditedInfo": "Los pasos no pueden ser editados a granel. Edite los pasos editando los casos individualmente.",
-      "confirmDeleteCases": "\"¿Estás seguro de que deseas eliminar {count, plural, one {# caso seleccionado} other {# casos seleccionados}}? Esta acción no se puede deshacer.\"",
+      "confirmDeleteCases": "¿Estás seguro de que deseas eliminar {count, plural, one {# caso seleccionado} other {# casos seleccionados}}? Esta acción no se puede deshacer.",
       "replaceAll": "Reemplazar todo",
       "searchReplace": "Buscar y reemplazar",
       "searchFor": "Buscar por",
@@ -3765,7 +3765,7 @@
       "compareButton": "Comparar",
       "viewCaseDetails": "Ver detalles del caso",
       "selectAll": "Seleccionar todo",
-      "selected": "{count, plural, one {# seleccionado} other {# seleccionado}}",
+      "selected": "{count, plural, one {# seleccionado} other {# seleccionados}}",
       "bulkDismiss": "No duplicados ({count, number})",
       "bulkLink": "Enlace como relacionado ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# par descartado} other {# pares descartados}}",
@@ -3843,7 +3843,7 @@
         "recentJobInfo": "{pages, plural, one {# página} other {# páginas}}{hasTestCases, select, true { · {testCases, plural, one {# caso de prueba} other {# casos de prueba}}} other {}}",
         "recentJobHasResults": "Listo para revisar",
         "recentJobClickToGenerate": "Haz clic para generar casos de prueba",
-        "recentJobCrawling": "Gateando... {pages, plural, one {# página} other {# páginas}} hasta ahora",
+        "recentJobCrawling": "Rastreando... {pages, plural, one {# página} other {# páginas}} hasta ahora",
         "removeJobTitle": "Eliminar generación",
         "confirmRemoveJob": "Esto eliminará el rastreo almacenado en caché y los casos de prueba generados. Siempre puedes generarlos de nuevo desde la misma URL.",
         "loadingRecentJobs": "Cargando trabajos recientes...",
@@ -3903,9 +3903,9 @@
         "title": "Revisar casos de prueba generados",
         "description": "Revise los casos de prueba generados por AI, haga cualquier edición necesaria y seleccione cuáles para importar.",
         "selected": "{count, number} de {total, number} seleccionado",
-        "moreSteps": "... y {count, plural, one {# más pasos} other {# más pasos}}",
+        "moreSteps": "... y {count, plural, one {# paso más} other {# pasos más}}",
         "templateFields": "Campos de Plantilla:",
-        "moreFields": "... y {count, plural, one {# más campos} other {# más campos}}",
+        "moreFields": "... y {count, plural, one {# campo más} other {# campos más}}",
         "crawledUrls": "{count, plural, one {# página rastreada} other {# páginas rastreadas}}",
         "spaWarning": "Esta página puede requerir la renderización mediante JavaScript. Los resultados pueden estar incompletos.",
         "filterByPage": "Filtrar por página",
@@ -3914,7 +3914,7 @@
       "generatingLegacy": "Generación de casos de prueba con IA...",
       "expandProgress": "{done, number} de {total, number} generado",
       "import": "{count, plural, =0 {Importar casos de prueba} =1 {Importar 1 caso de prueba} other {Importar # casos de prueba}}",
-      "stage": "{count, plural, =0 {Casos de prueba de etapa} =1 {Caso de prueba de etapa 1} other {Casos de prueba de etapa #}}",
+      "stage": "{count, plural, =0 {Preparar casos de prueba} =1 {Preparar 1 caso de prueba} other {Preparar # casos de prueba}}",
       "stageDescription": "Los casos de prueba en etapa son privados para ti. Revísalos en Mis casos en etapa y créalos desde allí; nada se agrega al repositorio hasta que lo hagas.",
       "importing": "{count, plural, =0 {Importando casos de prueba...} =1 {Importando 1 caso de prueba...} other {Importando # casos de prueba...}}",
       "externalSystem": "Sistema externo",
@@ -3926,11 +3926,11 @@
       "datasetTruncatedWarning": "El conjunto de datos fue truncado por la IA. Puede agregar filas manualmente en el editor de parámetros después de guardar.",
       "datasetCappedWarning": "El conjunto de datos se limitó al número máximo de filas. Las filas sobrantes se eliminaron.",
       "invalidParameterWarning": "Uno o más de los parámetros propuestos no eran válidos y fueron descartados.",
-      "datasetMoreRows": "...y {count, plural, one {# más filas} other {# más filas}}",
+      "datasetMoreRows": "...y {count, plural, one {# fila más} other {# filas más}}",
       "parameterChipSensitive": "sensible",
       "success": {
-        "imported": "{count, plural, =1 {¡Se ha importado con éxito 1 caso de prueba} other {¡# casos de prueba importados con éxito}}",
-        "staged": "{count, plural, =1 {Etapa # caso de prueba} other {Etapa # casos de prueba}}"
+        "imported": "{count, plural, =1 {Se ha importado con éxito 1 caso de prueba} other {# casos de prueba importados con éxito}}",
+        "staged": "{count, plural, =1 {Se preparó 1 caso de prueba} other {Se prepararon # casos de prueba}}"
       },
       "importData": {
         "issueDescription": "Problema externo vinculado a la generación del caso de prueba",
@@ -4035,7 +4035,7 @@
         "discardAndStage": "Descartar ediciones y poner en etapa"
       },
       "linkedIssuesDroppedTitle": "Algunos temas relacionados no fueron incluidos.",
-      "linkedIssuesDropped": "{count, plural, =1 {# El problema vinculado fue descartado} other {# Los problemas vinculados fueron descartados}} debido al presupuesto de tokens: {keys}.",
+      "linkedIssuesDropped": "{count, plural, =1 {# problema vinculado fue descartado} other {# problemas vinculados fueron descartados}} debido al presupuesto de tokens: {keys}.",
       "linkedIssuesPreviewHeading": "Temas relacionados que se incluirán",
       "contextImages": {
         "pickerHeading": "Imágenes para incluir como contexto (hasta {max})",
@@ -4145,7 +4145,7 @@
       "filePlaceholder": "Buscar archivos...",
       "filesCached": "{count, plural, one {# archivo} other {# archivos}} en caché · {date}",
       "filesLive": "Listando archivos en directo desde el repositorio",
-      "globMatches": "{count, plural, =0 {Sin archivos en caché coinciden} one {# archivo en caché coincide} other {# archivos en caché coinciden}}",
+      "globMatches": "{count, plural, =0 {Ningún archivo en caché coincide} one {# archivo en caché coincide} other {# archivos en caché coinciden}}",
       "globPlaceholder": "src/pagos/**",
       "kind": "Tipo",
       "kindFile": "Archivo completo",
@@ -4286,7 +4286,7 @@
       "toastPendingReviewExists": "Ya hay una revisión pendiente para esta transición. Espere la decisión o cancélela antes de volver a intentarlo."
     },
     "inbox": {
-      "iconAria": "{count, plural, =0 {Bandeja de entrada de revisiones} one {Bandeja de entrada de revisiones, # pendiente} other {Bandeja de entrada de revisiones, # pendiente}}",
+      "iconAria": "{count, plural, =0 {Bandeja de entrada de revisiones} one {Bandeja de entrada de revisiones, # pendiente} other {Bandeja de entrada de revisiones, # pendientes}}",
       "tabDecided": "Decidido",
       "emptyDecided": "Aún no hay revisiones decididas. Las revisiones que decidas, y las decisiones sobre las revisiones que solicites, aparecerán aquí.",
       "empty": "No hay revisiones pendientes. No hay nada esperando por usted, y todas las revisiones que ha solicitado han sido decididas.",
@@ -4444,9 +4444,9 @@
       "previewNoUsers": "Seleccione miembros del equipo para previsualizar la distribución.",
       "previewUser": "Miembro del Equipo",
       "previewCases": "Casos",
-      "previewSkipped": "{count, plural, one {# caso omitido} other {# casos omitidos}} (ya asignado o completado)",
+      "previewSkipped": "{count, plural, one {# caso omitido (ya asignado o completado)} other {# casos omitidos (ya asignados o completados)}}",
       "confirming": "Asignando…",
-      "success": "Se distribuyeron {count, plural, one {# caso} other {# casos}} entre {users, plural, one {# miembro} other {# miembros}}",
+      "success": "{count, plural, one {Se distribuyó # caso} other {Se distribuyeron # casos}} entre {users, plural, one {# miembro} other {# miembros}}",
       "errorGeneric": "No se pudieron distribuir las asignaciones",
       "errorRunCompleted": "Esta ejecución está completada y ya no se puede modificar",
       "errorNeedUsers": "Seleccione al menos un miembro del proyecto para distribuir",
@@ -4482,8 +4482,8 @@
       "noLlmIntegration": "Las funciones de IA requieren una integración LLM. Configúrela en la configuración del proyecto.",
       "configure": {
         "title": "Alcance del caso de prueba",
-        "description": "Se encontraron {count, plural, =1 {# caso de prueba} other {# casos de prueba}} en el repositorio",
-        "descriptionFiltered": "Se encontraron {count, plural, =1 {# casos de prueba posiblemente relevantes} other {# casos de prueba posiblemente relevantes}} de {total, plural, =1 {# total} other {# total}} en el repositorio",
+        "description": "{count, plural, =1 {Se encontró # caso de prueba} other {Se encontraron # casos de prueba}} en el repositorio",
+        "descriptionFiltered": "{count, plural, =1 {Se encontró # caso de prueba posiblemente relevante} other {Se encontraron # casos de prueba posiblemente relevantes}} de {total, plural, =1 {# total} other {# total}} en el repositorio",
         "noMatchesTitle": "No se encontraron casos de prueba coincidentes",
         "noMatchesDescription": "El nombre y la descripción de la ejecución de prueba no coincidieron con ningún caso de prueba. Regrese al paso anterior y agregue detalles más específicos, como nombres de funciones, nombres de componentes o palabras clave que aparecen en sus casos de prueba.",
         "maxResultsTitle": "Número máximo de casos de prueba coincidentes",
@@ -4491,7 +4491,7 @@
         "batchSize": "Tamaño del lote",
         "batchSizeAll": "Todos los casos (solicitud única)",
         "batchSizePercent": "{percent}% ({count} casos)",
-        "requestsNeeded": "{count, plural, =1 {# Se realizará una solicitud de IA} other {# Se realizarán solicitudes de IA}}",
+        "requestsNeeded": "{count, plural, =1 {Se realizará # solicitud de IA} other {Se realizarán # solicitudes de IA}}",
         "batchNote": "Se combinarán los resultados de todos los lotes."
       },
       "loading": {
@@ -4508,7 +4508,7 @@
         "description": "{count, plural, =1 {# caso de prueba seleccionado} other {# casos de prueba seleccionados}} según el contexto de ejecución de la prueba",
         "linkedCasesAdded": "{count, plural, =1 {# caso vinculado incluido automáticamente} other {# casos vinculados incluidos automáticamente}}",
         "truncationWarningTitle": "Resultados parciales",
-        "truncationWarning": "{count, plural, =1 {# el lote fue truncado} other {# los lotes fueron truncados}} por el modelo de IA: es posible que algunos casos de prueba no hayan sido evaluados."
+        "truncationWarning": "{count, plural, =1 {# lote fue truncado} other {# lotes fueron truncados}} por el modelo de IA: es posible que algunos casos de prueba no hayan sido evaluados."
       },
       "noSuggestions": {
         "title": "No hay casos de prueba coincidentes",
@@ -4676,7 +4676,7 @@
         "showFullPatch": "Mostrar parche completo",
         "binary": "Archivo binario",
         "noPatch": "Parche no disponible",
-        "pinnedFiles": "{count, plural, one {# entrada} other {# entradas}}",
+        "pinnedFiles": "{count, plural, one {# pin} other {# pines}}",
         "loading": "Comparando confirmaciones…"
       },
       "loading": {
@@ -4739,7 +4739,7 @@
       "stale": {
         "badge": "Duro",
         "tooltipAnalysis": "El bloque anclado no se pudo encontrar en la confirmación base; coincidió solo por ruta de archivo. Re-ancle desde la página del caso de prueba.",
-        "title": "{count, plural, one {# entrada obsoleta} other {# entradas obsoletas}}",
+        "title": "{count, plural, one {# pin obsoleto} other {# pines obsoletos}}",
         "description": "Estas entradas ya no coinciden con el código. Re-anclas desde la página del caso de prueba."
       },
       "uncovered": {
@@ -4900,7 +4900,7 @@
         "mappingAnalysisError": "No pudimos generar el análisis de mapeo. Inténtalo de nuevo.",
         "mappingLoading": "Análisis de mapeo de edificios…",
         "mappingSummaryHeading": "Entidades detectadas",
-        "mappingSummaryPending": "{count, plural, =1 {# pendiente} other {# pendiente}}",
+        "mappingSummaryPending": "{count, plural, =1 {# pendiente} other {# pendientes}}",
         "mappingOutstandingTitle": "Resolver asignaciones pendientes",
         "mappingOutstandingDescription": "Complete las asignaciones restantes antes de iniciar la importación.",
         "mappingOutstandingItem": "{count, plural, =1 {# elemento sin resolver} other {# elementos sin resolver}} en {label}",
@@ -4990,8 +4990,8 @@
         "activityLogTitle": "Actividad de importación",
         "activityLogDescription": "Registro detallado de los pasos de importación en segundo plano. Las marcas de tiempo se basan en la zona horaria del servidor.",
         "activitySummaryProcessed": "{count, plural, =1 {# registro procesado} other {# registros procesados}}",
-        "activitySummaryCreated": "{count, plural, =1 {# creado} other {# creado}}",
-        "activitySummaryMapped": "{count, plural, =1 {# mapeado} other {# mapeado}}",
+        "activitySummaryCreated": "{count, plural, =1 {# creado} other {# creados}}",
+        "activitySummaryMapped": "{count, plural, =1 {# mapeado} other {# mapeados}}",
         "activitySummaryUnknown": "Paso de importación",
         "activityDefaultMessage": "Actualización de importación",
         "previousImportsHeading": "Revisar importaciones anteriores",
@@ -6190,7 +6190,7 @@
       "deselectAllShiftTooltip": "Deseleccionar/Seleccionar todas las configuraciones en todas las páginas.",
       "shiftClickHint": "Mantén pulsada la tecla Mayús para seleccionar/deseleccionar todas las páginas.",
       "bulkEdit": {
-        "button": "{count, plural, one {Editar configuración 1} other {Editar configuraciones #}}",
+        "button": "{count, plural, one {Editar 1 configuración} other {Editar # configuraciones}}",
         "title": "{count, plural, one {Editar proyectos en 1 configuración} other {Editar proyectos en # configuraciones}}",
         "description": "Reemplace las asignaciones de proyecto en las configuraciones seleccionadas. El nombre de la configuración no se puede editar de forma masiva.",
         "applyButton": "{count, plural, one {Aplicar a 1 configuración} other {Aplicar a # configuraciones}}",
@@ -7277,7 +7277,7 @@
         "commentMentionTitle": "Te mencionaron en un comentario",
         "systemAnnouncementTitle": "Anuncio del sistema",
         "assignedTestCase": "le ha asignado al caso de prueba",
-        "assignedMultipleTestCases": "Te asigné {count, plural, one {# caso de prueba} other {# casos de prueba}}",
+        "assignedMultipleTestCases": "te asignó {count, plural, one {# caso de prueba} other {# casos de prueba}}",
         "assignedSession": "asignado a la sesión",
         "mentionedYouInComment": "Te mencioné en un comentario en",
         "inProject": "en proyecto",
@@ -7393,7 +7393,7 @@
           "MILESTONE_OVERDUE": "El hito está {daysOverdue, plural, one {# día} other {# días}} atrasado respecto a su fecha de vencimiento.",
           "LLM_BUDGET_USED": "El gasto del período de facturación es {spend} de {budget} presupuesto mensual ({percent}%, umbral {threshold}%).",
           "LLM_ERROR_RATE": "{failed} de las últimas {sampleCount} solicitudes fallaron ({failureRate}%, umbral {threshold}%).",
-          "LLM_RATE_LIMITED": "El proveedor limitó la velocidad de {blocked, plural, one {# solicitud} other {# solicitudes}} en las últimas {hours, plural, one {# hora} other {# horas}} (umbral {threshold}).",
+          "LLM_RATE_LIMITED": "El proveedor limitó la velocidad de {blocked, plural, one {# solicitud} other {# solicitudes}} {hours, plural, one {en la última # hora} other {en las últimas # horas}} (umbral {threshold}).",
           "CODE_REPOSITORY_CACHE_FAILING": "La caché del repositorio ha estado fallando durante {hours, plural, one {# hora} other {# horas}} (umbral {threshold}){error, select, other {: {error}}}",
           "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# usuario necesita} other {# usuarios necesitan}} reautorizar la integración (umbral {threshold}).",
           "QUEUE_FAILED_JOBS": "{failed, plural, one {# trabajo ha} other {# trabajos han}} fallado en la cola (umbral {threshold}).",
@@ -8006,7 +8006,7 @@
     "completed": "Completado: {count}",
     "durationRange": "Duración: {from}s - {to}s",
     "seconds": "{seconds}s",
-    "testCases": "{count, plural, one {# caja de prueba} other {# cajas de prueba}}",
+    "testCases": "{count, plural, one {# caso de prueba} other {# casos de prueba}}",
     "estimate": "Est: {value}",
     "partOf": "(Parte de {parent})",
     "status": "Estado: {status}",
@@ -8883,11 +8883,11 @@
           "last": "Pasado",
           "amount": "Número de períodos",
           "unit": "Período",
-          "days": "Últimos {count, plural, one {# día} other {# días}}",
-          "weeks": "Últimas {count, plural, one {# semana} other {# semanas}}",
-          "months": "Últimos {count, plural, one {# mes} other {# meses}}",
-          "calendarWeeks": "Últimas {count, plural, one {# semana de calendario} other {# semanas de calendario}}",
-          "calendarMonths": "Últimos {count, plural, one {# mes de calendario} other {# meses de calendario}}"
+          "days": "{count, plural, one {Último # día} other {Últimos # días}}",
+          "weeks": "{count, plural, one {Última # semana} other {Últimas # semanas}}",
+          "months": "{count, plural, one {Último # mes} other {Últimos # meses}}",
+          "calendarWeeks": "{count, plural, one {Última # semana de calendario} other {Últimas # semanas de calendario}}",
+          "calendarMonths": "{count, plural, one {Último # mes de calendario} other {Últimos # meses de calendario}}"
         },
         "rollingUnits": {
           "days": "días",
@@ -9013,7 +9013,7 @@
         "flipThreshold": "Volteos mínimos",
         "flipThresholdHelp": "Se requiere un número mínimo de transiciones de aprobado/reprobado para que se considere inestable.",
         "flips": "volteretas",
-        "lastNResults": "Último {count, plural, one {# Resultado} other {# Resultados}}",
+        "lastNResults": "{count, plural, one {Último # Resultado} other {Últimos # Resultados}}",
         "newest": "Nuevo",
         "oldest": "Viejo",
         "noFlakyTests": "No se encontraron pruebas inconsistentes que coincidan con los criterios",
@@ -9108,7 +9108,7 @@
         "heuristicBadge": "Heurístico",
         "heuristicBadgeTooltip": "No se ha configurado ninguna integración LLM para este proyecto, por lo que esta clasificación se generó directamente a partir de la métrica de estrategia de selección. Configure un LLM (Administración → Modelos de IA) para un razonamiento más completo que tenga en cuenta los campos personalizados, el contexto de los problemas vinculados y el contenido del caso.",
         "sourcedFromNewestN": "Los {ranked} casos manuales elegibles más frecuentes {total} a través de {strategy}",
-        "sourcedFromAll": "Se ha clasificado {total, plural, one {# caso manual elegible} =2 {ambos casos manuales elegibles} other {todos los # casos manuales elegibles}} mediante {strategy}",
+        "sourcedFromAll": "{total, plural, one {Se ha clasificado # caso manual elegible} =2 {Se han clasificado ambos casos manuales elegibles} other {Se han clasificado todos los # casos manuales elegibles}} mediante {strategy}",
         "metric": {
           "executions": "{count} corre",
           "forecast": "{value} pronóstico",
@@ -9466,8 +9466,8 @@
           "lastComplete": "Último período completo ({period}), comparado con el promedio de los períodos completos anteriores.",
           "results": "Resultados ejecutados",
           "runs": "Ejecuciones",
-          "deltaPoints": "{change} pts. en comparación con el {count, plural, one {período anterior} other {# períodos anteriores}}",
-          "deltaPercent": "{change}% en comparación con el {count, plural, one {período anterior} other {# períodos anteriores}}",
+          "deltaPoints": "{change} pts. en comparación con {count, plural, one {el período anterior} other {los # períodos anteriores}}",
+          "deltaPercent": "{change}% en comparación con {count, plural, one {el período anterior} other {los # períodos anteriores}}",
           "noBaseline": "Nada anterior para comparar"
         },
         "chart": {
@@ -9906,7 +9906,7 @@
         "title": "Mapear columnas CSV a campos de pasos compartidos",
         "description": "Mapee sus columnas CSV a campos de pasos compartidos. Los campos requeridos deben ser mapeados.",
         "ignoreColumn": "Ignorar esta columna",
-        "requiredFieldsWarning": "{count, plural, one {# El campo obligatorio no está mapeado} other {# Los campos obligatorios no están mapeados}}. Por favor, mapee todos los campos obligatorios para continuar."
+        "requiredFieldsWarning": "{count, plural, one {# campo obligatorio no está mapeado} other {# campos obligatorios no están mapeados}}. Por favor, mapee todos los campos obligatorios para continuar."
       },
       "page3": {
         "title": "Previsualizar datos de importación",
@@ -9935,9 +9935,9 @@
       "minStepsLabel": "Pasos mín",
       "minThresholdOption": "{count, number}+",
       "noMatchesForFilters": "No hay coincidencias que cumplan los filtros actuales. Reduce los mínimos para ampliar los resultados.",
-      "selected": "{count, plural, one {# seleccionado} other {# seleccionado}}",
+      "selected": "{count, plural, one {# seleccionado} other {# seleccionados}}",
       "bulkDismiss": "Descartar ({count, number})",
-      "bulkDismissSuccess": "{count, plural, one {# partida descartada} other {# partidas descartadas}}",
+      "bulkDismissSuccess": "{count, plural, one {# coincidencia descartada} other {# coincidencias descartadas}}",
       "bulkError": "Algunas operaciones fallaron. Inténtalo de nuevo.",
       "tableHint": "Haz clic en una fila para previsualizar los pasos coincidentes. Selecciona las filas con casillas de verificación para acciones masivas.",
       "matchedStepsCount": "{count, plural, one {# paso coincidente} other {# pasos coincidentes}}",
@@ -9970,7 +9970,7 @@
         "dismissSuccess": "Partido suspendido.",
         "dismissError": "No se pudo cerrar la solicitud. Inténtelo de nuevo.",
         "viewSharedStep": "Ver grupo de pasos compartido",
-        "skippedWarning": "{count, plural, one {# caso omitido} other {# casos omitidos}} (obsoleto o ya convertido).",
+        "skippedWarning": "{count, plural, one {# caso omitido (obsoleto o ya convertido)} other {# casos omitidos (obsoletos o ya convertidos)}}.",
         "noCasesSelected": "Seleccione al menos un caso para convertir.",
         "stepsUnavailable": "Los pasos coincidentes ya no están en este caso de prueba. Descarta esta coincidencia y ejecuta un nuevo análisis."
       }
@@ -10079,7 +10079,7 @@
     "filters": {
       "title": "Filtros avanzados",
       "active": "filtros activos",
-      "activeCount": "{count, plural, =0 {No hay filtros} one {# filtro} other {# filtros}} activos",
+      "activeCount": "{count, plural, =0 {No hay filtros activos} one {# filtro activo} other {# filtros activos}}",
       "apply": "Aplicar filtros",
       "common": "Filtros comunes",
       "entitySpecific": "Filtros específicos de tipo",
@@ -10193,7 +10193,7 @@
     }
   },
   "Trial": {
-    "daysRemaining": "El juicio finaliza en {count, plural, =1 {1 día} other {# días}}",
+    "daysRemaining": "La prueba finaliza en {count, plural, =1 {1 día} other {# días}}",
     "expiresT oday": "El período de prueba finaliza hoy",
     "expired": "{count, plural, =1 {La prueba expiró hace 1 día} other {La prueba expiró hace # días}}",
     "contactSales": "Actualizar"
@@ -10226,7 +10226,7 @@
       "noTagsSelected": "No hay etiquetas seleccionadas",
       "footerSummary": "{assignCount, plural, one {# etiqueta será asignada} other {# etiquetas serán asignadas}}, {newCount, plural, one {# nueva etiqueta será creada} other {# nuevas etiquetas serán creadas}}",
       "footerAssignCount": "{assignCount, plural, one {# etiqueta se asignará} other {# etiquetas se asignarán}}",
-      "footerNewCount": "{newCount, plural, one {# se creará nueva etiqueta} other {# se crearán nuevas etiquetas}}",
+      "footerNewCount": "{newCount, plural, one {Se creará # etiqueta nueva} other {Se crearán # etiquetas nuevas}}",
       "newTagsPopoverTitle": "Nuevas etiquetas para crear",
       "applying": "Aplicando...",
       "applySuccess": "{tagCount, plural, one {# etiqueta aplicada} other {# etiquetas aplicadas}} a {entityCount, plural, one {# entidad} other {# entidades}}",
@@ -10344,7 +10344,7 @@
     "renameConfirm": "Rebautizar",
     "renameNoRefsToast": "Parámetro renombrado (no existen referencias).",
     "selectSourceWarningTitle": "¿Cambiar la fuente SELECT para \"@{name}\"?",
-    "selectSourceWarningDescription": "Es posible que los valores del conjunto de datos existente para este parámetro no existan en la nueva lista. {invalidCount, plural, =1 {# fila} other {# filas}} necesitarán atención después de este cambio. ¿Continuar?",
+    "selectSourceWarningDescription": "Es posible que los valores del conjunto de datos existente para este parámetro no existan en la nueva lista. {invalidCount, plural, =1 {# fila necesitará} other {# filas necesitarán}} atención después de este cambio. ¿Continuar?",
     "selectSourceConfirm": "Cambiar fuente",
     "datasetSelectAllPageTooltip": "Haz clic para seleccionar todas las filas de esta página. Mantén pulsada la tecla Mayús y haz clic para seleccionar todas las filas de todas las páginas.",
     "datasetSelectAllAcrossPagesTooltip": "Seleccionar {count, plural, =1 {# fila} =2 {ambas filas} other {las # filas}} en todas las páginas",
@@ -10360,8 +10360,8 @@
     "datasetColumnDeleteTitle": "¿Eliminar la columna \"{name}\"?",
     "datasetColumnDeleteChecking": "Comprobando casos que hagan referencia a esta columna…",
     "datasetColumnDeleteDescription": "Se eliminará la columna y sus valores en cada fila. Las pruebas existentes que ya hayan capturado estos valores no se verán afectadas.",
-    "datasetColumnDeleteBlocked": "{count, plural, =1 {# case asigna un parámetro a esta columna} other {# cases asigna un parámetro a esta columna}}. Actualice primero esas asignaciones y luego elimine la columna.",
-    "datasetColumnDeleteAndMore": "y {count, plural, =1 {# más casos} other {# más casos}}",
+    "datasetColumnDeleteBlocked": "{count, plural, =1 {# caso asigna un parámetro a esta columna} other {# casos asignan un parámetro a esta columna}}. Actualice primero esas asignaciones y luego elimine la columna.",
+    "datasetColumnDeleteAndMore": "y {count, plural, =1 {# caso más} other {# casos más}}",
     "datasetColumnDeleteCheckError": "No se pudieron encontrar casos que hagan referencia a esta columna. Inténtelo de nuevo.",
     "datasetRowDefaultLabel": "Fila {number}",
     "datasetPasteCsv": "Pegar CSV",
@@ -10370,7 +10370,7 @@
     "datasetEmptyBody": "Para empezar, añade una fila, pega un archivo CSV o importa un archivo.",
     "datasetSensitiveDeniedTooltip": "No tienes permiso para revelar valores confidenciales.",
     "datasetSaveBlocked": "Corrige {count, plural, =1 {# error} other {# errores}} antes de continuar.",
-    "datasetBulkDeleteTitle": "Eliminar {count, plural, =1 {# fila} other {# filas}}?",
+    "datasetBulkDeleteTitle": "¿Eliminar {count, plural, =1 {# fila} other {# filas}}?",
     "datasetBulkDeleteDescription": "Esta acción no se puede deshacer.",
     "datasetCounts": "{paramCount} parámetros · {rowCount} filas",
     "datasetSelectedCount": "{count} seleccionado",
@@ -10414,7 +10414,7 @@
     "confirmSummaryMode": "Modo: {mode}",
     "cancelUploadTitle": "¿Descartar la carga?",
     "cancelUploadDescription": "Los datos CSV que has subido se perderán.",
-    "importSuccess": "Importado {count, plural, =1 {# fila} other {# filas}}",
+    "importSuccess": "{count, plural, =1 {Se importó # fila} other {Se importaron # filas}}",
     "addSuccess": "Se agregó el parámetro \"{name}\"",
     "addError": "No se pudo agregar el parámetro",
     "updateSuccess": "Parámetro guardado",
@@ -10435,13 +10435,13 @@
     "editorUndeclaredWarning": "Referencias no declaradas: {names}. Agréguelas a través de los parámetros de configuración para habilitar la sustitución de iteraciones.",
     "runProgressTitle": "Generando iteraciones para \"{runName}\"",
     "runProgressDescriptionAsync": "Creando {count, plural, =1 {# iteración} other {# iteraciones}} en segundo plano. Puedes seguir trabajando; te avisaremos cuando termine.",
-    "runProgressDescriptionSync": "Creado {count, plural, =1 {# iteración} other {# iteraciones}}.",
+    "runProgressDescriptionSync": "{count, plural, =1 {Se creó # iteración} other {Se crearon # iteraciones}}.",
     "runProgressFailed": "No se pudo iniciar la generación de iteraciones.",
     "runHardRefuseTitle": "Demasiadas iteraciones para crear",
     "runHardRefuseDescription": "Esta ejecución crearía {count} iteraciones, superando el límite de {cap}. Reduzca el número de filas del conjunto de datos, deseleccione casos o divídalo en varias ejecuciones.",
-    "runPreflightSync": "Se creará {n, plural, =1 {# iteración} other {# iteraciones}} instantáneamente",
-    "runPreflightAsync": "Se creará {n, plural, =1 {# iteración} other {# iteraciones}} (tarea en segundo plano)",
-    "runPreflightSoftConfirm": "Se creará {n, plural, =1 {# iteración} other {# iteraciones}} — se requiere confirmación",
+    "runPreflightSync": "{n, plural, =1 {Se creará # iteración} other {Se crearán # iteraciones}} instantáneamente",
+    "runPreflightAsync": "{n, plural, =1 {Se creará # iteración} other {Se crearán # iteraciones}} (tarea en segundo plano)",
+    "runPreflightSoftConfirm": "{n, plural, =1 {Se creará # iteración} other {Se crearán # iteraciones}} — se requiere confirmación",
     "runPreflightHardRefuse": "No se puede crear: {n} excede el límite de {cap}",
     "runPreflightTooltip": "{iterations, plural, =1 {# iteración} other {# iteraciones}} = {cases, plural, =1 {# caso} other {# casos}} × {configs, plural, =1 {# configuración} other {# configuraciones}} × filas del conjunto de datos",
     "runPreflightTooltipHeader": "{iterations, plural, =1 {# iteración} other {# iteraciones}} a través de {cases, plural, =1 {# caso parametrizado} other {# casos parametrizados}} × {configs, plural, =1 {# configuración} other {# configuraciones}}",
@@ -10465,12 +10465,12 @@
     "hardRefuseSuggestion1": "Reduzca el número de filas del conjunto de datos en el caso que más contribuya.",
     "hardRefuseSuggestion2": "Deseleccione una o más configuraciones.",
     "hardRefuseSuggestion3": "Divide el trabajo en varias pruebas.",
-    "softConfirmTitle": "Generar {n, plural, =1 {# iteración} other {# iteraciones}}?",
+    "softConfirmTitle": "¿Generar {n, plural, =1 {# iteración} other {# iteraciones}}?",
     "softConfirmDescription": "{n, plural, =1 {# iteración} other {# iteraciones}} desde {cases, plural, =1 {# caso} other {# casos}} × {configs, plural, =1 {# configuración} other {# configuraciones}}.",
     "softConfirmGo": "Generar iteraciones",
     "runProgressCounter": "{done} / {total}",
     "runProgressDismissAria": "Descartar el progreso",
-    "runProgressComplete": "Generado {total, plural, =1 {# iteración} other {# iteraciones}} para \"{runName}\"",
+    "runProgressComplete": "{total, plural, =1 {Se generó # iteración} other {Se generaron # iteraciones}} para \"{runName}\"",
     "runProgressFailedToast": "No se pudieron generar iteraciones para \"{runName}\". {reason}",
     "runProgressNavAway": "Muéstrame el resto de la carrera.",
     "runGeneratingHeading": "Generando iteraciones…",
@@ -10518,14 +10518,14 @@
     "overrideUnsavedDescription": "Sus modificaciones no se han guardado. Al cerrar el cuadro de diálogo, se descartarán.",
     "overrideUnsavedKeep": "Sigue editando",
     "overrideUnsavedDiscard": "Descartar cambios",
-    "iterationBulkConfirmTitle": "Marcar {count, plural, =1 {# iteración} other {# iteraciones}} como {action}?",
+    "iterationBulkConfirmTitle": "¿Marcar {count, plural, =1 {# iteración} other {# iteraciones}} como {action}?",
     "iterationBulkConfirmDescription": "Cada iteración seleccionada recibirá un nuevo resultado con el estado \"{statusName}\".",
     "iterationBulkConfirm": "Marca {action}",
     "iterationBulkConfirmReplace": "Reemplazar con {action}",
-    "iterationBulkOverwriteWarning": "{count, plural, =1 {# de las iteraciones seleccionadas ya tiene} other {# de las iteraciones seleccionadas ya tiene}} un resultado. Se registrará un nuevo resultado y el último reemplazará al actual.",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {# de las iteraciones seleccionadas ya tiene} other {# de las iteraciones seleccionadas ya tienen}} un resultado. Se registrará un nuevo resultado y el último reemplazará al actual.",
     "iterationBulkReasonLabel": "Motivo (opcional)",
     "iterationBulkReasonHelp": "Registrado en cada resultado.",
-    "iterationBulkSuccess": "{count, plural, =1 {# iteración} other {# iteraciones}} marcado {action}",
+    "iterationBulkSuccess": "{count, plural, =1 {# iteración marcada} other {# iteraciones marcadas}} como {action}",
     "iterationBulkError": "No se pudieron marcar las iteraciones.",
     "iterationBulkNa": "Marca N/A",
     "iterationListLoadError": "No se pudieron cargar las iteraciones.",
@@ -10641,7 +10641,7 @@
     "deleteRule": "Eliminar Alerta",
     "deleteConfirm": "¿Eliminar la alerta \"{name}\"? Sus suscriptores dejarán de recibir notificaciones y se puede restaurar desde la papelera.",
     "pauseTitle": "¿Pausar esta alerta para todos?",
-    "pauseConfirm": "\"{name}\" deja de activarse para {count, plural, =0 {todos} one {su único suscriptor} =2 {ambos de sus suscriptores} other {todos # de sus suscriptores}}, no solo usted, hasta que alguien la habilite de nuevo. Para detener solo sus propias notificaciones, desactive Notificarme en su lugar.",
+    "pauseConfirm": "\"{name}\" deja de activarse para {count, plural, =0 {todos} one {su único suscriptor} =2 {sus dos suscriptores} other {todos sus # suscriptores}}, no solo usted, hasta que alguien la habilite de nuevo. Para detener solo sus propias notificaciones, desactive Notificarme en su lugar.",
     "columns": {
       "name": "Regla",
       "condition": "Condición",
@@ -10914,7 +10914,7 @@
       "CASE_RECOVERED": {
         "label": "Caso recuperado",
         "description": "Un caso pasa después de fallar cada uno de sus últimos resultados.",
-        "summary": "Un caso pasa después de fallar sus últimos {window, plural, one {# resultado} other {# resultados}}"
+        "summary": "Un caso pasa después de fallar {window, plural, one {su último # resultado} other {sus últimos # resultados}}"
       },
       "CONSECUTIVE_FAILURES": {
         "label": "Fallos consecutivos",
@@ -10989,7 +10989,7 @@
       "STALE_CASES": {
         "label": "Casos obsoletos",
         "description": "Más de un número determinado de casos han pasado sin resultado durante un número de días. Verificado diariamente.",
-        "summary": "Más de {threshold, plural, one {# caso ha} other {# casos han}} no tenido resultado en {days, plural, one {# día} other {# días}}"
+        "summary": "Más de {threshold, plural, one {# caso no ha} other {# casos no han}} tenido resultado en {days, plural, one {# día} other {# días}}"
       },
       "AUTOMATION_SHARE_BELOW": {
         "label": "La participación de automatización está por debajo del umbral",
@@ -11014,7 +11014,7 @@
       "LLM_RATE_LIMITED": {
         "label": "Limitación de velocidad del proveedor de IA",
         "description": "El proveedor limitó las solicitudes de una integración del modelo de IA repetidamente.",
-        "summary": "El proveedor limitó la velocidad de al menos {threshold, plural, one {# solicitud} other {# solicitudes}} dentro de {days, plural, one {# hora} other {# horas}}"
+        "summary": "El proveedor limitó la velocidad de al menos {threshold, plural, one {# solicitud} other {# solicitudes}} en un plazo de {days, plural, one {# hora} other {# horas}}"
       },
       "CODE_REPOSITORY_CACHE_FAILING": {
         "label": "Caché del repositorio fallando",
@@ -11235,7 +11235,7 @@
       },
       "lastExecuted": "Último ejecutado",
       "neverExecuted": "Nunca ejecutado",
-      "verdicts": "{failed} de {sampled, plural, one {# resultado automatizado reciente} other {# resultados automatizados recientes}} falló",
+      "verdicts": "Fallos: {failed} de {sampled, plural, one {# resultado automatizado reciente} other {# resultados automatizados recientes}}",
       "flips": "{flips, plural, one {# cambio paso/fallo} other {# cambios paso/fallo}}",
       "requirements": "{count, plural, one {# requisito vinculado} other {# requisitos vinculados}} · prioridad principal {priority}",
       "suspect": "{count, plural, one {# requisito cambió} other {# requisitos cambiaron}} desde la última ejecución",

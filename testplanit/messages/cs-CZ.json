@@ -10,7 +10,7 @@
       "deleteAction": "Odstranit ({count})",
       "restoreAction": "Obnovit ({count})",
       "editTitle": "Hromadná úprava ({count})",
-      "applyToCount": "Změny se použijí na {count, plural, one {# položku} few {# položky} many {# položek} other {# položky}}.",
+      "applyToCount": "Změny se použijí na {count, plural, one {# položku} few {# položky} many {# položky} other {# položek}}.",
       "tagsAdditiveHint": "Vybrané štítky se přidají ke každé položce; existující štítky zůstanou zachovány.",
       "completeSuccess": "{count, plural, one {# položka dokončena} few {# položky dokončeny} many {# položky dokončeno} other {# položek dokončeno}}",
       "deleteSuccess": "{count, plural, one {# položka odstraněna} few {# položky odstraněny} many {# položky odstraněno} other {# položek odstraněno}}",
@@ -30,9 +30,9 @@
     "searchCases": "{count, plural, =0 {Hledat případy} one {Hledat # případ} few {Hledat # případy} many {Hledat # případu} other {Hledat # případů}}",
     "searchProjects": "{count, plural, =0 {Hledat projekty} one {Hledat # projekt} few {Hledat # projekty} many {Hledat # projektu} other {Hledat # projektů}}",
     "searchTags": "Hledat štítky...",
-    "searchRuns": "{count, plural, =0 {Hledat testovací běh} one {Hledat # testovací běh} few {Hledat # testovací běhy} many {Hledat # testovací běhy} other {Hledat # testovací běhy}}",
+    "searchRuns": "{count, plural, =0 {Hledat testovací běhy} one {Hledat # testovací běh} few {Hledat # testovací běhy} many {Hledat # testovacího běhu} other {Hledat # testovacích běhů}}",
     "searchSessions": "{count, plural, =0 {Hledat relace} one {Hledat # relaci} few {Hledat # relace} many {Hledat # relace} other {Hledat # relací}}",
-    "searchMilestones": "{count, plural, =0 {Hledat milníky} one {Hledat # milník} few {Hledat # milníky} many {Hledat # milníků} other {Hledat # milníky}}",
+    "searchMilestones": "{count, plural, =0 {Hledat milníky} one {Hledat # milník} few {Hledat # milníky} many {Hledat # milníku} other {Hledat # milníků}}",
     "search": "Hledat...",
     "defaultOption": "Výchozí možnost",
     "yes": "Ano",
@@ -91,10 +91,10 @@
       "actionsLabel": "Akce",
       "actionsWithAlerts": "Akce ({count, number} nepřečteno)",
       "assign": "Přiřadit",
-      "assignSelected": "Přiřadit {count, plural, one {# případ} few {# případy} many {# případů} other {# případy}}",
+      "assignSelected": "Přiřadit {count, plural, one {# případ} few {# případy} many {# případu} other {# případů}}",
       "refresh": "Obnovit",
       "addResultSelected": "Přidat výsledek k {count, plural, one {# případu} few {# případům} many {# případu} other {# případům}}",
-      "resultsAdded": "Přidáno {count, plural, one {# výsledek} few {# výsledky} many {# výsledku} other {# výsledků}}",
+      "resultsAdded": "{count, plural, one {Přidán # výsledek} few {Přidány # výsledky} many {Přidáno # výsledku} other {Přidáno # výsledků}}",
       "resultsAddedDescription": "{count, plural, one {Výsledek byl přidán k # testovacímu případu} few {Výsledky byly přidány k # testovacím případům} many {Výsledky byly přidány k # testovacím případům} other {Výsledky byly přidány k # testovacím případům}} úspěšně",
       "addingResultsToMultiple": "Přidávání výsledků k {count, plural, one {# testovacímu případu} few {# testovacím případům} many {# testovacího případu} other {# testovacím případům}}",
       "addedToTestRun": "Přidáno do testovacího běhu",
@@ -703,7 +703,7 @@
       "permissionDenied": "Nemáte oprávnění pro přístup k této stránce.",
       "resultSubmitPermissionDenied": "Nemůžete odesílat výsledky pro tento případ. Požádejte administrátora projektu, aby vám jej přiřadil.",
       "dependenciesNotPassed": "Blokováno závislostmi",
-      "dependenciesNotPassedDescription": "Tento případ testu nelze spustit, dokud {count, plural, =0 {případy, na kterých závisí, neprojdou} one {případ, na kterém závisí, neprojde} few {případy, na kterých závisí, neprojdou} many {případy, na kterých závisí, neprojdou} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
+      "dependenciesNotPassedDescription": "Tento případ testu nelze spustit, dokud {count, plural, =0 {ty případy, na kterých závisí, neprojdou} one {ten případ, na kterém závisí, neprojde} few {všechny # případy, na kterých závisí, neprojdou} many {všech # případů, na kterých závisí, neprojde} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
       "justificationRequired": "Zdůvodnění je povinné",
       "justificationRequiredDescription": "Obrácení dokončeného výsledku na jiný výstup vyžaduje podrobnosti výsledku vysvětlující změnu.",
       "requiredFieldMissing": "Povinnému poli výsledku chybí hodnota.",
@@ -833,14 +833,14 @@
       "noTestCasesSelected": "Nejsou vybrány žádné testovací případy",
       "editToSelectTestCases": "Upravte testovací běh pro výběr testovacích případů.",
       "casesInRun": "{count, plural, =0 {Žádné testovací případy v testovacím běhu} =1 {1 testovací případ v testovacím běhu} few {# testovací případy v testovacím běhu} many {# testovacích případů v testovacím běhu} other {# testovacích případů v testovacím běhu}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 jedinečný případ} few {# jedinečné případy} many {# jedinečného případu} other {# jedinečných případů}} napříč {configCount, plural, =1 {1 konfigurací} few {# konfiguracemi} many {# konfigurace} other {# konfiguracemi}} ({totalCount, number} celkem případů)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 jedinečný případ} few {# jedinečné případy} many {# jedinečného případu} other {# jedinečných případů}} napříč {configCount, plural, =1 {1 konfigurací} few {# konfiguracemi} many {# konfigurace} other {# konfiguracemi}} (celkem případů: {totalCount, number})",
       "viewTestRunDetails": "Zobrazit podrobnosti testovacího běhu",
       "sortByStatus": "Seskupit podle stavu",
       "sortByDate": "Seřadit podle data",
       "estimateFromCases": "Odhadovaný zbývající čas: {value} (z odhadů zadaných v případech)",
       "estimateEntered": "Odhad: {value} (zadán v případě)",
       "forecastFromHistory": "Prognóza: {value} (z minulých časů spuštění)",
-      "testRuns": "{count, plural, =0 {Žádné testovací běhy} =1 {1 testovací běh} few {# testovacích běhů} many {# testovacích běhů} other {# testovacích běhů}}",
+      "testRuns": "{count, plural, =0 {Žádné testovací běhy} =1 {1 testovací běh} few {# testovací běhy} many {# testovacího běhu} other {# testovacích běhů}}",
       "sessions": "{count, plural, =0 {Žádné relace} =1 {1 relace} few {# relace} many {# relace} other {# relací}}",
       "issues": "{count, plural, =0 {Žádné problémy} =1 {1 problém} few {# problémy} many {# problému} other {# problémů}}",
       "noOptions": "Žádné dostupné možnosti",
@@ -1143,7 +1143,7 @@
     "plural": {
       "case": "{count, plural, =1 {případ} few {případy} many {případu} other {případů}}",
       "result": "{count, plural, =1 {výsledek} few {výsledky} many {výsledku} other {výsledků}}",
-      "run": "{count, plural, =1 {běh} few {běhů} many {běhů} other {běhů}}",
+      "run": "{count, plural, =1 {běh} few {běhy} many {běhu} other {běhů}}",
       "comment": "{count, plural, =1 {# komentář} few {# komentáře} many {# komentáře} other {# komentářů}}"
     },
     "success": {
@@ -1385,15 +1385,15 @@
     "overview": {
       "title": "Přehled",
       "currentMilestones": "Aktuální milníky",
-      "seeAllMilestones": "{count, plural, =1 {Zobrazit # milník} =2 {Zobrazit oba milníky} other {Zobrazit všech # milníků}}",
-      "seeAllTestCases": "{count, plural, =1 {Zobrazit # testovací případ} =2 {Zobrazit oba testovací případy} other {Zobrazit všech # testovacích případů}}",
+      "seeAllMilestones": "{count, plural, =1 {Zobrazit # milník} =2 {Zobrazit oba milníky} few {Zobrazit všechny # milníky} other {Zobrazit všech # milníků}}",
+      "seeAllTestCases": "{count, plural, =1 {Zobrazit # testovací případ} =2 {Zobrazit oba testovací případy} few {Zobrazit všechny # testovací případy} other {Zobrazit všech # testovacích případů}}",
       "latestTestCases": "Nejnovější testovací případy",
       "createdOn": "Vytvořeno dne",
-      "seeAllTagsCount": "{count, plural, =1 {Zobrazit # štítek} =2 {Zobrazit oba štítky} other {Zobrazit všech # štítků}}",
-      "seeAllActiveSessions": "{count, plural, =1 {Zobrazit # aktivní relaci} =2 {Zobrazit obě aktivní relace} other {Zobrazit všech # aktivních relací}}",
+      "seeAllTagsCount": "{count, plural, =1 {Zobrazit # štítek} =2 {Zobrazit oba štítky} few {Zobrazit všechny # štítky} other {Zobrazit všech # štítků}}",
+      "seeAllActiveSessions": "{count, plural, =1 {Zobrazit # aktivní relaci} =2 {Zobrazit obě aktivní relace} few {Zobrazit všechny # aktivní relace} other {Zobrazit všech # aktivních relací}}",
       "latestSessions": "Nejnovější relace",
       "activeTestRuns": "Aktivní testovací běhy",
-      "seeAllActiveTestRuns": "{count, plural, =1 {Zobrazit # aktivní testovací běh} =2 {Zobrazit oba aktivní testovací běhy} other {Zobrazit všech # aktivních testovacích běhů}}",
+      "seeAllActiveTestRuns": "{count, plural, =1 {Zobrazit # aktivní testovací běh} =2 {Zobrazit oba aktivní testovací běhy} few {Zobrazit všechny # aktivní testovací běhy} other {Zobrazit všech # aktivních testovacích běhů}}",
       "latestTestRuns": "Nejnovější testovací běhy",
       "testCaseBreakdown": "Rozdělení testovacích případů",
       "noTestCases": "Úložiště projektu je prázdné. Přidejte testovací případy pomocí Úložiště.",
@@ -2055,7 +2055,7 @@
         "delete": {
           "title": "Smazat „{name}“?",
           "descriptionStage1": "Tato datová sada bude odebrána z projektu. Existující testovací běhy, které již zaznamenaly její hodnoty, nebudou dotčeny.",
-          "descriptionStage2": "Tuto datovou sadu používá {count, plural, =1 {# případ} few {# případy} many {# případu} other {# případů}}. Jejím smazáním se z těchto případů odebere přiřazení sdílené datové sady. Jejich existující testovací běhy nebudou dotčeny (snímky jsou neměnné).",
+          "descriptionStage2": "Tuto datovou sadu {count, plural, =1 {používá # případ} few {používají # případy} many {používá # případu} other {používá # případů}}. Jejím smazáním se z těchto případů odebere přiřazení sdílené datové sady. Jejich existující testovací běhy nebudou dotčeny (snímky jsou neměnné).",
           "confirm": "Smazat datovou sadu",
           "confirmAnyway": "Přesto smazat ({count, plural, =1 {# případ} few {# případy} many {# případu} other {# případů}})",
           "error": "Nepodařilo se smazat datovou sadu"
@@ -2379,21 +2379,21 @@
           "runningFull": "Skenování úplné historie…",
           "runningProgress": "{commits, number} commitů přečteno · {matched, number} jmenovalo propojený lístek · {fetched, number} z nich prověřeno",
           "fullBadge": "Úplná historie",
-          "imported": "{imported, plural, =0 {Ze trackeru nebyl importován žádný nový lístek.} one {# lístek byl importován ze trackeru.} other {# lístky byly importovány ze trackeru.}}",
+          "imported": "{imported, plural, =0 {Ze trackeru nebyl importován žádný nový lístek.} one {# lístek byl importován ze trackeru.} few {# lístky byly importovány ze trackeru.} many {# lístku bylo importováno ze trackeru.} other {# lístků bylo importováno ze trackeru.}}",
           "fullCapped": "Chůze se zastavila na {count, number} commitech před dosažením začátku větve. Spusťte Skenovat úplnou historii znovu, abyste pokračovali odkud se zastavilo.",
           "stale": "Skenování zahájené {date} nikdy nehlásilo zpět — pracovník mohl být restartován. Zařaďte jej znovu do fronty, aby pokračoval.",
-          "summaryCommits": "{commits, plural, one {# commit přečten} few {# commity přečteny} many {# commitu přečteno} other {# commitů přečteno}}{cached, plural, =0 {} other { ({cached, number} z cache commitů)}} · {naming, number} jmenovalo lístek · {tickets, plural, one {# odlišný lístek} other {# odlišné lístky}}",
+          "summaryCommits": "{commits, plural, one {# commit přečten} few {# commity přečteny} many {# commitu přečteno} other {# commitů přečteno}}{cached, plural, =0 {} other { ({cached, number} z cache commitů)}} · s lístkem: {naming, number} · {tickets, plural, one {# odlišný lístek} few {# odlišné lístky} many {# odlišného lístku} other {# odlišných lístků}}",
           "summaryPins": "Piny: {created, number} vytvořeny · {updated, number} aktualizovány · {removed, number} odstraněny",
           "noLinkedHint": "Lístky fixují testovací případy pouze poté, co je testovací případ propojen s nimi. Připojujte případy k importovaným lístkům a pak znovu skenujte.",
           "importFailuresTitle": "Klíče nenalezené v trackeru ({shown} z {total}):",
           "windowCapped": "Byly přečteny pouze nejnovější {count, number} commity (nedávné okno cap). Použijte Skenovat úplnou historii pro čtení starších.",
-          "runningWalk": "{commits, number} commitů přečteno dosud{cached, plural, =0 {} other { ({cached, number} z cache commitů)}} — lístky budou vyhledávány po dokončení chůze",
+          "runningWalk": "Dosud přečteno commitů: {commits, number}{cached, plural, =0 {} other { ({cached, number} z cache commitů)}} — lístky budou vyhledávány po dokončení průchodu",
           "runningImport": "{commits, number} commitů přečteno · import lístků: {lookups, number} vyhledáno v trackeru · {imported, number} importováno",
           "summaryCommitsOnly": "{commits, plural, one {# commit přečten} few {# commity přečteny} many {# commitu přečteno} other {# commitů přečteno}}",
           "importSkipped": "{skipped, plural, one {# klíč prozatím nevyhledán} few {# klíče prozatím nevyhledány} many {# klíče prozatím nevyhledáno} other {# klíčů prozatím nevyhledáno}}, protože jedno skenování provádí omezený počet vyhledávání v trackeru. Spusťte skenování znovu, abyste pokračovali.",
           "cancelRequested": "Zrušení vyžádáno. Skenování se zastaví na dalším kroku; commity již přečtené zůstanou v cache.",
           "cancelled": "Skenování zrušeno {date}. Commity přečtené před zrušením jsou zachovány v cache commitů; piny nebyly aktualizovány.",
-          "importMoved": "{moved, plural, one {# klíč je starý název} other {# klíče jsou staré názvy}} lístků již importovaných; byly přesunuty nebo přejmenovány v trackeru.",
+          "importMoved": "{moved, plural, one {# klíč je starý název} few {# klíče jsou staré názvy} other {# klíčů je starými názvy}} lístků již importovaných; byly přesunuty nebo přejmenovány v trackeru.",
           "importFailed": "{failed, plural, one {# klíč nebyl nalezen v trackeru, uveden níže} few {# klíče nebyly nalezeny v trackeru, uvedeny níže} many {# klíče nebylo nalezeno v trackeru, uvedeno níže} other {# klíčů nebylo nalezeno v trackeru, uvedeno níže}}.",
           "summaryMatched": "{matched, plural, one {# commit jmenoval lístek propojený s testovacím případem} few {# commity jmenovaly lístek propojený s testovacím případem} many {# commitu jmenovalo lístek propojený s testovacím případem} other {# commitů jmenovalo lístek propojený s testovacím případem}}",
           "summarySymbolPins": "({count, number} vytvořených pinů se zaměřuje na funkci nebo třídu spíše než na celý soubor.)"
@@ -2403,8 +2403,8 @@
           "description": "Komentáře jako @testplanit case:123 a záznamy v .testplanit/testmap.yml se stávají kódovými piny při každém obnovení mezipaměti.",
           "skippedPrivacy": "Přeskočeno: ukládání do mezipaměti je zakázáno.",
           "skippedPartial": "Přeskočeno: obsahy souborů byly pouze částečně uloženy do mezipaměti.",
-          "summary": "{annotations, plural, one {# anotace} other {# anotace}} · {mapEntries, plural, one {# záznam mapy} other {# záznamy mapy}} · {created} vytvořeno · {updated} aktualizováno · {removed} odstraněno",
-          "problems": "{count, plural, one {# problém} other {# problémy}}"
+          "summary": "{annotations, plural, one {# anotace} few {# anotace} many {# anotace} other {# anotací}} · {mapEntries, plural, one {# záznam mapy} few {# záznamy mapy} many {# záznamu mapy} other {# záznamů mapy}} · {created} vytvořeno · {updated} aktualizováno · {removed} odstraněno",
+          "problems": "{count, plural, one {# problém} few {# problémy} many {# problému} other {# problémů}}"
         },
         "saved": "Konfigurace Analýzy dopadu byla uložena",
         "disconnectWarning1": "Odstraní {count, plural, one {# značku Code Pin} few {# značky Code Pin} many {# značky Code Pin} other {# značek Code Pin}} a historii analýzy pro toto úložiště",
@@ -2416,7 +2416,7 @@
           "connect": "Připojit úložiště",
           "allConnected": "Každé registrované úložiště je již připojeno.",
           "columnCache": "Mezipaměť",
-          "pinTotal": "{count, plural, one {# značka Code Pin} other {# značky Code Pin}}",
+          "pinTotal": "{count, plural, one {# značka Code Pin} few {# značky Code Pin} many {# značky Code Pin} other {# značek Code Pin}}",
           "cacheDisabled": "Ukládání vypnuto",
           "edit": "Upravit připojení",
           "connectTitle": "Připojit úložiště",
@@ -2427,19 +2427,19 @@
           "viewDescription": "Jak je toto úložiště připojeno. Odtud můžete obnovit mezipaměť nebo spustit prohledávání tiketů; pro změnu nastavení použijte tlačítko Upravit.",
           "empty": "Zatím nejsou připojena žádná úložiště",
           "emptyDescription": "Připojte úložiště testované aplikace, abyste mohli začít analyzovat změny.",
-          "lastScan": "{created, plural, one {# pin vytvořen} few {# piny vytvořeny} many {# pinu vytvořeno} other {# pinů vytvořeno}} poslední skenování",
+          "lastScan": "{created, plural, one {# pin vytvořen} few {# piny vytvořeny} many {# pinu vytvořeno} other {# pinů vytvořeno}} posledním skenováním",
           "scanFailed": "Poslední skenování selhalo",
           "scanCancelled": "Poslední skenování zrušeno"
         },
         "bulk": {
-          "label": "{count, plural, one {Vaše úložiště:} few {Všechna # úložiště:} many {Všechna # úložišť:} other {Všechna # úložišť:}}",
+          "label": "{count, plural, one {Vaše úložiště:} few {Všechna # úložiště:} many {Všech # úložišť:} other {Všech # úložišť:}}",
           "scanRecentHint": "Přeskenovat poslední commity v {count, plural, one {připojeném úložišti} few {připojených # úložištích} many {připojených # úložištích} other {připojených # úložištích}}.",
-          "scanFullHint": "Projít každý commit na větvi {count, plural, one {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}} a vyplnit back-fill pinů pro existující lístky.",
+          "scanFullHint": "Projít každý commit na větvi {count, plural, one {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}} a doplnit piny pro existující lístky.",
           "scanFullConfirm": "Toto projde každý commit na větvi {count, plural, one {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}}. Úložiště jsou skenována jedno po druhém, takže to může trvat dlouho a každý průchod čte commity přes API poskytovatele, což se počítá do jeho limitu rychlosti.",
           "checkStaleHint": "Zkontrolovat Code Pins {count, plural, one {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}} proti špičce každé větve.",
           "removeStaleHint": "Odstraní {count, plural, one {# zastaralý Code Pin} few {# zastaralé Code Pins} many {# zastaralých Code Pins} other {# zastaralých Code Pins}} v rámci {repos, plural, one {# úložiště} few {# úložišť} many {# úložišť} other {# úložišť}}.",
           "removeConfirm": "Odstraní {count, plural, one {# Code Pin, který poslední kontroly nemohly najít na špičce větve} few {# Code Pins, které poslední kontroly nemohly najít na špičce větve} many {# Code Pins, které poslední kontroly nemohly najít na špičce větve} other {# Code Pins, které poslední kontroly nemohly najít na špičce větve}}, v rámci {repos, plural, one {# úložiště} few {# úložišť} many {# úložišť} other {# úložišť}}?",
-          "queued": "Zařazeno do fronty pro {count, plural, one {# úložiště} few {# úložiště} many {# úložišť} other {# úložišť}}.{skipped, plural, =0 {} one { # již běželo.} few { # již běžela.} many { # již běžela.} other { # již běžela.}}",
+          "queued": "Zařazeno do fronty pro {count, plural, one {# úložiště} few {# úložiště} many {# úložišť} other {# úložišť}}.{skipped, plural, =0 {} one { # již běželo.} few { # již běžela.} many { # již běželo.} other { # již běželo.}}",
           "allRunning": "Již zařazeno do fronty nebo spuštěno pro každé úložiště.",
           "failed": "Nelze spustit pro: {names}"
         },
@@ -2457,9 +2457,9 @@
           "running": "Kontrola {checked, number} z {total, plural, one {# souboru} few {# souborů} many {# souborů} other {# souborů}}…",
           "neverChecked": "Dosud nekontrolováno",
           "checkFailed": "Poslední kontrola selhala",
-          "summary": "{count, plural, =0 {Žádné zastaralé piny} one {# zastaralý pin} other {# zastaraly piny}} · {checked, plural, one {# pin kontrolován} few {# piny kontrolovány} many {# pinu kontrolováno} other {# pinů kontrolováno}}",
-          "unreadable": "{count, plural, one {# soubor} other {# soubory}} nelze bylo přečíst, takže ty piny nebyly kontrolovány.",
-          "removed": "{count, plural, =0 {Žádné zastaralé piny nebyly odstraněny} one {# zastaralý pin odstraněn} other {# zastaralé piny odstraněny}}",
+          "summary": "{count, plural, =0 {Žádné zastaralé piny} one {# zastaralý pin} few {# zastaralé piny} many {# zastaralého pinu} other {# zastaralých pinů}} · {checked, plural, one {# pin kontrolován} few {# piny kontrolovány} many {# pinu kontrolováno} other {# pinů kontrolováno}}",
+          "unreadable": "{count, plural, one {# soubor} few {# soubory} many {# souboru} other {# souborů}} nebylo možné přečíst, takže ty piny nebyly kontrolovány.",
+          "removed": "{count, plural, =0 {Žádné zastaralé piny nebyly odstraněny} one {# zastaralý pin odstraněn} few {# zastaralé piny odstraněny} many {# zastaralého pinu odstraněno} other {# zastaralých pinů odstraněno}}",
           "removeFailed": "Odebrat zastaralé piny se nepodařilo",
           "removeConfirm": "Odebrat {count, plural, one {# značku Code Pin, kterou} few {# značky Code Pin, které} many {# značky Code Pin, které} other {# značek Code Pin, které}} poslední kontrola nemohla najít na hrotu {name}?",
           "removeConfirmNote": "Piny, jejichž příznak Zastaralý byl zrušen, a piny udržované značkami úložiště jsou zachovány. Odstraněné piny lze obnovit z Koše.",
@@ -2656,7 +2656,7 @@
       "emptyFiltered": "Žádné milníky neodpovídají vašim filtrům.",
       "partialWarning": "Některé projekty {provider} se nepodařilo načíst:",
       "importing": "Importuji {count, plural, one {# milník} few {# milníky} many {# milníků} other {# milníků}} z {provider}…",
-      "completed": "Importováno {count, plural, one {# milník} few {# milníky} many {# milníků} other {# milníků}} z {provider}",
+      "completed": "{count, plural, one {Importován # milník} few {Importovány # milníky} many {Importováno # milníků} other {Importováno # milníků}} z {provider}",
       "stillRunning": "Import stále běží na pozadí — milníky se zobrazí po jeho dokončení."
     },
     "sync": {
@@ -2749,7 +2749,7 @@
     "auditLog": {
       "description": "Všechny změny zaznamenané pro tuto relaci."
     },
-    "title": "{count, plural, =1 {Relace} other {Relací}}",
+    "title": "{count, plural, =1 {Relace} few {Relace} other {Relací}}",
     "labels": {
       "totalElapsed": "Strávený čas",
       "remaining": "Zbývá: {time}",
@@ -2888,15 +2888,15 @@
   "home": {
     "dashboard": {
       "title": "Váš přehled",
-      "users": "{count, plural, =1 {Je zde # uživatel} other {Je zde # uživatelů}}",
+      "users": "{count, plural, =1 {Je zde # uživatel} few {Jsou zde # uživatelé} other {Je zde # uživatelů}}",
       "yourProjects": "Vaše projekty",
       "projects": "Máte přístup k {count, plural, =1 {# projektu} other {# projektům}}",
       "loading": "Načítání přehledu...",
       "noItems": "V tuto chvíli nevyžaduje žádná z vám přiřazených položek pozornost.",
       "pendingRuns": "Čekající testovací běhy",
       "activeSessions": "Aktivní relace",
-      "yourActiveSessions": "{count, plural, =0 {Žádné aktivní relace} =1 {# aktivní relace} other {# aktivních relací}}",
-      "yourPendingRuns": "{count, plural, =0 {Žádné čekající testovací běhy} =1 {# aktivní testovací běh} other {# aktivních testovacích běhů}}",
+      "yourActiveSessions": "{count, plural, =0 {Žádné aktivní relace} =1 {# aktivní relace} few {# aktivní relace} other {# aktivních relací}}",
+      "yourPendingRuns": "{count, plural, =0 {Žádné čekající testovací běhy} =1 {# aktivní testovací běh} few {# aktivní testovací běhy} other {# aktivních testovacích běhů}}",
       "yourAssignments": "Vaše přiřazení",
       "totalTime": "Celkový odhadovaný čas: ",
       "totalWorkEffort": "Celkové pracovní úsilí: ",
@@ -2931,12 +2931,12 @@
       "contact": "Pro požádání o přístup kontaktujte správce projektu."
     },
     "counts": {
-      "testCases": "{count, plural, =0 {# testovacích případů} =1 {# testovací případ} other {# testovacích případů}}",
-      "activeMilestones": "{count, plural, =0 {# aktivních milníků} =1 {# aktivní milník} other {# aktivních milníků}}",
-      "activeRuns": "{count, plural, =0 {# aktivních běhů} =1 {# aktivní běh} other {# aktivních běhů}}",
+      "testCases": "{count, plural, =0 {# testovacích případů} =1 {# testovací případ} few {# testovací případy} other {# testovacích případů}}",
+      "activeMilestones": "{count, plural, =0 {# aktivních milníků} =1 {# aktivní milník} few {# aktivní milníky} other {# aktivních milníků}}",
+      "activeRuns": "{count, plural, =0 {# aktivních běhů} =1 {# aktivní běh} few {# aktivní běhy} other {# aktivních běhů}}",
       "automationRunsInProgress": "{count, plural, =0 {# probíhajících automatizovaných běhů} =1 {# probíhající automatizovaný běh} few {# probíhající automatizované běhy} many {# probíhajícího automatizovaného běhu} other {# probíhajících automatizovaných běhů}}",
-      "activeSessions": "{count, plural, =0 {# aktivních relací} =1 {# aktivní relace} other {# aktivních relací}}",
-      "issues": "{count, plural, =0 {# problémů} =1 {# problém} other {# problémů}}",
+      "activeSessions": "{count, plural, =0 {# aktivních relací} =1 {# aktivní relace} few {# aktivní relace} other {# aktivních relací}}",
+      "issues": "{count, plural, =0 {# problémů} =1 {# problém} few {# problémy} other {# problémů}}",
       "assignedToYou": "{count, plural, =1 {# testovací případ přiřazený vám čeká} one {# testovací případ přiřazený vám čeká} few {# testovací případy přiřazené vám čekají} many {# testovacích případů přiřazených vám čeká} other {# testovacích případů přiřazených vám čeká}}"
     },
     "lastActivity": "Poslední aktivita",
@@ -3301,7 +3301,7 @@
       "confirmDelete": "Potvrdit odstranění kroku {number, number}?",
       "createSharedSteps": "{number, plural, one {Vytvořit sdílený krok} other {Vytvořit sdílené kroky}}",
       "sharedStepsName": "Název sdílených kroků",
-      "sharedStepsDescription": "Zadejte název pro nové sdílené {number, plural, one {krok} few {kroky} other {kroků}}. Bude zahrnovat {number, plural, one {# vybraný krok} few {# vybrané kroky} other {# vybraných kroků}}.",
+      "sharedStepsDescription": "Zadejte název pro {number, plural, one {nový sdílený krok} few {nové sdílené kroky} other {nové sdílené kroky}}. Bude zahrnovat {number, plural, one {# vybraný krok} few {# vybrané kroky} other {# vybraných kroků}}.",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "Vyberte prosím kroky a zadejte název pro vytvoření sdílených kroků.",
         "failedToCreateSharedStepGroupError": "Vytvoření sdílených kroků se nezdařilo. Zkuste to prosím znovu.",
@@ -3322,7 +3322,7 @@
       "loadingSharedStepsItems": "Načítání kroků...",
       "noStepsInSharedGroup": "Tato skupina sdílených kroků je prázdná.",
       "searchSharedStepsPlaceholder": "Vyberte sdílené kroky...",
-      "stepsCountLabel": "{count, plural, =0 {# kroků} =1 {# krok} other {# kroků}}",
+      "stepsCountLabel": "{count, plural, =0 {# kroků} =1 {# krok} few {# kroky} other {# kroků}}",
       "reviewSelectedStepsTitle": "Zkontrolovat vybrané kroky",
       "noStepsInSelectedGroup": "Vybraná skupina neobsahuje žádné kroky.",
       "sharedGroupSuffix": "(Sdílené kroky)",
@@ -3341,7 +3341,7 @@
     },
     "templateNotAssignedWarning": "Tento testovací případ používá šablonu \"{templateName}\", která aktuálně není přiřazena k projektu \"{projectName}\". Možná budete muset tuto šablonu přiřadit k projektu, nebo změnit testovací případ tak, aby používal jinou šablonu.",
     "orphanedStepsWarning": "Tento testovací případ obsahuje kroky, ale aktuální šablona \"{templateName}\" pole Kroky neobsahuje. Kroky nelze upravovat, dokud testovací případ nebude mít šablonu s polem Kroky.",
-    "orphanedFieldsWarning": "Tento testovací případ má {count, plural, =1 {# hodnotu pole} other {# hodnot polí}}, která {count, plural, =1 {není} other {nejsou}} součástí aktuální šablony „{templateName}“. {count, plural, =1 {Toto pole je zobrazeno níže, ale nemusí být možné je upravovat, dokud nebude přidáno do šablony.} other {Tato pole jsou zobrazena níže, ale nemusí být možné je upravovat, dokud nebudou přidána do šablony.}}",
+    "orphanedFieldsWarning": "Tento testovací případ má {count, plural, =1 {# hodnotu pole} few {# hodnoty polí} other {# hodnot polí}}, která {count, plural, =1 {není} other {nejsou}} součástí aktuální šablony „{templateName}“. {count, plural, =1 {Toto pole je zobrazeno níže, ale nemusí být možné je upravovat, dokud nebude přidáno do šablony.} other {Tato pole jsou zobrazena níže, ale nemusí být možné je upravovat, dokud nebudou přidána do šablony.}}",
     "title": "Úložiště testovacích případů",
     "folders": "Složky",
     "showDescendants": "Zobrazit všechny potomky",
@@ -3369,15 +3369,15 @@
       "move": "Přesunout",
       "promptTitle": "Co chcete udělat?",
       "copying": "Kopírování…",
-      "copyComplete": "{count, plural, =1 {Zkopírován 1 případ do {folder}} other {Zkopírováno # případů do {folder}}}{dest, select, samename {} crossProject { v projektu {projectName}} other {}}",
-      "moveComplete": "{count, plural, =1 {Přesunut 1 případ do {folder}} other {Přesunuto # případů do {folder}}}{dest, select, samename {} crossProject { v projektu {projectName}} other {}}",
+      "copyComplete": "{count, plural, =1 {Zkopírován 1 případ do {folder}} few {Zkopírovány # případy do {folder}} other {Zkopírováno # případů do {folder}}}{dest, select, samename {} crossProject { v projektu {projectName}} other {}}",
+      "moveComplete": "{count, plural, =1 {Přesunut 1 případ do {folder}} few {Přesunuty # případy do {folder}} other {Přesunuto # případů do {folder}}}{dest, select, samename {} crossProject { v projektu {projectName}} other {}}",
       "copyError": "{count, plural, =1 {Kopírování 1 případu do {folder} se nezdařilo} other {Kopírování # případů do {folder} se nezdařilo}}{dest, select, samename {} crossProject { v projektu {projectName}} other {}}",
       "moveError": "{count, plural, =1 {Přesunutí 1 případu do {folder} se nezdařilo} other {Přesunutí # případů do {folder} se nezdařilo}}{dest, select, samename {} crossProject { v projektu {projectName}} other {}}",
       "copyAlreadyRunning": "Jiné kopírování již probíhá. Počkejte prosím, až se dokončí.",
       "currentSuffix": "(Aktuální)",
       "moveDisabledSameFolder": "Případy jsou již v této složce",
       "dragPreviewCase": "Testovací případ",
-      "dragPreviewCount": "{count, plural, =1 {# testovací případ} other {# testovacích případů}}",
+      "dragPreviewCount": "{count, plural, =1 {# testovací případ} few {# testovací případy} other {# testovacích případů}}",
       "modifierHintMac": "Podržte ⇧ pro přesun nebo ⌥ pro kopírování při přetahování a přeskočte tuto nabídku.",
       "modifierHintWin": "Podržte Shift pro přesun nebo Ctrl pro kopírování při přetahování a přeskočte tuto nabídku.",
       "dropZoneReorder": "Přetáhněte pro přeuspořádání",
@@ -3526,7 +3526,7 @@
           "showing": "Zobrazeno {start, number}-{end, number} z {total, number} případů",
           "case": "Případ {number, number}",
           "multiRow": {
-            "aggregated": "Režim s více řádky seskupil {rows, number} řádků CSV do {cases, plural, one {# testovacího případu} few {# testovacích případů} many {# testovacího případu} other {# testovacích případů}}.",
+            "aggregated": "Režim s více řádky seskupil řádky CSV (celkem {rows, number}) do {cases, plural, one {# testovacího případu} few {# testovacích případů} many {# testovacího případu} other {# testovacích případů}}.",
             "noStepColumn": "Režim s více řádky je povolen, ale nebyl zjištěn žádný sloupec s kroky. Očekává se jeden z těchto názvů: Step Content, Step, Steps, Action, Description (bez rozlišování velikosti písmen). Každý řádek CSV bude importován jako samostatný testovací případ.",
             "noKeyColumn": "Režim s více řádky je povolen, ale není namapován žádný sloupec ID nebo Název. Namapujte sloupec ID nebo Název v předchozím kroku, aby bylo možné řádky seskupit do případů.",
             "noGrouping": "Režim s více řádky je povolen, ale žádné řádky nebyly seskupeny. Každý řádek má jiné ID/Název, takže se z každého stane samostatný testovací případ. Na navazujících řádcích ponechte ID a Název prázdné, nebo opakujte stejné ID/Název na řádcích patřících k jednomu případu."
@@ -3880,7 +3880,7 @@
         "quantity": "Počet testovacích případů k vygenerování",
         "placeholder": "Přidejte konkrétní pokyny pro generování testovacích případů...\n\nNapříklad:\n• Zaměřte se na bezpečnostní testování\n• Zahrňte krajní případy a hraniční podmínky\n• Testujte jak úspěšný scénář, tak chybové scénáře\n• Zvažte scénáře pro mobilní i desktopové zařízení\n• Zaměřte se na testování API",
         "linksIgnoredTitle": "Odkazy v poznámkách nejsou otevřeny",
-        "linksIgnored": "{count, plural, =1 {Odkaz} few {# odkazy} many {# odkazů} other {# odkazů}} v poznámkách bude odeslán pouze jako prostý text. Chcete-li použít dokument nebo tabulku, vložte příslušný obsah (scénáře, testovací data, očekávané výsledky) do poznámek.",
+        "linksIgnored": "{count, plural, =1 {Odkaz v poznámkách bude odeslán} few {# odkazy v poznámkách budou odeslány} many {# odkazu v poznámkách bude odesláno} other {# odkazů v poznámkách bude odesláno}} pouze jako prostý text. Chcete-li použít dokument nebo tabulku, vložte příslušný obsah (scénáře, testovací data, očekávané výsledky) do poznámek.",
         "suggestions": "Rychlé návrhy:",
         "quantityOptions": {
           "justOne": "Pouze jeden",
@@ -3913,8 +3913,8 @@
       },
       "generatingLegacy": "Generování testovacích případů pomocí AI...",
       "expandProgress": "{done, number} z {total, number} vygenerováno",
-      "import": "{count, plural, =0 {Importovat testovací případy} =1 {Importovat 1 testovací případ} other {Importovat # testovacích případů}}",
-      "stage": "{count, plural, =0 {Testovací případy v přípravě} =1 {Testovací případ v přípravě 1} other {Testovací případy v přípravě #}}",
+      "import": "{count, plural, =0 {Importovat testovací případy} =1 {Importovat 1 testovací případ} few {Importovat # testovací případy} other {Importovat # testovacích případů}}",
+      "stage": "{count, plural, =0 {Připravit testovací případy} =1 {Připravit 1 testovací případ} few {Připravit # testovací případy} other {Připravit # testovacích případů}}",
       "stageDescription": "Testovací případy v přípravě jsou soukromé. Zkontrolujte je v sekci Moje případy v přípravě a vytvořte je tam. Do úložiště se přidají teprve poté, když to uděláte.",
       "importing": "{count, plural, =0 {Importování testovacích případů...} =1 {Importování 1 testovacího případu...} other {Importování # testovacích případů...}}",
       "externalSystem": "Externí systém",
@@ -3929,8 +3929,8 @@
       "datasetMoreRows": "...a {count, plural, one {# další řádek} few {# další řádky} many {# dalšího řádku} other {# dalších řádků}}",
       "parameterChipSensitive": "citlivé",
       "success": {
-        "imported": "{count, plural, =1 {Úspěšně importován 1 testovací případ} other {Úspěšně importováno # testovacích případů}}",
-        "staged": "{count, plural, =1 {V přípravě 1 testovací případ} other {V přípravě # testovacích případů}}"
+        "imported": "{count, plural, =1 {Úspěšně importován 1 testovací případ} few {Úspěšně importovány # testovací případy} other {Úspěšně importováno # testovacích případů}}",
+        "staged": "{count, plural, =1 {V přípravě 1 testovací případ} few {V přípravě # testovací případy} other {V přípravě # testovacích případů}}"
       },
       "importData": {
         "issueDescription": "Externí problém propojený z generování testovacích případů",
@@ -4027,7 +4027,7 @@
       },
       "unsavedEdits": {
         "title": "Neuložené úpravy",
-        "description": "{count, plural, =1 {Máte 1 testovací případ s neuloženými úpravami.} other {Máte # testovacích případů s neuloženými úpravami.}}",
+        "description": "{count, plural, =1 {Máte 1 testovací případ s neuloženými úpravami.} few {Máte # testovací případy s neuloženými úpravami.} other {Máte # testovacích případů s neuloženými úpravami.}}",
         "warning": "Pokud budete pokračovat bez uložení, vaše změny budou ztraceny.",
         "saveAllAndImport": "Uložit vše a importovat",
         "discardAndImport": "Zahodit úpravy a importovat",
@@ -4035,7 +4035,7 @@
         "discardAndStage": "Zahodit změny a připravit"
       },
       "linkedIssuesDroppedTitle": "Některé propojené problémy nebyly zahrnuty",
-      "linkedIssuesDropped": "{count, plural, =1 {# propojený problém byl vynechán} other {# propojených problémů bylo vynecháno}} kvůli limitu tokenů: {keys}.",
+      "linkedIssuesDropped": "{count, plural, =1 {# propojený problém byl vynechán} few {# propojené problémy byly vynechány} other {# propojených problémů bylo vynecháno}} kvůli limitu tokenů: {keys}.",
       "linkedIssuesPreviewHeading": "Propojené problémy, které budou zahrnuty",
       "contextImages": {
         "pickerHeading": "Obrázky k zahrnutí jako kontext (až {max})",
@@ -4068,7 +4068,7 @@
       "selectFolderFirst": "Před otevřením tohoto připraveného případu vyberte složku.",
       "problemCount": "{count, plural, one {{count} problém} few {{count} problémy} many {{count} problémů} other {{count} problémů}}",
       "updated": "Aktualizováno {age}",
-      "createSelected": "{count, plural, =0 {Vytvořit vybrané} other {Vytvořit {count} vybraných}}",
+      "createSelected": "{count, plural, =0 {Vytvořit vybrané} one {Vytvořit {count} vybraný} few {Vytvořit {count} vybrané} other {Vytvořit {count} vybraných}}",
       "createdToast": "{count, plural, one {{count} testovací případ vytvořen} few {{count} testovací případy vytvořeny} many {{count} testovacích případů vytvořeno} other {{count} testovacích případů vytvořeno}}",
       "failedToast": "{count, plural, one {{count} připravený případ se nepodařilo vytvořit} few {{count} připravené případy se nepodařilo vytvořit} many {{count} připravených případů se nepodařilo vytvořit} other {{count} připravených případů se nepodařilo vytvořit}}",
       "problemFolder": "Složka byla smazána. Otevřete připravený případ a vyberte složku.",
@@ -4145,7 +4145,7 @@
       "filePlaceholder": "Hledat soubory…",
       "filesCached": "{count, plural, one {# soubor} few {# soubory} many {# souboru} other {# souborů}} v mezipaměti · {date}",
       "filesLive": "Soubory se načítají přímo z úložiště",
-      "globMatches": "{count, plural, =0 {Žádné soubory v mezipaměti se neshodují} one {# soubor v mezipaměti se shoduje} other {# soubory v mezipaměti se shodují}}",
+      "globMatches": "{count, plural, =0 {Žádné soubory v mezipaměti se neshodují} one {# soubor v mezipaměti se shoduje} few {# soubory v mezipaměti se shodují} many {# souboru v mezipaměti se shoduje} other {# souborů v mezipaměti se shoduje}}",
       "globPlaceholder": "src/payments/**",
       "kind": "Druh",
       "kindFile": "Celý soubor",
@@ -4343,7 +4343,7 @@
       "otherEditsNote": "Vaše další úpravy polí se použijí při odeslání. Změna stavu čeká na schválení.",
       "pendingSkipNote": "{count, plural, one {# případ už čeká na kontrolu a bude přeskočen} few {# případy už čekají na kontrolu a budou přeskočeny} many {# případu už čeká na kontrolu a bude přeskočeno} other {# případů už čeká na kontrolu a bude přeskočeno}}.",
       "submitSuccess": "{count, plural, one {Vytvořen # požadavek na kontrolu} few {Vytvořeny # požadavky na kontrolu} many {Vytvořeno # požadavku na kontrolu} other {Vytvořeno # požadavků na kontrolu}}.",
-      "submitSuccessWithSkips": "{created, plural, one {vytvořen # požadavek na kontrolu} few {vytvořeny # požadavky na kontrolu} many {vytvořeno # požadavku na kontrolu} other {vytvořeno # požadavků na kontrolu}}, {skipped, plural, one {# přeskočen} few {# přeskočeny} many {# přeskočeno} other {# přeskočeno}} (již čeká na kontrolu).",
+      "submitSuccessWithSkips": "{created, plural, one {vytvořen # požadavek na kontrolu} few {vytvořeny # požadavky na kontrolu} many {vytvořeno # požadavku na kontrolu} other {vytvořeno # požadavků na kontrolu}}, {skipped, plural, one {# přeskočen (již čeká na kontrolu)} few {# přeskočeny (již čekají na kontrolu)} many {# přeskočeno (již čeká na kontrolu)} other {# přeskočeno (již čeká na kontrolu)}}.",
       "nothingToRequest": "Pro vybrané případy nebyly potřeba žádné požadavky na kontrolu.",
       "editsAppliedNoRequests": "Vaše úpravy byly uloženy. Žádné požadavky na kontrolu nebyly potřeba.",
       "selectionTooLarge": "Je vybráno příliš mnoho případů pro současné vyžádání kontroly. Vyberte méně případů a zkuste to znovu."
@@ -4414,9 +4414,9 @@
     },
     "dependencies": {
       "blocked": "Blokováno",
-      "blockedBy": "Blokováno až {count, plural, one {tento případ prošel} few {tyto # případy prošly} many {těchto # případů prošlo} other {tyto případy projdou}} v tomto běhu:",
-      "blockedNotice": "Tento testovací případ nelze spustit, dokud {count, plural, one {případ, na kterém závisí, neprošel} few {všechny # případy, na kterých závisí, neprošly} many {všech # případů, na kterých závisí, neprošlo} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
-      "notInRun": "{count, plural, one {# případ, na kterém tento závisí, je v tomto běhu a nebude blokovat spuštění} few {# případy, na kterých tento závisí, jsou v tomto běhu a nebudou blokovat spuštění} many {# případů, na kterých tento závisí, je v tomto běhu a nebude blokovat spuštění} other {# případy, na kterých tento závisí, jsou v tomto běhu a nebudou blokovat spuštění}}:",
+      "blockedBy": "Blokováno, dokud {count, plural, one {tento případ neprojde} few {tyto # případy neprojdou} many {těchto # případů neprojde} other {tyto případy neprojdou}} v tomto běhu:",
+      "blockedNotice": "Tento testovací případ nelze spustit, dokud {count, plural, one {ten případ, na kterém závisí, neprojde} few {všechny # případy, na kterých závisí, neprojdou} many {všech # případů, na kterých závisí, neprojde} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
+      "notInRun": "{count, plural, one {# případ, na kterém tento závisí, není v tomto běhu a nebude blokovat spuštění} few {# případy, na kterých tento závisí, nejsou v tomto běhu a nebudou blokovat spuštění} many {# případů, na kterých tento závisí, není v tomto běhu a nebude blokovat spuštění} other {# případů, na kterých tento závisí, není v tomto běhu a nebude blokovat spuštění}}:",
       "unblocked": "Všechny případy, na kterých tento závisí, v tomto běhu prošly."
     },
     "distribute": {
@@ -4446,7 +4446,7 @@
       "previewCases": "Případy",
       "previewSkipped": "{count, plural, one {# případ přeskočen} few {# případy přeskočeny} many {# případu přeskočeno} other {# případů přeskočeno}} (již přiřazeno nebo dokončeno)",
       "confirming": "Přiřazování…",
-      "success": "Rozděleno {count, plural, one {# případ} few {# případy} many {# případu} other {# případů}} mezi {users, plural, one {# členem} few {# členy} many {# členy} other {# členy}}",
+      "success": "{count, plural, one {Rozdělen # případ} few {Rozděleny # případy} many {Rozděleno # případu} other {Rozděleno # případů}} mezi {users, plural, one {# členem} few {# členy} many {# členy} other {# členy}}",
       "errorGeneric": "Nepodařilo se rozdělit přiřazení",
       "errorRunCompleted": "Tento běh je dokončen a už jej nelze měnit",
       "errorNeedUsers": "Vyberte alespoň jednoho člena projektu, kterému chcete přiřadit",
@@ -4482,8 +4482,8 @@
       "noLlmIntegration": "Funkce AI vyžadují integraci LLM. Nakonfigurujte ji v nastavení projektu.",
       "configure": {
         "title": "Rozsah testovacích případů",
-        "description": "V úložišti {count, plural, =1 {nalezen # testovací případ} other {nalezeno # testovacích případů}}",
-        "descriptionFiltered": "{count, plural, =1 {Nalezen # případně relevantní testovací případ} other {Nalezeno # případně relevantních testovacích případů}} z {total, plural, =1 {# celkem} other {# celkem}} v úložišti",
+        "description": "V úložišti {count, plural, =1 {nalezen # testovací případ} few {nalezeny # testovací případy} other {nalezeno # testovacích případů}}",
+        "descriptionFiltered": "{count, plural, =1 {Nalezen # případně relevantní testovací případ} few {Nalezeny # případně relevantní testovací případy} other {Nalezeno # případně relevantních testovacích případů}} z {total, plural, =1 {# celkem} other {# celkem}} v úložišti",
         "noMatchesTitle": "Nebyly nalezeny žádné odpovídající testovací případy",
         "noMatchesDescription": "Název a popis testovacího běhu neodpovídaly žádným testovacím případům. Vraťte se na předchozí krok a přidejte konkrétnější podrobnosti, jako jsou názvy funkcí, názvy komponent nebo klíčová slova, která se objevují ve vašich testovacích případech.",
         "maxResultsTitle": "Odpovídá maximální počet testovacích případů",
@@ -4491,7 +4491,7 @@
         "batchSize": "Velikost dávky",
         "batchSizeAll": "Všechny případy (jeden požadavek)",
         "batchSizePercent": "{percent} % ({count} případů)",
-        "requestsNeeded": "{count, plural, =1 {Bude proveden # požadavek na AI} other {Bude provedeno # požadavků na AI}}",
+        "requestsNeeded": "{count, plural, =1 {Bude proveden # požadavek na AI} few {Budou provedeny # požadavky na AI} other {Bude provedeno # požadavků na AI}}",
         "batchNote": "Výsledky ze všech dávek budou zkombinovány"
       },
       "loading": {
@@ -4499,16 +4499,16 @@
         "analyzing": "Analyzování testovacích případů...",
         "progress": "Analyzováno {analyzed, number} z {total, number} testovacích případů...",
         "waitingForAi": "Čekání na odpověď AI (dávka {batch} z {total})...",
-        "selectedSoFar": "{count, plural, =1 {Zatím vybrán # testovací případ} other {Zatím vybráno # testovacích případů}}",
+        "selectedSoFar": "{count, plural, =1 {Zatím vybrán # testovací případ} few {Zatím vybrány # testovací případy} other {Zatím vybráno # testovacích případů}}",
         "resolving_integration": "Řešení integrace AI...",
         "fetching_cases": "Načítání testovacích případů..."
       },
       "success": {
         "title": "Navrhované testovací případy",
-        "description": "{count, plural, =1 {Vybrán # testovací případ} other {Vybráno # testovacích případů}} na základě kontextu vašeho testovacího běhu",
-        "linkedCasesAdded": "{count, plural, =1 {Automaticky zahrnut # propojený případ} other {Automaticky zahrnuto # propojených případů}}",
+        "description": "{count, plural, =1 {Vybrán # testovací případ} few {Vybrány # testovací případy} other {Vybráno # testovacích případů}} na základě kontextu vašeho testovacího běhu",
+        "linkedCasesAdded": "{count, plural, =1 {Automaticky zahrnut # propojený případ} few {Automaticky zahrnuty # propojené případy} other {Automaticky zahrnuto # propojených případů}}",
         "truncationWarningTitle": "Částečné výsledky",
-        "truncationWarning": "{count, plural, =1 {# dávka byla zkrácena} other {# dávek bylo zkráceno}} modelem AI — některé testovací případy nemusely být vyhodnoceny."
+        "truncationWarning": "{count, plural, =1 {# dávka byla zkrácena} few {# dávky byly zkráceny} other {# dávek bylo zkráceno}} modelem AI — některé testovací případy nemusely být vyhodnoceny."
       },
       "noSuggestions": {
         "title": "Žádné odpovídající testovací případy",
@@ -4658,7 +4658,7 @@
         "latestOnBranch": "Nejnovější na {branch}",
         "previousAnalysisLabel": "Začněte od předchozí analýzy",
         "previousAnalysisPlaceholder": "Vyberte analýzu…",
-        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# postižený test} other {# postižené testy}}",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# postižený test} few {# postižené testy} many {# postiženého testu} other {# postižených testů}}",
         "sameCommit": "Základní a headový commit jsou stejné.",
         "swapped": "Základní a headový commit byly vyměněny, takže se změny čtou vpřed.",
         "loadingCommits": "Načítání commitů…",
@@ -4676,7 +4676,7 @@
         "showFullPatch": "Zobrazit úplnou opravu",
         "binary": "Binární soubor",
         "noPatch": "Oprava není k dispozici",
-        "pinnedFiles": "{count, plural, one {# pin} other {# piny}}",
+        "pinnedFiles": "{count, plural, one {# pin} few {# piny} many {# pinu} other {# pinů}}",
         "loading": "Porovnávání commitů…"
       },
       "loading": {
@@ -4710,7 +4710,7 @@
         "tierPinnedTooltip": "Kódový pin na tento případ protíná změnu. Fixované případy se vždy umístí na prvním místě.",
         "tierAffectedTooltip": "Ostatní signály umisťují tento případ na nebo nad prahovou hodnotu dopadu {threshold, number}.",
         "tierRelatedTooltip": "Propojeno s výrazně ovlivněným případem, nebo jeho signály skórují pod {threshold, number}.",
-        "excluded": "{count, plural, one {# případ již v běhu byl přeskočen} other {# případy již v běhu byly přeskočeny}}"
+        "excluded": "{count, plural, one {# případ již v běhu byl přeskočen} few {# případy již v běhu byly přeskočeny} many {# případu již v běhu bylo přeskočeno} other {# případů již v běhu bylo přeskočeno}}"
       },
       "noAffected": {
         "title": "Nenalezeny žádné postižené testy",
@@ -4731,7 +4731,7 @@
         "fieldContent": "obsah případu",
         "fieldTag": "štítek",
         "fieldFolder": "složka",
-        "historyDetail": "{count, plural, one {# dřívější běh} other {# dřívější běhy}} po změnách stejných souborů",
+        "historyDetail": "{count, plural, one {# dřívější běh} few {# dřívější běhy} many {# dřívějšího běhu} other {# dřívějších běhů}} po změnách stejných souborů",
         "historyFailed": "Selhalo v dřívějším běhu po podobných změnách",
         "linkedDetail": "Propojeno s případem {caseId}",
         "issueDetail": "Propojeno s {key}, pojmenováno v {count, plural, one {commitu {sha}} other {# commitech}}"
@@ -4739,17 +4739,17 @@
       "stale": {
         "badge": "Zastaralé",
         "tooltipAnalysis": "Fixovaný blok nebyl nalezen na základním commitu; shoduje se pouze podle cesty souboru. Znovu fixujte ze stránky testovacího případu.",
-        "title": "{count, plural, one {# zastaralý pin} other {# zastaralé piny}}",
+        "title": "{count, plural, one {# zastaralý pin} few {# zastaralé piny} many {# zastaralého pinu} other {# zastaralých pinů}}",
         "description": "Tyto piny již neodpovídají kódu. Znovu je ukotvěte ze stránky testovacího případu."
       },
       "uncovered": {
-        "title": "{count, plural, one {# změněný soubor nemá test} other {# změněné soubory nemají testy}}",
+        "title": "{count, plural, one {# změněný soubor nemá test} few {# změněné soubory nemají testy} many {# změněného souboru nemá testy} other {# změněných souborů nemá testy}}",
         "description": "Žádný testovací případ není propojen s těmito soubory. Fixujte případ, abyste uzavřeli mezeru.",
         "pinAction": "Fixovat případ…"
       },
       "warnings": {
         "diff_truncated_by_provider": "Poskytovatel vrátil částečné rozlišení.",
-        "diff_truncated_by_budget": "Do kontextu AI se vešla pouze část rozlišení; {count, plural, one {# soubor byl shrnut} few {# soubory byly shrnuty} many {# souboru bylo shrnuto} other {# souborů bylo shrnuto}} pouze podle cesty.",
+        "diff_truncated_by_budget": "Do kontextu AI se vešla pouze část rozdílů; {count, plural, one {# soubor byl shrnut} few {# soubory byly shrnuty} many {# souboru bylo shrnuto} other {# souborů bylo shrnuto}} pouze podle cesty.",
         "llm_not_configured": "Bez aktivní integrace LLM: hodnocení AI bylo přeskočeno.",
         "search_fallback_db": "Index hledání není k dispozici: porovnávání klíčových slov používalo databázi.",
         "search_index_empty": "Index hledání neobsahuje žádné testovací případy pro tento projekt, takže porovnávání klíčových slov se vrátilo k názvům testovacích případů v databázi a mohlo pominout shody s obsahem případu. Požádejte administrátora, aby znovu vytvořil index hledání v sekci Administrace → Vyhledávací modul.",
@@ -4764,7 +4764,7 @@
         "analyze": "Analyzovat",
         "reanalyze": "Analyzovat znovu",
         "refine": "Zpět na změny",
-        "accept": "{count, plural, one {Přidat # případ} other {Přidat # případy}}",
+        "accept": "{count, plural, one {Přidat # případ} few {Přidat # případy} many {Přidat # případu} other {Přidat # případů}}",
         "cancelAnalysis": "Zrušit analýzu"
       },
       "errors": {
@@ -4788,10 +4788,10 @@
       "title": "Prioritizovat podle rizika",
       "description": "Případy, které si nejvíce zaslouží spuštění, nejprve s nejvyšším rizikem. Případy, které se již v tomto běhu nacházejí, jsou vynechány.",
       "minimumScore": "Minimální skóre rizika",
-      "showing": "{shown, plural, one {# případ načten} few {# případy načteny} many {# případů načteno} other {# případů načteno}} z {total, plural, one {# shoda} few {# shody} many {# shod} other {# shod}}",
-      "loadedSelected": "{shown, plural, =2 {Oba načtené případy jsou vybrány} one {Načtený případ je vybrán} other {Všech # načtených případů je vybráno}}.",
-      "selectAllMatches": "{total, plural, =2 {Vybrat obě shody} one {Vybrat jedinou shodu} other {Vybrat všech # shod}}",
-      "allMatchesSelected": "{total, plural, =2 {Obě shody jsou vybrány} one {Jediná shoda je vybrána} other {Všech # shod je vybráno}}.",
+      "showing": "{shown, plural, one {# případ načten} few {# případy načteny} many {# případů načteno} other {# případů načteno}} z {total, plural, one {# shody} few {# shod} many {# shody} other {# shod}}",
+      "loadedSelected": "{shown, plural, =2 {Oba načtené případy jsou vybrány} one {Načtený případ je vybrán} few {Všechny # načtené případy jsou vybrány} other {Všech # načtených případů je vybráno}}.",
+      "selectAllMatches": "{total, plural, =2 {Vybrat obě shody} one {Vybrat jedinou shodu} few {Vybrat všechny # shody} other {Vybrat všech # shod}}",
+      "allMatchesSelected": "{total, plural, =2 {Obě shody jsou vybrány} one {Jediná shoda je vybrána} few {Všechny # shody jsou vybrány} other {Všech # shod je vybráno}}.",
       "noneMatch": "V tomto skóre nebo vyšší nejsou žádné hodnocené případy.",
       "caseColumn": "Testovací případ",
       "scoreColumn": "Skóre rizika",
@@ -4900,10 +4900,10 @@
         "mappingAnalysisError": "Analýzu mapování se nepodařilo vygenerovat. Zkuste to znovu.",
         "mappingLoading": "Vytváření analýzy mapování…",
         "mappingSummaryHeading": "Detekované entity",
-        "mappingSummaryPending": "{count, plural, =1 {# čekající} other {# čekající}}",
+        "mappingSummaryPending": "{count, plural, =1 {# čekající} few {# čekající} other {# čekajících}}",
         "mappingOutstandingTitle": "Vyřešit nevyřízená mapování",
         "mappingOutstandingDescription": "Před spuštěním importu dokončete zbývající mapování.",
-        "mappingOutstandingItem": "{count, plural, =1 {# nevyřešená položka} other {# nevyřešených položek}} v {label}",
+        "mappingOutstandingItem": "{count, plural, =1 {# nevyřešená položka} few {# nevyřešené položky} other {# nevyřešených položek}} v {label}",
         "mappingSummaryTemplateFields": "Pole šablony",
         "mappingDatasetLabels": {
           "field_values": "Hodnoty polí",
@@ -4981,15 +4981,15 @@
         "mappingDatasetEmptyTitle": "Nebyly zachovány žádné datové sady",
         "mappingDatasetEmptyDescription": "Analýza nezachovala žádné datové sady ke konfiguraci. Pokud očekáváte další data, nahrajte jiný export.",
         "importProgressTitle": "Průběh importu",
-        "importProgressDescription": "{count, plural, =0 {Všechny záznamy byly importovány napříč sledovanými entitami.} =1 {Zbývá 1 záznam napříč sledovanými entitami.} other {Zbývá # záznamů napříč sledovanými entitami.}}",
-        "importProgressTotalRemaining": "{count, plural, =0 {Žádné zbývající záznamy} =1 {Zbývá 1 záznam} other {Zbývá # záznamů}}",
+        "importProgressDescription": "{count, plural, =0 {Všechny záznamy byly importovány napříč sledovanými entitami.} =1 {Zbývá 1 záznam napříč sledovanými entitami.} few {Zbývají # záznamy napříč sledovanými entitami.} other {Zbývá # záznamů napříč sledovanými entitami.}}",
+        "importProgressTotalRemaining": "{count, plural, =0 {Žádné zbývající záznamy} =1 {Zbývá 1 záznam} few {Zbývají # záznamy} other {Zbývá # záznamů}}",
         "importProgressProcessed": "Importováno záznamů: {processed, number}/{total, number}",
         "importProgressAria": "{percent, number} % importu dokončeno",
         "importProgressPercentLabel": "{percent, number} %",
         "importDurationLabel": "Celkový čas:",
         "activityLogTitle": "Aktivita importu",
         "activityLogDescription": "Podrobný protokol kroků importu na pozadí. Časová razítka vycházejí z časového pásma serveru.",
-        "activitySummaryProcessed": "{count, plural, =1 {# zpracovaný záznam} other {# zpracovaných záznamů}}",
+        "activitySummaryProcessed": "{count, plural, =1 {# zpracovaný záznam} few {# zpracované záznamy} other {# zpracovaných záznamů}}",
         "activitySummaryCreated": "{count, plural, =1 {# vytvořeno} other {# vytvořeno}}",
         "activitySummaryMapped": "{count, plural, =1 {# namapováno} other {# namapováno}}",
         "activitySummaryUnknown": "Krok importu",
@@ -5031,7 +5031,7 @@
         "mappingImportInProgress": "Probíhá import na pozadí",
         "mappingImportInProgressDescription": "Proces importu zpracovává konfiguraci. Stav můžete sledovat výše.",
         "mapping": {
-          "datasetTotalLabel": "{count, plural, =1 {# záznam} other {# záznamů}} ",
+          "datasetTotalLabel": "{count, plural, =1 {# záznam} few {# záznamy} other {# záznamů}} ",
           "columnSource": "Entita Testmo",
           "columnSourceDetails": "Podrobnosti",
           "columnSuggestedWorkflowType": "Navrhovaný typ",
@@ -5118,8 +5118,8 @@
           "templateFieldStatusCreate": "Vytvořit nové pole",
           "templateFieldStatusMissing": "Nenamapováno",
           "templateFieldStatusMismatch": "Nesoulad cíle",
-          "templateCaseFieldCountBadge": "{count, plural, =1 {# pole případu} other {# polí případu}}",
-          "templateResultFieldCountBadge": "{count, plural, =1 {# pole výsledku} other {# polí výsledku}}",
+          "templateCaseFieldCountBadge": "{count, plural, =1 {# pole případu} few {# pole případu} other {# polí případu}}",
+          "templateResultFieldCountBadge": "{count, plural, =1 {# pole výsledku} few {# pole výsledku} other {# polí výsledku}}",
           "templateMapLabel": "Namapovat na existující šablonu",
           "templateCreateLabel": "Vytvořit novou šablonu",
           "templateNoMatchingTargets": "Nejsou k dispozici žádné odpovídající šablony.",
@@ -6351,7 +6351,7 @@
       },
       "delete": {
         "confirmMessage": "Opravdu chcete odstranit hlavní příčinu {name}?",
-        "inUse": "{count, plural, one {# vzor selhání ji používá.} few {# vzory selhání jej používají.} many {# vzorů selhání jej používá.} other {# vzorů selhání jej používá.}}",
+        "inUse": "{count, plural, one {# vzor selhání ji používá.} few {# vzory selhání ji používají.} many {# vzorů selhání ji používá.} other {# vzorů selhání ji používá.}}",
         "moveLabel": "{count, plural, one {Přesunout vzor na} few {Přesunout # vzory na} many {Přesunout # vzorů na} other {Přesunout # vzorů na}}"
       }
     },
@@ -6443,7 +6443,7 @@
           "ORPHAN": "Osiřelý",
           "REFERENCED": "Používáno"
         },
-        "loadedSelected": "{shown, plural, one {Načtený soubor je vybrán} few {Všechny # načtené soubory jsou vybrány} many {Všechny # načtených souborů jsou vybrány} other {Všechny # načtených souborů jsou vybrány}}.",
+        "loadedSelected": "{shown, plural, one {Načtený soubor je vybrán} few {Všechny # načtené soubory jsou vybrány} many {Všech # načtených souborů je vybráno} other {Všech # načtených souborů je vybráno}}.",
         "confirmDelete": "{count, plural, =0 {Žádný z vybraných souborů nelze smazat.} one {Smazat tento soubor ({size}) z úložiště? Tuto akci nelze vrátit zpět.} few {Smazat # soubory ({size}) z úložiště? Tuto akci nelze vrátit zpět.} many {Smazat # souborů ({size}) z úložiště? Tuto akci nelze vrátit zpět.} other {Smazat # souborů ({size}) z úložiště? Tuto akci nelze vrátit zpět.}}",
         "skipped": "{count, plural, one {# vybraný soubor je ponechán, protože se používá.} few {# vybrané soubory jsou ponechány, protože se používají.} many {# vybraných souborů je ponecháno, protože se používají.} other {# vybraných souborů je ponecháno, protože se používají.}}",
         "deleted": "{count, plural, one {# soubor smazán z úložiště} few {# soubory smazány z úložiště} many {# souborů smazáno z úložiště} other {# souborů smazáno z úložiště}}"
@@ -6464,7 +6464,7 @@
       "selection": {
         "loadedSelected": "{shown, plural, one {Načtená příloha je vybrána} few {Všechny # načtené přílohy jsou vybrány} many {Všech # načtených příloh je vybráno} other {Všech # načtených příloh je vybráno}}.",
         "selectAllMatches": "{total, plural, one {Vyberte jedinou shodu} few {Vyberte všechny # shody} many {Vyberte všech # shod} other {Vyberte všech # shod}}",
-        "allMatchesSelected": "{total, plural, one {Jedinou shoda je vybrána} few {Všechny # shody jsou vybrány} many {Všech # shod je vybráno} other {Všech # shod je vybráno}}.",
+        "allMatchesSelected": "{total, plural, one {Jediná shoda je vybrána} few {Všechny # shody jsou vybrány} many {Všech # shod je vybráno} other {Všech # shod je vybráno}}.",
         "tooMany": "Najednou lze vybrat až {max}. Zúžením filtrů vyberete každou shodu."
       },
       "actions": {
@@ -7245,7 +7245,7 @@
   "components": {
     "notifications": {
       "empty": "Žádná oznámení",
-      "panelTitle": "{count, plural, =0 {Oznámení} one {# nové oznámení} other {# nových oznámení}}",
+      "panelTitle": "{count, plural, =0 {Oznámení} one {# nové oznámení} few {# nová oznámení} many {# nového oznámení} other {# nových oznámení}}",
       "actions": {
         "markRead": "Označit jako přečtené",
         "markUnread": "Označit jako nepřečtené",
@@ -7375,32 +7375,32 @@
           "CASE_REGRESSED": "Případ selhal po úspěšném průchodu {passedBefore, plural, one {jeho posledního výsledku} few {jeho posledních # výsledků} many {jeho posledních # výsledků} other {jeho posledních # výsledků}}.",
           "CASE_RECOVERED": "Případ prošel po neúspěšném průchodu {failedBefore, plural, one {jeho posledního výsledku} few {jeho posledních # výsledků} many {jeho posledních # výsledků} other {jeho posledních # výsledků}}.",
           "RUN_DURATION_DEVIATION": "Běh trval {elapsed}, {deviation}% od výchozího {baseline} (více než {threshold}% povoleno).",
-          "RUN_NOT_PROGRESSING": "Běh nemá nový výsledek již {idleHours, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold}).",
+          "RUN_NOT_PROGRESSING": "Běh nemá nový výsledek již {idleHours, plural, one {# hodinu} few {# hodiny} many {# hodiny} other {# hodin}} (prahová hodnota {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "Automatické spuštění na {target} skončilo s {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% případů běhu nemá výsledek s {daysRemaining, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} před splatností milníku (prahová hodnota {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# problém je propojen} few {# problémy jsou propojeny} many {# problémů je propojeno} other {# problémů je propojeno}} s výsledky běhu (prahová hodnota {threshold}).",
           "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# vzor selhání se objevil} few {# vzory selhání se objevily} many {# vzorů selhání se objevilo} other {# vzorů selhání se objevilo}} poprvé v běhu (práh {threshold}).",
           "SESSION_OVERRUN": "Relace trvala {elapsed} proti odhadu {estimate}, {overrun}% více (více než {threshold}% povoleno).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} z {total} požadavků ({coverage}%) {basis, select, PASSING {má procházející poslední výsledek} other {je propojen s testovacím případem}} (prahová hodnota {threshold}%).",
-          "STALE_CASES": "{stale, plural, one {# případ má} few {# případy mají} many {# případů má} other {# případů má}} žádný výsledek za {days, plural, one {# den} few {# dny} many {# dny} other {# dny}} (prahová hodnota {threshold}).",
+          "STALE_CASES": "{stale, plural, one {# případ nemá} few {# případy nemají} many {# případů nemá} other {# případů nemá}} žádný výsledek za {days, plural, one {# den} few {# dny} many {# dne} other {# dní}} (prahová hodnota {threshold}).",
           "AUTOMATION_SHARE_BELOW": "{automated} z {total} případů ({automatedPercent}%) jsou automatizovány (prahová hodnota {threshold}%).",
           "WEBHOOK_FAILURE_RATE": "{failed} z posledních {sampleCount} doručení selhalo ({failureRate}%, prahová hodnota {threshold}%).",
           "CONSECUTIVE_FAILURES": "Případ selhal {streak, plural, one {# krát} few {# krát} many {# krát} other {# krát}} po sobě (prahová hodnota {threshold}).",
           "CASE_FLAKY": "Výsledek se přepnul {flips, plural, one {# krát} few {# krát} many {# krát} other {# krát}} v posledních {sampleCount} výsledcích (prahová hodnota {threshold}).",
           "RUN_PASS_RATE_BELOW": "Míra úspěšnosti je {passRate}% v {sampleCount} výsledcích (prahová hodnota {threshold}%).",
           "RUN_FAILURE_COUNT": "{failed, plural, one {# výsledek selhal} few {# výsledky selhaly} many {# výsledků selhalo} other {# výsledků selhalo}} (prahová hodnota {threshold}).",
-          "MILESTONE_BEHIND": "Milník je {completion}% hotov s {daysRemaining, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} do zbytku (prahová hodnota {threshold}%).",
-          "MILESTONE_OVERDUE": "Milník je {daysOverdue, plural, one {# den} few {# dny} many {# dny} other {# dny}} po splatnosti.",
+          "MILESTONE_BEHIND": "Milník je {completion}% hotov s {daysRemaining, plural, one {# zbývajícím dnem} few {# zbývajícími dny} many {# zbývajícími dny} other {# zbývajícími dny}} (prahová hodnota {threshold}%).",
+          "MILESTONE_OVERDUE": "Milník je {daysOverdue, plural, one {# den} few {# dny} many {# dne} other {# dní}} po splatnosti.",
           "LLM_BUDGET_USED": "Výdaje za fakturační období jsou {spend} z {budget} měsíčního rozpočtu ({percent}%, prahová hodnota {threshold}%).",
           "LLM_ERROR_RATE": "{failed} z posledních {sampleCount} požadavků selhalo ({failureRate}%, prahová hodnota {threshold}%).",
-          "LLM_RATE_LIMITED": "Poskytovatel omezil {blocked, plural, one {# požadavek} few {# požadavky} many {# požadavků} other {# požadavků}} v posledních {hours, plural, one {# hodinę} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold}).",
-          "CODE_REPOSITORY_CACHE_FAILING": "Mezipaměť úložiště selhala již {hours, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold}){error, select, other {: {error}}}",
+          "LLM_RATE_LIMITED": "Poskytovatel omezil {blocked, plural, one {# požadavek} few {# požadavky} many {# požadavků} other {# požadavků}} v {hours, plural, one {poslední # hodině} few {posledních # hodinách} many {posledních # hodinách} other {posledních # hodinách}} (prahová hodnota {threshold}).",
+          "CODE_REPOSITORY_CACHE_FAILING": "Mezipaměť úložiště selhává již {hours, plural, one {# hodinu} few {# hodiny} many {# hodiny} other {# hodin}} (prahová hodnota {threshold}){error, select, other {: {error}}}",
           "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# uživatel musí} few {# uživatelé musí} many {# uživatelů musí} other {# uživatelů musí}} znovu ověřit integraci (prahová hodnota {threshold}).",
           "QUEUE_FAILED_JOBS": "{failed, plural, one {# úloha selhala} few {# úlohy selhaly} many {# úloh selhalo} other {# úloh selhalo}} ve frontě (prahová hodnota {threshold}).",
           "QUEUE_BACKLOG": "Nejstarší z {waiting, plural, one {# čekající úlohy} few {# čekajících úloh} many {# čekajících úloh} other {# čekajících úloh}} čeká {minutes, plural, one {# minutu} few {# minuty} many {# minut} other {# minut}} (prahová hodnota {threshold}).",
           "AUDIT_BACKLOG": "Nejstarší nezpracovaná změna auditu je stará {minutes, plural, one {# minutu} few {# minuty} many {# minut} other {# minut}} (prahová hodnota {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# účet je uzamčen} few {# účty jsou uzamčeny} many {# účtů je uzamčeno} other {# účtů je uzamčeno}} po neúspěšných přihlášeních (prahová hodnota {threshold}).",
-          "NO_AUTOMATED_RESULTS": "Žádný automatizovaný výsledek nebyl přijat za {hours, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}} (prahová hodnota {threshold})."
+          "NO_AUTOMATED_RESULTS": "Žádný automatizovaný výsledek nebyl přijat za {hours, plural, one {# hodinu} few {# hodiny} many {# hodiny} other {# hodin}} (prahová hodnota {threshold})."
         },
         "reviewDecisionRevertedAction": "vrátili své rozhodnutí na",
         "reviewDecisionRevertedEmailMessage": "{actorName} vrátili své rozhodnutí na {entityLabel} \"{entityName}\" v projektu \"{projectName}\" — čeká se na kontrolu.",
@@ -7705,7 +7705,7 @@
     },
     "linkedCases": {
       "title": "Propojené testovací případy",
-      "titleWithCount": "{count, plural, =0 {Propojené testovací případy} =1 {# Propojený testovací případ} other {# Propojených testovacích případů}}",
+      "titleWithCount": "{count, plural, =0 {Propojené testovací případy} =1 {# Propojený testovací případ} few {# Propojené testovací případy} other {# Propojených testovacích případů}}",
       "empty": "Žádné propojené testovací případy.",
       "addLinkDialogTitle": "Propojit testovací případy",
       "searchPlaceholder": "Hledat testovací případy…",
@@ -7737,7 +7737,7 @@
       "dismissFailed": "Nepodařilo se zrušit příznak podezření."
     },
     "references": {
-      "title": "{count, plural, =0 {Odkazy} =1 {{count} odkaz} other {{count} odkazů}}",
+      "title": "{count, plural, =0 {Odkazy} =1 {{count} odkaz} few {{count} odkazy} other {{count} odkazů}}",
       "empty": "Zatím žádné odkazy.",
       "emptyHint": "Přiložte tikety, které tento požadavek ovlivnily.",
       "addReference": "Přidat odkaz",
@@ -7763,7 +7763,7 @@
       "loadFailed": "Nepodařilo se načíst pokrytí.",
       "retry": "Zkusit znovu",
       "panelTitle": "Pokrývající testovací případy",
-      "panelTitleWithCount": "{count, plural, =0 {Pokrývající testovací případy} =1 {Pokrývající # testovací případ} other {Pokrývající # testovacích případů}}",
+      "panelTitleWithCount": "{count, plural, =0 {Pokrývající testovací případy} =1 {Pokrývající # testovací případ} few {Pokrývající # testovací případy} other {Pokrývajících # testovacích případů}}",
       "panelDescription": "Všechny testovací případy započítané do pokrytí tohoto požadavku — případy propojené přímo s ním i případy propojené s libovolným podřízeným požadavkem. Chcete-li propojení přidat nebo odstranit, použijte Propojené testovací případy.",
       "panelEmpty": "Tento požadavek zatím nepokrývá žádný testovací případ.",
       "columnCase": "Testovací případ",
@@ -7919,7 +7919,7 @@
       "buttonSelected": "{count, plural, one {Spustit # vybraný automatizovaný případ} few {Spustit # vybrané automatizované případy} many {Spustit # vybraného automatizovaného případu} other {Spustit # vybraných automatizovaných případů}}",
       "noAutomatedSelected": "Žádný z vybraných případů není automatizovaným případem v tomto běhu.",
       "selectedCaseCountSummary": "{count, plural, one {# vybraný automatizovaný případ bude požadován} few {# vybrané automatizované případy budou požadovány} many {# vybraného automatizovaného případu bude požadováno} other {# vybraných automatizovaných případů bude požadováno}}",
-      "skippedSelection": "{count, plural, one {# vybraný případ není automatizovaným případem v tomto běhu a je přeskočen.} few {# vybrané případy nejsou automatizovanými případy v tomto běhu a jsou přeskočeny.} many {# vybraného případu není automatizovaným případem v tomto běhu a je přeskočen.} other {# vybraných případů nejsou automatizovanými případy v tomto běhu a jsou přeskočeny.}}",
+      "skippedSelection": "{count, plural, one {# vybraný případ není automatizovaným případem v tomto běhu a je přeskočen.} few {# vybrané případy nejsou automatizovanými případy v tomto běhu a jsou přeskočeny.} many {# vybraného případu není automatizovaným případem v tomto běhu a je přeskočen.} other {# vybraných případů není automatizovanými případy v tomto běhu a je přeskočeno.}}",
       "resultsNote": "Výsledky se připojí k tomuto běhu, když úloha ohlásí TESTPLANIT_RUN_ID={runId}.",
       "submit": "Spustit",
       "submitting": "Požadavek...",
@@ -8883,11 +8883,11 @@
           "last": "Poslední",
           "amount": "Počet období",
           "unit": "Období",
-          "days": "Posledních {count, plural, one {# den} few {# dny} many {# dne} other {# dní}}",
-          "weeks": "Posledních {count, plural, one {# týden} few {# týdny} many {# týdne} other {# týdnů}}",
-          "months": "Posledních {count, plural, one {# měsíc} few {# měsíce} many {# měsíce} other {# měsíců}}",
-          "calendarWeeks": "Posledních {count, plural, one {# kalendářní týden} few {# kalendářní týdny} many {# kalendářních týdnů} other {# kalendářních týdnů}}",
-          "calendarMonths": "Posledních {count, plural, one {# kalendářní měsíc} few {# kalendářní měsíce} many {# kalendářních měsíců} other {# kalendářních měsíců}}"
+          "days": "{count, plural, one {Poslední # den} few {Poslední # dny} many {Posledních # dne} other {Posledních # dní}}",
+          "weeks": "{count, plural, one {Poslední # týden} few {Poslední # týdny} many {Posledních # týdne} other {Posledních # týdnů}}",
+          "months": "{count, plural, one {Poslední # měsíc} few {Poslední # měsíce} many {Posledních # měsíce} other {Posledních # měsíců}}",
+          "calendarWeeks": "{count, plural, one {Poslední # kalendářní týden} few {Poslední # kalendářní týdny} many {Posledních # kalendářních týdnů} other {Posledních # kalendářních týdnů}}",
+          "calendarMonths": "{count, plural, one {Poslední # kalendářní měsíc} few {Poslední # kalendářní měsíce} many {Posledních # kalendářních měsíců} other {Posledních # kalendářních měsíců}}"
         },
         "rollingUnits": {
           "days": "dny",
@@ -9108,7 +9108,7 @@
         "heuristicBadge": "Heuristika",
         "heuristicBadgeTooltip": "Pro tento projekt není nakonfigurována žádná integrace LLM, proto bylo toto pořadí sestaveno přímo z metriky strategie výběru. Nakonfigurujte LLM (Administrace → AI modely) pro bohatší uvažování, které zohledňuje vlastní pole, kontext propojených úkolů a obsah případu.",
         "sourcedFromNewestN": "Nejlepších {ranked} z {total} způsobilých manuálních případů podle {strategy}",
-        "sourcedFromAll": "Seřazeno {total, plural, one {# způsobilý manuální případ} =2 {oba způsobilé manuální případy} few {všechny # způsobilé manuální případy} many {všechny # způsobilé manuální případy} other {všech # způsobilých manuálních případů}} podle {strategy}",
+        "sourcedFromAll": "{total, plural, one {Seřazen # způsobilý manuální případ} =2 {Seřazeny oba způsobilé manuální případy} few {Seřazeny všechny # způsobilé manuální případy} many {Seřazeny všechny # způsobilé manuální případy} other {Seřazeno všech # způsobilých manuálních případů}} podle {strategy}",
         "metric": {
           "executions": "{count} běhů",
           "forecast": "Odhad {value}",
@@ -9466,8 +9466,8 @@
           "lastComplete": "Poslední úplné období ({period}), v porovnání s průměrem úplných období před ním.",
           "results": "Provedené výsledky",
           "runs": "Testy",
-          "deltaPoints": "{change} bodů v porovnání s předchozím {count, plural, one {# období} few {# období} many {# období} other {# období}}",
-          "deltaPercent": "{change}% v porovnání s předchozím {count, plural, one {# období} few {# období} many {# období} other {# období}}",
+          "deltaPoints": "{change} bodů v porovnání s {count, plural, one {předchozím # obdobím} few {předchozími # obdobími} many {předchozími # obdobími} other {předchozími # obdobími}}",
+          "deltaPercent": "{change}% v porovnání s {count, plural, one {předchozím # obdobím} few {předchozími # obdobími} many {předchozími # obdobími} other {předchozími # obdobími}}",
           "noBaseline": "Nic staršího k porovnání"
         },
         "chart": {
@@ -10347,7 +10347,7 @@
     "selectSourceWarningDescription": "Existující hodnoty datové sady pro tento parametr nemusí v novém seznamu existovat. {invalidCount, plural, =1 {# řádek bude vyžadovat} few {# řádky budou vyžadovat} many {# řádku bude vyžadovat} other {# řádků bude vyžadovat}} pozornost po této změně. Pokračovat?",
     "selectSourceConfirm": "Změnit zdroj",
     "datasetSelectAllPageTooltip": "Kliknutím vyberete všechny řádky na této stránce. Shift+klik vybere všechny řádky napříč všemi stránkami.",
-    "datasetSelectAllAcrossPagesTooltip": "Vybrat {count, plural, =1 {# řádek} =2 {oba řádky} other {všech # řádků}} napříč všemi stránkami",
+    "datasetSelectAllAcrossPagesTooltip": "Vybrat {count, plural, =1 {# řádek} =2 {oba řádky} few {všechny # řádky} other {všech # řádků}} napříč všemi stránkami",
     "datasetDeselectAllAcrossPagesTooltip": "Zrušit výběr všech řádků napříč všemi stránkami",
     "datasetAddRow": "Přidat řádek",
     "datasetAddColumn": "Přidat sloupec",
@@ -10414,7 +10414,7 @@
     "confirmSummaryMode": "Režim: {mode}",
     "cancelUploadTitle": "Zahodit nahrávání?",
     "cancelUploadDescription": "Nahraná data CSV budou ztracena.",
-    "importSuccess": "Importováno {count, plural, =1 {# řádek} few {# řádky} many {# řádku} other {# řádků}}",
+    "importSuccess": "{count, plural, =1 {Importován # řádek} few {Importovány # řádky} many {Importováno # řádku} other {Importováno # řádků}}",
     "addSuccess": "Parametr „{name}“ byl přidán",
     "addError": "Nepodařilo se přidat parametr",
     "updateSuccess": "Parametr byl uložen",
@@ -10470,7 +10470,7 @@
     "softConfirmGo": "Vygenerovat iterace",
     "runProgressCounter": "{done} / {total}",
     "runProgressDismissAria": "Skrýt průběh",
-    "runProgressComplete": "Vygenerováno {total, plural, =1 {# iterace} few {# iterace} many {# iterace} other {# iterací}} pro „{runName}“",
+    "runProgressComplete": "{total, plural, =1 {Vygenerována # iterace} few {Vygenerovány # iterace} many {Vygenerováno # iterace} other {Vygenerováno # iterací}} pro „{runName}“",
     "runProgressFailedToast": "Nepodařilo se vygenerovat iterace pro „{runName}“. {reason}",
     "runProgressNavAway": "Zobrazit zbytek běhu",
     "runGeneratingHeading": "Generování iterací…",
@@ -10522,10 +10522,10 @@
     "iterationBulkConfirmDescription": "Každá vybraná iterace obdrží nový výsledek se stavem „{statusName}“.",
     "iterationBulkConfirm": "Označit {action}",
     "iterationBulkConfirmReplace": "Nahradit stavem {action}",
-    "iterationBulkOverwriteWarning": "{count, plural, =1 {# z vybraných iterací již má} few {# z vybraných iterací již má} many {# z vybraných iterací již má} other {# z vybraných iterací již má}} výsledek. Bude zaznamenán nový výsledek a nejnovější nahradí ten stávající.",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {# z vybraných iterací již má} few {# z vybraných iterací již mají} many {# z vybraných iterací již má} other {# z vybraných iterací již má}} výsledek. Bude zaznamenán nový výsledek a nejnovější nahradí ten stávající.",
     "iterationBulkReasonLabel": "Důvod (volitelné)",
     "iterationBulkReasonHelp": "Zaznamenáno u každého výsledku.",
-    "iterationBulkSuccess": "{count, plural, =1 {# iterace} few {# iterace} many {# iterace} other {# iterací}} označeno jako {action}",
+    "iterationBulkSuccess": "{count, plural, =1 {# iterace označena} few {# iterace označeny} many {# iterace označeno} other {# iterací označeno}} jako {action}",
     "iterationBulkError": "Nepodařilo se označit iterace",
     "iterationBulkNa": "Označit N/A",
     "iterationListLoadError": "Nepodařilo se načíst iterace.",
@@ -10641,7 +10641,7 @@
     "deleteRule": "Smazat upozornění",
     "deleteConfirm": "Smazat upozornění \"{name}\"? Jeho předplatitelé přestanou dostávat oznámení a může být obnoven z koše.",
     "pauseTitle": "Pozastavit toto upozornění pro všechny?",
-    "pauseConfirm": "\"{name}\" se přestane spouštět pro {count, plural, =0 {všechny} one {jeho jediného předplatitele} =2 {oba jeho předplatitele} other {všech # jeho předplatitelů}}, ne jen pro vás, dokud jej někdo znovu nepovolí. Chcete-li zastavit pouze svá vlastní oznámení, místo toho vypněte Upozornit mě.",
+    "pauseConfirm": "\"{name}\" se přestane spouštět pro {count, plural, =0 {všechny} one {jeho jediného předplatitele} =2 {oba jeho předplatitele} few {všechny # jeho předplatitele} other {všech # jeho předplatitelů}}, ne jen pro vás, dokud jej někdo znovu nepovolí. Chcete-li zastavit pouze svá vlastní oznámení, místo toho vypněte Upozornit mě.",
     "columns": {
       "name": "Pravidlo",
       "condition": "Podmínka",
@@ -10668,7 +10668,7 @@
     },
     "history": "Historie",
     "subscribers": "Předplatitelé",
-    "subscriberCount": "{count, plural, =0 {Žádní předplatitelé} one {# předplatitel} other {# předplatitelů}}",
+    "subscriberCount": "{count, plural, =0 {Žádní předplatitelé} one {# předplatitel} few {# předplatitelé} many {# předplatitele} other {# předplatitelů}}",
     "toasts": {
       "created": "Pravidlo vytvořeno.",
       "updated": "Pravidlo aktualizováno.",
@@ -10914,7 +10914,7 @@
       "CASE_RECOVERED": {
         "label": "Případ se zotavil",
         "description": "Případ prošel po neúspěšném průchodu každého ze svých posledních výsledků.",
-        "summary": "Případ prošel po selhání posledních {window, plural, one {# výsledku} few {# výsledků} many {# výsledků} other {# výsledků}}"
+        "summary": "Případ prošel po selhání {window, plural, one {posledního # výsledku} few {posledních # výsledků} many {posledních # výsledků} other {posledních # výsledků}}"
       },
       "CONSECUTIVE_FAILURES": {
         "label": "Postupné selhání",
@@ -10974,7 +10974,7 @@
       "MILESTONE_BEHIND": {
         "label": "Milník je pozadu",
         "description": "Případy běhu milníku nejsou dost dokončeny s několika málo dny před splatností. Kontrolováno denně.",
-        "summary": "Milník je pod {threshold}% hotov s {days, plural, one {# dnem} few {# dny} many {# dny} other {# dny}} nebo méně zbývajícím"
+        "summary": "Milník je pod {threshold}% hotov s {days, plural, one {# zbývajícím dnem} few {# zbývajícími dny} many {# zbývajícími dny} other {# zbývajícími dny}} nebo méně"
       },
       "MILESTONE_OVERDUE": {
         "label": "Milník je po splatnosti",
@@ -10989,7 +10989,7 @@
       "STALE_CASES": {
         "label": "Staré případy",
         "description": "Více než daný počet případů přešlo bez výsledku daný počet dní. Kontrolováno denně.",
-        "summary": "Více než {threshold, plural, one {# případ má} few {# případy mají} many {# případů má} other {# případů má}} žádný výsledek za {days, plural, one {# den} few {# dny} many {# dny} other {# dny}}"
+        "summary": "Více než {threshold, plural, one {# případ nemá} few {# případy nemají} many {# případů nemá} other {# případů nemá}} žádný výsledek za {days, plural, one {# den} few {# dny} many {# dne} other {# dní}}"
       },
       "AUTOMATION_SHARE_BELOW": {
         "label": "Podíl automatizace pod prahovou hodnotou",
@@ -11019,7 +11019,7 @@
       "CODE_REPOSITORY_CACHE_FAILING": {
         "label": "Mezipaměť úložiště selhává",
         "description": "Připojení úložiště kódu neobnovilo svou mezipaměť úspěšně chvíli. Kontrolováno každou hodinu.",
-        "summary": "Mezipaměť připojení úložiště selhává již více než {threshold, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}}"
+        "summary": "Mezipaměť připojení úložiště selhává již alespoň {threshold, plural, one {# hodinu} few {# hodiny} many {# hodiny} other {# hodin}}"
       },
       "INTEGRATION_REAUTH_NEEDED": {
         "label": "Opětovné ověření integrace je nutné",
@@ -11049,7 +11049,7 @@
       "NO_AUTOMATED_RESULTS": {
         "label": "Bez automatizovaných výsledků",
         "description": "Žádný automatizovaný testovací výsledek nepřišel z žádného potrubí nějakou dobu. Kontrolováno denně.",
-        "summary": "Žádný automatizovaný výsledek nebyl přijat za {threshold, plural, one {# hodinu} few {# hodin} many {# hodin} other {# hodin}}"
+        "summary": "Žádný automatizovaný výsledek nebyl přijat za {threshold, plural, one {# hodinu} few {# hodiny} many {# hodiny} other {# hodin}}"
       }
     },
     "sourceSummary": "Výsledky: {source, select, MANUAL {manuální} AUTOMATED {automatizované} other {manuální a automatizované}}",
@@ -11186,7 +11186,7 @@
       "autoReleaseDescription": "Karanténa testovacího případu se uvolní poté, co bude úspěšně projít tolikrát po sobě od doby, kdy byla karanténa zavedena. Přeskočené výsledky se ignorují. Karanténa označená \"ponechat až do ručního uvolnění\" zůstává.",
       "autoReleaseOnToast": "Automatické uvolnění povoleno",
       "autoReleaseOffToast": "Automatické uvolnění zakázáno",
-      "autoReleasePassesSaved": "{count, plural, one {Karanténa se uvolní po # po sobě jdoucího průchodu} few {Karanténa se uvolní po # po sobě jdoucích průchodech} many {Karanténa se uvolní po # po sobě jdoucích průchodech} other {Karanténa se uvolní po # po sobě jdoucích průchodech}}",
+      "autoReleasePassesSaved": "{count, plural, one {Karanténa se uvolní po # po sobě jdoucím průchodu} few {Karanténa se uvolní po # po sobě jdoucích průchodech} many {Karanténa se uvolní po # po sobě jdoucích průchodech} other {Karanténa se uvolní po # po sobě jdoucích průchodech}}",
       "autoReleasePassesInvalid": "Zadejte počet průchodů mezi 1 a 100",
       "openTriage": "Otevřít Failure Patterns"
     },
@@ -11202,20 +11202,20 @@
       "reasonPlaceholder": "Proč je tento testovací případ v karanténě? (volitelné)",
       "keepLabel": "Zachovat v karanténě až do ručního uvolnění",
       "keepHint": "Přeskakuje automatické uvolnění projektu po po sobě jdoucích průchodech.",
-      "dialogTitle": "{count, plural, one {Karanténa # testovací případ} few {Karanténa # testovací případy} many {Karanténa # testovacích případů} other {Karanténa # testovacích případů}}",
+      "dialogTitle": "{count, plural, one {Umístit # testovací případ do karantény} few {Umístit # testovací případy do karantény} many {Umístit # testovacího případu do karantény} other {Umístit # testovacích případů do karantény}}",
       "releaseConfirmTitle": "Uvolnit z karantény?",
       "releaseConfirmDescription": "Selhání testovacího případu se znovu počítají v průchodu/selhání běhu.",
       "quarantinedToast": "{count, plural, one {# testovací případ v karanténě} few {# testovací případy v karanténě} many {# testovacích případů v karanténě} other {# testovacích případů v karanténě}}",
       "releasedToast": "Testovací případ uvolněn z karantény",
       "failedToast": "Nepodařilo se aktualizovat karanténu",
-      "listButton": "{count, plural, =0 {Testovací případy v karanténě} one {# testovací případ v karanténě} other {# testovacích případů v karanténě}}",
+      "listButton": "{count, plural, =0 {Testovací případy v karanténě} one {# testovací případ v karanténě} few {# testovací případy v karanténě} other {# testovacích případů v karanténě}}",
       "columns": {
         "signature": "Vzor selhání",
         "by": "Karanténa nastavena",
         "since": "Od",
         "releasePolicy": "Uvolnit"
       },
-      "releaseAuto": "{count, plural, one {Automaticky po # po sobě jdoucího průchodu} few {Automaticky po # po sobě jdoucích průchodech} many {Automaticky po # po sobě jdoucích průchodech} other {Automaticky po # po sobě jdoucích průchodech}}",
+      "releaseAuto": "{count, plural, one {Automaticky po # po sobě jdoucím průchodu} few {Automaticky po # po sobě jdoucích průchodech} many {Automaticky po # po sobě jdoucích průchodech} other {Automaticky po # po sobě jdoucích průchodech}}",
       "releaseManual": "Ručně",
       "empty": "V tomto projektu nejsou v karanténě žádné testovací případy."
     }

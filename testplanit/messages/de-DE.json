@@ -27,11 +27,11 @@
     "selectMultiple": "Mehrere auswählen...",
     "searchUsers": "Benutzer suchen...",
     "searchGroups": "Nach Gruppen suchen...",
-    "searchCases": "{count, plural, =0 {Fälle durchsuchen} one {Fall # durchsuchen} other {Fälle # durchsuchen}}",
-    "searchProjects": "{count, plural, =0 {Projekte suchen} one {Projekt # suchen} other {Projekte # suchen}}",
+    "searchCases": "{count, plural, =0 {Fälle durchsuchen} one {# Fall durchsuchen} other {# Fälle durchsuchen}}",
+    "searchProjects": "{count, plural, =0 {Projekte suchen} one {# Projekt suchen} other {# Projekte suchen}}",
     "searchTags": "Nach Schlagwörtern suchen...",
-    "searchRuns": "{count, plural, =0 {Suche Testläufe} one {Suche # Testläufe} other {Suche # Testläufe}}",
-    "searchSessions": "{count, plural, =0 {Sitzungen durchsuchen} one {Sitzung # durchsuchen} other {Sitzung # durchsuchen}}",
+    "searchRuns": "{count, plural, =0 {Suche Testläufe} one {Suche # Testlauf} other {Suche # Testläufe}}",
+    "searchSessions": "{count, plural, =0 {Sitzungen durchsuchen} one {# Sitzung durchsuchen} other {# Sitzungen durchsuchen}}",
     "searchMilestones": "{count, plural, =0 {Meilensteine durchsuchen} one {# Meilenstein durchsuchen} other {# Meilensteine durchsuchen}}",
     "search": "Suchen...",
     "defaultOption": "Standardoption",
@@ -91,12 +91,12 @@
       "actionsLabel": "Aktionen",
       "actionsWithAlerts": "Aktionen ({count, number} ungelesen)",
       "assign": "Zuordnen",
-      "assignSelected": "Weisen Sie {count, plural, one {zu # Fall} other {# Fälle}} zu",
+      "assignSelected": "Weisen Sie {count, plural, one {# Fall} other {# Fälle}} zu",
       "refresh": "Aktualisieren",
-      "addResultSelected": "Füge Ergebnis zu {count, plural, one {hinzu # Fall} other {# Fälle}}",
+      "addResultSelected": "Ergebnis zu {count, plural, one {# Fall} other {# Fällen}} hinzufügen",
       "resultsAdded": "{count, plural, one {# Ergebnis} other {# Ergebnisse}} Hinzugefügt",
-      "resultsAddedDescription": "{count, plural, one {Ergebnis wurde zu Testfall # hinzugefügt} other {Ergebnisse wurden zu Testfällen # hinzugefügt}} erfolgreich",
-      "addingResultsToMultiple": "Ergebnisse zu {count, plural, one {hinzufügen # Testfall} other {# Testfälle}} hinzufügen",
+      "resultsAddedDescription": "{count, plural, one {Ergebnis wurde erfolgreich zu # Testfall hinzugefügt} other {Ergebnisse wurden erfolgreich zu # Testfällen hinzugefügt}}",
+      "addingResultsToMultiple": "Ergebnisse werden zu {count, plural, one {# Testfall} other {# Testfällen}} hinzugefügt",
       "addedToTestRun": "Zum Testlauf hinzugefügt",
       "addedToTestRunDescription": "Der Testfall wurde dem Testlauf hinzugefügt.",
       "noAvailableTestRuns": "Alle aktiven Testläufe beinhalten diesen Testfall bereits.",
@@ -504,7 +504,7 @@
       },
       "assignBulk": {
         "title": "Testfälle massenhaft zuweisen",
-        "description": "Weisen Sie {count, plural, one {# ausgewählten Testfall} other {# ausgewählten Testfall}} einem Benutzer zu"
+        "description": "Weisen Sie {count, plural, one {# ausgewählten Testfall} other {# ausgewählte Testfälle}} einem Benutzer zu"
       },
       "complete": {
         "title": "Vollständiger Testlauf",
@@ -833,7 +833,7 @@
       "noTestCasesSelected": "Keine Testfälle ausgewählt",
       "editToSelectTestCases": "Bearbeiten Sie den Testlauf, um Testfälle auszuwählen.",
       "casesInRun": "{count, plural, =0 {Keine Testfälle im Testlauf} =1 {1 Testfall im Testlauf} other {# Testfälle im Testlauf}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 eindeutiger Fall} other {# eindeutige Fälle}} insgesamt {configCount, plural, =1 {1 Konfiguration} other {# Konfigurationen}} ({totalCount, number} Gesamtzahl der Fälle)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 eindeutiger Fall} other {# eindeutige Fälle}} über {configCount, plural, =1 {1 Konfiguration} other {# Konfigurationen}} ({totalCount, number} Gesamtzahl der Fälle)",
       "viewTestRunDetails": "Details zum Testlauf anzeigen",
       "sortByStatus": "Nach Status gruppieren",
       "sortByDate": "Nach Datum sortieren",
@@ -912,10 +912,10 @@
       "goToPrevious": "Zur vorherigen Seite",
       "goToNext": "Weiter zur nächsten Seite",
       "all": "Alle Artikel",
-      "entries": "{count, plural, =1 {# Artikel} other {# Artikel}}",
+      "entries": "{count, plural, =1 {# Eintrag} other {# Einträge}}",
       "pageSize": "Seitengröße",
       "showing": "Anzeige",
-      "total": "Gesamt {count, plural, =1 {# Artikel} other {# Artikel}}",
+      "total": "Gesamt {count, plural, =1 {# Eintrag} other {# Einträge}}",
       "filtered": "gefiltert von",
       "pageOfPages": "Seite {current} von {total}",
       "loadedOfTotal": "{loaded, number} von {total, number}"
@@ -926,9 +926,9 @@
       "attachments": {
         "title": "Anhänge hochladen",
         "description": "Ziehen Sie Ihre Dateien per Drag & Drop in die App oder klicken Sie auf die Schaltfläche unten, um Dateien auszuwählen.",
-        "selectFiles": "{count, plural, =0 {Dateien auswählen} one {1 ausgewählte Datei} other {# ausgewählten Dateien}}",
+        "selectFiles": "{count, plural, =0 {Dateien auswählen} one {1 ausgewählte Datei} other {# ausgewählte Dateien}}",
         "selectFile": "{count, plural, =0 {Datei auswählen} other {1 Datei ausgewählt}}",
-        "filesSelected": "{count, plural, one {1 Datei ausgewählt} other {# ausgewählten Dateien}}",
+        "filesSelected": "{count, plural, one {1 Datei ausgewählt} other {# Dateien ausgewählt}}",
         "addMoreFiles": "Weitere Dateien hinzufügen...",
         "replaceFile": "Datei ersetzen...",
         "invalidFileType": "Ungültiger Dateityp. Nur {types} -Dateien sind zulässig.",
@@ -1150,7 +1150,7 @@
       "assigned": "Testfall erfolgreich zugewiesen",
       "unassigned": "Testfall erfolgreich abgemeldet",
       "bulkAssigned": "{count, plural, one {# Testfall} other {# Testfälle}} erfolgreich zugewiesen",
-      "bulkUnassigned": "{count, plural, one {# Testfall} other {# Testfälle}} erfolgreich nicht zugewiesen"
+      "bulkUnassigned": "Zuweisung von {count, plural, one {# Testfall} other {# Testfällen}} erfolgreich aufgehoben"
     },
     "tabs": {
       "general": "Allgemein",
@@ -2055,13 +2055,13 @@
         "delete": {
           "title": "Löschen \"{name}\"?",
           "descriptionStage1": "Dieser Datensatz wird aus dem Projekt entfernt. Bestehende Testläufe, die bereits Momentaufnahmen seiner Werte erstellt haben, sind davon nicht betroffen.",
-          "descriptionStage2": "Dieser Datensatz wird von {count, plural, =1 {# Fall} other {# Fälle}}verwendet. Durch das Löschen dieses Datensatzes wird die Zuordnung zum gemeinsamen Datensatz für diese Fälle aufgehoben. Bestehende Testläufe sind davon nicht betroffen (Snapshots sind unveränderlich).",
+          "descriptionStage2": "Dieser Datensatz wird von {count, plural, =1 {# Fall} other {# Fällen}} verwendet. Durch das Löschen dieses Datensatzes wird die Zuordnung zum gemeinsamen Datensatz für diese Fälle aufgehoben. Bestehende Testläufe sind davon nicht betroffen (Snapshots sind unveränderlich).",
           "confirm": "Datensatz löschen",
           "confirmAnyway": "Trotzdem löschen ({count, plural, =1 {# Fall} other {# Fälle}})",
           "error": "Datensatz konnte nicht gelöscht werden"
         },
         "deleteSuccess": "Gelöscht \"{name}\"",
-        "deleteSuccessWithAssignments": "Gelöscht \"{name}\" und nicht zugewiesen {count, plural, =1 {# Fall} other {# Fälle}}",
+        "deleteSuccessWithAssignments": "\"{name}\" gelöscht und Zuweisung von {count, plural, =1 {# Fall} other {# Fällen}} aufgehoben",
         "editor": {
           "back": "Zurück zu den Datensätzen",
           "loadError": "Dieser Datensatz konnte nicht geladen werden.",
@@ -2382,7 +2382,7 @@
           "imported": "{imported, plural, =0 {Es wurden keine neuen Tickets vom Tracker importiert.} one {# Ticket wurde vom Tracker importiert.} other {# Tickets wurden vom Tracker importiert.}}",
           "fullCapped": "Der Durchlauf stoppte bei {count, number} Commits, bevor er den Anfang des Zweigs erreichte. Führen Sie „Vollständigen Verlauf scannen",
           "stale": "Ein Scan, der {date} gestartet wurde, hat nie Bericht erstattet — der Worker wurde möglicherweise neu gestartet. Reihen Sie ihn erneut in die Warteschlange ein, um fortzufahren.",
-          "summaryCommits": "{commits, plural, one {# Commit} other {# Commits}} gelesen{cached, plural, =0 {} other { ({cached, number} aus dem Commit-Cache)}} · {naming, number} benannte ein Ticket · {tickets, plural, one {# unterschiedliches Ticket} other {# unterschiedliche Tickets}}",
+          "summaryCommits": "{commits, plural, one {# Commit} other {# Commits}} gelesen{cached, plural, =0 {} other { ({cached, number} aus dem Commit-Cache)}} · {naming, number} mit Ticketbezug · {tickets, plural, one {# unterschiedliches Ticket} other {# unterschiedliche Tickets}}",
           "summaryPins": "Pins: {created, number} erstellt · {updated, number} aktualisiert · {removed, number} entfernt",
           "noLinkedHint": "Tickets pinnen Testfälle nur, wenn ein Testfall mit ihnen verknüpft ist. Verknüpfen Sie Fälle mit den importierten Tickets und scannen Sie dann erneut.",
           "importFailuresTitle": "Schlüssel nicht im Tracker gefunden ({shown} von {total}):",
@@ -2407,7 +2407,7 @@
           "problems": "{count, plural, one {# Problem} other {# Probleme}}"
         },
         "saved": "Auswirkungsanalysekonfiguration gespeichert",
-        "disconnectWarning1": "{count, plural, one {# Code-Pin entfernen} other {# Code-Pins entfernen}} und den Analyseverlauf für dieses Repository",
+        "disconnectWarning1": "{count, plural, one {# Code-Pin} other {# Code-Pins}} und den Analyseverlauf für dieses Repository entfernen",
         "disconnectSuccess": "Anwendungs-Repository getrennt",
         "disconnectError": "Fehler beim Trennen des Anwendungs-Repositorys",
         "repositories": {
@@ -2433,13 +2433,13 @@
         },
         "bulk": {
           "label": "{count, plural, one {Ihr Repository:} other {Alle # Repositories:}}",
-          "scanRecentHint": "Aktuelle Commits im {count, plural, one {verbundenen Repository} other {allen # verbundenen Repositories}} erneut scannen.",
-          "scanFullHint": "Jeden Commit im Branch des {count, plural, one {verbundenen Repositorys} other {aller # verbundenen Repositories}} durchlaufen und Pins für vorhandene Tickets ergänzen.",
-          "scanFullConfirm": "Dies durchläuft jeden Commit im Branch des {count, plural, one {verbundenen Repositorys} other {aller # verbundenen Repositories}}. Repositories werden nacheinander gescannt, daher kann dies lange dauern, und jeder Durchlauf liest Commits über die API des Anbieters, was auf sein Ratenlimit angerechnet wird.",
-          "checkStaleHint": "Überprüfen Sie die Code Pins des {count, plural, one {verbundenen Repositorys} other {aller # verbundenen Repositories}} gegen jeden Branch-Tip.",
+          "scanRecentHint": "Aktuelle Commits {count, plural, one {im verbundenen Repository} other {in allen # verbundenen Repositories}} erneut scannen.",
+          "scanFullHint": "Jeden Commit im Branch {count, plural, one {des verbundenen Repositorys} other {aller # verbundenen Repositories}} durchlaufen und Pins für vorhandene Tickets ergänzen.",
+          "scanFullConfirm": "Dies durchläuft jeden Commit im Branch {count, plural, one {des verbundenen Repositorys} other {aller # verbundenen Repositories}}. Repositories werden nacheinander gescannt, daher kann dies lange dauern, und jeder Durchlauf liest Commits über die API des Anbieters, was auf sein Ratenlimit angerechnet wird.",
+          "checkStaleHint": "Überprüfen Sie die Code Pins {count, plural, one {des verbundenen Repositorys} other {aller # verbundenen Repositories}} gegen jeden Branch-Tip.",
           "removeStaleHint": "Entfernen Sie {count, plural, one {# veralteten Code Pin} other {# veraltete Code Pins}} über {repos, plural, one {# Repository} other {# Repositories}}.",
           "removeConfirm": "Entfernen Sie {count, plural, one {# Code Pin, den} other {# Code Pins, die}} die letzten Überprüfungen nicht am Branch-Tip finden konnten, über {repos, plural, one {# Repository} other {# Repositories}}?",
-          "queued": "In Warteschlange für {count, plural, one {# Repository} other {# Repositories}}.{skipped, plural, =0 {} one { # wurde bereits ausgeführt.} other { # wurden bereits ausgeführt.}}",
+          "queued": "In Warteschlange für {count, plural, one {# Repository} other {# Repositories}}.{skipped, plural, =0 {} one { # lief bereits.} other { # liefen bereits.}}",
           "allRunning": "Bereits in der Warteschlange oder wird für jedes Repository ausgeführt.",
           "failed": "Konnte nicht starten für: {names}"
         },
@@ -2642,7 +2642,7 @@
       "alreadyLinked": "Bereits verlinkt",
       "selectedCount": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
       "confirmSelection": "Ausgewählte importieren",
-      "confirmSelectionCount": "{count, plural, one {Meilenstein # importieren} other {# Meilensteine importieren}}",
+      "confirmSelectionCount": "{count, plural, one {# Meilenstein importieren} other {# Meilensteine importieren}}",
       "empty": "Keine Meilensteine gefunden",
       "previewFailed": "Meilensteine konnten nicht aus {provider} geladen werden",
       "importFailed": "Ausgewählte Meilensteine konnten nicht importiert werden",
@@ -2888,14 +2888,14 @@
   "home": {
     "dashboard": {
       "title": "Ihr Dashboard",
-      "users": "Es gibt {count, plural, =1 {# Benutzer} other {sind # Benutzer}}",
+      "users": "Es gibt {count, plural, =1 {# Benutzer} other {# Benutzer}}",
       "yourProjects": "Ihre Projekte",
       "projects": "Sie haben Zugriff auf {count, plural, =1 {# Projekt} other {# Projekte}}",
       "loading": "Dashboard wird geladen...",
       "noItems": "Alles erledigt – dir sind derzeit keine Aufgaben zugewiesen.",
       "pendingRuns": "Ausstehende Testläufe",
       "activeSessions": "Aktive Sitzungen",
-      "yourActiveSessions": "{count, plural, =0 {Keine aktiven Sitzungen} =1 {# Aktive Sitzungen} other {# Aktive Sitzungen}}",
+      "yourActiveSessions": "{count, plural, =0 {Keine aktiven Sitzungen} =1 {# Aktive Sitzung} other {# Aktive Sitzungen}}",
       "yourPendingRuns": "{count, plural, =0 {Keine ausstehenden Testläufe} =1 {# Aktiver Testlauf} other {# Aktive Testläufe}}",
       "yourAssignments": "Ihre Aufgaben",
       "totalTime": "Geschätzte Gesamtzeit: ",
@@ -3299,9 +3299,9 @@
       "delete": "Schritt löschen",
       "removedFromCase": "Aus Testfall entfernt",
       "confirmDelete": "Löschvorgang bestätigen Schritt {number, number}?",
-      "createSharedSteps": "Gemeinsame Schritte erstellen {number, plural, one {Schritt} other {Schritte}}",
+      "createSharedSteps": "{number, plural, one {Gemeinsamen Schritt} other {Gemeinsame Schritte}} erstellen",
       "sharedStepsName": "Gemeinsame Schritte Name",
-      "sharedStepsDescription": "Geben Sie einen Namen für Ihren neuen gemeinsamen Schritt {number, plural, one {} other {}}ein. Dieser umfasst {number, plural, one {# ausgewählte Schritte} other {# ausgewählte Schritte}}.",
+      "sharedStepsDescription": "Geben Sie einen Namen für {number, plural, one {Ihren neuen gemeinsamen Schritt} other {Ihre neuen gemeinsamen Schritte}} ein. Dies umfasst {number, plural, one {# ausgewählten Schritt} other {# ausgewählte Schritte}}.",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "Bitte wählen Sie Schritte aus und geben Sie einen Namen ein, um gemeinsame Schritte zu erstellen.",
         "failedToCreateSharedStepGroupError": "Die gemeinsamen Schritte konnten nicht erstellt werden. Bitte versuchen Sie es erneut.",
@@ -3347,10 +3347,10 @@
     "showDescendants": "Alle untergeordneten Elemente anzeigen",
     "addFolder": "Ordner hinzufügen",
     "emptyFolders": "Klicken Sie oben auf die Schaltfläche „Ordner hinzufügen“, um den ersten Ordner hinzuzufügen.",
-    "selectedAllCases": "{count, plural, =0 {Alle Fälle ausgewählt} one {# Fälle auf allen Seiten ausgewählt} other {# Fälle auf allen Seiten ausgewählt}}",
+    "selectedAllCases": "{count, plural, =0 {Alle Fälle ausgewählt} one {# Fall auf allen Seiten ausgewählt} other {# Fälle auf allen Seiten ausgewählt}}",
     "deselectedAllCases": "Alle Fälle auf allen Seiten abgewählt.",
     "selectAllTooltip": "Alle Fälle auf dieser Seite auswählen/abwählen",
-    "selectAllShiftTooltip": "{count, plural, =0 {Alle Fälle auf allen Seiten auswählen/abwählen} one {# Fälle auf allen Seiten auswählen/abwählen} other {# Fälle auf allen Seiten auswählen/abwählen}}",
+    "selectAllShiftTooltip": "{count, plural, =0 {Alle Fälle auf allen Seiten auswählen/abwählen} one {# Fall auf allen Seiten auswählen/abwählen} other {# Fälle auf allen Seiten auswählen/abwählen}}",
     "deselectAllShiftTooltip": "Alle Fälle auf allen Seiten auswählen/abwählen",
     "shiftClickHint": "Halten Sie die Umschalttaste gedrückt, um alle Seiten auszuwählen/die Auswahl aufzuheben",
     "treeView": {
@@ -3370,9 +3370,9 @@
       "promptTitle": "Was möchten Sie tun?",
       "copying": "Kopieren…",
       "copyComplete": "{count, plural, =1 {1 Fall kopiert nach {folder}} other {# Fälle kopiert nach {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
-      "moveComplete": "{count, plural, =1 {1 Fall nach {folder}} other {verschoben. # Fälle nach {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}} verschoben.",
+      "moveComplete": "{count, plural, =1 {1 Fall nach {folder}} other {# Fälle nach {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}} verschoben.",
       "copyError": "{count, plural, =1 {Fehler beim Kopieren von 1 Fall nach {folder}} other {Fehler beim Kopieren von # Fällen nach {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
-      "moveError": "{count, plural, one {}=1 {Fehler beim Verschieben von 1 Fall nach {folder}} other {Fehler beim Verschieben von # Fällen nach {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
+      "moveError": "{count, plural, =1 {Fehler beim Verschieben von 1 Fall nach {folder}} other {Fehler beim Verschieben von # Fällen nach {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "copyAlreadyRunning": "Ein weiterer Kopiervorgang ist bereits in Arbeit. Bitte warten Sie, bis er abgeschlossen ist.",
       "currentSuffix": "(Aktuell)",
       "moveDisabledSameFolder": "Fälle befinden sich bereits in diesem Ordner",
@@ -3461,10 +3461,10 @@
           "markdownParseFailed": "Fehler beim Parsen der Markdown-Datei",
           "markdownLlmFailed": "KI-Parsing nicht verfügbar, Standardparser wird verwendet",
           "validationTitle": "Importvalidierung fehlgeschlagen",
-          "validationSummary": "{count, plural, one {# Ticket wurde} other {# Tickets wurden}} in Ihrer Datei gefunden. Es wurden keine Testfälle importiert.",
+          "validationSummary": "{count, plural, one {# Problem wurde} other {# Probleme wurden}} in Ihrer Datei gefunden. Es wurden keine Testfälle importiert.",
           "validationEntry": "Zeile {row, number} · {field}: {message}",
           "validationEntryNamed": "Zeile {row, number} \"{name}\" · {field}: {message}",
-          "validationMore": "{count, plural, one {# weiteres Ticket wird} other {# weitere Tickets werden}} nicht angezeigt.",
+          "validationMore": "{count, plural, one {# weiteres Problem wird} other {# weitere Probleme werden}} nicht angezeigt.",
           "validationMultiRowNote": "Die Zeilennummern beziehen sich auf die gruppierten Testfälle in der Vorschau, nicht auf die rohen CSV-Zeilen.",
           "partialTitle": "Einige Testfälle wurden nicht importiert",
           "partialSummary": "{failed, plural, one {# Zeile konnte} other {# Zeilen konnten}} nicht importiert werden. {imported, plural, one {# Testfall wurde} other {# Testfälle wurden}} erfolgreich importiert."
@@ -3583,10 +3583,10 @@
       "confirmMessageStart": "Sind Sie sicher, dass Sie den Testfall löschen möchten? ",
       "confirmMessageEnd": "?",
       "warning": "Dieser Testfall wird aus dem Projekt entfernt. Die historischen Daten dieses Testfalls, einschließlich der Ergebnisse, bleiben jedoch im Projekt erhalten.",
-      "activeRunWarningMessage": "Dieser Testfall ist Teil von {count, plural, =1 {# aktiver Testlauf} other {# aktive Testläufe}}. Durch das Löschen wird er innerhalb dieser Läufe als gelöscht markiert."
+      "activeRunWarningMessage": "Dieser Testfall ist Teil von {count, plural, =1 {# aktivem Testlauf} other {# aktiven Testläufen}}. Durch das Löschen wird er innerhalb dieser Läufe als gelöscht markiert."
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {Durch das Löschen dieses Ordners werden auch alle Unterordner gelöscht. Sind Sie sicher?} one {Durch das Löschen dieses Ordners werden auch 1 Testfall in diesem Ordner und allen Unterordnern gelöscht. Sind Sie sicher?} other {Durch das Löschen dieses Ordners werden auch # Testfälle in diesem Ordner und allen Unterordnern gelöscht. Sind Sie sicher?}}",
+      "confirmMessage": "{count, plural, =0 {Durch das Löschen dieses Ordners werden auch alle Unterordner gelöscht. Sind Sie sicher?} one {Durch das Löschen dieses Ordners wird auch 1 Testfall in diesem Ordner und allen Unterordnern gelöscht. Sind Sie sicher?} other {Durch das Löschen dieses Ordners werden auch # Testfälle in diesem Ordner und allen Unterordnern gelöscht. Sind Sie sicher?}}",
       "warning": "Dieser Ordner und alle darin enthaltenen Testfälle werden aus dem Projekt entfernt. Die historischen Daten dieser Testfälle, einschließlich der Ergebnisse, bleiben jedoch im Projekt erhalten.",
       "confirm": "Ordner löschen bestätigen",
       "success": "Ordner und alle Unterordner/Fälle wurden erfolgreich gelöscht."
@@ -3619,7 +3619,7 @@
     "createFirstFolder": "Erstelle deinen ersten Ordner",
     "bulkEdit": {
       "title": "Massenbearbeitung {count, plural, one {# Fall} other {# Fälle}}",
-      "description": "Bearbeiten {count, plural, one {# ausgewählter Fall} other {# ausgewählter Fall}}. Markieren Sie ein Feld, um die Bearbeitung zu aktivieren.",
+      "description": "Bearbeitung von {count, plural, one {# ausgewähltem Fall} other {# ausgewählten Fällen}}. Markieren Sie ein Feld, um die Bearbeitung zu aktivieren.",
       "defineStepsTitle": "Schritte für die Massenaktualisierung definieren",
       "saveNewSteps": "Neue Schritte speichern",
       "newStepsDefined": "Neue Schritte definiert ({count, number}) - Zum Bearbeiten auf die Schaltfläche klicken.",
@@ -3648,7 +3648,7 @@
       "stepsCannotBeBulkEdited": "Schritte können nicht in großen Mengen bearbeitet werden",
       "stepsInfoTitle": "Schrittinformationen",
       "stepsCannotBeBulkEditedInfo": "Schritte können nicht in großen Mengen bearbeitet werden. Bearbeiten Sie die Schritte, indem Sie die einzelnen Fälle bearbeiten.",
-      "confirmDeleteCases": "Möchten Sie wirklich {count, plural, one {# ausgewählte Fälle} other {# ausgewählte Fälle}}löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "confirmDeleteCases": "Möchten Sie wirklich {count, plural, one {# ausgewählten Fall} other {# ausgewählte Fälle}} löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
       "replaceAll": "Alle ersetzen",
       "searchReplace": "Suchen und Ersetzen",
       "searchFor": "Suchen nach",
@@ -3746,7 +3746,7 @@
       "retryScan": "Scan wiederholen",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Ergebnisse durch KI verbessern...",
-      "scanComplete": "Duplikatanalyse abgeschlossen — {count, plural, =0 {Keine Duplikate gefunden} one {# Potenzielle Duplikate gefunden} other {# Potenzielle Duplikate gefunden}}",
+      "scanComplete": "Duplikatanalyse abgeschlossen — {count, plural, =0 {Keine Duplikate gefunden} one {# potenzielles Duplikat gefunden} other {# potenzielle Duplikate gefunden}}",
       "scanFailed": "Duplikatanalyse fehlgeschlagen",
       "scanFailedDescription": "Es ist ein unerwarteter Fehler aufgetreten.",
       "pageTitle": "Doppelte Kandidaten",
@@ -3782,7 +3782,7 @@
       "merging": "Zusammenführen...",
       "linking": "Verknüpfung...",
       "dismissing": "Entlassen...",
-      "mergeSuccess": "Fälle erfolgreich zusammengeführt. {runsTransferred, plural, =0 {Keine Testläufe übertragen} one {# Testläufe übertragen} other {# Testläufe übertragen}}.",
+      "mergeSuccess": "Fälle erfolgreich zusammengeführt. {runsTransferred, plural, =0 {Keine Testläufe übertragen} one {# Testlauf übertragen} other {# Testläufe übertragen}}.",
       "linkSuccess": "Fälle, die miteinander verknüpft sind.",
       "dismissSuccess": "Das Paar wurde entlassen. Es wird in zukünftigen Scans nicht mehr angezeigt.",
       "resolveError": "Das doppelte Paar konnte nicht aufgelöst werden. Bitte versuchen Sie es erneut.",
@@ -3800,7 +3800,7 @@
       "duplicateWarningDescription": "{count, plural, one {# bestehender Fall kann} other {# bestehende Fälle können}} ähnliche Funktionalitäten abdecken",
       "duplicateWarningReview": "Rezension",
       "importWarning": "Mögliches Duplikat",
-      "importWarningTooltip": "Dieser Fallname ähnelt {count, plural, one {# bestehender Fall} other {# bestehende Fälle}}: {names}",
+      "importWarningTooltip": "Dieser Fallname ähnelt {count, plural, one {# bestehendem Fall} other {# bestehenden Fällen}}: {names}",
       "importIntraWarning": "Duplikat innerhalb des Imports",
       "importIntraWarningTooltip": "Die Zeilen {rows} in diesem Import haben den gleichen oder einen sehr ähnlichen Namen",
       "checkingDuplicates": "Suche nach Duplikaten..."
@@ -3843,7 +3843,7 @@
         "recentJobInfo": "{pages, plural, one {# Seite} other {# Seiten}}{hasTestCases, select, true { · {testCases, plural, one {# Testfall} other {# Testfälle}}} other {}}",
         "recentJobHasResults": "Bereit zur Überprüfung",
         "recentJobClickToGenerate": "Klicken Sie hier, um Testfälle zu generieren.",
-        "recentJobCrawling": "Kriechen... {pages, plural, one {# Seite} other {# Seiten}} bisher",
+        "recentJobCrawling": "Crawlen... {pages, plural, one {# Seite} other {# Seiten}} bisher",
         "removeJobTitle": "Generation entfernen",
         "confirmRemoveJob": "Dadurch werden der zwischengespeicherte Crawl und alle generierten Testfälle gelöscht. Sie können jederzeit von derselben URL aus erneut generieren.",
         "loadingRecentJobs": "Aktuelle Jobs werden geladen...",
@@ -3858,7 +3858,7 @@
         "followLinksHint": "Es werden nur Seiten gecrawlt, die sich auf derselben Domain wie die eingegebene URL befinden.",
         "maxDepth": "Maximale Tiefe",
         "maxPages": "Maximale Seiten",
-        "crawlProgress": "{current, plural, one {Bisher # Seiten abgerufen...} other {Bisher # Seiten abgerufen...}}",
+        "crawlProgress": "{current, plural, one {Bisher # Seite abgerufen...} other {Bisher # Seiten abgerufen...}}",
         "generatingSinglePage": "Generiere Testfälle...",
         "generatingSetup": "Vorbereitung zur Generierung von Testfällen...",
         "robotsSkipped": "{count, plural, one {# Seite übersprungen} other {# Seiten übersprungen}} (robots.txt)"
@@ -3905,7 +3905,7 @@
         "selected": "{count, number} von {total, number} ausgewählt",
         "moreSteps": "... und {count, plural, one {# weiterer Schritt} other {# weitere Schritte}}",
         "templateFields": "Vorlagenfelder:",
-        "moreFields": "... und {count, plural, one {# weitere Felder} other {# weitere Felder}}",
+        "moreFields": "... und {count, plural, one {# weiteres Feld} other {# weitere Felder}}",
         "crawledUrls": "{count, plural, one {# Seite durchsucht} other {# Seiten durchsucht}}",
         "spaWarning": "Diese Seite erfordert möglicherweise JavaScript-Rendering. Die Ergebnisse sind möglicherweise unvollständig.",
         "filterByPage": "Nach Seite filtern",
@@ -3914,7 +3914,7 @@
       "generatingLegacy": "Generierung von Testfällen mit KI...",
       "expandProgress": "{done, number} von {total, number} generiert",
       "import": "{count, plural, =0 {Testfälle importieren} =1 {1 Testfall importieren} other {# Testfälle importieren}}",
-      "stage": "{count, plural, =0 {Testfälle inszenieren} =1 {1 Testfall inszenieren} other {# Testfälle inszenieren}}",
+      "stage": "{count, plural, =0 {Testfälle bereitstellen} =1 {1 Testfall bereitstellen} other {# Testfälle bereitstellen}}",
       "stageDescription": "Bereitgestellte Testfälle sind privat für Sie. Überprüfen Sie sie unter \"Meine bereitgestellten Fälle\" und erstellen Sie sie von dort aus. Nichts wird zum Repository hinzugefügt, bis Sie dies tun.",
       "importing": "{count, plural, =0 {Importiere Testfälle...} =1 {Importiere 1 Testfall...} other {Importiere # Testfälle...}}",
       "externalSystem": "Externes System",
@@ -4070,7 +4070,7 @@
       "updated": "Aktualisiert {age}",
       "createSelected": "{count, plural, =0 {Ausgewählte erstellen} other {{count} Ausgewählte erstellen}}",
       "createdToast": "{count, plural, one {{count} Testfall erstellt} other {{count} Testfälle erstellt}}",
-      "failedToast": "{count, plural, one {{count} eingereiht Fall konnte nicht erstellt werden} other {{count} eingereiht Fälle konnten nicht erstellt werden}}",
+      "failedToast": "{count, plural, one {{count} eingereihter Fall konnte nicht erstellt werden} other {{count} eingereihte Fälle konnten nicht erstellt werden}}",
       "problemFolder": "Der Ordner wurde gelöscht. Öffnen Sie den eingereiht Fall, um einen Ordner auszuwählen.",
       "problemTemplate": "Die Vorlage ist nicht mehr diesem Projekt zugewiesen. Öffnen Sie den eingereiht Fall, um eine auszuwählen.",
       "problemState": "Der Status existiert nicht mehr. Öffnen Sie den eingereiht Fall, um einen auszuwählen.",
@@ -4078,7 +4078,7 @@
       "notCreated": "Nicht erstellt: {message}",
       "openToFix": "Öffnen Sie den eingereiht Fall, um ihn zu beheben.",
       "elsewhereTitle": "Sie haben auch eingereiht Fälle in",
-      "elsewhereCount": "{count, plural, one {{count} eingereiht Fall} other {{count} eingereiht Fälle}}"
+      "elsewhereCount": "{count, plural, one {{count} eingereihter Fall} other {{count} eingereihte Fälle}}"
     },
     "filterBar": {
       "addFilter": "Filter hinzufügen",
@@ -4415,7 +4415,7 @@
     "dependencies": {
       "blocked": "Blockiert",
       "blockedBy": "Blockiert bis {count, plural, one {dieser Fall besteht} other {diese # Fälle bestehen}} in diesem Lauf:",
-      "blockedNotice": "Dieser Testfall kann nicht ausgeführt werden, bis {count, plural, one {der Fall, von dem er abhängt, bestanden hat} other {alle # Fälle, von denen er abhängt, bestanden haben}} in diesem Lauf.",
+      "blockedNotice": "Dieser Testfall kann nicht ausgeführt werden, bis {count, plural, one {der Fall, von dem er abhängt, in diesem Lauf bestanden hat} other {alle # Fälle, von denen er abhängt, in diesem Lauf bestanden haben}}.",
       "notInRun": "{count, plural, one {# Fall, von dem dieser abhängt, ist nicht in diesem Lauf und blockiert die Ausführung nicht:} other {# Fälle, von denen dieser abhängt, sind nicht in diesem Lauf und blockieren die Ausführung nicht:}}",
       "unblocked": "Alle Fälle, von denen dieser abhängt, haben in diesem Lauf bestanden."
     },
@@ -4482,8 +4482,8 @@
       "noLlmIntegration": "Die KI-Funktionen erfordern eine LLM-Integration. Konfigurieren Sie diese in den Projekteinstellungen.",
       "configure": {
         "title": "Testfallumfang",
-        "description": "Im Repository wurden folgende Testfälle gefunden: {count, plural, =1 {# Testfälle} other {# Testfälle}}",
-        "descriptionFiltered": "Gefunden: {count, plural, =1 {# möglicherweise relevanter Testfall} other {# möglicherweise relevanter Testfall}} von {total, plural, =1 {# insgesamt} other {# insgesamt}} im Repository",
+        "description": "{count, plural, =1 {# Testfall wurde} other {# Testfälle wurden}} im Repository gefunden",
+        "descriptionFiltered": "Gefunden: {count, plural, =1 {# möglicherweise relevanter Testfall} other {# möglicherweise relevante Testfälle}} von {total, plural, =1 {# insgesamt} other {# insgesamt}} im Repository",
         "noMatchesTitle": "Keine passenden Testfälle gefunden",
         "noMatchesDescription": "Name und Beschreibung des Testlaufs stimmten mit keinem Testfall überein. Gehen Sie zurück zum vorherigen Schritt und fügen Sie genauere Details wie Funktionsnamen, Komponentennamen oder Schlüsselwörter hinzu, die in Ihren Testfällen vorkommen.",
         "maxResultsTitle": "Maximale Anzahl übereinstimmender Testfälle",
@@ -4499,14 +4499,14 @@
         "analyzing": "Analyse der Testfälle...",
         "progress": "Analysierte {analyzed, number} von {total, number} Testfällen...",
         "waitingForAi": "Warte auf KI-Antwort (Batch {batch} von {total})...",
-        "selectedSoFar": "{count, plural, =1 {# Bisher ausgewählte Testfälle} other {# Bisher ausgewählte Testfälle}}",
+        "selectedSoFar": "{count, plural, =1 {# Testfall bisher ausgewählt} other {# Testfälle bisher ausgewählt}}",
         "resolving_integration": "Lösung der KI-Integration...",
         "fetching_cases": "Testfälle werden abgerufen..."
       },
       "success": {
         "title": "Vorgeschlagene Testfälle",
         "description": "{count, plural, =1 {# ausgewählter Testfall} other {# ausgewählte Testfälle}} basierend auf Ihrem Testlaufkontext",
-        "linkedCasesAdded": "{count, plural, =1 {# verknüpfte Fälle automatisch eingeschlossen} other {# verknüpfte Fälle automatisch eingeschlossen}}",
+        "linkedCasesAdded": "{count, plural, =1 {# verknüpfter Fall automatisch eingeschlossen} other {# verknüpfte Fälle automatisch eingeschlossen}}",
         "truncationWarningTitle": "Teilergebnisse",
         "truncationWarning": "{count, plural, =1 {# Batch wurde abgeschnitten} other {# Batches wurden abgeschnitten}} durch das KI-Modell — einige Testfälle wurden möglicherweise nicht ausgewertet."
       },
@@ -4981,8 +4981,8 @@
         "mappingDatasetEmptyTitle": "Keine Datensätze erhalten",
         "mappingDatasetEmptyDescription": "Die Analyse hat keine Konfigurationsdatensätze gespeichert. Laden Sie einen anderen Export hoch, wenn Sie zusätzliche Daten erwarten.",
         "importProgressTitle": "Importfortschritt",
-        "importProgressDescription": "{count, plural, =0 {Alle importierten Datensätze aller verfolgten Entitäten.} =1 {1 Datensatz aller verfolgten Entitäten verbleibend.} other {# verbleibenden Datensätze aller verfolgten Entitäten.}}",
-        "importProgressTotalRemaining": "{count, plural, =0 {Keine Datensätze mehr} =1 {1 Datensatz übrig} other {# verbleibenden Datensätze}}",
+        "importProgressDescription": "{count, plural, =0 {Alle Datensätze aller verfolgten Entitäten importiert.} =1 {1 Datensatz aller verfolgten Entitäten verbleibend.} other {# verbleibende Datensätze aller verfolgten Entitäten.}}",
+        "importProgressTotalRemaining": "{count, plural, =0 {Keine Datensätze mehr} =1 {1 Datensatz übrig} other {# verbleibende Datensätze}}",
         "importProgressProcessed": "{processed, number}/{total, number} Datensätze importiert",
         "importProgressAria": "{percent, number}% des Imports abgeschlossen",
         "importProgressPercentLabel": "{percent, number}%",
@@ -5031,7 +5031,7 @@
         "mappingImportInProgress": "Hintergrundimport läuft",
         "mappingImportInProgressDescription": "Der Importprozess verarbeitet die Konfiguration. Den Status können Sie oben überwachen.",
         "mapping": {
-          "datasetTotalLabel": "{count, plural, =1 {# Aufnahme} other {# Aufnahmen}} ",
+          "datasetTotalLabel": "{count, plural, =1 {# Datensatz} other {# Datensätze}} ",
           "columnSource": "Testmo-Entität",
           "columnSourceDetails": "Details",
           "columnSuggestedWorkflowType": "Empfohlener Typ",
@@ -6186,7 +6186,7 @@
       "filterPlaceholder": "Filterkonfigurationen...",
       "allProjects": "Alle Projekte",
       "selectAllTooltip": "Alle Konfigurationen auf dieser Seite auswählen/abwählen",
-      "selectAllShiftTooltip": "{count, plural, =0 {Alle Konfigurationen auf allen Seiten auswählen/abwählen} one {# Konfigurationen auf allen Seiten auswählen/abwählen} other {# Konfigurationen auf allen Seiten auswählen/abwählen}}",
+      "selectAllShiftTooltip": "{count, plural, =0 {Alle Konfigurationen auf allen Seiten auswählen/abwählen} one {# Konfiguration auf allen Seiten auswählen/abwählen} other {# Konfigurationen auf allen Seiten auswählen/abwählen}}",
       "deselectAllShiftTooltip": "Alle Konfigurationen auf allen Seiten abwählen/auswählen",
       "shiftClickHint": "Halten Sie die Umschalttaste gedrückt, um alle Seiten auszuwählen/die Auswahl aufzuheben",
       "bulkEdit": {
@@ -6312,7 +6312,7 @@
       "defaultLockedDescription": "Um den Standard zu ändern, bearbeiten Sie einen anderen Meilensteintyp und legen Sie diesen als Standard fest.",
       "wizard": {
         "selectProjects": "Projekte auswählen",
-        "projectsSelected": "{count, plural, =0 {Keine Projekte ausgewählt} one {# Projekte ausgewählt} other {# Projekte ausgewählt}}",
+        "projectsSelected": "{count, plural, =0 {Keine Projekte ausgewählt} one {# Projekt ausgewählt} other {# Projekte ausgewählt}}",
         "createMilestone": "Meilenstein erstellen",
         "noCommonTypesTitle": "Keine gemeinsamen Meilensteintypen",
         "noCommonTypesDescription": "Die ausgewählten Projekte weisen keine gemeinsamen Meilensteintypen auf. Bitte stellen Sie sicher, dass alle ausgewählten Projekte mindestens einen gemeinsamen Meilensteintyp haben, oder wählen Sie unterschiedliche Projekte aus."
@@ -7277,7 +7277,7 @@
         "commentMentionTitle": "Du wurdest in einem Kommentar erwähnt.",
         "systemAnnouncementTitle": "Systemankündigung",
         "assignedTestCase": "Ihnen wurde der Testfall zugewiesen",
-        "assignedMultipleTestCases": "dir zugewiesen {count, plural, one {# Testfall} other {# Testfälle}}",
+        "assignedMultipleTestCases": "hat Ihnen {count, plural, one {# Testfall} other {# Testfälle}} zugewiesen",
         "assignedSession": "Sie wurden der Sitzung zugewiesen",
         "mentionedYouInComment": "Ich habe dich in einem Kommentar erwähnt auf",
         "inProject": "im Projekt",
@@ -7372,23 +7372,23 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "Das Ergebnis dauerte {elapsed}, {deviation}% abweichend von der Baseline von {baseline} (mehr als {threshold}% zulässig).",
-          "CASE_REGRESSED": "Der Fall fehlgeschlagen nach bestandenem {passedBefore, plural, one {seinen letzten Ergebnis} other {seinen letzten # Ergebnisse}}.",
-          "CASE_RECOVERED": "Der Fall bestanden nach Fehler {failedBefore, plural, one {seinen letzten Ergebnis} other {seinen letzten # Ergebnisse}}.",
+          "CASE_REGRESSED": "Der Fall ist fehlgeschlagen, nachdem er {passedBefore, plural, one {bei seinem letzten Ergebnis} other {bei seinen letzten # Ergebnissen}} bestanden hatte.",
+          "CASE_RECOVERED": "Der Fall hat bestanden, nachdem er {failedBefore, plural, one {bei seinem letzten Ergebnis} other {bei seinen letzten # Ergebnissen}} fehlgeschlagen war.",
           "RUN_DURATION_DEVIATION": "Der Durchlauf dauerte {elapsed}, {deviation}% abweichend von der Baseline von {baseline} (mehr als {threshold}% zulässig).",
           "RUN_NOT_PROGRESSING": "Der Durchlauf hat {idleHours, plural, one {# Stunde} other {# Stunden}} lang kein neues Ergebnis (Schwelle {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "Die automatisierte Ausführung auf {target} endete mit {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% der Fälle des Durchlaufs haben kein Ergebnis mit {daysRemaining, plural, one {# Tag} other {# Tagen}} bis zum Fälligkeitsdatum des Meilensteins (Schwelle {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# Ticket ist} other {# Tickets sind}} mit den Ergebnissen des Durchlaufs verknüpft (Schwelle {threshold}).",
-          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# Fehlermuster ist} other {# Fehlermuster sind}} zum ersten Mal in der Ausführung angezeigt (Schwelle {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# Fehlermuster ist} other {# Fehlermuster sind}} zum ersten Mal in der Ausführung aufgetreten (Schwelle {threshold}).",
           "SESSION_OVERRUN": "Die Sitzung dauerte {elapsed} gegen eine Schätzung von {estimate}, {overrun}% über (mehr als {threshold}% zulässig).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} von {total} Anforderungen ({coverage}%) {basis, select, PASSING {haben ein bestandenes letztes Ergebnis} other {sind mit einem Testfall verknüpft}} (Schwelle {threshold}%).",
-          "STALE_CASES": "{stale, plural, one {# Fall hat} other {# Fälle haben}} {days, plural, one {# Tag} other {# Tagen}} lang kein Ergebnis (Schwelle {threshold}).",
+          "STALE_CASES": "{stale, plural, one {# Fall hat} other {# Fälle haben}} {days, plural, one {# Tag} other {# Tage}} lang kein Ergebnis (Schwelle {threshold}).",
           "AUTOMATION_SHARE_BELOW": "{automated} von {total} Fällen ({automatedPercent}%) sind automatisiert (Schwelle {threshold}%).",
           "WEBHOOK_FAILURE_RATE": "{failed} der letzten {sampleCount} Lieferungen fehlgeschlagen ({failureRate}%, Schwelle {threshold}%).",
-          "CONSECUTIVE_FAILURES": "Der Fall hat {streak, plural, one {# Mal} other {# Male}} hintereinander fehlgeschlagen (Schwelle {threshold}).",
-          "CASE_FLAKY": "Das Ergebnis wechselte {flips, plural, one {# Mal} other {# Male}} in den letzten {sampleCount} Ergebnissen (Schwelle {threshold}).",
+          "CONSECUTIVE_FAILURES": "Der Fall ist {streak, plural, one {# Mal} other {# Mal}} hintereinander fehlgeschlagen (Schwelle {threshold}).",
+          "CASE_FLAKY": "Das Ergebnis wechselte {flips, plural, one {# Mal} other {# Mal}} in den letzten {sampleCount} Ergebnissen (Schwelle {threshold}).",
           "RUN_PASS_RATE_BELOW": "Die Bestehensquote liegt bei {passRate}% über {sampleCount} Ergebnisse (Schwelle {threshold}%).",
-          "RUN_FAILURE_COUNT": "{failed, plural, one {# Ergebnis hat} other {# Ergebnisse haben}} fehlgeschlagen (Schwelle {threshold}).",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# Ergebnis ist} other {# Ergebnisse sind}} fehlgeschlagen (Schwelle {threshold}).",
           "MILESTONE_BEHIND": "Der Meilenstein ist zu {completion}% abgeschlossen mit {daysRemaining, plural, one {# Tag} other {# Tagen}} verbleibend (Schwelle {threshold}%).",
           "MILESTONE_OVERDUE": "Der Meilenstein ist {daysOverdue, plural, one {# Tag} other {# Tage}} nach seinem Fälligkeitsdatum.",
           "LLM_BUDGET_USED": "Ausgaben für den Abrechnungszeitraum sind {spend} des monatlichen Budgets von {budget} ({percent}%, Schwelle {threshold}%).",
@@ -7396,7 +7396,7 @@
           "LLM_RATE_LIMITED": "Der Anbieter hat {blocked, plural, one {# Anfrage} other {# Anfragen}} in den letzten {hours, plural, one {# Stunde} other {# Stunden}} begrenzt (Schwelle {threshold}).",
           "CODE_REPOSITORY_CACHE_FAILING": "Der Repository-Cache hat {hours, plural, one {# Stunde} other {# Stunden}} lang nicht funktioniert (Schwelle {threshold}){error, select, other {: {error}}}",
           "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# Benutzer muss} other {# Benutzer müssen}} die Integration erneut autorisieren (Schwelle {threshold}).",
-          "QUEUE_FAILED_JOBS": "{failed, plural, one {# Job hat} other {# Jobs haben}} in der Warteschlange fehlgeschlagen (Schwelle {threshold}).",
+          "QUEUE_FAILED_JOBS": "{failed, plural, one {# Job ist} other {# Jobs sind}} in der Warteschlange fehlgeschlagen (Schwelle {threshold}).",
           "QUEUE_BACKLOG": "Der älteste von {waiting, plural, one {# wartenden Job} other {# wartenden Jobs}} hat {minutes, plural, one {# Minute} other {# Minuten}} gewartet (Schwelle {threshold}).",
           "AUDIT_BACKLOG": "Die älteste unverarbeitete Audit-Änderung ist {minutes, plural, one {# Minute} other {# Minuten}} alt (Schwelle {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# Konto ist} other {# Konten sind}} nach fehlgeschlagenen Anmeldeversuchen gesperrt (Schwelle {threshold}).",
@@ -7451,7 +7451,7 @@
         "searching": "Suche...",
         "searchError": "Suche nach Problemen fehlgeschlagen",
         "linkButton": "Link",
-        "linkedCount": "{count, plural, one {# Problem} other {# Probleme}} verknüpft"
+        "linkedCount": "{count, plural, one {# Ticket} other {# Tickets}} verknüpft"
       }
     },
     "copyMove": {
@@ -8883,11 +8883,11 @@
           "last": "Letzter",
           "amount": "Anzahl der Zeiträume",
           "unit": "Zeitraum",
-          "days": "Letzte {count, plural, one {# Tag} other {# Tage}}",
+          "days": "{count, plural, one {Letzter # Tag} other {Letzte # Tage}}",
           "weeks": "Letzte {count, plural, one {# Woche} other {# Wochen}}",
-          "months": "Letzte {count, plural, one {# Monat} other {# Monate}}",
+          "months": "{count, plural, one {Letzter # Monat} other {Letzte # Monate}}",
           "calendarWeeks": "Letzte {count, plural, one {# Kalenderwoche} other {# Kalenderwochen}}",
-          "calendarMonths": "Letzte {count, plural, one {# Kalendermonat} other {# Kalendermonate}}"
+          "calendarMonths": "{count, plural, one {Letzter # Kalendermonat} other {Letzte # Kalendermonate}}"
         },
         "rollingUnits": {
           "days": "Tage",
@@ -9013,7 +9013,7 @@
         "flipThreshold": "Mindestanzahl an Flips",
         "flipThresholdHelp": "Mindestanzahl an Übergängen zwischen bestanden und nicht bestanden erforderlich, um als unzuverlässig zu gelten.",
         "flips": "Überschläge",
-        "lastNResults": "Letztes Ergebnis {count, plural, one {# Ergebnis} other {# Ergebnisse}}",
+        "lastNResults": "{count, plural, one {Letztes # Ergebnis} other {Letzte # Ergebnisse}}",
         "newest": "Neu",
         "oldest": "Alt",
         "noFlakyTests": "Es wurden keine fehlerhaften Tests gefunden, die den Kriterien entsprechen.",
@@ -9128,7 +9128,7 @@
             "random": "Die Fälle stellen eine unvoreingenommene Zufallsstichprobe aus der infrage kommenden Menge dar."
           },
           "rationale": {
-            "mostExecutedWithCount": "Ausgeführt {count, plural, =1 {1 Mal} other {# Mal}} manuell über die Testläufe dieses Projekts hinweg — die Automatisierung spart direkt Zeit beim Testen bei jedem zukünftigen Lauf.",
+            "mostExecutedWithCount": "{count, plural, =1 {1 Mal} other {# Mal}} manuell über die Testläufe dieses Projekts hinweg ausgeführt — die Automatisierung spart direkt Zeit beim Testen bei jedem zukünftigen Lauf.",
             "mostExecutedNone": "Bisher liegen keine Hinrichtungshistorien vor – die Heuristik der am häufigsten Hingerichteten liefert kein Signal, um diesen Fall im Vergleich zu den anderen zu bewerten.",
             "flakiestWithScore": "Unzuverlässigkeit {percent}% (Ergebnis „bestanden/nicht bestanden“ wechselt in {description} der Ausführungen) — unzuverlässige manuelle Tests verschwenden bei jedem Durchlauf die Zeit des Testers und profitieren am meisten von einem deterministischen Automatisierungsorakel.",
             "flakiestNone": "Bisher keine unterschiedlichen Ergebnisse – die Flakiest-First-Heuristik kann in diesem Fall noch keine Wechsel zwischen bestanden und nicht bestanden messen.",
@@ -9152,7 +9152,7 @@
           },
           "relativeAge": {
             "today": "Heute",
-            "days": "{count, plural, =1 {Vor 1 Tag} other {# Tage zuvor}}",
+            "days": "{count, plural, =1 {Vor 1 Tag} other {Vor # Tagen}}",
             "months": "{count, plural, =1 {Vor einem Monat} other {Vor # Monaten}}",
             "years": "{count, plural, =1 {Vor 1 Jahr} other {Vor # Jahren}}",
             "unknown": "zu einem unbekannten Zeitpunkt"
@@ -9937,7 +9937,7 @@
       "noMatchesForFilters": "Keine Treffer entsprechen den aktuellen Filtern. Verringern Sie die Mindestwerte, um die Ergebnisse zu erweitern.",
       "selected": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
       "bulkDismiss": "Schließen ({count, number})",
-      "bulkDismissSuccess": "{count, plural, one {# Spiel abgebrochen} other {# Spiele abgebrochen}}",
+      "bulkDismissSuccess": "{count, plural, one {# Übereinstimmung verworfen} other {# Übereinstimmungen verworfen}}",
       "bulkError": "Es sind einige Vorgänge fehlgeschlagen. Bitte versuchen Sie es erneut.",
       "tableHint": "Klicken Sie auf eine Zeile, um die zugehörigen Schritte in der Vorschau anzuzeigen. Markieren Sie Zeilen mit Kontrollkästchen, um Massenaktionen durchzuführen.",
       "matchedStepsCount": "{count, plural, one {# übereinstimmender Schritt} other {# übereinstimmende Schritte}}",
@@ -10193,7 +10193,7 @@
     }
   },
   "Trial": {
-    "daysRemaining": "Die Prüfung endet in {count, plural, =1 {1 Tag} other {# Tagen}}",
+    "daysRemaining": "Die Testversion endet in {count, plural, =1 {1 Tag} other {# Tagen}}",
     "expiresT oday": "Die Testphase läuft heute ab",
     "expired": "{count, plural, =1 {Testversion vor 1 Tag abgelaufen} other {Testversion vor # Tagen abgelaufen}}",
     "contactSales": "Aktualisieren"
@@ -10336,7 +10336,7 @@
     "deleteDescription": "Dieser Parameter wird in den Schritten {stepCount} und den Datensatzzeilen {rowCount} referenziert. Durch das Löschen bleiben diese Referenzen als Klartext erhalten und der Fall wird auf Version {nextVersion} aktualisiert.",
     "deleteConfirm": "Parameter löschen",
     "renameTitle": "\"@{oldName}\" in \"@{newName} \" umbenennen?",
-    "renameDescriptionLead": "Dies wird {totalCount, plural, =1 {# Referenz} other {# Referenzen}} : überschreiben",
+    "renameDescriptionLead": "Dies wird {totalCount, plural, =1 {# Referenz} other {# Referenzen}} überschreiben:",
     "renameDescriptionStepCount": "{stepCount, plural, =1 {# Schritttextreferenz} other {# Schritttextreferenzen}}",
     "renameDescriptionExpectedCount": "{expectedCount, plural, =1 {# Referenz auf erwartetes Ergebnis} other {# Referenzen auf erwartetes Ergebnis}}",
     "renameDescriptionRowCount": "{rowCount, plural, =1 {# Datensatzzeile} other {# Datensatzzeilen}}",
@@ -10369,8 +10369,8 @@
     "datasetEmptyHeading": "Noch keine Datensätze",
     "datasetEmptyBody": "Um loszulegen, fügen Sie eine Zeile hinzu, fügen Sie eine CSV-Datei ein oder importieren Sie eine Datei.",
     "datasetSensitiveDeniedTooltip": "Sie haben keine Berechtigung, sensible Daten preiszugeben.",
-    "datasetSaveBlocked": "Beheben Sie die Fehler {count, plural, =1 {#,} other {# und}} , bevor Sie fortfahren.",
-    "datasetBulkDeleteTitle": "Löschen {count, plural, =1 {# Zeile} other {# Zeilen}}?",
+    "datasetSaveBlocked": "Beheben Sie {count, plural, =1 {# Fehler} other {# Fehler}}, bevor Sie fortfahren.",
+    "datasetBulkDeleteTitle": "{count, plural, =1 {# Zeile} other {# Zeilen}} löschen?",
     "datasetBulkDeleteDescription": "Diese Handlung kann nicht rückgängig gemacht werden.",
     "datasetCounts": "{paramCount} Parameter · {rowCount} Zeilen",
     "datasetSelectedCount": "{count} ausgewählt",
@@ -10414,7 +10414,7 @@
     "confirmSummaryMode": "Modus: {mode}",
     "cancelUploadTitle": "Upload verwerfen?",
     "cancelUploadDescription": "Die von Ihnen hochgeladenen CSV-Daten gehen verloren.",
-    "importSuccess": "Importiert {count, plural, =1 {# Zeile} other {# Zeilen}}",
+    "importSuccess": "{count, plural, =1 {# Zeile} other {# Zeilen}} importiert",
     "addSuccess": "Parameter \"{name}\" hinzugefügt",
     "addError": "Parameter konnte nicht hinzugefügt werden",
     "updateSuccess": "Parameter gespeichert",
@@ -10434,17 +10434,17 @@
     "chipTooltipUndeclared": "\"@{name}\" ist kein deklarierter Parameter. Öffnen Sie \"Parameter konfigurieren\", um ihn hinzuzufügen.",
     "editorUndeclaredWarning": "Nicht deklarierte Referenzen: {names}. Fügen Sie diese über die Konfigurationsparameter hinzu, um die Iterationssubstitution zu aktivieren.",
     "runProgressTitle": "Generiere Iterationen für \"{runName}\"",
-    "runProgressDescriptionAsync": "Im Hintergrund werden {count, plural, =1 {# Iterationen} other {# Iterationen}} erstellt. Sie können weiterarbeiten – wir benachrichtigen Sie, sobald der Vorgang abgeschlossen ist.",
-    "runProgressDescriptionSync": "Erstellt {count, plural, =1 {# Iteration} other {# Iterationen}}.",
+    "runProgressDescriptionAsync": "Im Hintergrund {count, plural, =1 {wird # Iteration} other {werden # Iterationen}} erstellt. Sie können weiterarbeiten – wir benachrichtigen Sie, sobald der Vorgang abgeschlossen ist.",
+    "runProgressDescriptionSync": "{count, plural, =1 {# Iteration} other {# Iterationen}} erstellt.",
     "runProgressFailed": "Die Iterationsgenerierung konnte nicht gestartet werden.",
     "runHardRefuseTitle": "Zu viele Iterationen, um zu erstellen",
     "runHardRefuseDescription": "Dieser Durchlauf würde {count} Iterationen erzeugen und damit das Limit von {cap}überschreiten. Reduzieren Sie die Anzahl der Zeilen im Datensatz, heben Sie die Auswahl bestimmter Fälle auf oder teilen Sie den Durchlauf in mehrere Durchläufe auf.",
-    "runPreflightSync": "Erzeugt sofort {n, plural, =1 {# Iterationen} other {# Iterationen}}",
-    "runPreflightAsync": "Erzeugt {n, plural, =1 {# Iterationen} other {# Iterationen}} (Hintergrundprozess)",
-    "runPreflightSoftConfirm": "Es werden {n, plural, =1 {# Iterationen} other {# Iterationen}} erstellt – Bestätigung erforderlich",
+    "runPreflightSync": "Erzeugt sofort {n, plural, =1 {# Iteration} other {# Iterationen}}",
+    "runPreflightAsync": "Erzeugt {n, plural, =1 {# Iteration} other {# Iterationen}} (Hintergrundprozess)",
+    "runPreflightSoftConfirm": "Es {n, plural, =1 {wird # Iteration} other {werden # Iterationen}} erstellt – Bestätigung erforderlich",
     "runPreflightHardRefuse": "Erstellung nicht möglich – {n} überschreitet die Obergrenze von {cap}",
     "runPreflightTooltip": "{iterations, plural, =1 {# Iteration} other {# Iterationen}} = {cases, plural, =1 {# Fall} other {# Fälle}} × {configs, plural, =1 {# Konfiguration} other {# Konfigurationen}} × Datensatzzeilen",
-    "runPreflightTooltipHeader": "{iterations, plural, =1 {# Iteration} other {# Iterationen}} über {cases, plural, =1 {# parametrisierter Fall} other {# parametrisierte Fälle}} × {configs, plural, =1 {# Konfiguration} other {# Konfigurationen}}",
+    "runPreflightTooltipHeader": "{iterations, plural, =1 {# Iteration} other {# Iterationen}} über {cases, plural, =1 {# parametrisierten Fall} other {# parametrisierte Fälle}} × {configs, plural, =1 {# Konfiguration} other {# Konfigurationen}}",
     "runPreflightTooltipCaseRow": "{title} — {rows, plural, =1 {# Zeile} other {# Zeilen}}",
     "chipClickToReveal": "Zum Anzeigen klicken",
     "chipCopyValue": "Wert kopieren",
@@ -10465,12 +10465,12 @@
     "hardRefuseSuggestion1": "Reduziere die Anzahl der Datensätze anhand des größten Beitragsfalls.",
     "hardRefuseSuggestion2": "Eine oder mehrere Konfigurationen abwählen.",
     "hardRefuseSuggestion3": "Teilen Sie die Arbeit in mehrere Testläufe auf.",
-    "softConfirmTitle": "Generieren {n, plural, =1 {# Iterationen} other {# Iterationen}}?",
-    "softConfirmDescription": "{n, plural, =1 {# Iteration} other {# Iterationen}} von {cases, plural, =1 {# Fall} other {# Fälle}} × {configs, plural, =1 {# Konfiguration} other {# Konfigurationen}}.",
+    "softConfirmTitle": "{n, plural, =1 {# Iteration} other {# Iterationen}} generieren?",
+    "softConfirmDescription": "{n, plural, =1 {# Iteration} other {# Iterationen}} von {cases, plural, =1 {# Fall} other {# Fällen}} × {configs, plural, =1 {# Konfiguration} other {# Konfigurationen}}.",
     "softConfirmGo": "Iterationen generieren",
     "runProgressCounter": "{done} / {total}",
     "runProgressDismissAria": "Fortschritt verwerfen",
-    "runProgressComplete": "Generiert {total, plural, =1 {# Iteration} other {# Iterationen}} für \"{runName}\"",
+    "runProgressComplete": "{total, plural, =1 {# Iteration} other {# Iterationen}} für \"{runName}\" generiert",
     "runProgressFailedToast": "Fehler beim Generieren von Iterationen für \"{runName}\". {reason}",
     "runProgressNavAway": "Zeig mir den Rest des Laufs",
     "runGeneratingHeading": "Generiere Iterationen…",
@@ -10522,10 +10522,10 @@
     "iterationBulkConfirmDescription": "Für jede ausgewählte Iteration wird ein neues Ergebnis mit dem Status \"{statusName} \" ausgegeben.",
     "iterationBulkConfirm": "{action} markieren",
     "iterationBulkConfirmReplace": "Ersetzen Sie durch {action}",
-    "iterationBulkOverwriteWarning": "{count, plural, =1 {# der ausgewählten Iterationen haben bereits ein Ergebnis geliefert.} other {# der ausgewählten Iterationen haben bereits ein Ergebnis geliefert.}} Ein neues Ergebnis wird gespeichert und das aktuelle ersetzt.",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {# der ausgewählten Iterationen hat bereits ein Ergebnis geliefert.} other {# der ausgewählten Iterationen haben bereits ein Ergebnis geliefert.}} Ein neues Ergebnis wird gespeichert und das aktuelle ersetzt.",
     "iterationBulkReasonLabel": "Grund (optional)",
     "iterationBulkReasonHelp": "Wird bei jedem Ergebnis vermerkt.",
-    "iterationBulkSuccess": "{count, plural, =1 {# Iteration} other {# Iterationen}} markiert {action}",
+    "iterationBulkSuccess": "{count, plural, =1 {# Iteration} other {# Iterationen}} als {action} markiert",
     "iterationBulkError": "Iterationen konnten nicht markiert werden",
     "iterationBulkNa": "N/A markieren",
     "iterationListLoadError": "Iterationen konnten nicht geladen werden.",
@@ -10641,7 +10641,7 @@
     "deleteRule": "Warnmeldung löschen",
     "deleteConfirm": "Die Warnmeldung \"{name}\" löschen? Ihre Abonnenten erhalten keine Benachrichtigungen mehr und sie kann aus dem Papierkorb wiederhergestellt werden.",
     "pauseTitle": "Diese Warnmeldung für alle pausieren?",
-    "pauseConfirm": "\"{name}\" wird für {count, plural, =0 {alle} one {seinen einzigen Abonnenten} =2 {beide seiner Abonnenten} other {alle # seiner Abonnenten}} nicht mehr ausgelöst, nicht nur für Sie, bis jemand sie wieder aktiviert. Um nur Ihre eigenen Benachrichtigungen zu stoppen, schalten Sie stattdessen \"Benachrichtige mich\" aus.",
+    "pauseConfirm": "\"{name}\" wird für {count, plural, =0 {alle} one {ihren einzigen Abonnenten} =2 {beide ihrer Abonnenten} other {alle # ihrer Abonnenten}} nicht mehr ausgelöst, nicht nur für Sie, bis jemand sie wieder aktiviert. Um nur Ihre eigenen Benachrichtigungen zu stoppen, schalten Sie stattdessen \"Benachrichtige mich\" aus.",
     "columns": {
       "name": "Regel",
       "condition": "Bedingung",
@@ -10914,17 +10914,17 @@
       "CASE_RECOVERED": {
         "label": "Fall wiederhergestellt",
         "description": "Ein Fall besteht nach Fehler bei allen seinen letzten Ergebnissen.",
-        "summary": "Ein Fall besteht nach Fehler bei {window, plural, one {# Ergebnis} other {# Ergebnisse}}"
+        "summary": "Ein Fall besteht, nachdem er bei {window, plural, one {seinem letzten # Ergebnis} other {seinen letzten # Ergebnissen}} fehlgeschlagen ist"
       },
       "CONSECUTIVE_FAILURES": {
         "label": "Aufeinanderfolgende Fehler",
         "description": "Ein Fall schlägt mehrere Male hintereinander fehl.",
-        "summary": "Ein Fall schlägt {threshold, plural, one {# Mal} other {# Male}} hintereinander fehl"
+        "summary": "Ein Fall schlägt {threshold, plural, one {# Mal} other {# Mal}} hintereinander fehl"
       },
       "CASE_FLAKY": {
         "label": "Fall wurde instabil",
         "description": "Ein Fall wechselt in seinen letzten Ergebnissen wiederholt zwischen Bestanden und Fehler. Verwendet die gleichen Eingaben wie der Bericht \"Instabile Tests\".",
-        "summary": "Ein Fall wechselt zwischen Bestanden und Fehler mindestens {threshold, plural, one {# Mal} other {# Male}} über die letzten {window} Ergebnisse"
+        "summary": "Ein Fall wechselt zwischen Bestanden und Fehler mindestens {threshold, plural, one {# Mal} other {# Mal}} über die letzten {window} Ergebnisse"
       },
       "RUN_PASS_RATE_BELOW": {
         "label": "Durchlaufquote unter Schwelle",
@@ -10959,7 +10959,7 @@
       "RUN_ISSUES_OPENED": {
         "label": "Probleme, die von einem Durchlauf geöffnet werden",
         "description": "Mehr als eine bestimmte Anzahl von Problemen ist mit den Ergebnissen eines Durchlaufs verknüpft.",
-        "summary": "Mehr als {threshold, plural, one {# Problem ist} other {# Probleme sind}} mit den Ergebnissen eines Durchlaufs verknüpft, {evaluateOn, select, AS_RESULTS_ARRIVE {bewertet, während Ergebnisse ankommen} other {bewertet, wenn der Durchlauf abgeschlossen ist}}"
+        "summary": "Mehr als {threshold, plural, one {# Ticket ist} other {# Tickets sind}} mit den Ergebnissen eines Durchlaufs verknüpft, {evaluateOn, select, AS_RESULTS_ARRIVE {bewertet, während Ergebnisse ankommen} other {bewertet, wenn der Durchlauf abgeschlossen ist}}"
       },
       "NEW_FAILURE_SIGNATURES": {
         "label": "Neue Fehlermuster in einer Ausführung",
@@ -10989,7 +10989,7 @@
       "STALE_CASES": {
         "label": "Abgelaufene Fälle",
         "description": "Mehr als eine bestimmte Anzahl von Fällen hatten {days, plural, one {# Tag} other {# Tagen}} lang kein Ergebnis. Wird täglich überprüft.",
-        "summary": "Mehr als {threshold, plural, one {# Fall hat} other {# Fälle haben}} {days, plural, one {# Tag} other {# Tagen}} lang kein Ergebnis"
+        "summary": "Mehr als {threshold, plural, one {# Fall hat} other {# Fälle haben}} {days, plural, one {# Tag} other {# Tage}} lang kein Ergebnis"
       },
       "AUTOMATION_SHARE_BELOW": {
         "label": "Automatisierter Anteil unter Schwelle",
@@ -11029,7 +11029,7 @@
       "QUEUE_FAILED_JOBS": {
         "label": "Warteschlange fehlgeschlagene Jobs",
         "description": "Eine Hintergrund-Warteschlange enthält zu viele fehlgeschlagene Jobs. Wird stündlich überprüft.",
-        "summary": "Mehr als {threshold, plural, one {# Job hat} other {# Jobs haben}} in einer Warteschlange fehlgeschlagen"
+        "summary": "Mehr als {threshold, plural, one {# Job ist} other {# Jobs sind}} in einer Warteschlange fehlgeschlagen"
       },
       "QUEUE_BACKLOG": {
         "label": "Warteschlangen-Rückstand",
