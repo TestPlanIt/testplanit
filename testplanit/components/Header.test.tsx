@@ -77,6 +77,10 @@ vi.mock("@/components/reviews/ReviewInboxButton", () => ({
   ReviewInboxButton: () => <div data-testid="review-inbox-button-mock" />,
 }));
 
+vi.mock("~/hooks/useSetupChecklist", () => ({
+  useShowSetupChecklist: () => vi.fn(),
+}));
+
 vi.mock("~/hooks/useHeaderAlertCounts", () => ({
   useHeaderAlertCounts: () => ({
     notificationCount: 0,

@@ -77,6 +77,10 @@ test.describe("Initial preferences dialog", () => {
       USER_PASSWORD
     );
     openedContexts.push(ctx);
+    // The welcome tour starts once this dialog closes; tours.spec.ts covers it.
+    await ctx.addInitScript(() =>
+      localStorage.setItem("hasSeenOnboardingTour", "true")
+    );
 
     const page = await ctx.newPage();
     await stubLiveStreams(page);

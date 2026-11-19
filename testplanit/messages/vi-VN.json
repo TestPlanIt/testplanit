@@ -2921,12 +2921,6 @@
       "adminAddProject": "Thêm dự án đầu tiên của bạn để bắt đầu!",
       "footer": "Cần có quyền truy cập để xem và tham gia vào các hoạt động lập kế hoạch thử nghiệm."
     },
-    "getStarted": {
-      "title": "Bắt đầu",
-      "description": "Thêm Dự án của riêng bạn khi bạn sẵn sàng bắt đầu lập kế hoạch.",
-      "adminAddProject": "Tạo Dự án đầu tiên của bạn",
-      "footer": "Dự án Demo chứa dữ liệu mẫu mà bạn có thể khám phá hoặc xóa bất cứ lúc nào."
-    },
     "noProjectAccess": {
       "description": "Bạn không có quyền truy cập vào dự án này.",
       "contact": "Hãy liên hệ với người quản lý dự án của bạn để yêu cầu quyền truy cập."
@@ -2941,7 +2935,26 @@
       "assignedToYou": "{count, plural, =1 {# trường hợp thử nghiệm được giao cho bạn đang chờ} other {# trường hợp thử nghiệm được giao cho bạn đang chờ}}"
     },
     "lastActivity": "Hoạt động cuối cùng",
-    "noActivity": "Chưa có hoạt động thử nghiệm nào"
+    "noActivity": "Chưa có hoạt động thử nghiệm nào",
+    "setupChecklist": {
+      "title": "Thiết lập TestPlanIt",
+      "progress": "{done} trên {total} đã hoàn thành",
+      "items": {
+        "createProject": "Tạo dự án đầu tiên của bạn",
+        "inviteTeam": "Mời đội của bạn",
+        "connectIssueTracker": "Kết nối bộ theo dõi vấn đề",
+        "connectAiProvider": "Kết nối nhà cung cấp AI",
+        "setUpSso": "Thiết lập đăng nhập duy nhất"
+      },
+      "open": "Mở",
+      "hint": "Đánh dấu bất kỳ điều gì bạn đã thực hiện theo cách khác hoặc không cần. Dấu tích áp dụng cho mọi quản trị viên.",
+      "hide": "Ẩn danh sách kiểm tra",
+      "hideConfirm": {
+        "title": "Ẩn danh sách kiểm tra thiết lập?",
+        "description": "Nó sẽ không còn xuất hiện trên trang chủ của bạn. Để hiển thị lại, chọn Danh sách kiểm tra thiết lập từ menu Trợ giúp. Các quản trị viên khác sẽ tiếp tục nhìn thấy nó cho đến khi họ ẩn nó."
+      },
+      "demoNote": "Dự án Demo chứa dữ liệu mẫu mà bạn có thể khám phá hoặc xóa bất kỳ lúc nào."
+    }
   },
   "users": {
     "description": "Quản lý tài khoản người dùng, thiết lập cấp độ truy cập hệ thống và phân công vai trò toàn cầu.",
@@ -8553,7 +8566,8 @@
       "startTour": "Chuyến tham quan chào mừng có hướng dẫn",
       "startProjectTour": "Chuyến tham quan dự án",
       "startAdminTour": "Chuyến tham quan dành cho quản trị viên",
-      "startDemoProjectTour": "Giới thiệu dự án mẫu"
+      "startDemoProjectTour": "Giới thiệu dự án mẫu",
+      "setupChecklist": "Danh sách kiểm tra thiết lập"
     },
     "tour": {
       "mainTour": {
@@ -8566,7 +8580,8 @@
         },
         "project": {
           "title": "Thẻ dự án",
-          "content": "Nhấp vào thẻ dự án để xem chi tiết. Chọn \"Hướng dẫn tham quan dự án\" từ menu trợ giúp để xem hướng dẫn chi tiết về các tính năng của dự án."
+          "content": "Nhấp vào thẻ dự án để mở. Trong một dự án, chọn Chuyến tham quan dự án từ menu Trợ giúp để được giới thiệu các tính năng của dự án.",
+          "contentWithDemo": "Nhấp vào thẻ dự án để mở nó. Khi bạn kết thúc tour này, một tour của Dự án Demo sẽ bắt đầu. Đó là một dự án mẫu mà bạn có thể khám phá tự do."
         },
         "globalFeatures": {
           "title": "Tính năng toàn cầu",
@@ -8644,6 +8659,15 @@
         "settings": {
           "title": "Cài đặt dự án",
           "content": "Từ đây, bạn có thể quản lý các tích hợp cấp dự án, cấu hình mô hình AI và các liên kết chia sẻ."
+        },
+        "requirements": {
+          "content": "Viết down những gì dự án phải cung cấp dưới dạng một cây yêu cầu, và liên kết các trường hợp kiểm tra với chúng để xem yêu cầu nào được bao gồm và vượt qua."
+        },
+        "triage": {
+          "content": "Các kết quả lỗi được nhóm theo mô hình lỗi của chúng. Ghi lại nguyên nhân gốc một lần cho mọi lỗi phù hợp, và cách ly các trường hợp lỏng lẻo trong khi nguyên nhân được khắc phục."
+        },
+        "auditLogs": {
+          "content": "Xem ai đã tạo, thay đổi hoặc xóa bất kỳ điều gì trong dự án này và khi nào."
         }
       },
       "adminTour": {
@@ -8651,72 +8675,13 @@
           "title": "Chào mừng đến với Trang quản trị",
           "content": "Hãy cùng khám phá các tính năng quản trị của TestPlanIt. Quản lý dự án, người dùng, cấu hình và cài đặt hệ thống từ bảng điều khiển quản trị tập trung này."
         },
-        "projects": {
-          "title": "Quản lý dự án",
-          "content": "Quản lý tất cả các dự án trong tổ chức của bạn. Tạo, cấu hình và lưu trữ dự án. Thiết lập quyền và kiểm soát truy cập cho toàn bộ dự án."
-        },
-        "templatesAndFields": {
-          "content": "Tạo và quản lý các mẫu trường hợp kiểm thử và các trường tùy chỉnh. Xác định loại trường, quy tắc xác thực và sắp xếp các mẫu để đảm bảo cấu trúc trường hợp kiểm thử nhất quán trên các dự án."
-        },
-        "workflows": {
-          "title": "Quản lý quy trình làm việc",
-          "content": "Xác định quy trình làm việc và chuyển đổi trạng thái của trường hợp kiểm thử. Cấu hình cách các trường hợp kiểm thử tiến triển qua các trạng thái khác nhau như Bản nháp, Đang xem xét và Đã phê duyệt."
-        },
-        "statuses": {
-          "title": "Trạng thái kết quả xét nghiệm",
-          "content": "Cấu hình các trạng thái kết quả kiểm tra có sẵn như Đạt, Không đạt, Bị chặn và Bỏ qua. Thiết lập các trạng thái tùy chỉnh và xác định hành vi cũng như hình thức hiển thị của chúng."
-        },
-        "milestones": {
-          "content": "Xác định các loại mốc quan trọng để theo dõi dự án. Cấu hình các loại bản phát hành, danh mục sprint và các phân loại mốc quan trọng khác của dự án."
-        },
-        "configurations": {
-          "title": "Cấu hình kiểm thử",
-          "content": "Quản lý cấu hình và môi trường kiểm thử. Thiết lập các tổ hợp trình duyệt, loại thiết bị, hệ điều hành và các ngữ cảnh thực thi kiểm thử khác."
-        },
-        "users": {
-          "title": "Quản lý người dùng",
-          "content": "Quản lý tài khoản người dùng, quyền hạn và cấp độ truy cập. Tạo người dùng mới, phân công vai trò và cấu hình cài đặt xác thực."
-        },
-        "groups": {
-          "title": "Quản lý nhóm",
-          "content": "Tổ chức người dùng thành các nhóm để quản lý quyền dễ dàng hơn. Tạo các nhóm theo phòng ban, nhóm dự án và nhóm truy cập dựa trên vai trò."
-        },
-        "roles": {
-          "title": "Quản lý vai trò",
-          "content": "Xác định vai trò và quyền hạn của người dùng. Cấu hình các hành động mà các vai trò khác nhau có thể thực hiện trong các dự án và quản trị hệ thống."
-        },
-        "tags": {
-          "title": "Thẻ toàn cầu",
-          "content": "Quản lý các thẻ trên toàn tổ chức để phân loại các trường hợp thử nghiệm, dự án và các thực thể khác. Tạo hệ thống phân cấp thẻ và chuẩn hóa việc gắn thẻ trên các dự án."
-        },
-        "reports": {
-          "content": "Tạo báo cáo bao quát nhiều dự án. Phân tích xu hướng, chỉ số hiệu suất và hiệu quả kiểm thử của tổ chức trên toàn bộ không gian làm việc của bạn."
-        },
-        "notifications": {
-          "title": "Cài đặt thông báo",
-          "content": "Cấu hình tùy chọn thông báo toàn hệ thống. Thiết lập mẫu email, quy tắc thông báo và cài đặt mặc định cho thông báo người dùng."
-        },
-        "integrations": {
-          "title": "Tích hợp hệ thống",
-          "content": "Quản lý các tích hợp bên thứ ba và kết nối API. Cấu hình tích hợp Jira, GitHub và các công cụ bên ngoài khác cho tổ chức của bạn."
-        },
-        "llm": {
-          "title": "Cấu hình AI",
-          "content": "Cấu hình các mô hình AI và cài đặt để tạo trường hợp kiểm thử tự động và các tính năng thông minh. Quản lý khóa API và tùy chọn mô hình."
-        },
-        "sso": {
-          "title": "Đăng nhập một lần",
-          "content": "Cấu hình các nhà cung cấp SSO và phương thức xác thực. Thiết lập tích hợp SAML, OAuth và các nhà cung cấp danh tính khác để truy cập người dùng liền mạch."
-        },
-        "appConfig": {
-          "content": "Quản lý cài đặt ứng dụng toàn cầu và tùy chọn hệ thống. Cấu hình giá trị mặc định, công tắc tính năng và hành vi trên toàn hệ thống."
-        },
-        "attachments": {
-          "content": "Xem mọi tập tin và liên kết được đính kèm ở bất kỳ nơi nào trên phiên bản, tìm những gì chưa được đính kèm hoặc đã xóa, và tách rời, xóa, khôi phục hoặc thanh lọc các tệp đính kèm."
-        },
-        "trash": {
-          "title": "Thùng rác hệ thống",
-          "content": "Xem và quản lý các mục đã xóa trên tất cả các dự án. Khôi phục nội dung bị xóa nhầm hoặc xóa vĩnh viễn các mục khỏi hệ thống."
+        "sections": {
+          "testManagement": "Những gì mọi dự án được xây dựng từ: các mẫu và trường mà một trường hợp kiểm tra ghi lại, quy trình làm việc nó di chuyển qua, trạng thái kết quả, loại milestone và cấu hình.",
+          "peopleAndAccess": "Ai có thể sử dụng phiên bản này, cách họ được nhóm, và mỗi vai trò có thể làm gì trong một dự án.",
+          "authentication": "Cách mọi người đăng nhập, quy tắc mật khẩu và khóa, cũng như các token và cấp phát mà các công cụ và nhà cung cấp danh tính sử dụng.",
+          "toolsAndIntegrations": "Kết nối các bộ theo dõi vấn đề và kho lưu trữ mã, và chọn những gì TestPlanIt gửi đến các công cụ khác.",
+          "aiTools": "Kết nối các nhà cung cấp AI và điều chỉnh các lời nhắc và mẫu tập lệnh mà họ tạo ra.",
+          "system": "Cài đặt toàn phiên bản, nhập, tìm kiếm, công việc nền, và các bản ghi những gì đã được thay đổi hoặc xóa."
         }
       },
       "demoProjectTour": {

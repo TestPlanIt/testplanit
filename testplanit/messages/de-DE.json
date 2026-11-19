@@ -2921,12 +2921,6 @@
       "adminAddProject": "Fügen Sie Ihr erstes Projekt hinzu, um loszulegen!",
       "footer": "Für die Teilnahme an den Testplanungsaktivitäten ist ein Zugriff erforderlich."
     },
-    "getStarted": {
-      "title": "Erste Schritte",
-      "description": "Fügen Sie Ihr eigenes Projekt hinzu, wenn Sie bereit sind, mit der Planung zu beginnen.",
-      "adminAddProject": "Erstellen Sie Ihr erstes Projekt",
-      "footer": "Das Demo-Projekt enthält Beispieldaten, die Sie jederzeit erkunden oder entfernen können."
-    },
     "noProjectAccess": {
       "description": "Sie haben keinen Zugriff auf dieses Projekt.",
       "contact": "Wenden Sie sich an Ihren Projektadministrator, um Zugriff zu beantragen."
@@ -2941,7 +2935,26 @@
       "assignedToYou": "{count, plural, =1 {# Testfall, der Ihnen zugewiesen ist, wartet} other {# Testfälle, die Ihnen zugewiesen sind, warten}}"
     },
     "lastActivity": "Letzte Aktivität",
-    "noActivity": "Noch keine Testaktivität"
+    "noActivity": "Noch keine Testaktivität",
+    "setupChecklist": {
+      "title": "TestPlanIt einrichten",
+      "progress": "{done} von {total} abgeschlossen",
+      "items": {
+        "createProject": "Erstellen Sie Ihr erstes Projekt",
+        "inviteTeam": "Laden Sie Ihr Team ein",
+        "connectIssueTracker": "Verbinden Sie einen Issue-Tracker",
+        "connectAiProvider": "Verbinden Sie einen KI-Anbieter",
+        "setUpSso": "Richten Sie Single Sign-On ein"
+      },
+      "open": "Öffnen",
+      "hint": "Markieren Sie alles, das Sie auf andere Weise erledigt haben oder nicht benötigen. Häkchen gelten für jeden Administrator.",
+      "hide": "Checkliste ausblenden",
+      "hideConfirm": {
+        "title": "Einrichtungs-Checkliste ausblenden?",
+        "description": "Sie wird nicht mehr auf Ihrer Startseite angezeigt. Um sie zurückzubringen, wählen Sie \"Einrichtungs-Checkliste\" aus dem Hilfemenü. Andere Administratoren sehen sie, bis sie sie selbst ausblenden."
+      },
+      "demoNote": "Das Demo-Projekt enthält Beispieldaten, die Sie jederzeit erkunden oder entfernen können."
+    }
   },
   "users": {
     "description": "Benutzerkonten verwalten, Systemzugriffsebenen festlegen und globale Rollen zuweisen.",
@@ -8553,7 +8566,8 @@
       "startTour": "Geführte Willkommenstour",
       "startProjectTour": "Projektrundgang",
       "startAdminTour": "Admin-Tour",
-      "startDemoProjectTour": "Demo-Projekt-Tour"
+      "startDemoProjectTour": "Demo-Projekt-Tour",
+      "setupChecklist": "Einrichtungs-Checkliste"
     },
     "tour": {
       "mainTour": {
@@ -8566,7 +8580,8 @@
         },
         "project": {
           "title": "Projektkarte",
-          "content": "Klicken Sie auf eine Projektkarte, um deren Details anzuzeigen. Wählen Sie im Hilfemenü „Projekttour“ aus, um eine geführte Tour durch die Projektfunktionen zu erhalten."
+          "content": "Klicken Sie auf eine Projektkarte, um sie zu öffnen. Wählen Sie in einem Projekt \"Projektrundgang\" aus dem Hilfemenü für eine geführte Tour durch die Funktionen.",
+          "contentWithDemo": "Klicken Sie auf eine Projektkarte, um sie zu öffnen. Wenn Sie diese Tour beenden, startet eine Tour des Demo-Projekts. Es ist ein Beispielprojekt, das Sie frei erkunden können."
         },
         "globalFeatures": {
           "title": "Globale Merkmale",
@@ -8644,6 +8659,15 @@
         "settings": {
           "title": "Projekteinstellungen",
           "content": "Von hier aus verwalten Sie Integrationen auf Projektebene, KI-Modellkonfigurationen und freigegebene Links."
+        },
+        "requirements": {
+          "content": "Notieren Sie, was das Projekt liefern muss, als Baum von Anforderungen, und verknüpfen Sie Testfälle damit, um zu sehen, welche Anforderungen erfüllt und erfolgreich sind."
+        },
+        "triage": {
+          "content": "Fehlgeschlagene Ergebnisse werden nach dem Muster ihres Ausfalls gruppiert. Notieren Sie eine Grundursache einmal für jeden passenden Fehler, und unter Quarantäne stellen Sie unsichere Fälle, während die Ursache behoben wird."
+        },
+        "auditLogs": {
+          "content": "Sehen Sie, wer etwas in diesem Projekt erstellt, geändert oder gelöscht hat, und wann."
         }
       },
       "adminTour": {
@@ -8651,72 +8675,13 @@
           "title": "Willkommen bei den Administrator-Steuerelementen",
           "content": "Machen Sie eine geführte Tour durch die administrativen Funktionen von TestPlanIt. Verwalten Sie Projekte, Benutzer, Konfigurationen und Systemeinstellungen über dieses zentrale Administrationspanel."
         },
-        "projects": {
-          "title": "Projektverwaltung",
-          "content": "Verwalten Sie alle Projekte in Ihrem Unternehmen. Erstellen, konfigurieren und archivieren Sie Projekte. Legen Sie projektweite Berechtigungen und Zugriffskontrollen fest."
-        },
-        "templatesAndFields": {
-          "content": "Erstellen und verwalten Sie Testfallvorlagen und benutzerdefinierte Felder. Definieren Sie Feldtypen und Validierungsregeln und organisieren Sie Vorlagen für eine einheitliche Testfallstruktur in allen Projekten."
-        },
-        "workflows": {
-          "title": "Workflow-Management",
-          "content": "Definieren Sie Testfall-Workflows und Statusübergänge. Konfigurieren Sie, wie Testfälle verschiedene Status wie Entwurf, Überprüfung und Genehmigt durchlaufen."
-        },
-        "statuses": {
-          "title": "Testergebnisstatus",
-          "content": "Konfigurieren Sie die verfügbaren Testergebnisstatus wie Bestanden, Nicht bestanden, Blockiert und Übersprungen. Richten Sie benutzerdefinierte Status ein und definieren Sie deren Verhalten und Darstellung."
-        },
-        "milestones": {
-          "content": "Definieren Sie Meilensteintypen für die Projektverfolgung. Konfigurieren Sie Releasetypen, Sprintkategorien und andere Projektmeilensteinklassifizierungen."
-        },
-        "configurations": {
-          "title": "Testkonfigurationen",
-          "content": "Testkonfigurationen und -umgebungen verwalten. Browserkombinationen, Gerätetypen, Betriebssysteme und andere Testausführungskontexte einrichten."
-        },
-        "users": {
-          "title": "Benutzerverwaltung",
-          "content": "Benutzerkonten, Berechtigungen und Zugriffsebenen verwalten. Neue Benutzer erstellen, Rollen zuweisen und Authentifizierungseinstellungen konfigurieren."
-        },
-        "groups": {
-          "title": "Konzernmanagement",
-          "content": "Organisieren Sie Benutzer in Gruppen, um die Berechtigungsverwaltung zu vereinfachen. Erstellen Sie Abteilungs-, Projekt- und rollenbasierte Zugriffsgruppen."
-        },
-        "roles": {
-          "title": "Rollenmanagement",
-          "content": "Definieren Sie Benutzerrollen und Berechtigungen. Konfigurieren Sie, welche Aktionen verschiedene Rollen projekt- und systemadministrationsübergreifend ausführen können."
-        },
-        "tags": {
-          "title": "Globale Tags",
-          "content": "Verwalten Sie unternehmensweite Tags zur Kategorisierung von Testfällen, Projekten und anderen Entitäten. Erstellen Sie Tag-Hierarchien und standardisieren Sie die Tag-Vergabe projektübergreifend."
-        },
-        "reports": {
-          "content": "Erstellen Sie Berichte, die mehrere Projekte umfassen. Analysieren Sie Trends, Leistungskennzahlen und die Effektivität von Organisationstests in Ihrem gesamten Arbeitsbereich."
-        },
-        "notifications": {
-          "title": "Benachrichtigungseinstellungen",
-          "content": "Konfigurieren Sie die systemweiten Benachrichtigungseinstellungen. Richten Sie E-Mail-Vorlagen, Benachrichtigungsregeln und Standardeinstellungen für Benutzerbenachrichtigungen ein."
-        },
-        "integrations": {
-          "title": "Systemintegrationen",
-          "content": "Verwalten Sie Drittanbieterintegrationen und API-Verbindungen. Konfigurieren Sie Jira, GitHub und andere externe Tool-Integrationen für Ihr Unternehmen."
-        },
-        "llm": {
-          "title": "KI-Konfiguration",
-          "content": "Konfigurieren Sie KI-Modelle und -Einstellungen für die automatisierte Testfallgenerierung und intelligente Funktionen. Verwalten Sie API-Schlüssel und Modellpräferenzen."
-        },
-        "sso": {
-          "title": "Einmalanmeldung",
-          "content": "Konfigurieren Sie SSO-Anbieter und Authentifizierungsmethoden. Richten Sie SAML-, OAuth- und andere Identitätsanbieterintegrationen für einen nahtlosen Benutzerzugriff ein."
-        },
-        "appConfig": {
-          "content": "Verwalten Sie globale Anwendungseinstellungen und Systempräferenzen. Konfigurieren Sie Standardwerte, Funktionsumschalter und systemweite Verhaltensweisen."
-        },
-        "attachments": {
-          "content": "Siehe jeden Datei- und Link-Anhang überall in der Instanz, finde nicht angehängte oder gelöschte Dateien und Anhänge, und hänge Anhänge ab, lösche, stelle sie wieder her oder bereinige sie."
-        },
-        "trash": {
-          "title": "System-Papierkorb",
-          "content": "Gelöschte Elemente projektübergreifend anzeigen und verwalten. Versehentlich gelöschte Inhalte wiederherstellen oder Elemente endgültig aus dem System entfernen."
+        "sections": {
+          "testManagement": "Woraus jedes Projekt besteht: die Vorlagen und Felder, die ein Testfall aufzeichnet, der Workflow, den er durchläuft, Ergebnisstatus, Meilenstein-Typen und Konfigurationen.",
+          "peopleAndAccess": "Wer kann diese Instanz nutzen, wie werden sie gruppiert, und welche Rollen dürfen in einem Projekt tun.",
+          "authentication": "Wie sich Personen anmelden, die Passwort- und Sperrregeln, sowie die Token und Bereitstellung, die Tools und Identitätsanbieter verwenden.",
+          "toolsAndIntegrations": "Verbinden Sie Issue-Tracker und Code-Repositories, und wählen Sie, was TestPlanIt an andere Tools sendet.",
+          "aiTools": "Verbinden Sie KI-Anbieter und passen Sie die Aufforderungen und Skriptvorlagen an, die diese generieren.",
+          "system": "Instanzweite Einstellungen, Importe, Suche, Hintergrund-Jobs und die Aufzeichnungen darüber, was geändert oder gelöscht wurde."
         }
       },
       "demoProjectTour": {

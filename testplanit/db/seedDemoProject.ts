@@ -309,9 +309,10 @@ export async function seedDemoProject() {
 
   const demoProject = await db.projects.upsert({
     where: { name: "Demo Project" },
-    update: { docs: docsContent },
+    update: { docs: docsContent, isDemo: true },
     create: {
       name: "Demo Project",
+      isDemo: true,
       docs: docsContent,
       createdBy: adminUser.id,
       defaultAccessType: "GLOBAL_ROLE",

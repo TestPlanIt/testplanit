@@ -254,6 +254,7 @@ overrides:
 patchedDependencies:
   '@acid-info/docusaurus-og@1.0.3-beta.2': beddb9454387dac2126078c1626f4582ba524500d1c488c358685c5365660068
   '@zenstackhq/tanstack-query@3.10.1': 9de5f759e2459d278ba9023cf6c25c31127a30b3a1ea82d65d911c51611a1164
+  nextstepjs@2.3.0: 9e22fb91e380af7dd8d7fca6b0d53b6f2ca51792092723c6c8e776408aea2dd7
 
 importers:
 
@@ -873,7 +874,7 @@ importers:
         version: 0.4.6(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       nextstepjs:
         specifier: ^2.3.0
-        version: 2.3.0(motion@14.14.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(next@16.4.6(@babel/core@8.1.2)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        version: 2.3.0(patch_hash=9e22fb91e380af7dd8d7fca6b0d53b6f2ca51792092723c6c8e776408aea2dd7)(motion@14.14.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(next@16.4.6(@babel/core@8.1.2)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       nodemailer:
         specifier: '>=9.0.1'
         version: 10.5.0
@@ -31025,7 +31026,7 @@ snapshots:
       - '@types/node'
       - babel-plugin-macros
 
-  nextstepjs@2.3.0(motion@14.14.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(next@16.4.6(@babel/core@8.1.2)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
+  nextstepjs@2.3.0(patch_hash=9e22fb91e380af7dd8d7fca6b0d53b6f2ca51792092723c6c8e776408aea2dd7)(motion@14.14.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(next@16.4.6(@babel/core@8.1.2)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
     dependencies:
       motion: 14.14.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react: 19.3.1

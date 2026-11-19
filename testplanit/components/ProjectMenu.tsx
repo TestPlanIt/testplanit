@@ -14,7 +14,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ApplicationArea } from "~/zenstack/models";
 import {
   Gauge,
   BookText as DocumentationIcon,
@@ -45,13 +44,10 @@ import {
   Webhook,
   Fingerprint,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { schema } from "~/zenstack/schema";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useProjectMenuVisibility } from "~/hooks/useProjectMenuVisibility";
 import { Link, usePathname } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -153,59 +149,14 @@ export default function ProjectsMenu({
   const shouldRenderMenu = projectId && !isNaN(Number(projectId));
   const t = useTranslations();
   const tCommon = useTranslations("common");
-  const { data: session } = useSession();
-
-  // Requirements is opt-in per project. Teams whose source of truth is their
-  // tracker never turn it on and should not carry a permanently empty section
-  // in the menu; the flag lives on the project rather than on an integration's
-  // config because a project with no tracker at all is exactly the case the
-  // feature was asked for (requirements authored natively in TestPlanIt).
-  const { data: project } = useClientQueries(schema).projects.useFindUnique(
-    {
-      where: { id: Number(projectId) },
-      select: { requirementsEnabled: true, failureTriageEnabled: true },
-    },
-    { enabled: Boolean(projectId) && !isNaN(Number(projectId)) }
-  );
-  const requirementsEnabled = project?.requirementsEnabled === true;
-  const failureTriageEnabled = project?.failureTriageEnabled === true;
-
-  // Permission check for Shared Steps
-  const safeProjectId = projectId ? String(projectId) : "";
-  const { permissions: sharedStepsPerms } = useProjectPermissions(
-    safeProjectId,
-    ApplicationArea.SharedSteps
-  );
-  const canSeeSharedSteps =
-    sharedStepsPerms &&
-    (sharedStepsPerms.canAddEdit || sharedStepsPerms.canDelete);
-
-  // Issues are accessible to all users - no permission check needed
-
-  // Permission check for Reporting
-  const { permissions: reportingPerms } = useProjectPermissions(
-    safeProjectId,
-    ApplicationArea.Reporting
-  );
-  const canSeeReports =
-    reportingPerms && (reportingPerms.canAddEdit || reportingPerms.canDelete);
-
-  // Settings and the project audit log are for project admins.
-  // `isProjectAdmin` is the server's own resolution — the same one the
-  // settings pages, their server actions and the write policies gate on:
-  // 1. System ADMIN users (always have access to all projects)
-  // 2. System PROJECTADMIN users, on projects they are assigned to
-  // 3. Users whose effective project role carries Settings canAddEdit
-  // 4. The project's creator
-  const { isProjectAdmin } = useProjectPermissions(
-    safeProjectId,
-    ApplicationArea.Settings
-  );
-  const canSeeSettings = isProjectAdmin;
-  const canSeeAuditLogs =
-    isProjectAdmin ||
-    session?.user?.access === "ADMIN" ||
-    session?.user?.access === "PROJECTADMIN";
+  const {
+    requirementsEnabled,
+    failureTriageEnabled,
+    canSeeSharedSteps,
+    canSeeReports,
+    canSeeSettings,
+    canSeeAuditLogs,
+  } = useProjectMenuVisibility(projectId as string | undefined);
 
   const menuOptions: MenuOption[] = [
     // Project

@@ -134,6 +134,7 @@ overrides:
 patchedDependencies:
   '@acid-info/docusaurus-og@1.0.3-beta.2': patches/@acid-info__docusaurus-og@1.0.3-beta.2.patch
   '@zenstackhq/tanstack-query@3.10.1': patches/@zenstackhq__tanstack-query@3.10.1.patch
+  nextstepjs@2.3.0: patches/nextstepjs@2.3.0.patch
 
 permissions:
   '@tanstack/react-table':

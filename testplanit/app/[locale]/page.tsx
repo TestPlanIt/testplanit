@@ -3,13 +3,19 @@
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { useProjectCards } from "~/hooks/useProjectCards";
+import {
+  SETUP_CHECKLIST_OPEN_PARAM,
+  useSetupChecklist,
+} from "~/hooks/useSetupChecklist";
 import { redirect } from "~/lib/navigation";
 
-import { CreateFirstProjectCard } from "@/components/CreateFirstProjectCard";
 import { Loading } from "@/components/Loading";
 import { NoProjectsCard } from "@/components/NoProjectsCard";
+import { SetupChecklistCard } from "@/components/onboarding/SetupChecklistCard";
 import { InitialPreferencesDialog } from "@/components/onboarding/InitialPreferencesDialog";
 import { ProjectCard } from "@/components/ProjectCard";
 import { Button } from "@/components/ui/button";
@@ -30,11 +36,6 @@ type AuthUser = {
   access?: string | null;
 };
 
-// The seeded sample project (db/seedDemoProject.ts) is identified only by its
-// unique name. A workspace whose sole project is the Demo Project is treated as
-// a fresh install and nudged to create a real project.
-const DEMO_PROJECT_NAME = "Demo Project";
-
 const Welcome = ({ user: _user }: { user: AuthUser }) => {
   const t = useTranslations();
 
@@ -47,6 +48,13 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
     isFetched,
   } = useProjectCards();
 
+  const isAdmin = session?.user.access === "ADMIN";
+  // The Help menu's Setup Checklist entry opens the card even when all is done.
+  const searchParams = useSearchParams();
+  const setupChecklist = useSetupChecklist(isAdmin, {
+    forceVisible: searchParams.has(SETUP_CHECKLIST_OPEN_PARAM),
+  });
+
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const panelRef = useRef<React.ElementRef<typeof ResizablePanel>>(null);
@@ -57,14 +65,19 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
 
   const projectCount = projectsForCards.length;
 
-  const isAdmin = session.user.access === "ADMIN";
-
-  // A fresh install still has the seeded Demo Project. Prompt admins to create
-  // their own project while keeping the Demo Project visible to explore.
-  const showGetStartedPrompt =
-    isAdmin &&
-    projectCount === 1 &&
-    projectsForCards[0]?.name === DEMO_PROJECT_NAME;
+  const setupChecklistCard = setupChecklist.visible ? (
+    <SetupChecklistCard
+      items={setupChecklist.items}
+      doneCount={setupChecklist.doneCount}
+      onDismiss={setupChecklist.dismiss}
+      onMarkedChange={(key, marked) =>
+        setupChecklist
+          .setMarked(key, marked)
+          .catch(() => toast.error(t("common.errors.somethingWentWrong")))
+      }
+      showDemoNote={projectsForCards.some((project) => project.isDemo)}
+    />
+  ) : null;
 
   const toggleCollapse = () => {
     setIsTransitioning(true);
@@ -134,16 +147,17 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
                   {t("home.dashboard.projects", { count: projectCount })}
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex flex-col gap-4">
+                {/* Outside #your-projects: the welcome tour points at its first link. */}
+                {setupChecklistCard}
                 <div
                   id="your-projects"
                   className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-4"
                 >
                   {projectCount === 0 ? (
-                    <NoProjectsCard isAdmin={isAdmin} />
+                    !setupChecklistCard && <NoProjectsCard isAdmin={isAdmin} />
                   ) : (
                     <>
-                      {showGetStartedPrompt && <CreateFirstProjectCard />}
                       {projectsForCards.map((project) => (
                         <ProjectCard
                           key={project.id}

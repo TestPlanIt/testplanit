@@ -2921,12 +2921,6 @@
       "adminAddProject": "Pro začátek přidejte svůj první projekt!",
       "footer": "Pro zobrazení a účast na aktivitách plánování testů je vyžadován přístup."
     },
-    "getStarted": {
-      "title": "Začínáme",
-      "description": "Až budete připraveni začít s plánováním, přidejte vlastní projekt.",
-      "adminAddProject": "Vytvořte svůj první projekt",
-      "footer": "Ukázkový projekt obsahuje vzorová data, která můžete kdykoli prozkoumat nebo odstranit."
-    },
     "noProjectAccess": {
       "description": "Nemáte přístup k tomuto projektu.",
       "contact": "Pro požádání o přístup kontaktujte správce projektu."
@@ -2941,7 +2935,26 @@
       "assignedToYou": "{count, plural, =1 {# testovací případ přiřazený vám čeká} one {# testovací případ přiřazený vám čeká} few {# testovací případy přiřazené vám čekají} many {# testovacích případů přiřazených vám čeká} other {# testovacích případů přiřazených vám čeká}}"
     },
     "lastActivity": "Poslední aktivita",
-    "noActivity": "Zatím žádná testovací aktivita"
+    "noActivity": "Zatím žádná testovací aktivita",
+    "setupChecklist": {
+      "title": "Nastavit TestPlanIt",
+      "progress": "{done} z {total} hotovo",
+      "items": {
+        "createProject": "Vytvořit první projekt",
+        "inviteTeam": "Pozvat tým",
+        "connectIssueTracker": "Připojit sledovací systém problémů",
+        "connectAiProvider": "Připojit poskytovatele AI",
+        "setUpSso": "Nastavit jednotné přihlašování"
+      },
+      "open": "Otevřít",
+      "hint": "Zaškrtněte vše, co jste udělali jiným způsobem nebo nepotřebujete. Zaškrtnutí se vztahuje na všechny administrátory.",
+      "hide": "Skrýt kontrolní seznam",
+      "hideConfirm": {
+        "title": "Skrýt kontrolní seznam nastavení?",
+        "description": "Nebude se již zobrazovat na vaší domovské stránce. Chcete-li jej vrátit, zvolte Kontrolní seznam nastavení z nabídky Nápověda. Ostatní administrátoři jej budou vidět, dokud jej sami neskryjí."
+      },
+      "demoNote": "Ukázkový projekt obsahuje vzorová data, která můžete kdykoli prozkoumat nebo odstranit."
+    }
   },
   "users": {
     "description": "Spravujte uživatelské účty, nastavujte úrovně systémového přístupu a přiřazujte globální role.",
@@ -8553,7 +8566,8 @@
       "startTour": "Průvodce úvodní prohlídkou",
       "startProjectTour": "Prohlídka projektu",
       "startAdminTour": "Prohlídka administrace",
-      "startDemoProjectTour": "Prohlídka ukázkového projektu"
+      "startDemoProjectTour": "Prohlídka ukázkového projektu",
+      "setupChecklist": "Kontrolní seznam nastavení"
     },
     "tour": {
       "mainTour": {
@@ -8566,7 +8580,8 @@
         },
         "project": {
           "title": "Karta projektu",
-          "content": "Kliknutím na kartu projektu zobrazíte jeho podrobnosti. Pro řízenou prohlídku funkcí projektu vyberte v nabídce nápovědy možnost Prohlídka projektu."
+          "content": "Kliknutím na kartu projektu jej otevřete. V projektu zvolte v nabídce Nápověda položku Prohlídka projektu, která vás provede jeho funkcemi.",
+          "contentWithDemo": "Kliknutím na kartu projektu jej otevřete. Po dokončení tohoto průvodce se spustí průvodce pro ukázkový projekt. Jedná se o ukázkový projekt, který můžete volně prozkoumat."
         },
         "globalFeatures": {
           "title": "Globální funkce",
@@ -8644,6 +8659,15 @@
         "settings": {
           "title": "Nastavení projektu",
           "content": "Odsud spravujte integrace na úrovni projektu, konfigurace AI modelů a sdílené odkazy."
+        },
+        "requirements": {
+          "content": "Zapište, co má projekt dodat, jako strom požadavků, a propojte s nimi testovací případy, abyste viděli, které požadavky jsou pokryty a procházejí."
+        },
+        "triage": {
+          "content": "Selhané výsledky jsou seskupeny podle vzoru jejich selhání. Zaznamenejte základní příčinu jednou pro každé odpovídající selhání a uvedte problematické případy do karantény, dokud není příčina vyřešena."
+        },
+        "auditLogs": {
+          "content": "Podívejte se, kdo vytvořil, změnil nebo smazal cokoli v tomto projektu a kdy."
         }
       },
       "adminTour": {
@@ -8651,72 +8675,13 @@
           "title": "Vítejte v ovládacích prvcích administrace",
           "content": "Projděte si řízenou prohlídku administrativních funkcí aplikace TestPlanIt. Spravujte projekty, uživatele, konfigurace a systémová nastavení z tohoto centrálního administračního panelu."
         },
-        "projects": {
-          "title": "Správa projektů",
-          "content": "Spravujte všechny projekty ve své organizaci. Vytvářejte, konfigurujte a archivujte projekty. Nastavte oprávnění a řízení přístupu v rámci celého projektu."
-        },
-        "templatesAndFields": {
-          "content": "Vytvářejte a spravujte šablony testovacích případů a vlastní pole. Definujte typy polí, validační pravidla a organizujte šablony pro konzistentní strukturu testovacích případů napříč projekty."
-        },
-        "workflows": {
-          "title": "Správa pracovních postupů",
-          "content": "Definujte pracovní postupy testovacích případů a přechody mezi stavy. Nakonfigurujte, jak testovací případy postupují různými stavy, jako je Koncept, Kontrola a Schváleno."
-        },
-        "statuses": {
-          "title": "Stavy výsledků testů",
-          "content": "Nakonfigurujte dostupné stavy výsledků testů, jako je Úspěch, Neúspěch, Blokováno a Přeskočeno. Nastavte vlastní stavy a definujte jejich chování a vzhled."
-        },
-        "milestones": {
-          "content": "Definujte typy milníků pro sledování projektu. Nakonfigurujte typy vydání, kategorie sprintů a další klasifikace milníků projektu."
-        },
-        "configurations": {
-          "title": "Testovací konfigurace",
-          "content": "Spravujte testovací konfigurace a prostředí. Nastavte kombinace prohlížečů, typy zařízení, operační systémy a další kontexty spouštění testů."
-        },
-        "users": {
-          "title": "Správa uživatelů",
-          "content": "Spravujte uživatelské účty, oprávnění a úrovně přístupu. Vytvářejte nové uživatele, přiřazujte role a konfigurujte nastavení ověřování."
-        },
-        "groups": {
-          "title": "Správa skupin",
-          "content": "Organizujte uživatele do skupin pro snazší správu oprávnění. Vytvářejte skupiny oddělení, projektové týmy a skupiny s přístupem na základě rolí."
-        },
-        "roles": {
-          "title": "Správa rolí",
-          "content": "Definujte uživatelské role a oprávnění. Nakonfigurujte, jaké akce mohou různé role provádět napříč projekty a správou systému."
-        },
-        "tags": {
-          "title": "Globální štítky",
-          "content": "Spravujte štítky platné pro celou organizaci pro kategorizaci testovacích případů, projektů a dalších entit. Vytvářejte hierarchie štítků a standardizujte označování napříč projekty."
-        },
-        "reports": {
-          "content": "Generujte sestavy, které zahrnují více projektů. Analyzujte trendy, metriky výkonu a efektivitu testování v rámci celé organizace napříč celým pracovním prostorem."
-        },
-        "notifications": {
-          "title": "Nastavení oznámení",
-          "content": "Nakonfigurujte předvolby oznámení platné pro celý systém. Nastavte e-mailové šablony, pravidla oznámení a výchozí nastavení pro uživatelská oznámení."
-        },
-        "integrations": {
-          "title": "Systémové integrace",
-          "content": "Spravujte integrace třetích stran a API připojení. Nakonfigurujte integrace Jira, GitHub a dalších externích nástrojů pro vaši organizaci."
-        },
-        "llm": {
-          "title": "Konfigurace AI",
-          "content": "Nakonfigurujte AI modely a nastavení pro automatické generování testovacích případů a inteligentní funkce. Spravujte API klíče a předvolby modelů."
-        },
-        "sso": {
-          "title": "Jednotné přihlášení",
-          "content": "Nakonfigurujte poskytovatele SSO a metody ověřování. Nastavte integrace SAML, OAuth a dalších poskytovatelů identity pro bezproblémový přístup uživatelů."
-        },
-        "appConfig": {
-          "content": "Spravujte globální nastavení aplikace a systémové předvolby. Nakonfigurujte výchozí hodnoty, přepínače funkcí a chování platné pro celý systém."
-        },
-        "attachments": {
-          "content": "Podívejte se na všechny soubory a odkazy připojené kdekoli v instanci, najděte, co není připojeno nebo smazáno, a odpojujte, mažte, obnovujte nebo vyprazdňujte přílohy."
-        },
-        "trash": {
-          "title": "Systémový koš",
-          "content": "Zobrazujte a spravujte odstraněné položky napříč všemi projekty. Obnovte omylem odstraněný obsah nebo trvale vymažte položky ze systému."
+        "sections": {
+          "testManagement": "To, z čeho je každý projekt postaven: šablony a pole, která zaznamenává testovací případ, workflow, kterým prochází, stavy výsledků, typy milníků a konfigurace.",
+          "peopleAndAccess": "Kdo může používat tuto instanci, jak jsou seskupeni a jaké oprávnění má každá role v projektu.",
+          "authentication": "Jak se lidé přihlašují, pravidla hesel a uzamykání, tokeny a zřizování, které používají nástroje a poskytovatelé identit.",
+          "toolsAndIntegrations": "Připojte sledovací systémy problémů a úložiště kódu a zvolte, co TestPlanIt posílá jiným nástrojům.",
+          "aiTools": "Připojte poskytovatele AI a vyladíte výzvy a šablony skriptů, které generují.",
+          "system": "Nastavení v rámci instance, importy, vyhledávání, úlohy na pozadí a záznamy o změnách nebo smazaných záznamech."
         }
       },
       "demoProjectTour": {

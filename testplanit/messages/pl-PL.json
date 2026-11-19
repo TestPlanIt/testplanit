@@ -2921,12 +2921,6 @@
       "adminAddProject": "Dodaj swój pierwszy projekt, aby rozpocząć!",
       "footer": "Aby móc przeglądać i uczestniczyć w działaniach związanych z planowaniem testów, wymagany jest dostęp."
     },
-    "getStarted": {
-      "title": "Zacznij",
-      "description": "Dodaj własny projekt, gdy będziesz gotowy zacząć planowanie.",
-      "adminAddProject": "Utwórz swój pierwszy projekt",
-      "footer": "Projekt demonstracyjny zawiera przykładowe dane, które możesz przeglądać lub usunąć w każdej chwili."
-    },
     "noProjectAccess": {
       "description": "Nie masz dostępu do tego projektu.",
       "contact": "Aby uzyskać dostęp, skontaktuj się z administratorem projektu."
@@ -2941,7 +2935,26 @@
       "assignedToYou": "{count, plural, =1 {# przypadek testowy przypisany do Ciebie czeka} one {# przypadek testowy przypisany do Ciebie czeka} few {# przypadki testowe przypisane do Ciebie czekają} many {# przypadków testowych przypisanych do Ciebie czeka} other {# przypadków testowych przypisanych do Ciebie czeka}}"
     },
     "lastActivity": "Ostatnia aktywność",
-    "noActivity": "Brak aktywności testów"
+    "noActivity": "Brak aktywności testów",
+    "setupChecklist": {
+      "title": "Skonfiguruj TestPlanIt",
+      "progress": "{done} z {total} wykonane",
+      "items": {
+        "createProject": "Utwórz swój pierwszy projekt",
+        "inviteTeam": "Zaproś swój zespół",
+        "connectIssueTracker": "Połącz tracker problemów",
+        "connectAiProvider": "Połącz dostawcę AI",
+        "setUpSso": "Skonfiguruj logowanie jednokrotne"
+      },
+      "open": "Otwórz",
+      "hint": "Zaznacz wszystko, co zrobiłeś w inny sposób lub czego nie potrzebujesz. Zaznaczenia dotyczą wszystkich administratorów.",
+      "hide": "Ukryj listę kontrolną",
+      "hideConfirm": {
+        "title": "Ukryć listę kontrolną konfiguracji?",
+        "description": "Nie będzie już pojawiać się na Twojej stronie głównej. Aby ją przywrócić, wybierz Listę kontrolną konfiguracji z menu Pomoc. Inni administratorzy będą ją widział, dopóki sami jej nie ukryją."
+      },
+      "demoNote": "Projekt demonstracyjny zawiera przykładowe dane, które możesz eksplorować lub usunąć w dowolnym momencie."
+    }
   },
   "users": {
     "description": "Zarządzaj kontami użytkowników, ustawiaj poziomy dostępu do systemu i przypisuj role globalne.",
@@ -8553,7 +8566,8 @@
       "startTour": "Wycieczka powitalna z przewodnikiem",
       "startProjectTour": "Wycieczka po projekcie",
       "startAdminTour": "Wycieczka administracyjna",
-      "startDemoProjectTour": "Wycieczka po projekcie demonstracyjnym"
+      "startDemoProjectTour": "Wycieczka po projekcie demonstracyjnym",
+      "setupChecklist": "Lista kontrolna konfiguracji"
     },
     "tour": {
       "mainTour": {
@@ -8566,7 +8580,8 @@
         },
         "project": {
           "title": "Karta projektu",
-          "content": "Kliknij kartę projektu, aby wyświetlić jej szczegóły. Wybierz „Przewodnik po projekcie” z menu pomocy, aby zapoznać się z funkcjami projektu."
+          "content": "Kliknij kartę projektu, aby ją otworzyć. W projekcie wybierz „Wycieczka po projekcie” z menu Pomoc, aby poznać jego funkcje.",
+          "contentWithDemo": "Kliknij kartę projektu, aby ją otworzyć. Po zakończeniu tego przewodnika uruchomi się przewodnik po Projekcie demonstracyjnym. Jest to przykładowy projekt, który możesz swobodnie eksplorować."
         },
         "globalFeatures": {
           "title": "Funkcje globalne",
@@ -8644,6 +8659,15 @@
         "settings": {
           "title": "Ustawienia projektu",
           "content": "Stąd możesz zarządzać integracjami na poziomie projektu, konfiguracjami modeli AI i udostępnianymi linkami."
+        },
+        "requirements": {
+          "content": "Zapisz to, co projekt musi dostarczyć, jako drzewo wymagań i powiąż z nimi przypadki testowe, aby zobaczyć, które wymagania są pokryte i przechodzą testy."
+        },
+        "triage": {
+          "content": "Niepowodzenia wyników są pogrupowane według wzoru ich niepowodzenia. Zapisz przyczynę źródłową raz dla każdego pasującego niepowodzenia i poddaj kwarantannie niestabilne przypadki podczas naprawiania przyczyny."
+        },
+        "auditLogs": {
+          "content": "Sprawdź, kto utworzył, zmienił lub usunął coś w tym projekcie i kiedy."
         }
       },
       "adminTour": {
@@ -8651,72 +8675,13 @@
           "title": "Witamy w Kontroli administracyjnej",
           "content": "Zapoznaj się z funkcjami administracyjnymi TestPlanIt. Zarządzaj projektami, użytkownikami, konfiguracjami i ustawieniami systemu z tego centralnego panelu administracyjnego."
         },
-        "projects": {
-          "title": "Administracja projektu",
-          "content": "Zarządzaj wszystkimi projektami w swojej organizacji. Twórz, konfiguruj i archiwizuj projekty. Ustawiaj uprawnienia i kontrolę dostępu w całym projekcie."
-        },
-        "templatesAndFields": {
-          "content": "Twórz i zarządzaj szablonami przypadków testowych oraz polami niestandardowymi. Definiuj typy pól, reguły walidacji i organizuj szablony, aby zapewnić spójną strukturę przypadków testowych w różnych projektach."
-        },
-        "workflows": {
-          "title": "Zarządzanie przepływem pracy",
-          "content": "Zdefiniuj przepływy pracy przypadków testowych i przejścia między stanami. Skonfiguruj, jak przypadki testowe przechodzą przez różne stany, takie jak Wersja robocza, Przegląd i Zatwierdzenie."
-        },
-        "statuses": {
-          "title": "Statusy wyników testów",
-          "content": "Skonfiguruj dostępne statusy wyników testów, takie jak „Zaliczony”, „Niezaliczony”, „Zablokowany” i „Pominięty”. Skonfiguruj niestandardowe statusy i zdefiniuj ich zachowanie oraz wygląd."
-        },
-        "milestones": {
-          "content": "Zdefiniuj typy kamieni milowych do śledzenia projektu. Skonfiguruj typy wydań, kategorie sprintów i inne klasyfikacje kamieni milowych projektu."
-        },
-        "configurations": {
-          "title": "Konfiguracje testowe",
-          "content": "Zarządzaj konfiguracjami i środowiskami testów. Konfiguruj kombinacje przeglądarek, typy urządzeń, systemy operacyjne i inne konteksty wykonywania testów."
-        },
-        "users": {
-          "title": "Zarządzanie użytkownikami",
-          "content": "Zarządzaj kontami użytkowników, uprawnieniami i poziomami dostępu. Twórz nowych użytkowników, przypisuj role i konfiguruj ustawienia uwierzytelniania."
-        },
-        "groups": {
-          "title": "Zarządzanie Grupą",
-          "content": "Organizuj użytkowników w grupy, aby ułatwić zarządzanie uprawnieniami. Twórz grupy działowe, zespoły projektowe i grupy dostępu oparte na rolach."
-        },
-        "roles": {
-          "title": "Zarządzanie rolami",
-          "content": "Zdefiniuj role i uprawnienia użytkowników. Skonfiguruj działania, jakie mogą wykonywać poszczególne role w projektach i administracji systemem."
-        },
-        "tags": {
-          "title": "Tagi globalne",
-          "content": "Zarządzaj tagami w całej organizacji, aby kategoryzować przypadki testowe, projekty i inne jednostki. Twórz hierarchie tagów i standaryzuj tagowanie w projektach."
-        },
-        "reports": {
-          "content": "Generuj raporty obejmujące wiele projektów. Analizuj trendy, wskaźniki wydajności i skuteczność testów organizacyjnych w całym obszarze roboczym."
-        },
-        "notifications": {
-          "title": "Ustawienia powiadomień",
-          "content": "Skonfiguruj preferencje powiadomień w całym systemie. Skonfiguruj szablony wiadomości e-mail, reguły powiadomień i ustawienia domyślne powiadomień użytkowników."
-        },
-        "integrations": {
-          "title": "Integracje systemowe",
-          "content": "Zarządzaj integracjami z aplikacjami innych firm i połączeniami API. Skonfiguruj integracje z Jira, GitHub i innymi narzędziami zewnętrznymi dla swojej organizacji."
-        },
-        "llm": {
-          "title": "Konfiguracja AI",
-          "content": "Konfiguruj modele i ustawienia AI do automatycznego generowania przypadków testowych i inteligentnych funkcji. Zarządzaj kluczami API i preferencjami modeli."
-        },
-        "sso": {
-          "title": "Jednokrotne logowanie",
-          "content": "Skonfiguruj dostawców SSO i metody uwierzytelniania. Skonfiguruj integracje SAML, OAuth i innych dostawców tożsamości, aby zapewnić użytkownikom bezproblemowy dostęp."
-        },
-        "appConfig": {
-          "content": "Zarządzaj globalnymi ustawieniami aplikacji i preferencjami systemowymi. Konfiguruj wartości domyślne, przełączniki funkcji i zachowania w całym systemie."
-        },
-        "attachments": {
-          "content": "Pokaż każdy plik i link dołączony w dowolnym miejscu na instancji, znajdź to, co nie jest dołączone lub usunięte, i odłącz, usuń, przywróć lub wyczyść załączniki."
-        },
-        "trash": {
-          "title": "Kosz systemowy",
-          "content": "Przeglądaj i zarządzaj usuniętymi elementami we wszystkich projektach. Przywracaj przypadkowo usunięte treści lub trwale usuwaj elementy z systemu."
+        "sections": {
+          "testManagement": "To, z czego budowany jest każdy projekt: szablony i pola zapisywane przez przypadek testowy, przepływ pracy, przez który przechodzi, statusy wyników, typy kamieni milowych i konfiguracje.",
+          "peopleAndAccess": "Kto może korzystać z tej instancji, jak są pogrupowani i jakie działania każda rola może wykonywać w projekcie.",
+          "authentication": "Jak ludzie się logują, zasady haseł i blokowania oraz tokeny i provisioning, które narzędzia i dostawcy tożsamości wykorzystują.",
+          "toolsAndIntegrations": "Połącz trackery problemów i repozytoria kodu, a następnie wybierz, co TestPlanIt wysyła innym narzędziom.",
+          "aiTools": "Połącz dostawców AI i dostosuj podpowiedzi oraz szablony skryptów, które od nich generują.",
+          "system": "Ustawienia obejmujące całą instancję, importy, wyszukiwanie, zadania w tle oraz rekordy zmian lub usuniętych elementów."
         }
       },
       "demoProjectTour": {

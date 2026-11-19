@@ -2921,12 +2921,6 @@
       "adminAddProject": "Ajoutez votre premier projet pour commencer !",
       "footer": "L'accès est requis pour consulter et participer aux activités de planification des tests."
     },
-    "getStarted": {
-      "title": "Pour commencer",
-      "description": "Ajoutez votre propre projet lorsque vous êtes prêt à commencer la planification.",
-      "adminAddProject": "Créez votre premier projet",
-      "footer": "Le projet de démonstration contient des données d'exemple que vous pouvez explorer ou supprimer à tout moment."
-    },
     "noProjectAccess": {
       "description": "Vous n'avez pas accès à ce projet.",
       "contact": "Contactez votre administrateur de projet pour demander l'accès."
@@ -2941,7 +2935,26 @@
       "assignedToYou": "{count, plural, =1 {# cas de test assigné vous attend} other {# cas de test assignés vous attendent}}"
     },
     "lastActivity": "Dernière activité",
-    "noActivity": "Aucune activité de test pour le moment"
+    "noActivity": "Aucune activité de test pour le moment",
+    "setupChecklist": {
+      "title": "Configurer TestPlanIt",
+      "progress": "{done} sur {total} terminés",
+      "items": {
+        "createProject": "Créer votre premier projet",
+        "inviteTeam": "Inviter votre équipe",
+        "connectIssueTracker": "Connecter un suivi de problèmes",
+        "connectAiProvider": "Connecter un fournisseur d'IA",
+        "setUpSso": "Configurer l'authentification unique"
+      },
+      "open": "Ouvrir",
+      "hint": "Cochez tout ce que vous avez fait d'une autre manière ou dont vous n'avez pas besoin. Les coches s'appliquent à tous les administrateurs.",
+      "hide": "Masquer la liste de contrôle",
+      "hideConfirm": {
+        "title": "Masquer la liste de contrôle de configuration ?",
+        "description": "Elle n'apparaîtra plus sur votre page d'accueil. Pour la réafficher, choisissez Liste de contrôle de configuration dans le menu Aide. Les autres administrateurs continuent à la voir jusqu'à ce qu'ils la masquent eux-mêmes."
+      },
+      "demoNote": "Le projet de démonstration contient des données d'exemple que vous pouvez explorer ou supprimer à tout moment."
+    }
   },
   "users": {
     "description": "Gérer les comptes utilisateurs, définir les niveaux d'accès au système et attribuer des rôles globaux.",
@@ -8553,7 +8566,8 @@
       "startTour": "Visite guidée de bienvenue",
       "startProjectTour": "Visite du projet",
       "startAdminTour": "Visite guidée de l'administration",
-      "startDemoProjectTour": "Visite du projet de démonstration"
+      "startDemoProjectTour": "Visite du projet de démonstration",
+      "setupChecklist": "Liste de contrôle de configuration"
     },
     "tour": {
       "mainTour": {
@@ -8566,7 +8580,8 @@
         },
         "project": {
           "title": "Fiche de projet",
-          "content": "Cliquez sur la fiche d'un projet pour afficher ses détails. Choisissez « Visite guidée du projet » dans le menu Aide pour une présentation détaillée des fonctionnalités du projet."
+          "content": "Cliquez sur une carte de projet pour l'ouvrir. Dans un projet, choisissez Visite du projet dans le menu Aide pour une visite guidée de ses fonctionnalités.",
+          "contentWithDemo": "Cliquez sur une carte de projet pour l'ouvrir. Lorsque vous terminez cette visite, une visite du projet de démonstration commence. C'est un exemple de projet que vous pouvez explorer librement."
         },
         "globalFeatures": {
           "title": "Fonctionnalités globales",
@@ -8644,6 +8659,15 @@
         "settings": {
           "title": "Paramètres du projet",
           "content": "Gérez ici les intégrations au niveau du projet, les configurations des modèles d'IA et les liens partagés."
+        },
+        "requirements": {
+          "content": "Écrivez ce que le projet doit livrer sous forme d'arborescence d'exigences, et liez des cas de test à celles-ci pour voir quelles exigences sont couvertes et réussies."
+        },
+        "triage": {
+          "content": "Les résultats en échec sont regroupés selon le modèle de leur échec. Enregistrez une cause première une seule fois pour chaque échec correspondant, et mettez en quarantaine les cas instables pendant que la cause est en cours de correction."
+        },
+        "auditLogs": {
+          "content": "Voyez qui a créé, modifié ou supprimé quoi que ce soit dans ce projet, et quand."
         }
       },
       "adminTour": {
@@ -8651,72 +8675,13 @@
           "title": "Bienvenue dans les Contrôles d'administration",
           "content": "Découvrez les fonctionnalités d'administration de TestPlanIt grâce à une visite guidée. Gérez les projets, les utilisateurs, les configurations et les paramètres système depuis ce panneau d'administration central."
         },
-        "projects": {
-          "title": "Administration de projet",
-          "content": "Gérez tous les projets de votre organisation. Créez, configurez et archivez des projets. Définissez les autorisations et les contrôles d'accès à l'échelle du projet."
-        },
-        "templatesAndFields": {
-          "content": "Créez et gérez des modèles de cas de test et des champs personnalisés. Définissez les types de champs, les règles de validation et organisez les modèles pour une structure de cas de test cohérente entre les projets."
-        },
-        "workflows": {
-          "title": "Gestion des flux de travail",
-          "content": "Définissez les flux de travail et les transitions d'état des cas de test. Configurez la progression des cas de test à travers différents états tels que Brouillon, Révision et Approuvé."
-        },
-        "statuses": {
-          "title": "Statuts des résultats de test",
-          "content": "Configurez les statuts de résultats de test disponibles, tels que Réussi, Échec, Bloqué et Ignoré. Créez des statuts personnalisés et définissez leur comportement et leur apparence."
-        },
-        "milestones": {
-          "content": "Définissez les types de jalons pour le suivi de projet. Configurez les types de versions, les catégories de sprints et les autres classifications des jalons de projet."
-        },
-        "configurations": {
-          "title": "Configurations de test",
-          "content": "Gérez les configurations et les environnements de test. Configurez les combinaisons de navigateurs, les types d'appareils, les systèmes d'exploitation et autres contextes d'exécution des tests."
-        },
-        "users": {
-          "title": "Gestion des utilisateurs",
-          "content": "Gérez les comptes utilisateurs, les autorisations et les niveaux d'accès. Créez de nouveaux utilisateurs, attribuez des rôles et configurez les paramètres d'authentification."
-        },
-        "groups": {
-          "title": "Gestion de groupe",
-          "content": "Organisez les utilisateurs en groupes pour faciliter la gestion des autorisations. Créez des groupes par département, des équipes de projet et des groupes d'accès basés sur les rôles."
-        },
-        "roles": {
-          "title": "Gestion des rôles",
-          "content": "Définissez les rôles et les autorisations des utilisateurs. Configurez les actions que chaque rôle peut effectuer au sein des projets et de l'administration système."
-        },
-        "tags": {
-          "title": "Étiquettes globales",
-          "content": "Gérez les étiquettes à l'échelle de l'organisation pour catégoriser les cas de test, les projets et autres entités. Créez des hiérarchies d'étiquettes et standardisez l'étiquetage entre les projets."
-        },
-        "reports": {
-          "content": "Générez des rapports couvrant plusieurs projets. Analysez les tendances, les indicateurs de performance et l'efficacité des tests organisationnels dans l'ensemble de votre environnement de travail."
-        },
-        "notifications": {
-          "title": "Paramètres de notification",
-          "content": "Configurez les préférences de notification à l'échelle du système. Définissez les modèles d'e-mail, les règles de notification et les paramètres par défaut pour les notifications utilisateur."
-        },
-        "integrations": {
-          "title": "Intégrations de systèmes",
-          "content": "Gérez les intégrations tierces et les connexions API. Configurez Jira, GitHub et d'autres intégrations d'outils externes pour votre organisation."
-        },
-        "llm": {
-          "title": "Configuration de l'IA",
-          "content": "Configurez les modèles d'IA et les paramètres pour la génération automatisée de cas de test et les fonctionnalités intelligentes. Gérez les clés API et les préférences des modèles."
-        },
-        "sso": {
-          "title": "Authentification unique",
-          "content": "Configurez les fournisseurs d'authentification unique (SSO) et les méthodes d'authentification. Mettez en place les intégrations SAML, OAuth et autres fournisseurs d'identité pour un accès utilisateur fluide."
-        },
-        "appConfig": {
-          "content": "Gérez les paramètres globaux de l'application et les préférences système. Configurez les valeurs par défaut, les options d'activation/désactivation des fonctionnalités et les comportements à l'échelle du système."
-        },
-        "attachments": {
-          "content": "Consultez chaque fichier et lien attaché n'importe où sur l'instance, trouvez ce qui est non attaché ou supprimé, et détachez, supprimez, restaurez ou purgez des pièces jointes."
-        },
-        "trash": {
-          "title": "Corbeille système",
-          "content": "Consultez et gérez les éléments supprimés de tous vos projets. Restaurez les contenus supprimés accidentellement ou supprimez définitivement les éléments du système."
+        "sections": {
+          "testManagement": "Ce à partir de quoi chaque projet est construit : les modèles et les champs qu'un cas de test enregistre, le workflow qu'il traverse, les statuts des résultats, les types de jalons et les configurations.",
+          "peopleAndAccess": "Qui peut utiliser cette instance, comment ils sont groupés, et ce que chaque rôle peut faire dans un projet.",
+          "authentication": "Comment les gens se connectent, les règles de mot de passe et de verrouillage, et les jetons et l'approvisionnement que les outils et les fournisseurs d'identité utilisent.",
+          "toolsAndIntegrations": "Connectez des suivi de problèmes et des référentiels de code, et choisissez ce que TestPlanIt envoie à d'autres outils.",
+          "aiTools": "Connectez les fournisseurs d'IA et affinez les invites et les modèles de script qu'ils génèrent.",
+          "system": "Paramètres à l'échelle de l'instance, importations, recherche, travaux en arrière-plan, et les enregistrements de ce qui a été modifié ou supprimé."
         }
       },
       "demoProjectTour": {

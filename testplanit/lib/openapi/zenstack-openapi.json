@@ -374950,6 +374950,9 @@
           },
           "hasCompletedInitialPreferencesSetup": {
             "type": "boolean"
+          },
+          "hasDismissedSetupChecklist": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -374967,7 +374970,8 @@
           "detailsDisplayMode",
           "stepLayout",
           "hasCompletedWelcomeTour",
-          "hasCompletedInitialPreferencesSetup"
+          "hasCompletedInitialPreferencesSetup",
+          "hasDismissedSetupChecklist"
         ]
       },
       "UserPreferencesSelect": {
@@ -375023,6 +375027,9 @@
             "type": "boolean"
           },
           "hasCompletedInitialPreferencesSetup": {
+            "type": "boolean"
+          },
+          "hasDismissedSetupChecklist": {
             "type": "boolean"
           }
         }
@@ -375230,6 +375237,16 @@
                 "type": "boolean"
               }
             ]
+          },
+          "hasDismissedSetupChecklist": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
           }
         }
       },
@@ -375388,6 +375405,16 @@
             ]
           },
           "hasCompletedInitialPreferencesSetup": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "hasDismissedSetupChecklist": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/BoolFilter"
@@ -375566,6 +375593,16 @@
                 "type": "boolean"
               }
             ]
+          },
+          "hasDismissedSetupChecklist": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolWithAggregatesFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
           }
         }
       },
@@ -375641,6 +375678,9 @@
           },
           "hasCompletedInitialPreferencesSetup": {
             "$ref": "#/components/schemas/SortOrder"
+          },
+          "hasDismissedSetupChecklist": {
+            "$ref": "#/components/schemas/SortOrder"
           }
         }
       },
@@ -375660,7 +375700,8 @@
           "detailsDisplayMode",
           "stepLayout",
           "hasCompletedWelcomeTour",
-          "hasCompletedInitialPreferencesSetup"
+          "hasCompletedInitialPreferencesSetup",
+          "hasDismissedSetupChecklist"
         ]
       },
       "UserPreferencesCreatemutedNotificationTypesInput": {
@@ -375746,6 +375787,9 @@
           "hasCompletedInitialPreferencesSetup": {
             "type": "boolean"
           },
+          "hasDismissedSetupChecklist": {
+            "type": "boolean"
+          },
           "_all": {
             "type": "boolean"
           }
@@ -375796,6 +375840,9 @@
           "hasCompletedInitialPreferencesSetup": {
             "type": "integer"
           },
+          "hasDismissedSetupChecklist": {
+            "type": "integer"
+          },
           "_all": {
             "type": "integer"
           }
@@ -375815,6 +375862,7 @@
           "stepLayout",
           "hasCompletedWelcomeTour",
           "hasCompletedInitialPreferencesSetup",
+          "hasDismissedSetupChecklist",
           "_all"
         ]
       },
@@ -375858,6 +375906,9 @@
             "type": "boolean"
           },
           "hasCompletedInitialPreferencesSetup": {
+            "type": "boolean"
+          },
+          "hasDismissedSetupChecklist": {
             "type": "boolean"
           }
         }
@@ -375994,6 +376045,16 @@
                 "type": "boolean"
               }
             ]
+          },
+          "hasDismissedSetupChecklist": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
           }
         }
       },
@@ -376037,6 +376098,9 @@
             "type": "boolean"
           },
           "hasCompletedInitialPreferencesSetup": {
+            "type": "boolean"
+          },
+          "hasDismissedSetupChecklist": {
             "type": "boolean"
           }
         }
@@ -376173,6 +376237,16 @@
                 "type": "boolean"
               }
             ]
+          },
+          "hasDismissedSetupChecklist": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
           }
         }
       },
@@ -376266,6 +376340,9 @@
           "hasCompletedInitialPreferencesSetup": {
             "type": "boolean"
           },
+          "hasDismissedSetupChecklist": {
+            "type": "boolean"
+          },
           "_count": {
             "oneOf": [
               {
@@ -376310,7 +376387,8 @@
           "detailsDisplayMode",
           "stepLayout",
           "hasCompletedWelcomeTour",
-          "hasCompletedInitialPreferencesSetup"
+          "hasCompletedInitialPreferencesSetup",
+          "hasDismissedSetupChecklist"
         ]
       },
       "UserPreferencesCreateInput": {
@@ -376363,6 +376441,9 @@
             "type": "boolean"
           },
           "hasCompletedInitialPreferencesSetup": {
+            "type": "boolean"
+          },
+          "hasDismissedSetupChecklist": {
             "type": "boolean"
           },
           "user": {
@@ -376500,6 +376581,16 @@
             ]
           },
           "hasCompletedInitialPreferencesSetup": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "hasDismissedSetupChecklist": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -376649,6 +376740,16 @@
                 "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
               }
             ]
+          },
+          "hasDismissedSetupChecklist": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
           }
         }
       },
@@ -376705,6 +376806,9 @@
             "type": "boolean"
           },
           "hasCompletedInitialPreferencesSetup": {
+            "type": "boolean"
+          },
+          "hasDismissedSetupChecklist": {
             "type": "boolean"
           }
         },
@@ -376763,6 +376867,9 @@
           },
           "hasCompletedInitialPreferencesSetup": {
             "type": "boolean"
+          },
+          "hasDismissedSetupChecklist": {
+            "type": "boolean"
           }
         }
       },
@@ -376816,6 +376923,9 @@
             "type": "boolean"
           },
           "hasCompletedInitialPreferencesSetup": {
+            "type": "boolean"
+          },
+          "hasDismissedSetupChecklist": {
             "type": "boolean"
           }
         }
@@ -376955,6 +377065,16 @@
                 "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
               }
             ]
+          },
+          "hasDismissedSetupChecklist": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
           }
         }
       },
@@ -377085,6 +377205,16 @@
             ]
           },
           "hasCompletedInitialPreferencesSetup": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "hasDismissedSetupChecklist": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -410994,6 +411124,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -411549,6 +411682,7 @@
           "id",
           "name",
           "isCompleted",
+          "isDemo",
           "isDeleted",
           "createdAt",
           "createdBy",
@@ -411593,6 +411727,9 @@
             "type": "boolean"
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -413106,6 +413243,16 @@
               }
             ]
           },
+          "isDemo": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
           "isDeleted": {
             "oneOf": [
               {
@@ -413772,6 +413919,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/BoolFilter"
@@ -414480,6 +414637,16 @@
               }
             ]
           },
+          "isDemo": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
           "isDeleted": {
             "oneOf": [
               {
@@ -414947,6 +415114,16 @@
               }
             ]
           },
+          "isDemo": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolWithAggregatesFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
           "isDeleted": {
             "oneOf": [
               {
@@ -415399,6 +415576,9 @@
           "isCompleted": {
             "$ref": "#/components/schemas/SortOrder"
           },
+          "isDemo": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
           "isDeleted": {
             "$ref": "#/components/schemas/SortOrder"
           },
@@ -415781,6 +415961,7 @@
           "note",
           "docs",
           "isCompleted",
+          "isDemo",
           "isDeleted",
           "deletedAt",
           "deletedById",
@@ -415876,6 +416057,9 @@
             "type": "boolean"
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -416006,6 +416190,9 @@
           "isCompleted": {
             "type": "integer"
           },
+          "isDemo": {
+            "type": "integer"
+          },
           "isDeleted": {
             "type": "integer"
           },
@@ -416117,6 +416304,7 @@
           "note",
           "docs",
           "isCompleted",
+          "isDemo",
           "isDeleted",
           "deletedAt",
           "deletedById",
@@ -416175,6 +416363,9 @@
             "type": "boolean"
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -416333,6 +416524,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "null"
@@ -416671,6 +416872,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -416827,6 +417031,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "null"
@@ -417528,6 +417742,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -417789,6 +418006,7 @@
           "id",
           "name",
           "isCompleted",
+          "isDemo",
           "isDeleted",
           "createdAt",
           "createdBy",
@@ -417856,6 +418074,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -418238,6 +418459,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -418769,6 +419000,16 @@
               }
             ]
           },
+          "isDemo": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "isDeleted": {
             "oneOf": [
               {
@@ -419103,6 +419344,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -419362,6 +419606,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -419724,6 +419971,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -420144,6 +420394,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -420673,6 +420933,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -421260,6 +421530,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -421757,6 +422030,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -422469,6 +422752,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -422830,6 +423116,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -423251,6 +423540,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -423780,6 +424079,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -424482,6 +424791,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -424843,6 +425155,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -425264,6 +425579,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -425793,6 +426118,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -426495,6 +426830,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -426856,6 +427194,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -427277,6 +427618,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -427806,6 +428157,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -428508,6 +428869,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -428869,6 +429233,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -429290,6 +429657,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -429819,6 +430196,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -430521,6 +430908,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -430882,6 +431272,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -431296,6 +431689,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -431825,6 +432228,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -432409,6 +432822,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -432900,6 +433316,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -433609,6 +434035,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -433970,6 +434399,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -434391,6 +434823,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -434920,6 +435362,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -435622,6 +436074,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -435983,6 +436438,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -436404,6 +436862,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -436933,6 +437401,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -437635,6 +438113,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -437996,6 +438477,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -438417,6 +438901,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -438946,6 +439440,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -439648,6 +440152,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -440009,6 +440516,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -440430,6 +440940,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -440959,6 +441479,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -441661,6 +442191,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -442022,6 +442555,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -442443,6 +442979,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -442972,6 +443518,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -443674,6 +444230,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -444035,6 +444594,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -444456,6 +445018,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -444985,6 +445557,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -445687,6 +446269,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -446048,6 +446633,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -446469,6 +447057,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -446998,6 +447596,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -447700,6 +448308,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -448061,6 +448672,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -448482,6 +449096,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -449011,6 +449635,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -449713,6 +450347,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -450074,6 +450711,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -450495,6 +451135,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -451024,6 +451674,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -451726,6 +452386,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -452087,6 +452750,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -452508,6 +453174,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -453037,6 +453713,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -453739,6 +454425,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -454100,6 +454789,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -454514,6 +455206,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -455043,6 +455745,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -455627,6 +456339,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -456118,6 +456833,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -456827,6 +457552,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -457188,6 +457916,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -457609,6 +458340,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -458138,6 +458879,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -458840,6 +459591,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -459201,6 +459955,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -459622,6 +460379,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -460151,6 +460918,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -460853,6 +461630,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -461214,6 +461994,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -461635,6 +462418,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -462164,6 +462957,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -462866,6 +463669,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -463227,6 +464033,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -463648,6 +464457,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -464177,6 +464996,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -464879,6 +465708,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -465240,6 +466072,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -465661,6 +466496,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -466190,6 +467035,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -466892,6 +467747,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -467253,6 +468111,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -467674,6 +468535,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -468203,6 +469074,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -468905,6 +469786,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -469266,6 +470150,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -469687,6 +470574,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -470216,6 +471113,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -470918,6 +471825,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -471279,6 +472189,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -471700,6 +472613,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -472229,6 +473152,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -472931,6 +473864,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -473292,6 +474228,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -473713,6 +474652,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -474242,6 +475191,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -474944,6 +475903,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -475305,6 +476267,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -475726,6 +476691,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -476255,6 +477230,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -476957,6 +477942,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -477318,6 +478306,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -477739,6 +478730,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -478268,6 +479269,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -478970,6 +479981,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -479331,6 +480345,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -479752,6 +480769,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -480281,6 +481308,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -480983,6 +482020,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -481344,6 +482384,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -481765,6 +482808,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -482294,6 +483347,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -482996,6 +484059,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -483357,6 +484423,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -483778,6 +484847,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -484307,6 +485386,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -485009,6 +486098,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -485370,6 +486462,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -485784,6 +486879,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -486313,6 +487418,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -486897,6 +488012,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -487388,6 +488506,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -488097,6 +489225,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -488458,6 +489589,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -488879,6 +490013,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -489408,6 +490552,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -490130,6 +491284,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -490491,6 +491648,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -490912,6 +492072,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -491441,6 +492611,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -492143,6 +493323,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -492504,6 +493687,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -492925,6 +494111,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -493454,6 +494650,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -494176,6 +495382,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -494537,6 +495746,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -494958,6 +496170,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -495487,6 +496709,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -496189,6 +497421,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -496550,6 +497785,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -496971,6 +498209,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -497500,6 +498748,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -498222,6 +499480,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -498583,6 +499844,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -499004,6 +500268,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -499533,6 +500807,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -500235,6 +501519,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -500596,6 +501883,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -501017,6 +502307,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -501546,6 +502846,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -502248,6 +503558,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -502609,6 +503922,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -503030,6 +504346,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -503559,6 +504885,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -504261,6 +505597,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -504622,6 +505961,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -505043,6 +506385,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -505572,6 +506924,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -506294,6 +507656,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -506655,6 +508020,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -507076,6 +508444,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -507605,6 +508983,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -508327,6 +509715,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -508688,6 +510079,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -509109,6 +510503,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -509638,6 +511042,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -510360,6 +511774,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -510721,6 +512138,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -511142,6 +512562,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -511671,6 +513101,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -512373,6 +513813,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -512734,6 +514177,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -513148,6 +514594,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -513677,6 +515133,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -514261,6 +515727,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -514752,6 +516221,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -515461,6 +516940,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -515822,6 +517304,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -516236,6 +517721,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -516765,6 +518260,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -517349,6 +518854,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -517840,6 +519348,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -518549,6 +520067,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -518910,6 +520431,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -519324,6 +520848,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -519853,6 +521387,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -520437,6 +521981,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -520928,6 +522475,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -521637,6 +523194,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -521998,6 +523558,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -522419,6 +523982,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -522948,6 +524521,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -523650,6 +525233,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -524011,6 +525597,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -524432,6 +526021,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -524961,6 +526560,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -525663,6 +527272,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -526024,6 +527636,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -526445,6 +528060,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -526974,6 +528599,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -527676,6 +529311,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -528037,6 +529675,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -528458,6 +530099,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -528987,6 +530638,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -529689,6 +531350,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -530050,6 +531714,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -530471,6 +532138,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -531000,6 +532677,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -531702,6 +533389,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -532063,6 +533753,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -532484,6 +534177,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -533013,6 +534716,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -533715,6 +535428,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -534076,6 +535792,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -534497,6 +536216,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -535026,6 +536755,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -535748,6 +537487,9 @@
           "isCompleted": {
             "type": "boolean"
           },
+          "isDemo": {
+            "type": "boolean"
+          },
           "isDeleted": {
             "type": "boolean"
           },
@@ -536109,6 +537851,9 @@
             ]
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isDemo": {
             "type": "boolean"
           },
           "isDeleted": {
@@ -536530,6 +538275,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -537059,6 +538814,16 @@
             ]
           },
           "isCompleted": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "isDemo": {
             "oneOf": [
               {
                 "type": "boolean"

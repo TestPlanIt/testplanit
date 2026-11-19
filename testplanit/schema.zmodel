@@ -301,6 +301,7 @@ model UserPreferences {
     stepLayout                          StepLayout         @default(STACKED)
     hasCompletedWelcomeTour             Boolean            @default(false)
     hasCompletedInitialPreferencesSetup Boolean            @default(false)
+    hasDismissedSetupChecklist          Boolean            @default(false)
 
     @@deny('all', auth() == null)
     @@allow('create,update,delete', auth().id == userId || auth().access == 'ADMIN')
@@ -673,6 +674,7 @@ model Projects {
     note                             String?
     docs                             String?
     isCompleted                      Boolean                               @default(false)
+    isDemo                           Boolean                               @default(false)
     isDeleted                        Boolean                               @default(false)
     deletedAt                        DateTime?                             @db.Timestamptz(6)
     deletedById                      String?

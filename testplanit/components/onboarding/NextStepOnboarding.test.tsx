@@ -41,9 +41,14 @@ vi.mock("~/lib/navigation", () => ({
   })),
 }));
 
-vi.mock("~/hooks/useProjectPermissions", () => ({
-  useProjectPermissions: vi.fn(() => ({
-    permissions: null,
+vi.mock("~/hooks/useProjectMenuVisibility", () => ({
+  useProjectMenuVisibility: vi.fn(() => ({
+    requirementsEnabled: false,
+    failureTriageEnabled: false,
+    canSeeSharedSteps: false,
+    canSeeReports: false,
+    canSeeSettings: false,
+    canSeeAuditLogs: false,
   })),
 }));
 

@@ -2921,12 +2921,6 @@
       "adminAddProject": "¡Añade tu primer proyecto para empezar!",
       "footer": "Se requiere acceso para ver y participar en las actividades de planificación de pruebas."
     },
-    "getStarted": {
-      "title": "Comenzar",
-      "description": "Agregue su propio Proyecto cuando esté listo para comenzar a planificar.",
-      "adminAddProject": "Crear su primer Proyecto",
-      "footer": "El Proyecto de Demostración contiene datos de muestra que puede explorar o eliminar en cualquier momento."
-    },
     "noProjectAccess": {
       "description": "No tienes acceso a este proyecto.",
       "contact": "Comuníquese con el administrador de su proyecto para solicitar acceso."
@@ -2941,7 +2935,26 @@
       "assignedToYou": "{count, plural, =1 {# caso de prueba asignado a ti está esperando} other {# casos de prueba asignados a ti están esperando}}"
     },
     "lastActivity": "Última actividad",
-    "noActivity": "Sin actividad de prueba aún"
+    "noActivity": "Sin actividad de prueba aún",
+    "setupChecklist": {
+      "title": "Configurar TestPlanIt",
+      "progress": "{done} de {total} completado",
+      "items": {
+        "createProject": "Crear tu primer proyecto",
+        "inviteTeam": "Invitar a tu equipo",
+        "connectIssueTracker": "Conectar un rastreador de problemas",
+        "connectAiProvider": "Conectar un proveedor de IA",
+        "setUpSso": "Configurar inicio de sesión único"
+      },
+      "open": "Abrir",
+      "hint": "Marca todo lo que ya hayas hecho de otra manera o que no necesites. Las marcas se aplican a todos los administradores.",
+      "hide": "Ocultar lista de verificación",
+      "hideConfirm": {
+        "title": "¿Ocultar la lista de verificación de configuración?",
+        "description": "Ya no aparecerá en tu página de inicio. Para recuperarla, elige Lista de verificación de configuración en el menú Ayuda. Otros administradores seguirán viéndola hasta que la oculten ellos mismos."
+      },
+      "demoNote": "El Proyecto de demostración contiene datos de ejemplo que puedes explorar o eliminar en cualquier momento."
+    }
   },
   "users": {
     "description": "Gestiona las cuentas de usuario, establece los niveles de acceso al sistema y asigna roles globales.",
@@ -8553,7 +8566,8 @@
       "startTour": "Visita de bienvenida guiada",
       "startProjectTour": "Tour de proyecto",
       "startAdminTour": "Visita de administración",
-      "startDemoProjectTour": "Recorrido del proyecto de demostración"
+      "startDemoProjectTour": "Recorrido del proyecto de demostración",
+      "setupChecklist": "Lista de verificación de configuración"
     },
     "tour": {
       "mainTour": {
@@ -8566,7 +8580,8 @@
         },
         "project": {
           "title": "Tarjeta de proyecto",
-          "content": "Haga clic en una tarjeta de proyecto para ver sus detalles. Elija el tour del proyecto en el menú de ayuda para una visita guiada de las características del proyecto."
+          "content": "Haz clic en una tarjeta de proyecto para abrirla. Dentro de un proyecto, elige Tour de proyecto en el menú Ayuda para un recorrido guiado por sus funciones.",
+          "contentWithDemo": "Haz clic en una tarjeta de proyecto para abrirla. Cuando termines este tour, comienza un tour del Proyecto de demostración. Es un proyecto de ejemplo que puedes explorar libremente."
         },
         "globalFeatures": {
           "title": "Características globales",
@@ -8644,6 +8659,15 @@
         "settings": {
           "title": "Configuración del proyecto",
           "content": "Administre integraciones a nivel de proyecto, configuraciones de modelos de IA y enlaces compartidos desde aquí."
+        },
+        "requirements": {
+          "content": "Escribe lo que el proyecto tiene que entregar como un árbol de requisitos y vincula casos de prueba a ellos para ver qué requisitos están cubiertos y pasando."
+        },
+        "triage": {
+          "content": "Los resultados fallidos se agrupan por el patrón de su fallo. Registra una causa raíz una vez por cada fallo coincidente y pone en cuarentena los casos inestables mientras se corrige la causa."
+        },
+        "auditLogs": {
+          "content": "Ve quién creó, cambió o eliminó cualquier cosa en este proyecto y cuándo."
         }
       },
       "adminTour": {
@@ -8651,72 +8675,13 @@
           "title": "Bienvenido a Controles de administración",
           "content": "Realice una visita guiada a las funciones administrativas de TestPlanIt. Gestione proyectos, usuarios, configuraciones y ajustes del sistema desde este panel de administración central."
         },
-        "projects": {
-          "title": "Administración de proyectos",
-          "content": "Gestione todos los proyectos de su organización. Cree, configure y archive proyectos. Establezca permisos y controles de acceso para todo el proyecto."
-        },
-        "templatesAndFields": {
-          "content": "Cree y administre plantillas de casos de prueba y campos personalizados. Defina tipos de campo, reglas de validación y organice las plantillas para lograr una estructura de casos de prueba consistente en todos los proyectos."
-        },
-        "workflows": {
-          "title": "Gestión del flujo de trabajo",
-          "content": "Defina los flujos de trabajo de los casos de prueba y las transiciones de estado. Configure cómo progresan los casos de prueba a través de diferentes estados, como Borrador, Revisión y Aprobado."
-        },
-        "statuses": {
-          "title": "Estados de los resultados de las pruebas",
-          "content": "Configure los estados de resultados de prueba disponibles, como Aprobado, Reprobado, Bloqueado y Omitir. Configure estados personalizados y defina su comportamiento y apariencia."
-        },
-        "milestones": {
-          "content": "Define los tipos de hitos para el seguimiento del proyecto. Configura los tipos de lanzamiento, las categorías de sprint y otras clasificaciones de hitos del proyecto."
-        },
-        "configurations": {
-          "title": "Configuraciones de prueba",
-          "content": "Gestione configuraciones y entornos de prueba. Configure combinaciones de navegadores, tipos de dispositivos, sistemas operativos y otros contextos de ejecución de pruebas."
-        },
-        "users": {
-          "title": "Gestión de usuarios",
-          "content": "Administre cuentas de usuario, permisos y niveles de acceso. Cree nuevos usuarios, asigne roles y configure la autenticación."
-        },
-        "groups": {
-          "title": "Gestión de grupos",
-          "content": "Organice a los usuarios en grupos para facilitar la gestión de permisos. Cree grupos de departamentos, equipos de proyecto y grupos de acceso basados en roles."
-        },
-        "roles": {
-          "title": "Gestión de roles",
-          "content": "Defina roles y permisos de usuario. Configure las acciones que pueden realizar los distintos roles en los proyectos y la administración del sistema."
-        },
-        "tags": {
-          "title": "Etiquetas globales",
-          "content": "Gestione etiquetas en toda la organización para categorizar casos de prueba, proyectos y otras entidades. Cree jerarquías de etiquetas y estandarice el etiquetado en todos los proyectos."
-        },
-        "reports": {
-          "content": "Genere informes que abarquen varios proyectos. Analice tendencias, métricas de rendimiento y la eficacia de las pruebas organizacionales en todo su espacio de trabajo."
-        },
-        "notifications": {
-          "title": "Configuración de notificaciones",
-          "content": "Configure las preferencias de notificación para todo el sistema. Configure plantillas de correo electrónico, reglas de notificación y la configuración predeterminada para las notificaciones de usuario."
-        },
-        "integrations": {
-          "title": "Integraciones de sistemas",
-          "content": "Gestione integraciones de terceros y conexiones API. Configure integraciones con Jira, GitHub y otras herramientas externas para su organización."
-        },
-        "llm": {
-          "title": "Configuración de IA",
-          "content": "Configure modelos de IA y ajustes para la generación automatizada de casos de prueba y funciones inteligentes. Gestione las claves API y las preferencias de los modelos."
-        },
-        "sso": {
-          "title": "Inicio de sesión único",
-          "content": "Configure proveedores de SSO y métodos de autenticación. Configure integraciones con SAML, OAuth y otros proveedores de identidad para un acceso sin problemas a los usuarios."
-        },
-        "appConfig": {
-          "content": "Administre la configuración global de la aplicación y las preferencias del sistema. Configure valores predeterminados, opciones de configuración y comportamientos del sistema."
-        },
-        "attachments": {
-          "content": "Ve todos los archivos y enlaces adjuntos en cualquier lugar de la instancia, encuentra lo que está sin adjuntar o eliminado, y desadjunta, elimina, restaura o purga adjuntos."
-        },
-        "trash": {
-          "title": "Papelera del sistema",
-          "content": "Visualiza y gestiona elementos eliminados en todos los proyectos. Restaura contenido eliminado accidentalmente o purga elementos permanentemente del sistema."
+        "sections": {
+          "testManagement": "Lo que todo proyecto se construye sobre: las plantillas y campos que registra un caso de prueba, el flujo de trabajo por el que se mueve, los estados de resultado, tipos de hitos y configuraciones.",
+          "peopleAndAccess": "Quién puede usar esta instancia, cómo están agrupados y qué puede hacer cada rol en un proyecto.",
+          "authentication": "Cómo inician sesión las personas, las reglas de contraseña y bloqueo, y los tokens y aprovisionamiento que utilizan las herramientas y proveedores de identidad.",
+          "toolsAndIntegrations": "Conecta rastreadores de problemas y repositorios de código, y elige qué envía TestPlanIt a otras herramientas.",
+          "aiTools": "Conecta proveedores de IA y ajusta los indicadores y plantillas de script que generan.",
+          "system": "Configuración de toda la instancia, importaciones, búsqueda, trabajos en segundo plano y los registros de qué fue cambiado o eliminado."
         }
       },
       "demoProjectTour": {

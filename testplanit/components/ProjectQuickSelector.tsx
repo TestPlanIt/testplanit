@@ -43,6 +43,7 @@ export const ProjectQuickSelector = () => {
       iconUrl: true,
       isCompleted: true,
       isDeleted: true,
+      isDemo: true,
     },
   });
 

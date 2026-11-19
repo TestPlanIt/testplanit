@@ -6,6 +6,7 @@ import {
   BookOpen,
   Clock,
   HelpCircle,
+  ListChecks,
   LucideWaypoints,
   MessageSquareHeart,
   MoreVertical,
@@ -47,6 +48,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { UserDropdownMenu } from "@/components/UserDropdownMenu";
 import { useHeaderAlertCounts } from "~/hooks/useHeaderAlertCounts";
+import { useShowSetupChecklist } from "~/hooks/useSetupChecklist";
 import { getVersionString } from "~/lib/version";
 import { cn } from "~/utils";
 import { apiFetch } from "~/lib/basePath";
@@ -87,6 +89,7 @@ export const Header = () => {
   // kebab; surface their combined unread total on the kebab so it isn't missed.
   // Gated on `isHeaderCompact` so it only fetches while those icons are hidden.
   const { total: alertCount } = useHeaderAlertCounts(isHeaderCompact);
+  const showSetupChecklist = useShowSetupChecklist();
   const params = useParams();
   const projectId = params?.projectId as string | undefined;
   const isOnProjectPage = path.includes("/projects/") && !!projectId;
@@ -110,11 +113,11 @@ export const Header = () => {
   ).projects.useFindUnique(
     {
       where: { id: Number(projectId) },
-      select: { name: true },
+      select: { isDemo: true },
     },
     { enabled: isOnProjectPage && !!projectId }
   );
-  const isDemoProject = currentProject?.name === "Demo Project";
+  const isDemoProject = currentProject?.isDemo === true;
 
   // Reuse the same query as ProjectQuickSelector — React Query deduplicates it
   const { data: allProjects = [] } = useClientQueries(
@@ -128,9 +131,10 @@ export const Header = () => {
       iconUrl: true,
       isCompleted: true,
       isDeleted: true,
+      isDemo: true,
     },
   });
-  const demoProject = allProjects.find((p) => p.name === "Demo Project");
+  const demoProject = allProjects.find((p) => p.isDemo);
 
   // Fetch trial configuration from API (env vars are baked in at build time, so we need runtime fetch)
   useEffect(() => {
@@ -279,6 +283,16 @@ export const Header = () => {
         >
           <LucideWaypoints className="me-2 h-4 w-4" />
           {t("help.menu.startAdminTour")}
+        </DropdownMenuItem>
+      )}
+      {session.user.access === "ADMIN" && (
+        <DropdownMenuItem
+          onClick={() => void showSetupChecklist()}
+          className="cursor-pointer"
+          data-testid="help-menu-setup-checklist"
+        >
+          <ListChecks className="me-2 h-4 w-4" />
+          {t("help.menu.setupChecklist")}
         </DropdownMenuItem>
       )}
       <DropdownMenuItem

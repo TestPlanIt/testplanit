@@ -2921,12 +2921,6 @@
       "adminAddProject": "Add your first Project to get started!",
       "footer": "Access is required to view and participate in test planning activities."
     },
-    "getStarted": {
-      "title": "Get started",
-      "description": "Add your own Project when you're ready to start planning.",
-      "adminAddProject": "Create your first Project",
-      "footer": "The Demo Project contains sample data you can explore or remove at any time."
-    },
     "noProjectAccess": {
       "description": "You do not have access to this project.",
       "contact": "Contact your project administrator to request access."
@@ -2941,7 +2935,26 @@
       "assignedToYou": "{count, plural, =1 {# test case assigned to you is waiting} other {# test cases assigned to you are waiting}}"
     },
     "lastActivity": "Last activity",
-    "noActivity": "No test activity yet"
+    "noActivity": "No test activity yet",
+    "setupChecklist": {
+      "title": "Set up TestPlanIt",
+      "progress": "{done} of {total} done",
+      "items": {
+        "createProject": "Create your first project",
+        "inviteTeam": "Invite your team",
+        "connectIssueTracker": "Connect an issue tracker",
+        "connectAiProvider": "Connect an AI provider",
+        "setUpSso": "Set up single sign-on"
+      },
+      "open": "Open",
+      "hint": "Tick anything you have done another way or don't need. Ticks apply to every administrator.",
+      "hide": "Hide checklist",
+      "hideConfirm": {
+        "title": "Hide the setup checklist?",
+        "description": "It will no longer appear on your home page. To bring it back, choose Setup Checklist from the Help menu. Other administrators keep seeing it until they hide it themselves."
+      },
+      "demoNote": "The Demo Project contains sample data you can explore or remove at any time."
+    }
   },
   "users": {
     "description": "Manage user accounts, set system access levels, and assign global roles.",
@@ -8553,7 +8566,8 @@
       "startTour": "Guided Welcome Tour",
       "startProjectTour": "Project Tour",
       "startAdminTour": "Admin Tour",
-      "startDemoProjectTour": "Demo Project Tour"
+      "startDemoProjectTour": "Demo Project Tour",
+      "setupChecklist": "Setup Checklist"
     },
     "tour": {
       "mainTour": {
@@ -8566,7 +8580,8 @@
         },
         "project": {
           "title": "Project Card",
-          "content": "Click a project card to view its details. Choose Project Tour from the help menu for a guided tour of project features."
+          "content": "Click a project card to open it. Inside a project, choose Project Tour from the Help menu for a guided tour of its features.",
+          "contentWithDemo": "Click a project card to open it. When you finish this tour, a tour of the Demo Project starts. It is a sample project you can explore freely."
         },
         "globalFeatures": {
           "title": "Global Features",
@@ -8644,6 +8659,15 @@
         "settings": {
           "title": "Project Settings",
           "content": "Manage project-level integrations, AI model configurations, and shared links from here."
+        },
+        "requirements": {
+          "content": "Write down what the project has to deliver as a tree of requirements, and link test cases to them to see which requirements are covered and passing."
+        },
+        "triage": {
+          "content": "Failing results are grouped by the pattern of their failure. Record a root cause once for every matching failure, and quarantine flaky cases while the cause is being fixed."
+        },
+        "auditLogs": {
+          "content": "See who created, changed or deleted anything in this project, and when."
         }
       },
       "adminTour": {
@@ -8651,72 +8675,13 @@
           "title": "Welcome to Admin Controls",
           "content": "Take a guided tour of TestPlanIt's administrative features. Manage projects, users, configurations, and system settings from this central administration panel."
         },
-        "projects": {
-          "title": "Project Administration",
-          "content": "Manage all projects in your organization. Create, configure, and archive projects. Set project-wide permissions and access controls."
-        },
-        "templatesAndFields": {
-          "content": "Create and manage test case templates and custom fields. Define field types, validation rules, and organize templates for consistent test case structure across projects."
-        },
-        "workflows": {
-          "title": "Workflow Management",
-          "content": "Define test case workflows and state transitions. Configure how test cases progress through different states like Draft, Review, and Approved."
-        },
-        "statuses": {
-          "title": "Test Result Statuses",
-          "content": "Configure available test result statuses like Pass, Fail, Blocked, and Skip. Set up custom statuses and define their behavior and appearance."
-        },
-        "milestones": {
-          "content": "Define milestone types for project tracking. Configure release types, sprint categories, and other project milestone classifications."
-        },
-        "configurations": {
-          "title": "Test Configurations",
-          "content": "Manage test configurations and environments. Set up browser combinations, device types, operating systems, and other test execution contexts."
-        },
-        "users": {
-          "title": "User Management",
-          "content": "Manage user accounts, permissions, and access levels. Create new users, assign roles, and configure authentication settings."
-        },
-        "groups": {
-          "title": "Group Management",
-          "content": "Organize users into groups for easier permission management. Create department groups, project teams, and role-based access groups."
-        },
-        "roles": {
-          "title": "Role Management",
-          "content": "Define user roles and permissions. Configure what actions different roles can perform across projects and system administration."
-        },
-        "tags": {
-          "title": "Global Tags",
-          "content": "Manage organization-wide tags for categorizing test cases, projects, and other entities. Create tag hierarchies and standardize tagging across projects."
-        },
-        "reports": {
-          "content": "Generate reports that span multiple projects. Analyze trends, performance metrics, and organizational testing effectiveness across your entire workspace."
-        },
-        "notifications": {
-          "title": "Notification Settings",
-          "content": "Configure system-wide notification preferences. Set up email templates, notification rules, and default settings for user notifications."
-        },
-        "integrations": {
-          "title": "System Integrations",
-          "content": "Manage third-party integrations and API connections. Configure Jira, GitHub, and other external tool integrations for your organization."
-        },
-        "llm": {
-          "title": "AI Configuration",
-          "content": "Configure AI models and settings for automated test case generation and intelligent features. Manage API keys and model preferences."
-        },
-        "sso": {
-          "title": "Single Sign-On",
-          "content": "Configure SSO providers and authentication methods. Set up SAML, OAuth, and other identity provider integrations for seamless user access."
-        },
-        "appConfig": {
-          "content": "Manage global application settings and system preferences. Configure default values, feature toggles, and system-wide behaviors."
-        },
-        "attachments": {
-          "content": "See every file and link attached anywhere on the instance, find what is unattached or deleted, and detach, delete, restore or purge attachments."
-        },
-        "trash": {
-          "title": "System Trash",
-          "content": "View and manage deleted items across all projects. Restore accidentally deleted content or permanently purge items from the system."
+        "sections": {
+          "testManagement": "What every project is built from: the templates and fields a test case records, the workflow it moves through, result statuses, milestone types and configurations.",
+          "peopleAndAccess": "Who can use this instance, how they are grouped, and what each role may do in a project.",
+          "authentication": "How people sign in, the password and lockout rules, and the tokens and provisioning that tools and identity providers use.",
+          "toolsAndIntegrations": "Connect issue trackers and code repositories, and choose what TestPlanIt sends to other tools.",
+          "aiTools": "Connect AI providers and tune the prompts and script templates they generate from.",
+          "system": "Instance-wide settings, imports, search, background jobs, and the records of what was changed or deleted."
         }
       },
       "demoProjectTour": {

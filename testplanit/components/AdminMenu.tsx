@@ -49,7 +49,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
-type MenuSection =
+export type AdminMenuSection =
   | "testManagement"
   | "peopleAndAccess"
   | "authentication"
@@ -61,10 +61,10 @@ type MenuOption = {
   icon: React.ElementType;
   translationKey: string;
   path: string;
-  section: MenuSection;
+  section: AdminMenuSection;
 };
 
-const sectionIcons: Record<MenuSection, React.ElementType> = {
+const sectionIcons: Record<AdminMenuSection, React.ElementType> = {
   testManagement: Boxes,
   peopleAndAccess: Users,
   authentication: Lock,
@@ -73,7 +73,7 @@ const sectionIcons: Record<MenuSection, React.ElementType> = {
   system: Settings,
 };
 
-const sectionOrder: MenuSection[] = [
+const sectionOrder: AdminMenuSection[] = [
   "testManagement",
   "peopleAndAccess",
   "authentication",
@@ -294,7 +294,11 @@ const menuOptions: MenuOption[] = [
   },
 ];
 
-function getGroupedItems() {
+/**
+ * The admin menu's sections in order, each with the pages it links to. The
+ * admin tour describes one section per step from this same list.
+ */
+export function getAdminMenuSections() {
   return sectionOrder.map((sectionKey) => ({
     key: sectionKey,
     items: menuOptions.filter((opt) => opt.section === sectionKey),
@@ -305,12 +309,10 @@ function MenuLink({
   option,
   isActive,
   menuButtonClass,
-  t,
 }: {
   option: MenuOption;
   isActive: boolean;
   menuButtonClass: string;
-  t: ReturnType<typeof useTranslations>;
 }) {
   const tGlobal = useTranslations();
   const IconComponent = option.icon;
@@ -330,9 +332,7 @@ function MenuLink({
     >
       <IconComponent className="size-5 shrink-0" />
       <span className={`hidden md:inline ${isActive ? "font-bold" : ""}`}>
-        {SHARED_MENU_LABEL_KEYS[option.translationKey]
-          ? tGlobal(SHARED_MENU_LABEL_KEYS[option.translationKey] as any)
-          : t(option.translationKey as any)}
+        {tGlobal(adminMenuLabelKey(option.translationKey) as any)}
       </span>
     </Link>
   );
@@ -364,6 +364,13 @@ const SHARED_MENU_LABEL_KEYS: Record<string, string> = {
   automation: "common.pageTitles.automation",
 };
 
+/** The full translation key of an admin menu item's label. */
+export function adminMenuLabelKey(translationKey: string): string {
+  return (
+    SHARED_MENU_LABEL_KEYS[translationKey] ?? `admin.menu.${translationKey}`
+  );
+}
+
 export default function AdminMenu() {
   const router = useRouter();
   const page = usePathname().split("/")[2];
@@ -371,7 +378,7 @@ export default function AdminMenu() {
   const t = useTranslations("admin.menu");
   const tGlobal = useTranslations();
 
-  const groups = getGroupedItems();
+  const groups = getAdminMenuSections();
 
   const [openSections, setOpenSections] = useState<string[]>(() => []);
   const ssrDefaultSections = useRef(openSections);
@@ -450,7 +457,10 @@ export default function AdminMenu() {
                 className="mb-0 overflow-visible rounded-none border-0"
                 data-testid={`admin-menu-section-${group.key}`}
               >
-                <AccordionTrigger className="ms-3 mt-2 flex border-b-2 border-primary/40 bg-transparent px-0 py-2 text-xs uppercase hover:bg-transparent hover:no-underline md:border-b-0">
+                <AccordionTrigger
+                  data-testid={`admin-menu-section-trigger-${group.key}`}
+                  className="ms-3 mt-2 flex border-b-2 border-primary/40 bg-transparent px-0 py-2 text-xs uppercase hover:bg-transparent hover:no-underline md:border-b-0"
+                >
                   <span className="md:hidden">
                     {(() => {
                       const Icon = sectionIcons[group.key];
@@ -470,7 +480,6 @@ export default function AdminMenu() {
                       option={option}
                       isActive={page === option.path}
                       menuButtonClass={menuButtonClass}
-                      t={t}
                     />
                   ))}
                 </AccordionContent>

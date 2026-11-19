@@ -58,6 +58,22 @@ Before creating tests, you might want to familiarize yourself with the administr
 
 See the [Administration section](./user-guide/administration.md) for details.
 
+### Setup checklist
+
+Administrators see a **Set up TestPlanIt** checklist on the home page. It lists the first things to do on a new instance:
+
+- Create your first project
+- Invite your team
+- Connect an issue tracker
+- Connect an AI provider
+- Set up single sign-on
+
+An item is ticked off once it is done. The Demo Project does not count as your first project, and magic link sign-in does not count as single sign-on. You can also tick an item yourself, for example one you don't need. Ticks you add apply to every administrator, and you can untick them again.
+
+The checklist goes away when every item is ticked, or when you choose **Hide checklist**. Hiding it only affects your own account. To bring it back, choose **Help menu > Setup Checklist**.
+
+For a walkthrough of the administration area, open any Administration page and choose **Help menu > Admin Tour**. It has one step for each section of the administration menu.
+
 ## 4. Creating Your User Account
 
 **(Optional: Skip this step if you configured your desired admin credentials using the `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` variables in your `.env` file before running the initial application setup.)**

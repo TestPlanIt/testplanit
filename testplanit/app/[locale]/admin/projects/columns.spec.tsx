@@ -139,6 +139,7 @@ const testProject: ExtendedProjects = {
   deletedAt: null,
   deletedById: null,
   isCompleted: false,
+  isDemo: false,
   completedAt: null,
   createdAt: new Date(),
   createdBy: "user-1",

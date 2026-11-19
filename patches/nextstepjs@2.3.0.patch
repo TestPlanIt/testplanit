@@ -1,0 +1,100 @@
+diff --git a/dist/NextStepReact.js b/dist/NextStepReact.js
+index 8c1ba13a8c8bbdedc95075148a84096614dc99e9..8ed71bf521da4e666f6447a3ecc0bffd5e262914 100644
+--- a/dist/NextStepReact.js
++++ b/dist/NextStepReact.js
+@@ -399,11 +399,23 @@ const NextStepReact = (props) => {
+         }
+     };
+     // - -
+-    // Update pointer position on window resize
++    // Update pointer position on window resize, and on any scroll (captured, so a
++    // scrolling container counts too): an anchor inside a sticky or scrolled
++    // container moves through the page without the window resizing.
+     useEffect(() => {
+         if (isNextStepVisible) {
++            let frame = 0;
++            const onScroll = () => {
++                cancelAnimationFrame(frame);
++                frame = requestAnimationFrame(updatePointerPosition);
++            };
+             window.addEventListener('resize', updatePointerPosition);
+-            return () => window.removeEventListener('resize', updatePointerPosition);
++            window.addEventListener('scroll', onScroll, { passive: true, capture: true });
++            return () => {
++                cancelAnimationFrame(frame);
++                window.removeEventListener('resize', updatePointerPosition);
++                window.removeEventListener('scroll', onScroll, { capture: true });
++            };
+         }
+     }, [currentStep, currentTourSteps, isNextStepVisible]);
+     // - -
+@@ -638,12 +650,20 @@ const NextStepReact = (props) => {
+         }
+         // Space (px) the card needs to fit on a given side of the spotlight.
+         const CARD_SPACE = 256;
++        // Vertical room is judged against the card's real height when it is
++        // taller than that, so a long card still flips before it runs off.
++        const CARD_HEIGHT = Math.max(CARD_SPACE, cardRef.current?.offsetHeight ?? 0);
+         const { x, y, width, height } = pointerPosition;
+         // Available room around the spotlight within the (scrollable) viewport.
+         const spaceRight = viewport.scrollWidth - (x + width);
+         const spaceLeft = x;
+-        const spaceTop = y;
+-        const spaceBottom = viewport.scrollHeight - (y + height);
++        // Vertical room on the page is measured within the window, not the whole
++        // document: an anchor in a sticky container stays put as the page scrolls.
++        const onBody = viewport === window.document.body;
++        const spaceTop = onBody ? y - window.scrollY : y;
++        const spaceBottom = onBody
++            ? window.innerHeight - (y - window.scrollY + height)
++            : viewport.scrollHeight - (y + height);
+         let tempSide = side;
+         // Horizontal primary placement (left/right): flip to the opposite side only
+         // if it has room, otherwise fall back to the roomier vertical side.
+@@ -663,18 +683,42 @@ const NextStepReact = (props) => {
+                 tempSide = spaceBottom >= spaceTop ? 'bottom' : 'top';
+             }
+         }
++        // A card centred beside the spotlight (left, right) that would run past an
++        // edge is aligned to the spotlight's edge instead.
++        if (tempSide === 'right' || tempSide === 'left') {
++            const overhang = (CARD_HEIGHT - height) / 2;
++            if (spaceBottom < overhang) {
++                tempSide = `${tempSide}-bottom`;
++            }
++            else if (spaceTop < overhang) {
++                tempSide = `${tempSide}-top`;
++            }
++        }
+         // Vertical placement (top/bottom): verify the destination has room before
+         // flipping; if neither side fits, keep whichever has more space.
+-        if (tempSide.includes('top') && spaceTop < CARD_SPACE) {
+-            if (spaceBottom >= CARD_SPACE || spaceBottom > spaceTop) {
++        if (tempSide.startsWith('top') && spaceTop < CARD_HEIGHT) {
++            if (spaceBottom >= CARD_HEIGHT || spaceBottom > spaceTop) {
+                 tempSide = tempSide.replace('top', 'bottom');
+             }
+         }
+-        else if (tempSide.includes('bottom') && spaceBottom < CARD_SPACE) {
+-            if (spaceTop >= CARD_SPACE || spaceTop > spaceBottom) {
++        else if (tempSide.startsWith('bottom') && spaceBottom < CARD_HEIGHT) {
++            if (spaceTop >= CARD_HEIGHT || spaceTop > spaceBottom) {
+                 tempSide = tempSide.replace('bottom', 'top');
+             }
+         }
++        // A side placement aligned to the spotlight's top edge (right-top,
++        // left-top) runs downward and needs room below; one aligned to its
++        // bottom edge runs upward and needs room above.
++        else if (tempSide.endsWith('-top') && spaceBottom < CARD_HEIGHT) {
++            if (spaceTop >= CARD_HEIGHT || spaceTop > spaceBottom) {
++                tempSide = tempSide.replace('-top', '-bottom');
++            }
++        }
++        else if (tempSide.endsWith('-bottom') && spaceTop < CARD_HEIGHT) {
++            if (spaceBottom >= CARD_HEIGHT || spaceBottom > spaceTop) {
++                tempSide = tempSide.replace('-bottom', '-top');
++            }
++        }
+         return tempSide;
+     };
+     // - -

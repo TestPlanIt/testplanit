@@ -4,7 +4,6 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ApplicationArea } from "~/zenstack/models";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -18,7 +17,15 @@ import {
   useNextStep,
 } from "nextstepjs";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import {
+  adminMenuLabelKey,
+  getAdminMenuSections,
+} from "@/components/AdminMenu";
+import { AdminTourSectionContent } from "@/components/onboarding/AdminTourSectionContent";
+import {
+  type ProjectMenuVisibility,
+  useProjectMenuVisibility,
+} from "~/hooks/useProjectMenuVisibility";
 import { usePathname, useRouter } from "~/lib/navigation";
 
 // Custom tour card component that respects Tailwind theme
@@ -35,7 +42,11 @@ function TourCard({
 
   return (
     <div className="relative">
-      <Card className="w-80 border-border bg-card/70 text-card-foreground shadow-lg backdrop-blur-xs">
+      <Card
+        className="w-80 border-border bg-card/70 text-card-foreground shadow-lg backdrop-blur-xs"
+        data-testid="tour-card"
+        data-step-selector={step.selector}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-semibold text-primary">
@@ -76,7 +87,12 @@ function TourCard({
                 </Button>
               )}
 
-              <Button size="sm" onClick={nextStep} className="text-xs">
+              <Button
+                size="sm"
+                onClick={nextStep}
+                className="text-xs"
+                data-testid="tour-card-next"
+              >
                 {currentStep === totalSteps - 1
                   ? t("common.actions.finish") || "Finish"
                   : t("common.actions.next") || "Next"}
@@ -97,14 +113,10 @@ function TourCard({
   );
 }
 
-const createTourSteps = (
+export const createTourSteps = (
   t: any,
   projectId?: string,
-  options?: {
-    canSeeSharedSteps?: boolean;
-    canSeeReports?: boolean;
-    canSeeSettings?: boolean;
-  }
+  options?: Partial<ProjectMenuVisibility> & { hasDemoProject?: boolean }
 ): Tour[] => [
   {
     tour: "mainTour",
@@ -203,7 +215,10 @@ const createTourSteps = (
       {
         icon: null,
         title: t("help.tour.mainTour.project.title"),
-        content: t("help.tour.mainTour.project.content"),
+        // Finishing the welcome tour opens the Demo Project tour when there is one.
+        content: options?.hasDemoProject
+          ? t("help.tour.mainTour.project.contentWithDemo")
+          : t("help.tour.mainTour.project.content"),
         selector: "#your-projects a",
         side: "left",
         showControls: true,
@@ -251,6 +266,24 @@ const createTourSteps = (
           pointerPadding: 10,
         },
       ];
+
+      // Requirements (conditional) leads the menu's management section, so
+      // its step goes in front of the test cases step.
+      if (options?.requirementsEnabled) {
+        const testCasesIndex = steps.findIndex(
+          (step) => step.selector === "#test-cases-link"
+        );
+        steps.splice(testCasesIndex, 0, {
+          icon: null,
+          title: t("common.fields.requirements"),
+          content: t("help.tour.projectTour.requirements.content"),
+          selector: "#project-requirements-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+        });
+      }
 
       // Shared Steps (conditional)
       if (options?.canSeeSharedSteps) {
@@ -314,6 +347,20 @@ const createTourSteps = (
         pointerPadding: 10,
       });
 
+      // Triage (conditional)
+      if (options?.failureTriageEnabled) {
+        steps.push({
+          icon: null,
+          title: t("common.pageTitles.triage"),
+          content: t("help.tour.projectTour.triage.content"),
+          selector: "#project-triage-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+        });
+      }
+
       // Reports (conditional)
       if (options?.canSeeReports) {
         steps.push({
@@ -321,6 +368,20 @@ const createTourSteps = (
           title: t("help.tour.projectTour.reports.title"),
           content: t("help.tour.projectTour.reports.content"),
           selector: "#reports-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+        });
+      }
+
+      // Audit logs (conditional)
+      if (options?.canSeeAuditLogs) {
+        steps.push({
+          icon: null,
+          title: t("admin.menu.auditLogs"),
+          content: t("help.tour.projectTour.auditLogs.content"),
+          selector: "#audit-logs-link",
           side: "right",
           showControls: true,
           showSkip: true,
@@ -348,13 +409,16 @@ const createTourSteps = (
       // Add nextRoute for cross-page navigation between consecutive steps
       // Each step navigates to the page of the NEXT step's sidebar link
       const routeMap: Record<string, string> = {
+        "#project-requirements-link": "requirements",
         "#test-cases-link": "repository",
         "#shared-steps-link": "shared-steps",
         "#test-runs-link": "runs",
         "#exploratory-link": "sessions",
         "#project-tags-link": "tags",
         "#project-issues-link": "issues",
+        "#project-triage-link": "triage",
         "#reports-link": "reports",
+        "#audit-logs-link": "audit-logs",
         "#settings-integrations-link": "settings",
       };
       for (let i = 0; i < steps.length - 1; i++) {
@@ -385,186 +449,26 @@ const createTourSteps = (
         showSkip: true,
         pointerPadding: 20,
       },
-      {
+      // One step per admin menu section. The pages listed come from the menu
+      // itself, so a new admin page shows up here without a tour change.
+      ...getAdminMenuSections().map((section, index, sections) => ({
         icon: null,
-        title: t("help.tour.adminTour.projects.title"),
-        content: t("help.tour.adminTour.projects.content"),
-        selector: "#admin-menu-projects",
-        side: "right",
+        title: t(`admin.menu.${section.key}`),
+        content: (
+          <AdminTourSectionContent
+            description={t(`help.tour.adminTour.sections.${section.key}`)}
+            pages={section.items.map((item) =>
+              t(adminMenuLabelKey(item.translationKey) as any)
+            )}
+          />
+        ),
+        selector: `[data-testid='admin-menu-section-trigger-${section.key}']`,
+        // Opens downward; nextstepjs flips it upward near the page bottom.
+        side: "right-top" as const,
         showControls: true,
-        showSkip: true,
+        showSkip: index < sections.length - 1,
         pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("common.labels.templates"),
-        content: t("help.tour.adminTour.templatesAndFields.content"),
-        selector: "#admin-menu-fields",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.adminTour.workflows.title"),
-        content: t("help.tour.adminTour.workflows.content"),
-        selector: "#admin-menu-workflows",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.adminTour.statuses.title"),
-        content: t("help.tour.adminTour.statuses.content"),
-        selector: "#admin-menu-statuses",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("common.fields.milestoneTypes"),
-        content: t("help.tour.adminTour.milestones.content"),
-        selector: "#admin-menu-milestones",
-        side: "right-bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.adminTour.configurations.title"),
-        content: t("help.tour.adminTour.configurations.content"),
-        selector: "#admin-menu-configurations",
-        side: "right-bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.adminTour.users.title"),
-        content: t("help.tour.adminTour.users.content"),
-        selector: "#admin-menu-users",
-        side: "right-bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.adminTour.groups.title"),
-        content: t("help.tour.adminTour.groups.content"),
-        selector: "#admin-menu-groups",
-        side: "right-bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.adminTour.roles.title"),
-        content: t("help.tour.adminTour.roles.content"),
-        selector: "#admin-menu-roles",
-        side: "right-bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.adminTour.tags.title"),
-        content: t("help.tour.adminTour.tags.content"),
-        selector: "#admin-menu-tags",
-        side: "right-bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("navigation.admin.crossProjectReports"),
-        content: t("help.tour.adminTour.reports.content"),
-        selector: "#admin-menu-reports",
-        side: "right-bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.adminTour.notifications.title"),
-        content: t("help.tour.adminTour.notifications.content"),
-        selector: "#admin-menu-notifications",
-        side: "right-bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.adminTour.integrations.title"),
-        content: t("help.tour.adminTour.integrations.content"),
-        selector: "#admin-menu-integrations",
-        side: "right-bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.adminTour.llm.title"),
-        content: t("help.tour.adminTour.llm.content"),
-        selector: "#admin-menu-llm",
-        side: "right-bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.adminTour.sso.title"),
-        content: t("help.tour.adminTour.sso.content"),
-        selector: "#admin-menu-sso",
-        side: "right-bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("admin.menu.appConfig"),
-        content: t("help.tour.adminTour.appConfig.content"),
-        selector: "#admin-menu-app-config",
-        side: "top-left",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("admin.menu.attachments"),
-        content: t("help.tour.adminTour.attachments.content"),
-        selector: "#admin-menu-attachments",
-        side: "top-left",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.adminTour.trash.title"),
-        content: t("help.tour.adminTour.trash.content"),
-        selector: "#admin-menu-trash",
-        side: "top-left",
-        showControls: true,
-        showSkip: false,
-        pointerPadding: 10,
-      },
+      })),
     ],
   },
   {
@@ -974,40 +878,24 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
       iconUrl: true,
       isCompleted: true,
       isDeleted: true,
+      isDemo: true,
     },
   });
-  const demoProject = allProjects.find((p: any) => p.name === "Demo Project");
+  const demoProject = allProjects.find((p) => p.isDemo);
+  const hasDemoProject = !!demoProject;
 
   // Get current projectId from URL params
   const projectId = params?.projectId as string;
 
-  // Permission checks for conditional tour steps
-  const safeProjectId = projectId || "";
-  const { permissions: sharedStepsPerms } = useProjectPermissions(
-    safeProjectId,
-    ApplicationArea.SharedSteps
-  );
-  const canSeeSharedSteps = !!(
-    sharedStepsPerms &&
-    (sharedStepsPerms.canAddEdit || sharedStepsPerms.canDelete)
-  );
-  const { permissions: reportingPerms } = useProjectPermissions(
-    safeProjectId,
-    ApplicationArea.Reporting
-  );
-  const canSeeReports = !!(
-    reportingPerms &&
-    (reportingPerms.canAddEdit || reportingPerms.canDelete)
-  );
-  // Matches ProjectMenu and the settings pages: `isProjectAdmin` is the
-  // server's own `authorizeProjectAdminForProject` resolution. Nothing
-  // server-side honours the `Settings` area's `canAddEdit` bit, so steering
-  // the tour by it pointed users at pages that 404.
-  const { isProjectAdmin } = useProjectPermissions(
-    safeProjectId,
-    ApplicationArea.Settings
-  );
-  const canSeeSettings = !!isProjectAdmin;
+  // The tour steps for optional project menu entries follow the menu itself.
+  const {
+    requirementsEnabled,
+    failureTriageEnabled,
+    canSeeSharedSteps,
+    canSeeReports,
+    canSeeSettings,
+    canSeeAuditLogs,
+  } = useProjectMenuVisibility(projectId);
 
   // Check for tour state in URL parameters
   const tourParam = searchParams.get("tour");
@@ -1022,11 +910,25 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   const tourSteps = useMemo(
     () =>
       createTourSteps(t, projectId, {
+        requirementsEnabled,
+        failureTriageEnabled,
         canSeeSharedSteps,
         canSeeReports,
         canSeeSettings,
+        canSeeAuditLogs,
+        hasDemoProject,
       }),
-    [t, projectId, canSeeSharedSteps, canSeeReports, canSeeSettings]
+    [
+      t,
+      projectId,
+      requirementsEnabled,
+      failureTriageEnabled,
+      canSeeSharedSteps,
+      canSeeReports,
+      canSeeSettings,
+      canSeeAuditLogs,
+      hasDemoProject,
+    ]
   );
 
   const handleTourComplete = useCallback(
@@ -1119,6 +1021,21 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
   const handleStepChange = useCallback(
     (step: number, tourName: string | null) => {
+      // nextstepjs leaves an anchor alone once most of it shows, so one at the
+      // edge of a scrolling menu stays cut off and the card is placed past it.
+      // Again after a moment for steps that open another page first.
+      const stepSelector = tourSteps.find((t) => t.tour === tourName)?.steps[
+        step
+      ]?.selector;
+      if (stepSelector) {
+        const reveal = () =>
+          document
+            .querySelector(stepSelector)
+            ?.scrollIntoView({ block: "center" });
+        reveal();
+        window.setTimeout(reveal, 800);
+      }
+
       if (tourName === "demoProjectTour") {
         // Look up the current step's selector to decide auto-click actions
         const demoTour = tourSteps.find((t) => t.tour === "demoProjectTour");
@@ -1276,11 +1193,15 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
     // Show tour for new users (first visit to the app)
     // Check both localStorage (for backward compatibility) and user preferences
-    // Only show if explicitly not completed (not undefined/null)
+    // Only show if explicitly not completed (not undefined/null). On the home
+    // page, wait until the first-run preferences dialog is done.
+    const homeReady =
+      pathname === "/" &&
+      userPreferences?.hasCompletedInitialPreferencesSetup === true;
     if (
       !hasSeenTourInStorage &&
       hasCompletedTourInPreferences === false &&
-      pathname.includes("/projects")
+      (homeReady || pathname.includes("/projects"))
     ) {
       // Small delay to ensure DOM is ready
       setTimeout(() => {

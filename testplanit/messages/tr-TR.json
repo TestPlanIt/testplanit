@@ -2921,12 +2921,6 @@
       "adminAddProject": "Başlamak için ilk projenizi ekleyin!",
       "footer": "Test planlama faaliyetlerini görüntülemek ve bunlara katılmak için erişim gereklidir."
     },
-    "getStarted": {
-      "title": "Başlarken",
-      "description": "Planlamaya başlamaya hazır olduğunuzda kendi Projenizi ekleyin.",
-      "adminAddProject": "İlk Projenizi oluşturun",
-      "footer": "Demo Proje, istediğiniz zaman inceleyebileceğiniz veya kaldırabileceğiniz örnek veriler içerir."
-    },
     "noProjectAccess": {
       "description": "Bu projeye erişiminiz yok.",
       "contact": "Erişim talebinde bulunmak için proje yöneticinizle iletişime geçin."
@@ -2941,7 +2935,26 @@
       "assignedToYou": "{count, plural, =1 {# test senaryosu size atanmış ve beklemede} other {# test senaryosu size atanmış ve beklemede}}"
     },
     "lastActivity": "Son aktivite",
-    "noActivity": "Henüz hiçbir test aktivitesi yok"
+    "noActivity": "Henüz hiçbir test aktivitesi yok",
+    "setupChecklist": {
+      "title": "TestPlanIt'i Ayarla",
+      "progress": "{done} / {total} tamamlandı",
+      "items": {
+        "createProject": "İlk projenizi oluşturun",
+        "inviteTeam": "Ekibinizi davet edin",
+        "connectIssueTracker": "Bir sorun izleyici bağlayın",
+        "connectAiProvider": "Bir AI sağlayıcısı bağlayın",
+        "setUpSso": "Çoklu oturum açmayı ayarlayın"
+      },
+      "open": "Aç",
+      "hint": "Başka bir şekilde yaptığınız veya ihtiyacınız olmayan herhangi bir şeyi işaretleyin. İşaretler tüm yöneticiler için geçerlidir.",
+      "hide": "Denetim listesini gizle",
+      "hideConfirm": {
+        "title": "Kurulum denetim listesi gizlensin mi?",
+        "description": "Artık ana sayfanızda görünmez. Geri getirmek için Yardım menüsünden Kurulum Denetim Listesi'ni seçin. Diğer yöneticiler onu kendileri gizleyene kadar görmemeye devam edecektir."
+      },
+      "demoNote": "Demo Projesi, istediğiniz zaman keşfedebileceğiniz veya kaldırabileceğiniz örnek veriler içerir."
+    }
   },
   "users": {
     "description": "Kullanıcı hesaplarını yönetin, sistem erişim düzeylerini ayarlayın ve genel roller atayın.",
@@ -8553,7 +8566,8 @@
       "startTour": "Rehberli Karşılama Turu",
       "startProjectTour": "Proje Turu",
       "startAdminTour": "Yönetici Turu",
-      "startDemoProjectTour": "Demo Projesi Turu"
+      "startDemoProjectTour": "Demo Projesi Turu",
+      "setupChecklist": "Kurulum Denetim Listesi"
     },
     "tour": {
       "mainTour": {
@@ -8566,7 +8580,8 @@
         },
         "project": {
           "title": "Proje Kartı",
-          "content": "Bir projenin detaylarını görüntülemek için proje kartına tıklayın. Proje özelliklerine ilişkin rehberli bir tur için yardım menüsünden Proje Turu'nu seçin."
+          "content": "Bir projeyi açmak için proje kartına tıklayın. Bir proje içinde, Yardım menüsünden Proje Turu'nu seçerek özelliklerin rehberli turunu alın.",
+          "contentWithDemo": "Bir projeyi açmak için proje kartına tıklayın. Bu turu bitirdiğinizde, Demo Projesi'nin turu başlar. Bu, özgürce keşfedebileceğiniz örnek bir projedir."
         },
         "globalFeatures": {
           "title": "Küresel Özellikler",
@@ -8644,6 +8659,15 @@
         "settings": {
           "title": "Proje Ayarları",
           "content": "Proje düzeyindeki entegrasyonları, yapay zeka modeli yapılandırmalarını ve paylaşılan bağlantıları buradan yönetebilirsiniz."
+        },
+        "requirements": {
+          "content": "Projenin gerekliliklerin bir ağacı olarak teslim etmesi gerekenleri yazın ve test çalışmalarını bunlara bağlayarak hangi gerekliliklerin kapsandığını ve iletildiğini görmek için."
+        },
+        "triage": {
+          "content": "Başarısız sonuçlar başarısızlık desenleri ile gruplandırılır. Her eşleşen başarısızlık için bir kez kök neden kaydedin ve sebep düzeltilirken vakalar dengesiz hale getirerek karantinaya alınız."
+        },
+        "auditLogs": {
+          "content": "Bu projede kimin ne oluşturduğunu, değiştirdiğini veya sildiğini ve ne zaman olduğunu görün."
         }
       },
       "adminTour": {
@@ -8651,72 +8675,13 @@
           "title": "Yönetici Kontrollerine Hoş Geldiniz",
           "content": "TestPlanIt'in yönetim özelliklerinin rehberli turuna katılın. Bu merkezi yönetim panelinden projeleri, kullanıcıları, yapılandırmaları ve sistem ayarlarını yönetin."
         },
-        "projects": {
-          "title": "Proje Yönetimi",
-          "content": "Organizasyonunuzdaki tüm projeleri yönetin. Projeler oluşturun, yapılandırın ve arşivleyin. Proje genelinde izinler ve erişim kontrolleri ayarlayın."
-        },
-        "templatesAndFields": {
-          "content": "Test senaryosu şablonları ve özel alanlar oluşturun ve yönetin. Projeler genelinde tutarlı bir test senaryosu yapısı için alan türlerini, doğrulama kurallarını tanımlayın ve şablonları düzenleyin."
-        },
-        "workflows": {
-          "title": "İş Akışı Yönetimi",
-          "content": "Test senaryosu iş akışlarını ve durum geçişlerini tanımlayın. Test senaryolarının Taslak, İnceleme ve Onaylanmış gibi farklı durumlar arasında nasıl ilerleyeceğini yapılandırın."
-        },
-        "statuses": {
-          "title": "Test Sonuç Durumları",
-          "content": "Test sonuçları için Geçti, Başarısız, Engellendi ve Atlandı gibi durumları yapılandırın. Özel durumlar oluşturun ve bunların davranışlarını ve görünümünü tanımlayın."
-        },
-        "milestones": {
-          "content": "Proje takibi için kilometre taşı türlerini tanımlayın. Sürüm türlerini, sprint kategorilerini ve diğer proje kilometre taşı sınıflandırmalarını yapılandırın."
-        },
-        "configurations": {
-          "title": "Test Yapılandırmaları",
-          "content": "Test yapılandırmalarını ve ortamlarını yönetin. Tarayıcı kombinasyonlarını, cihaz türlerini, işletim sistemlerini ve diğer test yürütme bağlamlarını ayarlayın."
-        },
-        "users": {
-          "title": "Kullanıcı Yönetimi",
-          "content": "Kullanıcı hesaplarını, izinleri ve erişim düzeylerini yönetin. Yeni kullanıcılar oluşturun, roller atayın ve kimlik doğrulama ayarlarını yapılandırın."
-        },
-        "groups": {
-          "title": "Grup Yönetimi",
-          "content": "Kullanıcıları gruplara ayırarak izin yönetimini kolaylaştırın. Departman grupları, proje ekipleri ve rol tabanlı erişim grupları oluşturun."
-        },
-        "roles": {
-          "title": "Rol Yönetimi",
-          "content": "Kullanıcı rollerini ve izinlerini tanımlayın. Farklı rollerin projeler ve sistem yönetimi genelinde hangi eylemleri gerçekleştirebileceğini yapılandırın."
-        },
-        "tags": {
-          "title": "Küresel Etiketler",
-          "content": "Test senaryolarını, projeleri ve diğer varlıkları kategorize etmek için kuruluş genelinde etiketleri yönetin. Etiket hiyerarşileri oluşturun ve projeler genelinde etiketlemeyi standartlaştırın."
-        },
-        "reports": {
-          "content": "Birden fazla projeyi kapsayan raporlar oluşturun. Tüm çalışma alanınızda eğilimleri, performans ölçütlerini ve kurumsal test etkinliğini analiz edin."
-        },
-        "notifications": {
-          "title": "Bildirim Ayarları",
-          "content": "Sistem genelindeki bildirim tercihlerini yapılandırın. E-posta şablonlarını, bildirim kurallarını ve kullanıcı bildirimleri için varsayılan ayarları belirleyin."
-        },
-        "integrations": {
-          "title": "Sistem Entegrasyonları",
-          "content": "Üçüncü taraf entegrasyonlarını ve API bağlantılarını yönetin. Kuruluşunuz için Jira, GitHub ve diğer harici araç entegrasyonlarını yapılandırın."
-        },
-        "llm": {
-          "title": "Yapay Zeka Yapılandırması",
-          "content": "Otomatik test senaryosu oluşturma ve akıllı özellikler için yapay zeka modellerini ve ayarlarını yapılandırın. API anahtarlarını ve model tercihlerini yönetin."
-        },
-        "sso": {
-          "title": "Tekli Oturum Açma",
-          "content": "SSO sağlayıcılarını ve kimlik doğrulama yöntemlerini yapılandırın. Sorunsuz kullanıcı erişimi için SAML, OAuth ve diğer kimlik sağlayıcı entegrasyonlarını kurun."
-        },
-        "appConfig": {
-          "content": "Genel uygulama ayarlarını ve sistem tercihlerini yönetin. Varsayılan değerleri, özellik geçişlerini ve sistem genelindeki davranışları yapılandırın."
-        },
-        "attachments": {
-          "content": "Örnekteki herhangi bir yere bağlanan her dosya ve bağlantıyı görün, bağlanmamış veya silinmiş olanları bulun ve ekleri ayırın, silin, geri yükleyin veya temizleyin."
-        },
-        "trash": {
-          "title": "Sistem Çöpü",
-          "content": "Tüm projelerdeki silinmiş öğeleri görüntüleyin ve yönetin. Yanlışlıkla silinen içeriği geri yükleyin veya öğeleri sistemden kalıcı olarak silin."
+        "sections": {
+          "testManagement": "Her projenin inşa edildiği temel: bir test çalışmasının kaydettiği şablonlar ve alanlar, içinde hareket ettiği iş akışı, sonuç durumları, kilometre taşı türleri ve konfigürasyonlar.",
+          "peopleAndAccess": "Bu örneği kimin kullanabileceği, nasıl gruplandırıldığı ve her rolün bir projede neler yapabileceği.",
+          "authentication": "İnsanların nasıl oturum açtığı, parola ve kilitlenme kuralları ve araçların ve kimlik sağlayıcılarının kullandığı belirteçler ve sağlama.",
+          "toolsAndIntegrations": "Sorun izleyicilerini ve kod depolarını bağlayın ve TestPlanIt'in diğer araçlara neler gönderdiğini seçin.",
+          "aiTools": "AI sağlayıcılarını bağlayın ve bunların oluşturduğu istemler ve komut şablonlarını ayarlayın.",
+          "system": "Örnek genelindeki ayarlar, içeri aktarmalar, arama, arka plan işleri ve değiştirilen veya silinen kayıtlar."
         }
       },
       "demoProjectTour": {

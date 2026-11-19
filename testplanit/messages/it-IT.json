@@ -2921,12 +2921,6 @@
       "adminAddProject": "Aggiungi il tuo primo progetto per iniziare!",
       "footer": "L'accesso è necessario per visualizzare e partecipare alle attività di pianificazione dei test."
     },
-    "getStarted": {
-      "title": "Inizia",
-      "description": "Aggiungi il tuo Progetto quando sei pronto per iniziare a pianificare.",
-      "adminAddProject": "Crea il tuo primo Progetto",
-      "footer": "Il Progetto Demo contiene dati di esempio che puoi esplorare o rimuovere in qualsiasi momento."
-    },
     "noProjectAccess": {
       "description": "Non hai accesso a questo progetto.",
       "contact": "Contatta l'amministratore del progetto per richiedere l'accesso."
@@ -2941,7 +2935,26 @@
       "assignedToYou": "{count, plural, =1 {# caso di test assegnato a te è in attesa} other {# casi di test assegnati a te sono in attesa}}"
     },
     "lastActivity": "Ultima attività",
-    "noActivity": "Nessuna attività di test ancora"
+    "noActivity": "Nessuna attività di test ancora",
+    "setupChecklist": {
+      "title": "Configura TestPlanIt",
+      "progress": "{done} di {total} completati",
+      "items": {
+        "createProject": "Crea il tuo primo progetto",
+        "inviteTeam": "Invita il tuo team",
+        "connectIssueTracker": "Collega un issue tracker",
+        "connectAiProvider": "Collega un provider AI",
+        "setUpSso": "Configura l'accesso single sign-on"
+      },
+      "open": "Apri",
+      "hint": "Spunta tutto ciò che hai fatto in un altro modo o di cui non hai bisogno. Le spunte si applicano a ogni amministratore.",
+      "hide": "Nascondi checklist",
+      "hideConfirm": {
+        "title": "Nascondere la checklist di configurazione?",
+        "description": "Non apparirà più sulla tua home page. Per ripristinarla, scegli Checklist di configurazione dal menu Aiuto. Gli altri amministratori continueranno a vederla finché non la nascondono."
+      },
+      "demoNote": "Il Demo Project contiene dati di esempio che puoi esplorare o rimuovere in qualsiasi momento."
+    }
   },
   "users": {
     "description": "Gestisci gli account utente, imposta i livelli di accesso al sistema e assegna i ruoli globali.",
@@ -8553,7 +8566,8 @@
       "startTour": "Visita guidata di benvenuto",
       "startProjectTour": "Tour del progetto",
       "startAdminTour": "Tour amministrativo",
-      "startDemoProjectTour": "Tour dimostrativo del progetto"
+      "startDemoProjectTour": "Tour dimostrativo del progetto",
+      "setupChecklist": "Checklist di configurazione"
     },
     "tour": {
       "mainTour": {
@@ -8566,7 +8580,8 @@
         },
         "project": {
           "title": "Scheda Progetto",
-          "content": "Fai clic sulla scheda di un progetto per visualizzarne i dettagli. Seleziona \"Tour del progetto\" dal menu \"Aiuto\" per una panoramica guidata delle funzionalità del progetto."
+          "content": "Fai clic su una scheda progetto per aprirla. All'interno di un progetto, scegli Tour del progetto dal menu Aiuto per una visita guidata delle sue funzioni.",
+          "contentWithDemo": "Fai clic su una scheda progetto per aprirla. Quando termini questo tour, inizia un tour del Demo Project. È un progetto di esempio che puoi esplorare liberamente."
         },
         "globalFeatures": {
           "title": "Caratteristiche globali",
@@ -8644,6 +8659,15 @@
         "settings": {
           "title": "Impostazioni del progetto",
           "content": "Da qui è possibile gestire le integrazioni a livello di progetto, le configurazioni dei modelli di intelligenza artificiale e i link condivisi."
+        },
+        "requirements": {
+          "content": "Scrivi ciò che il progetto deve fornire come albero di requisiti e collega casi di test ad essi per vedere quali requisiti sono coperti e superati."
+        },
+        "triage": {
+          "content": "I risultati non riusciti sono raggruppati in base al modello del loro errore. Registra una causa principale una volta per ogni errore corrispondente e metti in quarantena i casi instabili mentre la causa viene risolta."
+        },
+        "auditLogs": {
+          "content": "Vedi chi ha creato, modificato o eliminato qualsiasi cosa in questo progetto e quando."
         }
       },
       "adminTour": {
@@ -8651,72 +8675,13 @@
           "title": "Benvenuti ai controlli amministrativi",
           "content": "Partecipa a un tour guidato delle funzionalità amministrative di TestPlanIt. Gestisci progetti, utenti, configurazioni e impostazioni di sistema da questo pannello di amministrazione centrale."
         },
-        "projects": {
-          "title": "Amministrazione del progetto",
-          "content": "Gestisci tutti i progetti della tua organizzazione. Crea, configura e archivia progetti. Imposta autorizzazioni e controlli di accesso a livello di progetto."
-        },
-        "templatesAndFields": {
-          "content": "Crea e gestisci modelli di casi di test e campi personalizzati. Definisci tipi di campo, regole di convalida e organizza i modelli per una struttura coerente dei casi di test in tutti i progetti."
-        },
-        "workflows": {
-          "title": "Gestione del flusso di lavoro",
-          "content": "Definisci i flussi di lavoro dei casi di test e le transizioni di stato. Configura il modo in cui i casi di test passano attraverso diversi stati, come Bozza, Revisione e Approvato."
-        },
-        "statuses": {
-          "title": "Stati dei risultati dei test",
-          "content": "Configura gli stati dei risultati dei test disponibili, come Superato, Non superato, Bloccato e Ignorato. Imposta stati personalizzati e definisci il loro comportamento e aspetto."
-        },
-        "milestones": {
-          "content": "Definisci i tipi di milestone per il monitoraggio del progetto. Configura i tipi di release, le categorie di sprint e altre classificazioni delle milestone del progetto."
-        },
-        "configurations": {
-          "title": "Configurazioni di prova",
-          "content": "Gestisci configurazioni e ambienti di test. Imposta combinazioni di browser, tipi di dispositivi, sistemi operativi e altri contesti di esecuzione dei test."
-        },
-        "users": {
-          "title": "Gestione degli utenti",
-          "content": "Gestisci account utente, autorizzazioni e livelli di accesso. Crea nuovi utenti, assegna ruoli e configura le impostazioni di autenticazione."
-        },
-        "groups": {
-          "title": "Gestione del gruppo",
-          "content": "Organizza gli utenti in gruppi per una gestione più semplice delle autorizzazioni. Crea gruppi di reparto, team di progetto e gruppi di accesso basati sui ruoli."
-        },
-        "roles": {
-          "title": "Gestione dei ruoli",
-          "content": "Definisci ruoli e permessi utente. Configura quali azioni possono essere eseguite dai diversi ruoli nei progetti e nell'amministrazione del sistema."
-        },
-        "tags": {
-          "title": "Tag globali",
-          "content": "Gestisci i tag a livello di organizzazione per categorizzare casi di test, progetti e altre entità. Crea gerarchie di tag e standardizza il tagging tra i progetti."
-        },
-        "reports": {
-          "content": "Genera report che coprono più progetti. Analizza tendenze, parametri di performance ed efficacia dei test organizzativi in tutto il tuo spazio di lavoro."
-        },
-        "notifications": {
-          "title": "Impostazioni di notifica",
-          "content": "Configura le preferenze di notifica a livello di sistema. Imposta modelli di email, regole di notifica e impostazioni predefinite per le notifiche utente."
-        },
-        "integrations": {
-          "title": "Integrazioni di sistema",
-          "content": "Gestisci integrazioni di terze parti e connessioni API. Configura Jira, GitHub e altre integrazioni di strumenti esterni per la tua organizzazione."
-        },
-        "llm": {
-          "title": "Configurazione AI",
-          "content": "Configura modelli e impostazioni di intelligenza artificiale per la generazione automatizzata di casi di test e funzionalità intelligenti. Gestisci le chiavi API e le preferenze del modello."
-        },
-        "sso": {
-          "title": "Accesso unico",
-          "content": "Configura i provider SSO e i metodi di autenticazione. Imposta SAML, OAuth e altre integrazioni con provider di identità per un accesso utente senza interruzioni."
-        },
-        "appConfig": {
-          "content": "Gestisci le impostazioni globali delle applicazioni e le preferenze di sistema. Configura i valori predefiniti, le opzioni di attivazione/disattivazione delle funzionalità e i comportamenti a livello di sistema."
-        },
-        "attachments": {
-          "content": "Visualizza ogni file e collegamento allegato in qualsiasi punto dell'istanza, trova ciò che non è allegato o eliminato, e scollega, elimina, ripristina o elimina definitivamente gli allegati."
-        },
-        "trash": {
-          "title": "Cestino di sistema",
-          "content": "Visualizza e gestisci gli elementi eliminati in tutti i progetti. Ripristina i contenuti eliminati accidentalmente o rimuovi definitivamente gli elementi dal sistema."
+        "sections": {
+          "testManagement": "Ciò su cui si basa ogni progetto: i modelli e i campi che registra un caso di test, il flusso di lavoro attraverso cui si muove, gli stati dei risultati, i tipi di milestone e le configurazioni.",
+          "peopleAndAccess": "Chi può utilizzare questa istanza, come sono raggruppati e cosa può fare ogni ruolo in un progetto.",
+          "authentication": "Come le persone accedono, le regole di password e blocco, e i token e il provisioning che gli strumenti e i provider di identità utilizzano.",
+          "toolsAndIntegrations": "Collega issue tracker e repository di codice, e scegli cosa TestPlanIt invia ad altri strumenti.",
+          "aiTools": "Collega provider AI e sintonizza i prompt e i modelli di script che generano.",
+          "system": "Impostazioni a livello di istanza, importazioni, ricerca, processi in background e i record di ciò che è stato modificato o eliminato."
         }
       },
       "demoProjectTour": {

@@ -2921,12 +2921,6 @@
       "adminAddProject": "Adicione seu primeiro projeto para começar!",
       "footer": "É necessário acesso para visualizar e participar das atividades de planejamento de testes."
     },
-    "getStarted": {
-      "title": "Primeiros passos",
-      "description": "Adicione seu próprio Projeto quando estiver pronto para começar a planejar.",
-      "adminAddProject": "Crie seu primeiro Projeto",
-      "footer": "O Projeto de Demonstração contém dados de exemplo que você pode explorar ou remover a qualquer momento."
-    },
     "noProjectAccess": {
       "description": "Você não tem acesso a este projeto.",
       "contact": "Entre em contato com o administrador do seu projeto para solicitar acesso."
@@ -2941,7 +2935,26 @@
       "assignedToYou": "{count, plural, =1 {# caso de teste atribuído a você está aguardando} other {# casos de teste atribuídos a você estão aguardando}}"
     },
     "lastActivity": "Última atividade",
-    "noActivity": "Sem atividade de teste ainda"
+    "noActivity": "Sem atividade de teste ainda",
+    "setupChecklist": {
+      "title": "Configurar TestPlanIt",
+      "progress": "{done} de {total} concluído",
+      "items": {
+        "createProject": "Crie seu primeiro projeto",
+        "inviteTeam": "Convide sua equipe",
+        "connectIssueTracker": "Conecte um rastreador de problemas",
+        "connectAiProvider": "Conecte um provedor de IA",
+        "setUpSso": "Configurar logon único"
+      },
+      "open": "Abrir",
+      "hint": "Marque qualquer coisa que você tenha feito de outra forma ou não precise. As marcas se aplicam a todos os administradores.",
+      "hide": "Ocultar lista de verificação",
+      "hideConfirm": {
+        "title": "Ocultar a lista de verificação de configuração?",
+        "description": "Ele não aparecerá mais na sua página inicial. Para trazê-lo de volta, escolha Lista de Verificação de Configuração no menu Ajuda. Outros administradores continuam a vê-lo até que eles o ocultarem."
+      },
+      "demoNote": "O Projeto de Demonstração contém dados de exemplo que você pode explorar ou remover a qualquer momento."
+    }
   },
   "users": {
     "description": "Gerencie contas de usuário, defina níveis de acesso ao sistema e atribua funções globais.",
@@ -8553,7 +8566,8 @@
       "startTour": "Visita guiada de boas-vindas",
       "startProjectTour": "Tour do Projeto",
       "startAdminTour": "Tour Administrativo",
-      "startDemoProjectTour": "Tour do Projeto de Demonstração"
+      "startDemoProjectTour": "Tour do Projeto de Demonstração",
+      "setupChecklist": "Lista de Verificação de Configuração"
     },
     "tour": {
       "mainTour": {
@@ -8566,7 +8580,8 @@
         },
         "project": {
           "title": "Cartão do Projeto",
-          "content": "Clique no cartão de um projeto para ver os detalhes. Selecione \"Tour do Projeto\" no menu de ajuda para um tour guiado pelas funcionalidades do projeto."
+          "content": "Clique em um cartão de projeto para abri-lo. Dentro de um projeto, escolha Tour do Projeto no menu Ajuda para um tour guiado de seus recursos.",
+          "contentWithDemo": "Clique em um cartão de projeto para abri-lo. Quando terminar este tour, um tour do Projeto de Demonstração será iniciado. É um projeto de exemplo que você pode explorar livremente."
         },
         "globalFeatures": {
           "title": "Recursos globais",
@@ -8644,6 +8659,15 @@
         "settings": {
           "title": "Configurações do projeto",
           "content": "Gerencie integrações em nível de projeto, configurações de modelos de IA e links compartilhados a partir daqui."
+        },
+        "requirements": {
+          "content": "Anote o que o projeto deve entregar como uma árvore de requisitos e vincule casos de teste a eles para ver quais requisitos são cobertos e aprovados."
+        },
+        "triage": {
+          "content": "Os resultados com falha são agrupados pelo padrão de sua falha. Registre uma causa raiz uma vez para cada falha correspondente e coloque em quarentena casos instáveis enquanto a causa está sendo corrigida."
+        },
+        "auditLogs": {
+          "content": "Veja quem criou, alterou ou excluiu qualquer coisa neste projeto e quando."
         }
       },
       "adminTour": {
@@ -8651,72 +8675,13 @@
           "title": "Bem-vindo aos Controles Administrativos",
           "content": "Faça um tour guiado pelos recursos administrativos do TestPlanIt. Gerencie projetos, usuários, configurações e definições do sistema a partir deste painel de administração central."
         },
-        "projects": {
-          "title": "Administração de Projetos",
-          "content": "Gerencie todos os projetos da sua organização. Crie, configure e arquive projetos. Defina permissões e controles de acesso para todos os projetos."
-        },
-        "templatesAndFields": {
-          "content": "Crie e gerencie modelos de casos de teste e campos personalizados. Defina tipos de campo, regras de validação e organize modelos para garantir uma estrutura consistente de casos de teste em todos os projetos."
-        },
-        "workflows": {
-          "title": "Gestão de fluxo de trabalho",
-          "content": "Defina os fluxos de trabalho dos casos de teste e as transições de estado. Configure como os casos de teste progridem por diferentes estados, como Rascunho, Revisão e Aprovado."
-        },
-        "statuses": {
-          "title": "Status dos resultados dos testes",
-          "content": "Configure os status de resultado de teste disponíveis, como Aprovado, Reprovado, Bloqueado e Ignorado. Defina status personalizados e configure seu comportamento e aparência."
-        },
-        "milestones": {
-          "content": "Defina os tipos de marcos para o acompanhamento do projeto. Configure os tipos de lançamento, as categorias de sprint e outras classificações de marcos do projeto."
-        },
-        "configurations": {
-          "title": "Configurações de teste",
-          "content": "Gerencie configurações e ambientes de teste. Configure combinações de navegadores, tipos de dispositivos, sistemas operacionais e outros contextos de execução de testes."
-        },
-        "users": {
-          "title": "Gerenciamento de usuários",
-          "content": "Gerencie contas de usuário, permissões e níveis de acesso. Crie novos usuários, atribua funções e configure as definições de autenticação."
-        },
-        "groups": {
-          "title": "Gestão de Grupo",
-          "content": "Organize os usuários em grupos para facilitar o gerenciamento de permissões. Crie grupos de departamento, equipes de projeto e grupos de acesso baseado em funções."
-        },
-        "roles": {
-          "title": "Gestão de funções",
-          "content": "Defina funções e permissões de usuário. Configure quais ações diferentes funções podem executar em projetos e na administração do sistema."
-        },
-        "tags": {
-          "title": "Etiquetas globais",
-          "content": "Gerencie tags em toda a organização para categorizar casos de teste, projetos e outras entidades. Crie hierarquias de tags e padronize a marcação em todos os projetos."
-        },
-        "reports": {
-          "content": "Gere relatórios que abrangem vários projetos. Analise tendências, métricas de desempenho e a eficácia dos testes organizacionais em todo o seu ambiente de trabalho."
-        },
-        "notifications": {
-          "title": "Configurações de notificação",
-          "content": "Configure as preferências de notificação de todo o sistema. Defina modelos de e-mail, regras de notificação e configurações padrão para notificações de usuário."
-        },
-        "integrations": {
-          "title": "Integrações de sistemas",
-          "content": "Gerencie integrações de terceiros e conexões de API. Configure integrações com Jira, GitHub e outras ferramentas externas para sua organização."
-        },
-        "llm": {
-          "title": "Configuração de IA",
-          "content": "Configure modelos e definições de IA para geração automatizada de casos de teste e funcionalidades inteligentes. Gerencie chaves de API e preferências de modelo."
-        },
-        "sso": {
-          "title": "Autenticação única",
-          "content": "Configure provedores de SSO e métodos de autenticação. Configure integrações com SAML, OAuth e outros provedores de identidade para acesso contínuo do usuário."
-        },
-        "appConfig": {
-          "content": "Gerencie as configurações globais do aplicativo e as preferências do sistema. Configure valores padrão, alternância de recursos e comportamentos de todo o sistema."
-        },
-        "attachments": {
-          "content": "Veja todos os arquivos e links anexados em qualquer lugar da instância, encontre o que está desanexado ou excluído, e desanexe, exclua, restaure ou limpe anexos."
-        },
-        "trash": {
-          "title": "Lixo do sistema",
-          "content": "Visualize e gerencie itens excluídos em todos os projetos. Restaure conteúdo excluído acidentalmente ou remova itens permanentemente do sistema."
+        "sections": {
+          "testManagement": "O que todo projeto é construído: os modelos e campos que um caso de teste registra, o fluxo de trabalho pelo qual se move, status de resultados, tipos de marcos e configurações.",
+          "peopleAndAccess": "Quem pode usar essa instância, como eles são agrupados e o que cada função pode fazer em um projeto.",
+          "authentication": "Como as pessoas se conectam, as regras de senha e bloqueio, e os tokens e provisionamento que ferramentas e provedores de identidade usam.",
+          "toolsAndIntegrations": "Conecte rastreadores de problemas e repositórios de código, e escolha o que o TestPlanIt envia para outras ferramentas.",
+          "aiTools": "Conecte provedores de IA e ajuste os prompts e modelos de script que eles geram.",
+          "system": "Configurações em toda a instância, importações, pesquisa, trabalhos em segundo plano e registros do que foi alterado ou excluído."
         }
       },
       "demoProjectTour": {

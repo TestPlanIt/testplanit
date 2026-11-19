@@ -40,6 +40,7 @@ const mockSession: Session = {
       stepLayout: "STACKED",
       hasCompletedWelcomeTour: false,
       hasCompletedInitialPreferencesSetup: false,
+      hasDismissedSetupChecklist: false,
     },
   },
 };

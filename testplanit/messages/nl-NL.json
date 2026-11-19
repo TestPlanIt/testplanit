@@ -2921,12 +2921,6 @@
       "adminAddProject": "Voeg je eerste project toe om aan de slag te gaan!",
       "footer": "Toegang is vereist om testplanningsactiviteiten te bekijken en eraan deel te nemen."
     },
-    "getStarted": {
-      "title": "Aan de slag",
-      "description": "Voeg uw eigen project toe wanneer u klaar bent om te beginnen met plannen.",
-      "adminAddProject": "Maak uw eerste project aan",
-      "footer": "Het demoproject bevat voorbeeldgegevens die u op elk moment kunt verkennen of verwijderen."
-    },
     "noProjectAccess": {
       "description": "U hebt geen toegang tot dit project.",
       "contact": "Neem contact op met uw projectbeheerder om toegang aan te vragen."
@@ -2941,7 +2935,26 @@
       "assignedToYou": "{count, plural, =1 {# testgeval dat aan u is toegewezen wacht} other {# testgevallen die aan u zijn toegewezen wachten}}"
     },
     "lastActivity": "Laatst actief",
-    "noActivity": "Nog geen teststartactiviteit"
+    "noActivity": "Nog geen teststartactiviteit",
+    "setupChecklist": {
+      "title": "TestPlanIt instellen",
+      "progress": "{done} van {total} voltooid",
+      "items": {
+        "createProject": "Maak uw eerste project",
+        "inviteTeam": "Nodig uw team uit",
+        "connectIssueTracker": "Verbind een issue tracker",
+        "connectAiProvider": "Verbind een AI-provider",
+        "setUpSso": "Single sign-on instellen"
+      },
+      "open": "Openen",
+      "hint": "Vink alles aan wat u op een ander moment hebt gedaan of niet nodig hebt. Vinkjes gelden voor elke beheerder.",
+      "hide": "Controlelijst verbergen",
+      "hideConfirm": {
+        "title": "Controlelijst verbergen?",
+        "description": "Deze wordt niet meer weergegeven op uw startpagina. Kies Controlelijst voor het instellen in het menu Help om deze terug te halen. Andere beheerders blijven deze zien totdat zij deze zelf verbergen."
+      },
+      "demoNote": "Het Demo Project bevat voorbeeldgegevens die u op elk moment kunt verkennen of verwijderen."
+    }
   },
   "users": {
     "description": "Beheer gebruikersaccounts, stel toegangsniveaus tot het systeem in en wijs algemene rollen toe.",
@@ -8553,7 +8566,8 @@
       "startTour": "Rondleiding Welkom",
       "startProjectTour": "Projecttour",
       "startAdminTour": "Beheerdersrondleiding",
-      "startDemoProjectTour": "Demo Projectrondleiding"
+      "startDemoProjectTour": "Demo Projectrondleiding",
+      "setupChecklist": "Controlelijst voor het instellen"
     },
     "tour": {
       "mainTour": {
@@ -8566,7 +8580,8 @@
         },
         "project": {
           "title": "Projectkaart",
-          "content": "Klik op een projectkaart om de details te bekijken. Kies 'Project Tour' in het helpmenu voor een rondleiding langs de projectfuncties."
+          "content": "Klik op een projectkaart om deze te openen. Kies in een project Projecttour in het menu Help voor een rondleiding door de functies.",
+          "contentWithDemo": "Klik op een projectkaart om deze te openen. Als u deze rondleiding hebt voltooid, begint een rondleiding door het Demo Project. Dit is een voorbeeldproject dat u vrijelijk kunt verkennen."
         },
         "globalFeatures": {
           "title": "Globale functies",
@@ -8644,6 +8659,15 @@
         "settings": {
           "title": "Projectinstellingen",
           "content": "Beheer hier projectintegraties, AI-modelconfiguraties en gedeelde links."
+        },
+        "requirements": {
+          "content": "Schrijf op wat het project moet opleveren als een boom van vereisten en koppel testgevallen eraan om te zien welke vereisten worden gedekt en slagen."
+        },
+        "triage": {
+          "content": "Mislukte resultaten worden gegroepeerd op basis van het patroon van hun mislukking. Registreer eenmaal een hoofdoorzaak voor elke overeenkomende mislukking en plaats wankele gevallen in quarantaine terwijl de oorzaak wordt verholpen."
+        },
+        "auditLogs": {
+          "content": "Zie wie iets in dit project heeft gemaakt, gewijzigd of verwijderd, en wanneer."
         }
       },
       "adminTour": {
@@ -8651,72 +8675,13 @@
           "title": "Welkom bij Admin Controls",
           "content": "Volg een rondleiding door de beheerfuncties van TestPlanIt. Beheer projecten, gebruikers, configuraties en systeeminstellingen vanuit dit centrale beheerpaneel."
         },
-        "projects": {
-          "title": "Projectbeheer",
-          "content": "Beheer alle projecten in uw organisatie. Maak, configureer en archiveer projecten. Stel projectbrede machtigingen en toegangscontroles in."
-        },
-        "templatesAndFields": {
-          "content": "Maak en beheer testcasesjablonen en aangepaste velden. Definieer veldtypen, validatieregels en organiseer sjablonen voor een consistente testcasestructuur in alle projecten."
-        },
-        "workflows": {
-          "title": "Workflowbeheer",
-          "content": "Definieer testcaseworkflows en statusovergangen. Configureer hoe testcases door verschillende statussen heen gaan, zoals Concept, Review en Goedgekeurd."
-        },
-        "statuses": {
-          "title": "Testresultaatstatussen",
-          "content": "Configureer beschikbare testresultaatstatussen zoals Geslaagd, Gezakt, Geblokkeerd en Overgeslagen. Stel aangepaste statussen in en definieer hun gedrag en weergave."
-        },
-        "milestones": {
-          "content": "Definieer mijlpaaltypen voor projecttracking. Configureer releasetypen, sprintcategorieën en andere projectmijlpaalclassificaties."
-        },
-        "configurations": {
-          "title": "Testconfiguraties",
-          "content": "Beheer testconfiguraties en -omgevingen. Stel browsercombinaties, apparaattypen, besturingssystemen en andere testuitvoeringscontexten in."
-        },
-        "users": {
-          "title": "Gebruikersbeheer",
-          "content": "Beheer gebruikersaccounts, machtigingen en toegangsniveaus. Maak nieuwe gebruikers aan, wijs rollen toe en configureer authenticatie-instellingen."
-        },
-        "groups": {
-          "title": "Groepsmanagement",
-          "content": "Organiseer gebruikers in groepen voor eenvoudiger rechtenbeheer. Creëer afdelingsgroepen, projectteams en rolgebaseerde toegangsgroepen."
-        },
-        "roles": {
-          "title": "Rollenbeheer",
-          "content": "Definieer gebruikersrollen en -rechten. Configureer welke acties verschillende rollen kunnen uitvoeren binnen projecten en systeembeheer."
-        },
-        "tags": {
-          "title": "Globale tags",
-          "content": "Beheer organisatiebrede tags voor het categoriseren van testcases, projecten en andere entiteiten. Creëer taghiërarchieën en standaardiseer tagging binnen projecten."
-        },
-        "reports": {
-          "content": "Genereer rapporten die meerdere projecten bestrijken. Analyseer trends, prestatiegegevens en de effectiviteit van organisatorische tests in uw gehele werkruimte."
-        },
-        "notifications": {
-          "title": "Meldingsinstellingen",
-          "content": "Configureer systeembrede meldingsvoorkeuren. Stel e-mailsjablonen, meldingsregels en standaardinstellingen voor gebruikersmeldingen in."
-        },
-        "integrations": {
-          "title": "Systeemintegraties",
-          "content": "Beheer integraties van derden en API-verbindingen. Configureer Jira, GitHub en andere externe toolintegraties voor uw organisatie."
-        },
-        "llm": {
-          "title": "AI-configuratie",
-          "content": "Configureer AI-modellen en -instellingen voor geautomatiseerde generatie van testcases en intelligente functies. Beheer API-sleutels en modelvoorkeuren."
-        },
-        "sso": {
-          "title": "Eenmalige aanmelding",
-          "content": "Configureer SSO-providers en authenticatiemethoden. Stel SAML, OAuth en andere identiteitsproviderintegraties in voor naadloze gebruikerstoegang."
-        },
-        "appConfig": {
-          "content": "Beheer globale applicatie-instellingen en systeemvoorkeuren. Configureer standaardwaarden, functie-instellingen en systeembreed gedrag."
-        },
-        "attachments": {
-          "content": "Bekijk elk bestand en elke koppeling die ergens op het exemplaar is gekoppeld, zoek wat niet is gekoppeld of verwijderd, en koppel los, verwijder, herstel of leeg bijlagen."
-        },
-        "trash": {
-          "title": "Systeemprullenbak",
-          "content": "Bekijk en beheer verwijderde items in alle projecten. Herstel per ongeluk verwijderde content of verwijder items permanent uit het systeem."
+        "sections": {
+          "testManagement": "Wat elk project is opgebouwd uit: de sjablonen en velden die een testgeval registreert, de workflow waardoor het zich beweegt, resultaatstatussen, milestontypen en configuraties.",
+          "peopleAndAccess": "Wie kan dit exemplaar gebruiken, hoe zij zijn gegroepeerd en wat elke rol in een project mag doen.",
+          "authentication": "Hoe mensen zich aanmelden, de regels voor wachtwoorden en vergrendeling, en de tokens en inrichting die hulpprogramma's en identiteitsproviders gebruiken.",
+          "toolsAndIntegrations": "Verbind issue trackers en coderepository's en kies wat TestPlanIt naar andere hulpprogramma's verzendt.",
+          "aiTools": "Verbind AI-providers en stem de prompts en scriptsjablonen die zij genereren af.",
+          "system": "Instellingen op instantieniveau, importen, zoeken, achtergrondtaken en records van wat is gewijzigd of verwijderd."
         }
       },
       "demoProjectTour": {
