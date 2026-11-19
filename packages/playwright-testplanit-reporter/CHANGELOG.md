@@ -1,5 +1,20 @@
 # @testplanit/playwright-reporter
 
+## 1.1.3
+
+### Patch Changes
+
+- [#756](https://github.com/TestPlanIt/testplanit/pull/756) [`602531b`](https://github.com/TestPlanIt/testplanit/commit/602531b4dce60c4df118dae46f216fe51d44e59c) Thanks [@therealbrad](https://github.com/therealbrad)! - State the TestPlanIt server version that copying tags needs
+
+  Documentation only; no code changes. Copying Playwright tags onto test cases
+  (`captureTags`, `overwriteTags`, added in 1.1.2) requires a TestPlanIt server
+  on 1.0.0 or later. The README said 1.2.0, which was wrong, and its
+  Compatibility section did not mention the server at all.
+
+  `captureTags` is on by default. Against a server older than 1.0.0 the reporter
+  logs an error for each new case that has tags and reports results as usual;
+  set `captureTags: false` to stop the attempts.
+
 ## 1.1.2
 
 ### Patch Changes
