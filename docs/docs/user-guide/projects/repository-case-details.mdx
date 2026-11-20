@@ -40,6 +40,22 @@ While editing, your changes are saved as you type. A status indicator sits on th
 
 Reopening a case with unsaved edits prompts you to restore or discard them. If you land on the read-only view with unsaved work outstanding — after a crash, for example — a banner offers to resume editing where you left off. Cancelling out of edit mode discards the draft. See [Auto-Save and Draft Recovery](./case-draft-autosave.md).
 
+### When Someone Else Saved the Test Case
+
+Saving checks whether the test case was saved by someone else after you started editing. If it was, nothing is saved and a dialog offers three choices:
+
+- **Keep editing** returns to the form with your changes intact.
+- **Discard my changes and reload** drops your changes and shows the test case as it is now.
+- **Overwrite** saves your changes as a new version on top of the other person's.
+
+### Loading an Earlier Version
+
+While editing, the history button to the left of **Delete** opens the **Load values from version** menu. It lists every version except the current one, each with its number and the date it was saved.
+
+Choosing a version fills the form with that version's name, steps, custom field values, tags, linked issues and estimate. The workflow state, folder, attachments and the Automated setting stay as they are. If the version used a different template that the project still has, the form switches to that template. A notice above the fields says which version the form holds and lists anything that could not be loaded, such as a tag that no longer exists.
+
+Nothing is saved until you click **Save**, and saving creates a new version; earlier versions are not changed or removed. If you have made changes in the form, you are asked to confirm before they are replaced.
+
 ## Duration Display
 
 Both the `Estimate` and `Forecast` fields store time in seconds but are displayed in a human-readable format (e.g., "5 minutes, 30 seconds", "1 hour, 2 minutes"). If no time is recorded (value is 0 or null), it displays "No time recorded".
@@ -96,7 +112,6 @@ Choose a version from the Versions menu. The **Versions** view shows the history
 />
 
 - **Timestamp:** When the version was saved.
-- **Author:** The user who made the change.
 - **Changes:** Opening a version shows it with the differences from the version before it highlighted. See [Test Case Versions](./repository-case-versions.md).
 
 ## Activity

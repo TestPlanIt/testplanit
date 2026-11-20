@@ -32,9 +32,15 @@ When viewing any version _except the very first one (Version 1)_, the page highl
 
 This allows you to easily track the evolution of a test case and understand what specific changes were made between edits.
 
+## Going Back to an Earlier Version
+
+The versions page does not change the test case. To bring an earlier version back, edit the test case and use the **Load values from version** menu, which fills the edit form with that version's content for you to save as a new version. See [Loading an Earlier Version](./repository-case-details.mdx#loading-an-earlier-version).
+
 ## Metadata
 
 The right panel also displays metadata specific to the version being viewed:
 
-- **Version Created**: The exact date and time this version was saved, and the user who saved it.
-- **Latest Version Updated**: For context, the date, time, and user for the most recent save of the test case are also shown.
+- **Version _N_**: **Created At** is the date and time the version being viewed was saved.
+- **Version _N_ (Latest)**: For context, the same details for the most recent version, with a link to it.
+
+**Created By** shows the user who created the test case, not the person who saved that version. To see who made a change, use the project's [Audit Log](./audit-log.md).

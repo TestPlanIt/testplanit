@@ -91,8 +91,8 @@ During import, you'll map these columns to the available fields. The wizard auto
 Rich text fields (such as Description and other "Text Long" fields) support multiple formats in CSV. During import, TestPlanIt automatically detects the format and converts it to rich text:
 
 - **TipTap JSON**: The native rich text format used internally. Imported as-is.
-- **HTML**: HTML markup is detected and converted to rich text.
-- **Markdown**: Markdown syntax (headings, bold, italic, lists, links, code blocks, etc.) is automatically detected and converted to rich text.
+- **HTML**: HTML markup, including tables, is detected and converted to rich text.
+- **Markdown**: Markdown syntax (headings, bold, italic, lists, links, tables, code blocks, etc.) is automatically detected and converted to rich text.
 - **Plain text**: Simple text is wrapped in a paragraph.
 
 Format detection happens automatically — you don't need to specify which format your CSV uses. This means you can export from TestPlanIt in Markdown format and re-import the CSV without any manual conversion.

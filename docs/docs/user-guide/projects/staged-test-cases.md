@@ -61,7 +61,8 @@ it was last updated.
 ## Creating several at once
 
 Tick the staged cases you want (**Select All** ticks every one that has no
-problems) and click **Create selected**. The cases are created
+problems, and **Shift+click** selects every case between the one you click
+and the last one you ticked) and click **Create selected**. The cases are created
 in list order, each in its own target folder, exactly as the Add Case dialog
 would create them: the same template, field values, tags, linked issues,
 steps, and first version, and the same [review gate](../review-approvals.md)

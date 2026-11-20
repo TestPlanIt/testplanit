@@ -18,7 +18,7 @@ Import the test cases of a TestRail suite from its XML export. The sections of t
 | References | Linked issues, when you map the column to **Issues** |
 | Preconditions | A column you can map to a text field |
 | Steps and Expected Result (text layout) | One step with its expected result |
-| Separated steps | One step each. A step's Additional Info is added below the step text. |
+| Separated steps | One step each. A step's Additional Info is added below the step text. When a step has no expected result of its own and its text contains a line reading "Expected Result:", the text after that line becomes the expected result. |
 | Custom fields | One column each, named as in the file |
 | Tables in text | Tables |
 | Variables in steps (`%name%`) | Parameters of the test case, shown as `@name` in the step. The values are in TestRail's datasets, not in the file, so add them to the test case's dataset after the import. See [Parameterized Test Cases](./user-guide/projects/parameterized-test-cases.md). |
@@ -41,12 +41,14 @@ TestRail's XML export holds test cases and sections only. These are not in the f
 
 ## Importing
 
-1. Navigate to **Repository** in your project and click **Import**.
+1. Navigate to **Repository** in your project and click **Import Test Cases**.
 2. Select the file. The wizard shows how many test cases and sections the suite holds.
 3. Choose where the folders are created: at the top level of the repository, or under a folder you pick. Choosing a single folder puts every test case in that folder and drops the section tree.
 4. Optionally put the sections in a new folder and name it, to keep several suites apart in one project.
 5. Select the template.
 6. Map the TestRail columns to template fields, then review the preview and import.
+
+The preview page reports what the import changes or leaves out: how many images were replaced with `[image not imported]`, how many test cases use TestRail variables, and how many estimates could not be read.
 
 ### Suites That Use Several TestRail Templates
 

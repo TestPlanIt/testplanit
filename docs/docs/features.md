@@ -244,6 +244,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Drag and drop import** - Drag files directly from your desktop onto the Repository or Test Runs page to instantly start an import with the file pre-loaded
 - **Bulk import** - Import test cases from CSV with automatic markdown/HTML detection for rich text fields
 - **Markdown import** - Paste markdown source directly to seed cases, steps, and documentation pages
+- **TestRail import** - Import the test cases and sections of a TestRail suite from its XML export, with steps, tables and variables carried over
 - **Test Results import** - Import automated test results via popular formats like JUnit XML
 - **TestMo migration** - Special import support for migrating from Testmo
 - **Export capabilities** - Export data in CSV or PDF, with markdown format option for rich text fields

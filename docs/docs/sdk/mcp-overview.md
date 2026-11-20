@@ -30,6 +30,13 @@ The MCP server doesn't support shared steps. A shared step group appears in a fe
 
 See the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) for the full tool reference, including request/response schemas for every tool.
 
+Every tool declares what it does through the standard MCP tool annotations, so a client can let reads run and ask before a change:
+
+- Tools that only read set `readOnlyHint`.
+- Tools that add records without touching existing ones set `destructiveHint` to false.
+- Tools that overwrite or remove existing data set `destructiveHint`. Deletes are soft-deletes and also set `idempotentHint`.
+- Tools that reach a system outside TestPlanIt, such as an issue tracker or an AI model, set `openWorldHint`.
+
 ## Installation
 
 ```bash

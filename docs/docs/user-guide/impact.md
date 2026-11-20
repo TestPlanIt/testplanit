@@ -96,6 +96,8 @@ The header counts the selection ("Selected 12 of 40 affected test cases"), and a
 
 Hover a tier badge, in a row or in the filter bar, for what it means.
 
+**Shift+click** a row's checkbox to select or clear every row between it and the last one you clicked.
+
 A filter bar above the list narrows what is shown without changing what is selected: toggle one or more tiers, toggle one or more reasons (a case stays when any chosen reason selected it), and drag **Minimum score** to change which scores are shown. It starts at the selection threshold, so the list opens showing the cases that start selected; lower it to see the rest. The bar reports how many cases are showing, and **Select shown** and **Deselect shown** check or clear exactly those, leaving hidden cases as they were. **Clear filters** returns to that starting view.
 
 Cases that are already in the run — or already selected while creating one — are left out, and a note under the header says how many were skipped. When AI ran, a short **Summary** of the change appears above the list.

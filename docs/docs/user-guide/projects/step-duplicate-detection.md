@@ -62,7 +62,7 @@ When nothing meets the current filters, the table says so and prompts you to low
 Click any result row to open the conversion dialog. The dialog shows:
 
 1. **Matched Step Sequence** — a preview of the detected steps. You can edit the steps before conversion if needed.
-2. **Affected Test Cases** — all test cases containing this sequence, each with a checkbox. Uncheck any cases you want to exclude from conversion.
+2. **Affected Test Cases** — all test cases containing this sequence, each with a checkbox. Uncheck any cases you want to exclude from conversion. **Shift+click** a checkbox to change every case between it and the last one you clicked.
 3. **Shared Step Group Name** — auto-populated from the first step's text. Change it to something descriptive.
 
 If the matched steps have since been deleted from the test case, the dialog reports that the match is stale instead of opening an empty editor — dismiss it and run a new scan.

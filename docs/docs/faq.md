@@ -57,7 +57,7 @@ When TestPlanIt is updated while you have it open, a banner at the top of the pa
 
 ### Can I migrate from another test management tool?
 
-Yes, TestPlanIt supports importing test cases from CSV files. For specific tools like Testmo, see the [import guide](/docs/import-export). If you need to migrate from a tool that isn't directly supported, you can use the API to programmatically import your data.
+Yes. TestPlanIt imports test cases from CSV and Markdown files, imports the test cases and sections of a TestRail suite from its [XML export](/docs/import-testrail), and has a full migration for [Testmo](/docs/import-testmo). See the [import guide](/docs/import-export). If you need to migrate from a tool that isn't directly supported, you can use the API to programmatically import your data.
 
 ## Features
 

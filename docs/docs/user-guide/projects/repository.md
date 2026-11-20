@@ -28,7 +28,7 @@ You will see:
 * **Add Folder:** Click the "Add Folder" button (usually near the top of the folder tree).
 * **Add Case:** Click the "Add Case" button for manual test case creation (see [Add Test Case](./repository-add-case.md)).
 * **Generate Test Cases:** Click the "Generate Test Cases" button (sparkles icon) to use AI-powered generation from issues or requirements (requires [LLM Integration](../llm-integrations.md)).
-* **Import Cases:** Click the "Import Cases" button to bulk import test cases from CSV files.
+* **Import Test Cases:** Click the "Import Test Cases" button to bulk import test cases from a CSV file, a Markdown file, or a TestRail XML export. See [Import & Export](../../import-export.md).
 
 ## Editing and Organizing
 
@@ -65,7 +65,7 @@ The page features a resizable two-panel layout:
     * **Breadcrumbs (Folder View Only)**: Shows the path to the currently selected folder. Next to the breadcrumb, a **Show all descendants** toggle (folder-down icon) lets you view test cases from the selected folder and all of its nested subfolders in a single list. When enabled, each test case row displays a folder badge showing which subfolder it belongs to, with a tooltip showing the full folder path. All existing sorting, filtering, and bulk actions work on the aggregated list.
     * **Add Case Button**: Allows adding a new test case using a detailed modal (`AddCaseModal`).
     * **Generate Test Cases Button**: Opens the AI generation wizard (sparkles icon, requires [LLM Integration](../llm-integrations.md)).
-    * **Import Cases Button**: Opens the CSV import wizard for bulk test case creation.
+    * **Import Test Cases Button**: Opens the import wizard for bulk test case creation from a CSV file, a Markdown file, or a TestRail XML export.
     * **Filter Bar**: The active filters, shown as chips directly above the table, alongside the **Add Filter** button and **Clear All**. See [Views & Filtering](#views--filtering).
     * **Filter Cases Box**: A **Filter cases...** box that narrows the list to the cases whose name contains what you type. It applies on top of the folder scope, the grouping axis and every filter chip. See [Searching](#searching).
     * **Column Selection**: Choose which columns are visible in the table using the **Columns** control. Your selection is remembered automatically — it is saved in your browser and scoped to this project's repository, so the columns you pick are still there the next time you open it.
