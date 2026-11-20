@@ -1,3 +1,15 @@
+## [1.3.0-beta.5](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.4...v1.3.0-beta.5) (2026-11-20)
+
+### Features
+
+* **import:** import test cases from a TestRail XML export ([f877856](https://github.com/TestPlanIt/testplanit/commit/f877856034881ccff1772c1db8a636439feb581c))
+* **repository:** load an earlier version into the test case edit form ([e7207ed](https://github.com/TestPlanIt/testplanit/commit/e7207edc5bc4a71157286a8f7eb6ce861f4fdf09))
+
+### Bug Fixes
+
+* **execution:** scrub stateless GitHub App installation tokens from errors ([8f451b9](https://github.com/TestPlanIt/testplanit/commit/8f451b93fe21f59fe9bbe169733ee4f943baf786))
+* **ui:** mark every required form field with the asterisk ([4ea6d89](https://github.com/TestPlanIt/testplanit/commit/4ea6d8963f6d3997ec27f0712b0772fb1805e099))
+
 ## [1.3.0-beta.4](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.3...v1.3.0-beta.4) (2026-11-20)
 
 ### Features
