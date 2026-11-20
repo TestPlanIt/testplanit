@@ -61,6 +61,18 @@ describe("buildPlanUrl / sanitizeExecutionError", () => {
     ).not.toContain("glpat-AbCdEfGhIjKlMnOp");
     expect(sanitizeExecutionError(undefined)).toBe("Unknown error");
   });
+
+  it("scrubs a stateless GitHub App installation token whole", () => {
+    const jwt = [
+      "eyJhbGciOiJSUzI1NiJ9",
+      "eyJpc3MiOiJnaXRodWIiLCJpbnN0IjoxMjM0NX0",
+      "c2lnbmF0dXJl-AbC_dEf",
+    ].join(".");
+    const scrubbed = sanitizeExecutionError(
+      new Error(`Bad credentials for ghs_123456_${jwt} on acme/web`)
+    );
+    expect(scrubbed).toBe("Bad credentials for [redacted] on acme/web");
+  });
 });
 
 describe("resolveTargetCredentials", () => {
