@@ -1322,7 +1322,8 @@ export function TestCaseDetailsView({
   // Whether the user has changed anything since edit mode opened or a version
   // was last loaded. A form change alone is not proof: the rich text editors
   // report changes while they mount. So a change only counts once the user has
-  // pressed a key or a pointer inside the form.
+  // acted inside the form: a key or pointer press, typed or pasted input, or
+  // a drop.
   const editedSinceLoadRef = useRef(false);
   const interactedSinceLoadRef = useRef(false);
   useEffect(() => {
@@ -1338,14 +1339,23 @@ export function TestCaseDetailsView({
         interactedSinceLoadRef.current = true;
       }
     };
-    document.addEventListener("keydown", markInteraction, true);
-    document.addEventListener("pointerdown", markInteraction, true);
+    const interactionEvents = [
+      "keydown",
+      "pointerdown",
+      "input",
+      "paste",
+      "drop",
+    ];
+    for (const type of interactionEvents) {
+      document.addEventListener(type, markInteraction, true);
+    }
     const subscription = watch(() => {
       if (interactedSinceLoadRef.current) editedSinceLoadRef.current = true;
     });
     return () => {
-      document.removeEventListener("keydown", markInteraction, true);
-      document.removeEventListener("pointerdown", markInteraction, true);
+      for (const type of interactionEvents) {
+        document.removeEventListener(type, markInteraction, true);
+      }
       subscription.unsubscribe();
     };
   }, [isEditMode, watch]);
