@@ -282,6 +282,7 @@ const sidebars: SidebarsConfig = {
                     'user-guide/projects/step-duplicate-detection', // Step sequence duplicate detection
                     'import-export', // Add import-export.md
                     'import-markdown', // Markdown test case import
+                    'import-testrail', // TestRail suite XML import
                     'copy-move-test-cases', // Copy/Move test cases between projects
                     'user-guide/projects/duplicate-detection', // Duplicate test case detection
                     'user-guide/projects/quickscript', // QuickScript from repository

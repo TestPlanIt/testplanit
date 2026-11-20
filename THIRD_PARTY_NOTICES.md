@@ -1371,6 +1371,19 @@ The `@testplanit/*` packages under `packages/*` are published to npm separately 
 
 ---
 
+## Test Fixtures
+
+Sample files kept in the repository for automated tests. They are not part of the running application.
+
+### Xray code snippets: TestRail sample export
+
+- **File**: `testplanit/utils/__fixtures__/testrail/xray-comic-estore.xml` (unmodified)
+- **License**: BSD-3-Clause (copy beside the file)
+- **Repository**: <https://github.com/Xray-App/xray-code-snippets>
+- **Copyright**: Copyright (c) 2021, Xray App
+
+---
+
 ## Container Images
 
 Images pulled by `docker-compose.prod.yml`, `docker-compose.yml` and the Helm chart for the bundled file storage. They run as separate containers and are not compiled into or distributed with TestPlanIt.

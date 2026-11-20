@@ -622,6 +622,154 @@ describe("CSV Import API Route", () => {
       expect(mockEnhancedDb.repositoryFolders.create).toHaveBeenCalledTimes(3); // UI, Login, Tests
     });
 
+    it("creates folders from a TestRail section list without splitting names", async () => {
+      const request = createRequest({
+        projectId: 1,
+        fileType: "testrail",
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "top_level",
+        fieldMappings: [
+          { csvColumn: "Title", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Section", templateField: "folder" },
+        ],
+        folderSplitMode: "slash",
+        rowMode: "single",
+        parsedData: [
+          {
+            Title: "Pay by card",
+            Description: "Test Description",
+            Section: ["Checkout / Cards", "v2.0 > drafts"],
+          },
+        ],
+        folderDescriptions: [
+          { path: ["Checkout / Cards"], description: "Card payments" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete).toBeDefined();
+      const created = mockEnhancedDb.repositoryFolders.create.mock.calls.map(
+        ([args]: any) => args.data
+      );
+      expect(created.map((data: any) => data.name)).toEqual([
+        "Checkout / Cards",
+        "v2.0 > drafts",
+      ]);
+      expect(JSON.parse(created[0].docs)).toMatchObject({ type: "doc" });
+      expect(created[0].docs).toContain("Card payments");
+      expect(created[1].docs).toBeUndefined();
+    });
+
+    it("turns TestRail variables in steps into parameters", async () => {
+      mockEnhancedDb.templates.findUnique.mockResolvedValue({
+        ...mockTemplate,
+        caseFields: [
+          ...mockTemplate.caseFields,
+          {
+            caseField: {
+              id: 99,
+              systemName: "steps",
+              displayName: "Steps",
+              isRequired: false,
+              type: { type: "Steps" },
+            },
+          },
+        ],
+      });
+      mockEnhancedDb.testCaseParameter = { upsert: vi.fn() };
+      const request = createRequest({
+        projectId: 1,
+        fileType: "testrail",
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [
+          { csvColumn: "Title", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Steps", templateField: "steps" },
+        ],
+        rowMode: "single",
+        parsedData: [
+          {
+            Title: "Log in",
+            Description: "Test Description",
+            Steps: JSON.stringify([
+              { step: "Log in as %user%", expectedResult: "Hello %user%" },
+              { step: "Pay 50% with %card%", expectedResult: "" },
+            ]),
+          },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete).toBeDefined();
+      const firstStep = mockEnhancedDb.steps.create.mock.calls[0][0].data;
+      expect(JSON.stringify(firstStep.step)).toContain(
+        '{"type":"parameterMention","attrs":{"id":"user","label":"user","paramType":"STRING"}}'
+      );
+      expect(JSON.stringify(firstStep.expectedResult)).toContain(
+        '"parameterMention"'
+      );
+      expect(
+        mockEnhancedDb.testCaseParameter.upsert.mock.calls.map(
+          ([args]: any) => [args.create.name, args.create.order]
+        )
+      ).toEqual([
+        ["user", 0],
+        ["card", 1],
+      ]);
+      expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { hasParameters: true } })
+      );
+    });
+
+    it("leaves the documentation of a folder that already exists", async () => {
+      mockEnhancedDb.repositoryFolders.findFirst.mockResolvedValue({
+        id: 7,
+        name: "Checkout",
+      });
+      const request = createRequest({
+        projectId: 1,
+        fileType: "testrail",
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "top_level",
+        fieldMappings: [
+          { csvColumn: "Title", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Section", templateField: "folder" },
+        ],
+        rowMode: "single",
+        parsedData: [
+          {
+            Title: "Pay by card",
+            Description: "Test Description",
+            Section: ["Checkout"],
+          },
+        ],
+        folderDescriptions: [{ path: ["Checkout"], description: "New text" }],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete).toBeDefined();
+      expect(mockEnhancedDb.repositoryFolders.create).not.toHaveBeenCalled();
+    });
+
     it("imports test cases with tags", async () => {
       mockEnhancedDb.tags.findFirst.mockResolvedValue(null);
       mockEnhancedDb.tags.create.mockImplementation(({ data }: any) => ({

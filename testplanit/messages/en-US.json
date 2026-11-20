@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "Template selection is required",
           "folderRequired": "Folder selection is required for this import location",
-          "fileRequired": "A CSV or Markdown file is required",
+          "fileRequired": "A CSV, Markdown or TestRail XML file is required",
           "markdownParseFailed": "Failed to parse Markdown file",
           "markdownLlmFailed": "AI parsing unavailable, using standard parser",
           "validationTitle": "Import validation failed",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "Map CSV Columns to Fields",
+          "titleMarkdown": "Map Markdown Fields to Template Fields",
+          "titleTestRail": "Map TestRail Fields to Template Fields",
           "description": "Map each CSV column to a field in the template or choose to ignore it.",
+          "descriptionMarkdown": "Map each field found in the Markdown file to a field in the template or choose to ignore it.",
+          "descriptionTestRail": "Map each TestRail field to a field in the template or choose to ignore it.",
           "ignoreColumn": "Ignore Column",
           "requiredFieldsWarning": "{count, plural, one {# required field is} other {# required fields are}} not mapped",
           "caseIdHint": "This must be the numeric Case ID — matching cases are overwritten."
@@ -3544,6 +3548,29 @@
             "noStepColumn": "Multi-row mode is enabled but no step column was detected. Expected one of: Step Content, Step, Steps, Action, Description (case-insensitive). Each CSV row will be imported as a separate test case.",
             "noKeyColumn": "Multi-row mode is enabled but no ID or Name column is mapped. Map an ID or Name column on the previous step so rows can be grouped into cases.",
             "noGrouping": "Multi-row mode is enabled but no rows were grouped. Each row has a different ID/Name, so each will become a separate test case. Leave the ID and Name blank on continuation rows, or repeat the same ID/Name across the rows that belong to one case."
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {TestRail suite \"{suite}\" holds # test case in {sections, plural, one {# section} other {# sections}}.} other {TestRail suite \"{suite}\" holds # test cases in {sections, plural, one {# section} other {# sections}}.}}",
+          "summaryUnnamed": "{cases, plural, one {This TestRail suite holds # test case in {sections, plural, one {# section} other {# sections}}.} other {This TestRail suite holds # test cases in {sections, plural, one {# section} other {# sections}}.}}",
+          "notIncluded": "The export holds test cases and sections only. Attachments, images, test runs, results, users and case history are not in the file. Templates and fields are not created by the import, so set up the template before you import.",
+          "unrecognizedFields": "{count, plural, one {The field {fields} has a structure this import does not know. Its values are imported as plain text.} other {The fields {fields} have a structure this import does not know. Their values are imported as plain text.}}",
+          "suiteFolder": "Put the sections in a new folder",
+          "suiteFolderName": "Folder name",
+          "templateFilter": {
+            "label": "TestRail template",
+            "all": "All templates ({count, number})",
+            "option": "{name} ({count, number})",
+            "help": "Each import maps the cases to one template. If the TestRail templates need different templates here, run the import once for each."
+          },
+          "imageMarker": "[image not imported]",
+          "imagesReplaced": "{count, plural, one {# image in the text points at TestRail and cannot be imported. It is replaced with \"{marker}\".} other {# images in the text point at TestRail and cannot be imported. Each is replaced with \"{marker}\".}}",
+          "variables": "{count, plural, one {# test case uses TestRail variables in its steps. Each variable becomes a parameter of the test case. The values are not in the file, so add them to the test case's dataset after the import.} other {# test cases use TestRail variables in their steps. Each variable becomes a parameter of its test case. The values are not in the file, so add them to each test case's dataset after the import.}}",
+          "unreadEstimates": "{count, plural, one {The estimate of # test case could not be read and is left empty.} other {The estimates of # test cases could not be read and are left empty.}}",
+          "errors": {
+            "invalidXml": "This file could not be read as XML.",
+            "notASuite": "This XML file is not a TestRail test suite export. In TestRail, open the suite's Test Cases page and export it as XML.",
+            "noCases": "This TestRail export holds no test cases."
           }
         }
       }

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -79,6 +80,13 @@ import {
   parseMarkdownTestCases,
   type ParsedMarkdownCase,
 } from "~/utils/markdownTestCaseParser";
+import {
+  convertTestRailSuiteToImportData,
+  parseTestRailXml,
+  TESTRAIL_DEFAULT_SUITE_NAME,
+  TestRailXmlError,
+  type TestRailSuite,
+} from "~/utils/testRailXmlParser";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { generateHTMLFallback } from "~/utils/tiptapToHtml";
 import { apiFetch } from "~/lib/basePath";
@@ -90,12 +98,15 @@ interface ImportCasesWizardProps {
   initialFile?: File | null;
 }
 
-type FileType = "csv" | "markdown";
+type FileType = "csv" | "markdown" | "testrail";
 
 const detectFileType = (file: File): FileType => {
   const ext = file.name.split(".").pop()?.toLowerCase();
+  if (ext === "xml") return "testrail";
   return ext === "md" || ext === "markdown" ? "markdown" : "csv";
 };
+
+const ALL_TESTRAIL_TEMPLATES = "__all__";
 
 type ImportLocation = "single_folder" | "root_folder" | "top_level";
 type Delimiter = "," | ";" | ":" | "|" | "\t";
@@ -190,6 +201,24 @@ export function ImportCasesWizard({
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [rowMode, setRowMode] = useState<RowMode>("single");
   const [useAiParsing, setUseAiParsing] = useState(false);
+  const [testRailSuite, setTestRailSuite] = useState<TestRailSuite | null>(
+    null
+  );
+  const [testRailTemplate, setTestRailTemplate] = useState(
+    ALL_TESTRAIL_TEMPLATES
+  );
+  const [testRailSuiteFolder, setTestRailSuiteFolder] = useState(false);
+  const [testRailSuiteFolderName, setTestRailSuiteFolderName] = useState("");
+  const [testRailError, setTestRailError] = useState<
+    "invalid_xml" | "not_a_suite" | "no_cases" | null
+  >(null);
+  // What the last conversion of the TestRail file left out or changed.
+  const [testRailNotes, setTestRailNotes] = useState<{
+    imageCount: number;
+    unreadEstimates: number;
+    casesWithVariables: number;
+    folderDescriptions: { path: string[]; description: string }[];
+  } | null>(null);
 
   // Page 2 state
   // const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -252,6 +281,50 @@ export function ImportCasesWizard({
       setFileType(detectFileType(initialFile));
     }
   }, [open, initialFile]);
+
+  // Read a TestRail export as soon as it is chosen, so the first page can
+  // show what it holds and offer the TestRail template filter.
+  useEffect(() => {
+    setTestRailSuite(null);
+    setTestRailTemplate(ALL_TESTRAIL_TEMPLATES);
+    setTestRailNotes(null);
+    setTestRailError(null);
+    if (!selectedFile || fileType !== "testrail") return;
+
+    let cancelled = false;
+    selectedFile
+      .text()
+      .then((text) => {
+        if (cancelled) return;
+        const suite = parseTestRailXml(text);
+        if (suite.cases.length === 0) {
+          setTestRailError("no_cases");
+          return;
+        }
+        setTestRailSuite(suite);
+        setTestRailSuiteFolderName(
+          suite.name && suite.name !== TESTRAIL_DEFAULT_SUITE_NAME
+            ? suite.name
+            : "TestRail"
+        );
+        // The section tree is the point of this export; a single target
+        // folder would flatten it.
+        setImportLocation((current) =>
+          current === "single_folder" ? "top_level" : current
+        );
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setTestRailError(
+          error instanceof TestRailXmlError && error.code === "not_a_suite"
+            ? "not_a_suite"
+            : "invalid_xml"
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedFile, fileType]);
 
   // Fetch data
   const { data: templates } = useClientQueries(schema).templates.useFindMany({
@@ -794,6 +867,28 @@ export function ImportCasesWizard({
     }
   };
 
+  // Convert the TestRail suite read on file selection into mappable rows.
+  const convertTestRailFile = () => {
+    if (!testRailSuite) return;
+    const data = convertTestRailSuiteToImportData(testRailSuite, {
+      template:
+        testRailTemplate === ALL_TESTRAIL_TEMPLATES ? null : testRailTemplate,
+      suiteFolderName:
+        testRailSuiteFolder && importLocation !== "single_folder"
+          ? testRailSuiteFolderName
+          : null,
+      imageMarker: t("importWizard.testRail.imageMarker"),
+    });
+    setParsedData(data.rows as ParsedCase[]);
+    setFieldMappings(createFieldMappings(data.columns));
+    setTestRailNotes({
+      imageCount: data.imageCount,
+      unreadEstimates: data.unreadEstimates.length,
+      casesWithVariables: data.casesWithVariables,
+      folderDescriptions: data.folderDescriptions,
+    });
+  };
+
   // Helper to detect columns from LLM-parsed cases
   const detectColumnsFromLlmCases = (cases: ParsedMarkdownCase[]): string[] => {
     const columns = new Set<string>();
@@ -910,6 +1005,13 @@ export function ImportCasesWizard({
       return false;
     }
 
+    // A TestRail file is read on selection; without a suite there is
+    // nothing to map, and the file field already says why.
+    if (fileType === "testrail" && !testRailSuite) {
+      setValidationErrors({});
+      return false;
+    }
+
     setValidationErrors({});
     return true;
   };
@@ -956,7 +1058,11 @@ export function ImportCasesWizard({
           folderSplitMode:
             importLocation !== "single_folder" ? folderSplitMode : null,
           rowMode: fileType === "csv" ? rowMode : "single",
-          parsedData: fileType === "markdown" ? parsedData : undefined,
+          parsedData: fileType !== "csv" ? parsedData : undefined,
+          folderDescriptions:
+            fileType === "testrail" && importLocation !== "single_folder"
+              ? testRailNotes?.folderDescriptions
+              : undefined,
         }),
       });
 
@@ -1095,28 +1201,39 @@ export function ImportCasesWizard({
     </div>
   );
 
+  const fileError =
+    validationErrors.selectedFile ??
+    (testRailError === "not_a_suite"
+      ? t("importWizard.testRail.errors.notASuite")
+      : testRailError === "no_cases"
+        ? t("importWizard.testRail.errors.noCases")
+        : testRailError === "invalid_xml"
+          ? t("importWizard.testRail.errors.invalidXml")
+          : undefined);
+
   const renderPage1 = () => (
     <div className="space-y-6">
       <div>
-        <RequiredLabel required error={validationErrors.selectedFile}>
+        <RequiredLabel required error={fileError}>
           {tGlobal("common.editor.uploadFile")}
         </RequiredLabel>
         <div className="mt-2">
           <div
             className={
-              validationErrors.selectedFile
-                ? "rounded-lg border border-destructive p-2"
-                : ""
+              fileError ? "rounded-lg border border-destructive p-2" : ""
             }
           >
             <UploadAttachments
               onFileSelect={handleFileSelect}
               compact
               previews={false}
-              accept=".csv,.md,.markdown,.txt"
+              accept=".csv,.md,.markdown,.txt,.xml"
               allowedTypes={[
                 ".csv",
                 "text/csv",
+                ".xml",
+                "text/xml",
+                "application/xml",
                 ".md",
                 ".markdown",
                 ".txt",
@@ -1129,6 +1246,36 @@ export function ImportCasesWizard({
           </div>
         </div>
       </div>
+
+      {fileType === "testrail" && testRailSuite && (
+        <Alert data-testid="testrail-import-summary">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <p>
+              {testRailSuite.name &&
+              testRailSuite.name !== TESTRAIL_DEFAULT_SUITE_NAME
+                ? t("importWizard.testRail.summary", {
+                    suite: testRailSuite.name,
+                    cases: testRailSuite.cases.length,
+                    sections: testRailSuite.sections.length,
+                  })
+                : t("importWizard.testRail.summaryUnnamed", {
+                    cases: testRailSuite.cases.length,
+                    sections: testRailSuite.sections.length,
+                  })}
+            </p>
+            <p className="mt-1">{t("importWizard.testRail.notIncluded")}</p>
+            {testRailSuite.unrecognizedFields.length > 0 && (
+              <p className="mt-1">
+                {t("importWizard.testRail.unrecognizedFields", {
+                  count: testRailSuite.unrecognizedFields.length,
+                  fields: testRailSuite.unrecognizedFields.join(", "),
+                })}
+              </p>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div>
         <Label>{t("importWizard.page1.importLocation.label")}</Label>
@@ -1260,6 +1407,74 @@ export function ImportCasesWizard({
         </>
       )}
 
+      {fileType === "testrail" &&
+        testRailSuite &&
+        importLocation !== "single_folder" && (
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="testRailSuiteFolder"
+                checked={testRailSuiteFolder}
+                onCheckedChange={(c) => setTestRailSuiteFolder(!!c)}
+              />
+              <Label
+                htmlFor="testRailSuiteFolder"
+                className="cursor-pointer font-normal"
+              >
+                {t("importWizard.testRail.suiteFolder")}
+              </Label>
+            </div>
+            {testRailSuiteFolder && (
+              <Input
+                className="ms-6 w-auto min-w-64"
+                value={testRailSuiteFolderName}
+                onChange={(e) => setTestRailSuiteFolderName(e.target.value)}
+                aria-label={t("importWizard.testRail.suiteFolderName")}
+                placeholder={t("importWizard.testRail.suiteFolderName")}
+                maxLength={255}
+                data-testid="testrail-suite-folder-name"
+              />
+            )}
+          </div>
+        )}
+
+      {fileType === "testrail" &&
+        testRailSuite &&
+        testRailSuite.templates.length > 1 && (
+          <div>
+            <Label>{t("importWizard.testRail.templateFilter.label")}</Label>
+            <Select
+              value={testRailTemplate}
+              onValueChange={setTestRailTemplate}
+            >
+              <SelectTrigger
+                className="mt-2"
+                data-testid="testrail-template-filter"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_TESTRAIL_TEMPLATES}>
+                  {t("importWizard.testRail.templateFilter.all", {
+                    count: testRailSuite.cases.length,
+                  })}
+                </SelectItem>
+                {testRailSuite.templates.map((template) => (
+                  <SelectItem key={template.name} value={template.name}>
+                    {t("importWizard.testRail.templateFilter.option", {
+                      name: template.name,
+                      count: template.count,
+                    })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("importWizard.testRail.templateFilter.help")}
+            </p>
+          </div>
+        )}
+
       {selectedFile && fileType === "markdown" && hasLlmIntegration && (
         <div className="flex items-center space-x-2">
           <Checkbox
@@ -1354,7 +1569,11 @@ export function ImportCasesWizard({
   const renderPage2 = () => (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        {t("importWizard.page2.description")}
+        {fileType === "testrail"
+          ? t("importWizard.page2.descriptionTestRail")
+          : fileType === "markdown"
+            ? t("importWizard.page2.descriptionMarkdown")
+            : t("importWizard.page2.description")}
       </p>
 
       {fileType === "csv" && fieldMappings.length > 0 && (
@@ -1492,7 +1711,7 @@ export function ImportCasesWizard({
           </CardContent>
         </Card>
 
-        {hasFolderMapping && (
+        {hasFolderMapping && fileType !== "testrail" && (
           <div>
             <Label>{t("importWizard.page3.folderSplitMode.label")}</Label>
             <RadioGroup
@@ -1732,6 +1951,39 @@ export function ImportCasesWizard({
             current={currentMapping}
           />
         )}
+        {fileType === "testrail" &&
+          testRailNotes &&
+          (testRailNotes.imageCount > 0 ||
+            testRailNotes.unreadEstimates > 0 ||
+            testRailNotes.casesWithVariables > 0) && (
+            <Alert data-testid="testrail-import-notes">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {testRailNotes.imageCount > 0 && (
+                  <p>
+                    {t("importWizard.testRail.imagesReplaced", {
+                      count: testRailNotes.imageCount,
+                      marker: t("importWizard.testRail.imageMarker"),
+                    })}
+                  </p>
+                )}
+                {testRailNotes.casesWithVariables > 0 && (
+                  <p>
+                    {t("importWizard.testRail.variables", {
+                      count: testRailNotes.casesWithVariables,
+                    })}
+                  </p>
+                )}
+                {testRailNotes.unreadEstimates > 0 && (
+                  <p>
+                    {t("importWizard.testRail.unreadEstimates", {
+                      count: testRailNotes.unreadEstimates,
+                    })}
+                  </p>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
         {multiRowDiagnostics && multiRowAggregated && (
           <Alert>
             <AlertCircle className="h-4 w-4" />
@@ -1855,7 +2107,11 @@ export function ImportCasesWizard({
                       const field = templateFields.find(
                         (f) => f.id === mapping.templateField
                       );
-                      const value = caseData[mapping.csvColumn];
+                      const cell = caseData[mapping.csvColumn];
+                      // A TestRail section arrives as a list of folder names.
+                      const value = Array.isArray(cell)
+                        ? cell.join(" / ")
+                        : cell;
                       const isExpandedField =
                         field?.id === "steps" ||
                         field?.id === "tags" ||
@@ -1980,6 +2236,9 @@ export function ImportCasesWizard({
         if (fileType === "csv") {
           parseCSVFile();
           setCurrentPage(currentPage + 1);
+        } else if (fileType === "testrail") {
+          convertTestRailFile();
+          setCurrentPage(currentPage + 1);
         } else {
           await parseMarkdownFile();
           setCurrentPage(currentPage + 1);
@@ -2002,7 +2261,12 @@ export function ImportCasesWizard({
           <DialogDescription>
             {currentPage === 1 &&
               tGlobal("sharedSteps.importWizard.page1.title")}
-            {currentPage === 2 && t("importWizard.page2.title")}
+            {currentPage === 2 &&
+              (fileType === "testrail"
+                ? t("importWizard.page2.titleTestRail")
+                : fileType === "markdown"
+                  ? t("importWizard.page2.titleMarkdown")
+                  : t("importWizard.page2.title"))}
             {currentPage === 3 && t("importWizard.page3.title")}
             {currentPage === 4 && t("importWizard.page4.title")}
           </DialogDescription>

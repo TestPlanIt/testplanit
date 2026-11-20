@@ -18,6 +18,7 @@ import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersi
 import { authOptions } from "~/server/auth";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
+import { convertTestRailVariables } from "~/utils/testRailVariables";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { parseStepsCell } from "~/lib/utils/parseExportedSteps";
 import { aggregateMultiRowSteps } from "~/lib/utils/aggregateMultiRowSteps";
@@ -140,7 +141,7 @@ interface FieldMapping {
 interface ImportRequest {
   projectId: number;
   file?: string;
-  fileType?: "csv" | "markdown";
+  fileType?: "csv" | "markdown" | "testrail";
   delimiter: string;
   hasHeaders: boolean;
   encoding: string;
@@ -151,6 +152,8 @@ interface ImportRequest {
   folderSplitMode?: "plain" | "slash" | "dot" | "greater_than";
   rowMode: "single" | "multi";
   parsedData?: any[];
+  // Documentation for folders this import creates, keyed by folder path.
+  folderDescriptions?: { path: string[]; description: string }[];
 }
 
 interface ImportError {
@@ -280,8 +283,11 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
         // Parse input data
         let rows: any[];
 
-        if (body.fileType === "markdown" && body.parsedData) {
-          // For markdown, the frontend has already parsed the file
+        if (
+          (body.fileType === "markdown" || body.fileType === "testrail") &&
+          body.parsedData
+        ) {
+          // The wizard has already parsed Markdown and TestRail files
           rows = body.parsedData;
         } else {
           // CSV parsing
@@ -324,6 +330,16 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
             "No column is mapped to Name. Go back to the column mapping step and map the column holding the test case name."
           );
           return;
+        }
+
+        const folderDescriptions = new Map<string, string>();
+        for (const entry of body.folderDescriptions ?? []) {
+          if (Array.isArray(entry?.path) && entry.description) {
+            folderDescriptions.set(
+              folderPathKey(entry.path),
+              String(entry.description)
+            );
+          }
         }
 
         // Process each row
@@ -455,6 +471,26 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
             }
           }
 
+          // TestRail variables in steps become parameter chips; the case
+          // gets a parameter for each name once it exists.
+          if (body.fileType === "testrail" && Array.isArray(caseData.steps)) {
+            const parameterNames: string[] = [];
+            const withChips = (content: any) => {
+              if (!content) return content;
+              const { doc, names } = convertTestRailVariables(content);
+              for (const name of names) {
+                if (!parameterNames.includes(name)) parameterNames.push(name);
+              }
+              return doc;
+            };
+            caseData.steps = caseData.steps.map((step: any) => ({
+              ...step,
+              step: withChips(step.step),
+              expectedResult: withChips(step.expectedResult),
+            }));
+            caseData.parameterNames = parameterNames;
+          }
+
           if (Array.isArray(row._aggregatedSteps)) {
             caseData.steps = row._aggregatedSteps.map((s: any) => ({
               step: ensureTipTapJSON(s.step),
@@ -522,7 +558,8 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
                   ? body.folderId || null
                   : null,
                 body.folderSplitMode || "plain",
-                session.user.id
+                session.user.id,
+                folderDescriptions
               );
               caseData.folderId = folderId;
             } catch (error: any) {
@@ -867,6 +904,29 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
               }
             }
 
+            // Declare a parameter for each variable the steps reference. The
+            // file holds no values, so the parameters start without a dataset.
+            if (caseData.parameterNames?.length) {
+              for (const [order, name] of caseData.parameterNames.entries()) {
+                await enhancedDb.testCaseParameter.upsert({
+                  where: {
+                    testCaseId_name: { testCaseId: newCase.id, name },
+                  },
+                  create: {
+                    testCaseId: newCase.id,
+                    name,
+                    type: "STRING",
+                    order,
+                  },
+                  update: { isDeleted: false },
+                });
+              }
+              await enhancedDb.repositoryCases.update({
+                where: { id: newCase.id },
+                data: { hasParameters: true },
+              });
+            }
+
             // Settle the version number now (it depends only on the case's
             // own history), but DON'T snapshot yet: the helper re-reads the
             // case, and tags / issues / attachments are attached further
@@ -1126,7 +1186,11 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
             body.projectId,
             {
               source:
-                body.fileType === "markdown" ? "Markdown Import" : "CSV Import",
+                body.fileType === "markdown"
+                  ? "Markdown Import"
+                  : body.fileType === "testrail"
+                    ? "TestRail Import"
+                    : "CSV Import",
               templateId: body.templateId,
               importLocation: body.importLocation,
             }
@@ -1348,20 +1412,42 @@ function validateFieldValue(
   }
 }
 
+const folderPathKey = (names: string[]) =>
+  JSON.stringify(names.map((name) => String(name).trim()));
+
 async function getOrCreateFolder(
   db: DbClient,
   projectId: number,
   repositoryId: number,
-  folderPath: string,
+  folderPath: string | string[],
   parentId: number | null,
   splitMode: string,
-  userId: string
+  userId: string,
+  descriptions?: Map<string, string>
 ): Promise<number> {
+  let folderNames: string[];
+
+  // A list is a path already split into names (TestRail sections), so a name
+  // holding a separator character stays one folder.
+  if (Array.isArray(folderPath)) {
+    folderNames = folderPath.map((n) => String(n).trim()).filter((n) => n);
+    if (folderNames.length === 0) {
+      throw new Error("Folder path cannot be empty");
+    }
+    return createFolderPath(
+      db,
+      projectId,
+      repositoryId,
+      folderNames,
+      parentId,
+      userId,
+      descriptions
+    );
+  }
+
   if (!folderPath || folderPath.trim() === "") {
     throw new Error("Folder path cannot be empty");
   }
-
-  let folderNames: string[];
 
   switch (splitMode) {
     case "slash":
@@ -1388,10 +1474,30 @@ async function getOrCreateFolder(
       break;
   }
 
+  return createFolderPath(
+    db,
+    projectId,
+    repositoryId,
+    folderNames,
+    parentId,
+    userId,
+    descriptions
+  );
+}
+
+async function createFolderPath(
+  db: DbClient,
+  projectId: number,
+  repositoryId: number,
+  folderNames: string[],
+  parentId: number | null,
+  userId: string,
+  descriptions?: Map<string, string>
+): Promise<number> {
   let currentParentId = parentId;
   let lastFolderId: number = 0;
 
-  for (const folderName of folderNames) {
+  for (const [depth, folderName] of folderNames.entries()) {
     // Check if folder exists
     let folder = await db.repositoryFolders.findFirst({
       where: {
@@ -1404,7 +1510,11 @@ async function getOrCreateFolder(
     });
 
     if (!folder) {
-      // Create folder
+      // Only a folder this import creates gets a description; an existing
+      // folder keeps its own documentation.
+      const description = descriptions?.get(
+        folderPathKey(folderNames.slice(0, depth + 1))
+      );
       folder = await db.repositoryFolders.create({
         data: {
           projectId,
@@ -1412,6 +1522,9 @@ async function getOrCreateFolder(
           parentId: currentParentId,
           name: folderName,
           creatorId: userId,
+          ...(description
+            ? { docs: JSON.stringify(ensureTipTapJSON(description)) }
+            : {}),
         },
       });
     }

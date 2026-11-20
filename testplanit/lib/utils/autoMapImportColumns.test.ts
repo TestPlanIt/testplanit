@@ -38,6 +38,29 @@ const mapOf = (headers: string[]) =>
   );
 
 describe("autoMapImportColumns", () => {
+  it("maps the columns of a TestRail export", () => {
+    const mapped = mapOf([
+      "Title",
+      "Section",
+      "TestRail ID",
+      "TestRail Template",
+      "Priority",
+      "References",
+      "Preconditions",
+      "Steps",
+    ]);
+    expect(mapped).toEqual({
+      Title: "name",
+      Section: "folder",
+      "TestRail ID": null,
+      "TestRail Template": null,
+      Priority: "priority",
+      References: "issues",
+      Preconditions: "preconditions",
+      Steps: "steps",
+    });
+  });
+
   it("maps Case ID only from exact headers", () => {
     expect(mapOf(["ID"])["ID"]).toBe("id");
     expect(mapOf(["Case ID"])["Case ID"]).toBe("id");

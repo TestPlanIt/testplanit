@@ -1,6 +1,12 @@
 import { JSONContent } from "@tiptap/core";
 import { Color } from "@tiptap/extension-color";
 import { Link } from "@tiptap/extension-link";
+import {
+  Table,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@tiptap/extension-table";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Underline } from "@tiptap/extension-underline";
 import { generateJSON as generateJSONInBrowser } from "@tiptap/html";
@@ -33,6 +39,13 @@ const tiptapConversionExtensions = [
   Link,
   TextStyle,
   Color,
+  // The stock table nodes, not the editor's own (app/extensions/Table): those
+  // add editing plugins this converter has no use for. The node names and
+  // attributes match, so the editor opens what this produces.
+  Table,
+  TableRow,
+  TableHeader,
+  TableCell,
 ];
 
 const escapeHtml = (value: string): string =>

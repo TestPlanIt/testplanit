@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suite>
+	<id>S7</id>
+	<name>Billing</name>
+	<description>All billing checks</description>
+	<sections>
+		<section>
+			<name>Invoices / Credit notes</name>
+			<description>&lt;p&gt;Covers &lt;strong&gt;invoices&lt;/strong&gt;&lt;/p&gt;</description>
+			<cases>
+				<case>
+					<id>C101</id>
+					<title>Create an invoice</title>
+					<template>Test Case (Steps)</template>
+					<type>Functional</type>
+					<priority>High</priority>
+					<estimate>1h 30m</estimate>
+					<references>BILL-12, BILL-40</references>
+					<custom>
+						<preconds>&lt;p&gt;A customer exists&lt;/p&gt;&lt;img src="index.php?/attachments/get/aaaa-1111" alt=""&gt;</preconds>
+						<steps_separated>
+							<step><index>2</index><content>Save the invoice</content><expected>The invoice gets a number</expected></step>
+							<step><index>1</index><content>Open New invoice</content><expected>The form opens</expected><additional_info>Use customer ACME</additional_info></step>
+						</steps_separated>
+						<platforms><item><id>1</id><value>Web</value></item><item><id>2</id><value>iOS</value></item></platforms>
+						<priority>Custom priority</priority>
+					</custom>
+				</case>
+				<case>
+					<id>C102</id>
+					<title>Estimate that cannot be read</title>
+					<template>Test Case (Text)</template>
+					<type>Functional</type>
+					<priority>Low</priority>
+					<estimate>about a day</estimate>
+					<references></references>
+					<custom>
+						<steps>Do the thing</steps>
+					</custom>
+				</case>
+			</cases>
+			<sections>
+				<section>
+					<name>v2.0 &gt; drafts</name>
+					<description></description>
+					<cases>
+						<case>
+							<id>C103</id>
+							<title>Draft invoice</title>
+							<template>Test Case (Text)</template>
+							<type>Functional</type>
+							<priority>Medium</priority>
+							<estimate>45s</estimate>
+							<references></references>
+						</case>
+					</cases>
+				</section>
+			</sections>
+		</section>
+		<section>
+			<name>Empty section</name>
+			<description>Nothing here</description>
+		</section>
+	</sections>
+</suite>

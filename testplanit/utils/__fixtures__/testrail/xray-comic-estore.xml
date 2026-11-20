@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suite>
+	<id>S196</id>
+	<name>Master</name>
+	<description></description>
+	<sections>
+		<section>
+		<name>Test Cases</name>
+		<description></description>
+						<cases>
+												<case>
+				<id>C22478</id>
+				<title>Test Case Steps (Text)</title>
+												<template>Test Case (Text)</template>
+																<type>Destructive</type>
+																<priority>Medium</priority>
+																				<estimate></estimate>
+																								<references></references>
+																				<custom>
+										<automation_type><id>6</id><value> Manual</value></automation_type>
+										<preconds>Test Case Step *TEXT* Precondition</preconds>
+										<steps>%Var3 
+%Var4
+</steps>
+										<expected> ![](index.php?/attachments/get/d8d1d9e0-fe4c-43c8-b894-dfd83d9c160c) </expected>
+									</custom>
+							</case>
+															<case>
+				<id>C22494</id>
+				<title>Automated Checkout</title>
+												<template>functional area</template>
+																<type>Automated</type>
+																<priority>Critical</priority>
+																				<estimate></estimate>
+																								<references></references>
+																			</case>
+								</cases>
+								<sections>
+		<section>
+		<name>Regression</name>
+		<description>Regression Tests</description>
+						<cases>
+												<case>
+				<id>C22475</id>
+				<title>Manual Test Case (Steps)</title>
+												<template>Test Case (Steps)</template>
+																<type>UAT</type>
+																<priority>Medium</priority>
+																				<estimate></estimate>
+																								<references></references>
+																				<custom>
+										<automation_type><id>6</id><value> Manual</value></automation_type>
+										<preconds>Manual Test Case (Steps) Precondition</preconds>
+										<steps_separated><step>
+<index>1</index><content>Login with user *%User1* 
+Expected Result:
+Application redirects you to the main page in a logged in state</content></step>
+<step>
+<index>2</index><content>First step description</content><expected>Expected result for the first step</expected><additional_info>Additional step description</additional_info></step>
+<step>
+<index>3</index><content>Second step description with two variables: %Var1% and %Var2% </content><expected>Expected result for the second step</expected><additional_info>Additional step 2 description</additional_info></step>
+<step>
+<index>4</index><content>Third step with a table:
+
+
+
+
+|||:Name 1|:Last name 2|:Phone 3|:Address 4
+|| John .. | Smack | 111111111 |  Address1
+|| Smith .. | Moon |222222222  |  Address2
+|| Jenkins .. | Stone | 333333333 |  Address3
+|| Ford .. | Mustang |444444444  |  Address4
+</content><expected>Expected result for the third step</expected><additional_info>Additional step 2 description (Var1: %Var1% and Var2: %Var2%)</additional_info></step>
+<step>
+<index>5</index><content> ![](index.php?/attachments/get/3b93e38b-5609-49c6-a987-8f2f6968121e) </content><expected> ![](index.php?/attachments/get/6c9ccdd6-446f-4b23-9244-3a16b997a0e6) </expected><additional_info> ![](index.php?/attachments/get/5edccf31-330d-4e62-9e8a-324f771d96c8) </additional_info></step>
+</steps_separated>
+									</custom>
+							</case>
+								</cases>
+							</section>
+	</sections>
+			</section>
+			<section>
+		<name>Exploratory Tests</name>
+		<description>Exploratory Test Section Description</description>
+						<cases>
+												<case>
+				<id>C22477</id>
+				<title>Exploratory Session Test</title>
+												<template>Exploratory Session</template>
+																<type>Regression</type>
+																<priority>Medium</priority>
+								<assignedto>Cristiano Cunha</assignedto>
+												<estimate></estimate>
+																								<references></references>
+																				<custom>
+										<mission>Exploratory Mission</mission>
+										<goals>Exploratory Goal</goals>
+									</custom>
+							</case>
+								</cases>
+							</section>
+			<section>
+		<name>Performance Tessts</name>
+		<description></description>
+						<cases>
+												<case>
+				<id>C22493</id>
+				<title>Load Tests</title>
+												<template>functional area</template>
+																<type>Performance</type>
+																<priority>Medium</priority>
+																				<estimate></estimate>
+																								<references></references>
+																			</case>
+								</cases>
+							</section>
+	</sections>
+</suite>

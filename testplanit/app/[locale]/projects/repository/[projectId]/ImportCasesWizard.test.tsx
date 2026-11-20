@@ -515,6 +515,88 @@ describe("ImportCasesWizard", () => {
     });
   });
 
+  describe("TestRail XML", () => {
+    const suiteXml = `<?xml version="1.0" encoding="UTF-8"?>
+<suite><id>S1</id><name>Master</name><description></description>
+<sections><section><name>Checkout / Cards</name><description></description>
+<cases>
+<case><id>C1</id><title>Pay by card</title><template>Test Case (Steps)</template><type>Functional</type><priority>High</priority><estimate></estimate><references></references>
+<custom><steps_separated><step><index>1</index><content>Pay</content><expected>Paid</expected></step></steps_separated></custom></case>
+<case><id>C2</id><title>Explore refunds</title><template>Exploratory Session</template><type>Other</type><priority>Low</priority><estimate></estimate><references></references>
+<custom><mission>Find refund gaps</mission></custom></case>
+</cases></section></sections></suite>`;
+
+    const upload = async (content: string, name = "suite.xml") => {
+      // The mocked upload input only declares .csv.
+      const user = userEvent.setup({ applyAccept: false });
+      render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
+      await user.upload(
+        screen.getByTestId("file-upload"),
+        new File([content], name, { type: "text/xml" })
+      );
+    };
+
+    it("summarizes the suite and offers the TestRail template filter", async () => {
+      await upload(suiteXml);
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("testrail-import-summary")
+        ).toBeInTheDocument();
+      });
+      expect(
+        screen.getByTestId("testrail-template-filter")
+      ).toBeInTheDocument();
+      // CSV-only options stay hidden.
+      expect(screen.queryByLabelText("hasHeaders")).not.toBeInTheDocument();
+      // The section tree needs folders, so the single-folder target is left.
+      expect(screen.queryByTestId("folder-select")).not.toBeInTheDocument();
+    });
+
+    it("rejects XML that is not a TestRail suite", async () => {
+      await upload("<testsuites><testsuite/></testsuites>", "junit.xml");
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("importWizard.testRail.errors.notASuite")
+        ).toBeInTheDocument();
+      });
+      expect(
+        screen.queryByTestId("testrail-import-summary")
+      ).not.toBeInTheDocument();
+    });
+
+    it("rejects a file that is not XML", async () => {
+      await upload("<suite><name>broken</suite>");
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("importWizard.testRail.errors.invalidXml")
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("lists the TestRail columns on the mapping page", async () => {
+      await upload(suiteXml);
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("testrail-import-summary")
+        ).toBeInTheDocument();
+      });
+
+      // The template select is the last select on the page.
+      fireEvent.click(screen.getByTestId("template-select"));
+      fireEvent.click(screen.getByTestId("next-button"));
+
+      await waitFor(() => {
+        expect(screen.getByText("TestRail ID")).toBeInTheDocument();
+      });
+      for (const column of ["Title", "Section", "Steps", "mission"]) {
+        expect(screen.getByText(column)).toBeInTheDocument();
+      }
+    });
+  });
+
   describe("Import functionality", () => {
     it("shows import button on final page", async () => {
       const user = userEvent.setup();
