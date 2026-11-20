@@ -1,3 +1,22 @@
+## [1.3.0-beta.4](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.3...v1.3.0-beta.4) (2026-11-20)
+
+### Features
+
+* **onboarding:** add an admin setup checklist and rework the guided tours ([9087581](https://github.com/TestPlanIt/testplanit/commit/9087581c79652dbfd82cb2dc211c6b3a96841e4c))
+
+### Bug Fixes
+
+* **i18n:** correct grammar, meaning and leftover text in plural translations ([b98ff48](https://github.com/TestPlanIt/testplanit/commit/b98ff486d224e320296bf6cc8689cdd5674fa0f3))
+* **i18n:** make plural and sentence structure translatable, and use formal German ([0fd7e4f](https://github.com/TestPlanIt/testplanit/commit/0fd7e4fae4b60f1148029edaeec7b529cc79acc0))
+* **i18n:** replace wrong-meaning words for product concepts in translations ([ef6b1ee](https://github.com/TestPlanIt/testplanit/commit/ef6b1eecff8dd07a5267742bffa7318a0ad8e3ce))
+* **i18n:** replace wrong-meaning words in Japanese, Korean, Vietnamese and Chinese, and repair shifted translations ([17905b0](https://github.com/TestPlanIt/testplanit/commit/17905b0855423f498e7eee5a88b5af094e458bd8))
+* **i18n:** translate the session count word and add singular wording where it was missing ([9edca06](https://github.com/TestPlanIt/testplanit/commit/9edca0630d5a562fea9d01040c480aa7fb53a6fd))
+
+### Enhancements
+
+* **playwright-reporter:** copy Playwright tags onto test cases ([13a68c8](https://github.com/TestPlanIt/testplanit/commit/13a68c89dbcf799d693d3c7bd82bd1a9caad0322))
+* **repository:** warn when a test case changed while it was being edited ([9eb0138](https://github.com/TestPlanIt/testplanit/commit/9eb0138fad78748fc5e0373de46cc0d5921b72fa))
+
 ## [1.3.0-beta.3](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.2...v1.3.0-beta.3) (2026-11-18)
 
 ### Features
