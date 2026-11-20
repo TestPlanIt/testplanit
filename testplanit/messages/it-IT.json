@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "È richiesta la selezione del modello",
           "folderRequired": "Per questa posizione di importazione è richiesta la selezione della cartella",
-          "fileRequired": "È richiesto un file CSV o Markdown",
+          "fileRequired": "È richiesto un file CSV, Markdown o TestRail XML",
           "markdownParseFailed": "Impossibile analizzare il file Markdown",
           "markdownLlmFailed": "Analisi sintattica tramite IA non disponibile, utilizzo del parser standard.",
           "validationTitle": "Convalida importazione non riuscita",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "Mappa le colonne CSV sui campi",
+          "titleMarkdown": "Mappa campi Markdown a campi modello",
+          "titleTestRail": "Mappa campi TestRail a campi modello",
           "description": "Associa ogni colonna CSV a un campo nel modello oppure scegli di ignorarla.",
+          "descriptionMarkdown": "Mappa ogni campo trovato nel file Markdown a un campo nel modello o scegli di ignorarlo.",
+          "descriptionTestRail": "Mappa ogni campo TestRail a un campo nel modello o scegli di ignorarlo.",
           "ignoreColumn": "Ignora colonna",
           "requiredFieldsWarning": "{count, plural, one {# campo obbligatorio non è mappato} other {# campi obbligatori non sono mappati}}",
           "caseIdHint": "Deve essere l'ID caso numerico — i casi corrispondenti vengono sovrascritti."
@@ -3544,6 +3548,29 @@
             "noStepColumn": "La modalità multi-riga è abilitata, ma non è stata rilevata alcuna colonna \"Passo\". Previsto uno dei seguenti valori: Contenuto passaggio, Passaggio, Passaggi, Azione, Descrizione (senza distinzione tra maiuscole e minuscole). Ogni riga CSV verrà importata come caso di test separato.",
             "noKeyColumn": "La modalità multi-riga è abilitata, ma non è mappata alcuna colonna ID o Nome. Mappa una colonna ID o Nome nel passaggio precedente in modo che le righe possano essere raggruppate in casi.",
             "noGrouping": "La modalità multi-riga è abilitata, ma non sono state raggruppate righe. Ogni riga ha un ID/nome diverso, quindi ognuna diventerà un caso di test separato. Lasciare vuoti i campi ID e Nome nelle righe di continuazione, oppure ripetere lo stesso ID/Nome nelle righe che appartengono a un singolo caso."
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {La suite TestRail \"{suite}\" contiene # caso di test in {sections, plural, one {# sezione} other {# sezioni}}.} other {La suite TestRail \"{suite}\" contiene # casi di test in {sections, plural, one {# sezione} other {# sezioni}}.}}",
+          "summaryUnnamed": "{cases, plural, one {Questa suite TestRail contiene # test case in {sections, plural, one {# section} other {# sections}}.} other {Questa suite TestRail contiene # test cases in {sections, plural, one {# section} other {# sections}}.}}",
+          "notIncluded": "L'esportazione contiene solo casi di test e sezioni. Gli allegati, le immagini, le esecuzioni dei test, i risultati, gli utenti e la cronologia dei casi non sono nel file. I modelli e i campi non vengono creati dall'importazione, quindi configura il modello prima di importare.",
+          "unrecognizedFields": "{count, plural, one {Il campo {fields} ha una struttura che questa importazione non riconosce. I suoi valori vengono importati come testo semplice.} other {I campi {fields} hanno una struttura che questa importazione non riconosce. I loro valori vengono importati come testo semplice.}}",
+          "suiteFolder": "Inserisci le sezioni in una nuova cartella",
+          "suiteFolderName": "Nome cartella",
+          "templateFilter": {
+            "label": "Modello TestRail",
+            "all": "Tutti i modelli ({count, number})",
+            "option": "{name} ({count, number})",
+            "help": "Ogni importazione mappa i casi a un modello. Se i modelli TestRail richiedono modelli diversi qui, esegui l'importazione una volta per ciascuno."
+          },
+          "imageMarker": "[immagine non importata]",
+          "imagesReplaced": "{count, plural, one {# immagine nel testo rimanda a TestRail e non può essere importata. Viene sostituita con \"{marker}\".} other {# immagini nel testo rimandano a TestRail e non possono essere importate. Ciascuna viene sostituita con \"{marker}\".}}",
+          "variables": "{count, plural, one {# test case utilizza variabili TestRail nei suoi step. Ogni variabile diventa un parametro del test case. I valori non sono nel file, quindi aggiungili al dataset del test case dopo l'importazione.} other {# test cases utilizzano variabili TestRail nei loro step. Ogni variabile diventa un parametro del relativo test case. I valori non sono nel file, quindi aggiungili al dataset di ogni test case dopo l'importazione.}}",
+          "unreadEstimates": "{count, plural, one {La stima di # caso di test non ha potuto essere letta e viene lasciata vuota.} other {Le stime di # casi di test non hanno potuto essere lette e vengono lasciate vuote.}}",
+          "errors": {
+            "invalidXml": "Questo file non ha potuto essere letto come XML.",
+            "notASuite": "Questo file XML non è un'esportazione di suite di test TestRail. In TestRail, apri la pagina Test Cases della suite ed esportala come XML.",
+            "noCases": "Questa esportazione TestRail non contiene casi di test."
           }
         }
       }

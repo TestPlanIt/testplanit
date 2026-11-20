@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "템플릿 선택이 필요합니다.",
           "folderRequired": "이 가져오기 위치를 선택하려면 폴더를 지정해야 합니다.",
-          "fileRequired": "CSV 또는 Markdown 파일이 필요합니다.",
+          "fileRequired": "CSV, Markdown 또는 TestRail XML 파일이 필요합니다",
           "markdownParseFailed": "마크다운 파일을 구문 분석하는 데 실패했습니다.",
           "markdownLlmFailed": "AI 구문 분석 기능을 사용할 수 없으므로 표준 구문 분석기를 사용합니다.",
           "validationTitle": "가져오기 유효성 검사 실패",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "CSV 열을 필드에 매핑",
+          "titleMarkdown": "마크다운 필드를 템플릿 필드에 매핑",
+          "titleTestRail": "TestRail 필드를 템플릿 필드에 매핑",
           "description": "CSV 파일의 각 열을 템플릿의 필드에 매핑하거나 무시하도록 선택할 수 있습니다.",
+          "descriptionMarkdown": "마크다운 파일에서 발견된 각 필드를 템플릿의 필드에 매핑하거나 무시하도록 선택합니다.",
+          "descriptionTestRail": "각 TestRail 필드를 템플릿의 필드에 매핑하거나 무시하도록 선택합니다.",
           "ignoreColumn": "무시할 열",
           "requiredFieldsWarning": "{count, plural, one {# 필수 입력 필드는} other {# 필수 입력 필드는}} 매핑되지 않았습니다",
           "caseIdHint": "이는 숫자로 된 케이스 ID여야 하며, 일치하는 케이스는 덮어씌워집니다."
@@ -3544,6 +3548,29 @@
             "noStepColumn": "다중 행 모드가 활성화되었지만 단계 열이 감지되지 않았습니다. 예상되는 열은 단계 내용, 단계, 단계들, 작업, 설명 중 하나입니다(대소문자 구분 없음). 각 CSV 행은 별도의 테스트 케이스로 가져옵니다.",
             "noKeyColumn": "다중 행 모드가 활성화되었지만 ID 또는 이름 열이 매핑되지 않았습니다. 행을 사례별로 그룹화할 수 있도록 이전 단계에서 ID 또는 이름 열을 매핑하십시오.",
             "noGrouping": "다중 행 모드가 활성화되었지만 행이 그룹화되지 않았습니다. 각 행에는 서로 다른 ID/이름이 있으므로 각각이 별도의 테스트 케이스가 됩니다. 연속 행의 ID와 이름을 비워 두거나, 하나의 테스트 케이스에 속하는 행 전체에 동일한 ID/이름을 반복해서 사용하십시오."
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {TestRail 스위트 \"{suite}\"에는 {sections, plural, one {# 섹션} other {# 섹션}}에 # 테스트 케이스가 있습니다.} other {TestRail 스위트 \"{suite}\"에는 {sections, plural, one {# 섹션} other {# 섹션}}에 # 테스트 케이스가 있습니다.}}",
+          "summaryUnnamed": "{cases, plural, one {이 TestRail 모음에는 {sections, plural, one {# 섹션} other {# 섹션}}에 # 테스트 케이스가 포함되어 있습니다.} other {이 TestRail 모음에는 {sections, plural, one {# 섹션} other {# 섹션}}에 # 테스트 케이스가 포함되어 있습니다.}}",
+          "notIncluded": "내보내기에는 테스트 케이스 및 섹션만 포함됩니다. 첨부 파일, 이미지, 테스트 실행, 결과, 사용자 및 케이스 기록은 파일에 포함되지 않습니다. 템플릿 및 필드는 가져오기로 생성되지 않으므로 가져오기 전에 템플릿을 설정하세요.",
+          "unrecognizedFields": "{count, plural, one {필드 {fields}의 구조는 이 가져오기에서 인식하지 못합니다. 해당 값은 일반 텍스트로 가져옵니다.} other {필드 {fields}의 구조는 이 가져오기에서 인식하지 못합니다. 해당 값은 일반 텍스트로 가져옵니다.}}",
+          "suiteFolder": "섹션을 새 폴더에 넣기",
+          "suiteFolderName": "폴더 이름",
+          "templateFilter": {
+            "label": "TestRail 템플릿",
+            "all": "모든 템플릿 ({count, number})",
+            "option": "{name} ({count, number})",
+            "help": "각 가져오기는 케이스를 하나의 템플릿에 매핑합니다. TestRail 템플릿에 여기에서 다른 템플릿이 필요한 경우 각각에 대해 한 번씩 가져오기를 실행하세요."
+          },
+          "imageMarker": "[이미지를 가져오지 않음]",
+          "imagesReplaced": "{count, plural, one {텍스트의 # 이미지가 TestRail을 가리키고 있으며 가져올 수 없습니다. \"{marker}\"로 바뀝니다.} other {텍스트의 # 이미지가 TestRail을 가리키고 있으며 가져올 수 없습니다. 각각 \"{marker}\"로 바뀝니다.}}",
+          "variables": "{count, plural, one {# 테스트 케이스가 단계에서 TestRail 변수를 사용합니다. 각 변수는 테스트 케이스의 매개변수가 됩니다. 값이 파일에 없으므로 가져오기 후 테스트 케이스의 데이터 집합에 추가합니다.} other {# 테스트 케이스가 단계에서 TestRail 변수를 사용합니다. 각 변수는 해당 테스트 케이스의 매개변수가 됩니다. 값이 파일에 없으므로 가져오기 후 각 테스트 케이스의 데이터 집합에 추가합니다.}}",
+          "unreadEstimates": "{count, plural, one {# 테스트 케이스의 추정값을 읽을 수 없어 비워 둡니다.} other {# 테스트 케이스의 추정값을 읽을 수 없어 비워 둡니다.}}",
+          "errors": {
+            "invalidXml": "이 파일을 XML로 읽을 수 없습니다.",
+            "notASuite": "이 XML 파일은 TestRail 테스트 스위트 내보내기가 아닙니다. TestRail에서 스위트의 테스트 케이스 페이지를 열고 XML로 내보내세요.",
+            "noCases": "이 TestRail 내보내기에는 테스트 케이스가 없습니다."
           }
         }
       }

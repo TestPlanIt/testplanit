@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "Việc chọn mẫu là bắt buộc.",
           "folderRequired": "Bạn cần chọn thư mục cho vị trí nhập này.",
-          "fileRequired": "Cần có tệp CSV hoặc Markdown.",
+          "fileRequired": "Cần có tệp CSV, Markdown hoặc TestRail XML",
           "markdownParseFailed": "Không thể phân tích cú pháp tệp Markdown.",
           "markdownLlmFailed": "Tính năng phân tích cú pháp bằng AI không khả dụng, đang sử dụng trình phân tích cú pháp tiêu chuẩn.",
           "validationTitle": "Xác thực nhập thất bại",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "Ánh xạ các cột CSV sang các trường",
+          "titleMarkdown": "Ánh xạ Các Trường Markdown tới Các Trường Mẫu",
+          "titleTestRail": "Ánh xạ Các Trường TestRail tới Các Trường Mẫu",
           "description": "Bạn có thể ánh xạ từng cột trong tệp CSV đến một trường trong mẫu hoặc chọn bỏ qua bước này.",
+          "descriptionMarkdown": "Ánh xạ từng trường được tìm thấy trong tệp Markdown tới một trường trong mẫu hoặc chọn bỏ qua nó.",
+          "descriptionTestRail": "Ánh xạ từng trường TestRail tới một trường trong mẫu hoặc chọn bỏ qua nó.",
           "ignoreColumn": "Bỏ qua cột",
           "requiredFieldsWarning": "{count, plural, one {# Trường bắt buộc là} other {# Các trường bắt buộc là}} không được ánh xạ",
           "caseIdHint": "Đây phải là ID trường hợp dạng số — các trường hợp trùng khớp sẽ bị ghi đè."
@@ -3544,6 +3548,29 @@
             "noStepColumn": "Chế độ nhiều hàng đã được bật nhưng không phát hiện thấy cột bước nào. Dự kiến một trong các định dạng sau: Nội dung bước, Bước, Các bước, Hành động, Mô tả (không phân biệt chữ hoa chữ thường). Mỗi hàng trong tệp CSV sẽ được nhập dưới dạng một trường hợp kiểm thử riêng biệt.",
             "noKeyColumn": "Chế độ nhiều hàng đã được bật nhưng chưa có cột ID hoặc Tên nào được ánh xạ. Hãy ánh xạ cột ID hoặc Tên ở bước trước đó để các hàng có thể được nhóm thành các trường hợp.",
             "noGrouping": "Chế độ nhiều hàng đã được bật nhưng chưa có hàng nào được nhóm lại. Mỗi hàng có một ID/Tên khác nhau, vì vậy mỗi hàng sẽ trở thành một trường hợp kiểm thử riêng biệt. Hãy để trống ID và Tên trên các hàng tiếp theo, hoặc lặp lại cùng một ID/Tên trên các hàng thuộc cùng một trường hợp."
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {Bộ TestRail \"{suite}\" chứa # trường hợp kiểm thử trong {sections, plural, one {# phần} other {# phần}}.} other {Bộ TestRail \"{suite}\" chứa # trường hợp kiểm thử trong {sections, plural, one {# phần} other {# phần}}.}}",
+          "summaryUnnamed": "{cases, plural, one {Bộ TestRail này chứa # trường hợp kiểm thử trong {sections, plural, one {# phần} other {# phần}}.} other {Bộ TestRail này chứa # trường hợp kiểm thử trong {sections, plural, one {# phần} other {# phần}}.}}",
+          "notIncluded": "Bản xuất chỉ chứa các trường hợp kiểm thử và phần. Tệp không chứa các tệp đính kèm, hình ảnh, lần chạy kiểm thử, kết quả, người dùng và lịch sử trường hợp. Các mẫu và trường không được tạo bởi lần nhập, vì vậy hãy thiết lập mẫu trước khi nhập.",
+          "unrecognizedFields": "{count, plural, one {Trường {fields} có cấu trúc mà lần nhập này không nhận biết. Các giá trị của nó được nhập dưới dạng văn bản thuần túy.} other {Các trường {fields} có cấu trúc mà lần nhập này không nhận biết. Các giá trị của chúng được nhập dưới dạng văn bản thuần túy.}}",
+          "suiteFolder": "Đặt các phần vào một thư mục mới",
+          "suiteFolderName": "Tên thư mục",
+          "templateFilter": {
+            "label": "Mẫu TestRail",
+            "all": "Tất cả các mẫu ({count, number})",
+            "option": "{name} ({count, number})",
+            "help": "Mỗi lần nhập sẽ ánh xạ các trường hợp đến một mẫu. Nếu các mẫu TestRail cần các mẫu khác nhau ở đây, hãy chạy lần nhập một lần cho mỗi mẫu."
+          },
+          "imageMarker": "[hình ảnh không được nhập]",
+          "imagesReplaced": "{count, plural, one {# hình ảnh trong văn bản trỏ đến TestRail và không thể được nhập. Nó được thay thế bằng \"{marker}\".} other {# hình ảnh trong văn bản trỏ đến TestRail và không thể được nhập. Mỗi cái được thay thế bằng \"{marker}\".}}",
+          "variables": "{count, plural, one {# trường hợp kiểm thử sử dụng các biến TestRail trong các bước của nó. Mỗi biến trở thành một tham số của trường hợp kiểm thử. Các giá trị không có trong tệp, vì vậy hãy thêm chúng vào tập dữ liệu của trường hợp kiểm thử sau khi nhập.} other {# trường hợp kiểm thử sử dụng các biến TestRail trong các bước của chúng. Mỗi biến trở thành một tham số của trường hợp kiểm thử của nó. Các giá trị không có trong tệp, vì vậy hãy thêm chúng vào tập dữ liệu của từng trường hợp kiểm thử sau khi nhập.}}",
+          "unreadEstimates": "{count, plural, one {Không thể đọc được ước tính của # trường hợp kiểm thử và để trống.} other {Không thể đọc được ước tính của # trường hợp kiểm thử và để trống.}}",
+          "errors": {
+            "invalidXml": "Không thể đọc tệp này dưới dạng XML.",
+            "notASuite": "Tệp XML này không phải là lần xuất bộ kiểm thử TestRail. Trong TestRail, hãy mở trang Trường hợp kiểm thử của bộ và xuất nó dưới dạng XML.",
+            "noCases": "Lần xuất TestRail này không chứa bất kỳ trường hợp kiểm thử nào."
           }
         }
       }

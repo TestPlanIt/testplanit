@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "Die Auswahl einer Vorlage ist erforderlich.",
           "folderRequired": "Für diesen Importort ist eine Ordnerauswahl erforderlich.",
-          "fileRequired": "Eine CSV- oder Markdown-Datei ist erforderlich.",
+          "fileRequired": "Eine CSV-, Markdown- oder TestRail-XML-Datei ist erforderlich",
           "markdownParseFailed": "Fehler beim Parsen der Markdown-Datei",
           "markdownLlmFailed": "KI-Parsing nicht verfügbar, Standardparser wird verwendet",
           "validationTitle": "Importvalidierung fehlgeschlagen",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "CSV-Spalten Feldern zuordnen",
+          "titleMarkdown": "Markdown-Felder den Template-Feldern zuordnen",
+          "titleTestRail": "TestRail-Felder den Template-Feldern zuordnen",
           "description": "Ordnen Sie jede CSV-Spalte einem Feld in der Vorlage zu oder wählen Sie, ob sie ignoriert werden soll.",
+          "descriptionMarkdown": "Ordnen Sie jedes im Markdown-Datei gefundene Feld einem Feld in der Vorlage zu oder wählen Sie, es zu ignorieren.",
+          "descriptionTestRail": "Ordnen Sie jedes TestRail-Feld einem Feld in der Vorlage zu oder wählen Sie, es zu ignorieren.",
           "ignoreColumn": "Spalte ignorieren",
           "requiredFieldsWarning": "{count, plural, one {# Pflichtfeld ist} other {# Pflichtfelder sind}} nicht zugeordnet",
           "caseIdHint": "Dies muss die numerische Fall-ID sein — übereinstimmende Fälle werden überschrieben."
@@ -3544,6 +3548,29 @@
             "noStepColumn": "Der Mehrzeilenmodus ist aktiviert, es wurde jedoch keine Spalte „Schritt“ erkannt. Erwartet wird eine der folgenden Spalten: „Schrittinhalt“, „Schritt“, „Schritte“, „Aktion“ oder „Beschreibung“ (Groß-/Kleinschreibung wird nicht beachtet). Jede CSV-Zeile wird als separater Testfall importiert.",
             "noKeyColumn": "Der Mehrzeilenmodus ist aktiviert, aber es ist keine ID- oder Namensspalte zugeordnet. Ordnen Sie im vorherigen Schritt eine ID- oder Namensspalte zu, damit die Zeilen in Fälle gruppiert werden können.",
             "noGrouping": "Der Mehrzeilenmodus ist aktiviert, aber es wurden keine Zeilen gruppiert. Jede Zeile hat eine andere ID/einen anderen Namen und wird somit zu einem separaten Testfall. Lassen Sie ID und Namen in den Folgezeilen leer oder verwenden Sie dieselbe ID/denselben Namen in allen Zeilen, die zu einem Testfall gehören."
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {TestRail-Suite \"{suite}\" enthält # Testfall in {sections, plural, one {# Abschnitt} other {# Abschnitten}}.} other {TestRail-Suite \"{suite}\" enthält # Testfälle in {sections, plural, one {# Abschnitt} other {# Abschnitten}}.}}",
+          "summaryUnnamed": "{cases, plural, one {Diese TestRail-Suite enthält # Testfall in {sections, plural, one {# Abschnitt} other {# Abschnitte}}.} other {Diese TestRail-Suite enthält # Testfälle in {sections, plural, one {# Abschnitt} other {# Abschnitte}}.}}",
+          "notIncluded": "Der Export enthält nur Testfälle und Abschnitte. Anhänge, Bilder, Testläufe, Ergebnisse, Benutzer und Fallverlauf sind nicht in der Datei enthalten. Vorlagen und Felder werden durch den Import nicht erstellt. Richten Sie daher die Vorlage vor dem Import ein.",
+          "unrecognizedFields": "{count, plural, one {Das Feld {fields} hat eine Struktur, die dieser Import nicht kennt. Seine Werte werden als reiner Text importiert.} other {Die Felder {fields} haben eine Struktur, die dieser Import nicht kennt. Ihre Werte werden als reiner Text importiert.}}",
+          "suiteFolder": "Abschnitte in einen neuen Ordner verschieben",
+          "suiteFolderName": "Ordnername",
+          "templateFilter": {
+            "label": "TestRail-Vorlage",
+            "all": "Alle Vorlagen ({count, number})",
+            "option": "{name} ({count, number})",
+            "help": "Jeder Import ordnet die Fälle einer Vorlage zu. Wenn die TestRail-Vorlagen unterschiedliche Vorlagen benötigen, führen Sie den Import einmal für jede Vorlage aus."
+          },
+          "imageMarker": "[Bild nicht importiert]",
+          "imagesReplaced": "{count, plural, one {# Bild im Text verweist auf TestRail und kann nicht importiert werden. Es wird durch \"{marker}\" ersetzt.} other {# Bilder im Text verweisen auf TestRail und können nicht importiert werden. Jedes wird durch \"{marker}\" ersetzt.}}",
+          "variables": "{count, plural, one {# Testfall verwendet TestRail-Variablen in seinen Schritten. Jede Variable wird zu einem Parameter des Testfalls. Die Werte befinden sich nicht in der Datei. Fügen Sie sie nach dem Import zum Dataset des Testfalls hinzu.} other {# Testfälle verwenden TestRail-Variablen in ihren Schritten. Jede Variable wird zu einem Parameter ihres Testfalls. Die Werte befinden sich nicht in der Datei. Fügen Sie sie nach dem Import zu den Datasets der einzelnen Testfälle hinzu.}}",
+          "unreadEstimates": "{count, plural, one {Die Schätzung von # Testfall konnte nicht gelesen werden und bleibt leer.} other {Die Schätzungen von # Testfällen konnten nicht gelesen werden und bleiben leer.}}",
+          "errors": {
+            "invalidXml": "Diese Datei konnte nicht als XML gelesen werden.",
+            "notASuite": "Diese XML-Datei ist kein TestRail-Testsuite-Export. Öffnen Sie in TestRail die Seite \"Testfälle\" der Suite und exportieren Sie sie als XML.",
+            "noCases": "Dieser TestRail-Export enthält keine Testfälle."
           }
         }
       }

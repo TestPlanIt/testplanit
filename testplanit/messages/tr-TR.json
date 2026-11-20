@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "Şablon seçimi gereklidir.",
           "folderRequired": "Bu içe aktarma konumu için klasör seçimi gereklidir.",
-          "fileRequired": "CSV veya Markdown dosyası gereklidir.",
+          "fileRequired": "CSV, Markdown veya TestRail XML dosyası gereklidir",
           "markdownParseFailed": "Markdown dosyasını ayrıştırma başarısız oldu.",
           "markdownLlmFailed": "Yapay zeka ile ayrıştırma kullanılamıyor, standart ayrıştırıcı kullanılıyor.",
           "validationTitle": "İçe aktarma doğrulaması başarısız oldu",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "CSV Sütunlarını Alanlara Eşleme",
+          "titleMarkdown": "Markdown Alanlarını Şablon Alanlarına Eşle",
+          "titleTestRail": "TestRail Alanlarını Şablon Alanlarına Eşle",
           "description": "Her CSV sütununu şablondaki bir alana eşleştirin veya yok saymayı seçin.",
+          "descriptionMarkdown": "Markdown dosyasında bulunan her alanı şablondaki bir alana eşleyin veya yoksaymayı seçin.",
+          "descriptionTestRail": "Her TestRail alanını şablondaki bir alana eşleyin veya yoksaymayı seçin.",
           "ignoreColumn": "Sütunu Yok Say",
           "requiredFieldsWarning": "{count, plural, one {# gerekli alan} other {# gerekli alan}} eşleştirilmemiş",
           "caseIdHint": "Bu, sayısal Test Durumu ID'si olmalıdır — eşleşen durumların üzerine yazılır."
@@ -3544,6 +3548,29 @@
             "noStepColumn": "Çok satırlı mod etkinleştirildi ancak adım sütunu algılanmadı. Beklenenler: Adım İçeriği, Adım, Adımlar, Eylem, Açıklama (büyük/küçük harf duyarsız). Her CSV satırı ayrı bir test durumu olarak içe aktarılacaktır.",
             "noKeyColumn": "Çoklu satır modu etkinleştirilmiş ancak hiçbir Kimlik veya Ad sütunu eşleştirilmemiş. Satırların vakalara gruplandırılabilmesi için önceki adımda bir Kimlik veya Ad sütunu eşleştirin.",
             "noGrouping": "Çoklu satır modu etkinleştirildi ancak hiçbir satır gruplandırılmadı. Her satırın farklı bir Kimliği/Adı var, bu nedenle her biri ayrı bir test durumu haline gelecek. Devam satırlarında Kimlik ve Ad alanlarını boş bırakın veya aynı Kimliği/Adı tek bir duruma ait satırlarda tekrarlayın."
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {TestRail paketi \"{suite}\" {sections, plural, one {# bölüm} other {# bölüm}} içinde # test senaryosu barındırır.} other {TestRail paketi \"{suite}\" {sections, plural, one {# bölüm} other {# bölüm}} içinde # test senaryosu barındırır.}}",
+          "summaryUnnamed": "{cases, plural, one {Bu TestRail paketi {sections, plural, one {# bölüm} other {# bölüm}} içinde # test çalışmasını barındırır.} other {Bu TestRail paketi {sections, plural, one {# bölüm} other {# bölüm}} içinde # test çalışmasını barındırır.}}",
+          "notIncluded": "Dışa aktarma yalnızca test senaryolarını ve bölümleri içerir. Ekler, görseller, test çalıştırmaları, sonuçlar, kullanıcılar ve senaryo geçmişi dosyada bulunmaz. Şablonlar ve alanlar içe aktarma sırasında oluşturulmaz, bu nedenle içe aktarmadan önce şablonu ayarlayın.",
+          "unrecognizedFields": "{count, plural, one {Alanı {fields}, bu içe aktarmanın tanımadığı bir yapıya sahip. Değerleri düz metin olarak içe aktarılır.} other {Alanları {fields}, bu içe aktarmanın tanımadığı bir yapıya sahip. Değerleri düz metin olarak içe aktarılır.}}",
+          "suiteFolder": "Bölümleri yeni bir klasöre koy",
+          "suiteFolderName": "Klasör adı",
+          "templateFilter": {
+            "label": "TestRail şablonu",
+            "all": "Tüm şablonlar ({count, number})",
+            "option": "{name} ({count, number})",
+            "help": "Her içe aktarma senaryoları bir şablona eşler. TestRail şablonları burada farklı şablonlara ihtiyaç duyuyorsa, her biri için bir kez içe aktarmayı çalıştırın."
+          },
+          "imageMarker": "[görsel içe aktarılmadı]",
+          "imagesReplaced": "{count, plural, one {Metindeki # görsel TestRail'e işaret eder ve içe aktarılamaz. \"{marker}\" ile değiştirilmiştir.} other {Metindeki # görseller TestRail'e işaret eder ve içe aktarılamaz. Her biri \"{marker}\" ile değiştirilmiştir.}}",
+          "variables": "{count, plural, one {# test çalışması adımlarında TestRail değişkenleri kullanır. Her değişken test çalışmasının bir parametresi haline gelir. Değerler dosyada olmadığından, içe aktarımdan sonra bunları test çalışmasının veri setine ekleyin.} other {# test çalışması adımlarında TestRail değişkenleri kullanır. Her değişken test çalışmasının bir parametresi haline gelir. Değerler dosyada olmadığından, içe aktarımdan sonra bunları her test çalışmasının veri setine ekleyin.}}",
+          "unreadEstimates": "{count, plural, one {# test senaryosunun tahmini okunamadı ve boş bırakıldı.} other {# test senaryosunun tahminleri okunamadı ve boş bırakıldı.}}",
+          "errors": {
+            "invalidXml": "Bu dosya XML olarak okunamadı.",
+            "notASuite": "Bu XML dosyası TestRail test paketi dışa aktarması değildir. TestRail'de paketin Test Senaryoları sayfasını açın ve bunu XML olarak dışa aktarın.",
+            "noCases": "Bu TestRail dışa aktarması hiç test senaryosu içermez."
           }
         }
       }

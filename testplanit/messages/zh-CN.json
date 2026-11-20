@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "需要选择模板",
           "folderRequired": "此导入位置需要选择文件夹。",
-          "fileRequired": "需要 CSV 或 Markdown 文件。",
+          "fileRequired": "需要CSV、Markdown或TestRail XML文件",
           "markdownParseFailed": "解析 Markdown 文件失败",
           "markdownLlmFailed": "AI解析不可用，使用标准解析器",
           "validationTitle": "导入验证失败",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "将 CSV 列映射到字段",
+          "titleMarkdown": "将Markdown字段映射到模板字段",
+          "titleTestRail": "将TestRail字段映射到模板字段",
           "description": "将 CSV 文件中的每一列映射到模板中的一个字段，或者选择忽略它。",
+          "descriptionMarkdown": "将Markdown文件中找到的每个字段映射到模板中的字段，或选择忽略它。",
+          "descriptionTestRail": "将每个TestRail字段映射到模板中的字段，或选择忽略它。",
           "ignoreColumn": "忽略列",
           "requiredFieldsWarning": "{count, plural, one {# 必填字段为} other {# 必填字段为}} 未映射",
           "caseIdHint": "此项必须为数字用例 ID — 匹配的用例将被覆盖。"
@@ -3544,6 +3548,29 @@
             "noStepColumn": "已启用多行模式，但未检测到步骤列。预期列类型为：步骤内容、步骤、步骤、操作、描述（不区分大小写）。每个 CSV 行将作为单独的测试用例导入。",
             "noKeyColumn": "已启用多行模式，但未映射 ID 或名称列。请在上一步映射 ID 或名称列，以便将行分组到案例中。",
             "noGrouping": "已启用多行模式，但未对任何行进行分组。每行都有不同的 ID/名称，因此每一行都将成为单独的测试用例。对于后续行，请将 ID 和名称留空，或者在属于同一测试用例的行中重复使用相同的 ID/名称。"
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {TestRail套件\"{suite}\"包含# 个测试用例，共{sections, plural, one {# 个部分}other {# 个部分}}。} other {TestRail套件\"{suite}\"包含# 个测试用例，共{sections, plural, one {# 个部分}other {# 个部分}}。}}",
+          "summaryUnnamed": "{cases, plural, one {此TestRail套件包含#个测试用例在{sections, plural, one {#个部分} other {#个部分}}中。} other {此TestRail套件包含#个测试用例在{sections, plural, one {#个部分} other {#个部分}}中。}}",
+          "notIncluded": "导出仅包含测试用例和部分。不包括附件、图像、测试运行、结果、用户和用例历史记录。导入不会创建模板和字段，请在导入前设置模板。",
+          "unrecognizedFields": "{count, plural, one {字段{fields}的结构此导入不识别。其值作为纯文本导入。} other {字段{fields}的结构此导入不识别。其值作为纯文本导入。}}",
+          "suiteFolder": "将部分放在新文件夹中",
+          "suiteFolderName": "文件夹名称",
+          "templateFilter": {
+            "label": "TestRail模板",
+            "all": "所有模板({count, number})",
+            "option": "{name}({count, number})",
+            "help": "每次导入将用例映射到一个模板。如果TestRail模板需要不同的模板，请分别为每个模板运行一次导入。"
+          },
+          "imageMarker": "[图像未导入]",
+          "imagesReplaced": "{count, plural, one {文本中# 张图像指向TestRail且无法导入。已用\"{marker}\"替换。} other {文本中# 张图像指向TestRail且无法导入。每张都已用\"{marker}\"替换。}}",
+          "variables": "{count, plural, one {#个测试用例在其步骤中使用TestRail变量。每个变量都成为测试用例的参数。这些值不在文件中，因此请在导入后将它们添加到测试用例的数据集中。} other {#个测试用例在其步骤中使用TestRail变量。每个变量都成为其测试用例的参数。这些值不在文件中，因此请在导入后将它们添加到每个测试用例的数据集中。}}",
+          "unreadEstimates": "{count, plural, one {# 个测试用例的预计值无法读取且保留为空。} other {# 个测试用例的预计值无法读取且保留为空。}}",
+          "errors": {
+            "invalidXml": "此文件无法作为XML读取。",
+            "notASuite": "此XML文件不是TestRail测试套件导出。在TestRail中，打开套件的测试用例页面并将其导出为XML。",
+            "noCases": "此TestRail导出不包含任何测试用例。"
           }
         }
       }

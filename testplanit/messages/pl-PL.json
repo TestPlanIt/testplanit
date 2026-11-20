@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "Wymagany jest wybór szablonu",
           "folderRequired": "W przypadku tej lokalizacji importu wymagany jest wybór folderu",
-          "fileRequired": "Wymagany jest plik CSV lub Markdown",
+          "fileRequired": "Wymagany jest plik CSV, Markdown lub XML z TestRail",
           "markdownParseFailed": "Nie udało się przeanalizować pliku Markdown",
           "markdownLlmFailed": "Analiza AI niedostępna, używany jest standardowy parser",
           "validationTitle": "Walidacja importu nie powiodła się",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "Mapowanie kolumn CSV na pola",
+          "titleMarkdown": "Mapuj pola Markdown na pola szablonu",
+          "titleTestRail": "Mapuj pola TestRail na pola szablonu",
           "description": "Przypisz każdą kolumnę CSV do pola w szablonie lub zignoruj ją.",
+          "descriptionMarkdown": "Mapuj każde pole znalezione w pliku Markdown na pole w szablonie lub wybierz, aby je zignorować.",
+          "descriptionTestRail": "Mapuj każde pole TestRail na pole w szablonie lub wybierz, aby je zignorować.",
           "ignoreColumn": "Ignoruj kolumnę",
           "requiredFieldsWarning": "{count, plural, one {# wymagane pole nie jest mapowane} few {# wymagane pola nie są mapowane} many {# wymaganych pól nie jest mapowanych} other {# wymaganych pól nie jest mapowanych}}",
           "caseIdHint": "To musi być numeryczne ID przypadku — pasujące przypadki zostaną nadpisane."
@@ -3544,6 +3548,29 @@
             "noStepColumn": "Tryb wielowierszowy jest włączony, ale nie wykryto kolumny kroków. Oczekiwano jednej z następujących wartości: Zawartość kroku, Krok, Kroki, Akcja, Opis (bez uwzględniania wielkości liter). Każdy wiersz pliku CSV zostanie zaimportowany jako osobny przypadek testowy.",
             "noKeyColumn": "Tryb wielowierszowy jest włączony, ale kolumna ID lub Nazwa nie jest mapowana. Zmapuj kolumnę ID lub Nazwa w poprzednim kroku, aby wiersze mogły być grupowane w przypadki.",
             "noGrouping": "Tryb wielowierszowy jest włączony, ale żadne wiersze nie zostały zgrupowane. Każdy wiersz ma inny identyfikator/nazwę, więc każdy stanie się oddzielnym przypadkiem testowym. Pozostaw identyfikator i nazwę puste w wierszach kontynuacji lub powtórz ten sam identyfikator/nazwę w wierszach należących do jednego przypadku."
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {Pakiet TestRail \"{suite}\" zawiera # przypadek testowy w {sections, plural, one {# sekcji} few {# sekcjach} many {# sekcjach} other {# sekcjach}}.} few {Pakiet TestRail \"{suite}\" zawiera # przypadki testowe w {sections, plural, one {# sekcji} few {# sekcjach} many {# sekcjach} other {# sekcjach}}.} many {Pakiet TestRail \"{suite}\" zawiera # przypadków testowych w {sections, plural, one {# sekcji} few {# sekcjach} many {# sekcjach} other {# sekcjach}}.} other {Pakiet TestRail \"{suite}\" zawiera # przypadków testowych w {sections, plural, one {# sekcji} few {# sekcjach} many {# sekcjach} other {# sekcjach}}.}}",
+          "summaryUnnamed": "{cases, plural, one {Ta usługa TestRail zawiera # przypadek testowy w {sections, plural, one {# sekcji} few {# sekcjach} many {# sekcjach} other {# sekcjach}}.} few {Ta usługa TestRail zawiera # przypadki testowe w {sections, plural, one {# sekcji} few {# sekcjach} many {# sekcjach} other {# sekcjach}}.} many {Ta usługa TestRail zawiera # przypadków testowych w {sections, plural, one {# sekcji} few {# sekcjach} many {# sekcjach} other {# sekcjach}}.} other {Ta usługa TestRail zawiera # przypadków testowych w {sections, plural, one {# sekcji} few {# sekcjach} many {# sekcjach} other {# sekcjach}}.}}",
+          "notIncluded": "Eksport zawiera tylko przypadki testowe i sekcje. Załączniki, obrazy, przebiegi testów, wyniki, użytkownicy i historia przypadków nie są zawarte w pliku. Szablony i pola nie są tworzone przez import, dlatego skonfiguruj szablon przed importem.",
+          "unrecognizedFields": "{count, plural, one {Pole {fields} ma strukturę, której ten import nie rozpoznaje. Jego wartości są importowane jako zwykły tekst.} few {Pola {fields} mają strukturę, której ten import nie rozpoznaje. Ich wartości są importowane jako zwykły tekst.} many {Pól {fields} ma strukturę, której ten import nie rozpoznaje. Ich wartości są importowane jako zwykły tekst.} other {Pól {fields} ma strukturę, której ten import nie rozpoznaje. Ich wartości są importowane jako zwykły tekst.}}",
+          "suiteFolder": "Umieść sekcje w nowym folderze",
+          "suiteFolderName": "Nazwa folderu",
+          "templateFilter": {
+            "label": "Szablon TestRail",
+            "all": "Wszystkie szablony ({count, number})",
+            "option": "{name} ({count, number})",
+            "help": "Każdy import mapuje przypadki testowe na jeden szablon. Jeśli szablony TestRail wymagają różnych szablonów tutaj, uruchom import raz dla każdego."
+          },
+          "imageMarker": "[obraz nie został zaimportowany]",
+          "imagesReplaced": "{count, plural, one {# obraz w tekście wskazuje na TestRail i nie może być zaimportowany. Zostaje zastąpiony przez \"{marker}\".} few {# obrazy w tekście wskazują na TestRail i nie mogą być zaimportowane. Każdy zostaje zastąpiony przez \"{marker}\".} many {# obrazów w tekście wskazuje na TestRail i nie mogą być zaimportowane. Każdy zostaje zastąpiony przez \"{marker}\".} other {# obrazów w tekście wskazuje na TestRail i nie mogą być zaimportowane. Każdy zostaje zastąpiony przez \"{marker}\".}}",
+          "variables": "{count, plural, one {# przypadek testowy używa zmiennych TestRail w swoich krokach. Każda zmienna staje się parametrem przypadku testowego. Wartości nie znajdują się w pliku, dlatego dodaj je do zestawu danych przypadku testowego po imporcie.} few {# przypadki testowe używają zmiennych TestRail w swoich krokach. Każda zmienna staje się parametrem swojego przypadku testowego. Wartości nie znajdują się w pliku, dlatego dodaj je do zestawu danych każdego przypadku testowego po imporcie.} many {# przypadków testowych używa zmiennych TestRail w swoich krokach. Każda zmienna staje się parametrem swojego przypadku testowego. Wartości nie znajdują się w pliku, dlatego dodaj je do zestawu danych każdego przypadku testowego po imporcie.} other {# przypadków testowych używa zmiennych TestRail w swoich krokach. Każda zmienna staje się parametrem swojego przypadku testowego. Wartości nie znajdują się w pliku, dlatego dodaj je do zestawu danych każdego przypadku testowego po imporcie.}}",
+          "unreadEstimates": "{count, plural, one {Oszacowanie czasu # przypadku testowego nie mogło być odczytane i pozostaje puste.} few {Oszacowania czasu # przypadków testowych nie mogły być odczytane i pozostają puste.} many {Oszacowania czasu # przypadków testowych nie mogły być odczytane i pozostają puste.} other {Oszacowania czasu # przypadków testowych nie mogły być odczytane i pozostają puste.}}",
+          "errors": {
+            "invalidXml": "Tego pliku nie można było odczytać jako XML.",
+            "notASuite": "Ten plik XML nie jest eksportem pakietu testów z TestRail. W TestRail otwórz stronę Test Cases pakietu i wyeksportuj go jako XML.",
+            "noCases": "Ten eksport z TestRail nie zawiera przypadków testowych."
           }
         }
       }

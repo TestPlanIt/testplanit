@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "需要選擇模板",
           "folderRequired": "此導入位置需要選擇資料夾。",
-          "fileRequired": "需要 CSV 或 Markdown 檔案。",
+          "fileRequired": "需要CSV、Markdown或TestRail XML檔案",
           "markdownParseFailed": "解析 Markdown 文件失敗",
           "markdownLlmFailed": "AI解析不可用，使用標準解析器",
           "validationTitle": "匯入驗證失敗",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "將 CSV 欄位對應到字段",
+          "titleMarkdown": "將 Markdown 欄位對應至範本欄位",
+          "titleTestRail": "將 TestRail 欄位對應至範本欄位",
           "description": "將 CSV 檔案中的每一列對應到範本中的一個字段，或選擇忽略它。",
+          "descriptionMarkdown": "將 Markdown 檔案中找到的每個欄位對應至範本中的欄位，或選擇忽略它。",
+          "descriptionTestRail": "將每個 TestRail 欄位對應至範本中的欄位，或選擇忽略它。",
           "ignoreColumn": "忽略列",
           "requiredFieldsWarning": "{count, plural, one {# 必填欄位為} other {# 必填欄位為}} 未對映",
           "caseIdHint": "這必須是數字案例 ID — 相符的案例將被覆寫。"
@@ -3544,6 +3548,29 @@
             "noStepColumn": "已啟用多行模式，但未偵測到步驟列。預期列類型為：步驟內容、步驟、步驟、操作、描述（不區分大小寫）。每個 CSV 行將作為單獨的測試案例匯入。",
             "noKeyColumn": "已啟用多行模式，但未對應 ID 或名稱列。請在上一步對應 ID 或名稱列，以便將行分組到案例中。",
             "noGrouping": "已啟用多行模式，但未對任何行進行分組。每行都有不同的 ID/名稱，因此每一行都將成為單獨的測試案例。對於後續行，請將 ID 和名稱留空，或在屬於相同測試案例的行中重複使用相同的 ID/名稱。"
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {TestRail套件「{suite}」包含# 個測試案例，位於{sections, plural, one {# 個部分} other {# 個部分}}中。} other {TestRail套件「{suite}」包含# 個測試案例，位於{sections, plural, one {# 個部分} other {# 個部分}}中。}}",
+          "summaryUnnamed": "{cases, plural, one {此 TestRail 套件在 {sections, plural, one {# 區段} other {# 區段}} 中包含 # 個測試案例。} other {此 TestRail 套件在 {sections, plural, one {# 區段} other {# 區段}} 中包含 # 個測試案例。}}",
+          "notIncluded": "此匯出僅包含測試案例和部分。不包括附件、影像、測試執行、結果、使用者和案例歷史記錄。範本和欄位不會由匯入建立，因此請在匯入前設定範本。",
+          "unrecognizedFields": "{count, plural, one {欄位{fields}的結構此匯入不知道。其值以純文字匯入。} other {欄位{fields}的結構此匯入不知道。其值以純文字匯入。}}",
+          "suiteFolder": "將區段放在新資料夾中",
+          "suiteFolderName": "資料夾名稱",
+          "templateFilter": {
+            "label": "TestRail範本",
+            "all": "所有範本（{count, number}）",
+            "option": "{name}（{count, number}）",
+            "help": "每次匯入都會將案例對應到一個範本。如果TestRail範本需要不同的範本，請為每個範本執行一次匯入。"
+          },
+          "imageMarker": "[影像未匯入]",
+          "imagesReplaced": "{count, plural, one {文字中# 個影像指向TestRail，無法匯入。已取代為「{marker}」。} other {文字中# 個影像指向TestRail，無法匯入。每個都已取代為「{marker}」。}}",
+          "variables": "{count, plural, one {# 個測試案例在其步驟中使用 TestRail 變數。每個變數都會成為測試案例的參數。這些值不在檔案中，因此請在匯入後將其新增至測試案例的資料集。} other {# 個測試案例在其步驟中使用 TestRail 變數。每個變數都會成為其測試案例的參數。這些值不在檔案中，因此請在匯入後將其新增至每個測試案例的資料集。}}",
+          "unreadEstimates": "{count, plural, one {# 個測試案例的預估值無法讀取，保留為空白。} other {# 個測試案例的預估值無法讀取，保留為空白。}}",
+          "errors": {
+            "invalidXml": "此檔案無法讀取為XML。",
+            "notASuite": "此XML檔案不是TestRail測試套件匯出。在TestRail中，開啟套件的「測試案例」頁面並將其匯出為XML。",
+            "noCases": "此TestRail匯出不包含任何測試案例。"
           }
         }
       }

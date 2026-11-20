@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "Výběr šablony je povinný",
           "folderRequired": "Pro toto umístění importu je vyžadován výběr složky",
-          "fileRequired": "Je vyžadován soubor CSV nebo Markdown",
+          "fileRequired": "Je vyžadován soubor CSV, Markdown nebo TestRail XML",
           "markdownParseFailed": "Zpracování souboru Markdown se nezdařilo",
           "markdownLlmFailed": "Zpracování pomocí AI není k dispozici, používá se standardní parser",
           "validationTitle": "Ověření importu selhalo",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "Namapovat sloupce CSV na pole",
+          "titleMarkdown": "Mapování polí Markdown na pole šablony",
+          "titleTestRail": "Mapování polí TestRail na pole šablony",
           "description": "Namapujte jednotlivé sloupce CSV na pole v šabloně, nebo je vynechte.",
+          "descriptionMarkdown": "Mapujte každé pole nalezené v souboru Markdown na pole v šabloně nebo si vyberte, že jej ignorujete.",
+          "descriptionTestRail": "Mapujte každé pole TestRail na pole v šabloně nebo si vyberte, že jej ignorujete.",
           "ignoreColumn": "Ignorovat sloupec",
           "requiredFieldsWarning": "{count, plural, one {# povinné pole není namapováno} few {# povinná pole nejsou namapována} other {# povinných polí není namapováno}}",
           "caseIdHint": "Musí se jednat o číselné ID případu — shodující se případy budou přepsány."
@@ -3544,6 +3548,29 @@
             "noStepColumn": "Režim s více řádky je povolen, ale nebyl zjištěn žádný sloupec s kroky. Očekává se jeden z těchto názvů: Step Content, Step, Steps, Action, Description (bez rozlišování velikosti písmen). Každý řádek CSV bude importován jako samostatný testovací případ.",
             "noKeyColumn": "Režim s více řádky je povolen, ale není namapován žádný sloupec ID nebo Název. Namapujte sloupec ID nebo Název v předchozím kroku, aby bylo možné řádky seskupit do případů.",
             "noGrouping": "Režim s více řádky je povolen, ale žádné řádky nebyly seskupeny. Každý řádek má jiné ID/Název, takže se z každého stane samostatný testovací případ. Na navazujících řádcích ponechte ID a Název prázdné, nebo opakujte stejné ID/Název na řádcích patřících k jednomu případu."
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {Sada TestRail \"{suite}\" obsahuje # testovací případ v {sections, plural, one {# sekci} few {# sekcích} many {# sekcích} other {# sekcích}}.} few {Sada TestRail \"{suite}\" obsahuje # testovací případy v {sections, plural, one {# sekci} few {# sekcích} many {# sekcích} other {# sekcích}}.} many {Sada TestRail \"{suite}\" obsahuje # testovacích případů v {sections, plural, one {# sekci} few {# sekcích} many {# sekcích} other {# sekcích}}.} other {Sada TestRail \"{suite}\" obsahuje # testovacích případů v {sections, plural, one {# sekci} few {# sekcích} many {# sekcích} other {# sekcích}}.}}",
+          "summaryUnnamed": "{cases, plural, one {Tato sada TestRail obsahuje # testovací případ v {sections, plural, one {# sekci} few {# sekcích} many {# sekcích} other {# sekcích}}.} few {Tato sada TestRail obsahuje # testovací případy v {sections, plural, one {# sekci} few {# sekcích} many {# sekcích} other {# sekcích}}.} many {Tato sada TestRail obsahuje # testovacích případů v {sections, plural, one {# sekci} few {# sekcích} many {# sekcích} other {# sekcích}}.} other {Tato sada TestRail obsahuje # testovacích případů v {sections, plural, one {# sekci} few {# sekcích} many {# sekcích} other {# sekcích}}.}}",
+          "notIncluded": "Export obsahuje pouze testovací případy a sekce. Přílohy, obrázky, testovací běhy, výsledky, uživatelé a historie případu nejsou v souboru obsaženy. Šablony a pole nejsou importem vytvořeny, proto si šablonu nastavte před importem.",
+          "unrecognizedFields": "{count, plural, one {Pole {fields} má strukturu, kterou tento import nezná. Její hodnoty jsou importovány jako prostý text.} few {Pole {fields} mají strukturu, kterou tento import nezná. Jejich hodnoty jsou importovány jako prostý text.} many {Pole {fields} mají strukturu, kterou tento import nezná. Jejich hodnoty jsou importovány jako prostý text.} other {Pole {fields} mají strukturu, kterou tento import nezná. Jejich hodnoty jsou importovány jako prostý text.}}",
+          "suiteFolder": "Umístit sekce do nové složky",
+          "suiteFolderName": "Název složky",
+          "templateFilter": {
+            "label": "Šablona TestRail",
+            "all": "Všechny šablony ({count, number})",
+            "option": "{name} ({count, number})",
+            "help": "Každý import mapuje případy na jednu šablonu. Pokud testovací šablony TestRail vyžadují různé šablony, spusťte import jednou pro každou."
+          },
+          "imageMarker": "[obrázek nebyl importován]",
+          "imagesReplaced": "{count, plural, one {# obrázek v textu odkazuje na TestRail a nemůže být importován. Je nahrazen textem \"{marker}\".} few {# obrázky v textu odkazují na TestRail a nemohou být importovány. Každý je nahrazen textem \"{marker}\".} many {# obrázků v textu odkazuje na TestRail a nemohou být importovány. Každý je nahrazen textem \"{marker}\".} other {# obrázků v textu odkazuje na TestRail a nemohou být importovány. Každý je nahrazen textem \"{marker}\".}}",
+          "variables": "{count, plural, one {# testovací případ používá proměnné TestRail v jeho krocích. Každá proměnná se stává parametrem testovacího případu. Hodnoty nejsou v souboru, proto je po importu přidejte do datové sady testovacího případu.} few {# testovací případy používají proměnné TestRail v jejich krocích. Každá proměnná se stává parametrem jejího testovacího případu. Hodnoty nejsou v souboru, proto je po importu přidejte do datové sady každého testovacího případu.} many {# testovacích případů používá proměnné TestRail v jejich krocích. Každá proměnná se stává parametrem jejího testovacího případu. Hodnoty nejsou v souboru, proto je po importu přidejte do datové sady každého testovacího případu.} other {# testovacích případů používá proměnné TestRail v jejich krocích. Každá proměnná se stává parametrem jejího testovacího případu. Hodnoty nejsou v souboru, proto je po importu přidejte do datové sady každého testovacího případu.}}",
+          "unreadEstimates": "{count, plural, one {Odhad # testovacího případu nemohl být přečten a zůstává prázdný.} few {Odhady # testovacích případů nemohly být přečteny a zůstávají prázdné.} many {Odhady # testovacích případů nemohly být přečteny a zůstávají prázdné.} other {Odhady # testovacích případů nemohly být přečteny a zůstávají prázdné.}}",
+          "errors": {
+            "invalidXml": "Tento soubor nelze přečíst jako XML.",
+            "notASuite": "Tento soubor XML není exportem testovací sady TestRail. V TestRail otevřete stránku Test Cases vaší sady a exportujte ji jako XML.",
+            "noCases": "Tento export TestRail neobsahuje žádné testovací případy."
           }
         }
       }

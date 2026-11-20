@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "La selección de plantillas es necesaria",
           "folderRequired": "La selección de carpeta es necesaria para esta ubicación de importación",
-          "fileRequired": "Se requiere un archivo CSV o Markdown",
+          "fileRequired": "Se requiere un archivo CSV, Markdown o TestRail XML",
           "markdownParseFailed": "No se pudo analizar el archivo Markdown",
           "markdownLlmFailed": "Análisis de IA no disponible, se utiliza el analizador estándar",
           "validationTitle": "Error de validación de importación",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "Mapear columnas CSV a campos",
+          "titleMarkdown": "Asignar campos de Markdown a campos de plantilla",
+          "titleTestRail": "Asignar campos de TestRail a campos de plantilla",
           "description": "Mapear cada columna CSV a un campo en la plantilla o elegir ignorarlo.",
+          "descriptionMarkdown": "Asigna cada campo encontrado en el archivo de Markdown a un campo de la plantilla o elige ignorarlo.",
+          "descriptionTestRail": "Asigna cada campo de TestRail a un campo de la plantilla o elige ignorarlo.",
           "ignoreColumn": "Ignorar Columna",
           "requiredFieldsWarning": "{count, plural, one {# campo requerido no está mapeado} other {# campos requeridos no están mapeados}}",
           "caseIdHint": "Debe ser el ID numérico del caso; los casos coincidentes se sobrescriben."
@@ -3544,6 +3548,29 @@
             "noStepColumn": "El modo de varias filas está activado, pero no se detectó ninguna columna de pasos. Se esperaba uno de los siguientes elementos: Contenido del paso, Paso, Pasos, Acción, Descripción (sin distinción entre mayúsculas y minúsculas). Cada fila del archivo CSV se importará como un caso de prueba independiente.",
             "noKeyColumn": "El modo de varias filas está habilitado, pero no se ha asignado ninguna columna de ID o Nombre. Asigne una columna de ID o Nombre en el paso anterior para que las filas se puedan agrupar en casos.",
             "noGrouping": "El modo de varias filas está activado, pero no se ha agrupado ninguna fila. Cada fila tiene un ID/nombre diferente, por lo que cada una constituirá un caso de prueba independiente. Deje el ID y el nombre en blanco en las filas siguientes, o repita el mismo ID/nombre en todas las filas que pertenezcan a un mismo caso."
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {La suite de TestRail \"{suite}\" contiene # caso de prueba en {sections, plural, one {# sección} other {# secciones}}.} other {La suite de TestRail \"{suite}\" contiene # casos de prueba en {sections, plural, one {# sección} other {# secciones}}.}}",
+          "summaryUnnamed": "{cases, plural, one {Esta suite de TestRail contiene # caso de prueba en {sections, plural, one {# sección} other {# secciones}}.} other {Esta suite de TestRail contiene # casos de prueba en {sections, plural, one {# sección} other {# secciones}}.}}",
+          "notIncluded": "La exportación contiene solo casos de prueba y secciones. Los archivos adjuntos, imágenes, ejecuciones de prueba, resultados, usuarios e historial de casos no se encuentran en el archivo. Las plantillas y campos no se crean en la importación, por lo que debe configurar la plantilla antes de importar.",
+          "unrecognizedFields": "{count, plural, one {El campo {fields} tiene una estructura que esta importación no reconoce. Sus valores se importan como texto sin formato.} other {Los campos {fields} tienen una estructura que esta importación no reconoce. Sus valores se importan como texto sin formato.}}",
+          "suiteFolder": "Poner las secciones en una carpeta nueva",
+          "suiteFolderName": "Nombre de la carpeta",
+          "templateFilter": {
+            "label": "Plantilla de TestRail",
+            "all": "Todas las plantillas ({count, number})",
+            "option": "{name} ({count, number})",
+            "help": "Cada importación asigna los casos a una plantilla. Si las plantillas de TestRail necesitan diferentes plantillas aquí, ejecute la importación una vez para cada una."
+          },
+          "imageMarker": "[imagen no importada]",
+          "imagesReplaced": "{count, plural, one {# imagen en el texto apunta a TestRail y no se puede importar. Se reemplaza con \"{marker}\".} other {# imágenes en el texto apuntan a TestRail y no se pueden importar. Cada una se reemplaza con \"{marker}\".}}",
+          "variables": "{count, plural, one {# caso de prueba utiliza variables de TestRail en sus pasos. Cada variable se convierte en un parámetro del caso de prueba. Los valores no están en el archivo, por lo que añádelos al conjunto de datos del caso de prueba después de la importación.} other {# casos de prueba utilizan variables de TestRail en sus pasos. Cada variable se convierte en un parámetro de su caso de prueba. Los valores no están en el archivo, por lo que añádelos al conjunto de datos de cada caso de prueba después de la importación.}}",
+          "unreadEstimates": "{count, plural, one {La estimación de # caso de prueba no se pudo leer y se deja vacía.} other {Las estimaciones de # casos de prueba no se pudieron leer y se dejan vacías.}}",
+          "errors": {
+            "invalidXml": "Este archivo no se pudo leer como XML.",
+            "notASuite": "Este archivo XML no es una exportación de suite de prueba de TestRail. En TestRail, abra la página Test Cases de la suite y expórtela como XML.",
+            "noCases": "Esta exportación de TestRail no contiene casos de prueba."
           }
         }
       }

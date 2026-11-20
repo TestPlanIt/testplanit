@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "テンプレートの選択は必須です",
           "folderRequired": "このインポート場所にはフォルダの選択が必要です",
-          "fileRequired": "CSVまたはMarkdownファイルが必要です",
+          "fileRequired": "CSV、MarkdownまたはTestRail XMLファイルが必要です",
           "markdownParseFailed": "Markdownファイルの解析に失敗しました",
           "markdownLlmFailed": "AI解析は利用できません。標準パーサーを使用します。",
           "validationTitle": "インポートの検証に失敗しました",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "CSV列をフィールドにマッピングする",
+          "titleMarkdown": "Markdownフィールドをテンプレートフィールドにマッピング",
+          "titleTestRail": "TestRailフィールドをテンプレートフィールドにマッピング",
           "description": "各 CSV 列をテンプレートのフィールドにマップするか、無視することを選択します。",
+          "descriptionMarkdown": "Markdownファイルで見つかった各フィールドをテンプレート内のフィールドにマッピングするか、無視することを選択します。",
+          "descriptionTestRail": "各TestRailフィールドをテンプレート内のフィールドにマッピングするか、無視することを選択します。",
           "ignoreColumn": "列を無視",
           "requiredFieldsWarning": "{count, plural, one {# 必須フィールドは} other {# 必須フィールドは}} マッピングされていません",
           "caseIdHint": "これは数値のケースIDである必要があります。一致するケースは上書きされます。"
@@ -3544,6 +3548,29 @@
             "noStepColumn": "複数行モードが有効になっていますが、ステップ列が検出されませんでした。期待される列は、Step Content、Step、Steps、Action、Descriptionのいずれかです（大文字小文字は区別されません）。各CSV行は個別のテストケースとしてインポートされます。",
             "noKeyColumn": "複数行モードが有効になっていますが、ID列または名前列がマッピングされていません。行をケースごとにグループ化できるように、前の手順でID列または名前列をマッピングしてください。",
             "noGrouping": "複数行モードが有効になっていますが、行はグループ化されていません。各行には異なるID/名前が割り当てられているため、それぞれが個別のテストケースになります。継続行のIDと名前は空白のままにするか、1つのケースに属する行に同じID/名前を繰り返してください。"
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {TestRailスイート\"{suite}\"には、{sections, plural, one {# セクション} other {# セクション}}内に# 個のテストケースが含まれています。} other {TestRailスイート\"{suite}\"には、{sections, plural, one {# セクション} other {# セクション}}内に# 個のテストケースが含まれています。}}",
+          "summaryUnnamed": "{cases, plural, one {このTestRailスイートは{sections, plural, one {# セクション} other {# セクション}}に# 個のテストケースを含みます。} other {このTestRailスイートは{sections, plural, one {# セクション} other {# セクション}}に# 個のテストケースを含みます。}}",
+          "notIncluded": "エクスポートにはテストケースとセクションのみが含まれます。添付ファイル、画像、テスト実行、結果、ユーザー、ケース履歴はファイルに含まれていません。テンプレートとフィールドはインポートによって作成されないため、インポートの前にテンプレートを設定してください。",
+          "unrecognizedFields": "{count, plural, one {フィールド{fields}は、このインポートが認識しない構造を持っています。その値はプレーンテキストとしてインポートされます。} other {フィールド{fields}は、このインポートが認識しない構造を持っています。それらの値はプレーンテキストとしてインポートされます。}}",
+          "suiteFolder": "セクションを新しいフォルダに配置",
+          "suiteFolderName": "フォルダ名",
+          "templateFilter": {
+            "label": "TestRailテンプレート",
+            "all": "すべてのテンプレート({count, number})",
+            "option": "{name}({count, number})",
+            "help": "各インポートはケースを1つのテンプレートにマップします。TestRailテンプレートがここで異なるテンプレートが必要な場合は、各テンプレートに対してインポートを実行してください。"
+          },
+          "imageMarker": "[画像はインポートされていません]",
+          "imagesReplaced": "{count, plural, one {テキスト内の# 個の画像はTestRailを指していますが、インポートできません。\"{marker}\"に置き換えられました。} other {テキスト内の# 個の画像はTestRailを指していますが、インポートできません。各画像は\"{marker}\"に置き換えられました。}}",
+          "variables": "{count, plural, one {# 個のテストケースが手順でTestRail変数を使用しています。各変数はテストケースのパラメーターになります。値はファイルに含まれていないため、インポート後にテストケースのデータセットに追加してください。} other {# 個のテストケースが手順でTestRail変数を使用しています。各変数はテストケースのパラメーターになります。値はファイルに含まれていないため、インポート後に各テストケースのデータセットに追加してください。}}",
+          "unreadEstimates": "{count, plural, one {# 個のテストケースの見積もりを読み取ることができず、空のままになっています。} other {# 個のテストケースの見積もりを読み取ることができず、空のままになっています。}}",
+          "errors": {
+            "invalidXml": "このファイルはXMLとして読み取ることができませんでした。",
+            "notASuite": "このXMLファイルはTestRailのテストスイートエクスポートではありません。TestRailでスイートの[テストケース]ページを開き、XMLとしてエクスポートしてください。",
+            "noCases": "このTestRailエクスポートはテストケースを含みません。"
           }
         }
       }

@@ -3471,7 +3471,7 @@
         "errors": {
           "templateRequired": "Sjabloonselectie is vereist",
           "folderRequired": "Voor deze importlocatie is mapselectie vereist",
-          "fileRequired": "Een CSV- of Markdown-bestand is vereist.",
+          "fileRequired": "Een CSV-, Markdown- of TestRail XML-bestand is vereist",
           "markdownParseFailed": "Het parseren van het Markdown-bestand is mislukt.",
           "markdownLlmFailed": "AI-parsing niet beschikbaar, standaardparser wordt gebruikt.",
           "validationTitle": "Importvalidatie mislukt",
@@ -3515,7 +3515,11 @@
         },
         "page2": {
           "title": "CSV-kolommen toewijzen aan velden",
+          "titleMarkdown": "Markdown-velden aan sjabloonvelden koppelen",
+          "titleTestRail": "TestRail-velden aan sjabloonvelden koppelen",
           "description": "U kunt elke CSV-kolom toewijzen aan een veld in de sjabloon, of ervoor kiezen deze te negeren.",
+          "descriptionMarkdown": "Koppel elk veld dat in het Markdown-bestand is gevonden aan een veld in het sjabloon of kies ervoor dit te negeren.",
+          "descriptionTestRail": "Koppel elk TestRail-veld aan een veld in het sjabloon of kies ervoor dit te negeren.",
           "ignoreColumn": "Kolom negeren",
           "requiredFieldsWarning": "{count, plural, one {# verplicht veld is} other {# verplichte velden zijn}} niet toegewezen",
           "caseIdHint": "Dit moet het numerieke Testgeval-ID zijn — overeenkomende testgevallen worden overschreven."
@@ -3544,6 +3548,29 @@
             "noStepColumn": "De modus voor meerdere rijen is ingeschakeld, maar er is geen kolom voor stappen gedetecteerd. Verwacht wordt een van de volgende kolommen: Stapinhoud, Stap, Stappen, Actie, Beschrijving (hoofdlettergevoeligheid speelt geen rol). Elke rij in het CSV-bestand wordt als een aparte testcase geïmporteerd.",
             "noKeyColumn": "De modus voor meerdere rijen is ingeschakeld, maar er is geen ID- of Naam-kolom toegewezen. Wijs in de vorige stap een ID- of Naam-kolom toe, zodat rijen in cases kunnen worden gegroepeerd.",
             "noGrouping": "De modus voor meerdere rijen is ingeschakeld, maar er zijn geen rijen gegroepeerd. Elke rij heeft een andere ID/naam, dus elke rij wordt een afzonderlijk testgeval. Laat de ID en naam leeg in vervolgrijen, of herhaal dezelfde ID/naam in alle rijen die bij één testgeval horen."
+          }
+        },
+        "testRail": {
+          "summary": "{cases, plural, one {TestRail suite \"{suite}\" bevat # testcase in {sections, plural, one {# sectie} other {# secties}}.} other {TestRail suite \"{suite}\" bevat # testcases in {sections, plural, one {# sectie} other {# secties}}.}}",
+          "summaryUnnamed": "{cases, plural, one {Deze TestRail-suite bevat # testcase in {sections, plural, one {# sectie} other {# secties}}.} other {Deze TestRail-suite bevat # testcases in {sections, plural, one {# sectie} other {# secties}}.}}",
+          "notIncluded": "Het export bevat alleen testcases en secties. Bijlagen, afbeeldingen, testruns, resultaten, gebruikers en case-geschiedenis bevinden zich niet in het bestand. Sjablonen en velden worden niet gemaakt door het importeren. Stel de sjabloon in voordat u importeert.",
+          "unrecognizedFields": "{count, plural, one {Het veld {fields} heeft een structuur die dit importeren niet kent. De waarden worden als platte tekst geïmporteerd.} other {De velden {fields} hebben een structuur die dit importeren niet kennen. Hun waarden worden als platte tekst geïmporteerd.}}",
+          "suiteFolder": "Plaats de secties in een nieuwe map",
+          "suiteFolderName": "Mapnaam",
+          "templateFilter": {
+            "label": "TestRail-sjabloon",
+            "all": "Alle sjablonen ({count, number})",
+            "option": "{name} ({count, number})",
+            "help": "Elk importeren wijst de cases toe aan één sjabloon. Als de TestRail-sjablonen hier verschillende sjablonen nodig hebben, voert u het importeren eenmaal per sjabloon uit."
+          },
+          "imageMarker": "[afbeelding niet geïmporteerd]",
+          "imagesReplaced": "{count, plural, one {# afbeelding in de tekst verwijst naar TestRail en kan niet worden geïmporteerd. Deze wordt vervangen door \"{marker}\".} other {# afbeeldingen in de tekst verwijzen naar TestRail en kunnen niet worden geïmporteerd. Elk wordt vervangen door \"{marker}\".}}",
+          "variables": "{count, plural, one {# testcase gebruikt TestRail-variabelen in de stappen ervan. Elke variabele wordt een parameter van de testcase. De waarden bevinden zich niet in het bestand, dus voeg ze toe aan de dataset van de testcase na het importeren.} other {# testcases gebruiken TestRail-variabelen in hun stappen. Elke variabele wordt een parameter van de bijbehorende testcase. De waarden bevinden zich niet in het bestand, dus voeg ze toe aan de dataset van elke testcase na het importeren.}}",
+          "unreadEstimates": "{count, plural, one {De schatting van # testcase kon niet worden gelezen en is leeg gelaten.} other {De schattingen van # testcases konden niet worden gelezen en zijn leeg gelaten.}}",
+          "errors": {
+            "invalidXml": "Dit bestand kon niet als XML worden gelezen.",
+            "notASuite": "Dit XML-bestand is geen TestRail-testsuiteexport. Open in TestRail de pagina Testcases van de suite en exporteer deze als XML.",
+            "noCases": "Deze TestRail-export bevat geen testcases."
           }
         }
       }
