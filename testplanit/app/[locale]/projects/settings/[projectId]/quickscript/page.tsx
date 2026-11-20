@@ -59,6 +59,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   AlertTriangle,
+  Asterisk,
   CheckCircle,
   GitBranch,
   Loader2,
@@ -476,7 +477,12 @@ export default function QuickScriptPage() {
                       name="repositoryId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{tDimensions("codeRepository")}</FormLabel>
+                          <FormLabel className="flex items-center">
+                            {tDimensions("codeRepository")}
+                            <sup>
+                              <Asterisk className="w-3 h-3 text-destructive" />
+                            </sup>
+                          </FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}

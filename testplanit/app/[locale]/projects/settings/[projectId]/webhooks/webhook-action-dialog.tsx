@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -229,7 +230,12 @@ function WebhookActionDialogBody({
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>{tReports("trigger")}</Label>
+            <Label className="flex items-center">
+              {tReports("trigger")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
+            </Label>
             <Select
               value={trigger}
               onValueChange={(next) =>
@@ -253,7 +259,12 @@ function WebhookActionDialogBody({
           </div>
 
           <div className="space-y-1.5">
-            <Label>{tAuditLogs("filterAction")}</Label>
+            <Label className="flex items-center">
+              {tAuditLogs("filterAction")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
+            </Label>
             <Select
               value={action}
               onValueChange={(next) => setAction(next as WebhookActionType)}
@@ -278,6 +289,7 @@ function WebhookActionDialogBody({
               integration={integration}
               value={filter}
               onChange={setFilter}
+              statusesRequired={trigger === "ISSUE_STATUS_ENTERED"}
             />
           )}
 

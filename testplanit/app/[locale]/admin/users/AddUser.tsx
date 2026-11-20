@@ -25,7 +25,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Star } from "lucide-react";
+import { Asterisk, Star } from "lucide-react";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 
@@ -511,6 +511,9 @@ export function AddUser({ open, onClose }: AddUserProps) {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       {tCommon("name")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                       <HelpPopover helpKey="user.name" />
                     </FormLabel>
                     <FormControl>
@@ -527,6 +530,9 @@ export function AddUser({ open, onClose }: AddUserProps) {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       {tCommon("fields.email")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                       <HelpPopover helpKey="user.email" />
                     </FormLabel>
                     <FormControl>
@@ -548,6 +554,11 @@ export function AddUser({ open, onClose }: AddUserProps) {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       {tCommon("fields.password")}
+                      {passwordRequired && (
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
+                      )}
                       {!passwordRequired && (
                         <span className="text-muted-foreground text-xs ms-2">
                           {"("}
@@ -586,6 +597,11 @@ export function AddUser({ open, onClose }: AddUserProps) {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       {tCommon("fields.confirmPassword")}
+                      {passwordRequired && (
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
+                      )}
                       {!passwordRequired && (
                         <span className="text-muted-foreground text-xs ms-2">
                           {"("}
@@ -634,6 +650,9 @@ export function AddUser({ open, onClose }: AddUserProps) {
                   <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                     <FormLabel className="flex whitespace-nowrap items-center">
                       {tCommon("fields.access")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                       <HelpPopover helpKey="user.access" />
                       <FormControl>
                         <Controller
@@ -690,6 +709,9 @@ export function AddUser({ open, onClose }: AddUserProps) {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       {tCommon("fields.role")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                       <HelpPopover helpKey="user.role" />
                     </FormLabel>
                     <FormControl>

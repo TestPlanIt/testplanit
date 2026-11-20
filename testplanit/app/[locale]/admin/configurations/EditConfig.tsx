@@ -3,6 +3,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { Configurations } from "~/zenstack/models";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -164,6 +165,9 @@ export function EditConfiguration({
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("name")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="config.name" />
                   </FormLabel>
                   <FormControl>

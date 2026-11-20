@@ -34,6 +34,7 @@ import {
   VisibilityState,
 } from "@/components/tables/tableFeatures";
 import {
+  Asterisk,
   Beaker,
   Bot,
   ChevronDown,
@@ -4313,6 +4314,7 @@ function ReportBuilderContent({
                                 "requirementCoverage.baselineLabel"
                               )}
                               nullMode="none"
+                              required
                               canManage={canManageSnapshots}
                               canDelete={canDeleteSnapshots}
                               requirementIds={requirementScope.map(
@@ -4962,8 +4964,11 @@ function ReportBuilderContent({
                       {/* Dimensions Selection */}
                       <div className="grid gap-2">
                         <div className="flex items-center gap-2">
-                          <label className="text-sm font-medium">
+                          <label className="flex items-center text-sm font-medium">
                             {tReports("dimensions")}
+                            <sup>
+                              <Asterisk className="w-3 h-3 text-destructive" />
+                            </sup>
                           </label>
                           <HelpPopover helpKey="reportBuilder.dimensions" />
                         </div>
@@ -5242,8 +5247,11 @@ function ReportBuilderContent({
                         reportType !== "flaky-tests" && (
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
-                              <label className="text-sm font-medium">
+                              <label className="flex items-center text-sm font-medium">
                                 {tReports("metrics")}
+                                <sup>
+                                  <Asterisk className="w-3 h-3 text-destructive" />
+                                </sup>
                               </label>
                               <HelpPopover helpKey="reportBuilder.metrics" />
                             </div>

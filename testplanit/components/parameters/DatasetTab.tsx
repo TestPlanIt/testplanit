@@ -70,6 +70,7 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import {
+  Asterisk,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -2015,10 +2016,13 @@ export function DatasetTab({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label
-                  className="text-xs font-medium"
+                  className="flex items-center text-xs font-medium"
                   htmlFor="dataset-add-column-input"
                 >
                   {tCommon("name")}
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
                 </label>
                 <Input
                   id="dataset-add-column-input"
@@ -2034,10 +2038,13 @@ export function DatasetTab({
               </div>
               <div>
                 <label
-                  className="text-xs font-medium"
+                  className="flex items-center text-xs font-medium"
                   htmlFor="dataset-add-column-type"
                 >
                   {tCommon("fields.type")}
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
                 </label>
                 <Select
                   value={newColumnType}

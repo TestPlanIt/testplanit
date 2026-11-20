@@ -30,6 +30,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Asterisk,
   Bookmark,
   BookmarkPlus,
   Loader2,
@@ -268,7 +269,15 @@ export function SavedSearchesMenu({
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="saved-search-edit-name">{t("common.name")}</Label>
+              <Label
+                htmlFor="saved-search-edit-name"
+                className="flex items-center"
+              >
+                {t("common.name")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              </Label>
               <Input
                 id="saved-search-edit-name"
                 value={editName}

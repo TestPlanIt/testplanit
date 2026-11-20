@@ -23,6 +23,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import type { TestCaseParameter } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -195,10 +196,13 @@ export function ParameterEditDialog({
 
             <div>
               <label
-                className="text-xs font-medium"
+                className="flex items-center text-xs font-medium"
                 htmlFor="parameter-edit-type"
               >
                 {tCommon("fields.type")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </label>
               <Controller
                 control={form.control}
@@ -348,10 +352,13 @@ export function ParameterEditDialog({
               ) : (
                 <div>
                   <label
-                    className="text-xs font-medium"
+                    className="flex items-center text-xs font-medium"
                     htmlFor="parameter-edit-lookup-dataset"
                   >
                     {t("selectLookupDataSetLabel")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   </label>
                   <Controller
                     control={form.control}

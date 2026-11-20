@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -86,6 +87,9 @@ export function AddAppConfig({ open, onClose }: AddAppConfigProps) {
           <div className="space-y-2">
             <Label htmlFor="key" className="flex items-center">
               {tCommon("fields.key")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
               <HelpPopover helpKey="appConfig.key" />
             </Label>
             <Input
@@ -103,6 +107,9 @@ export function AddAppConfig({ open, onClose }: AddAppConfigProps) {
           <div className="space-y-2">
             <Label htmlFor="value" className="flex items-center">
               {tCommon("fields.value")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
               <HelpPopover helpKey="appConfig.value" />
             </Label>
             <Textarea

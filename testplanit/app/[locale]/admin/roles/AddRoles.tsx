@@ -40,7 +40,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { WarningAlert } from "@/components/ui/warning-alert";
-import { TriangleAlert } from "lucide-react";
+import { Asterisk, TriangleAlert } from "lucide-react";
 import { Label } from "@radix-ui/react-label";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 
@@ -275,6 +275,9 @@ export function AddRole({ open, onClose }: AddRoleProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {t("common.name")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="role.name" />
                   </FormLabel>
                   <FormControl>

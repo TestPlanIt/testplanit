@@ -53,7 +53,7 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ApplicationArea, TestRunType } from "~/zenstack/models";
 import type { Attachments } from "~/zenstack/models";
 import { DialogDescription } from "@radix-ui/react-dialog";
-import { Combine } from "lucide-react";
+import { Asterisk, Combine } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -244,6 +244,9 @@ const BasicInfoDialog = React.memo(
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {tCommon("name")}
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="testRun.name" />
                       </FormLabel>
                       <FormControl>
@@ -440,6 +443,9 @@ const BasicInfoDialog = React.memo(
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {tCommon("fields.state")}
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="testRun.state" />
                       </FormLabel>
                       <Select

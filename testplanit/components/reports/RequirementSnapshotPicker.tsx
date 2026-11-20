@@ -18,7 +18,14 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
-import { Camera, Check, ChevronDown, Loader2, Trash } from "lucide-react";
+import {
+  Asterisk,
+  Camera,
+  Check,
+  ChevronDown,
+  Loader2,
+  Trash,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -61,6 +68,7 @@ export function RequirementSnapshotPicker({
   onValueChange,
   label,
   nullMode = "live",
+  required = false,
   canManage = false,
   canDelete = canManage,
   requirementIds,
@@ -71,6 +79,7 @@ export function RequirementSnapshotPicker({
   onValueChange: (next: number | null) => void;
   label: string;
   nullMode?: RequirementSnapshotPickerNullMode;
+  required?: boolean;
   /** Shows the capture action (Reporting add/edit). */
   canManage?: boolean;
   /** Shows the per-row delete action (Reporting delete); defaults to `canManage`. */
@@ -142,7 +151,14 @@ export function RequirementSnapshotPicker({
 
   return (
     <div className="grid gap-2">
-      <label className="text-sm font-medium">{label}</label>
+      <label className="flex items-center text-sm font-medium">
+        {label}
+        {required && (
+          <sup>
+            <Asterisk className="w-3 h-3 text-destructive" />
+          </sup>
+        )}
+      </label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button

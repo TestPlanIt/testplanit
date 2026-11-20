@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -206,7 +206,12 @@ export function WebhookAutoExecuteFields({
       {value.enabled && !noTargets && (
         <div className="space-y-3 border-s ps-4">
           <div className="space-y-1.5">
-            <Label>{tExecute("target")}</Label>
+            <Label className="flex items-center">
+              {tExecute("target")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
+            </Label>
             <Select
               value={selected ? String(selected.id) : ""}
               onValueChange={(next) =>

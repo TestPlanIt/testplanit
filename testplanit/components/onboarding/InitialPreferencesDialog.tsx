@@ -39,7 +39,14 @@ import {
   Theme,
   TimeFormat,
 } from "~/zenstack/models";
-import { Accessibility, Circle, Moon, Sun, SunMoon } from "lucide-react";
+import {
+  Accessibility,
+  Asterisk,
+  Circle,
+  Moon,
+  Sun,
+  SunMoon,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -491,7 +498,12 @@ export function InitialPreferencesDialog() {
                 name="theme"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tCommon("fields.theme")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {tCommon("fields.theme")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={(value) => {
@@ -532,7 +544,12 @@ export function InitialPreferencesDialog() {
                 name="locale"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tCommon("fields.locale")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {tCommon("fields.locale")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
@@ -561,7 +578,12 @@ export function InitialPreferencesDialog() {
                   name="dateFormat"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("dateFormat")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {t("dateFormat")}
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
+                      </FormLabel>
                       <FormControl>
                         <Select
                           onValueChange={field.onChange}
@@ -593,7 +615,12 @@ export function InitialPreferencesDialog() {
                   name="timeFormat"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("timeFormat")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {t("timeFormat")}
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
+                      </FormLabel>
                       <FormControl>
                         <Select
                           onValueChange={field.onChange}
@@ -627,7 +654,12 @@ export function InitialPreferencesDialog() {
                   name="timezone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tGlobal("common.fields.timezone")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tGlobal("common.fields.timezone")}
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
+                      </FormLabel>
                       <FormControl>
                         <AsyncCombobox<TimezoneOption>
                           value={
@@ -660,8 +692,11 @@ export function InitialPreferencesDialog() {
                 name="itemsPerPage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="flex items-center">
                       {tGlobal("common.fields.itemsPerPage")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                     </FormLabel>
                     <FormControl>
                       <Select
@@ -692,7 +727,12 @@ export function InitialPreferencesDialog() {
                 name="notificationMode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tNotificationsMode("label")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {tNotificationsMode("label")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
@@ -722,8 +762,11 @@ export function InitialPreferencesDialog() {
                 name="detailsDisplayMode"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>
+                    <FormLabel className="flex items-center">
                       {tGlobal("common.fields.detailsDisplayMode")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                     </FormLabel>
                     <FormControl>
                       <Select

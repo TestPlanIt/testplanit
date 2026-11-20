@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Asterisk } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -253,8 +254,14 @@ export function CreateRequirementDialog({
               </div>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="create-requirement-name">
+              <Label
+                htmlFor="create-requirement-name"
+                className="flex items-center"
+              >
                 {t("common.name")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="create-requirement-name"
@@ -299,7 +306,12 @@ export function CreateRequirementDialog({
               </div>
             </div>
             <div className="space-y-1">
-              <Label>{t("requirements.create.promoteIssueLabel")}</Label>
+              <Label className="flex items-center">
+                {t("requirements.create.promoteIssueLabel")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              </Label>
               <div className="flex items-center gap-2">
                 <div
                   className="min-w-0 flex-1 truncate text-sm"

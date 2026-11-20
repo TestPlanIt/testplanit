@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Asterisk,
   Bookmark,
   BookmarkPlus,
   Loader2,
@@ -406,7 +407,15 @@ export function SavedViewsMenu({
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="saved-view-rename-name">{t("common.name")}</Label>
+              <Label
+                htmlFor="saved-view-rename-name"
+                className="flex items-center"
+              >
+                {t("common.name")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              </Label>
               <Input
                 id="saved-view-rename-name"
                 value={renameName}

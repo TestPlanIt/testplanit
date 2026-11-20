@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Asterisk, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -280,7 +280,15 @@ export function AutomationTargetDialog({
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="automation-target-name">{tCommon("name")}</Label>
+            <Label
+              htmlFor="automation-target-name"
+              className="flex items-center"
+            >
+              {tCommon("name")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
+            </Label>
             <Input
               id="automation-target-name"
               value={name}
@@ -291,7 +299,12 @@ export function AutomationTargetDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>{tCommon("fields.provider")}</Label>
+            <Label className="flex items-center">
+              {tCommon("fields.provider")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
+            </Label>
             <Select
               value={provider}
               onValueChange={(v) => {
@@ -318,7 +331,12 @@ export function AutomationTargetDialog({
           {!isGeneric && (
             <>
               <div className="space-y-1.5">
-                <Label>{t("repository")}</Label>
+                <Label className="flex items-center">
+                  {t("repository")}
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
+                </Label>
                 {!repositoriesLoading && (repositories?.length ?? 0) === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     {t("noRepositories", { provider: repoProvider ?? "" })}
@@ -348,7 +366,12 @@ export function AutomationTargetDialog({
 
               {provider === "GITHUB_ACTIONS" && (
                 <div className="space-y-1.5">
-                  <Label>{t("workflow")}</Label>
+                  <Label className="flex items-center">
+                    {t("workflow")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
+                  </Label>
                   {optionsLoading ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -504,7 +527,15 @@ export function AutomationTargetDialog({
           {isGeneric && (
             <>
               <div className="space-y-1.5">
-                <Label htmlFor="automation-target-url">{t("webhookUrl")}</Label>
+                <Label
+                  htmlFor="automation-target-url"
+                  className="flex items-center"
+                >
+                  {t("webhookUrl")}
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
+                </Label>
                 <Input
                   id="automation-target-url"
                   value={url}

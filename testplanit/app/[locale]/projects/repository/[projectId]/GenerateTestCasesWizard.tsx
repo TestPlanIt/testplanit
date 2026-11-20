@@ -63,6 +63,7 @@ import { ApplicationArea } from "~/zenstack/models";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
+  Asterisk,
   Bot,
   CheckCircle2,
   ChevronDown,
@@ -4923,8 +4924,14 @@ export function GenerateTestCasesWizard({
 
                               {/* URL Input */}
                               <div className="space-y-2">
-                                <Label htmlFor="url-input">
+                                <Label
+                                  htmlFor="url-input"
+                                  className="flex items-center"
+                                >
                                   {t("generateTestCases.selectSource.urlInput")}
+                                  <sup>
+                                    <Asterisk className="w-3 h-3 text-destructive" />
+                                  </sup>
                                 </Label>
                               </div>
 
@@ -5184,10 +5191,13 @@ export function GenerateTestCasesWizard({
                             ) : (
                               <div className="space-y-4">
                                 <div>
-                                  <Label className="text-sm font-medium">
+                                  <Label className="flex items-center text-sm font-medium">
                                     {t(
                                       "generateTestCases.selectSource.documentDescription"
                                     )}
+                                    <sup>
+                                      <Asterisk className="w-3 h-3 text-destructive" />
+                                    </sup>
                                   </Label>
                                   {/* Rich text: pasted screenshots and
                                       uploaded images become generation

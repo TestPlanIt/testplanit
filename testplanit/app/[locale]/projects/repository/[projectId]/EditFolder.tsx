@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -172,6 +173,9 @@ export function EditFolderModal({
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {t("common.name")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="folder.name" />
                   </FormLabel>
                   <FormControl>

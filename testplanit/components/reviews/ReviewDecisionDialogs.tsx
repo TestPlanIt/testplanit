@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -333,8 +334,14 @@ export function RequestChangesDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor={`request-changes-comment-${reviewRequestId}`}>
+          <Label
+            htmlFor={`request-changes-comment-${reviewRequestId}`}
+            className="flex items-center"
+          >
             {t("commentLabel")}
+            <sup>
+              <Asterisk className="w-3 h-3 text-destructive" />
+            </sup>
           </Label>
           <Textarea
             id={`request-changes-comment-${reviewRequestId}`}
@@ -468,8 +475,14 @@ export function RejectDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor={`reject-comment-${reviewRequestId}`}>
+          <Label
+            htmlFor={`reject-comment-${reviewRequestId}`}
+            className="flex items-center"
+          >
             {t("commentLabel")}
+            <sup>
+              <Asterisk className="w-3 h-3 text-destructive" />
+            </sup>
           </Label>
           <Textarea
             id={`reject-comment-${reviewRequestId}`}

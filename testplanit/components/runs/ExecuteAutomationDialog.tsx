@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FilePlay, Loader2 } from "lucide-react";
+import { Asterisk, FilePlay, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -205,7 +205,12 @@ export function ExecuteAutomationDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>{t("target")}</Label>
+            <Label className="flex items-center">
+              {t("target")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
+            </Label>
             <Select value={targetId} onValueChange={setTargetId}>
               <SelectTrigger data-testid="execute-automation-target-select">
                 <SelectValue placeholder={t("targetPlaceholder")} />

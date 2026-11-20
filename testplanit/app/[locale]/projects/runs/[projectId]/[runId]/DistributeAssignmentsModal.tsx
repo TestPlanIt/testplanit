@@ -22,6 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -292,7 +293,12 @@ export function DistributeAssignmentsModal({
         <div className="grid gap-5 py-2 min-w-0">
           {/* Team members */}
           <div className="grid gap-2">
-            <Label>{t("runs.distribute.selectUsers")}</Label>
+            <Label className="flex items-center">
+              {t("runs.distribute.selectUsers")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
+            </Label>
             <MultiAsyncCombobox<UserOption>
               value={selectedUsers}
               onValueChange={setSelectedUsers}

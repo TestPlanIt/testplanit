@@ -2,7 +2,14 @@
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { format } from "date-fns";
-import { CalendarIcon, Check, Copy, Loader2, ShieldAlert } from "lucide-react";
+import {
+  Asterisk,
+  CalendarIcon,
+  Check,
+  Copy,
+  Loader2,
+  ShieldAlert,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -349,7 +356,12 @@ export function MintDialog({ open, onOpenChange, onSuccess }: MintDialogProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("nameLabel")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {t("nameLabel")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -369,7 +381,12 @@ export function MintDialog({ open, onOpenChange, onSuccess }: MintDialogProps) {
                 name="idpName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("idpLabel")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {t("idpLabel")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
                     <Select
                       onValueChange={(v) => field.onChange(v as IdpName)}
                       value={field.value}
@@ -398,7 +415,12 @@ export function MintDialog({ open, onOpenChange, onSuccess }: MintDialogProps) {
                 name="expiresOption"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("expiresLabel")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {t("expiresLabel")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
                     <Select
                       onValueChange={(v) => field.onChange(v as ExpiresOption)}
                       value={field.value}

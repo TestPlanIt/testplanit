@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Asterisk } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -335,6 +335,9 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {t("common.name")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="milestone.name" />
                   </FormLabel>
                   <FormControl>
@@ -378,6 +381,9 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {t("common.fields.type")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="milestone.type" />
                   </FormLabel>
                   <FormControl>

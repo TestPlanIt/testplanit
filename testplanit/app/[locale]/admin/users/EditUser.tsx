@@ -29,7 +29,13 @@ import {
 } from "@/components/ui/select";
 
 import { Badge } from "@/components/ui/badge";
-import { CircleSlash2, Cloud, ShieldAlert, Trash } from "lucide-react";
+import {
+  Asterisk,
+  CircleSlash2,
+  Cloud,
+  ShieldAlert,
+  Trash,
+} from "lucide-react";
 
 import {
   Form,
@@ -460,6 +466,9 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("name")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="user.name" />
                   </FormLabel>
                   <FormControl>
@@ -480,6 +489,9 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("fields.email")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="user.email" />
                   </FormLabel>
                   <FormControl>
@@ -522,6 +534,9 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                   <FormLabel className="flex whitespace-nowrap items-center">
                     {tCommon("fields.access")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="user.access" />
                     {user.accessSource === "GROUP_MAPPING" && (
                       <Badge
@@ -588,6 +603,9 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                   <FormLabel className="flex whitespace-nowrap items-center">
                     {tCommon("fields.role")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="user.role" />
                     <FormControl>
                       <Controller
