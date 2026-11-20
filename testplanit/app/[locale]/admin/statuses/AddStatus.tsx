@@ -38,6 +38,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
+import { Asterisk } from "lucide-react";
 
 const createAddStatusFormSchema = (
   t: ReturnType<typeof useTranslations<"admin.statuses.add">>
@@ -291,6 +292,9 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {tCommon("name")}
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="status.name" />
                       </FormLabel>
                       <FormControl>
@@ -309,6 +313,9 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("fields.systemName")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="status.systemName" />
                     <div className="text-muted-foreground text-sm ms-1">
                       {t("systemNameHelp")}

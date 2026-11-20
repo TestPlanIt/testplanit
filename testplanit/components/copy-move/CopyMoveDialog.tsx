@@ -25,6 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  Asterisk,
   Boxes,
   CheckCircle2,
   ChevronLeft,
@@ -525,7 +526,12 @@ export function CopyMoveDialog({
                 className="flex flex-col gap-1.5"
                 data-testid="copy-move-target-project-trigger"
               >
-                <Label>{t("targetProject")}</Label>
+                <Label className="flex items-center">
+                  {t("targetProject")}
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
+                </Label>
                 <AsyncCombobox<ProjectOption>
                   value={selectedProject}
                   onValueChange={(project) => {
@@ -582,7 +588,12 @@ export function CopyMoveDialog({
 
               {targetProjectId && (
                 <div data-testid="copy-move-target-folder-trigger">
-                  <Label>{t("targetFolder")}</Label>
+                  <Label className="flex items-center">
+                    {t("targetFolder")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
+                  </Label>
                   <div className="flex gap-1.5">
                     <AsyncCombobox<FolderOption>
                       value={selectedFolder}

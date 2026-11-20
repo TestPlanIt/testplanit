@@ -40,6 +40,7 @@ import {
 import { SelectScrollable } from "@/components/SelectScrollableCaseFields";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 
@@ -353,6 +354,9 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("name")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="template.name" />
                   </FormLabel>
                   <FormControl>

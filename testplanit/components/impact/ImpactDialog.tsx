@@ -19,7 +19,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { WizardStepIndicator } from "@/components/ui/WizardStepIndicator";
-import { GitCompareArrows, Radar, Radio, XCircle } from "lucide-react";
+import {
+  Asterisk,
+  GitCompareArrows,
+  Radar,
+  Radio,
+  XCircle,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import {
@@ -505,8 +511,11 @@ export function ImpactDialog({
         <div className="min-h-0 flex-1 overflow-y-auto px-1">
           {state.step === "pick" && configs.length > 1 && (
             <div className="mb-4 space-y-1">
-              <Label htmlFor="impact-repository">
+              <Label htmlFor="impact-repository" className="flex items-center">
                 {tCommon("pageTitles.repository")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </Label>
               <Select
                 value={configId === null ? "" : String(configId)}

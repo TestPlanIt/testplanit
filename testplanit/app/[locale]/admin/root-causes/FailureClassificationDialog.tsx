@@ -31,6 +31,7 @@ import { z } from "zod/v4";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { schema } from "~/zenstack/schema";
 import type { ClassificationRow } from "./types";
+import { Asterisk } from "lucide-react";
 
 interface FailureClassificationDialogProps {
   open: boolean;
@@ -160,7 +161,12 @@ export function FailureClassificationDialog({
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tCommon("name")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tCommon("name")}
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}

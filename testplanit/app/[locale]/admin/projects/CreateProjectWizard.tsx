@@ -1160,6 +1160,9 @@ export function CreateProjectWizard({
               <div className="space-y-2">
                 <FormLabel className="flex items-center">
                   {t("common.labels.defaultProjectAccess")}
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
                   <HelpPopover helpKey="project.defaultAccess" />
                 </FormLabel>
                 <FormField

@@ -46,7 +46,7 @@ import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { JsonNull, type JsonValue } from "@zenstackhq/orm";
 import { Decimal } from "decimal.js";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Asterisk, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -671,6 +671,9 @@ export function AddLlmIntegration({
                   <FormItem>
                     <FormLabel className="flex items-center">
                       {tIntegrations("config.name")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                       <HelpPopover helpKey="llm.name" />
                     </FormLabel>
                     <FormControl>
@@ -744,6 +747,9 @@ export function AddLlmIntegration({
                         <FormItem>
                           <FormLabel className="flex items-center">
                             {tCommon("fields.provider")}
+                            <sup>
+                              <Asterisk className="w-3 h-3 text-destructive" />
+                            </sup>
                             <HelpPopover helpKey="llm.provider" />
                           </FormLabel>
                           <Select
@@ -847,6 +853,9 @@ export function AddLlmIntegration({
                           <FormLabel className="flex items-center justify-between">
                             <span className="flex items-center">
                               {tLlm("defaultModel")}
+                              <sup>
+                                <Asterisk className="w-3 h-3 text-destructive" />
+                              </sup>
                               <HelpPopover helpKey="llm.defaultModel" />
                             </span>
                             {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
@@ -957,6 +966,9 @@ export function AddLlmIntegration({
                         <FormItem>
                           <FormLabel className="flex items-center">
                             {t("maxTokensPerRequest")}
+                            <sup>
+                              <Asterisk className="w-3 h-3 text-destructive" />
+                            </sup>
                             <HelpPopover helpKey="llm.maxTokensPerRequest" />
                           </FormLabel>
                           <FormControl>
@@ -980,6 +992,9 @@ export function AddLlmIntegration({
                         <FormItem>
                           <FormLabel className="flex items-center">
                             {t("defaultMaxTokens")}
+                            <sup>
+                              <Asterisk className="w-3 h-3 text-destructive" />
+                            </sup>
                             <HelpPopover helpKey="llm.defaultMaxTokens" />
                           </FormLabel>
                           <FormControl>
@@ -1034,6 +1049,9 @@ export function AddLlmIntegration({
                         <FormItem>
                           <FormLabel className="flex items-center">
                             {t("costPerInputToken")}
+                            <sup>
+                              <Asterisk className="w-3 h-3 text-destructive" />
+                            </sup>
                             <HelpPopover helpKey="llm.costPerInputToken" />
                           </FormLabel>
                           <FormControl>
@@ -1058,6 +1076,9 @@ export function AddLlmIntegration({
                         <FormItem>
                           <FormLabel className="flex items-center">
                             {t("costPerOutputToken")}
+                            <sup>
+                              <Asterisk className="w-3 h-3 text-destructive" />
+                            </sup>
                             <HelpPopover helpKey="llm.costPerOutputToken" />
                           </FormLabel>
                           <FormControl>
@@ -1156,6 +1177,9 @@ export function AddLlmIntegration({
                         <FormItem>
                           <FormLabel className="flex items-center">
                             {t("timeout")}
+                            <sup>
+                              <Asterisk className="w-3 h-3 text-destructive" />
+                            </sup>
                             <HelpPopover helpKey="llm.timeout" />
                           </FormLabel>
                           <FormControl>
@@ -1185,6 +1209,9 @@ export function AddLlmIntegration({
                         <FormItem>
                           <FormLabel className="flex items-center">
                             {t("defaultTemperature")}
+                            <sup>
+                              <Asterisk className="w-3 h-3 text-destructive" />
+                            </sup>
                             <HelpPopover helpKey="llm.defaultTemperature" />
                           </FormLabel>
                           <FormControl>

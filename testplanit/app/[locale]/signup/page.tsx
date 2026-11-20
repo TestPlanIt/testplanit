@@ -37,7 +37,7 @@ import {
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
-import { LinkIcon, Loader2 } from "lucide-react";
+import { Asterisk, LinkIcon, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 import { TestPlanItLogo } from "@/components/TestPlanItLogo";
@@ -337,6 +337,9 @@ const Signup: NextPage = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.name")}
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="user.name" tabIndex={5} />
                       </FormLabel>
                       <FormControl>
@@ -353,6 +356,9 @@ const Signup: NextPage = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.fields.email")}
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="user.email" tabIndex={6} />
                       </FormLabel>
                       <FormControl>
@@ -369,6 +375,9 @@ const Signup: NextPage = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.fields.password")}
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="user.password" tabIndex={7} />
                       </FormLabel>
                       <FormControl>
@@ -389,6 +398,9 @@ const Signup: NextPage = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.fields.confirmPassword")}
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                         <HelpPopover
                           helpKey="user.confirmPassword"
                           tabIndex={8}

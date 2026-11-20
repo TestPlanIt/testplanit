@@ -17,7 +17,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { PageTitle } from "@/components/ui/typography";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { Fingerprint, Loader2, RefreshCw } from "lucide-react";
+import { Asterisk, Fingerprint, Loader2, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -324,9 +324,12 @@ export default function TriageSettingsPage() {
                   />
                   <Label
                     htmlFor="triage-auto-release-passes"
-                    className="font-normal"
+                    className="flex items-center font-normal"
                   >
                     {t("autoReleasePassesLabel")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   </Label>
                 </div>
               </div>

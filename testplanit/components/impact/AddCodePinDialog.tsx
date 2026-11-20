@@ -4,6 +4,7 @@ import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
+import { Asterisk } from "lucide-react";
 import micromatch from "micromatch";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -526,7 +527,12 @@ export function AddCodePinDialog({
         <div className="flex flex-1 min-h-0 flex-col gap-4 overflow-y-auto px-1">
           {caseId === undefined && (
             <div className="space-y-1">
-              <Label>{t("caseLabel")}</Label>
+              <Label className="flex items-center">
+                {t("caseLabel")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              </Label>
               <AsyncCombobox<CaseOption>
                 value={selectedCase}
                 onValueChange={setSelectedCase}
@@ -560,8 +566,14 @@ export function AddCodePinDialog({
 
           {canChooseRepository && (
             <div className="space-y-1">
-              <Label htmlFor="code-pin-repository">
+              <Label
+                htmlFor="code-pin-repository"
+                className="flex items-center"
+              >
                 {tCommon("pageTitles.repository")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </Label>
               <Select
                 value={String(selectedConfigId)}
@@ -615,7 +627,12 @@ export function AddCodePinDialog({
 
           {kind !== "GLOB" && (
             <div className="space-y-1">
-              <Label>{tCommon("file")}</Label>
+              <Label className="flex items-center">
+                {tCommon("file")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              </Label>
               <AsyncCombobox<ImpactFileEntry>
                 value={file}
                 onValueChange={(option) => {
@@ -669,7 +686,15 @@ export function AddCodePinDialog({
             <div className="flex flex-1 min-h-0 flex-col gap-2">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="code-pin-start-line">{t("startLine")}</Label>
+                  <Label
+                    htmlFor="code-pin-start-line"
+                    className="flex items-center"
+                  >
+                    {t("startLine")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
+                  </Label>
                   <Input
                     id="code-pin-start-line"
                     type="number"
@@ -721,7 +746,12 @@ export function AddCodePinDialog({
 
           {kind === "SYMBOL" && (
             <div className="space-y-1">
-              <Label>{t("kindSymbol")}</Label>
+              <Label className="flex items-center">
+                {t("kindSymbol")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              </Label>
               <AsyncCombobox<SymbolOption>
                 value={symbol ? { name: symbol } : null}
                 onValueChange={(option) => setSymbol(option?.name ?? "")}
@@ -770,8 +800,11 @@ export function AddCodePinDialog({
 
           {kind === "GLOB" && (
             <div className="space-y-1">
-              <Label htmlFor="code-pin-glob">
+              <Label htmlFor="code-pin-glob" className="flex items-center">
                 {tRepo("pathPatterns.patternLabel")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="code-pin-glob"

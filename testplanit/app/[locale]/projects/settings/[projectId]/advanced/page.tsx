@@ -28,7 +28,7 @@ import {
 import { WarningAlert } from "@/components/ui/warning-alert";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import type { IconName } from "~/types/globals";
-import { Loader2, Save, Star, TriangleAlert } from "lucide-react";
+import { Asterisk, Loader2, Save, Star, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { ApplicationArea } from "~/zenstack/models";
@@ -828,9 +828,12 @@ export default function AdvancedPage() {
                       <div className="flex items-center gap-2 text-sm">
                         <Label
                           htmlFor="revert-window-minutes"
-                          className="font-normal"
+                          className="flex items-center font-normal"
                         >
                           {t("revertWindow.minutesBefore")}
+                          <sup>
+                            <Asterisk className="w-3 h-3 text-destructive" />
+                          </sup>
                         </Label>
                         <Input
                           id="revert-window-minutes"
@@ -958,9 +961,12 @@ export default function AdvancedPage() {
                   <div className="flex items-center gap-2 text-sm">
                     <Label
                       htmlFor="abandoned-runs-minutes"
-                      className="font-normal"
+                      className="flex items-center font-normal"
                     >
                       {t("abandonedRuns.minutesBefore")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                     </Label>
                     <Input
                       id="abandoned-runs-minutes"
@@ -1154,9 +1160,12 @@ export default function AdvancedPage() {
                       <div className="flex items-center gap-2 text-sm">
                         <Label
                           htmlFor="edit-window-minutes"
-                          className="font-normal"
+                          className="flex items-center font-normal"
                         >
                           {t("editWindow.minutesBefore")}
+                          <sup>
+                            <Asterisk className="w-3 h-3 text-destructive" />
+                          </sup>
                         </Label>
                         <Input
                           id="edit-window-minutes"

@@ -58,6 +58,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Accessibility,
+  Asterisk,
   Check,
   Circle,
   Moon,
@@ -599,6 +600,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                 <FormItem>
                                   <FormLabel className="flex items-center">
                                     {tGlobal("common.name")}
+                                    <sup>
+                                      <Asterisk className="w-3 h-3 text-destructive" />
+                                    </sup>
                                     <HelpPopover helpKey="user.name" />
                                   </FormLabel>
                                   <FormControl>
@@ -627,6 +631,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                 <FormItem>
                                   <FormLabel className="flex items-center">
                                     {tGlobal("common.fields.email")}
+                                    <sup>
+                                      <Asterisk className="w-3 h-3 text-destructive" />
+                                    </sup>
                                     <HelpPopover helpKey="user.email" />
                                   </FormLabel>
                                   <FormControl>
@@ -1153,6 +1160,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                         <FormItem>
                                           <FormLabel className="flex items-center">
                                             {tCommon("fields.theme")}
+                                            <sup>
+                                              <Asterisk className="w-3 h-3 text-destructive" />
+                                            </sup>
                                             <HelpPopover helpKey="user.theme" />
                                           </FormLabel>
                                           <FormControl>
@@ -1208,6 +1218,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                         <FormItem data-testid="user-locale-edit">
                                           <FormLabel className="flex items-center">
                                             {tCommon("fields.locale")}
+                                            <sup>
+                                              <Asterisk className="w-3 h-3 text-destructive" />
+                                            </sup>
                                             <HelpPopover helpKey="user.locale" />
                                           </FormLabel>
                                           <FormControl>
@@ -1256,6 +1269,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                             {tGlobal(
                                               "common.fields.itemsPerPage"
                                             )}
+                                            <sup>
+                                              <Asterisk className="w-3 h-3 text-destructive" />
+                                            </sup>
                                             <HelpPopover helpKey="user.itemsPerPage" />
                                           </FormLabel>
                                           <FormControl>
@@ -1304,6 +1320,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                             {tGlobal(
                                               "home.initialPreferences.dateFormat"
                                             )}
+                                            <sup>
+                                              <Asterisk className="w-3 h-3 text-destructive" />
+                                            </sup>
                                             <HelpPopover helpKey="user.dateFormat" />
                                           </FormLabel>
                                           <FormControl>
@@ -1361,6 +1380,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                             {tGlobal(
                                               "home.initialPreferences.timeFormat"
                                             )}
+                                            <sup>
+                                              <Asterisk className="w-3 h-3 text-destructive" />
+                                            </sup>
                                             <HelpPopover helpKey="user.timeFormat" />
                                           </FormLabel>
                                           <FormControl>
@@ -1416,6 +1438,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                         <FormItem>
                                           <FormLabel className="flex items-center">
                                             {tGlobal("common.fields.timezone")}
+                                            <sup>
+                                              <Asterisk className="w-3 h-3 text-destructive" />
+                                            </sup>
                                             <HelpPopover helpKey="user.timezone" />
                                           </FormLabel>
                                           <FormControl>
@@ -1467,6 +1492,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                             {tCommon(
                                               "fields.detailsDisplayMode"
                                             )}
+                                            <sup>
+                                              <Asterisk className="w-3 h-3 text-destructive" />
+                                            </sup>
                                             <HelpPopover helpKey="user.detailsDisplayMode" />
                                           </FormLabel>
                                           <FormControl>

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Asterisk } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -139,7 +140,12 @@ export function ManualSharedStepsDialog({
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="group-name">{tCommon("fields.groupName")}</Label>
+            <Label htmlFor="group-name" className="flex items-center">
+              {tCommon("fields.groupName")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
+            </Label>
             <Input
               id="group-name"
               value={groupName}
@@ -150,7 +156,12 @@ export function ManualSharedStepsDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>{tGlobal("common.fields.steps")}</Label>
+            <Label className="flex items-center">
+              {tGlobal("common.fields.steps")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
+            </Label>
             <FormProvider {...form}>
               <StepsForm
                 control={form.control}

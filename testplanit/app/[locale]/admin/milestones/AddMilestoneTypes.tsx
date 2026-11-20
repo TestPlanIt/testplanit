@@ -1,6 +1,7 @@
 "use client";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -166,6 +167,9 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("name")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="milestoneType.name" />
                   </FormLabel>
                   <FormControl>

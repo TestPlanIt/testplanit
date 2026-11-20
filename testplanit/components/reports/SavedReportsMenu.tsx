@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Asterisk,
   Bookmark,
   ChartNoAxesColumn,
   Loader2,
@@ -215,8 +216,14 @@ export function SavedReportsMenu({ projectId }: SavedReportsMenuProps) {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="saved-report-rename-name">
+              <Label
+                htmlFor="saved-report-rename-name"
+                className="flex items-center"
+              >
                 {tCommon("name")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="saved-report-rename-name"

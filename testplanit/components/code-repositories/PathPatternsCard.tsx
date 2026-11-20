@@ -21,7 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Eye, Loader2, Plus, Trash, XCircle } from "lucide-react";
+import { Asterisk, Eye, Loader2, Plus, Trash, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { type Control, useFieldArray, useWatch } from "react-hook-form";
@@ -181,8 +181,11 @@ export function PathPatternsCard({
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       {index === 0 && (
-                        <FormLabel>
+                        <FormLabel className="flex items-center">
                           {tRepo("pathPatterns.patternLabel")}
+                          <sup>
+                            <Asterisk className="w-3 h-3 text-destructive" />
+                          </sup>
                         </FormLabel>
                       )}
                       <FormControl>

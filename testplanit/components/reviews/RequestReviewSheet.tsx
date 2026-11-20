@@ -34,7 +34,7 @@ import { toast } from "sonner";
 import * as z from "zod/v4";
 
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
-import { MessageSquareWarning } from "lucide-react";
+import { Asterisk, MessageSquareWarning } from "lucide-react";
 import { requestReview } from "~/app/actions/reviews";
 import {
   commentsQueryKey,
@@ -299,7 +299,12 @@ export function RequestReviewSheet({
               name="assigneeKey"
               render={() => (
                 <FormItem>
-                  <FormLabel>{t("common.ui.issues.assignee")}</FormLabel>
+                  <FormLabel className="flex items-center">
+                    {t("common.ui.issues.assignee")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
+                  </FormLabel>
                   <FormControl>
                     <AssigneeCombobox
                       projectId={projectId}
@@ -318,8 +323,11 @@ export function RequestReviewSheet({
               name="targetStateId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
+                  <FormLabel className="flex items-center">
                     {t("reviews.requester.targetStateLabel")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                   </FormLabel>
                   <FormControl>
                     <Select

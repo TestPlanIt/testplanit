@@ -3,7 +3,7 @@
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useQueryClient } from "@tanstack/react-query";
-import { Eye, EyeOff } from "lucide-react";
+import { Asterisk, Eye, EyeOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -270,6 +270,7 @@ export function OverrideValuesDialog({
                     ? Boolean(cur) !== (snap === true || snap === "true")
                     : valueToFormString(cur) !== valueToFormString(snap);
                 const isRevealed = revealed[p.name] === true;
+                const isRequired = p.type !== "BOOLEAN" && p.required !== false;
                 const errMsg = form.formState.errors[p.name]?.message as
                   string | undefined;
 
@@ -278,9 +279,14 @@ export function OverrideValuesDialog({
                     <div className="flex items-baseline justify-between">
                       <label
                         htmlFor={fieldId}
-                        className="text-xs font-medium font-mono"
+                        className="flex items-center text-xs font-medium font-mono"
                       >
                         {`@${p.name}`}
+                        {isRequired && (
+                          <sup>
+                            <Asterisk className="w-3 h-3 text-destructive" />
+                          </sup>
+                        )}
                         {sensitive && (
                           <span className="text-muted-foreground ms-1 font-sans">
                             {`(${t("formSensitive").toLowerCase()})`}

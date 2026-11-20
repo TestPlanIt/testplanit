@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Asterisk, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -85,7 +85,12 @@ export function SaveViewDialog({
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="saved-view-name">{t("common.name")}</Label>
+            <Label htmlFor="saved-view-name" className="flex items-center">
+              {t("common.name")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
+            </Label>
             <Input
               id="saved-view-name"
               value={name}

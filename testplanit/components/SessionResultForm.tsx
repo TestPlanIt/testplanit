@@ -969,6 +969,9 @@ export function SessionResultForm({
                       <FormLabel className="flex items-center gap-1">
                         <CircleCheckBig className="h-4 w-4" />
                         {tGlobal("common.actions.status")}
+                        <sup>
+                          <Asterisk className="w-3 h-3 text-destructive" />
+                        </sup>
                       </FormLabel>
                       <FormControl>
                         <Select

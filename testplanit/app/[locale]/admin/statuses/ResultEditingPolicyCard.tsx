@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Save } from "lucide-react";
+import { Asterisk, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -120,9 +120,12 @@ export function ResultEditingPolicyCard() {
             <div className="flex items-center gap-2 text-sm">
               <Label
                 htmlFor="edit-policy-minutes"
-                className="whitespace-nowrap font-normal"
+                className="flex items-center whitespace-nowrap font-normal"
               >
                 {t("minutesBefore")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="edit-policy-minutes"

@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import { useFormContext } from "react-hook-form";
@@ -209,6 +209,9 @@ export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
               <div className="flex items-center justify-between">
                 <FormLabel className="flex items-center">
                   {t("systemPrompt")}
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
                   <HelpPopover helpKey="promptConfig.systemPrompt" />
                 </FormLabel>
                 <PromptVariableInserter
@@ -283,6 +286,9 @@ export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
               <FormItem>
                 <FormLabel className="flex items-center">
                   {t("temperature")}
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
                   <HelpPopover helpKey="promptConfig.temperature" />
                 </FormLabel>
                 <FormControl>
@@ -307,6 +313,9 @@ export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
               <FormItem>
                 <FormLabel className="flex items-center">
                   {t("maxOutputTokens")}
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
                   <HelpPopover helpKey="promptConfig.maxOutputTokens" />
                 </FormLabel>
                 <FormControl>

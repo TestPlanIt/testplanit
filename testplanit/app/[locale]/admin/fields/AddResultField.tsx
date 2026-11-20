@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { emptyEditorContent } from "~/app/constants";
 
-import { Ellipsis } from "lucide-react";
+import { Asterisk, Ellipsis } from "lucide-react";
 
 import {
   Form,
@@ -735,6 +735,9 @@ export function AddResultFieldModal({
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("fields.displayName")}
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="resultField.displayName" />
                   </FormLabel>
                   <FormControl>
@@ -755,6 +758,9 @@ export function AddResultFieldModal({
                 <FormItem>
                   <FormLabel className="flex items-center">
                     <span>{tCommon("fields.systemName")}</span>
+                    <sup>
+                      <Asterisk className="w-3 h-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="resultField.systemName" />
                     <div className="text-muted-foreground text-sm ms-2">
                       {tCommon("fields.hints.systemName")}
@@ -863,6 +869,9 @@ export function AddResultFieldModal({
                   <FormLabel className="whitespace-nowrap items-center flex space-x-2">
                     <div className="flex items-center">
                       <span>{tCommon("fields.fieldType")}</span>
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
                       <HelpPopover helpKey="resultField.fieldType" />
                     </div>
                     <div className="text-muted-foreground text-sm">

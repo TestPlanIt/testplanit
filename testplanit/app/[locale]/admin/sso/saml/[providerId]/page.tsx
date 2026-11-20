@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Access } from "~/zenstack/models";
-import { AlertCircle, ArrowLeft, Save } from "lucide-react";
+import { AlertCircle, ArrowLeft, Asterisk, Save } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -271,7 +271,12 @@ export default function SAMLConfigurationPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="providerName">{t("common.name")}</Label>
+              <Label htmlFor="providerName" className="flex items-center">
+                {t("common.name")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              </Label>
               <Input
                 id="providerName"
                 value={providerName}
@@ -286,8 +291,11 @@ export default function SAMLConfigurationPage() {
             </div>
 
             <div>
-              <Label htmlFor="entryPoint">
+              <Label htmlFor="entryPoint" className="flex items-center">
                 {t("admin.sso.samlConfiguration.samlSettings.ssoUrl")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="entryPoint"
@@ -300,8 +308,11 @@ export default function SAMLConfigurationPage() {
             </div>
 
             <div>
-              <Label htmlFor="issuer">
+              <Label htmlFor="issuer" className="flex items-center">
                 {t("admin.sso.samlConfiguration.samlSettings.entityId")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="issuer"
@@ -314,8 +325,11 @@ export default function SAMLConfigurationPage() {
             </div>
 
             <div>
-              <Label htmlFor="cert">
+              <Label htmlFor="cert" className="flex items-center">
                 {t("admin.sso.samlConfiguration.samlSettings.certificate")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </Label>
               <Textarea
                 id="cert"

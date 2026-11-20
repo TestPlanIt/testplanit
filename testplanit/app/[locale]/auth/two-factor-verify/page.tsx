@@ -14,7 +14,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { Loader2, Shield } from "lucide-react";
+import { Asterisk, Loader2, Shield } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -99,10 +99,13 @@ export default function TwoFactorVerifyPage() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">
+              <label className="flex items-center text-sm font-medium">
                 {useBackupCode
                   ? t("auth.twoFactorVerify.backupCodeLabel")
                   : t("auth.twoFactorSetup.verifyLabel")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </label>
               {useBackupCode ? (
                 <Input

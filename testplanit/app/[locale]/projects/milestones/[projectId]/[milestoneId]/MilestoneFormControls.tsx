@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { ExternalLink } from "lucide-react";
+import { Asterisk, ExternalLink } from "lucide-react";
 import { TrackerGlyph } from "@/components/MilestoneSourceBadge";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -445,7 +445,14 @@ export default function MilestoneFormControls({
         name="milestoneTypesId"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{tCommon("fields.type")}</FormLabel>
+            <FormLabel className="flex items-center">
+              {tCommon("fields.type")}
+              {isEditMode && (
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
+              )}
+            </FormLabel>
             <Select
               disabled={!isEditMode || isSubmitting}
               onValueChange={(value) => field.onChange(Number(value))}

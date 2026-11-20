@@ -98,6 +98,7 @@ import { ApplicationArea } from "~/zenstack/models";
 import type { JSONContent } from "@tiptap/react";
 import {
   ArrowLeft,
+  Asterisk,
   ChevronLeft,
   ChevronRight,
   CircleCheckBig,
@@ -364,7 +365,14 @@ function SessionFormControls({
 
           return (
             <FormItem>
-              <FormLabel>{tCommon("fields.template")}</FormLabel>
+              <FormLabel className="flex items-center">
+                {tCommon("fields.template")}
+                {isEditMode && (
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
+                )}
+              </FormLabel>
               <div className="flex items-center gap-2">
                 {isEditMode ? (
                   <Select
@@ -425,7 +433,14 @@ function SessionFormControls({
 
           return (
             <FormItem>
-              <FormLabel>{tGlobal("common.fields.state")}</FormLabel>
+              <FormLabel className="flex items-center">
+                {tGlobal("common.fields.state")}
+                {isEditMode && (
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive" />
+                  </sup>
+                )}
+              </FormLabel>
               <FormControl>
                 {isEditMode ? (
                   <Select

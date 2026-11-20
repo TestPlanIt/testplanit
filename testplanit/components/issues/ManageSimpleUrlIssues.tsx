@@ -392,7 +392,12 @@ export function ManageSimpleUrlIssues({
           </DialogHeader>
 
           <div className="space-y-2">
-            <Label>{t("common.fields.issues")}</Label>
+            <Label className="flex items-center">
+              {t("common.fields.issues")}
+              <sup>
+                <Asterisk className="w-3 h-3 text-destructive" />
+              </sup>
+            </Label>
             <AsyncCombobox<{ id: number; name: string; title: string | null }>
               value={selectedExisting}
               onValueChange={setSelectedExisting}

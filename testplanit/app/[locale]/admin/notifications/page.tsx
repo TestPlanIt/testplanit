@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { NotificationMode } from "~/zenstack/models";
-import { Save, Send } from "lucide-react";
+import { Asterisk, Save, Send } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -358,8 +358,14 @@ function NotificationSettingsContent() {
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <div>
-              <Label htmlFor="system-notification-title">
+              <Label
+                htmlFor="system-notification-title"
+                className="flex items-center"
+              >
                 {t("systemNotification.title")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="system-notification-title"
@@ -374,8 +380,12 @@ function NotificationSettingsContent() {
               <Label
                 htmlFor="system-notification-message"
                 data-testid="notification-message-label"
+                className="flex items-center"
               >
                 {tGlobal("common.actions.automated.message")}
+                <sup>
+                  <Asterisk className="w-3 h-3 text-destructive" />
+                </sup>
               </Label>
               <div className="border rounded-md">
                 <TipTapEditor
