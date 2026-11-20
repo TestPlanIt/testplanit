@@ -3286,7 +3286,16 @@
       "metadataRegion": "Test case metadata",
       "versionCreated": "Version {version}",
       "latestVersionUpdated": "Version {version, number} (Latest)",
-      "historyView": "Test Case History View"
+      "historyView": "Test Case History View",
+      "loadFromVersion": "Load values from version",
+      "loadConfirmTitle": "Load version {version} into the form?",
+      "loadConfirmDescription": "Your unsaved edits will be replaced with the values from version {version}.",
+      "loadConfirmAction": "Load version",
+      "loadedFromVersion": "The form holds version {version} of this test case. The workflow state and folder are unchanged. Nothing is saved until you save, and saving creates a new version.",
+      "fieldValuesNotRecorded": "That version did not record its custom field values, so the fields keep the values the test case has now.",
+      "skippedFields": "{count, plural, one {The field {fields} is not in this template, so its value was not loaded.} other {The fields {fields} are not in this template, so their values were not loaded.}}",
+      "skippedTags": "{count, plural, one {The tag {tags} no longer exists and was not loaded.} other {The tags {tags} no longer exist and were not loaded.}}",
+      "skippedIssues": "{count, plural, one {# linked issue from that version can no longer be linked and was not loaded.} other {# linked issues from that version can no longer be linked and were not loaded.}}"
     },
     "auditLog": {
       "description": "All changes recorded for this test case."

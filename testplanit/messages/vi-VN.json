@@ -3286,7 +3286,16 @@
       "metadataRegion": "Siêu dữ liệu trường hợp thử nghiệm",
       "versionCreated": "Phiên bản {version}",
       "latestVersionUpdated": "Phiên bản {version, number} (Mới nhất)",
-      "historyView": "Chế độ xem lịch sử trường hợp kiểm thử"
+      "historyView": "Chế độ xem lịch sử trường hợp kiểm thử",
+      "loadFromVersion": "Tải giá trị từ phiên bản",
+      "loadConfirmTitle": "Tải phiên bản {version} vào biểu mẫu?",
+      "loadConfirmDescription": "Các chỉnh sửa chưa lưu của bạn sẽ được thay thế bằng các giá trị từ phiên bản {version}.",
+      "loadConfirmAction": "Tải phiên bản",
+      "loadedFromVersion": "Biểu mẫu chứa phiên bản {version} của trường hợp kiểm tra này. Trạng thái quy trình làm việc và thư mục không thay đổi. Không có gì được lưu cho đến khi bạn lưu, và việc lưu sẽ tạo một phiên bản mới.",
+      "fieldValuesNotRecorded": "Phiên bản đó không ghi lại các giá trị trường tùy chỉnh của nó, vì vậy các trường vẫn giữ các giá trị mà trường hợp kiểm thử hiện có.",
+      "skippedFields": "{count, plural, one {Trường {fields} không có trong mẫu này, vì vậy giá trị của nó không được tải.} other {Các trường {fields} không có trong mẫu này, vì vậy các giá trị của chúng không được tải.}}",
+      "skippedTags": "{count, plural, one {Thẻ {tags} không còn tồn tại và không được tải.} other {Các thẻ {tags} không còn tồn tại và không được tải.}}",
+      "skippedIssues": "{count, plural, one {# vấn đề được liên kết từ phiên bản đó không thể được liên kết nữa và không được tải.} other {# vấn đề được liên kết từ phiên bản đó không thể được liên kết nữa và không được tải.}}"
     },
     "auditLog": {
       "description": "Tất cả các thay đổi được ghi lại cho trường hợp thử nghiệm này."

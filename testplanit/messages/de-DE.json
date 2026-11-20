@@ -3286,7 +3286,16 @@
       "metadataRegion": "Testfall-Metadaten",
       "versionCreated": "Version {version}",
       "latestVersionUpdated": "Version {version, number} (Neueste)",
-      "historyView": "Testfallverlauf anzeigen"
+      "historyView": "Testfallverlauf anzeigen",
+      "loadFromVersion": "Werte aus Version laden",
+      "loadConfirmTitle": "Version {version} in das Formular laden?",
+      "loadConfirmDescription": "Ihre ungespeicherten Änderungen werden durch die Werte aus Version {version} ersetzt.",
+      "loadConfirmAction": "Version laden",
+      "loadedFromVersion": "Das Formular enthält Version {version} dieses Testfalls. Der Workflow-Status und der Ordner bleiben unverändert. Nichts wird gespeichert, bis Sie speichern, und das Speichern erstellt eine neue Version.",
+      "fieldValuesNotRecorded": "Diese Version hat ihre benutzerdefinierten Feldwerte nicht gespeichert, daher behalten die Felder die Werte, die der Testfall jetzt hat.",
+      "skippedFields": "{count, plural, one {Das Feld {fields} ist nicht in dieser Vorlage, daher wurde sein Wert nicht geladen.} other {Die Felder {fields} sind nicht in dieser Vorlage, daher wurden ihre Werte nicht geladen.}}",
+      "skippedTags": "{count, plural, one {Das Tag {tags} existiert nicht mehr und wurde nicht geladen.} other {Die Tags {tags} existieren nicht mehr und wurden nicht geladen.}}",
+      "skippedIssues": "{count, plural, one {# verknüpftes Problem aus dieser Version kann nicht mehr verknüpft werden und wurde nicht geladen.} other {# verknüpfte Probleme aus dieser Version können nicht mehr verknüpft werden und wurden nicht geladen.}}"
     },
     "auditLog": {
       "description": "Alle für diesen Testfall aufgezeichneten Änderungen."

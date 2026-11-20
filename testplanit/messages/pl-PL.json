@@ -3286,7 +3286,16 @@
       "metadataRegion": "Metadane przypadku testowego",
       "versionCreated": "Wersja {version}",
       "latestVersionUpdated": "Wersja {version, number} (Najnowsza)",
-      "historyView": "Widok historii przypadków testowych"
+      "historyView": "Widok historii przypadków testowych",
+      "loadFromVersion": "Załaduj wartości z wersji",
+      "loadConfirmTitle": "Załadować wersję {version} do formularza?",
+      "loadConfirmDescription": "Niezapisane zmiany zostaną zastąpione wartościami z wersji {version}.",
+      "loadConfirmAction": "Załaduj wersję",
+      "loadedFromVersion": "Formularz zawiera wersję {version} tego przypadku testowego. Stan przepływu pracy i folder pozostają bez zmian. Nic nie jest zapisane, dopóki nie zapiszesz, a zapisanie tworzy nową wersję.",
+      "fieldValuesNotRecorded": "Ta wersja nie zarejestrowała wartości pól niestandardowych, dlatego pola zachowują wartości, które test case ma teraz.",
+      "skippedFields": "{count, plural, one {Pole {fields} nie istnieje w tym szablonie, dlatego jego wartość nie została załadowana.} few {Pola {fields} nie istnieją w tym szablonie, dlatego ich wartości nie zostały załadowane.} many {Pól {fields} nie istnieje w tym szablonie, dlatego ich wartości nie zostały załadowane.} other {Pola {fields} nie istnieją w tym szablonie, dlatego ich wartości nie zostały załadowane.}}",
+      "skippedTags": "{count, plural, one {Etykieta {tags} już nie istnieje i nie została załadowana.} few {Etykiety {tags} już nie istnieją i nie zostały załadowane.} many {Etykiet {tags} już nie istnieje i nie zostały załadowane.} other {Etykiety {tags} już nie istnieją i nie zostały załadowane.}}",
+      "skippedIssues": "{count, plural, one {# połączona kwestia z tej wersji nie może już być połączona i nie została załadowana.} few {# połączone kwestie z tej wersji nie mogą już być połączone i nie zostały załadowane.} many {# połączonych kwestii z tej wersji nie mogą już być połączone i nie zostały załadowane.} other {# połączone kwestie z tej wersji nie mogą już być połączone i nie zostały załadowane.}}"
     },
     "auditLog": {
       "description": "Wszystkie zmiany odnotowane dla tego przypadku testowego."

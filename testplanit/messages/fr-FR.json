@@ -3286,7 +3286,16 @@
       "metadataRegion": "métadonnées des cas de test",
       "versionCreated": "Version {version}",
       "latestVersionUpdated": "Version {version, number} (Dernière)",
-      "historyView": "Historique des cas de test"
+      "historyView": "Historique des cas de test",
+      "loadFromVersion": "Charger les valeurs à partir de la version",
+      "loadConfirmTitle": "Charger la version {version} dans le formulaire ?",
+      "loadConfirmDescription": "Vos modifications non enregistrées seront remplacées par les valeurs de la version {version}.",
+      "loadConfirmAction": "Charger la version",
+      "loadedFromVersion": "Le formulaire contient la version {version} de ce cas de test. L'état du workflow et le dossier restent inchangés. Rien n'est enregistré jusqu'à ce que vous enregistriez, et l'enregistrement crée une nouvelle version.",
+      "fieldValuesNotRecorded": "Cette version n'a pas enregistré ses valeurs de champs personnalisés, les champs conservent donc les valeurs que le cas de test a maintenant.",
+      "skippedFields": "{count, plural, one {Le champ {fields} ne se trouve pas dans ce modèle, sa valeur n'a donc pas été chargée.} other {Les champs {fields} ne se trouvent pas dans ce modèle, leurs valeurs n'ont donc pas été chargées.}}",
+      "skippedTags": "{count, plural, one {L'étiquette {tags} n'existe plus et n'a pas été chargée.} other {Les étiquettes {tags} n'existent plus et n'ont pas été chargées.}}",
+      "skippedIssues": "{count, plural, one {# le problème lié de cette version ne peut plus être lié et n'a pas été chargé.} other {# les problèmes liés de cette version ne peuvent plus être liés et n'ont pas été chargés.}}"
     },
     "auditLog": {
       "description": "Toutes les modifications enregistrées pour ce cas de test."

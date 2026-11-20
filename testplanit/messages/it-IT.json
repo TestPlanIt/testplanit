@@ -3286,7 +3286,16 @@
       "metadataRegion": "Metadati del caso di prova",
       "versionCreated": "Versione {version}",
       "latestVersionUpdated": "Versione {version, number} (Più recente)",
-      "historyView": "Visualizzazione cronologia casi di test"
+      "historyView": "Visualizzazione cronologia casi di test",
+      "loadFromVersion": "Carica valori dalla versione",
+      "loadConfirmTitle": "Caricare la versione {version} nel modulo?",
+      "loadConfirmDescription": "Le modifiche non salvate verranno sostituite con i valori della versione {version}.",
+      "loadConfirmAction": "Carica versione",
+      "loadedFromVersion": "Il modulo contiene la versione {version} di questo caso di test. Lo stato del flusso di lavoro e la cartella rimangono invariati. Niente viene salvato finché non salvi e il salvataggio crea una nuova versione.",
+      "fieldValuesNotRecorded": "Quella versione non ha registrato i valori dei campi personalizzati, quindi i campi mantengono i valori che il caso di test ha ora.",
+      "skippedFields": "{count, plural, one {Il campo {fields} non è in questo modello, quindi il suo valore non è stato caricato.} other {I campi {fields} non sono in questo modello, quindi i loro valori non sono stati caricati.}}",
+      "skippedTags": "{count, plural, one {L'etichetta {tags} non esiste più e non è stata caricata.} other {Le etichette {tags} non esistono più e non sono state caricate.}}",
+      "skippedIssues": "{count, plural, one {# problema collegato da quella versione non può più essere collegato e non è stato caricato.} other {# problemi collegati da quella versione non possono più essere collegati e non sono stati caricati.}}"
     },
     "auditLog": {
       "description": "Tutte le modifiche registrate per questo caso di test."

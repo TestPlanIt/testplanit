@@ -3286,7 +3286,16 @@
       "metadataRegion": "テストケースのメタデータ",
       "versionCreated": "バージョン {version}",
       "latestVersionUpdated": "バージョン {version, number}（最新）",
-      "historyView": "テストケース履歴ビュー"
+      "historyView": "テストケース履歴ビュー",
+      "loadFromVersion": "バージョンから値を読み込む",
+      "loadConfirmTitle": "バージョン {version} をフォームに読み込みますか？",
+      "loadConfirmDescription": "保存されていない編集内容がバージョン {version} の値に置き換わります。",
+      "loadConfirmAction": "バージョンを読み込む",
+      "loadedFromVersion": "このフォームはこのテストケースのバージョン {version} を保持しています。ワークフロー状態とフォルダーは変更されません。保存するまで何も保存されず、保存すると新しいバージョンが作成されます。",
+      "fieldValuesNotRecorded": "そのバージョンはカスタムフィールド値を記録していないため、フィールドはテストケースが現在持つ値を保持しています。",
+      "skippedFields": "{count, plural, one {フィールド {fields} はこのテンプレートに含まれていないため、その値は読み込まれませんでした。} other {フィールド {fields} はこのテンプレートに含まれていないため、それらの値は読み込まれませんでした。}}",
+      "skippedTags": "{count, plural, one {タグ {tags} は存在しなくなったため、読み込まれませんでした。} other {タグ {tags} は存在しなくなったため、読み込まれませんでした。}}",
+      "skippedIssues": "{count, plural, one {そのバージョンからのリンクされた問題 # は、リンクできなくなったため読み込まれませんでした。} other {そのバージョンからのリンクされた問題 # は、リンクできなくなったため読み込まれませんでした。}}"
     },
     "auditLog": {
       "description": "このテストケースで記録されたすべての変更です。"

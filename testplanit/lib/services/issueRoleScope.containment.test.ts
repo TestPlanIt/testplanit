@@ -308,6 +308,13 @@ const EXEMPT_IDENTITY_LOOKUP_FILES = [
   "components/search/FacetedSearchFilters.tsx",
   "app/[locale]/projects/repository/[projectId]/AddResultModal.tsx",
   "app/[locale]/projects/repository/[projectId]/[caseId]/[version]/page.tsx",
+  // "Load values from version" in the case edit form: resolves the issue ids
+  // a version snapshot recorded for this case, by id, to find which of them
+  // the Issues field can still hold (not deleted, owned by an integration).
+  // Either row kind applies, as it does for that field's own seed
+  // (pickerOwnedIssueIds): a requirement synced from a tracker is a link the
+  // picker owns too.
+  "app/[locale]/projects/repository/[projectId]/[caseId]/TestCaseDetailsView.tsx",
   // Fetches project-wide, but the result is used ONLY as a name lookup for
   // ids already present in local component state (the same file's
   // linked-issue-id map over the fetched list) — confirmed by reading both

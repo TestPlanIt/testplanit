@@ -3286,7 +3286,16 @@
       "metadataRegion": "Testcase-metagegevens",
       "versionCreated": "Versie {version}",
       "latestVersionUpdated": "Versie {version, number} (Nieuwste)",
-      "historyView": "Testcase geschiedenisweergave"
+      "historyView": "Testcase geschiedenisweergave",
+      "loadFromVersion": "Waarden uit versie laden",
+      "loadConfirmTitle": "Versie {version} in het formulier laden?",
+      "loadConfirmDescription": "Uw niet-opgeslagen wijzigingen worden vervangen door de waarden uit versie {version}.",
+      "loadConfirmAction": "Versie laden",
+      "loadedFromVersion": "Het formulier bevat versie {version} van deze testcase. De workflowstatus en map blijven ongewijzigd. Niets wordt opgeslagen totdat u opslaat. Bij opslaan wordt een nieuwe versie gemaakt.",
+      "fieldValuesNotRecorded": "Die versie heeft geen aangepaste veldwaarden opgeslagen, dus de velden behouden de waarden die het testcase nu heeft.",
+      "skippedFields": "{count, plural, one {Het veld {fields} is niet in deze sjabloon, dus de waarde ervan is niet geladen.} other {De velden {fields} zijn niet in deze sjabloon, dus de waarden ervan zijn niet geladen.}}",
+      "skippedTags": "{count, plural, one {Het label {tags} bestaat niet meer en is niet geladen.} other {De labels {tags} bestaan niet meer en zijn niet geladen.}}",
+      "skippedIssues": "{count, plural, one {# gekoppeld probleem uit die versie kan niet langer worden gekoppeld en is niet geladen.} other {# gekoppelde problemen uit die versie kunnen niet langer worden gekoppeld en zijn niet geladen.}}"
     },
     "auditLog": {
       "description": "Alle wijzigingen vastgelegd voor deze testcase."

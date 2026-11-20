@@ -118,6 +118,7 @@ import {
   CaseChangedDialog,
   hasCaseChangedSinceLoad,
 } from "@/components/cases/CaseChangedDialog";
+import { LoadFromVersionMenu } from "@/components/cases/LoadFromVersionMenu";
 import {
   ConfirmTemplateSwitchDialog,
   type PendingTemplateSwitch,
@@ -129,6 +130,7 @@ import {
   templateFieldDefaults,
 } from "~/lib/services/caseTemplateSwitch";
 import { useCaseDraft } from "~/hooks/useCaseDraft";
+import { caseVersionToFormValues } from "~/utils/caseVersionRestore";
 import {
   caseDraftDigest,
   reviveCaseDraftValues,
@@ -1304,6 +1306,201 @@ export function TestCaseDetailsView({
     setIsEditMode(true);
   }, [handleRestoreDraft, testcase?.template?.id]);
 
+  // "Load values from version" in the edit form: an earlier version's content
+  // is laid over the form as unsaved work, the same way a recovered draft is,
+  // and nothing is written until the user saves.
+  const [versionLoadRequest, setVersionLoadRequest] = useState<number | null>(
+    null
+  );
+  const [loadedFromVersion, setLoadedFromVersion] = useState<{
+    version: number;
+    skippedFields: string[];
+    skippedTags: string[];
+    skippedIssues: number;
+    fieldValuesNotRecorded: boolean;
+  } | null>(null);
+  // Whether the user has changed anything since edit mode opened or a version
+  // was last loaded. A form change alone is not proof: the rich text editors
+  // report changes while they mount. So a change only counts once the user has
+  // pressed a key or a pointer inside the form.
+  const editedSinceLoadRef = useRef(false);
+  const interactedSinceLoadRef = useRef(false);
+  useEffect(() => {
+    if (!isEditMode) return;
+    editedSinceLoadRef.current = false;
+    interactedSinceLoadRef.current = false;
+    const markInteraction = (event: Event) => {
+      const target = event.target as Element | null;
+      if (
+        target?.closest?.("form") &&
+        !target.closest('[data-testid="load-from-version-button"]')
+      ) {
+        interactedSinceLoadRef.current = true;
+      }
+    };
+    document.addEventListener("keydown", markInteraction, true);
+    document.addEventListener("pointerdown", markInteraction, true);
+    const subscription = watch(() => {
+      if (interactedSinceLoadRef.current) editedSinceLoadRef.current = true;
+    });
+    return () => {
+      document.removeEventListener("keydown", markInteraction, true);
+      document.removeEventListener("pointerdown", markInteraction, true);
+      subscription.unsubscribe();
+    };
+  }, [isEditMode, watch]);
+
+  const { data: versionToLoad } = useClientQueries(
+    schema
+  ).repositoryCaseVersions.useFindFirst(
+    {
+      where: {
+        repositoryCaseId: numericCaseId,
+        version: versionLoadRequest ?? -1,
+        isDeleted: false,
+      },
+      include: { caseFieldVersionValues: true },
+    },
+    { enabled: versionLoadRequest !== null && isValidCaseId }
+  );
+  const versionTagNames = useMemo(
+    () =>
+      Array.isArray(versionToLoad?.tags)
+        ? (versionToLoad.tags as unknown[]).filter(
+            (name): name is string => typeof name === "string"
+          )
+        : [],
+    [versionToLoad]
+  );
+  const versionIssueIds = useMemo(
+    () =>
+      Array.isArray(versionToLoad?.issues)
+        ? (versionToLoad.issues as any[])
+            .map((issue) => issue?.id)
+            .filter((id): id is number => typeof id === "number")
+        : [],
+    [versionToLoad]
+  );
+  const { data: versionTags } = useClientQueries(schema).tags.useFindMany(
+    {
+      where: { name: { in: versionTagNames }, isDeleted: false },
+      select: { id: true, name: true },
+    },
+    { enabled: !!versionToLoad }
+  );
+  // Only issues an integration owns: those are the links the Issues field
+  // holds (see pickerOwnedIssueIds); the rest are left as the case has them.
+  const { data: versionIssues } = useClientQueries(schema).issue.useFindMany(
+    {
+      where: {
+        id: { in: versionIssueIds },
+        isDeleted: false,
+        integrationId: { not: null },
+      },
+      select: { id: true },
+    },
+    { enabled: !!versionToLoad }
+  );
+
+  // Every stored field value of the case. `testcase.caseFieldValues` leaves
+  // out the values of fields outside the case's current template, and a
+  // version can bring its own template back; without these the form would
+  // show those fields empty and saving would clear them.
+  const { data: storedFieldValues } = useClientQueries(
+    schema
+  ).caseFieldValues.useFindMany(
+    {
+      where: {
+        testCaseId: numericCaseId,
+        field: { isEnabled: true, isDeleted: false },
+      },
+      select: { id: true, fieldId: true, value: true },
+    },
+    { enabled: versionLoadRequest !== null && isValidCaseId }
+  );
+
+  useEffect(() => {
+    if (
+      versionLoadRequest === null ||
+      versionToLoad?.version !== versionLoadRequest ||
+      !versionTags ||
+      !versionIssues ||
+      !storedFieldValues ||
+      !testcase?.template?.id ||
+      !templates ||
+      !isEditMode
+    ) {
+      return;
+    }
+
+    // The version's own template when the project still has it; a field is
+    // matched by name either way.
+    const template =
+      templates.find((item) => item.id === versionToLoad.templateId) ??
+      templates.find((item) => item.id === testcase.template.id);
+    const templateId = template?.id ?? testcase.template.id;
+    const templateFields = (template?.caseFields ?? []).filter(isEnabledField);
+    const { values: loaded, skipped } = caseVersionToFormValues({
+      version: versionToLoad,
+      templateFields,
+      tags: versionTags,
+      linkableIssueIds: versionIssues.map((issue) => issue.id),
+      formatEstimate: formatSeconds,
+    });
+    const current = getValues();
+    const values: Record<string, any> = {
+      workflowId: current.workflowId ?? testcase.state.id,
+      folderId: current.folderId ?? testcase.folderId,
+      automated: current.automated ?? testcase.automated,
+      templateId,
+    };
+    // The case's own field values first, so a snapshot that recorded no field
+    // values leaves them as they are.
+    templateFields.forEach((fieldMeta) => {
+      values[fieldMeta.caseField.id.toString()] = savedCaseFieldValue(
+        storedFieldValues as ExtendedCases["caseFieldValues"],
+        fieldMeta
+      );
+    });
+    Object.assign(values, loaded);
+
+    setRestoredDraftSteps(values.steps);
+    restoredDraftValuesRef.current = values;
+    editedSinceLoadRef.current = false;
+    interactedSinceLoadRef.current = false;
+    setLoadedFromVersion({
+      version: versionToLoad.version,
+      skippedFields: skipped.fields,
+      skippedTags: skipped.tags,
+      skippedIssues: skipped.issues,
+      fieldValuesNotRecorded: skipped.fieldValuesNotRecorded,
+    });
+    setVersionLoadRequest(null);
+    setDraftRestoreNonce((n) => n + 1);
+    // Effect 2 only resets an edit-mode form when the template changes, and
+    // then applies the values held above. With the template unchanged the
+    // values have to be applied here.
+    if (templateId === lastResetTemplateIdRef.current) {
+      reset(values);
+    } else {
+      setSelectedTemplateId(templateId);
+    }
+  }, [
+    versionLoadRequest,
+    versionToLoad,
+    versionTags,
+    versionIssues,
+    storedFieldValues,
+    testcase,
+    templates,
+    isEditMode,
+    getValues,
+    reset,
+  ]);
+
+  /** Whether the form holds edits that loading a version would replace. */
+  const hasEditsToReplace = useCallback(() => editedSinceLoadRef.current, []);
+
   const viewVersion = (version: string) => {
     router.push(`/projects/repository/${projectId}/${caseId}/${version}`);
   };
@@ -1432,6 +1629,8 @@ export function TestCaseDetailsView({
     draft.clear();
     setRestoredDraftSteps(null);
     restoredDraftValuesRef.current = null;
+    setLoadedFromVersion(null);
+    setVersionLoadRequest(null);
     // Form will be reset through the template change effect
     onEditExit?.(false);
   };
@@ -2231,6 +2430,8 @@ export function TestCaseDetailsView({
       draft.clear();
       setRestoredDraftSteps(null);
       restoredDraftValuesRef.current = null;
+      setLoadedFromVersion(null);
+      setVersionLoadRequest(null);
       void refetch();
       onEditExit?.(true);
     } catch (error) {
@@ -2589,30 +2790,41 @@ export function TestCaseDetailsView({
                           {errors.root.message}
                         </div>
                       )}
-                      {/* Do not allow deletion of automated test cases */}
-                      {!isAutomatedCaseSource(testcase.source) && (
-                        <div className="flex w-full justify-end">
-                          <Button
-                            variant="destructive"
-                            className={`h-auto px-2 py-1 ${compactActionClass || "w-full"}`}
-                            type="button"
-                            onClick={() => setIsDeleteCaseOpen(true)}
-                          >
-                            {renderActionButtonContent(
-                              Trash,
-                              t("common.actions.delete")
+                      <div className="flex w-full items-stretch justify-end gap-2">
+                        <LoadFromVersionMenu
+                          versions={versions || []}
+                          currentVersion={testcase.currentVersion}
+                          hasUnsavedEdits={hasEditsToReplace}
+                          onLoad={setVersionLoadRequest}
+                          dateFormat={session?.user.preferences?.dateFormat}
+                          timeFormat={session?.user.preferences?.timeFormat}
+                          timezone={session?.user.preferences?.timezone}
+                        />
+                        {/* Do not allow deletion of automated test cases */}
+                        {!isAutomatedCaseSource(testcase.source) && (
+                          <>
+                            <Button
+                              variant="destructive"
+                              className={`h-auto px-2 py-1 ${compactActionClass || "flex-1"}`}
+                              type="button"
+                              onClick={() => setIsDeleteCaseOpen(true)}
+                            >
+                              {renderActionButtonContent(
+                                Trash,
+                                t("common.actions.delete")
+                              )}
+                            </Button>
+                            {isDeleteCaseOpen && (
+                              <DeleteCaseModal
+                                testcase={testcase}
+                                open={isDeleteCaseOpen}
+                                onClose={() => setIsDeleteCaseOpen(false)}
+                                onDeleteSuccess={inSheet ? onClose : undefined}
+                              />
                             )}
-                          </Button>
-                          {isDeleteCaseOpen && (
-                            <DeleteCaseModal
-                              testcase={testcase}
-                              open={isDeleteCaseOpen}
-                              onClose={() => setIsDeleteCaseOpen(false)}
-                              onDeleteSuccess={inSheet ? onClose : undefined}
-                            />
-                          )}
-                        </div>
-                      )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   ) : headerCompact ? (
                     <div className="flex items-center justify-end space-x-2">
@@ -2933,6 +3145,46 @@ export function TestCaseDetailsView({
               </div>
             </CardDescription>
           </CardHeader>
+          {isEditMode && loadedFromVersion && (
+            <div className="px-6 pb-4">
+              <Alert data-testid="loaded-from-version-alert">
+                <History className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  <p>
+                    {t("repository.version.loadedFromVersion", {
+                      version: loadedFromVersion.version,
+                    })}
+                  </p>
+                  {loadedFromVersion.fieldValuesNotRecorded && (
+                    <p>{t("repository.version.fieldValuesNotRecorded")}</p>
+                  )}
+                  {loadedFromVersion.skippedFields.length > 0 && (
+                    <p>
+                      {t("repository.version.skippedFields", {
+                        count: loadedFromVersion.skippedFields.length,
+                        fields: loadedFromVersion.skippedFields.join(", "),
+                      })}
+                    </p>
+                  )}
+                  {loadedFromVersion.skippedTags.length > 0 && (
+                    <p>
+                      {t("repository.version.skippedTags", {
+                        count: loadedFromVersion.skippedTags.length,
+                        tags: loadedFromVersion.skippedTags.join(", "),
+                      })}
+                    </p>
+                  )}
+                  {loadedFromVersion.skippedIssues > 0 && (
+                    <p>
+                      {t("repository.version.skippedIssues", {
+                        count: loadedFromVersion.skippedIssues,
+                      })}
+                    </p>
+                  )}
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
           {/* Template not assigned to project warning */}
           {testcase?.template &&
           "projects" in testcase.template &&

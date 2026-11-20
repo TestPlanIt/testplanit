@@ -3286,7 +3286,16 @@
       "metadataRegion": "Metadatos de caso de prueba",
       "versionCreated": "Versión {version}",
       "latestVersionUpdated": "Versión {version, number} (Más reciente)",
-      "historyView": "Ver Historial de Casos de Prueba"
+      "historyView": "Ver Historial de Casos de Prueba",
+      "loadFromVersion": "Cargar valores de la versión",
+      "loadConfirmTitle": "¿Cargar la versión {version} en el formulario?",
+      "loadConfirmDescription": "Los cambios no guardados serán reemplazados con los valores de la versión {version}.",
+      "loadConfirmAction": "Cargar versión",
+      "loadedFromVersion": "El formulario contiene la versión {version} de este caso de prueba. El estado del flujo de trabajo y la carpeta no cambian. Nada se guarda hasta que lo guarde, y al guardar se crea una nueva versión.",
+      "fieldValuesNotRecorded": "Esa versión no registró sus valores de campos personalizados, por lo que los campos conservan los valores que el caso de prueba tiene ahora.",
+      "skippedFields": "{count, plural, one {El campo {fields} no está en esta plantilla, por lo que su valor no se cargó.} other {Los campos {fields} no están en esta plantilla, por lo que sus valores no se cargaron.}}",
+      "skippedTags": "{count, plural, one {La etiqueta {tags} ya no existe y no se cargó.} other {Las etiquetas {tags} ya no existen y no se cargaron.}}",
+      "skippedIssues": "{count, plural, one {# problema vinculado de esa versión ya no se puede vincular y no se cargó.} other {# problemas vinculados de esa versión ya no se pueden vincular y no se cargaron.}}"
     },
     "auditLog": {
       "description": "Todos los cambios registrados para este caso de prueba."

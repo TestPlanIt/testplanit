@@ -3286,7 +3286,16 @@
       "metadataRegion": "Metadados do caso de teste",
       "versionCreated": "Versão {version}",
       "latestVersionUpdated": "Versão {version, number} (Mais recente)",
-      "historyView": "Visualização do histórico de casos de teste"
+      "historyView": "Visualização do histórico de casos de teste",
+      "loadFromVersion": "Carregar valores da versão",
+      "loadConfirmTitle": "Carregar versão {version} no formulário?",
+      "loadConfirmDescription": "Suas edições não salvas serão substituídas pelos valores da versão {version}.",
+      "loadConfirmAction": "Carregar versão",
+      "loadedFromVersion": "O formulário contém a versão {version} deste caso de teste. O estado do fluxo de trabalho e a pasta permanecem inalterados. Nada é salvo até que você salve, e salvar cria uma nova versão.",
+      "fieldValuesNotRecorded": "Essa versão não registrou seus valores de campo personalizado, portanto os campos mantêm os valores que o caso de teste tem agora.",
+      "skippedFields": "{count, plural, one {O campo {fields} não está neste modelo, portanto seu valor não foi carregado.} other {Os campos {fields} não estão neste modelo, portanto seus valores não foram carregados.}}",
+      "skippedTags": "{count, plural, one {A tag {tags} não existe mais e não foi carregada.} other {As tags {tags} não existem mais e não foram carregadas.}}",
+      "skippedIssues": "{count, plural, one {# problema vinculado dessa versão não pode mais ser vinculado e não foi carregado.} other {# problemas vinculados dessa versão não podem mais ser vinculados e não foram carregados.}}"
     },
     "auditLog": {
       "description": "Todas as alterações registradas para este caso de teste."

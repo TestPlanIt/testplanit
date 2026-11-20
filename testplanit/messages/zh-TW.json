@@ -3286,7 +3286,16 @@
       "metadataRegion": "測試用例元數據",
       "versionCreated": "版本 {version}",
       "latestVersionUpdated": "版本 {version, number}（最新）",
-      "historyView": "測試用例歷史記錄視圖"
+      "historyView": "測試用例歷史記錄視圖",
+      "loadFromVersion": "從版本載入值",
+      "loadConfirmTitle": "將版本 {version} 載入表單？",
+      "loadConfirmDescription": "您未保存的編輯將被版本 {version} 中的值替換。",
+      "loadConfirmAction": "載入版本",
+      "loadedFromVersion": "表單包含此測試案例的版本 {version}。工作流狀態和資料夾保持不變。在您保存之前，沒有任何內容會被保存，保存會建立新版本。",
+      "fieldValuesNotRecorded": "該版本未記錄其自訂欄位值，因此欄位保留測試案例目前擁有的值。",
+      "skippedFields": "{count, plural, one {欄位 {fields} 不在此範本中，因此未載入其值。} other {欄位 {fields} 不在此範本中，因此未載入其值。}}",
+      "skippedTags": "{count, plural, one {標籤 {tags} 已不存在，未被載入。} other {標籤 {tags} 已不存在，未被載入。}}",
+      "skippedIssues": "{count, plural, one {該版本中的 # 個連結問題無法再連結，未被載入。} other {該版本中的 # 個連結問題無法再連結，未被載入。}}"
     },
     "auditLog": {
       "description": "此測試案例的所有變更記錄。"

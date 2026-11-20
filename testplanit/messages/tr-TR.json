@@ -3286,7 +3286,16 @@
       "metadataRegion": "Test durumu meta verileri",
       "versionCreated": "Sürüm {version}",
       "latestVersionUpdated": "Sürüm {version, number} (En Son)",
-      "historyView": "Test Durumu Geçmişini Görüntüle"
+      "historyView": "Test Durumu Geçmişini Görüntüle",
+      "loadFromVersion": "Sürümden değerleri yükle",
+      "loadConfirmTitle": "Sürüm {version} form'a yüklensin mi?",
+      "loadConfirmDescription": "Kaydedilmemiş değişiklikleriniz sürüm {version}'deki değerlerle değiştirilecektir.",
+      "loadConfirmAction": "Sürümü yükle",
+      "loadedFromVersion": "Form, bu test durumunun sürüm {version}'ünü içerir. İş akışı durumu ve klasör değişmemiştir. Siz kaydedene kadar hiçbir şey kaydedilmez ve kaydetmek yeni bir sürüm oluşturur.",
+      "fieldValuesNotRecorded": "Bu sürüm özel alan değerlerini kaydetmedi, bu nedenle alanlar şu anda test çalışmasının sahip olduğu değerleri korur.",
+      "skippedFields": "{count, plural, one {Alan {fields} bu şablonda bulunmadığından değeri yüklenmedi.} other {Alanlar {fields} bu şablonda bulunmadığından değerleri yüklenmedi.}}",
+      "skippedTags": "{count, plural, one {Etiket {tags} artık mevcut değildir ve yüklenmedi.} other {Etiketler {tags} artık mevcut değildir ve yüklenmedi.}}",
+      "skippedIssues": "{count, plural, one {# bağlantılı sorun o sürümden artık bağlanılamıyor ve yüklenmedi.} other {# bağlantılı sorunlar o sürümden artık bağlanılamıyor ve yüklenmedi.}}"
     },
     "auditLog": {
       "description": "Bu test durumu için kaydedilen tüm değişiklikler."

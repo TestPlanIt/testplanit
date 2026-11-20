@@ -3286,7 +3286,16 @@
       "metadataRegion": "테스트 케이스 메타데이터",
       "versionCreated": "버전 {version}",
       "latestVersionUpdated": "버전 {version, number} (최신)",
-      "historyView": "테스트 케이스 기록 보기"
+      "historyView": "테스트 케이스 기록 보기",
+      "loadFromVersion": "버전에서 값 로드",
+      "loadConfirmTitle": "버전 {version}을 양식으로 로드하시겠습니까?",
+      "loadConfirmDescription": "저장하지 않은 편집 사항이 버전 {version}의 값으로 바뀝니다.",
+      "loadConfirmAction": "버전 로드",
+      "loadedFromVersion": "양식에는 이 테스트 케이스의 버전 {version}이 포함되어 있습니다. 워크플로우 상태와 폴더는 변경되지 않습니다. 저장할 때까지 아무것도 저장되지 않으며, 저장하면 새 버전이 생성됩니다.",
+      "fieldValuesNotRecorded": "해당 버전에서 사용자 정의 필드 값을 기록하지 않았으므로 필드는 현재 테스트 케이스의 값을 유지합니다.",
+      "skippedFields": "{count, plural, one {필드 {fields}이 이 템플릿에 없어서 값이 로드되지 않았습니다.} other {필드 {fields}이 이 템플릿에 없어서 값이 로드되지 않았습니다.}}",
+      "skippedTags": "{count, plural, one {태그 {tags}이 더 이상 존재하지 않아서 로드되지 않았습니다.} other {태그 {tags}이 더 이상 존재하지 않아서 로드되지 않았습니다.}}",
+      "skippedIssues": "{count, plural, one {해당 버전의 연결된 문제 #개를 더 이상 연결할 수 없어서 로드되지 않았습니다.} other {해당 버전의 연결된 문제 #개를 더 이상 연결할 수 없어서 로드되지 않았습니다.}}"
     },
     "auditLog": {
       "description": "이 테스트 케이스에 기록된 모든 변경 사항입니다."

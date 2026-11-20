@@ -3286,7 +3286,16 @@
       "metadataRegion": "Metadata testovacího případu",
       "versionCreated": "Verze {version}",
       "latestVersionUpdated": "Verze {version, number} (Nejnovější)",
-      "historyView": "Zobrazení historie testovacího případu"
+      "historyView": "Zobrazení historie testovacího případu",
+      "loadFromVersion": "Načíst hodnoty z verze",
+      "loadConfirmTitle": "Načíst verzi {version} do formuláře?",
+      "loadConfirmDescription": "Vaše neuložené úpravy budou nahrazeny hodnotami z verze {version}.",
+      "loadConfirmAction": "Načíst verzi",
+      "loadedFromVersion": "Formulář obsahuje verzi {version} tohoto testovacího případu. Stav pracovního postupu a složka se nemění. Nic se neukládá, dokud neuložíte, a uložení vytvoří novou verzi.",
+      "fieldValuesNotRecorded": "Tato verze neměla zaznamenané vlastní hodnoty polí, proto pole zůstávají na hodnotách, které má nyní testovací případ.",
+      "skippedFields": "{count, plural, one {Pole {fields} není v této šabloně, takže jeho hodnota nebyla načtena.} few {Pole {fields} nejsou v této šabloně, takže jejich hodnoty nebyly načteny.} many {Pole {fields} nejsou v této šabloně, takže jejich hodnoty nebyly načteny.} other {Pole {fields} nejsou v této šabloně, takže jejich hodnoty nebyly načteny.}}",
+      "skippedTags": "{count, plural, one {Značka {tags} již neexistuje a nebyla načtena.} few {Značky {tags} již neexistují a nebyly načteny.} many {Značky {tags} již neexistují a nebyly načteny.} other {Značky {tags} již neexistují a nebyly načteny.}}",
+      "skippedIssues": "{count, plural, one {# propojená problém z této verze již nelze propojit a nebyl načten.} few {# propojené problémy z této verze již nelze propojit a nebyly načteny.} many {# propojených problémů z této verze již nelze propojit a nebyly načteny.} other {# propojených problémů z této verze již nelze propojit a nebyly načteny.}}"
     },
     "auditLog": {
       "description": "Všechny změny zaznamenané pro tento testovací případ."
