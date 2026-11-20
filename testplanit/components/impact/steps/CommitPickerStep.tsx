@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, ArrowUpToLine, GitBranch } from "lucide-react";
+import { AlertCircle, ArrowUpToLine, Asterisk, GitBranch } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -509,7 +509,12 @@ export function CommitPickerStep({
       <div className={mode === "pull" ? "hidden" : "grid gap-4 md:grid-cols-2"}>
         <div className="space-y-2">
           <div className="flex h-8 items-center">
-            <Label>{t("pick.baseLabel")}</Label>
+            <Label className="flex items-center">
+              {t("pick.baseLabel")}
+              <sup>
+                <Asterisk className="h-3 w-3 text-destructive" />
+              </sup>
+            </Label>
           </div>
           <CommitPicker
             repositoryId={config.repositoryId}
@@ -563,7 +568,12 @@ export function CommitPickerStep({
 
         <div className="space-y-2">
           <div className="flex h-8 items-center justify-between">
-            <Label>{t("pick.headLabel")}</Label>
+            <Label className="flex items-center">
+              {t("pick.headLabel")}
+              <sup>
+                <Asterisk className="h-3 w-3 text-destructive" />
+              </sup>
+            </Label>
             <Button
               type="button"
               variant="outline"

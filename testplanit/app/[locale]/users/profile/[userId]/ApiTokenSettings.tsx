@@ -37,6 +37,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  Asterisk,
   Check,
   Copy,
   KeyRound,
@@ -327,7 +328,12 @@ export function ApiTokenSettings({
           {!newToken ? (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="token-name">{t("nameLabel")}</Label>
+                <Label htmlFor="token-name" className="flex items-center">
+                  {t("nameLabel")}
+                  <sup>
+                    <Asterisk className="h-3 w-3 text-destructive" />
+                  </sup>
+                </Label>
                 <Input
                   id="token-name"
                   placeholder={t("namePlaceholder")}

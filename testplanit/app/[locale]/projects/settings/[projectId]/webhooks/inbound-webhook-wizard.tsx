@@ -413,6 +413,9 @@ function WizardBody({
         <div className="space-y-1">
           <Label htmlFor="webhook-wizard-repository">
             {tCommon("pageTitles.repository")}
+            <sup>
+              <Asterisk className="inline h-3 w-3 text-destructive" />
+            </sup>
           </Label>
           <Select
             value={repositoryId === null ? "" : String(repositoryId)}

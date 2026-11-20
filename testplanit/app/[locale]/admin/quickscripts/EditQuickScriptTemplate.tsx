@@ -42,6 +42,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
+import { Asterisk } from "lucide-react";
 
 interface EditQuickScriptTemplateProps {
   template: CaseExportTemplate;
@@ -254,7 +255,12 @@ export function EditQuickScriptTemplate({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tCommon("name")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {tCommon("name")}
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
                     <FormControl>
                       <Input
                         data-testid="edit-export-template-name-input"
@@ -286,7 +292,12 @@ export function EditQuickScriptTemplate({
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("fields.category")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {t("fields.category")}
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
                     <FormControl>
                       <ComboboxInput
                         options={categoryOptions}
@@ -306,7 +317,12 @@ export function EditQuickScriptTemplate({
                 name="framework"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("fields.framework")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {t("fields.framework")}
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
                     <FormControl>
                       <ComboboxInput
                         options={frameworkOptions}
@@ -329,7 +345,12 @@ export function EditQuickScriptTemplate({
                 name="fileExtension"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("fields.fileExtension")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {t("fields.fileExtension")}
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
                     <FormControl>
                       <ComboboxInput
                         options={extensionOptions}
@@ -349,7 +370,12 @@ export function EditQuickScriptTemplate({
                 name="language"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tCommon("fields.locale")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {tCommon("fields.locale")}
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
                     <FormControl>
                       <ComboboxInput
                         options={languageOptions}
@@ -431,7 +457,12 @@ export function EditQuickScriptTemplate({
                   render={({ field: { ref: fieldRef, ...fieldProps } }) => (
                     <FormItem>
                       <div className="flex items-center justify-between">
-                        <FormLabel>{t("fields.templateBody")}</FormLabel>
+                        <FormLabel className="flex items-center">
+                          {t("fields.templateBody")}
+                          <sup>
+                            <Asterisk className="h-3 w-3 text-destructive" />
+                          </sup>
+                        </FormLabel>
                         <TemplateVariableInserter
                           textareaRef={templateBodyRef}
                           currentValue={fieldProps.value}

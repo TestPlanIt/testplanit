@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { IntegrationAuthType, IntegrationProvider } from "~/zenstack/models";
 import type { Integration } from "~/zenstack/models";
-import { Activity, Loader2, ShieldCheck } from "lucide-react";
+import { Activity, Asterisk, Loader2, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -382,6 +382,9 @@ export function IntegrationModal({
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("config.name")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="integration.name" />
                       </FormLabel>
                       <FormControl>
@@ -403,6 +406,9 @@ export function IntegrationModal({
                       <FormItem>
                         <FormLabel className="flex items-center">
                           {t("config.authType")}
+                          <sup>
+                            <Asterisk className="h-3 w-3 text-destructive" />
+                          </sup>
                           <HelpPopover helpKey="integration.authType" />
                         </FormLabel>
                         <FormControl>

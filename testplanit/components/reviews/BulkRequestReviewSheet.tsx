@@ -9,7 +9,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useQueryClient } from "@tanstack/react-query";
-import { Info, Loader2, MessageSquareWarning } from "lucide-react";
+import { Asterisk, Info, Loader2, MessageSquareWarning } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -226,10 +226,13 @@ export function BulkRequestReviewSheet({
         <div className="flex flex-1 flex-col gap-4">
           <div className="space-y-2">
             <label
-              className="text-sm font-medium"
+              className="flex items-center text-sm font-medium"
               htmlFor="bulk-request-review-assignee"
             >
               {t("common.ui.issues.assignee")}
+              <sup>
+                <Asterisk className="h-3 w-3 text-destructive" />
+              </sup>
             </label>
             <div id="bulk-request-review-assignee">
               <AssigneeCombobox

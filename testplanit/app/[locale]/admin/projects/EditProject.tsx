@@ -29,7 +29,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { Star } from "lucide-react";
+import { Asterisk, Star } from "lucide-react";
 
 import {
   Form,
@@ -844,6 +844,9 @@ export function EditProjectModal({
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {tCommon("name")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="project.name" />
                       </FormLabel>
                       <FormControl>
@@ -878,6 +881,9 @@ export function EditProjectModal({
                 <div className="space-y-4 border-t pt-4">
                   <FormLabel className="flex items-center">
                     {tGlobal("common.labels.defaultProjectAccess")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="project.defaultAccess" />
                   </FormLabel>{" "}
                   <FormField

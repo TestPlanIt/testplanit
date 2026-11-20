@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Asterisk } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from "react";
@@ -313,6 +313,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.name")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="milestone.name" />
                       </FormLabel>
                       <FormControl>
@@ -356,6 +359,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.fields.type")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="milestone.type" />
                       </FormLabel>
                       <FormControl>

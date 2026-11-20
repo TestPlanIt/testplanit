@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { CheckCircle, Loader2, XCircle } from "lucide-react";
+import { Asterisk, CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -264,6 +264,9 @@ export function CodeRepositoryModal({
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("name")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="codeRepository.name" />
                   </FormLabel>
                   <FormControl>
@@ -282,6 +285,9 @@ export function CodeRepositoryModal({
                   <FormItem>
                     <FormLabel className="flex items-center">
                       {tCommon("fields.provider")}
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
                       <HelpPopover helpKey="codeRepository.provider" />
                     </FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>

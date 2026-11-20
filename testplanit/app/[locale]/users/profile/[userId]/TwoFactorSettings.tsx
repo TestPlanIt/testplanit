@@ -32,7 +32,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Check, Copy, Info, Loader2, RefreshCw, Shield } from "lucide-react";
+import {
+  Asterisk,
+  Check,
+  Copy,
+  Info,
+  Loader2,
+  RefreshCw,
+  Shield,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -354,8 +362,11 @@ export function TwoFactorSettings({
               <Separator />
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
+                <label className="flex items-center text-sm font-medium">
                   {t("auth.twoFactorSetup.verifyLabel")}
+                  <sup>
+                    <Asterisk className="h-3 w-3 text-destructive" />
+                  </sup>
                 </label>
                 <div className="flex justify-center">
                   <InputOTP

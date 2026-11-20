@@ -1162,7 +1162,12 @@ export function CreateIssueDialog({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("common.fields.title")}</FormLabel>
+                  <FormLabel className="flex items-center">
+                    {t("common.fields.title")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
+                  </FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -1399,7 +1404,7 @@ export function CreateIssueDialog({
                 </h4>
                 {issueTypeFields.map((field) => (
                   <div key={field.key} className="space-y-2">
-                    <Label htmlFor={field.key}>
+                    <Label htmlFor={field.key} className="flex items-center">
                       {field.name}
                       {field.required && (
                         <sup>

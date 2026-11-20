@@ -38,6 +38,7 @@ import {
 import { LinkType, RepositoryCaseSource } from "~/zenstack/models";
 import type { RepositoryCaseLink } from "~/zenstack/models";
 import {
+  Asterisk,
   Bot,
   Calendar,
   CircleSlash2,
@@ -617,8 +618,11 @@ function AddLinkDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block font-medium">
+            <label className="mb-1 flex items-center font-medium">
               {tLinkedCases("testCase")}
+              <sup>
+                <Asterisk className="h-3 w-3 text-destructive" />
+              </sup>
             </label>
             <AsyncCombobox
               value={selectedCase}
@@ -669,8 +673,11 @@ function AddLinkDialog({
             />
           </div>
           <div>
-            <label className="mb-1 block font-medium">
+            <label className="mb-1 flex items-center font-medium">
               {tLinkedCases("linkType")}
+              <sup>
+                <Asterisk className="h-3 w-3 text-destructive" />
+              </sup>
             </label>
             <Select
               value={selectedType || ""}

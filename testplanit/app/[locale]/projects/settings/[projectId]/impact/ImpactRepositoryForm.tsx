@@ -50,6 +50,7 @@ import {
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   AlertTriangle,
+  Asterisk,
   CheckCircle,
   Clock,
   History,
@@ -560,7 +561,14 @@ export function ImpactRepositoryForm({
               name="repositoryId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("repository.title")}</FormLabel>
+                  <FormLabel className="flex items-center">
+                    {t("repository.title")}
+                    {!readOnly && (
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
+                    )}
+                  </FormLabel>
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}

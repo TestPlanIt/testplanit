@@ -3,6 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useQueryClient } from "@tanstack/react-query";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -176,9 +177,12 @@ export function IterationBulkConfirmDialog({
         <div className="flex flex-col gap-1">
           <label
             htmlFor="iteration-bulk-status"
-            className="text-xs font-medium"
+            className="flex items-center text-xs font-medium"
           >
             {tCommon("actions.status")}
+            <sup>
+              <Asterisk className="h-3 w-3 text-destructive" />
+            </sup>
           </label>
           <Select
             value={selectedStatusId}

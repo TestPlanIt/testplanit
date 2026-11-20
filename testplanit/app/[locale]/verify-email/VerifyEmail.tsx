@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
+import { Asterisk } from "lucide-react";
 import { toast } from "sonner";
 import { TestPlanItLogo } from "@/components/TestPlanItLogo";
 import { withBasePath } from "~/lib/basePath";
@@ -150,6 +151,9 @@ const VerifyEmail = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {tCommon("fields.email")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="user.email" />
                       </FormLabel>
                       <FormControl>
@@ -171,6 +175,9 @@ const VerifyEmail = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {tCommon("fields.token")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="user.token" />
                       </FormLabel>
                       <FormControl>

@@ -13,6 +13,7 @@ import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { Switch } from "@/components/ui/switch";
 import { ValuesInput } from "@/components/ui/values-input";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
 import {
@@ -58,6 +59,7 @@ interface Props {
   integration: { id: number; provider: string } | null;
   value: TrackerFilterDraft;
   onChange: (next: TrackerFilterDraft) => void;
+  statusesRequired?: boolean;
 }
 
 /**
@@ -71,6 +73,7 @@ export function WebhookActionTrackerFilter({
   integration,
   value,
   onChange,
+  statusesRequired = false,
 }: Props) {
   const t = useTranslations("projects.settings.webhooks.actions");
   const tCommon = useTranslations("common");
@@ -161,7 +164,14 @@ export function WebhookActionTrackerFilter({
     <div className="space-y-3" data-testid="webhook-action-tracker-filter">
       <div className="text-sm font-medium">{tCommon("ui.search.filters")}</div>
       <div className="space-y-1.5">
-        <Label>{tCommon("labels.statuses")}</Label>
+        <Label className="flex items-center">
+          {tCommon("labels.statuses")}
+          {statusesRequired && (
+            <sup>
+              <Asterisk className="h-3 w-3 text-destructive" />
+            </sup>
+          )}
+        </Label>
         <MultiAsyncCombobox<string>
           value={value.statuses}
           onValueChange={(statuses) => update({ statuses })}

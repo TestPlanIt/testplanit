@@ -1738,7 +1738,12 @@ export function SessionResultsList({
                   name="statusId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tCommon("actions.status")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tCommon("actions.status")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
+                      </FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}

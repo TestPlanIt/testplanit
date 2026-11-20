@@ -12,7 +12,14 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Eye, EyeOff, Loader2, Lock } from "lucide-react";
+import {
+  AlertCircle,
+  Asterisk,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { apiFetch } from "~/lib/basePath";
@@ -129,7 +136,12 @@ export function PasswordDialog({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="password">{tCommon("fields.password")}</Label>
+              <Label htmlFor="password" className="flex items-center">
+                {tCommon("fields.password")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
+              </Label>
               <div className="relative">
                 <Input
                   data-testid="password-gate-input"

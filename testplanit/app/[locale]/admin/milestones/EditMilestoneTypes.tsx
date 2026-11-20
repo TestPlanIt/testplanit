@@ -13,7 +13,7 @@ import { AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { WarningAlert } from "@/components/ui/warning-alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TriangleAlert } from "lucide-react";
+import { Asterisk, TriangleAlert } from "lucide-react";
 
 import { FieldIconPicker } from "@/components/FieldIconPicker";
 import { ProjectIcon } from "@/components/ProjectIcon";
@@ -207,6 +207,9 @@ export function EditMilestoneType({
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("name")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="milestoneType.name" />
                   </FormLabel>
                   <FormControl>

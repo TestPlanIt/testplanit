@@ -2,6 +2,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -117,6 +118,9 @@ export function EditVariantModal({
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("name")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="configVariant.name" />
                   </FormLabel>
                   <FormControl>

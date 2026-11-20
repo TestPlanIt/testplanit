@@ -32,6 +32,7 @@ import UploadAttachments, {
 } from "@/components/UploadAttachments";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import type { Attachments, Tags } from "~/zenstack/models";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTestRunResultWindow } from "~/hooks/useResultWindow";
 import { IconName } from "~/types/globals";
@@ -219,7 +220,14 @@ function TestRunFormControls({
         render={({ field }) => {
           return (
             <FormItem>
-              <FormLabel>{t("common.fields.state")}</FormLabel>
+              <FormLabel className="flex items-center">
+                {t("common.fields.state")}
+                {isEditMode && (
+                  <sup>
+                    <Asterisk className="h-3 w-3 text-destructive" />
+                  </sup>
+                )}
+              </FormLabel>
               <FormControl>
                 {isEditMode ? (
                   <Select

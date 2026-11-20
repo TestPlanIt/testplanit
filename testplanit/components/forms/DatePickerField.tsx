@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarDays } from "lucide-react";
+import { Asterisk, CalendarDays } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
@@ -32,6 +32,7 @@ interface DatePickerFieldProps<T extends FieldValues = FieldValues> {
   maxDate?: Date;
   className?: ClassValue;
   helpKey?: string;
+  required?: boolean;
   /**
    * Stores the picked day as a calendar date — UTC midnight — instead of
    * midnight in the browser's zone, so the value means the same day to every
@@ -56,6 +57,7 @@ export function DatePickerField<T extends FieldValues = FieldValues>({
   maxDate = new Date("2099-12-31"),
   className,
   helpKey,
+  required = false,
   dateOnly = false,
 }: DatePickerFieldProps<T>) {
   const locale = useLocale();
@@ -75,6 +77,11 @@ export function DatePickerField<T extends FieldValues = FieldValues>({
           {label && (
             <FormLabel className="flex items-center">
               {label}
+              {required && (
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
+              )}
               {helpKey && <HelpPopover helpKey={helpKey} />}
             </FormLabel>
           )}

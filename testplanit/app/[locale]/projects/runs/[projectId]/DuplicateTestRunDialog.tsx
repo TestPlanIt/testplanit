@@ -24,6 +24,7 @@ import {
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -415,6 +416,11 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                   <div className="mb-4">
                     <FormLabel className="flex items-center text-base">
                       {t("fields.statusesToInclude.label")}
+                      {availableStatuses.length > 0 && (
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
+                      )}
                       <HelpPopover helpKey="testRun.duplicate.statusesToInclude" />
                     </FormLabel>
                     <FormDescription>

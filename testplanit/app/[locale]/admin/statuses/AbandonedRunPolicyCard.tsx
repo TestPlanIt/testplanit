@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Save } from "lucide-react";
+import { Asterisk, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -109,9 +109,12 @@ export function AbandonedRunPolicyCard() {
             <div className="flex items-center gap-2 text-sm">
               <Label
                 htmlFor="abandoned-run-policy-minutes"
-                className="font-normal whitespace-nowrap"
+                className="flex items-center font-normal whitespace-nowrap"
               >
                 {t("minutesBefore")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="abandoned-run-policy-minutes"

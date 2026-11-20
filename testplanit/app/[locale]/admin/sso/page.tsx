@@ -31,7 +31,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import type { SsoConfigSummary } from "~/lib/auth/ssoConfig";
 import { Access, SsoProviderType } from "~/zenstack/models";
-import { CirclePlus, Plus, Settings, Trash2, X } from "lucide-react";
+import { Asterisk, CirclePlus, Plus, Settings, Trash2, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
@@ -1293,8 +1293,11 @@ export default function SSOAdminPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="clientId">
+              <Label htmlFor="clientId" className="flex items-center">
                 {t("admin.integrations.config.clientId")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="clientId"
@@ -1306,8 +1309,13 @@ export default function SSOAdminPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="clientSecret">
+              <Label htmlFor="clientSecret" className="flex items-center">
                 {t("admin.integrations.config.clientSecret")}
+                {!summaryFor(SsoProviderType.GOOGLE)?.hasClientSecret && (
+                  <sup>
+                    <Asterisk className="h-3 w-3 text-destructive" />
+                  </sup>
+                )}
               </Label>
               <Input
                 id="clientSecret"
@@ -1381,8 +1389,11 @@ export default function SSOAdminPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="appleClientId">
+              <Label htmlFor="appleClientId" className="flex items-center">
                 {t("common.dialogs.complete.apple.clientId")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="appleClientId"
@@ -1394,8 +1405,11 @@ export default function SSOAdminPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="appleTeamId">
+              <Label htmlFor="appleTeamId" className="flex items-center">
                 {t("common.dialogs.complete.apple.teamId")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="appleTeamId"
@@ -1407,8 +1421,11 @@ export default function SSOAdminPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="appleKeyId">
+              <Label htmlFor="appleKeyId" className="flex items-center">
                 {t("common.dialogs.complete.apple.keyId")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="appleKeyId"
@@ -1420,8 +1437,13 @@ export default function SSOAdminPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="applePrivateKey">
+              <Label htmlFor="applePrivateKey" className="flex items-center">
                 {t("common.dialogs.complete.apple.privateKey")}
+                {!summaryFor(SsoProviderType.APPLE)?.hasPrivateKey && (
+                  <sup>
+                    <Asterisk className="h-3 w-3 text-destructive" />
+                  </sup>
+                )}
               </Label>
               <textarea
                 id="applePrivateKey"
@@ -1498,8 +1520,11 @@ export default function SSOAdminPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="microsoftClientId">
+              <Label htmlFor="microsoftClientId" className="flex items-center">
                 {t("admin.integrations.config.clientId")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="microsoftClientId"
@@ -1511,8 +1536,16 @@ export default function SSOAdminPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="microsoftClientSecret">
+              <Label
+                htmlFor="microsoftClientSecret"
+                className="flex items-center"
+              >
                 {t("admin.integrations.config.clientSecret")}
+                {!summaryFor(SsoProviderType.MICROSOFT)?.hasClientSecret && (
+                  <sup>
+                    <Asterisk className="h-3 w-3 text-destructive" />
+                  </sup>
+                )}
               </Label>
               <Input
                 id="microsoftClientSecret"

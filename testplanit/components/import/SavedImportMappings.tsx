@@ -34,6 +34,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertTriangle,
+  Asterisk,
   Bookmark,
   BookmarkPlus,
   CircleCheck,
@@ -834,7 +835,12 @@ export function SaveImportMappingDialog({
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="import-mapping-name">{tCommon("name")}</Label>
+            <Label htmlFor="import-mapping-name" className="flex items-center">
+              {tCommon("name")}
+              <sup>
+                <Asterisk className="h-3 w-3 text-destructive" />
+              </sup>
+            </Label>
             <Input
               id="import-mapping-name"
               value={name}
@@ -947,7 +953,15 @@ function EditImportMappingDialog({
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="import-mapping-edit-name">{tCommon("name")}</Label>
+            <Label
+              htmlFor="import-mapping-edit-name"
+              className="flex items-center"
+            >
+              {tCommon("name")}
+              <sup>
+                <Asterisk className="h-3 w-3 text-destructive" />
+              </sup>
+            </Label>
             <Input
               id="import-mapping-edit-name"
               value={name}

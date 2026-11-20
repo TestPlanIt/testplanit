@@ -15,7 +15,7 @@ import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { Users } from "lucide-react";
+import { Asterisk, Users } from "lucide-react";
 
 import {
   Form,
@@ -177,6 +177,9 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("fields.groupName")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="group.name" />
                   </FormLabel>
                   <FormControl>

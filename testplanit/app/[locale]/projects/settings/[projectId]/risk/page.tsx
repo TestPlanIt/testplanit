@@ -19,7 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { PageTitle } from "@/components/ui/typography";
 import { DbNull } from "@zenstackhq/orm";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { Gauge, Loader2, RefreshCw, Undo2 } from "lucide-react";
+import { Asterisk, Gauge, Loader2, RefreshCw, Undo2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -518,9 +518,12 @@ export default function RiskSettingsPage() {
                     />
                     <Label
                       htmlFor={`risk-weight-${key}`}
-                      className="font-normal"
+                      className="flex items-center font-normal"
                     >
                       {t(`components.${key}`)}
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
                     </Label>
                   </div>
                 ))}

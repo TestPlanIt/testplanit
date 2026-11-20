@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useQueryClient } from "@tanstack/react-query";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -128,7 +129,15 @@ export function RequirementSnapshotSaveDialog({
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="requirement-snapshot-name">{tCommon("name")}</Label>
+            <Label
+              htmlFor="requirement-snapshot-name"
+              className="flex items-center"
+            >
+              {tCommon("name")}
+              <sup>
+                <Asterisk className="h-3 w-3 text-destructive" />
+              </sup>
+            </Label>
             <Input
               id="requirement-snapshot-name"
               value={name}

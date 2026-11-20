@@ -2,7 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Loader2, Server } from "lucide-react";
+import { Asterisk, Loader2, Server } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -567,8 +567,14 @@ export function AlertRuleDialog({
               <div className="flex flex-col gap-4 md:flex-row md:items-start">
                 {showTargetPicker && (
                   <div className="flex-1 space-y-2">
-                    <Label htmlFor="alert-rule-project">
+                    <Label
+                      htmlFor="alert-rule-project"
+                      className="flex items-center"
+                    >
                       {tForm("project")}
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
                     </Label>
                     <Select
                       value={
@@ -649,7 +655,12 @@ export function AlertRuleDialog({
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tForm("name")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tForm("name")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -666,7 +677,12 @@ export function AlertRuleDialog({
                   name="metric"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tForm("metric")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tForm("metric")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
+                      </FormLabel>
                       <FormControl>
                         <AlertMetricPicker
                           value={field.value}
@@ -738,8 +754,11 @@ export function AlertRuleDialog({
                       name="thresholdValue"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>
+                          <FormLabel className="flex items-center">
                             {tForm(`thresholdLabels.${metric}` as never)}
+                            <sup>
+                              <Asterisk className="h-3 w-3 text-destructive" />
+                            </sup>
                           </FormLabel>
                           <FormControl>
                             <NumberInput
@@ -777,7 +796,12 @@ export function AlertRuleDialog({
                       name="direction"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{tForm("direction")}</FormLabel>
+                          <FormLabel className="flex items-center">
+                            {tForm("direction")}
+                            <sup>
+                              <Asterisk className="h-3 w-3 text-destructive" />
+                            </sup>
+                          </FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}
@@ -805,7 +829,12 @@ export function AlertRuleDialog({
                       name="baselineType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{tForm("baselineType")}</FormLabel>
+                          <FormLabel className="flex items-center">
+                            {tForm("baselineType")}
+                            <sup>
+                              <Asterisk className="h-3 w-3 text-destructive" />
+                            </sup>
+                          </FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}
@@ -833,8 +862,11 @@ export function AlertRuleDialog({
                       name="baselineWindow"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>
+                          <FormLabel className="flex items-center">
                             {fieldLabel("windowLabels", "baselineWindow")}
+                            <sup>
+                              <Asterisk className="h-3 w-3 text-destructive" />
+                            </sup>
                           </FormLabel>
                           <FormControl>
                             <NumberInput
@@ -860,8 +892,11 @@ export function AlertRuleDialog({
                       name="minSamples"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>
+                          <FormLabel className="flex items-center">
                             {fieldLabel("minSamplesLabels", "minSamples")}
+                            <sup>
+                              <Asterisk className="h-3 w-3 text-destructive" />
+                            </sup>
                           </FormLabel>
                           <FormControl>
                             <NumberInput
@@ -887,8 +922,11 @@ export function AlertRuleDialog({
                       name="secondaryValue"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>
+                          <FormLabel className="flex items-center">
                             {fieldLabel("secondaryLabels", "daysRemaining")}
+                            <sup>
+                              <Asterisk className="h-3 w-3 text-destructive" />
+                            </sup>
                           </FormLabel>
                           <FormControl>
                             <NumberInput
@@ -914,7 +952,12 @@ export function AlertRuleDialog({
                       name="coverageBasis"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{tForm("coverageBasis")}</FormLabel>
+                          <FormLabel className="flex items-center">
+                            {tForm("coverageBasis")}
+                            <sup>
+                              <Asterisk className="h-3 w-3 text-destructive" />
+                            </sup>
+                          </FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}
@@ -946,7 +989,12 @@ export function AlertRuleDialog({
                       name="resultSource"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{tForm("resultSource")}</FormLabel>
+                          <FormLabel className="flex items-center">
+                            {tForm("resultSource")}
+                            <sup>
+                              <Asterisk className="h-3 w-3 text-destructive" />
+                            </sup>
+                          </FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}
@@ -974,7 +1022,12 @@ export function AlertRuleDialog({
                       name="evaluateOn"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{tForm("evaluateOn")}</FormLabel>
+                          <FormLabel className="flex items-center">
+                            {tForm("evaluateOn")}
+                            <sup>
+                              <Asterisk className="h-3 w-3 text-destructive" />
+                            </sup>
+                          </FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}
@@ -1022,7 +1075,12 @@ export function AlertRuleDialog({
                       name="scopeType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{tForm("scopeType")}</FormLabel>
+                          <FormLabel className="flex items-center">
+                            {tForm("scopeType")}
+                            <sup>
+                              <Asterisk className="h-3 w-3 text-destructive" />
+                            </sup>
+                          </FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={(value) => {
@@ -1053,7 +1111,12 @@ export function AlertRuleDialog({
                         name="scopeId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{tForm("scopeFolder")}</FormLabel>
+                            <FormLabel className="flex items-center">
+                              {tForm("scopeFolder")}
+                              <sup>
+                                <Asterisk className="h-3 w-3 text-destructive" />
+                              </sup>
+                            </FormLabel>
                             <FormControl>
                               <FolderSelect
                                 value={field.value || null}
@@ -1077,7 +1140,12 @@ export function AlertRuleDialog({
                         name="scopeId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{tForm("scopeTag")}</FormLabel>
+                            <FormLabel className="flex items-center">
+                              {tForm("scopeTag")}
+                              <sup>
+                                <Asterisk className="h-3 w-3 text-destructive" />
+                              </sup>
+                            </FormLabel>
                             <FormControl>
                               <TagSearchSelect
                                 value={
@@ -1102,7 +1170,12 @@ export function AlertRuleDialog({
                         name="scopeId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{tForm("scopeCase")}</FormLabel>
+                            <FormLabel className="flex items-center">
+                              {tForm("scopeCase")}
+                              <sup>
+                                <Asterisk className="h-3 w-3 text-destructive" />
+                              </sup>
+                            </FormLabel>
                             <FormControl>
                               <CaseSearchSelect
                                 projectId={projectId ?? -1}
@@ -1128,7 +1201,12 @@ export function AlertRuleDialog({
                         name="scopeId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{tForm("scopeMilestone")}</FormLabel>
+                            <FormLabel className="flex items-center">
+                              {tForm("scopeMilestone")}
+                              <sup>
+                                <Asterisk className="h-3 w-3 text-destructive" />
+                              </sup>
+                            </FormLabel>
                             <FormControl>
                               <MilestoneSelect
                                 value={field.value || null}
@@ -1153,7 +1231,12 @@ export function AlertRuleDialog({
                         name="scopeText"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{tForm("scopeWebhook")}</FormLabel>
+                            <FormLabel className="flex items-center">
+                              {tForm("scopeWebhook")}
+                              <sup>
+                                <Asterisk className="h-3 w-3 text-destructive" />
+                              </sup>
+                            </FormLabel>
                             <Select
                               value={field.value || ""}
                               onValueChange={field.onChange}
@@ -1184,8 +1267,11 @@ export function AlertRuleDialog({
                         name="scopeId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>
+                            <FormLabel className="flex items-center">
                               {tForm("scopeLlmIntegration")}
+                              <sup>
+                                <Asterisk className="h-3 w-3 text-destructive" />
+                              </sup>
                             </FormLabel>
                             <Select
                               value={field.value || ""}
@@ -1222,8 +1308,11 @@ export function AlertRuleDialog({
                         name="scopeId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>
+                            <FormLabel className="flex items-center">
                               {tForm("scopeCodeRepository")}
+                              <sup>
+                                <Asterisk className="h-3 w-3 text-destructive" />
+                              </sup>
                             </FormLabel>
                             <Select
                               value={field.value || ""}
@@ -1260,7 +1349,12 @@ export function AlertRuleDialog({
                         name="scopeId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{tForm("scopeIntegration")}</FormLabel>
+                            <FormLabel className="flex items-center">
+                              {tForm("scopeIntegration")}
+                              <sup>
+                                <Asterisk className="h-3 w-3 text-destructive" />
+                              </sup>
+                            </FormLabel>
                             <Select
                               value={field.value || ""}
                               onValueChange={field.onChange}
@@ -1294,7 +1388,12 @@ export function AlertRuleDialog({
                         name="scopeText"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{tForm("scopeQueue")}</FormLabel>
+                            <FormLabel className="flex items-center">
+                              {tForm("scopeQueue")}
+                              <sup>
+                                <Asterisk className="h-3 w-3 text-destructive" />
+                              </sup>
+                            </FormLabel>
                             <Select
                               value={field.value || ""}
                               onValueChange={field.onChange}
@@ -1325,7 +1424,12 @@ export function AlertRuleDialog({
                         name="scopeText"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{tForm("scopeRunName")}</FormLabel>
+                            <FormLabel className="flex items-center">
+                              {tForm("scopeRunName")}
+                              <sup>
+                                <Asterisk className="h-3 w-3 text-destructive" />
+                              </sup>
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
@@ -1356,6 +1460,9 @@ export function AlertRuleDialog({
                       <FormItem>
                         <FormLabel className="flex items-center gap-1">
                           {tForm("cooldown")}
+                          <sup>
+                            <Asterisk className="h-3 w-3 text-destructive" />
+                          </sup>
                           <HelpPopover
                             helpKey={`## ${tForm("cooldown")}\n${tForm("cooldownHelp")}`}
                           />

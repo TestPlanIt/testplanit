@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarDays } from "lucide-react";
+import { Asterisk, CalendarDays } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
@@ -60,6 +60,7 @@ interface DateRangePickerFieldProps<T extends FieldValues = FieldValues> {
   maxDate?: Date;
   className?: ClassValue;
   helpKey?: string;
+  required?: boolean;
   /**
    * Preset key the picker starts on, matching a key in `rangeCategories`
    * (e.g. "thisWeek"). Set it alongside a pre-seeded form value so the preset
@@ -95,6 +96,7 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
   maxDate = new Date("2099-12-31"),
   className,
   helpKey,
+  required = false,
   defaultPreset = "custom",
   preset: controlledPreset,
   onPresetChange,
@@ -166,6 +168,11 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
               // with outside-click-to-close once the picker is open.
               <FormLabel className="flex w-fit items-center">
                 {label}
+                {required && (
+                  <sup>
+                    <Asterisk className="h-3 w-3 text-destructive" />
+                  </sup>
+                )}
                 {helpKey && <HelpPopover helpKey={helpKey} />}
               </FormLabel>
             )}

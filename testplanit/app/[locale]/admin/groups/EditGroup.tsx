@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Cloud, Users } from "lucide-react";
+import { Asterisk, Cloud, Users } from "lucide-react";
 
 import { GroupProjectMappings } from "./GroupProjectMappings";
 
@@ -293,6 +293,9 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       {tCommon("name")}
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
                       <HelpPopover helpKey="group.name" />
                     </FormLabel>
                     <FormControl>

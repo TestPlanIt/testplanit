@@ -18,7 +18,7 @@ import {
   translatePolicyViolation,
   type PolicyViolation,
 } from "~/lib/password-policy-messages";
-import { KeyRound, Loader2 } from "lucide-react";
+import { Asterisk, KeyRound, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -145,8 +145,11 @@ export default function ForceChangePasswordPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="newPassword">
+              <Label htmlFor="newPassword" className="flex items-center">
                 {t("auth.forceChangePassword.newPasswordLabel")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="newPassword"
@@ -163,8 +166,11 @@ export default function ForceChangePasswordPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">
+              <Label htmlFor="confirmPassword" className="flex items-center">
                 {t("auth.forceChangePassword.confirmPasswordLabel")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
               </Label>
               <Input
                 id="confirmPassword"

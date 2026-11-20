@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/tooltip";
 import { filesize } from "filesize";
 import {
+  Asterisk,
   CloudUpload,
   FileSpreadsheet,
   FileStack,
@@ -390,8 +391,14 @@ export default function UploadAttachments({
   const renderLinkForm = () => (
     <div className="w-full space-y-2 rounded-md border border-dashed border-muted p-3">
       <div className="space-y-1">
-        <Label htmlFor={`${fileInputId}-link-url`} className="text-xs">
+        <Label
+          htmlFor={`${fileInputId}-link-url`}
+          className="flex items-center text-xs"
+        >
           {tLink("urlLabel")}
+          <sup>
+            <Asterisk className="h-3 w-3 text-destructive" />
+          </sup>
         </Label>
         <Input
           id={`${fileInputId}-link-url`}

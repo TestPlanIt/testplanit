@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Asterisk, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
 
@@ -75,8 +75,11 @@ export function SaveDraftDialog({
           }}
           className="space-y-2"
         >
-          <Label htmlFor="save-draft-name">
+          <Label htmlFor="save-draft-name" className="flex items-center">
             {tGlobal("repository.addCase.name")}
+            <sup>
+              <Asterisk className="h-3 w-3 text-destructive" />
+            </sup>
           </Label>
           <Input
             id="save-draft-name"

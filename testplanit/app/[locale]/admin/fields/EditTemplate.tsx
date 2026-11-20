@@ -41,6 +41,7 @@ import {
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   ProjectDefaultTemplateWarning,
@@ -428,6 +429,9 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("name")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="template.name" />
                   </FormLabel>
                   <FormControl>

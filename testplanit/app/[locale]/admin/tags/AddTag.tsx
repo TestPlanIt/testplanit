@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { apiFetch } from "~/lib/basePath";
+import { Asterisk } from "lucide-react";
 
 // Create a simpler schema that works with form inference
 const AddTagSchema = z.object({
@@ -162,6 +163,9 @@ export function AddTag({ open, onClose }: AddTagProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("name")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="tag.name" />
                   </FormLabel>
                   <FormControl>

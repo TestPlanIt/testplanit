@@ -15,7 +15,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Asterisk, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useRangeSelect } from "~/hooks/useRangeSelect";
@@ -336,8 +336,14 @@ export function StepDuplicateConversionDialog({
 
         {/* Name input section */}
         <div>
-          <Label htmlFor="shared-step-name" className="text-sm font-semibold">
+          <Label
+            htmlFor="shared-step-name"
+            className="flex items-center text-sm font-semibold"
+          >
             {t("nameLabel")}
+            <sup>
+              <Asterisk className="h-3 w-3 text-destructive" />
+            </sup>
           </Label>
           <Input
             id="shared-step-name"

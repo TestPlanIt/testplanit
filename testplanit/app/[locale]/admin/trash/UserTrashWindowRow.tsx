@@ -1,7 +1,7 @@
 "use client";
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { Save } from "lucide-react";
+import { Asterisk, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -71,6 +71,9 @@ export function UserTrashWindowRow() {
         className="flex items-center gap-1"
       >
         {t("label")}
+        <sup>
+          <Asterisk className="h-3 w-3 text-destructive" />
+        </sup>
         <HelpPopover helpKey="userTrashWindow" />
       </Label>
       <Input

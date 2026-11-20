@@ -51,6 +51,7 @@ import { Switch } from "@/components/ui/switch";
 import { scopeDisplayData } from "~/app/constants";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
+import { Asterisk } from "lucide-react";
 
 const scopeKeys = Object.keys(scopeDisplayData) as [
   keyof typeof scopeDisplayData,
@@ -289,6 +290,9 @@ export function EditWorkflows({
             <FormItem>
               <FormLabel className="flex items-center">
                 {tCommon("fields.scope")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
                 <HelpPopover helpKey="workflow.scope" />
               </FormLabel>
             </FormItem>
@@ -359,6 +363,9 @@ export function EditWorkflows({
                     <div className="w-full">
                       <FormLabel className="flex items-center">
                         {tCommon("name")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="workflow.name" />
                       </FormLabel>
                       <FormControl>
@@ -377,6 +384,9 @@ export function EditWorkflows({
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("fields.type")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="workflow.type" />
                   </FormLabel>
                   <Select

@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { BookmarkPlus, Loader2 } from "lucide-react";
+import { Asterisk, BookmarkPlus, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -156,7 +156,12 @@ function SaveReportDialog({
         </DialogHeader>
         <div className="space-y-4 px-0.5 py-2">
           <div className="space-y-2">
-            <Label htmlFor="save-report-name">{tCommon("name")}</Label>
+            <Label htmlFor="save-report-name" className="flex items-center">
+              {tCommon("name")}
+              <sup>
+                <Asterisk className="h-3 w-3 text-destructive" />
+              </sup>
+            </Label>
             <Input
               id="save-report-name"
               value={name}

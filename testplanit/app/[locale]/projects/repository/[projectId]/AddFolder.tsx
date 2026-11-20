@@ -28,7 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { CircleX, Undo2 } from "lucide-react";
+import { Asterisk, CircleX, Undo2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -237,6 +237,9 @@ export function AddFolder({
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {t("common.name")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="folder.name" />
                   </FormLabel>
                   <FormControl>

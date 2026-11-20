@@ -13,6 +13,7 @@ import {
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -78,6 +79,9 @@ export function EditAppConfig({ config, open, onClose }: EditAppConfigProps) {
           <div className="space-y-2">
             <Label htmlFor="value" className="flex items-center">
               {tCommon("fields.value")}
+              <sup>
+                <Asterisk className="h-3 w-3 text-destructive" />
+              </sup>
               <HelpPopover helpKey="appConfig.value" />
             </Label>
             <Textarea

@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Asterisk, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -122,7 +122,12 @@ export function DatasetCreateDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{tCommon("name")}</FormLabel>
+                  <FormLabel className="flex items-center">
+                    {tCommon("name")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
+                  </FormLabel>
                   <FormControl>
                     <Input
                       {...field}

@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { emptyEditorContent } from "~/app/constants";
 
-import { Ellipsis } from "lucide-react";
+import { Asterisk, Ellipsis } from "lucide-react";
 
 import {
   Form,
@@ -745,6 +745,9 @@ export function AddCaseFieldModal({
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("fields.displayName")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="caseField.displayName" />
                   </FormLabel>
                   <FormControl>
@@ -765,6 +768,9 @@ export function AddCaseFieldModal({
                 <FormItem>
                   <FormLabel className="flex items-center">
                     <span>{tCommon("fields.systemName")}</span>
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="caseField.systemName" />
                     <div className="ms-2 text-sm text-muted-foreground">
                       {tCommon("fields.hints.systemName")}
@@ -897,6 +903,9 @@ export function AddCaseFieldModal({
                   <FormLabel className="flex items-center space-x-2 whitespace-nowrap">
                     <div className="flex items-center">
                       <span>{tCommon("fields.fieldType")}</span>
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
                       <HelpPopover helpKey="caseField.fieldType" />
                     </div>
                     <div className="text-sm text-muted-foreground">

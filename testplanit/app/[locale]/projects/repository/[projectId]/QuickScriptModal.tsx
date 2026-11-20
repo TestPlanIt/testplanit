@@ -46,7 +46,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Check, ChevronsUpDown, Loader2, Sparkles, Star } from "lucide-react";
+import {
+  Asterisk,
+  Check,
+  ChevronsUpDown,
+  Loader2,
+  Sparkles,
+  Star,
+} from "lucide-react";
 import { cn } from "~/utils";
 import { ExportPreviewPane } from "./ExportPreviewPane";
 import { sanitizeFilename } from "./quickScriptUtils";
@@ -799,7 +806,12 @@ export function QuickScriptModal({
           <>
             <div className="space-y-6 py-4">
               <div className="space-y-2">
-                <Label>{tCommon("fields.template")}</Label>
+                <Label className="flex items-center">
+                  {tCommon("fields.template")}
+                  <sup>
+                    <Asterisk className="h-3 w-3 text-destructive" />
+                  </sup>
+                </Label>
                 {assignmentsExistButEmpty ? (
                   <p className="py-4 text-center text-sm text-muted-foreground">
                     {t("noAvailableTemplates")}

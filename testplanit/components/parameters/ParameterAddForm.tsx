@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useQueryClient } from "@tanstack/react-query";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
@@ -177,8 +178,14 @@ export function ParameterAddForm({
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
-          <label className="text-xs font-medium" htmlFor="parameter-form-name">
+          <label
+            className="flex items-center text-xs font-medium"
+            htmlFor="parameter-form-name"
+          >
             {tCommon("name")}
+            <sup>
+              <Asterisk className="h-3 w-3 text-destructive" />
+            </sup>
           </label>
           <Input
             id="parameter-form-name"
@@ -189,8 +196,14 @@ export function ParameterAddForm({
         </div>
 
         <div>
-          <label className="text-xs font-medium" htmlFor="parameter-form-type">
+          <label
+            className="flex items-center text-xs font-medium"
+            htmlFor="parameter-form-type"
+          >
             {tCommon("fields.type")}
+            <sup>
+              <Asterisk className="h-3 w-3 text-destructive" />
+            </sup>
           </label>
           <Controller
             control={form.control}
@@ -340,10 +353,13 @@ export function ParameterAddForm({
           ) : (
             <div>
               <label
-                className="text-xs font-medium"
+                className="flex items-center text-xs font-medium"
                 htmlFor="parameter-form-lookup-dataset"
               >
                 {t("selectLookupDataSetLabel")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
               </label>
               <Controller
                 control={form.control}

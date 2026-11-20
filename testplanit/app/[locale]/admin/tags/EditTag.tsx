@@ -32,6 +32,7 @@ import {
 import { HelpPopover } from "@/components/ui/help-popover";
 import { useTranslations } from "next-intl";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
+import { Asterisk } from "lucide-react";
 
 // Create a simpler schema that works with form inference
 const EditTagSchema = z.object({
@@ -148,6 +149,9 @@ export function EditTag({ tag, open, onClose }: EditTagProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("name")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="tag.name" />
                   </FormLabel>
                   <FormControl>

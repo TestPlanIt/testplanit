@@ -39,6 +39,7 @@ import {
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Select, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 
@@ -720,6 +721,9 @@ export function EditCaseField({
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("fields.displayName")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="caseField.displayName" />
                   </FormLabel>
                   <FormControl>

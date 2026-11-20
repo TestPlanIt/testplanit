@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
+import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 // Helper function to construct external URL based on integration provider
@@ -190,6 +191,9 @@ export function EditIssue({ issue, open, onClose }: EditIssueProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("name")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="issue.name" />
                   </FormLabel>
                   <FormControl>
@@ -222,6 +226,9 @@ export function EditIssue({ issue, open, onClose }: EditIssueProps) {
                 <FormItem>
                   <FormLabel className="flex items-center">
                     {tCommon("fields.title")}
+                    <sup>
+                      <Asterisk className="h-3 w-3 text-destructive" />
+                    </sup>
                     <HelpPopover helpKey="issue.title" />
                   </FormLabel>
                   <FormControl>

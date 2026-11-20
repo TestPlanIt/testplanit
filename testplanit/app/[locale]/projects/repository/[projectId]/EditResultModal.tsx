@@ -1644,6 +1644,9 @@ export function EditResultModal({
                   <FormItem>
                     <FormLabel className="flex items-center">
                       {tCommon("actions.status")}
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
                       <HelpPopover helpKey="testResult.status" />
                     </FormLabel>
                     <FormControl>

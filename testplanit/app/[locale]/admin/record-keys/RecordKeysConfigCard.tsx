@@ -28,6 +28,7 @@ import {
   RECORD_KEY_TOKENS_KEY,
 } from "~/lib/services/recordKeyConfig";
 import { schema } from "~/zenstack/schema";
+import { Asterisk } from "lucide-react";
 
 /** Sample project code used only for the live preview column. */
 const PREVIEW_PROJECT_CODE = "PROJECT";
@@ -199,9 +200,12 @@ export function RecordKeysConfigCard() {
                   >
                     <Label
                       htmlFor={`record-keys-input-${type}`}
-                      className="w-40 text-sm font-medium"
+                      className="flex w-40 items-center text-sm font-medium"
                     >
                       {tRoot(TYPE_LABEL_KEY[type] as never)}
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
                     </Label>
                     <Input
                       id={`record-keys-input-${type}`}

@@ -40,7 +40,7 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { LinkIcon, Loader2, Mail, Shield } from "lucide-react";
+import { Asterisk, LinkIcon, Loader2, Mail, Shield } from "lucide-react";
 import { siApple, siGoogle } from "simple-icons";
 import { Link } from "~/lib/navigation";
 import { TestPlanItLogo } from "@/components/TestPlanItLogo";
@@ -575,8 +575,11 @@ const Signin: NextPage = () => {
         </div>
       )}
       <div className="space-y-2">
-        <label className="text-sm font-medium">
+        <label className="flex items-center text-sm font-medium">
           {t("auth.signin.passwordless.codeLabel")}
+          <sup>
+            <Asterisk className="h-3 w-3 text-destructive" />
+          </sup>
         </label>
         <div className="flex justify-center">
           <InputOTP
@@ -672,6 +675,9 @@ const Signin: NextPage = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.fields.email")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="user.email" tabIndex={4} />
                       </FormLabel>
                       <FormControl>
@@ -692,6 +698,9 @@ const Signin: NextPage = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.fields.password")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
                         <HelpPopover helpKey="user.password" tabIndex={5} />
                       </FormLabel>
                       <FormControl>
@@ -931,7 +940,12 @@ const Signin: NextPage = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("common.fields.email")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {t("common.fields.email")}
+                        <sup>
+                          <Asterisk className="h-3 w-3 text-destructive" />
+                        </sup>
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="email"
@@ -1051,10 +1065,13 @@ const Signin: NextPage = () => {
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">
+              <label className="flex items-center text-sm font-medium">
                 {useBackupCode
                   ? t("auth.twoFactorVerify.backupCodeLabel")
                   : t("auth.twoFactorSetup.verifyLabel")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
               </label>
               {useBackupCode ? (
                 <Input

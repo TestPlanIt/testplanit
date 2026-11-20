@@ -12,7 +12,14 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, Activity, Loader2, Send, XCircle } from "lucide-react";
+import {
+  Activity,
+  Asterisk,
+  CheckCircle,
+  Loader2,
+  Send,
+  XCircle,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -160,7 +167,12 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="test-message">{t("testMessage")}</Label>
+              <Label htmlFor="test-message" className="flex items-center">
+                {t("testMessage")}
+                <sup>
+                  <Asterisk className="h-3 w-3 text-destructive" />
+                </sup>
+              </Label>
               <Textarea
                 id="test-message"
                 value={testMessage}
