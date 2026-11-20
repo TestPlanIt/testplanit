@@ -504,9 +504,12 @@ test.describe("Bulk Operations", () => {
       await expect(saveButton).toBeVisible({ timeout: 5000 });
       await saveButton.click();
 
-      // Wait for save to complete — edit button reappears
-      await expect(editButton!).toBeVisible({ timeout: 15000 });
-      await page.waitForLoadState("networkidle");
+      // The edit button is back as soon as the save starts, so wait for the
+      // back link instead: it only renders once edit mode has exited, and it
+      // names the target folder only once the saved case has been re-read.
+      await expect(
+        page.locator(`a[href*="node=${targetFolderId}&case=${caseId}"]`).first()
+      ).toBeVisible({ timeout: 15000 });
     });
 
     await test.step("Verify the case now appears in the target folder", async () => {
