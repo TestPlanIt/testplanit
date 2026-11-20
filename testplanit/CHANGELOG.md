@@ -1,3 +1,9 @@
+## [1.2.5](https://github.com/TestPlanIt/testplanit/compare/v1.2.4...v1.2.5) (2026-11-20)
+
+### Bug Fixes
+
+* **ui:** mark every required form field with the asterisk ([#759](https://github.com/TestPlanIt/testplanit/issues/759)) ([c149674](https://github.com/TestPlanIt/testplanit/commit/c14967435589254d38ba9f11d36cbfd02bff3eaa))
+
 ## [1.2.4](https://github.com/TestPlanIt/testplanit/compare/v1.2.3...v1.2.4) (2026-11-19)
 
 ### Enhancements
