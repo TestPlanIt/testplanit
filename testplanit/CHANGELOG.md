@@ -1,3 +1,9 @@
+## [1.2.6](https://github.com/TestPlanIt/testplanit/compare/v1.2.5...v1.2.6) (2026-11-20)
+
+### Bug Fixes
+
+* **execution:** scrub stateless GitHub App installation tokens from errors ([#760](https://github.com/TestPlanIt/testplanit/issues/760)) ([18f8605](https://github.com/TestPlanIt/testplanit/commit/18f8605bcce3a84ed62b76640e76620016518830))
+
 ## [1.2.5](https://github.com/TestPlanIt/testplanit/compare/v1.2.4...v1.2.5) (2026-11-20)
 
 ### Bug Fixes
