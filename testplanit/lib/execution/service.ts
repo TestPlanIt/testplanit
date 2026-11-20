@@ -68,7 +68,7 @@ export function buildPlanUrl(
  * long opaque hex or base64 blob.
  */
 const SECRET_PATTERNS: RegExp[] = [
-  /\b(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})/g,
+  /\b(gh[pousr]_[A-Za-z0-9._-]{20,}|github_pat_[A-Za-z0-9_]{20,})/g,
   /\b(glpat-[A-Za-z0-9_-]{10,}|glptt-[A-Za-z0-9_-]{10,}|glrt-[A-Za-z0-9_-]{10,})/g,
   /\b(bearer|token|private-token)\s+[A-Za-z0-9._~+/=-]{12,}/gi,
   /\b[A-Fa-f0-9]{40,}\b/g,
