@@ -1,3 +1,9 @@
+## [1.3.0-beta.6](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.5...v1.3.0-beta.6) (2026-11-21)
+
+### Bug Fixes
+
+* **runs:** list step results in step order in the result history ([72ed36a](https://github.com/TestPlanIt/testplanit/commit/72ed36a24d4fd18613b8f6b51562eb2a9b532ab4))
+
 ## [1.3.0-beta.5](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.4...v1.3.0-beta.5) (2026-11-20)
 
 ### Features
