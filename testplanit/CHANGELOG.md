@@ -1,3 +1,17 @@
+## [1.3.0-beta.7](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.6...v1.3.0-beta.7) (2026-11-21)
+
+### Features
+
+* **imports:** connect to Qase and fetch a project's data for import ([ee2de5f](https://github.com/TestPlanIt/testplanit/commit/ee2de5f1a216bf9277861d7f3a214e48da2f8bb7))
+* **imports:** create projects and users from the Qase mapping ([80d57db](https://github.com/TestPlanIt/testplanit/commit/80d57dbd85661016e88e3df31440a804e2d615d5))
+* **imports:** import Qase defects and linked tracker issues ([d160c20](https://github.com/TestPlanIt/testplanit/commit/d160c203816b6dc4dac4f005405340818685766e))
+* **imports:** import Qase milestones, test runs and results ([88bb241](https://github.com/TestPlanIt/testplanit/commit/88bb241f9bad691316481d19258d4ed9a42a9d68))
+* **imports:** map fetched Qase data and import its test cases ([848d1d9](https://github.com/TestPlanIt/testplanit/commit/848d1d949a6c3c06534a99f464b73612ad722948))
+
+### Bug Fixes
+
+* **repository:** show Multi-Select field values when viewing a test case ([e7b8e6c](https://github.com/TestPlanIt/testplanit/commit/e7b8e6cf7d7beabcb74621536c9e02144f411b55))
+
 ## [1.3.0-beta.6](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.5...v1.3.0-beta.6) (2026-11-21)
 
 ### Bug Fixes
