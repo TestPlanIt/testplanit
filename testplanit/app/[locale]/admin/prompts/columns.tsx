@@ -109,7 +109,7 @@ export const useColumns = (
           if (integrationMap.size === 0) {
             return (
               <span className="text-sm text-muted-foreground">
-                {t("llmIntegrationPlaceholder")}
+                {tCommon("labels.access.projectDefault")}
               </span>
             );
           }

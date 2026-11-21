@@ -51,6 +51,7 @@ export function DuplicateResultsTable({
 }: DuplicateResultsTableProps) {
   const t = useTranslations("repository.duplicates");
   const tPriority = useTranslations("common.priority");
+  const tAria = useTranslations("common.aria");
   const queryClient = useQueryClient();
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
@@ -276,8 +277,15 @@ export function DuplicateResultsTable({
   );
 
   const columns = useMemo(
-    () => getColumns(t, tPriority, handleCheckboxClick, handleSelectAllClick),
-    [t, tPriority, handleCheckboxClick, handleSelectAllClick]
+    () =>
+      getColumns(
+        t,
+        tPriority,
+        tAria,
+        handleCheckboxClick,
+        handleSelectAllClick
+      ),
+    [t, tPriority, tAria, handleCheckboxClick, handleSelectAllClick]
   );
 
   const handleRowClick = useCallback(

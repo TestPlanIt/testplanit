@@ -52,6 +52,7 @@ function ConfidenceBadge({
 export const getColumns = (
   t: ReturnType<typeof useTranslations<"repository.duplicates">>,
   tPriority: ReturnType<typeof useTranslations<"common.priority">>,
+  tAria: ReturnType<typeof useTranslations<"common.aria">>,
   onCheckboxClick?: (rowIndex: number, event: React.MouseEvent) => void,
   onSelectAllClick?: (event: React.MouseEvent) => void
 ): ColumnDef<DuplicateCandidateRow>[] => [
@@ -80,7 +81,7 @@ export const getColumns = (
           e.stopPropagation();
           onCheckboxClick?.(row.index, e);
         }}
-        aria-label={t("selectRow")}
+        aria-label={tAria("selectRow")}
       />
     ),
     enableSorting: false,
