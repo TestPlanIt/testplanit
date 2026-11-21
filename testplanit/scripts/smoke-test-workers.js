@@ -43,6 +43,7 @@ const WORKERS = [
   "forecastWorker",
   "syncWorker",
   "testmoImportWorker",
+  "qaseImportWorker",
   "elasticsearchReindexWorker",
   "auditLogWorker",
   "autoTagWorker",

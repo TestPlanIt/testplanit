@@ -23,6 +23,7 @@ const entryPoints = [
   "workers/forecastWorker.ts",
   "workers/syncWorker.ts",
   "workers/testmoImportWorker.ts",
+  "workers/qaseImportWorker.ts",
   "workers/elasticsearchReindexWorker.ts",
   "workers/auditLogWorker.ts",
   "workers/autoTagWorker.ts",

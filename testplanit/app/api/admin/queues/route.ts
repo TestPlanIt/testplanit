@@ -54,6 +54,7 @@ async function handleGET(request: NextRequest) {
       emails: 3,
       "issue-sync": 2,
       "testmo-imports": 1,
+      "qase-imports": 1,
       "elasticsearch-reindex": 2,
       "audit-logs": 5,
       "budget-alerts": 3,
@@ -99,6 +100,11 @@ async function handleGET(request: NextRequest) {
       "testmo-imports": parseInt(
         process.env.TESTMO_IMPORT_CONCURRENCY ||
           String(defaultConcurrency["testmo-imports"]),
+        10
+      ),
+      "qase-imports": parseInt(
+        process.env.QASE_IMPORT_CONCURRENCY ||
+          String(defaultConcurrency["qase-imports"]),
         10
       ),
       "elasticsearch-reindex": parseInt(

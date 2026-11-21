@@ -169,6 +169,20 @@ module.exports = {
       },
     },
     {
+      name: "qase-import-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/qaseImportWorker.ts"
+        : "dist/workers/qaseImportWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("1G"),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
       name: "sync-worker",
       script: isDev ? "tsx" : "node",
       args: isDev ? "workers/syncWorker.ts" : "dist/workers/syncWorker.js",

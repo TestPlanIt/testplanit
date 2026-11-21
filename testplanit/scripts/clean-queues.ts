@@ -26,6 +26,7 @@ import {
   REPO_CACHE_QUEUE_NAME,
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
+  QASE_IMPORT_QUEUE_NAME,
 } from "../lib/queueNames";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -36,6 +37,7 @@ const ALL_QUEUES = [
   EMAIL_QUEUE_NAME,
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
+  QASE_IMPORT_QUEUE_NAME,
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
   AUDIT_LOG_QUEUE_NAME,
   BUDGET_ALERT_QUEUE_NAME,

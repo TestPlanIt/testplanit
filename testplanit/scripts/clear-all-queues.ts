@@ -7,6 +7,7 @@ import {
   NOTIFICATION_QUEUE_NAME,
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
+  QASE_IMPORT_QUEUE_NAME,
 } from "../lib/queues";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -17,6 +18,7 @@ const QUEUE_NAMES = [
   EMAIL_QUEUE_NAME,
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
+  QASE_IMPORT_QUEUE_NAME,
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
   AUTO_TAG_QUEUE_NAME,
 ];

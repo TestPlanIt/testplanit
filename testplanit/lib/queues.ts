@@ -19,6 +19,7 @@ import {
   STORAGE_SCAN_QUEUE_NAME,
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
+  QASE_IMPORT_QUEUE_NAME,
   WEBHOOK_DISPATCH_QUEUE_NAME,
   EXECUTION_DISPATCH_QUEUE_NAME,
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
@@ -37,6 +38,7 @@ export {
   EMAIL_QUEUE_NAME,
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
+  QASE_IMPORT_QUEUE_NAME,
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
   AUDIT_LOG_QUEUE_NAME,
   BUDGET_ALERT_QUEUE_NAME,
@@ -85,6 +87,7 @@ let _notificationQueue: Queue | null = null;
 let _emailQueue: Queue | null = null;
 let _syncQueue: Queue | null = null;
 let _testmoImportQueue: Queue | null = null;
+let _qaseImportQueue: Queue | null = null;
 let _elasticsearchReindexQueue: Queue | null = null;
 let _auditLogQueue: Queue | null = null;
 let _budgetAlertQueue: Queue | null = null;
@@ -261,6 +264,37 @@ export function getTestmoImportQueue(): Queue | null {
   });
 
   return _testmoImportQueue;
+}
+
+/**
+ * Get the Qase import queue instance (lazy initialization)
+ */
+export function getQaseImportQueue(): Queue | null {
+  if (_qaseImportQueue) return _qaseImportQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${QASE_IMPORT_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  _qaseImportQueue = new Queue(QASE_IMPORT_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: {
+      ...NO_RETRY_LIGHT_RETENTION,
+      removeOnComplete: { age: 3600 * 24 * 30, count: 100 },
+      removeOnFail: { age: 3600 * 24 * 30 },
+    },
+  });
+
+  console.log(`Queue "${QASE_IMPORT_QUEUE_NAME}" initialized.`);
+
+  _qaseImportQueue.on("error", (error) => {
+    console.error(`Queue ${QASE_IMPORT_QUEUE_NAME} error:`, error);
+  });
+
+  return _qaseImportQueue;
 }
 
 /**
@@ -874,6 +908,7 @@ export function getAllQueues() {
     emailQueue: getEmailQueue(),
     syncQueue: getSyncQueue(),
     testmoImportQueue: getTestmoImportQueue(),
+    qaseImportQueue: getQaseImportQueue(),
     elasticsearchReindexQueue: getElasticsearchReindexQueue(),
     auditLogQueue: getAuditLogQueue(),
     budgetAlertQueue: getBudgetAlertQueue(),

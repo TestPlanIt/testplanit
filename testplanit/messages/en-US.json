@@ -4900,8 +4900,18 @@
     },
     "imports": {
       "description": "Bring data from external test management tools into TestPlanIt.",
-      "tabs": {
-        "testmoJson": "Testmo JSON"
+      "sources": {
+        "heading": "Choose where to import from",
+        "importingFrom": "Importing from {source}",
+        "change": "Choose another source",
+        "testmo": {
+          "title": "Testmo",
+          "description": "Upload a JSON export file from Testmo."
+        },
+        "qase": {
+          "title": "Qase",
+          "description": "Connect to Qase with an API token and pick the projects to bring over."
+        }
       },
       "testmo": {
         "intro": "Upload a Testmo JSON export to analyze its contents and prepare your migration mapping.",
@@ -5233,6 +5243,73 @@
         },
         "nextSteps": "After the background import completes you can review the migrated data from the target projects.",
         "nextStepsDescription": "Background imports run asynchronously. You can monitor the status above or refresh the page to view updates."
+      },
+      "qase": {
+        "intro": "Connect to Qase with an API token, choose the projects to bring over, and TestPlanIt copies their data for you to review before anything is imported.",
+        "steps": {
+          "connect": "Connect to Qase",
+          "fetch": "Fetch data",
+          "mapping": "Configure mapping",
+          "import": "Monitor import"
+        },
+        "tokenLabel": "Qase API token",
+        "tokenHelp": "Create a token in Qase under your profile's API tokens. TestPlanIt stores it encrypted and deletes it when the import ends.",
+        "hostLabel": "Qase API host",
+        "hostHelp": "Leave this as it is unless you use Qase Enterprise on your own domain.",
+        "connect": "Connect",
+        "connecting": "Connecting…",
+        "projectsHeading": "Projects to import",
+        "projectsEmpty": "This token cannot read any Qase projects.",
+        "projectCounts": "{cases, plural, one {# test case} other {# test cases}} · {suites, plural, one {# suite} other {# suites}} · {runs, plural, one {# run} other {# runs}}",
+        "fetch": "Fetch data",
+        "fetching": "Starting…",
+        "fetchDescription": "TestPlanIt is copying the selected projects from Qase. Nothing is added to your projects yet.",
+        "fetchReady": "The data is copied and ready to be mapped.",
+        "fetchCanceled": "This fetch was canceled and the copied data was removed.",
+        "fetchFailed": "The fetch from Qase failed.",
+        "entityColumn": "Data",
+        "countColumn": "Records",
+        "countOfTotal": "{fetched, number} of {total, number}",
+        "entities": {
+          "user": "Users",
+          "custom_field": "Custom fields",
+          "shared_parameter": "Shared parameters",
+          "suite": "Suites",
+          "shared_step": "Shared steps",
+          "case": "Test cases",
+          "milestone": "Milestones",
+          "environment": "Environments",
+          "configuration": "Configuration groups",
+          "run": "Test runs",
+          "result": "Results",
+          "defect": "Defects"
+        },
+        "status": {
+          "QUEUED": "Queued",
+          "RUNNING": "Running",
+          "READY": "Ready",
+          "COMPLETED": "Completed",
+          "FAILED": "Failed",
+          "CANCELED": "Canceled"
+        },
+        "cancel": "Cancel fetch",
+        "cancelRequested": "Cancel requested",
+        "retry": "Try again",
+        "startOver": "Start a new import",
+        "previousHeading": "Previous imports",
+        "previousPlaceholder": "Select a previous import",
+        "previousEmpty": "No previous imports found for your account.",
+        "deleteJob": "Delete import",
+        "deleteConfirmTitle": "Delete this import?",
+        "deleteConfirmDescription": "The data copied from Qase for this import will be removed. Anything already imported into TestPlanIt stays.",
+        "errors": {
+          "unauthorized": "Qase rejected the API token. Check that it was copied in full and has not been revoked.",
+          "invalid_host": "The Qase API host is not valid. Enter a host such as api.qase.io.",
+          "rate_limited": "Qase's rate limit was reached. Wait a minute and try again.",
+          "request_failed": "Qase could not be reached. Try again in a moment.",
+          "bad_response": "Qase sent a response TestPlanIt could not read.",
+          "generic": "Something went wrong. Try again."
+        }
       },
       "comingSoon": {
         "description": "Imports for TestRail, Zephyr, and other tools are on the roadmap."
@@ -7143,6 +7220,7 @@
         "emails": "Email Queue",
         "issue-sync": "Issue Synchronization",
         "testmo-imports": "Testmo Imports",
+        "qase-imports": "Qase Imports",
         "elasticsearch-reindex": "Elasticsearch Reindex",
         "audit-logs": "Audit Logs",
         "budget-alerts": "Budget Alerts",

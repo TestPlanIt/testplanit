@@ -4,6 +4,7 @@ export const NOTIFICATION_QUEUE_NAME = "notifications";
 export const EMAIL_QUEUE_NAME = "emails";
 export const SYNC_QUEUE_NAME = "issue-sync";
 export const TESTMO_IMPORT_QUEUE_NAME = "testmo-imports";
+export const QASE_IMPORT_QUEUE_NAME = "qase-imports";
 export const ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
 export const AUDIT_LOG_QUEUE_NAME = "audit-logs";
 export const BUDGET_ALERT_QUEUE_NAME = "budget-alerts";
@@ -86,6 +87,7 @@ export const ALL_QUEUE_NAMES = [
   EMAIL_QUEUE_NAME,
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
+  QASE_IMPORT_QUEUE_NAME,
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
   AUDIT_LOG_QUEUE_NAME,
   BUDGET_ALERT_QUEUE_NAME,

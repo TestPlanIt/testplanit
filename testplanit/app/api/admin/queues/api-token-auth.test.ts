@@ -56,6 +56,7 @@ describe("Admin Queue Routes - API Token Authentication", () => {
       emailQueue: null,
       syncQueue: null,
       testmoImportQueue: null,
+      qaseImportQueue: null,
       elasticsearchReindexQueue: null,
     });
   });
