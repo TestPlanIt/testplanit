@@ -40,7 +40,7 @@ export async function processor(job: Job<QaseImportJobData>) {
       await runQaseImport({
         db,
         jobId,
-        onCompleted: async (projectIds) => {
+        onCompleted: async (projectIds, createdProjects) => {
           const importJob = await db.qaseImportJob.findUnique({
             where: { id: jobId },
             select: { createdById: true, processedCount: true },
@@ -57,6 +57,19 @@ export async function processor(job: Job<QaseImportJobData>) {
           const reindexQueue = getElasticsearchReindexQueue();
           if (!reindexQueue) {
             return;
+          }
+          if (createdProjects) {
+            await enqueueWithAuditContext(
+              reindexQueue,
+              `reindex-after-qase-import-${jobId}-projects`,
+              {
+                entityType: "projects" as const,
+                userId: importJob.createdById,
+                tenantId: job.data.tenantId,
+              }
+            ).catch((error) => {
+              console.error("Failed to queue reindex after Qase import", error);
+            });
           }
           for (const projectId of projectIds) {
             for (const entityType of [

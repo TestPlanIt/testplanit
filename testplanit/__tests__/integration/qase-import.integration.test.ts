@@ -23,7 +23,10 @@ import {
 
 import { createRawDbClient } from "~/lib/rawDbClient";
 import type { DbClient } from "~/lib/zenstack";
-import type { QaseMappingConfiguration } from "~/services/imports/qase/mapping";
+import {
+  unmappedQaseUser,
+  type QaseMappingConfiguration,
+} from "~/services/imports/qase/mapping";
 import { runQaseImport } from "~/services/imports/qase/runQaseImport";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
@@ -139,6 +142,7 @@ const CASES = [
     title: "Sign in with a valid password",
     suite_id: 2,
     position: 1,
+    member_id: 1,
     description: `Checks a normal sign-in.\n\n![diagram](${DIAGRAM})`,
     preconditions: "The user `demo` exists.",
     status: 0,
@@ -328,7 +332,13 @@ describeIntegration("Qase import (live DB)", () => {
   };
 
   /** A fetched job, its target project and a complete mapping. */
-  async function stageJob(overrides: Record<string, unknown> = {}) {
+  async function stageJob(
+    overrides: Record<string, unknown> = {},
+    adjust: (
+      configuration: QaseMappingConfiguration,
+      label: string
+    ) => void = () => {}
+  ) {
     run += 1;
     const label = `${STAMP}-${run}`;
     const project = await raw.projects.create({
@@ -337,8 +347,8 @@ describeIntegration("Qase import (live DB)", () => {
     projectIds.push(project.id);
 
     const configuration: QaseMappingConfiguration = {
-      projects: { SHOP: { mappedTo: project.id } },
-      users: { "1": { mappedTo: null } },
+      projects: { SHOP: { action: "map", mappedTo: project.id, name: "" } },
+      users: { "1": unmappedQaseUser() },
       caseStatuses: {
         "0": { mappedTo: states[0] },
         "1": { mappedTo: states[1] },
@@ -384,6 +394,8 @@ describeIntegration("Qase import (live DB)", () => {
         },
       },
     };
+
+    adjust(configuration, label);
 
     const job = await raw.qaseImportJob.create({
       data: {
@@ -575,8 +587,12 @@ describeIntegration("Qase import (live DB)", () => {
     // the suites sharing this database do not pick it up.
     await raw.qaseImportJob.deleteMany({ where: { id: { in: jobIds } } });
     await raw.projects.updateMany({
-      where: { id: { in: projectIds } },
+      where: { name: { contains: STAMP } },
       data: { isDeleted: true },
+    });
+    await raw.user.updateMany({
+      where: { email: { contains: STAMP } },
+      data: { isDeleted: true, isActive: false },
     });
     await raw.templates.updateMany({
       where: { templateName: { contains: STAMP } },
@@ -611,7 +627,7 @@ describeIntegration("Qase import (live DB)", () => {
     });
     expect(job.activityLog).toEqual([]);
     expect(await raw.qaseImportStaging.count({ where: { jobId } })).toBe(0);
-    expect(onCompleted).toHaveBeenCalledWith([projectId]);
+    expect(onCompleted).toHaveBeenCalledWith([projectId], false);
 
     const cases = await readCases(projectId);
     expect(cases.map((entry) => entry.name)).toEqual(
@@ -759,6 +775,188 @@ describeIntegration("Qase import (live DB)", () => {
     ).toBe(first.caseFieldValues.length);
   });
 
+  describe("creating projects and users", () => {
+    const newUser = (label: string) => ({
+      ...unmappedQaseUser(),
+      action: "create" as const,
+      name: "Qase Owner",
+      email: `owner-${label}@qase.test`,
+      access: "PROJECTADMIN" as const,
+      isApi: true,
+    });
+    const asNew = (configuration: QaseMappingConfiguration, label: string) => {
+      configuration.projects.SHOP = {
+        action: "create",
+        mappedTo: null,
+        name: `Shop from Qase ${label}`,
+      };
+      configuration.users["1"] = newUser(label);
+    };
+
+    it("creates the project and the user the mapping asks for", async () => {
+      const { jobId, projectId: unused, label } = await stageJob({}, asNew);
+      const onCompleted = vi.fn();
+
+      await runQaseImport({ db, jobId, copierOptions, onCompleted });
+
+      expect((await readJob(jobId)).status).toBe("COMPLETED");
+
+      const project = await raw.projects.findUniqueOrThrow({
+        where: { name: `Shop from Qase ${label}` },
+        include: {
+          repositories: true,
+          assignedWorkflows: true,
+          assignedStatuses: true,
+          milestoneTypes: true,
+          assignedTemplates: { include: { template: true } },
+        },
+      });
+      expect(project.id).not.toBe(unused);
+      expect(project.createdBy).toBe(adminId);
+      expect(project.repositories).toHaveLength(1);
+      // Set up like a project from the wizard with its defaults.
+      expect(project.assignedWorkflows).toHaveLength(
+        await raw.workflows.count({
+          where: { isDeleted: false, isEnabled: true },
+        })
+      );
+      expect(project.assignedStatuses).toHaveLength(
+        await raw.status.count({ where: { isDeleted: false, isEnabled: true } })
+      );
+      expect(project.milestoneTypes).toHaveLength(
+        await raw.milestoneTypes.count({ where: { isDeleted: false } })
+      );
+      const templateNames = project.assignedTemplates.map(
+        (entry) => entry.template.templateName
+      );
+      expect(templateNames).toContain(`Qase ${label}`);
+      expect(templateNames).toHaveLength(2);
+      expect(project.defaultTemplateId).not.toBeNull();
+      expect(onCompleted).toHaveBeenCalledWith([project.id], true);
+
+      const user = await raw.user.findUniqueOrThrow({
+        where: { email: `owner-${label}@qase.test` },
+        include: { role: true },
+      });
+      expect(user).toMatchObject({
+        name: "Qase Owner",
+        access: "PROJECTADMIN",
+        isActive: true,
+        isApi: true,
+        createdById: adminId,
+      });
+      expect(user.role.isDefault).toBe(true);
+      expect(user.emailVerified).not.toBeNull();
+      const [{ password }] = await raw.$queryRaw<
+        Array<{ password: string | null }>
+      >`SELECT password FROM "User" WHERE id = ${user.id}`;
+      expect(password).toMatch(/^\$2[aby]\$/);
+
+      // The case a Qase user wrote is credited to the new account; the rest
+      // stay with the importer.
+      const cases = await raw.repositoryCases.findMany({
+        where: { projectId: project.id },
+        orderBy: { id: "asc" },
+        select: { creatorId: true },
+      });
+      expect(cases.map((entry) => entry.creatorId)).toEqual([
+        user.id,
+        adminId,
+        adminId,
+      ]);
+      expect(
+        await raw.repositoryCases.count({ where: { projectId: unused } })
+      ).toBe(0);
+    });
+
+    it("uses the account that already has the address", async () => {
+      const admin = await raw.user.findUniqueOrThrow({
+        where: { id: adminId },
+      });
+      const before = await raw.user.count();
+      const { jobId, projectId } = await stageJob(
+        {},
+        (configuration, label) => {
+          configuration.users["1"] = {
+            ...newUser(label),
+            email: admin.email.toUpperCase(),
+          };
+        }
+      );
+
+      await runQaseImport({ db, jobId, copierOptions });
+
+      expect((await readJob(jobId)).status).toBe("COMPLETED");
+      expect(await raw.user.count()).toBe(before);
+      const unchanged = await raw.user.findUniqueOrThrow({
+        where: { id: adminId },
+      });
+      expect(unchanged.access).toBe(admin.access);
+      expect(unchanged.isApi).toBe(admin.isApi);
+      expect(await raw.repositoryCases.count({ where: { projectId } })).toBe(3);
+    });
+
+    it("does not create them again when a failed import continues", async () => {
+      const { jobId, label } = await stageJob({}, asNew);
+      saveProgressEveryTime();
+      let failed = false;
+      const failing = interceptProgress((casesDone) => {
+        if (!failed && casesDone >= 1) {
+          failed = true;
+          throw new Error("Connection lost");
+        }
+      });
+
+      await expect(
+        runQaseImport({ db: failing, jobId, copierOptions })
+      ).rejects.toThrow("Connection lost");
+      vi.restoreAllMocks();
+      await runQaseImport({ db, jobId, copierOptions });
+
+      expect((await readJob(jobId)).status).toBe("COMPLETED");
+      const projects = await raw.projects.findMany({
+        where: { name: { contains: `Shop from Qase ${label}` } },
+        select: { id: true },
+      });
+      expect(projects).toHaveLength(1);
+      expect(
+        await raw.user.count({
+          where: { email: `owner-${label}@qase.test` },
+        })
+      ).toBe(1);
+      expect(
+        await raw.repositoryCases.count({
+          where: { projectId: projects[0].id },
+        })
+      ).toBe(3);
+      expect(
+        await raw.repositories.count({ where: { projectId: projects[0].id } })
+      ).toBe(1);
+    });
+
+    it("refuses a name that a deleted project still holds", async () => {
+      const taken = `Deleted shop ${STAMP}`;
+      await raw.projects.create({
+        data: { name: taken, createdBy: adminId, isDeleted: true },
+      });
+      const { jobId } = await stageJob({}, (configuration) => {
+        configuration.projects.SHOP = {
+          action: "create",
+          mappedTo: null,
+          name: taken,
+        };
+      });
+
+      await expect(runQaseImport({ db, jobId, copierOptions })).rejects.toThrow(
+        /deleted project/
+      );
+
+      const job = await readJob(jobId);
+      expect(job.status).toBe("FAILED");
+      expect(job.error).toContain(taken);
+    });
+  });
+
   it("continues a failed import without writing anything twice", async () => {
     const { jobId, projectId } = await stageJob();
     saveProgressEveryTime();
@@ -869,7 +1067,7 @@ describeIntegration("Qase import (live DB)", () => {
       data: {
         configuration: {
           ...(job.configuration as object),
-          projects: { SHOP: { mappedTo: null } },
+          projects: { SHOP: { action: "map", mappedTo: null, name: "" } },
         },
       },
     });

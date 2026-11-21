@@ -24,6 +24,7 @@ describe("QaseFileCopier", () => {
       lookup,
       upload,
       onCopied,
+      retryDelayMs: 0,
     });
     return { copier, upload, onCopied };
   };
@@ -118,5 +119,56 @@ describe("QaseFileCopier", () => {
       await copier.copy("attachment", "https://files.test/a", "a")
     ).toBeNull();
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("tries a dropped or busy download again before giving up", async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("fetch failed"))
+      .mockResolvedValueOnce(response("busy", { status: 503 }))
+      .mockResolvedValueOnce(response("hello")) as unknown as typeof fetch;
+    const { copier, upload } = build(fetchImpl);
+
+    const copied = await copier.copy(
+      "attachment",
+      "https://files.test/a.txt",
+      "a.txt"
+    );
+
+    expect(copied?.size).toBe(5);
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(upload).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives up after three failed attempts and does not ask again", async () => {
+    const fetchImpl = vi.fn(async () => {
+      throw new TypeError("fetch failed");
+    }) as unknown as typeof fetch;
+    const { copier, upload } = build(fetchImpl);
+
+    expect(
+      await copier.copy("attachment", "https://files.test/a.txt", "a.txt")
+    ).toBeNull();
+    expect(
+      await copier.copy("attachment", "https://files.test/a.txt", "a.txt")
+    ).toBeNull();
+
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(copier.failureOf("attachment", "https://files.test/a.txt")).toBe(
+      "fetch failed"
+    );
+    expect(upload).not.toHaveBeenCalled();
+  });
+
+  it("does not repeat a download the host refuses", async () => {
+    const fetchImpl = vi.fn(async () =>
+      response("gone", { status: 404 })
+    ) as unknown as typeof fetch;
+    const { copier } = build(fetchImpl);
+
+    expect(
+      await copier.copy("attachment", "https://files.test/a.txt", "a.txt")
+    ).toBeNull();
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });

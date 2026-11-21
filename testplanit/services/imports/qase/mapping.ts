@@ -57,6 +57,7 @@ export interface QaseAnalysis {
     }[];
     templates: { id: number; name: string }[];
     caseFields: QaseExistingField[];
+    roles: { id: number; name: string; isDefault: boolean }[];
   };
   /** False when no file storage is set up, so attachments cannot be copied. */
   storageConfigured: boolean;
@@ -72,11 +73,42 @@ export interface QaseFieldMapping {
   name: string;
 }
 
+export type QaseProjectAction = "map" | "create";
+export type QaseUserAction = "map" | "create";
+export const QASE_USER_ACCESS = [
+  "NONE",
+  "USER",
+  "PROJECTADMIN",
+  "ADMIN",
+] as const;
+export type QaseUserAccess = (typeof QASE_USER_ACCESS)[number];
+
+export interface QaseProjectMapping {
+  action: QaseProjectAction;
+  mappedTo: number | null;
+  /** Name of the project to create. */
+  name: string;
+}
+
+export interface QaseUserMapping {
+  action: QaseUserAction;
+  /** With "map", null means the person importing. */
+  mappedTo: string | null;
+  /** The account to create. */
+  name: string;
+  email: string;
+  access: QaseUserAccess;
+  /** Null means the default role. */
+  roleId: number | null;
+  isActive: boolean;
+  isApi: boolean;
+}
+
 export interface QaseMappingConfiguration {
-  /** Qase project code to TestPlanIt project id. */
-  projects: Record<string, { mappedTo: number | null }>;
-  /** Qase user id to TestPlanIt user id; null means the person importing. */
-  users: Record<string, { mappedTo: string | null }>;
+  /** By Qase project code. */
+  projects: Record<string, QaseProjectMapping>;
+  /** By Qase user id. */
+  users: Record<string, QaseUserMapping>;
   /** Qase case status id to a workflow state id. */
   caseStatuses: Record<string, { mappedTo: number | null }>;
   template: {
@@ -89,6 +121,12 @@ export interface QaseMappingConfiguration {
 
 export type QaseMappingProblem =
   | { code: "project_unmapped"; subject: string }
+  | { code: "project_name_missing"; subject: string }
+  | { code: "project_name_taken"; subject: string }
+  | { code: "user_email_missing"; subject: string }
+  | { code: "user_email_invalid"; subject: string }
+  | { code: "user_email_reused"; subject: string }
+  | { code: "user_role_missing"; subject: string }
   | { code: "status_unmapped"; subject: string }
   | { code: "template_missing" }
   | { code: "template_name_taken"; subject: string }
@@ -111,6 +149,27 @@ const toId = (value: unknown): number | null =>
     ? value
     : null;
 
+const toName = (value: unknown) =>
+  typeof value === "string" ? value.trim().slice(0, 255) : "";
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** A user mapping that leaves the Qase user to the person importing. */
+export const unmappedQaseUser = (): QaseUserMapping => ({
+  action: "map",
+  mappedTo: null,
+  name: "",
+  email: "",
+  access: "USER",
+  roleId: null,
+  isActive: true,
+  isApi: false,
+});
+
+/** The label a Qase user is shown and reported by. */
+export const qaseUserLabel = (user: QaseSourceUser) =>
+  user.name || user.email || user.id;
+
 /** Coerces untrusted JSON into a configuration; unknown parts are dropped. */
 export function normalizeQaseMapping(value: unknown): QaseMappingConfiguration {
   const input = isRecord(value) ? value : {};
@@ -118,16 +177,29 @@ export function normalizeQaseMapping(value: unknown): QaseMappingConfiguration {
 
   const projects: QaseMappingConfiguration["projects"] = {};
   for (const [code, entry] of Object.entries(section("projects"))) {
+    const raw = isRecord(entry) ? entry : {};
     projects[code] = {
-      mappedTo: toId(isRecord(entry) ? entry.mappedTo : null),
+      action: raw.action === "create" ? "create" : "map",
+      mappedTo: toId(raw.mappedTo),
+      name: toName(raw.name),
     };
   }
 
   const users: QaseMappingConfiguration["users"] = {};
   for (const [id, entry] of Object.entries(section("users"))) {
-    const mappedTo = isRecord(entry) ? entry.mappedTo : null;
+    const raw = isRecord(entry) ? entry : {};
     users[id] = {
-      mappedTo: typeof mappedTo === "string" && mappedTo ? mappedTo : null,
+      action: raw.action === "create" ? "create" : "map",
+      mappedTo:
+        typeof raw.mappedTo === "string" && raw.mappedTo ? raw.mappedTo : null,
+      name: toName(raw.name),
+      email: toName(raw.email).toLowerCase(),
+      access: QASE_USER_ACCESS.includes(raw.access as QaseUserAccess)
+        ? (raw.access as QaseUserAccess)
+        : "USER",
+      roleId: toId(raw.roleId),
+      isActive: raw.isActive !== false,
+      isApi: raw.isApi === true,
     };
   }
 
@@ -173,7 +245,9 @@ export function buildDefaultQaseMapping(
     const match = existing.projects.find((candidate) =>
       sameName(candidate.name, project.title)
     );
-    projects[project.code] = { mappedTo: match?.id ?? null };
+    projects[project.code] = match
+      ? { action: "map", mappedTo: match.id, name: "" }
+      : { action: "create", mappedTo: null, name: project.title.trim() };
   }
 
   const users: QaseMappingConfiguration["users"] = {};
@@ -181,7 +255,18 @@ export function buildDefaultQaseMapping(
     const match = existing.users.find(
       (candidate) => !!user.email && sameName(candidate.email, user.email)
     );
-    users[user.id] = { mappedTo: match?.id ?? null };
+    const email = user.email.trim().toLowerCase();
+    // A Qase user TestPlanIt does not know is created; without an email
+    // address there is nothing to create, so the importer stands in.
+    users[user.id] =
+      match || !email
+        ? { ...unmappedQaseUser(), mappedTo: match?.id ?? null }
+        : {
+            ...unmappedQaseUser(),
+            action: "create",
+            name: user.name.trim() || email,
+            email,
+          };
   }
 
   const defaultWorkflow =
@@ -237,10 +322,52 @@ export function validateQaseMapping(
   const problems: QaseMappingProblem[] = [];
   const { source, existing } = analysis;
 
+  const newProjects: string[] = [];
   for (const project of source.projects) {
-    const target = config.projects[project.code]?.mappedTo ?? null;
+    const mapping = config.projects[project.code];
+    if (mapping?.action === "create") {
+      if (!mapping.name) {
+        problems.push({ code: "project_name_missing", subject: project.title });
+      } else if (
+        existing.projects.some((candidate) =>
+          sameName(candidate.name, mapping.name)
+        ) ||
+        newProjects.some((name) => sameName(name, mapping.name))
+      ) {
+        problems.push({ code: "project_name_taken", subject: mapping.name });
+      } else {
+        newProjects.push(mapping.name);
+      }
+      continue;
+    }
+    const target = mapping?.mappedTo ?? null;
     if (!existing.projects.some((candidate) => candidate.id === target)) {
       problems.push({ code: "project_unmapped", subject: project.title });
+    }
+  }
+
+  const newEmails = new Set<string>();
+  for (const user of source.users) {
+    const mapping = config.users[user.id];
+    if (mapping?.action !== "create") {
+      continue;
+    }
+    const subject = qaseUserLabel(user);
+    if (!mapping.email) {
+      problems.push({ code: "user_email_missing", subject });
+    } else if (!EMAIL_PATTERN.test(mapping.email)) {
+      problems.push({ code: "user_email_invalid", subject });
+    } else if (newEmails.has(mapping.email)) {
+      problems.push({ code: "user_email_reused", subject });
+    } else {
+      newEmails.add(mapping.email);
+    }
+    if (
+      mapping.roleId === null
+        ? !existing.roles.some((role) => role.isDefault)
+        : !existing.roles.some((role) => role.id === mapping.roleId)
+    ) {
+      problems.push({ code: "user_role_missing", subject });
     }
   }
 

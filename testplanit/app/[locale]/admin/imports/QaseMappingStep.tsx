@@ -4,6 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -11,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -19,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { AccessLevelDisplay } from "@/components/tables/AccessLevelDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -30,15 +33,22 @@ import {
   type ReactNode,
 } from "react";
 import LoadingSpinner from "~/components/LoadingSpinner";
+import { RoleNameDisplay } from "~/components/RoleNameDisplay";
 import { TemplateNameDisplay } from "~/components/TemplateNameDisplay";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { apiFetch } from "~/lib/basePath";
 import {
+  QASE_USER_ACCESS,
+  qaseUserLabel,
+  unmappedQaseUser,
   validateQaseMapping,
   type QaseAnalysis,
   type QaseFieldAction,
   type QaseMappingConfiguration,
+  type QaseProjectMapping,
   type QaseSourceField,
+  type QaseUserAccess,
+  type QaseUserMapping,
 } from "~/services/imports/qase/mapping";
 import type { QaseImportJobPayload } from "~/services/imports/qase/types";
 import type { IconName } from "~/types/globals";
@@ -130,6 +140,7 @@ const sameName = (a: string, b: string) =>
 
 export function QaseMappingStep({ jobId, onStarted }: QaseMappingStepProps) {
   const t = useTranslations("admin.imports.qase.mapping");
+  const tCommon = useTranslations("common");
   const [config, setConfig] = useState<QaseMappingConfiguration | null>(null);
   const [starting, setStarting] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -192,6 +203,36 @@ export function QaseMappingStep({ jobId, onStarted }: QaseMappingStepProps) {
             fields: {
               ...current.fields,
               [key]: { ...current.fields[key], ...patch },
+            },
+          }
+        : current
+    );
+
+  const setProject = (code: string, patch: Partial<QaseProjectMapping>) =>
+    setConfig((current) =>
+      current
+        ? {
+            ...current,
+            projects: {
+              ...current.projects,
+              [code]: {
+                ...{ action: "map" as const, mappedTo: null, name: "" },
+                ...current.projects[code],
+                ...patch,
+              },
+            },
+          }
+        : current
+    );
+
+  const setUser = (id: string, patch: Partial<QaseUserMapping>) =>
+    setConfig((current) =>
+      current
+        ? {
+            ...current,
+            users: {
+              ...current.users,
+              [id]: { ...unmappedQaseUser(), ...current.users[id], ...patch },
             },
           }
         : current
@@ -268,50 +309,111 @@ export function QaseMappingStep({ jobId, onStarted }: QaseMappingStepProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-1/2">{t("columnQase")}</TableHead>
+              <TableHead className="w-1/3">{t("columnQase")}</TableHead>
+              <TableHead className="w-1/4">{t("columnAction")}</TableHead>
               <TableHead>{t("columnTestPlanIt")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {source.projects.map((project) => (
-              <TableRow key={project.code}>
-                <TableCell>{`${project.title} (${project.code})`}</TableCell>
-                <TableCell>
-                  <Picker
-                    testId={`qase-map-project-${project.code}`}
-                    options={existing.projects}
-                    value={
-                      existing.projects.find(
-                        (candidate) =>
-                          candidate.id ===
-                          config.projects[project.code]?.mappedTo
-                      ) ?? null
-                    }
-                    onChange={(value) =>
-                      setConfig({
-                        ...config,
-                        projects: {
-                          ...config.projects,
-                          [project.code]: { mappedTo: value?.id ?? null },
-                        },
-                      })
-                    }
-                    getId={(option) => option.id}
-                    getLabel={(option) => option.name}
-                    render={(option) => option.name}
-                    ariaLabel={t("projectPickerLabel", {
-                      name: project.title,
-                    })}
-                    placeholder={t("projectPlaceholder")}
-                  />
-                  {problemFor("project_unmapped", project.title) && (
-                    <p className="mt-1 text-xs text-destructive">
-                      {t("problems.project_unmapped")}
-                    </p>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
+            {source.projects.map((project) => {
+              const mapping = config.projects[project.code] ?? {
+                action: "map" as const,
+                mappedTo: null,
+                name: "",
+              };
+              const projectProblem = (
+                ["project_unmapped", "project_name_missing"] as const
+              ).find((code) => problemFor(code, project.title));
+              const nameTaken =
+                mapping.action === "create" &&
+                problemFor("project_name_taken", mapping.name);
+              return (
+                <TableRow
+                  key={project.code}
+                  data-testid={`qase-map-project-row-${project.code}`}
+                >
+                  <TableCell>{`${project.title} (${project.code})`}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={mapping.action}
+                      onValueChange={(value) =>
+                        setProject(
+                          project.code,
+                          value === "create"
+                            ? {
+                                action: "create",
+                                mappedTo: null,
+                                name: project.title,
+                              }
+                            : { action: "map", mappedTo: null, name: "" }
+                        )
+                      }
+                    >
+                      <SelectTrigger
+                        aria-label={t("projectActionLabel", {
+                          name: project.title,
+                        })}
+                        data-testid={`qase-map-project-action-${project.code}`}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="create">
+                          {t("projectCreate")}
+                        </SelectItem>
+                        <SelectItem value="map">
+                          {t("projectExisting")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    {mapping.action === "create" ? (
+                      <Input
+                        data-testid={`qase-map-project-name-${project.code}`}
+                        aria-label={t("projectNameLabel", {
+                          name: project.title,
+                        })}
+                        maxLength={255}
+                        value={mapping.name}
+                        onChange={(event) =>
+                          setProject(project.code, { name: event.target.value })
+                        }
+                      />
+                    ) : (
+                      <Picker
+                        testId={`qase-map-project-${project.code}`}
+                        options={existing.projects}
+                        value={
+                          existing.projects.find(
+                            (candidate) => candidate.id === mapping.mappedTo
+                          ) ?? null
+                        }
+                        onChange={(value) =>
+                          setProject(project.code, {
+                            mappedTo: value?.id ?? null,
+                          })
+                        }
+                        getId={(option) => option.id}
+                        getLabel={(option) => option.name}
+                        render={(option) => option.name}
+                        ariaLabel={t("projectPickerLabel", {
+                          name: project.title,
+                        })}
+                        placeholder={t("projectPlaceholder")}
+                      />
+                    )}
+                    {(projectProblem || nameTaken) && (
+                      <p className="mt-1 text-xs text-destructive">
+                        {t(
+                          `problems.${nameTaken ? "project_name_taken" : projectProblem!}`
+                        )}
+                      </p>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </Section>
@@ -590,53 +692,227 @@ export function QaseMappingStep({ jobId, onStarted }: QaseMappingStepProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-1/2">{t("columnQase")}</TableHead>
+                <TableHead className="w-1/3">{t("columnQase")}</TableHead>
+                <TableHead className="w-1/4">{t("columnAction")}</TableHead>
                 <TableHead>{t("columnTestPlanIt")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {source.users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div>{user.name || user.email}</div>
-                    {user.name && user.email && (
-                      <div className="text-xs text-muted-foreground">
-                        {user.email}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Picker
-                      testId={`qase-map-user-${user.id}`}
-                      options={existing.users}
-                      value={
-                        existing.users.find(
-                          (candidate) =>
-                            candidate.id === config.users[user.id]?.mappedTo
-                        ) ?? null
-                      }
-                      onChange={(value) =>
-                        setConfig({
-                          ...config,
-                          users: {
-                            ...config.users,
-                            [user.id]: { mappedTo: value?.id ?? null },
-                          },
-                        })
-                      }
-                      getId={(option) => option.id}
-                      getLabel={(option) => `${option.name} ${option.email}`}
-                      render={(option) => (
-                        <UserNameCell userId={option.id} hideLink />
+              {source.users.map((user) => {
+                const mapping = config.users[user.id] ?? unmappedQaseUser();
+                const label = qaseUserLabel(user);
+                const emailProblem = (
+                  [
+                    "user_email_missing",
+                    "user_email_invalid",
+                    "user_email_reused",
+                  ] as const
+                ).find((code) => problemFor(code, label));
+                const emailInUse =
+                  mapping.action === "create" &&
+                  existing.users.some((candidate) =>
+                    sameName(candidate.email, mapping.email)
+                  );
+                return (
+                  <TableRow
+                    key={user.id}
+                    data-testid={`qase-map-user-row-${user.id}`}
+                  >
+                    <TableCell className="align-top">
+                      <div>{user.name || user.email}</div>
+                      {user.name && user.email && (
+                        <div className="text-xs text-muted-foreground">
+                          {user.email}
+                        </div>
                       )}
-                      ariaLabel={t("userPickerLabel", {
-                        name: user.name || user.email,
-                      })}
-                      placeholder={t("userPlaceholder")}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell className="align-top">
+                      <Select
+                        value={mapping.action}
+                        onValueChange={(value) =>
+                          setUser(
+                            user.id,
+                            value === "create"
+                              ? {
+                                  ...unmappedQaseUser(),
+                                  action: "create",
+                                  name: user.name || user.email,
+                                  email: user.email.trim().toLowerCase(),
+                                }
+                              : unmappedQaseUser()
+                          )
+                        }
+                      >
+                        <SelectTrigger
+                          aria-label={t("userActionLabel", { name: label })}
+                          data-testid={`qase-map-user-action-${user.id}`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="create">
+                            {t("userCreate")}
+                          </SelectItem>
+                          <SelectItem value="map">
+                            {t("userExisting")}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      {mapping.action === "map" ? (
+                        <Picker
+                          testId={`qase-map-user-${user.id}`}
+                          options={existing.users}
+                          value={
+                            existing.users.find(
+                              (candidate) => candidate.id === mapping.mappedTo
+                            ) ?? null
+                          }
+                          onChange={(value) =>
+                            setUser(user.id, { mappedTo: value?.id ?? null })
+                          }
+                          getId={(option) => option.id}
+                          getLabel={(option) =>
+                            `${option.name} ${option.email}`
+                          }
+                          render={(option) => (
+                            <UserNameCell userId={option.id} hideLink />
+                          )}
+                          ariaLabel={t("userPickerLabel", { name: label })}
+                          placeholder={t("userPlaceholder")}
+                        />
+                      ) : (
+                        <div
+                          className="grid gap-3 sm:grid-cols-2"
+                          data-testid={`qase-map-user-new-${user.id}`}
+                        >
+                          <div className="space-y-1">
+                            <Label htmlFor={`qase-user-name-${user.id}`}>
+                              {tCommon("name")}
+                            </Label>
+                            <Input
+                              id={`qase-user-name-${user.id}`}
+                              maxLength={255}
+                              value={mapping.name}
+                              onChange={(event) =>
+                                setUser(user.id, { name: event.target.value })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor={`qase-user-email-${user.id}`}>
+                              {tCommon("fields.email")}
+                            </Label>
+                            <Input
+                              id={`qase-user-email-${user.id}`}
+                              type="email"
+                              maxLength={255}
+                              value={mapping.email}
+                              onChange={(event) =>
+                                setUser(user.id, {
+                                  email: event.target.value
+                                    .trim()
+                                    .toLowerCase(),
+                                })
+                              }
+                            />
+                            {emailProblem && (
+                              <p className="text-xs text-destructive">
+                                {t(`problems.${emailProblem}`)}
+                              </p>
+                            )}
+                            {!emailProblem && emailInUse && (
+                              <p className="text-xs text-muted-foreground">
+                                {t("userEmailInUse")}
+                              </p>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <Label>{tCommon("fields.access")}</Label>
+                            <Select
+                              value={mapping.access}
+                              onValueChange={(value) =>
+                                setUser(user.id, {
+                                  access: value as QaseUserAccess,
+                                })
+                              }
+                            >
+                              <SelectTrigger
+                                aria-label={t("userAccessLabel", {
+                                  name: label,
+                                })}
+                              >
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {QASE_USER_ACCESS.map((access) => (
+                                  <SelectItem key={access} value={access}>
+                                    <AccessLevelDisplay accessLevel={access} />
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label>{tCommon("fields.role")}</Label>
+                            <Picker
+                              testId={`qase-map-user-role-${user.id}`}
+                              options={existing.roles}
+                              value={
+                                existing.roles.find((role) =>
+                                  mapping.roleId === null
+                                    ? role.isDefault
+                                    : role.id === mapping.roleId
+                                ) ?? null
+                              }
+                              onChange={(value) =>
+                                setUser(user.id, { roleId: value?.id ?? null })
+                              }
+                              getId={(option) => option.id}
+                              getLabel={(option) => option.name}
+                              render={(option) => (
+                                <RoleNameDisplay role={option} />
+                              )}
+                              ariaLabel={t("userRoleLabel", { name: label })}
+                              placeholder={t("userRolePlaceholder")}
+                            />
+                            {problemFor("user_role_missing", label) && (
+                              <p className="text-xs text-destructive">
+                                {t("problems.user_role_missing")}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id={`qase-user-active-${user.id}`}
+                              checked={mapping.isActive}
+                              onCheckedChange={(checked) =>
+                                setUser(user.id, { isActive: checked })
+                              }
+                            />
+                            <Label htmlFor={`qase-user-active-${user.id}`}>
+                              {tCommon("fields.isActive")}
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id={`qase-user-api-${user.id}`}
+                              checked={mapping.isApi}
+                              onCheckedChange={(checked) =>
+                                setUser(user.id, { isApi: checked })
+                              }
+                            />
+                            <Label htmlFor={`qase-user-api-${user.id}`}>
+                              {tCommon("fields.apiUser")}
+                            </Label>
+                          </div>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </Section>

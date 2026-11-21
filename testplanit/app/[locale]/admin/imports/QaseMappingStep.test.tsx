@@ -155,13 +155,17 @@ const analysis = (overrides: Partial<QaseAnalysis> = {}): QaseAnalysis => ({
         options: [],
       },
     ],
+    roles: [
+      { id: 1, name: "Tester", isDefault: true },
+      { id: 2, name: "Manager", isDefault: false },
+    ],
   },
   storageConfigured: true,
   ...overrides,
 });
 
 const configuration = (): QaseMappingConfiguration => ({
-  projects: { SHOP: { mappedTo: null } },
+  projects: { SHOP: { action: "map", mappedTo: null, name: "" } },
   users: {},
   caseStatuses: { "0": { mappedTo: 3 } },
   template: { action: "create", mappedTo: null, name: "Qase" },
@@ -324,6 +328,181 @@ describe("QaseMappingStep", () => {
     await userEvent.type(name, " (Qase)");
 
     expect(screen.getByTestId("qase-start-import-button")).toBeEnabled();
+  });
+
+  it("creates a project named after the Qase project when asked to", async () => {
+    const { onStarted } = mount({
+      analysis: analysis(),
+      configuration: configuration(),
+    });
+
+    const row = await screen.findByTestId("qase-map-project-row-SHOP");
+    await userEvent.selectOptions(
+      within(row).getAllByRole("combobox")[0],
+      "create"
+    );
+
+    const name = screen.getByTestId("qase-map-project-name-SHOP");
+    expect(name).toHaveValue("Shop");
+    expect(screen.queryByTestId("qase-map-project-SHOP")).toBeNull();
+
+    await userEvent.click(screen.getByTestId("qase-start-import-button"));
+
+    await waitFor(() => expect(onStarted).toHaveBeenCalled());
+    expect(
+      JSON.parse(String(calls("PUT")[0][1].body)).configuration.projects.SHOP
+    ).toEqual({ action: "create", mappedTo: null, name: "Shop" });
+  });
+
+  it("blocks a new project whose name is in use or missing", async () => {
+    const loaded = configuration();
+    loaded.projects.SHOP = {
+      action: "create",
+      mappedTo: null,
+      name: "web shop",
+    };
+    mount({ analysis: analysis(), configuration: loaded });
+
+    const row = await screen.findByTestId("qase-map-project-row-SHOP");
+    expect(row).toHaveTextContent("problems.project_name_taken");
+    expect(screen.getByTestId("qase-start-import-button")).toBeDisabled();
+
+    const name = screen.getByTestId("qase-map-project-name-SHOP");
+    await userEvent.clear(name);
+    expect(row).toHaveTextContent("problems.project_name_missing");
+
+    await userEvent.type(name, "Shop from Qase");
+    expect(screen.getByTestId("qase-start-import-button")).toBeEnabled();
+  });
+
+  describe("users", () => {
+    const withUser = () => {
+      const loaded = analysis();
+      loaded.source.users = [
+        { id: "9", name: "Grace", email: "Grace@Example.test" },
+      ];
+      loaded.existing.users = [
+        { id: "u1", name: "Ada", email: "ada@example.test" },
+      ];
+      return loaded;
+    };
+    const mapped = () => {
+      const loaded = configuration();
+      loaded.projects.SHOP.mappedTo = 7;
+      return loaded;
+    };
+
+    it("offers an existing user, with the importer as the fallback", async () => {
+      const { onStarted } = mount({
+        analysis: withUser(),
+        configuration: mapped(),
+      });
+
+      const picker = within(
+        await screen.findByTestId("qase-map-user-9")
+      ).getByRole("combobox");
+      await waitFor(() =>
+        expect(within(picker).getAllByRole("option")).toHaveLength(2)
+      );
+      await userEvent.selectOptions(picker, "u1");
+      await userEvent.click(screen.getByTestId("qase-start-import-button"));
+
+      await waitFor(() => expect(onStarted).toHaveBeenCalled());
+      expect(
+        JSON.parse(String(calls("PUT")[0][1].body)).configuration.users["9"]
+      ).toMatchObject({ action: "map", mappedTo: "u1" });
+    });
+
+    it("fills in a new user from the Qase user", async () => {
+      const { onStarted } = mount({
+        analysis: withUser(),
+        configuration: mapped(),
+      });
+
+      const row = await screen.findByTestId("qase-map-user-row-9");
+      await userEvent.selectOptions(
+        within(row).getAllByRole("combobox")[0],
+        "create"
+      );
+
+      const form = screen.getByTestId("qase-map-user-new-9");
+      expect(within(form).getByLabelText("common.name")).toHaveValue("Grace");
+      expect(within(form).getByLabelText("common.fields.email")).toHaveValue(
+        "grace@example.test"
+      );
+      // The default role stands in until another one is chosen.
+      const role = within(screen.getByTestId("qase-map-user-role-9")).getByRole(
+        "combobox"
+      );
+      await waitFor(() => expect(role).toHaveValue("1"));
+
+      await userEvent.selectOptions(role, "2");
+      await userEvent.click(
+        within(form).getByLabelText("common.fields.apiUser")
+      );
+      await userEvent.click(screen.getByTestId("qase-start-import-button"));
+
+      await waitFor(() => expect(onStarted).toHaveBeenCalled());
+      expect(
+        JSON.parse(String(calls("PUT")[0][1].body)).configuration.users["9"]
+      ).toEqual({
+        action: "create",
+        mappedTo: null,
+        name: "Grace",
+        email: "grace@example.test",
+        access: "USER",
+        roleId: 2,
+        isActive: true,
+        isApi: true,
+      });
+    });
+
+    it("blocks a new user without a usable email address", async () => {
+      const loaded = mapped();
+      loaded.users["9"] = {
+        action: "create",
+        mappedTo: null,
+        name: "Grace",
+        email: "",
+        access: "USER",
+        roleId: null,
+        isActive: true,
+        isApi: false,
+      };
+      mount({ analysis: withUser(), configuration: loaded });
+
+      const form = await screen.findByTestId("qase-map-user-new-9");
+      expect(form).toHaveTextContent("problems.user_email_missing");
+      expect(screen.getByTestId("qase-start-import-button")).toBeDisabled();
+
+      const email = within(form).getByLabelText("common.fields.email");
+      await userEvent.type(email, "grace");
+      expect(form).toHaveTextContent("problems.user_email_invalid");
+
+      await userEvent.type(email, "@example.test");
+      expect(form).not.toHaveTextContent("problems.");
+      expect(screen.getByTestId("qase-start-import-button")).toBeEnabled();
+    });
+
+    it("says when the address already belongs to a user", async () => {
+      const loaded = mapped();
+      loaded.users["9"] = {
+        action: "create",
+        mappedTo: null,
+        name: "Ada",
+        email: "ada@example.test",
+        access: "USER",
+        roleId: null,
+        isActive: true,
+        isApi: false,
+      };
+      mount({ analysis: withUser(), configuration: loaded });
+
+      expect(
+        await screen.findByTestId("qase-map-user-new-9")
+      ).toHaveTextContent("userEmailInUse");
+      expect(screen.getByTestId("qase-start-import-button")).toBeEnabled();
+    });
   });
 
   it("warns when attachments cannot be copied", async () => {

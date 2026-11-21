@@ -46,6 +46,7 @@ export async function buildQaseAnalysis(
     workflows,
     templates,
     caseFields,
+    roles,
   ] = await Promise.all([
     loadQaseStaged(db, job.id, "user"),
     loadQaseStaged(db, job.id, "system_field"),
@@ -91,6 +92,11 @@ export async function buildQaseAnalysis(
       },
       orderBy: { displayName: "asc" },
     }),
+    db.roles.findMany({
+      where: { isDeleted: false },
+      select: { id: true, name: true, isDefault: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   const users: QaseSourceUser[] = stagedUsers
@@ -130,6 +136,7 @@ export async function buildQaseAnalysis(
           .filter((option) => !option.isDeleted)
           .map((option) => ({ id: option.id, name: option.name })),
       })),
+      roles,
     },
     storageConfigured: isQaseStorageConfigured(),
   };

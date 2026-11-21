@@ -77,6 +77,7 @@ const analysis: QaseAnalysis = {
         options: [{ id: 21, name: "High" }],
       },
     ],
+    roles: [{ id: 1, name: "Tester", isDefault: true }],
   },
   storageConfigured: true,
 };
@@ -128,7 +129,11 @@ describe("Qase mapping route", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.configuration.projects.SHOP).toEqual({ mappedTo: 7 });
+    expect(body.configuration.projects.SHOP).toEqual({
+      action: "map",
+      mappedTo: 7,
+      name: "",
+    });
     expect(body.configuration.fields["system:priority"]).toEqual({
       action: "map",
       mappedTo: 11,
@@ -156,7 +161,11 @@ describe("Qase mapping route", () => {
 
     const body = await (await GET(get(), context)).json();
 
-    expect(body.configuration.projects.SHOP).toEqual({ mappedTo: 999 });
+    expect(body.configuration.projects.SHOP).toEqual({
+      action: "map",
+      mappedTo: 999,
+      name: "",
+    });
     expect(body.problems).toEqual([
       { code: "project_unmapped", subject: "Shop" },
     ]);
@@ -194,7 +203,7 @@ describe("Qase mapping route", () => {
     const saved = mocks.db.qaseImportJob.update.mock.calls[0][0];
     expect(saved.where).toEqual({ id: "job-1" });
     expect(saved.data.configuration).toEqual({
-      projects: { SHOP: { mappedTo: 7 } },
+      projects: { SHOP: { action: "map", mappedTo: 7, name: "" } },
       users: {},
       caseStatuses: { "0": { mappedTo: null } },
       template: { action: "create", mappedTo: null, name: "Qase" },

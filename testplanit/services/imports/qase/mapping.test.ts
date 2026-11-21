@@ -3,6 +3,7 @@ import {
   buildDefaultQaseMapping,
   normalizeQaseMapping,
   validateQaseMapping,
+  unmappedQaseUser,
   type QaseAnalysis,
 } from "./mapping";
 
@@ -19,7 +20,11 @@ const analysis: QaseAnalysis = {
         defects: 0,
       },
     ],
-    users: [{ id: "1", name: "Ada", email: "ADA@example.test" }],
+    users: [
+      { id: "1", name: "Ada", email: "ADA@example.test" },
+      { id: "2", name: "Grace", email: "Grace@example.test" },
+      { id: "3", name: "No Address", email: "" },
+    ],
     caseStatuses: [
       { id: "0", title: "Actual" },
       { id: "1", title: "Draft" },
@@ -81,6 +86,10 @@ const analysis: QaseAnalysis = {
         options: [],
       },
     ],
+    roles: [
+      { id: 1, name: "Tester", isDefault: true },
+      { id: 2, name: "Manager", isDefault: false },
+    ],
   },
   storageConfigured: true,
 };
@@ -89,8 +98,42 @@ describe("buildDefaultQaseMapping", () => {
   const config = buildDefaultQaseMapping(analysis);
 
   it("matches projects by name and users by email, ignoring case", () => {
-    expect(config.projects.WEB.mappedTo).toBe(5);
-    expect(config.users["1"].mappedTo).toBe("u1");
+    expect(config.projects.WEB).toEqual({
+      action: "map",
+      mappedTo: 5,
+      name: "",
+    });
+    expect(config.users["1"]).toEqual({
+      ...unmappedQaseUser(),
+      mappedTo: "u1",
+    });
+  });
+
+  it("proposes a new project when none has the Qase project's name", () => {
+    const unmatched = buildDefaultQaseMapping({
+      ...analysis,
+      existing: { ...analysis.existing, projects: [] },
+    });
+    expect(unmatched.projects.WEB).toEqual({
+      action: "create",
+      mappedTo: null,
+      name: "Web Shop",
+    });
+  });
+
+  it("proposes a new user for an unknown email address", () => {
+    expect(config.users["2"]).toEqual({
+      action: "create",
+      mappedTo: null,
+      name: "Grace",
+      email: "grace@example.test",
+      access: "USER",
+      roleId: null,
+      isActive: true,
+      isApi: false,
+    });
+    // Nothing to create an account from: the importer stands in.
+    expect(config.users["3"]).toEqual(unmappedQaseUser());
   });
 
   it("maps a status to the state of the same name, else the default state", () => {
@@ -131,12 +174,89 @@ describe("validateQaseMapping", () => {
 
   it("reports an unmapped project and status", () => {
     const config = valid();
-    config.projects.WEB.mappedTo = null;
+    config.projects.WEB = { action: "map", mappedTo: null, name: "" };
     config.caseStatuses["0"].mappedTo = 999;
     expect(validateQaseMapping(config, analysis)).toEqual([
       { code: "project_unmapped", subject: "Web Shop" },
       { code: "status_unmapped", subject: "Actual" },
     ]);
+  });
+
+  it("reports a new project without a name or with a name in use", () => {
+    const config = valid();
+    config.projects.WEB = { action: "create", mappedTo: null, name: "" };
+    expect(validateQaseMapping(config, analysis)).toEqual([
+      { code: "project_name_missing", subject: "Web Shop" },
+    ]);
+    config.projects.WEB.name = "WEB SHOP";
+    expect(validateQaseMapping(config, analysis)).toEqual([
+      { code: "project_name_taken", subject: "WEB SHOP" },
+    ]);
+    config.projects.WEB.name = "Web Shop from Qase";
+    expect(validateQaseMapping(config, analysis)).toEqual([]);
+  });
+
+  it("reports two Qase projects that would create the same project", () => {
+    const two: QaseAnalysis = {
+      ...analysis,
+      source: {
+        ...analysis.source,
+        projects: [
+          ...analysis.source.projects,
+          { ...analysis.source.projects[0], code: "API", title: "API" },
+        ],
+      },
+    };
+    const config = buildDefaultQaseMapping(two);
+    config.projects.WEB = { action: "create", mappedTo: null, name: "Shop" };
+    config.projects.API = { action: "create", mappedTo: null, name: "shop" };
+    expect(validateQaseMapping(config, two)).toEqual([
+      { code: "project_name_taken", subject: "shop" },
+    ]);
+  });
+
+  it("reports what stops a new user from being created", () => {
+    const config = valid();
+    config.users["2"].email = "";
+    config.users["3"] = {
+      ...unmappedQaseUser(),
+      action: "create",
+      email: "not-an-address",
+    };
+    expect(validateQaseMapping(config, analysis)).toEqual([
+      { code: "user_email_missing", subject: "Grace" },
+      { code: "user_email_invalid", subject: "No Address" },
+    ]);
+
+    config.users["2"].email = "new@example.test";
+    config.users["3"].email = "new@example.test";
+    config.users["3"].roleId = 99;
+    expect(validateQaseMapping(config, analysis)).toEqual([
+      { code: "user_email_reused", subject: "No Address" },
+      { code: "user_role_missing", subject: "No Address" },
+    ]);
+  });
+
+  it("needs a default role when a new user has none chosen", () => {
+    const config = valid();
+    const noDefault: QaseAnalysis = {
+      ...analysis,
+      existing: {
+        ...analysis.existing,
+        roles: [{ id: 2, name: "Manager", isDefault: false }],
+      },
+    };
+    expect(validateQaseMapping(config, noDefault)).toEqual([
+      { code: "user_role_missing", subject: "Grace" },
+    ]);
+    config.users["2"].roleId = 2;
+    expect(validateQaseMapping(config, noDefault)).toEqual([]);
+  });
+
+  it("does not check an existing-user mapping", () => {
+    const config = valid();
+    config.users["2"] = unmappedQaseUser();
+    expect(validateQaseMapping(config, analysis)).toEqual([]);
   });
 
   it("reports a template name that exists and a missing template", () => {
@@ -183,16 +303,60 @@ describe("normalizeQaseMapping", () => {
   it("keeps valid entries and drops everything else", () => {
     expect(
       normalizeQaseMapping({
-        projects: { WEB: { mappedTo: 5 }, BAD: { mappedTo: "5" } },
-        users: { "1": { mappedTo: "u1" }, "2": { mappedTo: 7 } },
+        projects: {
+          WEB: { mappedTo: 5 },
+          BAD: { mappedTo: "5" },
+          NEW: { action: "create", name: "  Shop  ", extra: 1 },
+        },
+        users: {
+          "1": { mappedTo: "u1" },
+          "2": { mappedTo: 7 },
+          "3": {
+            action: "create",
+            name: " Grace ",
+            email: " Grace@Example.test ",
+            access: "ROOT",
+            roleId: "2",
+            isActive: false,
+            isApi: "yes",
+          },
+          "4": { action: "create", access: "ADMIN", roleId: 2, isApi: true },
+        },
         caseStatuses: { "0": { mappedTo: 11.5 } },
         template: { action: "delete", name: "  Mine  " },
         fields: { "custom:7": { action: "skip", mappedTo: -1, name: 4 } },
         extra: true,
       })
     ).toEqual({
-      projects: { WEB: { mappedTo: 5 }, BAD: { mappedTo: null } },
-      users: { "1": { mappedTo: "u1" }, "2": { mappedTo: null } },
+      projects: {
+        WEB: { action: "map", mappedTo: 5, name: "" },
+        BAD: { action: "map", mappedTo: null, name: "" },
+        NEW: { action: "create", mappedTo: null, name: "Shop" },
+      },
+      users: {
+        "1": { ...unmappedQaseUser(), mappedTo: "u1" },
+        "2": unmappedQaseUser(),
+        "3": {
+          action: "create",
+          mappedTo: null,
+          name: "Grace",
+          email: "grace@example.test",
+          access: "USER",
+          roleId: null,
+          isActive: false,
+          isApi: false,
+        },
+        "4": {
+          action: "create",
+          mappedTo: null,
+          name: "",
+          email: "",
+          access: "ADMIN",
+          roleId: 2,
+          isActive: true,
+          isApi: true,
+        },
+      },
       caseStatuses: { "0": { mappedTo: null } },
       template: { action: "create", mappedTo: null, name: "Mine" },
       fields: { "custom:7": { action: "skip", mappedTo: null, name: "" } },

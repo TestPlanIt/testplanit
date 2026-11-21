@@ -56,6 +56,7 @@ const analysis = {
     workflows: [],
     templates: [],
     caseFields: [],
+    roles: [],
   },
   storageConfigured: true,
 };

@@ -12,6 +12,8 @@ import {
 export const QASE_MAX_FILE_BYTES = 32 * 1024 * 1024;
 const DOWNLOAD_TIMEOUT_MS = 60_000;
 const MAX_REDIRECTS = 3;
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 500;
 
 export type QaseFileKind = "attachment" | "docimage";
 
@@ -35,6 +37,8 @@ export interface QaseFileCopierOptions {
   /** Already copied files from an earlier attempt, by `kind:url`. */
   known?: Map<string, QaseCopiedFile>;
   onCopied?: (key: string, file: QaseCopiedFile) => Promise<void>;
+  /** Wait before a download is tried again; multiplied by the attempt. */
+  retryDelayMs?: number;
 }
 
 export const isQaseStorageConfigured = () => !!process.env.AWS_BUCKET_NAME;
@@ -71,6 +75,7 @@ export class QaseFileCopier {
   private readonly done: Map<string, QaseCopiedFile>;
   private readonly failed = new Map<string, string>();
   private readonly onCopied?: QaseFileCopierOptions["onCopied"];
+  private readonly retryDelayMs: number;
   private counter = 0;
 
   constructor(options: QaseFileCopierOptions) {
@@ -80,6 +85,7 @@ export class QaseFileCopier {
     this.upload = options.upload ?? defaultUpload;
     this.done = options.known ?? new Map();
     this.onCopied = options.onCopied;
+    this.retryDelayMs = options.retryDelayMs ?? RETRY_DELAY_MS;
   }
 
   /** Why a file could not be copied, when it could not. */
@@ -100,16 +106,39 @@ export class QaseFileCopier {
     }
   }
 
+  /**
+   * One request, tried again when the connection drops or the host is busy:
+   * a file that fails is left out of the import for good.
+   */
+  private async request(url: URL): Promise<Response> {
+    for (let attempt = 1; ; attempt++) {
+      const last = attempt >= MAX_ATTEMPTS;
+      try {
+        const response = await this.fetchImpl(url, {
+          redirect: "manual",
+          signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
+        });
+        if (last || (response.status !== 429 && response.status < 500)) {
+          return response;
+        }
+      } catch (error) {
+        if (last) {
+          throw error;
+        }
+      }
+      await new Promise((resolve) =>
+        setTimeout(resolve, this.retryDelayMs * attempt)
+      );
+    }
+  }
+
   private async download(
     source: string
   ): Promise<{ body: Buffer; mime: string }> {
     let current = new URL(source);
     for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
       await this.assertPublic(current);
-      const response = await this.fetchImpl(current, {
-        redirect: "manual",
-        signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
-      });
+      const response = await this.request(current);
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get("location");
         if (!location) {

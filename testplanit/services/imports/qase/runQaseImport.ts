@@ -1,8 +1,10 @@
 import type { JSONContent } from "@tiptap/core";
 import type { JsonObject } from "@zenstackhq/orm";
+import bcrypt from "bcrypt";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import type { DbClient, TxClient } from "~/lib/zenstack";
+import { generateRandomPassword } from "~/utils/randomPassword";
 import { findOrCreateProjectRepository } from "~/workers/testmoImport/helpers";
 import { buildQaseAnalysis, loadQaseStaged } from "./analysis";
 import {
@@ -27,6 +29,7 @@ import {
 } from "./files";
 import {
   normalizeQaseMapping,
+  unmappedQaseUser,
   validateQaseMapping,
   type QaseAnalysis,
   type QaseMappingConfiguration,
@@ -52,8 +55,14 @@ export interface RunQaseImportOptions {
   jobId: string;
   /** Test seam for downloads and uploads. */
   copierOptions?: Partial<QaseFileCopierOptions>;
-  /** Called once the import has finished, with the projects it wrote to. */
-  onCompleted?: (projectIds: number[]) => Promise<void>;
+  /**
+   * Called once the import has finished, with the projects it wrote to and
+   * whether it created any of them.
+   */
+  onCompleted?: (
+    projectIds: number[],
+    createdProjects: boolean
+  ) => Promise<void>;
 }
 
 const MAX_WARNINGS = 300;
@@ -180,6 +189,155 @@ function toSystemName(displayName: string, taken: Set<string>): string {
   }
   taken.add(candidate);
   return candidate;
+}
+
+/**
+ * Creates the projects the mapping asks for, set up like one made in the
+ * project wizard with its defaults: every workflow state, status and milestone
+ * type, and the default template.
+ */
+async function prepareProjects(state: ImportState): Promise<void> {
+  const { db, jobId, config, analysis } = state;
+  for (const source of analysis.source.projects) {
+    const mapping = config.projects[source.code];
+    if (mapping?.action !== "create") {
+      continue;
+    }
+    const name = mapping.name;
+    const projectId = await db.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
+      const sameNamed = await tx.projects.findUnique({
+        where: { name },
+        select: { id: true, isDeleted: true },
+      });
+      if (sameNamed?.isDeleted) {
+        throw new Error(
+          `A deleted project is already named "${name}". Choose another name.`
+        );
+      }
+      if (sameNamed) {
+        await remember(tx, jobId, "project", "", source.code, sameNamed.id);
+        return sameNamed.id;
+      }
+      const [workflows, statuses, milestoneTypes, defaultTemplate] =
+        await Promise.all([
+          tx.workflows.findMany({
+            where: { isDeleted: false, isEnabled: true },
+            select: { id: true },
+          }),
+          tx.status.findMany({
+            where: { isDeleted: false, isEnabled: true },
+            select: { id: true },
+          }),
+          tx.milestoneTypes.findMany({
+            where: { isDeleted: false },
+            select: { id: true },
+          }),
+          tx.templates.findFirst({
+            where: { isDeleted: false, isEnabled: true, isDefault: true },
+            select: { id: true },
+          }),
+        ]);
+      const created = await tx.projects.create({
+        data: {
+          name,
+          createdBy: state.importerId,
+          ...(defaultTemplate ? { defaultTemplateId: defaultTemplate.id } : {}),
+        },
+        select: { id: true },
+      });
+      await tx.repositories.create({ data: { projectId: created.id } });
+      await tx.projectWorkflowAssignment.createMany({
+        data: workflows.map(({ id }) => ({
+          workflowId: id,
+          projectId: created.id,
+        })),
+      });
+      await tx.projectStatusAssignment.createMany({
+        data: statuses.map(({ id }) => ({
+          statusId: id,
+          projectId: created.id,
+        })),
+      });
+      await tx.milestoneTypesAssignment.createMany({
+        data: milestoneTypes.map(({ id }) => ({
+          milestoneTypeId: id,
+          projectId: created.id,
+        })),
+      });
+      if (defaultTemplate) {
+        await tx.templateProjectAssignment.create({
+          data: { templateId: defaultTemplate.id, projectId: created.id },
+        });
+      }
+      await remember(tx, jobId, "project", "", source.code, created.id);
+      return created.id;
+    });
+    config.projects[source.code] = {
+      action: "map",
+      mappedTo: projectId,
+      name: "",
+    };
+  }
+}
+
+/**
+ * Creates the user accounts the mapping asks for. An address that already has
+ * an account is mapped to it instead. A new account gets a random password,
+ * so its owner signs in through a password reset or single sign-on.
+ */
+async function prepareUsers(state: ImportState): Promise<void> {
+  const { db, jobId, config, analysis } = state;
+  for (const source of analysis.source.users) {
+    const mapping = config.users[source.id];
+    if (mapping?.action !== "create") {
+      continue;
+    }
+    const email = mapping.email;
+    const name = mapping.name || email;
+    const user = await db.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
+      const existing = await tx.user.findFirst({
+        where: { email: { equals: email, mode: "insensitive" } },
+        select: { id: true, name: true, email: true },
+      });
+      if (existing) {
+        await remember(tx, jobId, "user", "", source.id, existing.id);
+        return existing;
+      }
+      const role =
+        mapping.roleId === null
+          ? await tx.roles.findFirst({
+              where: { isDefault: true, isDeleted: false },
+              select: { id: true },
+            })
+          : await tx.roles.findFirst({
+              where: { id: mapping.roleId, isDeleted: false },
+              select: { id: true },
+            });
+      if (!role) {
+        throw new Error(`The role chosen for ${email} does not exist.`);
+      }
+      const created = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: await bcrypt.hash(generateRandomPassword(), 10),
+          access: mapping.access,
+          roleId: role.id,
+          isActive: mapping.isActive,
+          isApi: mapping.isApi,
+          emailVerified: new Date(),
+          createdById: state.importerId,
+        },
+        select: { id: true, name: true, email: true },
+      });
+      await remember(tx, jobId, "user", "", source.id, created.id);
+      return created;
+    });
+    config.users[source.id] = { ...unmappedQaseUser(), mappedTo: user.id };
+    state.userNames.set(user.id, user.name || user.email || "");
+  }
 }
 
 /** Creates or resolves the template and the fields the cases are written to. */
@@ -1083,6 +1241,21 @@ export async function runQaseImport({
         name: "",
       };
     }
+    // Projects and users an earlier attempt created are used, not made again.
+    for (const [code, projectId] of await loadMappings(db, jobId, "project")) {
+      if (config.projects[code]?.action === "create") {
+        config.projects[code] = {
+          action: "map",
+          mappedTo: Number(projectId),
+          name: "",
+        };
+      }
+    }
+    for (const [sourceId, userId] of await loadMappings(db, jobId, "user")) {
+      if (config.users[sourceId]?.action === "create") {
+        config.users[sourceId] = { ...unmappedQaseUser(), mappedTo: userId };
+      }
+    }
     const problems = validateQaseMapping(config, analysis);
     if (problems.length > 0) {
       throw new Error(
@@ -1168,6 +1341,8 @@ export async function runQaseImport({
     }
 
     await persist(state, "template", true);
+    await prepareProjects(state);
+    await prepareUsers(state);
     await prepareTemplate(state);
 
     const projectIds: number[] = [];
@@ -1195,7 +1370,10 @@ export async function runQaseImport({
         apiToken: null,
       },
     });
-    await onCompleted?.([...new Set(projectIds)]);
+    await onCompleted?.(
+      [...new Set(projectIds)],
+      (await loadMappings(db, jobId, "project")).size > 0
+    );
   } catch (error) {
     if (error instanceof QaseImportCanceledError) {
       await finishCanceled();
