@@ -38,6 +38,7 @@ export type QaseImportProgress = Record<
   | "milestones"
   | "runs"
   | "results"
+  | "issues"
   | "files",
   QaseImportProgressEntry
 >;

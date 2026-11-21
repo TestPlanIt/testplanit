@@ -513,6 +513,75 @@ const RESULTS = [
   },
 ];
 
+const DEFECT_FIELD = {
+  id: 11,
+  title: "Found in",
+  entity: "defect",
+  type: "selectbox",
+  value: JSON.stringify([
+    { id: 1, title: "Production" },
+    { id: 2, title: "Staging" },
+  ]),
+};
+
+const DEFECTS = [
+  {
+    id: 1,
+    title: "Invoice PDF shows the wrong currency",
+    actual_result: "The PDF shows **USD** for a EUR account.",
+    status: "open",
+    severity: "critical",
+    milestone_id: 2,
+    author_uuid: "author-1",
+    attachments: [
+      {
+        hash: "a2",
+        url: SCREEN,
+        filename: "login-screen.png",
+        mime: "image/png",
+        size: 79,
+      },
+      // Qase could not say where this one is.
+      { hash: "gone" },
+    ],
+    custom_fields: [{ id: 11, value: "2" }],
+    external_data: "{}",
+    runs: [],
+    results: [],
+    tags: [{ title: "billing", internal_id: 6 }],
+    created_at: "2026-11-21T01:21:56+00:00",
+  },
+  {
+    id: 2,
+    title: "Sign in with a valid password",
+    actual_result: "Fails on firefox.",
+    status: "resolved",
+    severity: "major",
+    milestone_id: null,
+    author_uuid: "author-app",
+    attachments: [],
+    custom_fields: [],
+    external_data: JSON.stringify({ link: "https://jira.test/browse/SHOP-3" }),
+    runs: [1],
+    results: ["result-2"],
+    tags: [],
+    created_at: "2026-11-21T01:21:58+00:00",
+  },
+];
+
+const jiraIssue = (key: string) => ({
+  id: key,
+  link: `https://jira.test/browse/${key}`,
+});
+/** Tracker issues linked to cases, by Qase case id. */
+const CASE_ISSUES: Record<number, unknown[]> = {
+  1: [
+    { type: "jira-cloud", issues: [jiraIssue("SHOP-7"), jiraIssue("SHOP-8")] },
+  ],
+  2: [{ type: "jira-cloud", issues: [jiraIssue("SHOP-7")] }],
+};
+const RUN_ISSUE = { type: "jira-cloud", ...jiraIssue("SHOP-9") };
+
 const AUTHORS = [
   { id: 1, uuid: "author-1", entity_type: "user", entity_id: 1 },
   { id: 2, uuid: "author-app", entity_type: "app", entity_id: 500 },
@@ -574,8 +643,9 @@ describeIntegration("Qase import (live DB)", () => {
       configuration: QaseMappingConfiguration,
       label: string
     ) => void = () => {},
-    { withRuns = false } = {}
+    { withRuns = false, withIssues = false } = {}
   ) {
+    withRuns = withRuns || withIssues;
     run += 1;
     const label = `${STAMP}-${run}`;
     const project = await raw.projects.create({
@@ -663,6 +733,16 @@ describeIntegration("Qase import (live DB)", () => {
       },
       runStates,
       milestoneTypeId,
+      issueTrackers: withIssues
+        ? {
+            qase: { action: "create", mappedTo: null, name: `Qase ${label}` },
+            "jira-cloud": {
+              action: "create",
+              mappedTo: null,
+              name: `Jira ${label}`,
+            },
+          }
+        : {},
     };
 
     adjust(configuration, label);
@@ -710,7 +790,7 @@ describeIntegration("Qase import (live DB)", () => {
       [
         "custom_field",
         null,
-        [...CUSTOM_FIELDS, RUN_FIELD].map((field) => ({
+        [...CUSTOM_FIELDS, RUN_FIELD, DEFECT_FIELD].map((field) => ({
           id: String(field.id),
           data: field,
         })),
@@ -741,12 +821,27 @@ describeIntegration("Qase import (live DB)", () => {
             [
               "run",
               "SHOP",
-              RUNS.map((entry) => ({ id: String(entry.id), data: entry })),
+              RUNS.map((entry) => ({
+                id: String(entry.id),
+                data:
+                  withIssues && entry.id === 1
+                    ? { ...entry, external_issue: RUN_ISSUE }
+                    : entry,
+              })),
             ],
             [
               "result",
               "SHOP",
               RESULTS.map((entry) => ({ id: entry.hash, data: entry })),
+            ],
+          ] as [string, string | null, { id: string; data: unknown }[]][])
+        : []),
+      ...(withIssues
+        ? ([
+            [
+              "defect",
+              "SHOP",
+              DEFECTS.map((entry) => ({ id: String(entry.id), data: entry })),
             ],
           ] as [string, string | null, { id: string; data: unknown }[]][])
         : []),
@@ -763,7 +858,12 @@ describeIntegration("Qase import (live DB)", () => {
       [
         "case",
         "SHOP",
-        CASES.map((record) => ({ id: String(record.id), data: record })),
+        CASES.map((record) => ({
+          id: String(record.id),
+          data: withIssues
+            ? { ...record, external_issues: CASE_ISSUES[record.id] ?? [] }
+            : record,
+        })),
       ],
     ];
     await raw.qaseImportStaging.createMany({
@@ -964,6 +1064,10 @@ describeIntegration("Qase import (live DB)", () => {
       where: { name: { contains: STAMP } },
       data: { isDeleted: true },
     });
+    await raw.integration.updateMany({
+      where: { name: { contains: STAMP } },
+      data: { isDeleted: true },
+    });
     await raw.$disconnect();
   });
 
@@ -984,6 +1088,7 @@ describeIntegration("Qase import (live DB)", () => {
       milestones: { done: 0, total: 0 },
       runs: { done: 0, total: 0 },
       results: { done: 0, total: 0 },
+      issues: { done: 0, total: 0 },
       files: { done: 3, total: 3 },
     });
     expect(job.activityLog).toEqual([]);
@@ -1639,6 +1744,224 @@ describeIntegration("Qase import (live DB)", () => {
     });
   });
 
+  describe("defects and linked issues", () => {
+    const readIssues = (projectId: number) =>
+      raw.issue.findMany({
+        where: { projectId },
+        orderBy: { id: "asc" },
+        include: {
+          integration: true,
+          attachments: true,
+          milestoneIssues: { include: { milestone: true } },
+          testRuns: true,
+          testRunResults: { include: { status: true } },
+          caseIssues: { include: { case: true }, orderBy: { caseId: "asc" } },
+          projectMemberships: true,
+          createdBy: true,
+        },
+      });
+
+    it("imports defects and linked tracker issues with their links", async () => {
+      const { jobId, projectId, label } = await stageJob({}, undefined, {
+        withIssues: true,
+      });
+
+      await runQaseImport({ db, jobId, copierOptions });
+
+      const job = await readJob(jobId);
+      expect(job.error).toBeNull();
+      expect(job.status).toBe("COMPLETED");
+      // Two defects, three case links and one run link.
+      expect(job.entityProgress).toMatchObject({
+        issues: { done: 6, total: 6 },
+      });
+      expect(job.activityLog).toContainEqual({
+        code: "attachment_failed",
+        subject: "Invoice PDF shows the wrong currency: gone",
+      });
+
+      const issues = await readIssues(projectId);
+      expect(
+        issues.map((issue) => [issue.name, issue.integration?.name])
+      ).toEqual([
+        ["SHOP-D1", `Qase ${label}`],
+        ["SHOP-D2", `Qase ${label}`],
+        ["SHOP-7", `Jira ${label}`],
+        ["SHOP-8", `Jira ${label}`],
+        ["SHOP-9", `Jira ${label}`],
+      ]);
+      for (const issue of issues) {
+        expect(
+          issue.projectMemberships.map((membership) => membership.projectId)
+        ).toEqual([projectId]);
+      }
+
+      const [currency, signIn, shared, second, onRun] = issues;
+      expect(currency).toMatchObject({
+        title: "Invoice PDF shows the wrong currency",
+        description:
+          "The PDF shows **USD** for a EUR account.\n\n**Found in:** Staging\n\n**Tags:** billing",
+        status: "open",
+        priority: "critical",
+        externalId: "SHOP-D1",
+        externalKey: "SHOP-D1",
+        externalUrl: null,
+      });
+      expect(currency.integration).toMatchObject({
+        provider: "SIMPLE_URL",
+        status: "INACTIVE",
+        authType: "NONE",
+      });
+      expect(currency.createdAt.toISOString()).toBe("2026-11-21T01:21:56.000Z");
+      expect(currency.createdById).toBe(adminId);
+      expect(
+        currency.attachments.map((file) => [file.name, file.mimeType])
+      ).toEqual([["login-screen.png", "image/png"]]);
+      expect(
+        currency.milestoneIssues.map((entry) => entry.milestone.name)
+      ).toEqual(["Release 1.1"]);
+      expect(currency.testRuns).toEqual([]);
+
+      expect(signIn).toMatchObject({
+        status: "resolved",
+        priority: "major",
+        externalUrl: "https://jira.test/browse/SHOP-3",
+      });
+      expect(signIn.testRuns.map((entry) => entry.name)).toEqual([
+        "Release 1.1 regression",
+      ]);
+      expect(
+        signIn.testRunResults.map((entry) => entry.status.systemName)
+      ).toEqual(["failed"]);
+
+      expect(shared).toMatchObject({
+        title: "SHOP-7",
+        externalKey: "SHOP-7",
+        externalId: null,
+        externalUrl: "https://jira.test/browse/SHOP-7",
+        status: null,
+        priority: null,
+      });
+      expect(shared.integration?.provider).toBe("JIRA");
+      expect(shared.caseIssues).toHaveLength(2);
+      expect(second.caseIssues).toHaveLength(1);
+      expect(second.caseIssues[0].caseId).toBe(shared.caseIssues[0].caseId);
+      expect(onRun.caseIssues).toEqual([]);
+      expect(onRun.testRuns.map((entry) => entry.name)).toEqual([
+        "Release 1.1 regression",
+      ]);
+
+      // A project has one active integration.
+      const assignments = await raw.projectIntegration.findMany({
+        where: { projectId },
+        include: { integration: true },
+        orderBy: { integrationId: "asc" },
+      });
+      expect(
+        assignments.map((entry) => [entry.integration.name, entry.isActive])
+      ).toEqual([
+        [`Qase ${label}`, true],
+        [`Jira ${label}`, false],
+      ]);
+    });
+
+    it("does not repeat issues or integrations when a failed import continues", async () => {
+      const { jobId, projectId, label } = await stageJob({}, undefined, {
+        withIssues: true,
+      });
+      saveProgressEveryTime();
+      let failed = false;
+      const failing = interceptProgress((_cases, progress) => {
+        if (!failed && (progress.issues?.done ?? 0) >= 3) {
+          failed = true;
+          throw new Error("Connection lost");
+        }
+      });
+
+      await expect(
+        runQaseImport({ db: failing, jobId, copierOptions })
+      ).rejects.toThrow("Connection lost");
+      expect(await raw.issue.count({ where: { projectId } })).toBe(3);
+      vi.restoreAllMocks();
+
+      await runQaseImport({ db, jobId, copierOptions });
+
+      const job = await readJob(jobId);
+      expect(job.error).toBeNull();
+      expect(job.status).toBe("COMPLETED");
+      const issues = await readIssues(projectId);
+      expect(issues.map((issue) => issue.name)).toEqual([
+        "SHOP-D1",
+        "SHOP-D2",
+        "SHOP-7",
+        "SHOP-8",
+        "SHOP-9",
+      ]);
+      expect(issues[0].attachments).toHaveLength(1);
+      expect(issues[2].caseIssues).toHaveLength(2);
+      expect(
+        await raw.integration.count({ where: { name: { contains: label } } })
+      ).toBe(2);
+      expect(await raw.projectIntegration.count({ where: { projectId } })).toBe(
+        2
+      );
+    });
+
+    it("uses the issue an existing integration already holds", async () => {
+      const integration = await raw.integration.create({
+        data: {
+          name: `Jira existing ${STAMP}-${run}`,
+          provider: "JIRA",
+          authType: "NONE",
+          credentials: {},
+        },
+      });
+      const integrationId = integration.id;
+      const existing = await raw.issue.create({
+        data: {
+          name: "SHOP-7",
+          title: "Checkout rounds the total down",
+          externalId: "10007",
+          externalKey: "SHOP-7",
+          externalStatus: "Open",
+          integrationId,
+          createdById: adminId,
+        },
+      });
+      const existingId = existing.id;
+      const { jobId, projectId } = await stageJob(
+        {},
+        (configuration) => {
+          configuration.issueTrackers["jira-cloud"] = {
+            action: "map",
+            mappedTo: integrationId,
+            name: "",
+          };
+        },
+        { withIssues: true }
+      );
+
+      await runQaseImport({ db, jobId, copierOptions });
+
+      const job = await readJob(jobId);
+      expect(job.error).toBeNull();
+      expect(
+        await raw.issue.count({
+          where: { integrationId, externalKey: "SHOP-7" },
+        })
+      ).toBe(1);
+      const reused = await raw.issue.findUniqueOrThrow({
+        where: { id: existingId },
+        include: { caseIssues: true, projectMemberships: true },
+      });
+      expect(reused.title).toBe("Checkout rounds the total down");
+      expect(reused.caseIssues).toHaveLength(2);
+      expect(
+        reused.projectMemberships.map((membership) => membership.projectId)
+      ).toEqual([projectId]);
+    });
+  });
+
   it("continues a failed import without writing anything twice", async () => {
     const { jobId, projectId } = await stageJob();
     saveProgressEveryTime();
@@ -1684,6 +2007,7 @@ describeIntegration("Qase import (live DB)", () => {
       milestones: { done: 0, total: 0 },
       runs: { done: 0, total: 0 },
       results: { done: 0, total: 0 },
+      issues: { done: 0, total: 0 },
       files: { done: 3, total: 3 },
     });
     const cases = await raw.repositoryCases.findMany({

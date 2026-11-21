@@ -87,6 +87,48 @@ export async function fetchQaseData(
     entry.fetched += records.length;
   };
 
+  // A defect lists its attachments by hash only; the import needs where each
+  // file is, as cases and results give it.
+  const attachmentsByHash = new Map<string, QaseRecord | null>();
+  const resolveAttachments = async (records: QaseRecord[]) => {
+    for (const record of records) {
+      if (!Array.isArray(record.attachments)) {
+        continue;
+      }
+      const resolved: QaseRecord[] = [];
+      for (const attachment of record.attachments as QaseRecord[]) {
+        const hash =
+          typeof attachment?.hash === "string" ? attachment.hash : "";
+        if (!hash || typeof attachment.url === "string") {
+          resolved.push(attachment);
+          continue;
+        }
+        if (!attachmentsByHash.has(hash)) {
+          attachmentsByHash.set(
+            hash,
+            await client
+              .get<QaseRecord>(`attachment/${encodeURIComponent(hash)}`)
+              .catch(() => null)
+          );
+        }
+        const details = attachmentsByHash.get(hash);
+        const url = details?.full_path ?? details?.url;
+        resolved.push(
+          details && typeof url === "string"
+            ? {
+                ...attachment,
+                url,
+                filename: details.file,
+                mime: details.mime,
+                size: details.size,
+              }
+            : attachment
+        );
+      }
+      record.attachments = resolved;
+    }
+  };
+
   const fetchEntity = async (
     definition: QaseEntityDefinition,
     projectCode: string | null,
@@ -111,6 +153,9 @@ export async function fetchQaseData(
       if (!counted) {
         totals.push(page.total);
         counted = true;
+      }
+      if (definition.entity === "defect") {
+        await resolveAttachments(page.entities);
       }
       await stage(definition, projectCode, page.entities);
       await report(definition.entity);

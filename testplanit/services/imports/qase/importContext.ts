@@ -71,6 +71,8 @@ export interface ImportState {
   customFields: Record<string, unknown>[];
   /** Qase user id by the author uuid results carry. */
   authorUsers: Map<string, string>;
+  /** Integration id by issue tracker id: `qase` or a tracker type. */
+  trackers: Map<string, number>;
 }
 
 export function warn(state: ImportState, warning: QaseImportWarning) {
@@ -99,6 +101,7 @@ export async function persist(
     "milestones",
     "runs",
     "results",
+    "issues",
   ] as const;
   const updated = await state.db.qaseImportJob.update({
     where: { id: state.jobId },

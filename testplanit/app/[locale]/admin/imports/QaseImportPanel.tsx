@@ -92,6 +92,7 @@ const IMPORT_PROGRESS_ROWS = [
   "milestones",
   "runs",
   "results",
+  "issues",
   "files",
 ] as const;
 const WARNING_CODES = new Set([
@@ -104,6 +105,7 @@ const WARNING_CODES = new Set([
   "parameter_rows_skipped",
   "storage_not_configured",
   "run_failed",
+  "issue_failed",
   "run_case_missing",
   "result_failed",
   "result_skipped",

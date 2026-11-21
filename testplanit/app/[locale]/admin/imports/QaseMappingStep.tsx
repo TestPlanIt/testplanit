@@ -21,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { IntegrationIcon } from "@/components/admin/integrations/integration-icon";
 import { AccessLevelDisplay } from "@/components/tables/AccessLevelDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { useQuery } from "@tanstack/react-query";
@@ -40,12 +41,14 @@ import { TemplateNameDisplay } from "~/components/TemplateNameDisplay";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { apiFetch } from "~/lib/basePath";
 import {
+  QASE_DEFECT_TRACKER,
   QASE_USER_ACCESS,
   qaseUserLabel,
   unmappedQaseUser,
   validateQaseMapping,
   type QaseAnalysis,
   type QaseFieldAction,
+  type QaseIssueTrackerMapping,
   type QaseMappingConfiguration,
   type QaseProjectMapping,
   type QaseResultStatusMapping,
@@ -55,6 +58,7 @@ import {
 } from "~/services/imports/qase/mapping";
 import type { QaseImportJobPayload } from "~/services/imports/qase/types";
 import type { IconName } from "~/types/globals";
+import type { IntegrationProvider } from "~/zenstack/models";
 
 interface MappingResponse {
   analysis: QaseAnalysis;
@@ -248,6 +252,26 @@ export function QaseMappingStep({ jobId, onStarted }: QaseMappingStepProps) {
                   isCompleted: false,
                 },
                 ...current.resultStatuses[slug],
+                ...patch,
+              },
+            },
+          }
+        : current
+    );
+
+  const setIssueTracker = (
+    id: string,
+    patch: Partial<QaseIssueTrackerMapping>
+  ) =>
+    setConfig((current) =>
+      current
+        ? {
+            ...current,
+            issueTrackers: {
+              ...current.issueTrackers,
+              [id]: {
+                ...{ action: "map" as const, mappedTo: null, name: "" },
+                ...current.issueTrackers[id],
                 ...patch,
               },
             },
@@ -981,6 +1005,142 @@ export function QaseMappingStep({ jobId, onStarted }: QaseMappingStepProps) {
               </p>
             )}
           </div>
+        </Section>
+      )}
+
+      {source.issueTrackers.length > 0 && (
+        <Section
+          title={t("issueTrackersTitle")}
+          description={t("issueTrackersDescription")}
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-1/3">{t("columnQase")}</TableHead>
+                <TableHead className="w-1/4">{t("columnAction")}</TableHead>
+                <TableHead>{t("columnTestPlanIt")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {source.issueTrackers.map((tracker) => {
+                const mapping = config.issueTrackers[tracker.id] ?? {
+                  action: "map" as const,
+                  mappedTo: null,
+                  name: "",
+                };
+                const label =
+                  tracker.id === QASE_DEFECT_TRACKER
+                    ? t("issueTrackerDefects")
+                    : t("issueTrackerLinked", { name: tracker.title });
+                const trackerProblem = (
+                  [
+                    "issue_tracker_unmapped",
+                    "issue_tracker_name_missing",
+                  ] as const
+                ).find((code) => problemFor(code, tracker.title));
+                const nameTaken =
+                  mapping.action === "create" &&
+                  problemFor("issue_tracker_name_taken", mapping.name);
+                return (
+                  <TableRow
+                    key={tracker.id}
+                    data-testid={`qase-map-issue-tracker-row-${tracker.id}`}
+                  >
+                    <TableCell className="align-top">{label}</TableCell>
+                    <TableCell className="align-top">
+                      <Select
+                        value={mapping.action}
+                        onValueChange={(value) =>
+                          setIssueTracker(
+                            tracker.id,
+                            value === "create"
+                              ? {
+                                  action: "create",
+                                  mappedTo: null,
+                                  name: tracker.title,
+                                }
+                              : { action: "map", mappedTo: null, name: "" }
+                          )
+                        }
+                      >
+                        <SelectTrigger
+                          aria-label={t("issueTrackerActionLabel", {
+                            name: label,
+                          })}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="create">
+                            {t("issueTrackerCreate")}
+                          </SelectItem>
+                          <SelectItem value="map">
+                            {t("issueTrackerExisting")}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      {mapping.action === "map" ? (
+                        <Picker
+                          testId={`qase-map-issue-tracker-${tracker.id}`}
+                          options={existing.integrations}
+                          value={
+                            existing.integrations.find(
+                              (candidate) => candidate.id === mapping.mappedTo
+                            ) ?? null
+                          }
+                          onChange={(value) =>
+                            setIssueTracker(tracker.id, {
+                              mappedTo: value?.id ?? null,
+                            })
+                          }
+                          getId={(option) => option.id}
+                          getLabel={(option) => option.name}
+                          render={(option) => (
+                            <span className="flex items-center gap-2">
+                              <IntegrationIcon
+                                provider={
+                                  option.provider as IntegrationProvider
+                                }
+                                className="h-6 w-6 shrink-0"
+                              />
+                              {option.name}
+                            </span>
+                          )}
+                          ariaLabel={t("issueTrackerPickerLabel", {
+                            name: label,
+                          })}
+                          placeholder={t("issueTrackerPlaceholder")}
+                        />
+                      ) : (
+                        <Input
+                          data-testid={`qase-map-issue-tracker-new-${tracker.id}`}
+                          aria-label={t("issueTrackerNameLabel", {
+                            name: label,
+                          })}
+                          maxLength={255}
+                          value={mapping.name}
+                          onChange={(event) =>
+                            setIssueTracker(tracker.id, {
+                              name: event.target.value,
+                            })
+                          }
+                        />
+                      )}
+                      {(trackerProblem || nameTaken) && (
+                        <p className="mt-1 text-xs text-destructive">
+                          {t(
+                            `problems.${nameTaken ? "issue_tracker_name_taken" : trackerProblem!}`
+                          )}
+                        </p>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </Section>
       )}
 

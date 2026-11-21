@@ -3,9 +3,14 @@ import {
   qaseCaseStatuses,
   qaseResultStatuses,
   qaseSourceFields,
+  qaseTrackerTitle,
 } from "./content";
 import { isQaseStorageConfigured } from "./files";
-import type { QaseAnalysis, QaseSourceUser } from "./mapping";
+import {
+  QASE_DEFECT_TRACKER,
+  type QaseAnalysis,
+  type QaseSourceUser,
+} from "./mapping";
 import type { QaseProjectSummary } from "./types";
 
 type QaseRecord = Record<string, unknown>;
@@ -29,6 +34,35 @@ export async function loadQaseStaged(
     select: { data: true },
   });
   return rows.map((row) => row.data as QaseRecord);
+}
+
+/** The tracker types of the issues linked to the staged cases and runs. */
+async function loadExternalTrackerTypes(
+  db: DbClient,
+  jobId: string
+): Promise<string[]> {
+  const rows = await db.$queryRaw<{ type: string | null }[]>`
+    SELECT DISTINCT linked ->> 'type' AS type
+    FROM "QaseImportStaging" staged
+    CROSS JOIN LATERAL jsonb_array_elements(
+      CASE
+        WHEN jsonb_typeof(staged."data" -> 'external_issues') = 'array'
+        THEN staged."data" -> 'external_issues'
+        ELSE '[]'::jsonb
+      END
+    ) AS linked
+    WHERE staged."jobId" = ${jobId} AND staged."entity" = 'case'
+    UNION
+    SELECT DISTINCT staged."data" -> 'external_issue' ->> 'type' AS type
+    FROM "QaseImportStaging" staged
+    WHERE staged."jobId" = ${jobId}
+      AND staged."entity" = 'run'
+      AND jsonb_typeof(staged."data" -> 'external_issue') = 'object'
+  `;
+  return rows
+    .map((row) => (row.type ?? "").trim())
+    .filter(Boolean)
+    .sort();
 }
 
 /**
@@ -60,6 +94,9 @@ export async function buildQaseAnalysis(
     runCount,
     resultCount,
     milestoneCount,
+    defectCount,
+    trackerTypes,
+    integrations,
   ] = await Promise.all([
     loadQaseStaged(db, job.id, "user"),
     loadQaseStaged(db, job.id, "system_field"),
@@ -151,6 +188,13 @@ export async function buildQaseAnalysis(
     db.qaseImportStaging.count({
       where: { jobId: job.id, entity: "milestone" },
     }),
+    db.qaseImportStaging.count({ where: { jobId: job.id, entity: "defect" } }),
+    loadExternalTrackerTypes(db, job.id),
+    db.integration.findMany({
+      where: { isDeleted: false },
+      select: { id: true, name: true, provider: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   const users: QaseSourceUser[] = stagedUsers
@@ -170,6 +214,14 @@ export async function buildQaseAnalysis(
       resultStatuses: resultCount > 0 ? qaseResultStatuses(systemFields) : [],
       hasRuns: runCount > 0,
       hasMilestones: milestoneCount > 0,
+      issueTrackers: [
+        ...(defectCount > 0
+          ? [{ id: QASE_DEFECT_TRACKER, title: "Qase" }]
+          : []),
+        ...trackerTypes
+          .filter((type) => type !== QASE_DEFECT_TRACKER)
+          .map((type) => ({ id: type, title: qaseTrackerTitle(type) })),
+      ],
     },
     existing: {
       projects: existingProjects,
@@ -197,6 +249,7 @@ export async function buildQaseAnalysis(
       statuses,
       runStates,
       milestoneTypes,
+      integrations,
     },
     storageConfigured: isQaseStorageConfigured(),
   };

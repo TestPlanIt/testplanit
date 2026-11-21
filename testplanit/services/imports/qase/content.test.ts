@@ -16,7 +16,10 @@ import {
   qaseResultStatuses,
   qaseResultStatusSlugs,
   qaseRunCaseIds,
+  qaseDefectDescription,
+  qaseExternalIssues,
   qaseRunDescription,
+  qaseTrackerTitle,
   qaseSeconds,
   qaseStepSlots,
 } from "./content";
@@ -489,5 +492,90 @@ describe("runs", () => {
       qaseResultNotes({ comment: "Fails.", stacktrace: "Error\n  at x" })
     ).toBe("Fails.\n\n```\nError\n  at x\n```");
     expect(qaseResultNotes({ comment: " ", stacktrace: null })).toBe("");
+  });
+});
+
+describe("defects and linked issues", () => {
+  const customFields = [
+    {
+      id: 11,
+      title: "Found in",
+      entity: "defect",
+      value: JSON.stringify([
+        { id: 1, title: "Production" },
+        { id: 2, title: "Staging" },
+      ]),
+    },
+    // The same id on another kind of record is another field.
+    { id: 11, title: "Build number", entity: "run", value: null },
+  ];
+
+  it("writes a defect's result, field values and tags as text", () => {
+    expect(
+      qaseDefectDescription(
+        {
+          actual_result: " The PDF shows **USD**. ",
+          custom_fields: [{ id: 11, value: "2" }],
+          tags: [{ title: "billing" }, { title: " pdf " }, { title: "" }],
+        },
+        customFields
+      )
+    ).toBe(
+      "The PDF shows **USD**.\n\n**Found in:** Staging\n\n**Tags:** billing, pdf"
+    );
+    expect(
+      qaseDefectDescription({ actual_result: null, tags: [] }, customFields)
+    ).toBe("");
+  });
+
+  it("lists the tracker issues of a case and of a run once each", () => {
+    expect(
+      qaseExternalIssues({
+        external_issues: [
+          {
+            type: "jira-cloud",
+            issues: [
+              { id: "SHOP-7", link: "https://jira.test/browse/SHOP-7" },
+              { id: "SHOP-7", link: "https://jira.test/browse/SHOP-7" },
+              { id: "SHOP-8", link: "javascript:alert(1)" },
+              { id: "", link: "https://jira.test/browse/" },
+            ],
+          },
+          { type: "", issues: [{ id: "X-1" }] },
+          { type: "github", issues: [{ id: 42, link: null }] },
+        ],
+      })
+    ).toEqual([
+      {
+        type: "jira-cloud",
+        id: "SHOP-7",
+        link: "https://jira.test/browse/SHOP-7",
+      },
+      { type: "jira-cloud", id: "SHOP-8", link: null },
+      { type: "github", id: "42", link: null },
+    ]);
+    expect(
+      qaseExternalIssues({
+        external_issue: {
+          type: "jira-server",
+          id: "OPS-1",
+          link: "http://jira.internal/browse/OPS-1",
+        },
+      })
+    ).toEqual([
+      {
+        type: "jira-server",
+        id: "OPS-1",
+        link: "http://jira.internal/browse/OPS-1",
+      },
+    ]);
+    expect(
+      qaseExternalIssues({ external_issues: [], external_issue: null })
+    ).toEqual([]);
+  });
+
+  it("names a tracker type", () => {
+    expect(qaseTrackerTitle("jira-cloud")).toBe("Jira Cloud");
+    expect(qaseTrackerTitle("github")).toBe("Github");
   });
 });

@@ -3,6 +3,7 @@ import {
   buildDefaultQaseMapping,
   completeQaseMapping,
   normalizeQaseMapping,
+  qaseTrackerProvider,
   validateQaseMapping,
   unmappedQaseUser,
   type QaseAnalysis,
@@ -56,6 +57,7 @@ const analysis: QaseAnalysis = {
     ],
     hasRuns: true,
     hasMilestones: true,
+    issueTrackers: [],
   },
   existing: {
     projects: [{ id: 5, name: "web shop" }],
@@ -141,6 +143,7 @@ const analysis: QaseAnalysis = {
       { id: 51, name: "Cycle", isDefault: true, icon: null },
       { id: 52, name: "Release", isDefault: false, icon: null },
     ],
+    integrations: [],
   },
   storageConfigured: true,
 };
@@ -434,6 +437,89 @@ describe("runs, results and milestones", () => {
   });
 });
 
+describe("issue trackers", () => {
+  const withIssues: QaseAnalysis = {
+    ...analysis,
+    source: {
+      ...analysis.source,
+      issueTrackers: [
+        { id: "qase", title: "Qase" },
+        { id: "jira-cloud", title: "Jira Cloud" },
+        { id: "linear", title: "Linear" },
+      ],
+    },
+    existing: {
+      ...analysis.existing,
+      integrations: [
+        { id: 60, name: "Bugs", provider: "SIMPLE_URL" },
+        { id: 61, name: "Company Jira", provider: "JIRA" },
+      ],
+    },
+  };
+
+  it("uses an integration of the same kind and creates the rest", () => {
+    expect(buildDefaultQaseMapping(withIssues).issueTrackers).toEqual({
+      // Qase's own defects never land in a tracker that happens to exist.
+      qase: { action: "create", mappedTo: null, name: "Qase" },
+      "jira-cloud": { action: "map", mappedTo: 61, name: "" },
+      linear: { action: "create", mappedTo: null, name: "Linear" },
+    });
+  });
+
+  it("uses an integration that already has the name", () => {
+    const named: QaseAnalysis = {
+      ...withIssues,
+      existing: {
+        ...withIssues.existing,
+        integrations: [{ id: 62, name: "qase", provider: "SIMPLE_URL" }],
+      },
+    };
+    expect(buildDefaultQaseMapping(named).issueTrackers.qase).toEqual({
+      action: "map",
+      mappedTo: 62,
+      name: "",
+    });
+  });
+
+  it("reports a tracker without an integration or with a name in use", () => {
+    const config = buildDefaultQaseMapping(withIssues);
+    expect(validateQaseMapping(config, withIssues)).toEqual([]);
+
+    config.issueTrackers.qase.name = "";
+    config.issueTrackers["jira-cloud"].mappedTo = 999;
+    config.issueTrackers.linear.name = "company jira";
+    expect(validateQaseMapping(config, withIssues)).toEqual([
+      { code: "issue_tracker_name_missing", subject: "Qase" },
+      { code: "issue_tracker_unmapped", subject: "Jira Cloud" },
+      { code: "issue_tracker_name_taken", subject: "company jira" },
+    ]);
+  });
+
+  it("fills the trackers of a mapping saved before they were asked", () => {
+    const completed = completeQaseMapping(
+      normalizeQaseMapping({
+        issueTrackers: { linear: { action: "map", mappedTo: 60 } },
+      }),
+      withIssues
+    );
+    expect(completed.issueTrackers.linear).toEqual({
+      action: "map",
+      mappedTo: 60,
+      name: "",
+    });
+    expect(completed.issueTrackers["jira-cloud"].mappedTo).toBe(61);
+  });
+
+  it("picks the provider of a new integration from the tracker type", () => {
+    expect(qaseTrackerProvider("jira-cloud")).toBe("JIRA");
+    expect(qaseTrackerProvider("jira-server")).toBe("JIRA");
+    expect(qaseTrackerProvider("github")).toBe("GITHUB");
+    expect(qaseTrackerProvider("azure-devops")).toBe("AZURE_DEVOPS");
+    expect(qaseTrackerProvider("qase")).toBe("SIMPLE_URL");
+    expect(qaseTrackerProvider("linear")).toBe("SIMPLE_URL");
+  });
+});
+
 describe("normalizeQaseMapping", () => {
   it("keeps valid entries and drops everything else", () => {
     expect(
@@ -498,6 +584,7 @@ describe("normalizeQaseMapping", () => {
       resultStatuses: {},
       runStates: { active: null, completed: null },
       milestoneTypeId: null,
+      issueTrackers: {},
     });
     expect(normalizeQaseMapping(null).template.action).toBe("create");
   });

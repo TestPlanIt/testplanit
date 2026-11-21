@@ -101,6 +101,67 @@ describe("fetchQaseData", () => {
     });
   });
 
+  it("finds where the attachments of a defect are", async () => {
+    const { db, rows } = makeDb();
+    const client = makeClient({
+      "defect/DEMO": [
+        [
+          { id: 1, attachments: [{ hash: "h1" }, { hash: "missing" }] },
+          {
+            id: 2,
+            attachments: [
+              { hash: "h1" },
+              { hash: "h2", url: "https://files.test/known.txt" },
+            ],
+          },
+        ],
+      ],
+    });
+    client.get.mockImplementation(async (path: string) => {
+      if (path === "attachment/h1") {
+        return {
+          hash: "h1",
+          file: "screen.png",
+          mime: "image/png",
+          size: 79,
+          full_path: "https://files.test/screen.png",
+        } as never;
+      }
+      if (path.startsWith("attachment/")) {
+        throw new Error("Attachment not found");
+      }
+      return [];
+    });
+
+    await fetchQaseData({ db, client, jobId: "job-1", projectCodes: ["DEMO"] });
+
+    const found = {
+      hash: "h1",
+      url: "https://files.test/screen.png",
+      filename: "screen.png",
+      mime: "image/png",
+      size: 79,
+    };
+    expect(
+      rows.filter((row) => row.entity === "defect").map((row) => row.data)
+    ).toEqual([
+      { id: 1, attachments: [found, { hash: "missing" }] },
+      {
+        id: 2,
+        attachments: [
+          found,
+          { hash: "h2", url: "https://files.test/known.txt" },
+        ],
+      },
+    ]);
+    // Each file is looked up once, and one that Qase already located is not.
+    expect(
+      client.get.mock.calls
+        .map(([path]) => path)
+        .filter((path) => path.startsWith("attachment/"))
+    ).toEqual(["attachment/h1", "attachment/missing"]);
+  });
+
   it("stops when the job is canceled", async () => {
     const { db, rows } = makeDb();
     const client = makeClient({

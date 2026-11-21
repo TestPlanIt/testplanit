@@ -57,7 +57,7 @@ async function textToDoc(
 }
 
 /** The TestPlanIt user a Qase user id stands for, else the person importing. */
-function userFor(state: ImportState, qaseUserId: unknown): string {
+export function userFor(state: ImportState, qaseUserId: unknown): string {
   if (qaseUserId === undefined || qaseUserId === null) {
     return state.importerId;
   }

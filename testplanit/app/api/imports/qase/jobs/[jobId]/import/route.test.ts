@@ -57,6 +57,7 @@ const analysis = {
     resultStatuses: [],
     hasRuns: false,
     hasMilestones: false,
+    issueTrackers: [],
   },
   existing: {
     projects: [{ id: 7, name: "Shop" }],
@@ -68,6 +69,7 @@ const analysis = {
     statuses: [],
     runStates: [],
     milestoneTypes: [],
+    integrations: [],
   },
   storageConfigured: true,
 };

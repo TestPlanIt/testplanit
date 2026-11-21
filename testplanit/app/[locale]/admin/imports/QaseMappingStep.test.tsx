@@ -128,6 +128,7 @@ const analysis = (overrides: Partial<QaseAnalysis> = {}): QaseAnalysis => ({
     resultStatuses: [],
     hasRuns: false,
     hasMilestones: false,
+    issueTrackers: [],
   },
   existing: {
     projects: [{ id: 7, name: "Web shop" }],
@@ -165,6 +166,7 @@ const analysis = (overrides: Partial<QaseAnalysis> = {}): QaseAnalysis => ({
     statuses: [],
     runStates: [],
     milestoneTypes: [],
+    integrations: [],
   },
   storageConfigured: true,
   ...overrides,
@@ -179,6 +181,7 @@ const configuration = (): QaseMappingConfiguration => ({
   resultStatuses: {},
   runStates: { active: null, completed: null },
   milestoneTypeId: null,
+  issueTrackers: {},
 });
 
 function mount(
@@ -514,6 +517,80 @@ describe("QaseMappingStep", () => {
     });
   });
 
+  describe("issue trackers", () => {
+    const withIssues = () => {
+      const loaded = analysis();
+      loaded.source.issueTrackers = [
+        { id: "qase", title: "Qase" },
+        { id: "jira-cloud", title: "Jira Cloud" },
+      ];
+      loaded.existing.integrations = [
+        { id: 61, name: "Company Jira", provider: "JIRA" },
+      ];
+      return loaded;
+    };
+    const mapped = (): QaseMappingConfiguration => ({
+      ...configuration(),
+      projects: { SHOP: { action: "map", mappedTo: 7, name: "" } },
+      issueTrackers: {
+        qase: { action: "create", mappedTo: null, name: "Qase" },
+        "jira-cloud": { action: "map", mappedTo: 61, name: "" },
+      },
+    });
+
+    it("leaves the section out when no issues were fetched", async () => {
+      mount({ analysis: analysis(), configuration: configuration() });
+
+      await screen.findByTestId("qase-start-import-button");
+      expect(
+        screen.queryByTestId("qase-map-issue-tracker-row-qase")
+      ).toBeNull();
+    });
+
+    it("sends the integration choices", async () => {
+      const { onStarted } = mount({
+        analysis: withIssues(),
+        configuration: mapped(),
+      });
+
+      const name = await screen.findByTestId("qase-map-issue-tracker-new-qase");
+      expect(
+        screen.getByTestId("qase-map-issue-tracker-row-qase")
+      ).toHaveTextContent("issueTrackerDefects");
+      await waitFor(() =>
+        expect(
+          screen.getByTestId("qase-map-issue-tracker-jira-cloud")
+        ).toHaveTextContent("61")
+      );
+      await userEvent.clear(name);
+      await userEvent.type(name, "Old defects");
+      await userEvent.click(screen.getByTestId("qase-start-import-button"));
+
+      await waitFor(() => expect(onStarted).toHaveBeenCalled());
+      const sent = JSON.parse(String(calls("PUT")[0][1].body)).configuration;
+      expect(sent.issueTrackers).toEqual({
+        qase: { action: "create", mappedTo: null, name: "Old defects" },
+        "jira-cloud": { action: "map", mappedTo: 61, name: "" },
+      });
+    });
+
+    it("blocks the import until each tracker has an integration", async () => {
+      const loaded = mapped();
+      loaded.issueTrackers.qase.name = "Company Jira";
+      loaded.issueTrackers["jira-cloud"].mappedTo = null;
+      mount({ analysis: withIssues(), configuration: loaded });
+
+      const start = await screen.findByTestId("qase-start-import-button");
+      expect(start).toBeDisabled();
+      expect(
+        screen.getByTestId("qase-map-issue-tracker-row-qase")
+      ).toHaveTextContent("problems.issue_tracker_name_taken");
+      expect(
+        screen.getByTestId("qase-map-issue-tracker-row-jira-cloud")
+      ).toHaveTextContent("problems.issue_tracker_unmapped");
+    });
+  });
+
   describe("runs, results and milestones", () => {
     const withRuns = () => {
       const loaded = analysis();
@@ -577,6 +654,7 @@ describe("QaseMappingStep", () => {
       },
       runStates: { active: 42, completed: 43 },
       milestoneTypeId: 51,
+      issueTrackers: {},
     });
 
     it("leaves the sections out when nothing of the kind was fetched", async () => {

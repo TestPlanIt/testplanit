@@ -8,6 +8,11 @@ import { findOrCreateProjectRepository } from "~/workers/testmoImport/helpers";
 import { buildQaseAnalysis, loadQaseStaged } from "./analysis";
 import { importExecution, prepareResultStatuses } from "./runQaseExecution";
 import {
+  countQaseIssues,
+  importIssues,
+  prepareIssueTrackers,
+} from "./runQaseIssues";
+import {
   EMPTY_DOC,
   QaseImportCanceledError,
   asText,
@@ -921,6 +926,7 @@ async function importProject(
   }
 
   await importExecution(state, project);
+  await importIssues(state, project, cases);
   return projectId;
 }
 
@@ -1073,6 +1079,19 @@ export async function runQaseImport({
         };
       }
     }
+    for (const [trackerId, integrationId] of await loadMappings(
+      db,
+      jobId,
+      "issue_tracker"
+    )) {
+      if (config.issueTrackers[trackerId]?.action === "create") {
+        config.issueTrackers[trackerId] = {
+          action: "map",
+          mappedTo: Number(integrationId),
+          name: "",
+        };
+      }
+    }
     const problems = validateQaseMapping(config, analysis);
     if (problems.length > 0) {
       throw new Error(
@@ -1102,6 +1121,7 @@ export async function runQaseImport({
       milestones: { done: 0, total: 0 },
       runs: { done: 0, total: 0 },
       results: { done: 0, total: 0 },
+      issues: { done: 0, total: 0 },
       files: earlierFiles(job.entityProgress),
     };
     const warnings = earlierWarnings(job.activityLog);
@@ -1138,6 +1158,16 @@ export async function runQaseImport({
           await loadMappings(db, jobId, entity, project.code)
         ).size;
       }
+      progress.issues.total += countQaseIssues(
+        await db.qaseImportStaging.count({
+          where: { jobId, entity: "defect", projectCode: project.code },
+        }),
+        cases,
+        await loadQaseStaged(db, jobId, "run", project.code)
+      );
+      progress.issues.done += (
+        await loadMappings(db, jobId, "defect", project.code)
+      ).size;
     }
     const systemFields = await loadQaseStaged(db, jobId, "system_field");
     const authorUsers = new Map<string, string>();
@@ -1177,6 +1207,7 @@ export async function runQaseImport({
       statusSlugs: qaseResultStatusSlugs(systemFields),
       customFields: await loadQaseStaged(db, jobId, "custom_field"),
       authorUsers,
+      trackers: new Map(),
     };
     current = state;
     if (!analysis.storageConfigured) {
@@ -1188,6 +1219,7 @@ export async function runQaseImport({
     await prepareUsers(state);
     await prepareTemplate(state);
     await prepareResultStatuses(state);
+    await prepareIssueTrackers(state);
 
     const projectIds: number[] = [];
     for (const project of projects) {

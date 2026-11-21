@@ -1,4 +1,5 @@
 import type { DbClient } from "~/lib/zenstack";
+import { syncProjectIssuesToElasticsearch } from "~/services/issueSearch";
 import { syncProjectMilestonesToElasticsearch } from "~/services/milestoneSearch";
 import { syncAllProjectsToElasticsearch } from "~/services/projectSearch";
 import { syncProjectCasesToElasticsearch } from "~/services/repositoryCaseSync";
@@ -43,6 +44,9 @@ export async function syncQaseImportToSearch(
     );
     await attempt(`the test runs of project ${projectId}`, () =>
       syncProjectTestRunsToElasticsearch(projectId, db, tenantId)
+    );
+    await attempt(`the issues of project ${projectId}`, () =>
+      syncProjectIssuesToElasticsearch(projectId, db, tenantId)
     );
   }
 }

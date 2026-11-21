@@ -57,6 +57,7 @@ const analysis: QaseAnalysis = {
     resultStatuses: [],
     hasRuns: false,
     hasMilestones: false,
+    issueTrackers: [],
   },
   existing: {
     projects: [{ id: 7, name: "Shop" }],
@@ -84,6 +85,7 @@ const analysis: QaseAnalysis = {
     statuses: [],
     runStates: [],
     milestoneTypes: [],
+    integrations: [],
   },
   storageConfigured: true,
 };
@@ -219,6 +221,7 @@ describe("Qase mapping route", () => {
       resultStatuses: {},
       runStates: { active: null, completed: null },
       milestoneTypeId: null,
+      issueTrackers: {},
     });
     expect(body.problems).toEqual([
       { code: "status_unmapped", subject: "Actual" },

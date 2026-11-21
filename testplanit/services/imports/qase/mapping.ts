@@ -48,6 +48,11 @@ export interface QaseAnalysis {
     resultStatuses: QaseSourceOption[];
     hasRuns: boolean;
     hasMilestones: boolean;
+    /**
+     * Where the fetched issues come from: `qase` for Qase's own defects, else
+     * the tracker type of the issues linked to cases and runs.
+     */
+    issueTrackers: QaseSourceOption[];
   };
   existing: {
     projects: { id: number; name: string }[];
@@ -84,6 +89,8 @@ export interface QaseAnalysis {
       isDefault: boolean;
       icon: { name: string } | null;
     }[];
+    /** Issue integrations. */
+    integrations: { id: number; name: string; provider: string }[];
   };
   /** False when no file storage is set up, so attachments cannot be copied. */
   storageConfigured: boolean;
@@ -142,6 +149,32 @@ export interface QaseResultStatusMapping {
   isCompleted: boolean;
 }
 
+export type QaseIssueTrackerAction = "map" | "create";
+
+export interface QaseIssueTrackerMapping {
+  action: QaseIssueTrackerAction;
+  mappedTo: number | null;
+  /** The integration to create. */
+  name: string;
+}
+
+/** The tracker id of Qase's own defects. */
+export const QASE_DEFECT_TRACKER = "qase";
+
+/** The provider an integration created for a Qase tracker type gets. */
+export function qaseTrackerProvider(type: string): string {
+  const known: [RegExp, string][] = [
+    [/jira/, "JIRA"],
+    [/github/, "GITHUB"],
+    [/azure/, "AZURE_DEVOPS"],
+    [/gitlab/, "GITLAB"],
+    [/redmine/, "REDMINE"],
+    [/clickup/, "CLICKUP"],
+  ];
+  const lower = type.toLowerCase();
+  return known.find(([pattern]) => pattern.test(lower))?.[1] ?? "SIMPLE_URL";
+}
+
 export interface QaseMappingConfiguration {
   /** By Qase project code. */
   projects: Record<string, QaseProjectMapping>;
@@ -160,6 +193,8 @@ export interface QaseMappingConfiguration {
   /** The workflow state of a run still open in Qase, and of a finished one. */
   runStates: { active: number | null; completed: number | null };
   milestoneTypeId: number | null;
+  /** By tracker id: `qase` or the tracker type of linked issues. */
+  issueTrackers: Record<string, QaseIssueTrackerMapping>;
 }
 
 export type QaseMappingProblem =
@@ -182,7 +217,10 @@ export type QaseMappingProblem =
   | { code: "result_status_name_missing"; subject: string }
   | { code: "result_status_name_taken"; subject: string }
   | { code: "run_state_unmapped"; subject: "active" | "completed" }
-  | { code: "milestone_type_missing" };
+  | { code: "milestone_type_missing" }
+  | { code: "issue_tracker_unmapped"; subject: string }
+  | { code: "issue_tracker_name_missing"; subject: string }
+  | { code: "issue_tracker_name_taken"; subject: string };
 
 export const QASE_DEFAULT_TEMPLATE_NAME = "Qase";
 
@@ -298,6 +336,16 @@ export function normalizeQaseMapping(value: unknown): QaseMappingConfiguration {
     completed: toId(rawRunStates.completed),
   };
 
+  const issueTrackers: QaseMappingConfiguration["issueTrackers"] = {};
+  for (const [id, entry] of Object.entries(section("issueTrackers"))) {
+    const raw = isRecord(entry) ? entry : {};
+    issueTrackers[id] = {
+      action: raw.action === "create" ? "create" : "map",
+      mappedTo: toId(raw.mappedTo),
+      name: toName(raw.name),
+    };
+  }
+
   return {
     projects,
     users,
@@ -307,6 +355,7 @@ export function normalizeQaseMapping(value: unknown): QaseMappingConfiguration {
     resultStatuses,
     runStates,
     milestoneTypeId: toId(input.milestoneTypeId),
+    issueTrackers,
   };
 }
 
@@ -432,6 +481,25 @@ export function buildDefaultQaseMapping(
     existing.milestoneTypes[0]?.id ??
     null;
 
+  const issueTrackers: QaseMappingConfiguration["issueTrackers"] = {};
+  for (const tracker of source.issueTrackers) {
+    const provider = qaseTrackerProvider(tracker.id);
+    const match =
+      existing.integrations.find((candidate) =>
+        sameName(candidate.name, tracker.title)
+      ) ??
+      // Only a tracker of a known kind is matched by kind: Qase's own
+      // defects and trackers TestPlanIt has no provider for get their own.
+      (provider === "SIMPLE_URL"
+        ? undefined
+        : existing.integrations.find(
+            (candidate) => candidate.provider === provider
+          ));
+    issueTrackers[tracker.id] = match
+      ? { action: "map", mappedTo: match.id, name: "" }
+      : { action: "create", mappedTo: null, name: tracker.title };
+  }
+
   return {
     projects,
     users,
@@ -441,6 +509,7 @@ export function buildDefaultQaseMapping(
     resultStatuses,
     runStates,
     milestoneTypeId,
+    issueTrackers,
   };
 }
 
@@ -465,6 +534,7 @@ export function completeQaseMapping(
       completed: saved.runStates.completed ?? defaults.runStates.completed,
     },
     milestoneTypeId: saved.milestoneTypeId ?? defaults.milestoneTypeId,
+    issueTrackers: { ...defaults.issueTrackers, ...saved.issueTrackers },
   };
 }
 
@@ -634,6 +704,36 @@ export function validateQaseMapping(
     !existing.milestoneTypes.some((type) => type.id === config.milestoneTypeId)
   ) {
     problems.push({ code: "milestone_type_missing" });
+  }
+
+  const newTrackers: string[] = [];
+  for (const tracker of source.issueTrackers) {
+    const mapping = config.issueTrackers[tracker.id];
+    if (mapping?.action === "create") {
+      if (!mapping.name) {
+        problems.push({
+          code: "issue_tracker_name_missing",
+          subject: tracker.title,
+        });
+      } else if (
+        existing.integrations.some((candidate) =>
+          sameName(candidate.name, mapping.name)
+        ) ||
+        newTrackers.some((name) => sameName(name, mapping.name))
+      ) {
+        problems.push({
+          code: "issue_tracker_name_taken",
+          subject: mapping.name,
+        });
+      } else {
+        newTrackers.push(mapping.name);
+      }
+      continue;
+    }
+    const target = mapping?.mappedTo ?? null;
+    if (!existing.integrations.some((candidate) => candidate.id === target)) {
+      problems.push({ code: "issue_tracker_unmapped", subject: tracker.title });
+    }
   }
 
   return problems;

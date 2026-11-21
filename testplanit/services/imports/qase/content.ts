@@ -737,16 +737,18 @@ export function qaseSeconds(milliseconds: unknown): number | null {
  * A run's description followed by its custom field values, one per line.
  * TestPlanIt runs have no custom fields, so the values are kept in the text.
  */
-export function qaseRunDescription(
-  run: QaseRecord,
-  customFields: QaseRecord[]
-): string {
+/** The custom field values of a record as lines of Markdown. */
+function customFieldLines(
+  record: QaseRecord,
+  customFields: QaseRecord[],
+  entity: string
+): string[] {
   const lines: string[] = [];
-  for (const entry of Array.isArray(run.custom_fields)
-    ? (run.custom_fields as QaseRecord[])
+  for (const entry of Array.isArray(record.custom_fields)
+    ? (record.custom_fields as QaseRecord[])
     : []) {
     const field = customFields.find(
-      (candidate) => candidate.id === entry.id && candidate.entity === "run"
+      (candidate) => candidate.id === entry.id && candidate.entity === entity
     );
     const raw = asText(entry.value).trim();
     if (!field || !raw) {
@@ -771,7 +773,95 @@ export function qaseRunDescription(
       lines.push(`**${asText(field.title)}:** ${shown}`);
     }
   }
-  return [asText(run.description).trim(), lines.join("\n\n")]
+  return lines;
+}
+
+export function qaseRunDescription(
+  run: QaseRecord,
+  customFields: QaseRecord[]
+): string {
+  return [
+    asText(run.description).trim(),
+    customFieldLines(run, customFields, "run").join("\n\n"),
+  ]
     .filter(Boolean)
     .join("\n\n");
+}
+
+/**
+ * What a Qase defect says, as the text of an issue: its actual result, then
+ * its custom field values and tags, which an issue has no place for.
+ */
+export function qaseDefectDescription(
+  defect: QaseRecord,
+  customFields: QaseRecord[]
+): string {
+  const lines = customFieldLines(defect, customFields, "defect");
+  const tags = (Array.isArray(defect.tags) ? (defect.tags as QaseRecord[]) : [])
+    .map((tag) => asText(tag?.title).trim())
+    .filter(Boolean);
+  if (tags.length > 0) {
+    lines.push(`**Tags:** ${tags.join(", ")}`);
+  }
+  return [asText(defect.actual_result).trim(), lines.join("\n\n")]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+export interface QaseExternalIssue {
+  /** The tracker type, such as `jira-cloud`. */
+  type: string;
+  /** The issue's key in the tracker. */
+  id: string;
+  link: string | null;
+}
+
+const httpLink = (value: unknown): string | null => {
+  const text = asText(value).trim();
+  return /^https?:\/\//i.test(text) ? text : null;
+};
+
+/**
+ * The tracker issues linked to a case (`external_issues`) or to a run
+ * (`external_issue`), each once.
+ */
+export function qaseExternalIssues(record: QaseRecord): QaseExternalIssue[] {
+  const found = new Map<string, QaseExternalIssue>();
+  const add = (type: unknown, id: unknown, link: unknown) => {
+    const tracker = asText(type).trim();
+    const key =
+      typeof id === "number" ? String(id) : asText(id).trim().slice(0, 255);
+    if (tracker && key && !found.has(`${tracker}\u0000${key}`)) {
+      found.set(`${tracker}\u0000${key}`, {
+        type: tracker,
+        id: key,
+        link: httpLink(link),
+      });
+    }
+  };
+  for (const group of Array.isArray(record.external_issues)
+    ? (record.external_issues as QaseRecord[])
+    : []) {
+    for (const issue of Array.isArray(group?.issues)
+      ? (group.issues as QaseRecord[])
+      : []) {
+      add(group.type, issue?.id, issue?.link);
+    }
+  }
+  const single = record.external_issue as QaseRecord | null | undefined;
+  if (single && typeof single === "object") {
+    add(single.type, single.id, single.link);
+  }
+  return [...found.values()];
+}
+
+/** A Qase tracker type as a name: `jira-cloud` becomes "Jira Cloud". */
+export function qaseTrackerTitle(type: string): string {
+  return (
+    type
+      .split(/[-_\s]+/)
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ") || type
+  );
 }
