@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildDefaultQaseMapping,
+  completeQaseMapping,
   normalizeQaseMapping,
   validateQaseMapping,
   unmappedQaseUser,
@@ -49,6 +50,12 @@ const analysis: QaseAnalysis = {
         options: [],
       },
     ],
+    resultStatuses: [
+      { id: "passed", title: "Passed" },
+      { id: "invalid", title: "Invalid" },
+    ],
+    hasRuns: true,
+    hasMilestones: true,
   },
   existing: {
     projects: [{ id: 5, name: "web shop" }],
@@ -89,6 +96,50 @@ const analysis: QaseAnalysis = {
     roles: [
       { id: 1, name: "Tester", isDefault: true },
       { id: 2, name: "Manager", isDefault: false },
+    ],
+    statuses: [
+      {
+        id: 31,
+        name: "Passed",
+        systemName: "passed",
+        color: { value: "#0f0" },
+      },
+      {
+        id: 32,
+        name: "Failed",
+        systemName: "failed",
+        color: { value: "#f00" },
+      },
+    ],
+    runStates: [
+      {
+        id: 41,
+        name: "New",
+        workflowType: "NOT_STARTED",
+        isDefault: true,
+        icon: { name: "circle" },
+        color: { value: "#000" },
+      },
+      {
+        id: 42,
+        name: "In Progress",
+        workflowType: "IN_PROGRESS",
+        isDefault: false,
+        icon: { name: "circle" },
+        color: { value: "#000" },
+      },
+      {
+        id: 43,
+        name: "Done",
+        workflowType: "DONE",
+        isDefault: false,
+        icon: { name: "circle" },
+        color: { value: "#000" },
+      },
+    ],
+    milestoneTypes: [
+      { id: 51, name: "Cycle", isDefault: true, icon: null },
+      { id: 52, name: "Release", isDefault: false, icon: null },
     ],
   },
   storageConfigured: true,
@@ -299,6 +350,90 @@ describe("validateQaseMapping", () => {
   });
 });
 
+describe("runs, results and milestones", () => {
+  const valid = () => buildDefaultQaseMapping(analysis);
+
+  it("matches a result status by name and proposes a new one otherwise", () => {
+    const config = valid();
+    expect(config.resultStatuses.passed).toMatchObject({
+      action: "map",
+      mappedTo: 31,
+    });
+    expect(config.resultStatuses.invalid).toEqual({
+      action: "create",
+      mappedTo: null,
+      name: "Invalid",
+      isSuccess: false,
+      isFailure: false,
+      isCompleted: true,
+    });
+  });
+
+  it("proposes the in-progress and done states, and the default type", () => {
+    const config = valid();
+    expect(config.runStates).toEqual({ active: 42, completed: 43 });
+    expect(config.milestoneTypeId).toBe(51);
+    expect(validateQaseMapping(config, analysis)).toEqual([]);
+  });
+
+  it("reports what is missing for results, runs and milestones", () => {
+    const config = valid();
+    config.resultStatuses.passed.mappedTo = null;
+    config.resultStatuses.invalid.name = "failed";
+    config.runStates = { active: null, completed: 999 };
+    config.milestoneTypeId = null;
+    expect(validateQaseMapping(config, analysis)).toEqual([
+      { code: "result_status_unmapped", subject: "Passed" },
+      { code: "result_status_name_taken", subject: "failed" },
+      { code: "run_state_unmapped", subject: "active" },
+      { code: "run_state_unmapped", subject: "completed" },
+      { code: "milestone_type_missing" },
+    ]);
+    config.resultStatuses.invalid.name = "";
+    expect(validateQaseMapping(config, analysis)[1]).toEqual({
+      code: "result_status_name_missing",
+      subject: "Invalid",
+    });
+  });
+
+  it("asks for nothing when no runs or milestones were fetched", () => {
+    const bare: QaseAnalysis = {
+      ...analysis,
+      source: {
+        ...analysis.source,
+        resultStatuses: [],
+        hasRuns: false,
+        hasMilestones: false,
+      },
+    };
+    const config = buildDefaultQaseMapping(bare);
+    config.runStates = { active: null, completed: null };
+    config.milestoneTypeId = null;
+    expect(validateQaseMapping(config, bare)).toEqual([]);
+  });
+
+  it("fills a mapping saved before these parts existed", () => {
+    const saved = normalizeQaseMapping({
+      projects: { WEB: { mappedTo: 5 } },
+      caseStatuses: { "0": { mappedTo: 12 } },
+      template: { action: "create", name: "Mine" },
+      resultStatuses: { passed: { action: "map", mappedTo: 32 } },
+    });
+    const completed = completeQaseMapping(saved, analysis);
+
+    // What was chosen stays.
+    expect(completed.caseStatuses["0"].mappedTo).toBe(12);
+    expect(completed.template.name).toBe("Mine");
+    expect(completed.resultStatuses.passed.mappedTo).toBe(32);
+    // What was never asked comes from the defaults.
+    expect(completed.caseStatuses["1"].mappedTo).toBe(11);
+    expect(completed.resultStatuses.invalid.action).toBe("create");
+    expect(completed.runStates).toEqual({ active: 42, completed: 43 });
+    expect(completed.milestoneTypeId).toBe(51);
+    expect(completed.fields["custom:7"].action).toBe("create");
+  });
+});
+
 describe("normalizeQaseMapping", () => {
   it("keeps valid entries and drops everything else", () => {
     expect(
@@ -360,6 +495,9 @@ describe("normalizeQaseMapping", () => {
       caseStatuses: { "0": { mappedTo: null } },
       template: { action: "create", mappedTo: null, name: "Mine" },
       fields: { "custom:7": { action: "skip", mappedTo: null, name: "" } },
+      resultStatuses: {},
+      runStates: { active: null, completed: null },
+      milestoneTypeId: null,
     });
     expect(normalizeQaseMapping(null).template.action).toBe("create");
   });

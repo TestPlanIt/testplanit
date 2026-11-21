@@ -10,6 +10,15 @@ import {
   qaseSourceFields,
   qaseTextToDoc,
   type QaseFieldTarget,
+  flattenQaseStepResults,
+  isQaseRunCompleted,
+  qaseResultNotes,
+  qaseResultStatuses,
+  qaseResultStatusSlugs,
+  qaseRunCaseIds,
+  qaseRunDescription,
+  qaseSeconds,
+  qaseStepSlots,
 } from "./content";
 import type { QaseSourceField } from "./mapping";
 
@@ -309,5 +318,176 @@ describe("buildQaseParameterSet", () => {
       rows: [],
       truncated: false,
     });
+  });
+});
+
+describe("result statuses", () => {
+  const systemFields = [
+    {
+      slug: "result_status",
+      options: [
+        { id: 0, title: "Untested", slug: "untested" },
+        { id: 1, title: "Passed", slug: "passed" },
+        { id: 6, title: "Deleted", slug: "deleted" },
+        { id: 8, title: "Invalid", slug: "invalid" },
+      ],
+    },
+  ];
+
+  it("offers every status a result can be recorded with", () => {
+    expect(qaseResultStatuses(systemFields)).toEqual([
+      { id: "passed", title: "Passed" },
+      { id: "invalid", title: "Invalid" },
+    ]);
+    expect(qaseResultStatuses([])).toEqual([]);
+  });
+
+  it("names the status a step result's number stands for", () => {
+    const slugs = qaseResultStatusSlugs(systemFields);
+    expect(slugs.get(1)).toBe("passed");
+    expect(slugs.get(8)).toBe("invalid");
+    expect(slugs.get(4)).toBeUndefined();
+  });
+});
+
+describe("qaseStepSlots", () => {
+  it("numbers nested steps in the order they are flattened", () => {
+    const steps = [
+      { position: 2, action: "b", steps: [{ position: 1, action: "b1" }] },
+      { position: 1, action: "a" },
+      { position: 3, action: "c" },
+    ];
+    expect([...qaseStepSlots(steps)]).toEqual([
+      ["1", { index: 0, sharedItem: null }],
+      ["2", { index: 1, sharedItem: null }],
+      ["2.1", { index: 2, sharedItem: null }],
+      ["3", { index: 3, sharedItem: null }],
+    ]);
+    // The same order the case's steps were imported in.
+    expect(flattenQaseSteps(steps)).toHaveLength(4);
+  });
+
+  it("puts the steps of a shared step on one row, as items", () => {
+    const steps = [
+      { position: 1, action: "own first" },
+      { position: 2, action: "s1", shared_step_hash: "h" },
+      { position: 3, action: "s2", shared_step_hash: "h" },
+      { position: 4, action: "own last" },
+      { position: 5, action: "other", shared_step_hash: "g" },
+    ];
+    expect([...qaseStepSlots(steps)]).toEqual([
+      ["1", { index: 0, sharedItem: null }],
+      ["2", { index: 1, sharedItem: 0 }],
+      ["3", { index: 1, sharedItem: 1 }],
+      ["4", { index: 2, sharedItem: null }],
+      ["5", { index: 3, sharedItem: 0 }],
+    ]);
+    expect(flattenQaseSteps(steps)).toHaveLength(4);
+  });
+
+  it("gives a Gherkin scenario its one step", () => {
+    expect([...qaseStepSlots([{ action: "Given a user" }], "gherkin")]).toEqual(
+      [["1", { index: 0, sharedItem: null }]]
+    );
+  });
+});
+
+describe("flattenQaseStepResults", () => {
+  it("lists nested step results with the path of their step", () => {
+    expect(
+      flattenQaseStepResults([
+        {
+          position: 2,
+          status: 2,
+          comment: "broke",
+          steps: [{ position: 1, status: 1 }],
+        },
+        {
+          position: 1,
+          status: 1,
+          attachments: [{ url: "https://files.test/a.png", filename: "a.png" }],
+        },
+      ]).map((entry) => [
+        entry.path,
+        entry.status,
+        entry.comment,
+        entry.attachments.length,
+      ])
+    ).toEqual([
+      ["1", 1, "", 1],
+      ["2", 2, "broke", 0],
+      ["2.1", 1, "", 0],
+    ]);
+    expect(flattenQaseStepResults(null)).toEqual([]);
+  });
+});
+
+describe("runs", () => {
+  it("lists each case of a run once, in order", () => {
+    expect(qaseRunCaseIds({ cases: [1, 1, 5, 1, 8, 5] })).toEqual([
+      "1",
+      "5",
+      "8",
+    ]);
+    expect(qaseRunCaseIds({})).toEqual([]);
+  });
+
+  it("treats a run with an end or a final status as finished", () => {
+    expect(isQaseRunCompleted({ end_time: "2026-11-21T01:22:01+00:00" })).toBe(
+      true
+    );
+    expect(isQaseRunCompleted({ status_text: "failed", end_time: null })).toBe(
+      true
+    );
+    expect(
+      isQaseRunCompleted({ status_text: "in_progress", end_time: null })
+    ).toBe(false);
+    expect(isQaseRunCompleted({ status_text: "active" })).toBe(false);
+  });
+
+  it("keeps a run's custom field values under its description", () => {
+    const customFields = [
+      { id: 10, title: "Build number", entity: "run", value: null },
+      {
+        id: 11,
+        title: "Region",
+        entity: "run",
+        value: JSON.stringify([
+          { id: 1, title: "EU" },
+          { id: 2, title: "US" },
+        ]),
+      },
+      { id: 12, title: "Case only", entity: "case", value: null },
+    ];
+    expect(
+      qaseRunDescription(
+        {
+          description: "Full pass.",
+          custom_fields: [
+            { id: 10, value: "1.1.0-rc2" },
+            { id: 11, value: "1" },
+            { id: 11, value: "2" },
+            { id: 12, value: "ignored" },
+            { id: 99, value: "unknown field" },
+          ],
+        },
+        customFields
+      )
+    ).toBe("Full pass.\n\n**Build number:** 1.1.0-rc2\n\n**Region:** EU, US");
+    expect(qaseRunDescription({ description: null }, customFields)).toBe("");
+  });
+
+  it("converts milliseconds to whole seconds", () => {
+    expect(qaseSeconds(93500)).toBe(94);
+    expect(qaseSeconds(0)).toBeNull();
+    expect(qaseSeconds(null)).toBeNull();
+    expect(qaseSeconds(1e15)).toBe(2_147_483_647);
+  });
+
+  it("adds a stack trace to the result comment as a code block", () => {
+    expect(
+      qaseResultNotes({ comment: "Fails.", stacktrace: "Error\n  at x" })
+    ).toBe("Fails.\n\n```\nError\n  at x\n```");
+    expect(qaseResultNotes({ comment: " ", stacktrace: null })).toBe("");
   });
 });

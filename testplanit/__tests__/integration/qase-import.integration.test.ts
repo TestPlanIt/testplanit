@@ -70,6 +70,25 @@ const SYSTEM_FIELDS = [
   { slug: "description", title: "Description", options: [] },
   { slug: "preconditions", title: "Pre-conditions", options: [] },
   { slug: "is_flaky", title: "Is flaky", options: options("No", "Yes") },
+  {
+    slug: "result_status",
+    title: "Result status",
+    options: [
+      "Untested",
+      "Passed",
+      "Failed",
+      "Blocked",
+      "Retest",
+      "Skipped",
+      "Deleted",
+      "In progress",
+      "Invalid",
+    ].map((title, id) => ({
+      id,
+      title,
+      slug: title.toLowerCase().replace(" ", "_"),
+    })),
+  },
 ];
 
 const CUSTOM_FIELDS = [
@@ -285,6 +304,220 @@ const CASES = [
   },
 ];
 
+const FAILURE_LOG = `${FILES}/a4/failure-log.txt`;
+
+const MILESTONES = [
+  {
+    id: 1,
+    title: "Release 1.0",
+    description: "First release.",
+    status: "completed",
+    due_date: "2026-09-21T00:00:00+00:00",
+    created_at: "2026-09-01T08:00:00+00:00",
+    updated_at: "2026-09-21T08:00:00+00:00",
+  },
+  {
+    id: 2,
+    title: "Release 1.1",
+    description: null,
+    status: "active",
+    due_date: "2027-01-15T00:00:00+00:00",
+    created_at: "2026-10-01T08:00:00+00:00",
+    updated_at: "2026-10-01T08:00:00+00:00",
+  },
+];
+
+const CONFIGURATION_GROUPS = [
+  {
+    id: 1,
+    title: `Operating system ${STAMP}`,
+    configurations: [
+      { id: 2, title: "Windows" },
+      { id: 1, title: "macOS" },
+    ],
+  },
+  {
+    id: 2,
+    title: `Browser ${STAMP}`,
+    configurations: [{ id: 3, title: "Chrome" }],
+  },
+];
+
+const RUN_FIELD = {
+  id: 10,
+  title: "Build number",
+  entity: "run",
+  type: "string",
+  value: null,
+};
+
+const RUNS = [
+  {
+    id: 1,
+    title: "Release 1.1 regression",
+    description: "Full pass on **staging**.",
+    status: 3,
+    status_text: "failed",
+    start_time: "2026-11-21T01:21:57+00:00",
+    end_time: "2026-11-21T01:22:01+00:00",
+    time_spent: 146500,
+    user_id: 1,
+    environment: { title: `Staging ${STAMP}`, slug: "staging" },
+    milestone: { title: "Release 1.1" },
+    custom_fields: [{ id: 10, value: "1.1.0-rc2" }],
+    tags: [{ title: `regression ${STAMP}` }],
+    configurations: [1, 3],
+    // Case 1 is listed once per parameter combination; case 99 was deleted.
+    cases: [1, 1, 1, 2, 3, 99],
+  },
+  {
+    id: 2,
+    title: "Production smoke",
+    description: null,
+    status: 0,
+    status_text: "in_progress",
+    start_time: "2026-11-21T01:22:02+00:00",
+    end_time: null,
+    time_spent: 1500,
+    user_id: 1,
+    environment: { title: `Production ${STAMP}`, slug: "production" },
+    milestone: null,
+    custom_fields: [],
+    tags: [],
+    configurations: [],
+    cases: [1, 3],
+  },
+];
+
+const RESULTS = [
+  {
+    hash: "result-1",
+    run_id: 1,
+    case_id: 1,
+    status: "passed",
+    comment: "All good on **chrome**.",
+    stacktrace: null,
+    time_spent_ms: 93500,
+    end_time: "2026-11-21T01:21:57+00:00",
+    author_uuid: "author-1",
+    attachments: [],
+    steps: [
+      { position: 1, status: 1, comment: "ok", attachments: [] },
+      {
+        position: 2,
+        status: 1,
+        attachments: [],
+        steps: [{ position: 1, status: 1, attachments: [] }],
+      },
+      {
+        position: 3,
+        status: 1,
+        attachments: [
+          {
+            size: 79,
+            mime: "image/png",
+            filename: "login-screen.png",
+            url: SCREEN,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    hash: "result-2",
+    run_id: 1,
+    case_id: 1,
+    status: "failed",
+    comment: "Fails on firefox.",
+    stacktrace: "AssertionError: dashboard not shown\n  at login.spec.ts:42",
+    time_spent_ms: 41000,
+    end_time: "2026-11-21T01:21:58+00:00",
+    author_uuid: "author-1",
+    attachments: [
+      {
+        size: 38,
+        mime: "text/plain",
+        filename: "failure-log.txt",
+        url: FAILURE_LOG,
+      },
+    ],
+    steps: [
+      { position: 1, status: 1, attachments: [] },
+      { position: 2, status: 1, attachments: [] },
+      {
+        position: 3,
+        status: 2,
+        comment: "Spinner never ends.",
+        attachments: [],
+      },
+    ],
+  },
+  {
+    hash: "result-3",
+    run_id: 1,
+    case_id: 2,
+    status: "blocked",
+    comment: null,
+    time_spent_ms: 0,
+    end_time: "2026-11-21T01:21:59+00:00",
+    author_uuid: "author-app",
+    attachments: [],
+    // Positions 1 and 2 are the two steps of the shared step.
+    steps: [
+      { position: 1, status: 1, attachments: [] },
+      { position: 2, status: 3, attachments: [] },
+      { position: 3, status: 5, attachments: [] },
+    ],
+  },
+  {
+    hash: "result-4",
+    run_id: 1,
+    case_id: 3,
+    status: "invalid",
+    comment: null,
+    time_spent_ms: 0,
+    end_time: "2026-11-21T01:22:00+00:00",
+    author_uuid: "author-1",
+    attachments: [],
+    steps: [],
+  },
+  {
+    hash: "result-5",
+    run_id: 1,
+    case_id: 1,
+    status: "untested",
+    end_time: "2026-11-21T01:22:00+00:00",
+    attachments: [],
+    steps: [],
+  },
+  {
+    hash: "result-6",
+    run_id: 2,
+    case_id: 3,
+    status: "passed",
+    comment: null,
+    time_spent_ms: 1500,
+    end_time: "2026-11-21T01:22:02+00:00",
+    author_uuid: "author-1",
+    attachments: [],
+    steps: [],
+  },
+  {
+    hash: "result-7",
+    run_id: 1,
+    case_id: 99,
+    status: "passed",
+    end_time: "2026-11-21T01:22:03+00:00",
+    attachments: [],
+    steps: [],
+  },
+];
+
+const AUTHORS = [
+  { id: 1, uuid: "author-1", entity_type: "user", entity_id: 1 },
+  { id: 2, uuid: "author-app", entity_type: "app", entity_id: 500 },
+];
+
 const text = (node: unknown): string => {
   if (!node || typeof node !== "object") return "";
   const { text: own, content } = node as { text?: string; content?: unknown[] };
@@ -310,6 +543,9 @@ describeIntegration("Qase import (live DB)", () => {
   let priorityFieldId: number;
   let priorityHighId: number;
   let states: number[];
+  let seededStatuses: Record<string, number>;
+  let runStates: { active: number; completed: number };
+  let milestoneTypeId: number;
   const projectIds: number[] = [];
   const jobIds: string[] = [];
   const uploads: string[] = [];
@@ -337,7 +573,8 @@ describeIntegration("Qase import (live DB)", () => {
     adjust: (
       configuration: QaseMappingConfiguration,
       label: string
-    ) => void = () => {}
+    ) => void = () => {},
+    { withRuns = false } = {}
   ) {
     run += 1;
     const label = `${STAMP}-${run}`;
@@ -393,6 +630,39 @@ describeIntegration("Qase import (live DB)", () => {
           name: `Needs review ${label}`,
         },
       },
+      resultStatuses: {
+        ...Object.fromEntries(
+          ["passed", "failed", "blocked", "retest", "skipped"].map((slug) => [
+            slug,
+            {
+              action: "map" as const,
+              mappedTo: seededStatuses[slug],
+              name: "",
+              isSuccess: false,
+              isFailure: false,
+              isCompleted: false,
+            },
+          ])
+        ),
+        in_progress: {
+          action: "create",
+          mappedTo: null,
+          name: `In progress ${label}`,
+          isSuccess: false,
+          isFailure: false,
+          isCompleted: false,
+        },
+        invalid: {
+          action: "create",
+          mappedTo: null,
+          name: `Invalid ${label}`,
+          isSuccess: false,
+          isFailure: false,
+          isCompleted: true,
+        },
+      },
+      runStates,
+      milestoneTypeId,
     };
 
     adjust(configuration, label);
@@ -440,8 +710,46 @@ describeIntegration("Qase import (live DB)", () => {
       [
         "custom_field",
         null,
-        CUSTOM_FIELDS.map((field) => ({ id: String(field.id), data: field })),
+        [...CUSTOM_FIELDS, RUN_FIELD].map((field) => ({
+          id: String(field.id),
+          data: field,
+        })),
       ],
+      [
+        "author",
+        null,
+        AUTHORS.map((author) => ({ id: String(author.id), data: author })),
+      ],
+      ...(withRuns
+        ? ([
+            [
+              "milestone",
+              "SHOP",
+              MILESTONES.map((entry) => ({
+                id: String(entry.id),
+                data: entry,
+              })),
+            ],
+            [
+              "configuration",
+              "SHOP",
+              CONFIGURATION_GROUPS.map((entry) => ({
+                id: String(entry.id),
+                data: entry,
+              })),
+            ],
+            [
+              "run",
+              "SHOP",
+              RUNS.map((entry) => ({ id: String(entry.id), data: entry })),
+            ],
+            [
+              "result",
+              "SHOP",
+              RESULTS.map((entry) => ({ id: entry.hash, data: entry })),
+            ],
+          ] as [string, string | null, { id: string; data: unknown }[]][])
+        : []),
       [
         "suite",
         "SHOP",
@@ -503,7 +811,10 @@ describeIntegration("Qase import (live DB)", () => {
 
   /** A client that runs `before` ahead of every progress save. */
   const interceptProgress = (
-    before: (casesDone: number) => Promise<void> | void
+    before: (
+      casesDone: number,
+      progress: Record<string, { done?: number }>
+    ) => Promise<void> | void
   ): DbClient =>
     new Proxy(raw, {
       get(target, prop, receiver) {
@@ -516,9 +827,10 @@ describeIntegration("Qase import (live DB)", () => {
               return Reflect.get(model, key);
             }
             return async (args: {
-              data?: { entityProgress?: { cases?: { done?: number } } };
+              data?: { entityProgress?: Record<string, { done?: number }> };
             }) => {
-              await before(args.data?.entityProgress?.cases?.done ?? 0);
+              const progress = args.data?.entityProgress ?? {};
+              await before(progress.cases?.done ?? 0, progress);
               return (model.update as (a: unknown) => unknown)(args);
             };
           },
@@ -576,6 +888,36 @@ describeIntegration("Qase import (live DB)", () => {
       throw new Error("Test prerequisite: three CASES workflow states");
     }
     states = workflows.map((workflow) => workflow.id);
+
+    seededStatuses = Object.fromEntries(
+      (
+        await raw.status.findMany({
+          where: {
+            systemName: {
+              in: ["passed", "failed", "blocked", "retest", "skipped"],
+            },
+          },
+          select: { id: true, systemName: true },
+        })
+      ).map((status) => [status.systemName, status.id])
+    );
+    const runWorkflows = await raw.workflows.findMany({
+      where: { scope: "RUNS", isEnabled: true, isDeleted: false },
+      orderBy: { order: "asc" },
+    });
+    const ofType = (type: string) => {
+      const match = runWorkflows.find((entry) => entry.workflowType === type);
+      if (!match) throw new Error(`Test prerequisite: a ${type} run state`);
+      return match.id;
+    };
+    runStates = { active: ofType("IN_PROGRESS"), completed: ofType("DONE") };
+    const milestoneType = await raw.milestoneTypes.findFirst({
+      where: { isDefault: true, isDeleted: false },
+    });
+    if (!milestoneType) {
+      throw new Error("Test prerequisite: a default milestone type");
+    }
+    milestoneTypeId = milestoneType.id;
   });
 
   afterEach(() => {
@@ -602,6 +944,22 @@ describeIntegration("Qase import (live DB)", () => {
       where: { displayName: { contains: STAMP } },
       data: { isDeleted: true },
     });
+    await raw.status.updateMany({
+      where: { name: { contains: STAMP } },
+      data: { isDeleted: true },
+    });
+    await raw.configCategories.updateMany({
+      where: { name: { contains: STAMP } },
+      data: { isDeleted: true },
+    });
+    await raw.configVariants.updateMany({
+      where: { name: { contains: STAMP } },
+      data: { isDeleted: true },
+    });
+    await raw.configurations.updateMany({
+      where: { name: { contains: STAMP } },
+      data: { isDeleted: true },
+    });
     await raw.tags.updateMany({
       where: { name: { contains: STAMP } },
       data: { isDeleted: true },
@@ -623,6 +981,9 @@ describeIntegration("Qase import (live DB)", () => {
       folders: { done: 2, total: 2 },
       sharedSteps: { done: 1, total: 1 },
       cases: { done: 3, total: 3 },
+      milestones: { done: 0, total: 0 },
+      runs: { done: 0, total: 0 },
+      results: { done: 0, total: 0 },
       files: { done: 3, total: 3 },
     });
     expect(job.activityLog).toEqual([]);
@@ -957,6 +1318,327 @@ describeIntegration("Qase import (live DB)", () => {
     });
   });
 
+  describe("milestones, runs and results", () => {
+    const readRuns = (projectId: number) =>
+      raw.testRuns.findMany({
+        where: { projectId },
+        orderBy: { id: "asc" },
+        include: {
+          tags: true,
+          milestone: true,
+          configuration: {
+            include: {
+              variants: {
+                include: { variant: { include: { category: true } } },
+              },
+              projects: true,
+            },
+          },
+          testCases: {
+            orderBy: { order: "asc" },
+            include: { repositoryCase: true, status: true },
+          },
+          results: {
+            orderBy: { id: "asc" },
+            include: {
+              status: true,
+              attachments: true,
+              stepResults: {
+                orderBy: { id: "asc" },
+                include: { stepStatus: true, attachments: true, step: true },
+              },
+            },
+          },
+        },
+      });
+
+    it("imports them with their links to cases and steps", async () => {
+      const { jobId, projectId, label } = await stageJob({}, undefined, {
+        withRuns: true,
+      });
+
+      await runQaseImport({ db, jobId, copierOptions });
+
+      const job = await readJob(jobId);
+      expect(job.error).toBeNull();
+      expect(job.status).toBe("COMPLETED");
+      expect(job.entityProgress).toMatchObject({
+        milestones: { done: 2, total: 2 },
+        runs: { done: 2, total: 2 },
+        // The untested result is nothing to record; the result of the
+        // deleted case is counted as not imported.
+        results: { done: 6, total: 6, failed: 1 },
+      });
+      expect(
+        (job.activityLog as { code: string }[]).map((entry) => entry.code)
+      ).toEqual(["run_case_missing", "result_skipped"]);
+
+      // Milestones: the due date is kept in the completion date.
+      const milestones = await raw.milestones.findMany({
+        where: { projectId },
+        orderBy: { id: "asc" },
+      });
+      expect(
+        milestones.map((entry) => [
+          entry.name,
+          entry.isCompleted,
+          entry.milestoneTypesId,
+          entry.completedAt?.toISOString(),
+        ])
+      ).toEqual([
+        ["Release 1.0", true, milestoneTypeId, "2026-09-21T00:00:00.000Z"],
+        ["Release 1.1", false, milestoneTypeId, "2027-01-15T00:00:00.000Z"],
+      ]);
+      expect(text(milestones[0].note)).toBe("First release.");
+      expect(
+        await raw.milestoneTypesAssignment.count({
+          where: { projectId, milestoneTypeId },
+        })
+      ).toBe(1);
+
+      const [regression, smoke] = await readRuns(projectId);
+
+      // A finished run: completed, with its milestone, tags and custom field.
+      expect(regression).toMatchObject({
+        name: "Release 1.1 regression",
+        isCompleted: true,
+        stateId: runStates.completed,
+        createdById: adminId,
+        elapsed: 147,
+        testRunType: "REGULAR",
+      });
+      expect(regression.completedAt?.toISOString()).toBe(
+        "2026-11-21T01:22:01.000Z"
+      );
+      expect(regression.createdAt.toISOString()).toBe(
+        "2026-11-21T01:21:57.000Z"
+      );
+      expect(regression.milestone?.name).toBe("Release 1.1");
+      expect(regression.tags.map((tag) => tag.name)).toEqual([
+        `regression ${STAMP}`,
+      ]);
+      expect(text(regression.note)).toBe(
+        "Full pass on staging.Build number: 1.1.0-rc2"
+      );
+
+      // Its configuration: one variant per Qase configuration value, plus
+      // the environment.
+      expect(regression.configuration?.name).toBe(
+        `macOS, Chrome, Staging ${STAMP}`
+      );
+      expect(
+        regression.configuration?.variants
+          .map(
+            (entry) => `${entry.variant.category.name}=${entry.variant.name}`
+          )
+          .sort()
+      ).toEqual([
+        `Browser ${STAMP}=Chrome`,
+        `Environment=Staging ${STAMP}`,
+        `Operating system ${STAMP}=macOS`,
+      ]);
+      expect(
+        regression.configuration?.projects.map((entry) => entry.projectId)
+      ).toContain(projectId);
+
+      // Each case once, in Qase's order; the deleted case is left out.
+      expect(
+        regression.testCases.map((entry) => [
+          entry.repositoryCase.name,
+          entry.order,
+        ])
+      ).toEqual(CASES.map((entry, order) => [entry.title, order]));
+
+      // An open run stays open.
+      expect(smoke).toMatchObject({
+        name: "Production smoke",
+        isCompleted: false,
+        completedAt: null,
+        stateId: runStates.active,
+        milestoneId: null,
+      });
+      expect(smoke.configuration?.name).toBe(`Production ${STAMP}`);
+      expect(smoke.testCases).toHaveLength(2);
+      expect(smoke.results).toHaveLength(1);
+
+      // Results: in the order they were recorded, numbered per run case.
+      const [passed, failed, blocked, invalid] = regression.results;
+      expect(regression.results).toHaveLength(4);
+      expect(
+        regression.results.map((entry) => [entry.status.name, entry.attempt])
+      ).toEqual([
+        ["Passed", 1],
+        ["Failed", 2],
+        ["Blocked", 1],
+        [`Invalid ${label}`, 1],
+      ]);
+      expect(passed).toMatchObject({ elapsed: 94, executedById: adminId });
+      expect(passed.executedAt.toISOString()).toBe("2026-11-21T01:21:57.000Z");
+      expect(text(passed.notes)).toBe("All good on chrome.");
+      expect(typeof passed.notes).toBe("object");
+
+      // Step results follow the steps, nested ones included.
+      const firstCase = regression.testCases[0].repositoryCase;
+      const caseSteps = await raw.steps.findMany({
+        where: { testCaseId: firstCase.id },
+        orderBy: { order: "asc" },
+      });
+      expect(passed.stepResults.map((entry) => entry.stepId)).toEqual(
+        caseSteps.map((step) => step.id)
+      );
+      expect(text(passed.stepResults[0].notes)).toBe("ok");
+      expect(
+        passed.stepResults[3].attachments.map((file) => file.name)
+      ).toEqual(["login-screen.png"]);
+
+      // The comment, then the stack trace as a code block.
+      expect(text(failed.notes)).toContain("Fails on firefox.");
+      expect(text(failed.notes)).toContain(
+        "AssertionError: dashboard not shown"
+      );
+      expect(text(failed.notes)).toContain("at login.spec.ts:42");
+      expect(JSON.stringify(failed.notes)).toContain('"codeBlock"');
+      expect(failed.attachments.map((file) => file.name)).toEqual([
+        "failure-log.txt",
+      ]);
+      expect(failed.attachments[0].url).toMatch(
+        /\/api\/storage\/uploads\/attachments\/qase_.+_failure-log\.txt$/
+      );
+      expect(failed.stepResults.map((entry) => entry.stepStatus.name)).toEqual([
+        "Passed",
+        "Passed",
+        "Failed",
+      ]);
+      expect(text(failed.stepResults[2].notes)).toBe("Spinner never ends.");
+
+      // A shared step's results point at the placeholder step and the item.
+      const group = await raw.sharedStepGroup.findFirstOrThrow({
+        where: { projectId },
+        include: { items: { orderBy: { order: "asc" } } },
+      });
+      expect(
+        blocked.stepResults.map((entry) => [
+          entry.step.sharedStepGroupId,
+          entry.sharedStepItemId,
+          entry.stepStatus.name,
+        ])
+      ).toEqual([
+        [group.id, group.items[0].id, "Passed"],
+        [group.id, group.items[1].id, "Blocked"],
+        [null, null, "Skipped"],
+      ]);
+
+      // A created status is scoped to test runs and added to the project.
+      const created = await raw.status.findUniqueOrThrow({
+        where: { id: invalid.statusId },
+        include: { scope: { include: { scope: true } }, projects: true },
+      });
+      expect(created).toMatchObject({
+        name: `Invalid ${label}`,
+        isCompleted: true,
+        isSuccess: false,
+        isFailure: false,
+        isEnabled: true,
+      });
+      expect(created.scope.map((entry) => entry.scope.name)).toEqual([
+        "Test Run",
+      ]);
+      expect(created.projects.map((entry) => entry.projectId)).toContain(
+        projectId
+      );
+      // A status nothing used is still created, as the mapping asked.
+      expect(
+        await raw.status.count({ where: { name: `In progress ${label}` } })
+      ).toBe(1);
+
+      // A run case shows its latest result.
+      expect(
+        regression.testCases.map((entry) => [
+          entry.status?.name ?? null,
+          entry.isCompleted,
+        ])
+      ).toEqual([
+        ["Failed", true],
+        ["Blocked", false],
+        [`Invalid ${label}`, true],
+      ]);
+      expect(
+        smoke.testCases.map((entry) => entry.status?.name ?? null)
+      ).toEqual([null, "Passed"]);
+    });
+
+    it("does not repeat runs or results when a failed import continues", async () => {
+      const { jobId, projectId } = await stageJob({}, undefined, {
+        withRuns: true,
+      });
+      saveProgressEveryTime();
+      let failed = false;
+      const failing = interceptProgress((_cases, progress) => {
+        if (!failed && (progress.results?.done ?? 0) >= 2) {
+          failed = true;
+          throw new Error("Connection lost");
+        }
+      });
+
+      await expect(
+        runQaseImport({ db: failing, jobId, copierOptions })
+      ).rejects.toThrow("Connection lost");
+      expect(
+        await raw.testRunResults.count({ where: { testRun: { projectId } } })
+      ).toBe(2);
+      vi.restoreAllMocks();
+
+      await runQaseImport({ db, jobId, copierOptions });
+
+      const job = await readJob(jobId);
+      expect(job.status).toBe("COMPLETED");
+      expect(job.entityProgress).toMatchObject({
+        milestones: { done: 2, total: 2 },
+        runs: { done: 2, total: 2 },
+        results: { done: 6, total: 6 },
+      });
+      const runs = await readRuns(projectId);
+      expect(runs).toHaveLength(2);
+      expect(runs[0].testCases).toHaveLength(3);
+      expect(
+        runs[0].results.map((entry) => [entry.status.systemName, entry.attempt])
+      ).toEqual([
+        ["passed", 1],
+        ["failed", 2],
+        ["blocked", 1],
+        [expect.stringContaining("invalid"), 1],
+      ]);
+      expect(runs[1].results).toHaveLength(1);
+      expect(await raw.milestones.count({ where: { projectId } })).toBe(2);
+      expect(
+        await raw.configurations.count({
+          where: { name: `macOS, Chrome, Staging ${STAMP}` },
+        })
+      ).toBe(1);
+      expect(runs[0].testCases[0].status?.systemName).toBe("failed");
+    });
+
+    it("reuses a milestone of the same name", async () => {
+      const { jobId, projectId } = await stageJob({}, undefined, {
+        withRuns: true,
+      });
+      const existing = await raw.milestones.create({
+        data: {
+          projectId,
+          milestoneTypesId: milestoneTypeId,
+          name: "release 1.1",
+          createdBy: adminId,
+        },
+      });
+
+      await runQaseImport({ db, jobId, copierOptions });
+
+      expect(await raw.milestones.count({ where: { projectId } })).toBe(2);
+      const [regression] = await readRuns(projectId);
+      expect(regression.milestoneId).toBe(existing.id);
+    });
+  });
+
   it("continues a failed import without writing anything twice", async () => {
     const { jobId, projectId } = await stageJob();
     saveProgressEveryTime();
@@ -999,6 +1681,9 @@ describeIntegration("Qase import (live DB)", () => {
       folders: { done: 2, total: 2 },
       sharedSteps: { done: 1, total: 1 },
       cases: { done: 3, total: 3 },
+      milestones: { done: 0, total: 0 },
+      runs: { done: 0, total: 0 },
+      results: { done: 0, total: 0 },
       files: { done: 3, total: 3 },
     });
     const cases = await raw.repositoryCases.findMany({

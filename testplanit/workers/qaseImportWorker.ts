@@ -13,10 +13,9 @@ import { QASE_IMPORT_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { captureAuditEvent } from "../lib/services/auditLog";
-import { enqueueWithAuditContext } from "../lib/auditContextEnqueue";
-import { getElasticsearchReindexQueue } from "../lib/queues";
 import { runQaseFetch } from "../services/imports/qase/runQaseFetch";
 import { runQaseImport } from "../services/imports/qase/runQaseImport";
+import { syncQaseImportToSearch } from "../services/imports/qase/searchSync";
 import type { QaseImportMode } from "../services/imports/qase/types";
 
 export type QaseImportJobData = ActorContextJobData<
@@ -54,45 +53,12 @@ export async function processor(job: Job<QaseImportJobData>) {
             entityId: jobId,
             metadata: { projectIds, processedCount: importJob.processedCount },
           }).catch(() => {});
-          const reindexQueue = getElasticsearchReindexQueue();
-          if (!reindexQueue) {
-            return;
-          }
-          if (createdProjects) {
-            await enqueueWithAuditContext(
-              reindexQueue,
-              `reindex-after-qase-import-${jobId}-projects`,
-              {
-                entityType: "projects" as const,
-                userId: importJob.createdById,
-                tenantId: job.data.tenantId,
-              }
-            ).catch((error) => {
-              console.error("Failed to queue reindex after Qase import", error);
-            });
-          }
-          for (const projectId of projectIds) {
-            for (const entityType of [
-              "repositoryCases",
-              "sharedSteps",
-            ] as const) {
-              await enqueueWithAuditContext(
-                reindexQueue,
-                `reindex-after-qase-import-${jobId}-${projectId}-${entityType}`,
-                {
-                  entityType,
-                  projectId,
-                  userId: importJob.createdById,
-                  tenantId: job.data.tenantId,
-                }
-              ).catch((error) => {
-                console.error(
-                  "Failed to queue reindex after Qase import",
-                  error
-                );
-              });
-            }
-          }
+          await syncQaseImportToSearch(
+            db,
+            projectIds,
+            createdProjects,
+            job.data.tenantId
+          );
         },
       });
       return;

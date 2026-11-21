@@ -32,8 +32,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import DynamicIcon from "~/components/DynamicIcon";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { RoleNameDisplay } from "~/components/RoleNameDisplay";
+import StatusDisplay from "~/components/StatusDisplay";
 import { TemplateNameDisplay } from "~/components/TemplateNameDisplay";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { apiFetch } from "~/lib/basePath";
@@ -46,6 +48,7 @@ import {
   type QaseFieldAction,
   type QaseMappingConfiguration,
   type QaseProjectMapping,
+  type QaseResultStatusMapping,
   type QaseSourceField,
   type QaseUserAccess,
   type QaseUserMapping,
@@ -218,6 +221,33 @@ export function QaseMappingStep({ jobId, onStarted }: QaseMappingStepProps) {
               [code]: {
                 ...{ action: "map" as const, mappedTo: null, name: "" },
                 ...current.projects[code],
+                ...patch,
+              },
+            },
+          }
+        : current
+    );
+
+  const setResultStatus = (
+    slug: string,
+    patch: Partial<QaseResultStatusMapping>
+  ) =>
+    setConfig((current) =>
+      current
+        ? {
+            ...current,
+            resultStatuses: {
+              ...current.resultStatuses,
+              [slug]: {
+                ...{
+                  action: "map" as const,
+                  mappedTo: null,
+                  name: "",
+                  isSuccess: false,
+                  isFailure: false,
+                  isCompleted: false,
+                },
+                ...current.resultStatuses[slug],
                 ...patch,
               },
             },
@@ -686,6 +716,273 @@ export function QaseMappingStep({ jobId, onStarted }: QaseMappingStepProps) {
           </TableBody>
         </Table>
       </Section>
+
+      {source.resultStatuses.length > 0 && (
+        <Section
+          title={t("resultStatusesTitle")}
+          description={t("resultStatusesDescription")}
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-1/3">{t("columnQase")}</TableHead>
+                <TableHead className="w-1/4">{t("columnAction")}</TableHead>
+                <TableHead>{t("columnTestPlanIt")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {source.resultStatuses.map((status) => {
+                const mapping = config.resultStatuses[status.id] ?? {
+                  action: "map" as const,
+                  mappedTo: null,
+                  name: "",
+                  isSuccess: false,
+                  isFailure: false,
+                  isCompleted: false,
+                };
+                const statusProblem = (
+                  [
+                    "result_status_unmapped",
+                    "result_status_name_missing",
+                  ] as const
+                ).find((code) => problemFor(code, status.title));
+                const nameTaken =
+                  mapping.action === "create" &&
+                  problemFor("result_status_name_taken", mapping.name);
+                return (
+                  <TableRow
+                    key={status.id}
+                    data-testid={`qase-map-result-status-row-${status.id}`}
+                  >
+                    <TableCell className="align-top">{status.title}</TableCell>
+                    <TableCell className="align-top">
+                      <Select
+                        value={mapping.action}
+                        onValueChange={(value) =>
+                          setResultStatus(
+                            status.id,
+                            value === "create"
+                              ? {
+                                  action: "create",
+                                  mappedTo: null,
+                                  name: status.title,
+                                }
+                              : { action: "map", mappedTo: null, name: "" }
+                          )
+                        }
+                      >
+                        <SelectTrigger
+                          aria-label={t("resultStatusActionLabel", {
+                            name: status.title,
+                          })}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="create">
+                            {t("resultStatusCreate")}
+                          </SelectItem>
+                          <SelectItem value="map">
+                            {t("resultStatusExisting")}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      {mapping.action === "map" ? (
+                        <Picker
+                          testId={`qase-map-result-status-${status.id}`}
+                          options={existing.statuses}
+                          value={
+                            existing.statuses.find(
+                              (candidate) => candidate.id === mapping.mappedTo
+                            ) ?? null
+                          }
+                          onChange={(value) =>
+                            setResultStatus(status.id, {
+                              mappedTo: value?.id ?? null,
+                            })
+                          }
+                          getId={(option) => option.id}
+                          getLabel={(option) => option.name}
+                          render={(option) => (
+                            <StatusDisplay
+                              name={option.name}
+                              color={option.color.value}
+                            />
+                          )}
+                          ariaLabel={t("resultStatusPickerLabel", {
+                            name: status.title,
+                          })}
+                          placeholder={t("resultStatusPlaceholder")}
+                        />
+                      ) : (
+                        <div
+                          className="space-y-3"
+                          data-testid={`qase-map-result-status-new-${status.id}`}
+                        >
+                          <Input
+                            aria-label={t("resultStatusNameLabel", {
+                              name: status.title,
+                            })}
+                            maxLength={255}
+                            value={mapping.name}
+                            onChange={(event) =>
+                              setResultStatus(status.id, {
+                                name: event.target.value,
+                              })
+                            }
+                          />
+                          <div className="flex flex-wrap gap-x-6 gap-y-2">
+                            {(
+                              [
+                                ["isSuccess", "success"],
+                                ["isFailure", "failure"],
+                                ["isCompleted", "completed"],
+                              ] as const
+                            ).map(([flag, label]) => (
+                              <div
+                                key={flag}
+                                className="flex items-center gap-2"
+                              >
+                                <Switch
+                                  id={`qase-result-status-${status.id}-${flag}`}
+                                  checked={mapping[flag]}
+                                  onCheckedChange={(checked) =>
+                                    setResultStatus(status.id, {
+                                      [flag]: checked,
+                                    })
+                                  }
+                                />
+                                <Label
+                                  htmlFor={`qase-result-status-${status.id}-${flag}`}
+                                >
+                                  {tCommon(`fields.${label}`)}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {(statusProblem || nameTaken) && (
+                        <p className="mt-1 text-xs text-destructive">
+                          {t(
+                            `problems.${nameTaken ? "result_status_name_taken" : statusProblem!}`
+                          )}
+                        </p>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Section>
+      )}
+
+      {source.hasRuns && (
+        <Section
+          title={t("runStatesTitle")}
+          description={t("runStatesDescription")}
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-1/2">{t("columnQase")}</TableHead>
+                <TableHead>{t("columnTestPlanIt")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(["active", "completed"] as const).map((kind) => (
+                <TableRow key={kind}>
+                  <TableCell>{t(`runStates.${kind}`)}</TableCell>
+                  <TableCell>
+                    <Picker
+                      testId={`qase-map-run-state-${kind}`}
+                      options={existing.runStates}
+                      value={
+                        existing.runStates.find(
+                          (candidate) => candidate.id === config.runStates[kind]
+                        ) ?? null
+                      }
+                      onChange={(value) =>
+                        setConfig({
+                          ...config,
+                          runStates: {
+                            ...config.runStates,
+                            [kind]: value?.id ?? null,
+                          },
+                        })
+                      }
+                      getId={(option) => option.id}
+                      getLabel={(option) => option.name}
+                      render={(option) => (
+                        <WorkflowStateDisplay
+                          size="sm"
+                          state={{
+                            name: option.name,
+                            icon: { name: option.icon.name as IconName },
+                            color: option.color,
+                          }}
+                        />
+                      )}
+                      ariaLabel={t(`runStates.${kind}`)}
+                      placeholder={t("statusPlaceholder")}
+                    />
+                    {problemFor("run_state_unmapped", kind) && (
+                      <p className="mt-1 text-xs text-destructive">
+                        {t("problems.status_unmapped")}
+                      </p>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Section>
+      )}
+
+      {source.hasMilestones && (
+        <Section
+          title={t("milestonesTitle")}
+          description={t("milestonesDescription")}
+        >
+          <div className="max-w-md">
+            <Picker
+              testId="qase-map-milestone-type"
+              options={existing.milestoneTypes}
+              value={
+                existing.milestoneTypes.find(
+                  (candidate) => candidate.id === config.milestoneTypeId
+                ) ?? null
+              }
+              onChange={(value) =>
+                setConfig({ ...config, milestoneTypeId: value?.id ?? null })
+              }
+              getId={(option) => option.id}
+              getLabel={(option) => option.name}
+              render={(option) => (
+                <span className="flex items-center gap-1">
+                  {option.icon && (
+                    <DynamicIcon
+                      name={option.icon.name as IconName}
+                      className="h-4 w-4 shrink-0"
+                    />
+                  )}
+                  {option.name}
+                </span>
+              )}
+              ariaLabel={t("milestoneTypeLabel")}
+              placeholder={t("milestoneTypePlaceholder")}
+            />
+            {problemFor("milestone_type_missing") && (
+              <p className="mt-1 text-xs text-destructive">
+                {t("problems.milestone_type_missing")}
+              </p>
+            )}
+          </div>
+        </Section>
+      )}
 
       {source.users.length > 0 && (
         <Section title={t("usersTitle")} description={t("usersDescription")}>

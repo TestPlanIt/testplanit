@@ -125,6 +125,9 @@ const analysis = (overrides: Partial<QaseAnalysis> = {}): QaseAnalysis => ({
         ],
       },
     ],
+    resultStatuses: [],
+    hasRuns: false,
+    hasMilestones: false,
   },
   existing: {
     projects: [{ id: 7, name: "Web shop" }],
@@ -159,6 +162,9 @@ const analysis = (overrides: Partial<QaseAnalysis> = {}): QaseAnalysis => ({
       { id: 1, name: "Tester", isDefault: true },
       { id: 2, name: "Manager", isDefault: false },
     ],
+    statuses: [],
+    runStates: [],
+    milestoneTypes: [],
   },
   storageConfigured: true,
   ...overrides,
@@ -170,6 +176,9 @@ const configuration = (): QaseMappingConfiguration => ({
   caseStatuses: { "0": { mappedTo: 3 } },
   template: { action: "create", mappedTo: null, name: "Qase" },
   fields: { "system:type": { action: "map", mappedTo: 11, name: "" } },
+  resultStatuses: {},
+  runStates: { active: null, completed: null },
+  milestoneTypeId: null,
 });
 
 function mount(
@@ -502,6 +511,156 @@ describe("QaseMappingStep", () => {
         await screen.findByTestId("qase-map-user-new-9")
       ).toHaveTextContent("userEmailInUse");
       expect(screen.getByTestId("qase-start-import-button")).toBeEnabled();
+    });
+  });
+
+  describe("runs, results and milestones", () => {
+    const withRuns = () => {
+      const loaded = analysis();
+      loaded.source.resultStatuses = [
+        { id: "passed", title: "Passed" },
+        { id: "invalid", title: "Invalid" },
+      ];
+      loaded.source.hasRuns = true;
+      loaded.source.hasMilestones = true;
+      loaded.existing.statuses = [
+        {
+          id: 31,
+          name: "Passed",
+          systemName: "passed",
+          color: { value: "#00ff00" },
+        },
+      ];
+      loaded.existing.runStates = [
+        {
+          id: 42,
+          name: "In Progress",
+          workflowType: "IN_PROGRESS",
+          isDefault: false,
+          icon: { name: "circle" },
+          color: { value: "#000000" },
+        },
+        {
+          id: 43,
+          name: "Done",
+          workflowType: "DONE",
+          isDefault: false,
+          icon: { name: "circle" },
+          color: { value: "#000000" },
+        },
+      ];
+      loaded.existing.milestoneTypes = [
+        { id: 51, name: "Cycle", isDefault: true, icon: null },
+      ];
+      return loaded;
+    };
+    const mapped = (): QaseMappingConfiguration => ({
+      ...configuration(),
+      projects: { SHOP: { action: "map", mappedTo: 7, name: "" } },
+      resultStatuses: {
+        passed: {
+          action: "map",
+          mappedTo: 31,
+          name: "",
+          isSuccess: false,
+          isFailure: false,
+          isCompleted: false,
+        },
+        invalid: {
+          action: "create",
+          mappedTo: null,
+          name: "Invalid",
+          isSuccess: false,
+          isFailure: false,
+          isCompleted: true,
+        },
+      },
+      runStates: { active: 42, completed: 43 },
+      milestoneTypeId: 51,
+    });
+
+    it("leaves the sections out when nothing of the kind was fetched", async () => {
+      mount({ analysis: analysis(), configuration: configuration() });
+
+      await screen.findByTestId("qase-start-import-button");
+      expect(screen.queryByTestId("qase-map-run-state-active")).toBeNull();
+      expect(screen.queryByTestId("qase-map-milestone-type")).toBeNull();
+      expect(
+        screen.queryByTestId("qase-map-result-status-row-passed")
+      ).toBeNull();
+    });
+
+    it("sends the status, run state and milestone type choices", async () => {
+      const { onStarted } = mount({
+        analysis: withRuns(),
+        configuration: mapped(),
+      });
+
+      const created = await screen.findByTestId(
+        "qase-map-result-status-new-invalid"
+      );
+      await userEvent.click(
+        within(created).getByLabelText("common.fields.failure")
+      );
+      const name = within(created).getByRole("textbox");
+      await userEvent.clear(name);
+      await userEvent.type(name, "Not valid");
+      await userEvent.click(screen.getByTestId("qase-start-import-button"));
+
+      await waitFor(() => expect(onStarted).toHaveBeenCalled());
+      const sent = JSON.parse(String(calls("PUT")[0][1].body)).configuration;
+      expect(sent.resultStatuses.invalid).toEqual({
+        action: "create",
+        mappedTo: null,
+        name: "Not valid",
+        isSuccess: false,
+        isFailure: true,
+        isCompleted: true,
+      });
+      expect(sent.resultStatuses.passed.mappedTo).toBe(31);
+      expect(sent.runStates).toEqual({ active: 42, completed: 43 });
+      expect(sent.milestoneTypeId).toBe(51);
+    });
+
+    it("blocks the import until each choice is made", async () => {
+      const loaded = mapped();
+      loaded.resultStatuses.passed.mappedTo = null;
+      loaded.runStates.completed = null;
+      loaded.milestoneTypeId = null;
+      mount({ analysis: withRuns(), configuration: loaded });
+
+      const start = await screen.findByTestId("qase-start-import-button");
+      expect(start).toBeDisabled();
+      expect(
+        screen.getByTestId("qase-map-result-status-row-passed")
+      ).toHaveTextContent("problems.result_status_unmapped");
+
+      const pick = async (testId: string, value: string) => {
+        const select = within(screen.getByTestId(testId)).getByRole("combobox");
+        await waitFor(() =>
+          expect(within(select).getAllByRole("option").length).toBeGreaterThan(
+            1
+          )
+        );
+        await userEvent.selectOptions(select, value);
+      };
+      await pick("qase-map-result-status-passed", "31");
+      await pick("qase-map-run-state-completed", "43");
+      expect(start).toBeDisabled();
+      await pick("qase-map-milestone-type", "51");
+
+      expect(start).toBeEnabled();
+    });
+
+    it("refuses a new status named like an existing one", async () => {
+      const loaded = mapped();
+      loaded.resultStatuses.invalid.name = "passed";
+      mount({ analysis: withRuns(), configuration: loaded });
+
+      expect(
+        await screen.findByTestId("qase-map-result-status-row-invalid")
+      ).toHaveTextContent("problems.result_status_name_taken");
+      expect(screen.getByTestId("qase-start-import-button")).toBeDisabled();
     });
   });
 

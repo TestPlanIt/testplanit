@@ -54,6 +54,9 @@ const analysis: QaseAnalysis = {
         options: [{ id: "1", title: "High" }],
       },
     ],
+    resultStatuses: [],
+    hasRuns: false,
+    hasMilestones: false,
   },
   existing: {
     projects: [{ id: 7, name: "Shop" }],
@@ -78,6 +81,9 @@ const analysis: QaseAnalysis = {
       },
     ],
     roles: [{ id: 1, name: "Tester", isDefault: true }],
+    statuses: [],
+    runStates: [],
+    milestoneTypes: [],
   },
   storageConfigured: true,
 };
@@ -210,6 +216,9 @@ describe("Qase mapping route", () => {
       fields: {
         "system:priority": { action: "map", mappedTo: 11, name: "" },
       },
+      resultStatuses: {},
+      runStates: { active: null, completed: null },
+      milestoneTypeId: null,
     });
     expect(body.problems).toEqual([
       { code: "status_unmapped", subject: "Actual" },

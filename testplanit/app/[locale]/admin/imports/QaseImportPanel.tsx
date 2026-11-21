@@ -89,6 +89,9 @@ const IMPORT_PROGRESS_ROWS = [
   "folders",
   "sharedSteps",
   "cases",
+  "milestones",
+  "runs",
+  "results",
   "files",
 ] as const;
 const WARNING_CODES = new Set([
@@ -100,6 +103,10 @@ const WARNING_CODES = new Set([
   "shared_step_files_skipped",
   "parameter_rows_skipped",
   "storage_not_configured",
+  "run_failed",
+  "run_case_missing",
+  "result_failed",
+  "result_skipped",
 ]);
 
 type ErrorKey =

@@ -44,6 +44,10 @@ export interface QaseAnalysis {
     users: QaseSourceUser[];
     caseStatuses: QaseSourceOption[];
     fields: QaseSourceField[];
+    /** Result statuses, by Qase slug; empty when no results were fetched. */
+    resultStatuses: QaseSourceOption[];
+    hasRuns: boolean;
+    hasMilestones: boolean;
   };
   existing: {
     projects: { id: number; name: string }[];
@@ -58,6 +62,28 @@ export interface QaseAnalysis {
     templates: { id: number; name: string }[];
     caseFields: QaseExistingField[];
     roles: { id: number; name: string; isDefault: boolean }[];
+    /** Statuses a test run result can have. */
+    statuses: {
+      id: number;
+      name: string;
+      systemName: string;
+      color: { value: string };
+    }[];
+    /** Workflow states for test runs. */
+    runStates: {
+      id: number;
+      name: string;
+      workflowType: string;
+      isDefault: boolean;
+      icon: { name: string };
+      color: { value: string };
+    }[];
+    milestoneTypes: {
+      id: number;
+      name: string;
+      isDefault: boolean;
+      icon: { name: string } | null;
+    }[];
   };
   /** False when no file storage is set up, so attachments cannot be copied. */
   storageConfigured: boolean;
@@ -104,6 +130,18 @@ export interface QaseUserMapping {
   isApi: boolean;
 }
 
+export type QaseResultStatusAction = "map" | "create";
+
+export interface QaseResultStatusMapping {
+  action: QaseResultStatusAction;
+  mappedTo: number | null;
+  /** The status to create. */
+  name: string;
+  isSuccess: boolean;
+  isFailure: boolean;
+  isCompleted: boolean;
+}
+
 export interface QaseMappingConfiguration {
   /** By Qase project code. */
   projects: Record<string, QaseProjectMapping>;
@@ -117,6 +155,11 @@ export interface QaseMappingConfiguration {
     name: string;
   };
   fields: Record<string, QaseFieldMapping>;
+  /** By Qase result status slug. */
+  resultStatuses: Record<string, QaseResultStatusMapping>;
+  /** The workflow state of a run still open in Qase, and of a finished one. */
+  runStates: { active: number | null; completed: number | null };
+  milestoneTypeId: number | null;
 }
 
 export type QaseMappingProblem =
@@ -134,7 +177,12 @@ export type QaseMappingProblem =
   | { code: "field_type_mismatch"; subject: string }
   | { code: "field_target_reused"; subject: string }
   | { code: "field_name_missing"; subject: string }
-  | { code: "field_name_taken"; subject: string };
+  | { code: "field_name_taken"; subject: string }
+  | { code: "result_status_unmapped"; subject: string }
+  | { code: "result_status_name_missing"; subject: string }
+  | { code: "result_status_name_taken"; subject: string }
+  | { code: "run_state_unmapped"; subject: "active" | "completed" }
+  | { code: "milestone_type_missing" };
 
 export const QASE_DEFAULT_TEMPLATE_NAME = "Qase";
 
@@ -231,8 +279,48 @@ export function normalizeQaseMapping(value: unknown): QaseMappingConfiguration {
     };
   }
 
-  return { projects, users, caseStatuses, template, fields };
+  const resultStatuses: QaseMappingConfiguration["resultStatuses"] = {};
+  for (const [slug, entry] of Object.entries(section("resultStatuses"))) {
+    const raw = isRecord(entry) ? entry : {};
+    resultStatuses[slug] = {
+      action: raw.action === "create" ? "create" : "map",
+      mappedTo: toId(raw.mappedTo),
+      name: toName(raw.name),
+      isSuccess: raw.isSuccess === true,
+      isFailure: raw.isFailure === true,
+      isCompleted: raw.isCompleted === true,
+    };
+  }
+
+  const rawRunStates = section("runStates");
+  const runStates = {
+    active: toId(rawRunStates.active),
+    completed: toId(rawRunStates.completed),
+  };
+
+  return {
+    projects,
+    users,
+    caseStatuses,
+    template,
+    fields,
+    resultStatuses,
+    runStates,
+    milestoneTypeId: toId(input.milestoneTypeId),
+  };
 }
+
+/** How a Qase result status behaves when TestPlanIt has no status like it. */
+const RESULT_STATUS_FLAGS: Record<
+  string,
+  Pick<QaseResultStatusMapping, "isSuccess" | "isFailure" | "isCompleted">
+> = {
+  passed: { isSuccess: true, isFailure: false, isCompleted: true },
+  failed: { isSuccess: false, isFailure: true, isCompleted: true },
+  invalid: { isSuccess: false, isFailure: false, isCompleted: true },
+  skipped: { isSuccess: false, isFailure: false, isCompleted: true },
+};
+const OPEN_STATUS = { isSuccess: false, isFailure: false, isCompleted: false };
 
 /** The mapping the screen opens with: matched by name where a match exists. */
 export function buildDefaultQaseMapping(
@@ -311,7 +399,73 @@ export function buildDefaultQaseMapping(
     }
   }
 
-  return { projects, users, caseStatuses, template, fields };
+  const resultStatuses: QaseMappingConfiguration["resultStatuses"] = {};
+  for (const status of source.resultStatuses) {
+    const match = existing.statuses.find(
+      (candidate) =>
+        sameName(candidate.systemName, status.id) ||
+        sameName(candidate.name, status.title)
+    );
+    resultStatuses[status.id] = match
+      ? { action: "map", mappedTo: match.id, name: "", ...OPEN_STATUS }
+      : {
+          action: "create",
+          mappedTo: null,
+          name: status.title,
+          ...(RESULT_STATUS_FLAGS[status.id] ?? OPEN_STATUS),
+        };
+  }
+
+  const stateOfType = (type: string) =>
+    existing.runStates.find((state) => state.workflowType === type)?.id ?? null;
+  const defaultRunState =
+    existing.runStates.find((state) => state.isDefault)?.id ??
+    existing.runStates[0]?.id ??
+    null;
+  const runStates = {
+    active: stateOfType("IN_PROGRESS") ?? defaultRunState,
+    completed: stateOfType("DONE") ?? defaultRunState,
+  };
+
+  const milestoneTypeId =
+    existing.milestoneTypes.find((type) => type.isDefault)?.id ??
+    existing.milestoneTypes[0]?.id ??
+    null;
+
+  return {
+    projects,
+    users,
+    caseStatuses,
+    template,
+    fields,
+    resultStatuses,
+    runStates,
+    milestoneTypeId,
+  };
+}
+
+/**
+ * A saved mapping with everything it lacks taken from the defaults, so a
+ * mapping saved before part of the data was mappable still opens complete.
+ */
+export function completeQaseMapping(
+  saved: QaseMappingConfiguration,
+  analysis: QaseAnalysis
+): QaseMappingConfiguration {
+  const defaults = buildDefaultQaseMapping(analysis);
+  return {
+    projects: { ...defaults.projects, ...saved.projects },
+    users: { ...defaults.users, ...saved.users },
+    caseStatuses: { ...defaults.caseStatuses, ...saved.caseStatuses },
+    template: saved.template,
+    fields: { ...defaults.fields, ...saved.fields },
+    resultStatuses: { ...defaults.resultStatuses, ...saved.resultStatuses },
+    runStates: {
+      active: saved.runStates.active ?? defaults.runStates.active,
+      completed: saved.runStates.completed ?? defaults.runStates.completed,
+    },
+    milestoneTypeId: saved.milestoneTypeId ?? defaults.milestoneTypeId,
+  };
 }
 
 /** Everything that stops an import from starting with this mapping. */
@@ -433,6 +587,53 @@ export function validateQaseMapping(
     } else {
       newNames.push(mapping.name);
     }
+  }
+
+  const newStatuses: string[] = [];
+  for (const status of source.resultStatuses) {
+    const mapping = config.resultStatuses[status.id];
+    if (mapping?.action === "create") {
+      if (!mapping.name) {
+        problems.push({
+          code: "result_status_name_missing",
+          subject: status.title,
+        });
+      } else if (
+        existing.statuses.some((candidate) =>
+          sameName(candidate.name, mapping.name)
+        ) ||
+        newStatuses.some((name) => sameName(name, mapping.name))
+      ) {
+        problems.push({
+          code: "result_status_name_taken",
+          subject: mapping.name,
+        });
+      } else {
+        newStatuses.push(mapping.name);
+      }
+      continue;
+    }
+    const target = mapping?.mappedTo ?? null;
+    if (!existing.statuses.some((candidate) => candidate.id === target)) {
+      problems.push({ code: "result_status_unmapped", subject: status.title });
+    }
+  }
+
+  if (source.hasRuns) {
+    for (const kind of ["active", "completed"] as const) {
+      if (
+        !existing.runStates.some((state) => state.id === config.runStates[kind])
+      ) {
+        problems.push({ code: "run_state_unmapped", subject: kind });
+      }
+    }
+  }
+
+  if (
+    source.hasMilestones &&
+    !existing.milestoneTypes.some((type) => type.id === config.milestoneTypeId)
+  ) {
+    problems.push({ code: "milestone_type_missing" });
   }
 
   return problems;

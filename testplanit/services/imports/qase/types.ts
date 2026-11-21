@@ -32,7 +32,13 @@ export interface QaseImportProgressEntry {
 }
 
 export type QaseImportProgress = Record<
-  "folders" | "sharedSteps" | "cases" | "files",
+  | "folders"
+  | "sharedSteps"
+  | "cases"
+  | "milestones"
+  | "runs"
+  | "results"
+  | "files",
   QaseImportProgressEntry
 >;
 

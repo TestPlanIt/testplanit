@@ -559,3 +559,219 @@ export function buildQaseParameterSet(parameters: unknown): QaseParameterSet {
   const hasValues = blocks.some((block) => block.rows.length > 0);
   return { names, rows: hasValues ? rows : [], truncated: false };
 }
+
+/** Result statuses nothing is recorded for: no result yet, or a removed one. */
+const UNRECORDED_RESULT_STATUSES = new Set(["untested", "deleted"]);
+
+/** The result statuses to map, identified by their Qase slug. */
+export function qaseResultStatuses(
+  systemFields: QaseRecord[]
+): QaseSourceOption[] {
+  const field = systemFields.find(
+    (candidate) => candidate.slug === "result_status"
+  );
+  const options = Array.isArray(field?.options)
+    ? (field.options as QaseRecord[])
+    : [];
+  return options
+    .map((option) => ({
+      id: asText(option.slug),
+      title: asText(option.title) || asText(option.slug),
+    }))
+    .filter(
+      (option) => option.id && !UNRECORDED_RESULT_STATUSES.has(option.id)
+    );
+}
+
+/** Result status slug by the number step results use for it. */
+export function qaseResultStatusSlugs(
+  systemFields: QaseRecord[]
+): Map<number, string> {
+  const field = systemFields.find(
+    (candidate) => candidate.slug === "result_status"
+  );
+  const slugs = new Map<number, string>();
+  for (const option of Array.isArray(field?.options)
+    ? (field.options as QaseRecord[])
+    : []) {
+    if (typeof option.id === "number" && asText(option.slug)) {
+      slugs.set(option.id, asText(option.slug));
+    }
+  }
+  return slugs;
+}
+
+/**
+ * Where a Qase step ended up in the imported case: the position of its row
+ * among the case's steps and, for a step that came from a shared step, its
+ * position inside that shared step.
+ */
+export interface QaseStepSlot {
+  index: number;
+  sharedItem: number | null;
+}
+
+const positionOf = (step: QaseRecord, fallback: number) => {
+  const position = Number(step.position);
+  return Number.isFinite(position) && position > 0 ? position : fallback;
+};
+
+const orderedSteps = (steps: unknown): { step: QaseRecord; at: number }[] =>
+  (Array.isArray(steps) ? (steps as QaseRecord[]) : [])
+    .map((step, index) => ({ step, at: positionOf(step, index + 1) }))
+    .sort((a, b) => a.at - b.at);
+
+/**
+ * Each Qase step's slot, keyed by its path of positions ("2.1" is the first
+ * step nested under the second). Follows the same order as flattenQaseSteps,
+ * so `index` is the order of the step's row in TestPlanIt.
+ */
+export function qaseStepSlots(
+  steps: unknown,
+  stepsType: unknown = "classic"
+): Map<string, QaseStepSlot> {
+  const slots = new Map<string, QaseStepSlot>();
+  if (stepsType === "gherkin") {
+    let index = 0;
+    for (const { step, at } of orderedSteps(steps)) {
+      if ((asText(step.action) || asText(step.value)).trim()) {
+        slots.set(String(at), { index, sharedItem: null });
+        index += 1;
+      }
+    }
+    return slots;
+  }
+  let next = 0;
+  const walk = (level: unknown, prefix: string) => {
+    let lastSharedHash: string | null = null;
+    let sharedIndex = -1;
+    let sharedItem = 0;
+    for (const { step, at } of orderedSteps(level)) {
+      const path = `${prefix}${at}`;
+      const shared = asText(step.shared_step_hash);
+      if (shared) {
+        if (shared !== lastSharedHash) {
+          lastSharedHash = shared;
+          sharedIndex = next;
+          sharedItem = 0;
+          next += 1;
+        }
+        slots.set(path, { index: sharedIndex, sharedItem });
+        sharedItem += 1;
+        continue;
+      }
+      lastSharedHash = null;
+      slots.set(path, { index: next, sharedItem: null });
+      next += 1;
+      walk(step.steps, `${path}.`);
+    }
+  };
+  walk(steps, "");
+  return slots;
+}
+
+export interface QaseStepResult {
+  /** Path of positions, as in qaseStepSlots. */
+  path: string;
+  /** Qase's number for the status. */
+  status: number | null;
+  comment: string;
+  attachments: QaseFile[];
+}
+
+/** A result's step results, nested ones included, in execution order. */
+export function flattenQaseStepResults(steps: unknown): QaseStepResult[] {
+  const flat: QaseStepResult[] = [];
+  const walk = (level: unknown, prefix: string) => {
+    for (const { step, at } of orderedSteps(level)) {
+      const path = `${prefix}${at}`;
+      flat.push({
+        path,
+        status: typeof step.status === "number" ? step.status : null,
+        comment: asText(step.comment),
+        attachments: toQaseFiles(step.attachments),
+      });
+      walk(step.steps, `${path}.`);
+    }
+  };
+  walk(steps, "");
+  return flat;
+}
+
+/** The cases of a run, once each: Qase lists one per parameter combination. */
+export function qaseRunCaseIds(run: QaseRecord): string[] {
+  const ids = new Set<string>();
+  for (const id of Array.isArray(run.cases) ? run.cases : []) {
+    if (typeof id === "number" || typeof id === "string") {
+      ids.add(String(id));
+    }
+  }
+  return [...ids];
+}
+
+/** A run counts as finished once Qase gave it an end or a final status. */
+export const isQaseRunCompleted = (run: QaseRecord): boolean =>
+  !!asText(run.end_time) ||
+  (asText(run.status_text) !== "" &&
+    !["active", "in_progress"].includes(asText(run.status_text)));
+
+/** A result's comment with its stack trace, as Qase Markdown. */
+export function qaseResultNotes(result: QaseRecord): string {
+  const comment = asText(result.comment).trim();
+  const stacktrace = asText(result.stacktrace).trim();
+  return [comment, stacktrace ? `\`\`\`\n${stacktrace}\n\`\`\`` : ""]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+/** Milliseconds as whole seconds, kept within a 32-bit column. */
+export function qaseSeconds(milliseconds: unknown): number | null {
+  const value = Number(milliseconds);
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  return Math.min(Math.round(value / 1000), 2_147_483_647);
+}
+
+/**
+ * A run's description followed by its custom field values, one per line.
+ * TestPlanIt runs have no custom fields, so the values are kept in the text.
+ */
+export function qaseRunDescription(
+  run: QaseRecord,
+  customFields: QaseRecord[]
+): string {
+  const lines: string[] = [];
+  for (const entry of Array.isArray(run.custom_fields)
+    ? (run.custom_fields as QaseRecord[])
+    : []) {
+    const field = customFields.find(
+      (candidate) => candidate.id === entry.id && candidate.entity === "run"
+    );
+    const raw = asText(entry.value).trim();
+    if (!field || !raw) {
+      continue;
+    }
+    let shown = raw;
+    try {
+      const choices = JSON.parse(asText(field.value)) as QaseRecord[];
+      const choice = Array.isArray(choices)
+        ? choices.find((candidate) => String(candidate.id) === raw)
+        : undefined;
+      shown = asText(choice?.title) || raw;
+    } catch {
+      // Not a choice field: the value is shown as it is.
+    }
+    const existing = lines.findIndex((line) =>
+      line.startsWith(`**${asText(field.title)}:** `)
+    );
+    if (existing >= 0) {
+      lines[existing] += `, ${shown}`;
+    } else {
+      lines.push(`**${asText(field.title)}:** ${shown}`);
+    }
+  }
+  return [asText(run.description).trim(), lines.join("\n\n")]
+    .filter(Boolean)
+    .join("\n\n");
+}

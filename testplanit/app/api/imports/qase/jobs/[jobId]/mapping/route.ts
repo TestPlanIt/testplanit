@@ -7,6 +7,7 @@ import { db } from "~/server/db";
 import { buildQaseAnalysis } from "~/services/imports/qase/analysis";
 import {
   buildDefaultQaseMapping,
+  completeQaseMapping,
   normalizeQaseMapping,
   validateQaseMapping,
 } from "~/services/imports/qase/mapping";
@@ -54,7 +55,7 @@ async function handleGET(_request: NextRequest, context: RouteContext) {
   }
   const analysis = await buildQaseAnalysis(rawDb, job);
   const configuration = job.configuration
-    ? normalizeQaseMapping(job.configuration)
+    ? completeQaseMapping(normalizeQaseMapping(job.configuration), analysis)
     : buildDefaultQaseMapping(analysis);
   return NextResponse.json({
     analysis,

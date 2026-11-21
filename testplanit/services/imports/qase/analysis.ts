@@ -1,10 +1,17 @@
 import type { DbClient } from "~/lib/zenstack";
-import { qaseCaseStatuses, qaseSourceFields } from "./content";
+import {
+  qaseCaseStatuses,
+  qaseResultStatuses,
+  qaseSourceFields,
+} from "./content";
 import { isQaseStorageConfigured } from "./files";
 import type { QaseAnalysis, QaseSourceUser } from "./mapping";
 import type { QaseProjectSummary } from "./types";
 
 type QaseRecord = Record<string, unknown>;
+
+/** The status scope a test run result's status must have. */
+export const QASE_RUN_STATUS_SCOPE = "Test Run";
 
 export async function loadQaseStaged(
   db: DbClient,
@@ -47,6 +54,12 @@ export async function buildQaseAnalysis(
     templates,
     caseFields,
     roles,
+    statuses,
+    runStates,
+    milestoneTypes,
+    runCount,
+    resultCount,
+    milestoneCount,
   ] = await Promise.all([
     loadQaseStaged(db, job.id, "user"),
     loadQaseStaged(db, job.id, "system_field"),
@@ -97,6 +110,47 @@ export async function buildQaseAnalysis(
       select: { id: true, name: true, isDefault: true },
       orderBy: { name: "asc" },
     }),
+    db.status.findMany({
+      where: {
+        isDeleted: false,
+        isEnabled: true,
+        scope: { some: { scope: { name: QASE_RUN_STATUS_SCOPE } } },
+      },
+      select: {
+        id: true,
+        name: true,
+        systemName: true,
+        color: { select: { value: true } },
+      },
+      orderBy: { order: "asc" },
+    }),
+    db.workflows.findMany({
+      where: { isDeleted: false, isEnabled: true, scope: "RUNS" },
+      select: {
+        id: true,
+        name: true,
+        workflowType: true,
+        isDefault: true,
+        icon: { select: { name: true } },
+        color: { select: { value: true } },
+      },
+      orderBy: { order: "asc" },
+    }),
+    db.milestoneTypes.findMany({
+      where: { isDeleted: false },
+      select: {
+        id: true,
+        name: true,
+        isDefault: true,
+        icon: { select: { name: true } },
+      },
+      orderBy: { name: "asc" },
+    }),
+    db.qaseImportStaging.count({ where: { jobId: job.id, entity: "run" } }),
+    db.qaseImportStaging.count({ where: { jobId: job.id, entity: "result" } }),
+    db.qaseImportStaging.count({
+      where: { jobId: job.id, entity: "milestone" },
+    }),
   ]);
 
   const users: QaseSourceUser[] = stagedUsers
@@ -113,6 +167,9 @@ export async function buildQaseAnalysis(
       users,
       caseStatuses: qaseCaseStatuses(systemFields),
       fields: qaseSourceFields(systemFields, customFields, projectCodes),
+      resultStatuses: resultCount > 0 ? qaseResultStatuses(systemFields) : [],
+      hasRuns: runCount > 0,
+      hasMilestones: milestoneCount > 0,
     },
     existing: {
       projects: existingProjects,
@@ -137,6 +194,9 @@ export async function buildQaseAnalysis(
           .map((option) => ({ id: option.id, name: option.name })),
       })),
       roles,
+      statuses,
+      runStates,
+      milestoneTypes,
     },
     storageConfigured: isQaseStorageConfigured(),
   };

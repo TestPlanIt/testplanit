@@ -49,7 +49,15 @@ const projects = [
   },
 ];
 const analysis = {
-  source: { projects, users: [], caseStatuses: [], fields: [] },
+  source: {
+    projects,
+    users: [],
+    caseStatuses: [],
+    fields: [],
+    resultStatuses: [],
+    hasRuns: false,
+    hasMilestones: false,
+  },
   existing: {
     projects: [{ id: 7, name: "Shop" }],
     users: [],
@@ -57,6 +65,9 @@ const analysis = {
     templates: [],
     caseFields: [],
     roles: [],
+    statuses: [],
+    runStates: [],
+    milestoneTypes: [],
   },
   storageConfigured: true,
 };

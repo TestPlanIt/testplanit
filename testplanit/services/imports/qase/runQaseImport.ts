@@ -1,24 +1,39 @@
 import type { JSONContent } from "@tiptap/core";
 import type { JsonObject } from "@zenstackhq/orm";
 import bcrypt from "bcrypt";
-import { emptyEditorContent } from "~/app/constants/backend";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
-import type { DbClient, TxClient } from "~/lib/zenstack";
+import type { DbClient } from "~/lib/zenstack";
 import { generateRandomPassword } from "~/utils/randomPassword";
 import { findOrCreateProjectRepository } from "~/workers/testmoImport/helpers";
 import { buildQaseAnalysis, loadQaseStaged } from "./analysis";
+import { importExecution, prepareResultStatuses } from "./runQaseExecution";
+import {
+  EMPTY_DOC,
+  QaseImportCanceledError,
+  asText,
+  copyAttachments,
+  copyImages,
+  loadMappings,
+  MAX_WARNINGS,
+  persist,
+  remember,
+  resolveTag,
+  toDate,
+  warn,
+  type ImportState,
+  type ProjectContext,
+} from "./importContext";
 import {
   appendToDoc,
   buildQaseParameterSet,
-  collectQaseImageUrls,
   convertQaseFieldValue,
   flattenQaseSteps,
   isEmptyDoc,
   qaseCaseFieldRawValues,
+  qaseResultStatusSlugs,
   qaseTextToDoc,
   stepTextToDoc,
   toQaseFiles,
-  type QaseFieldTarget,
   type QaseFile,
   type QaseFlatStep,
 } from "./content";
@@ -31,9 +46,6 @@ import {
   normalizeQaseMapping,
   unmappedQaseUser,
   validateQaseMapping,
-  type QaseAnalysis,
-  type QaseMappingConfiguration,
-  type QaseSourceField,
 } from "./mapping";
 import type {
   QaseImportProgress,
@@ -43,12 +55,9 @@ import type {
 
 type QaseRecord = Record<string, unknown>;
 
-export class QaseImportCanceledError extends Error {
-  constructor() {
-    super("The import from Qase was canceled.");
-    this.name = "QaseImportCanceledError";
-  }
-}
+const TO_BE_AUTOMATED_TAG = "To be automated";
+
+export { QaseImportCanceledError };
 
 export interface RunQaseImportOptions {
   db: DbClient;
@@ -63,117 +72,6 @@ export interface RunQaseImportOptions {
     projectIds: number[],
     createdProjects: boolean
   ) => Promise<void>;
-}
-
-const MAX_WARNINGS = 300;
-const PERSIST_EVERY_MS = 1500;
-const EMPTY_DOC = emptyEditorContent as JSONContent;
-const TO_BE_AUTOMATED_TAG = "To be automated";
-
-const asText = (value: unknown) => (typeof value === "string" ? value : "");
-const toDate = (value: unknown): Date | undefined => {
-  const date = typeof value === "string" ? new Date(value) : null;
-  return date && !Number.isNaN(date.getTime()) ? date : undefined;
-};
-const fileNameOf = (url: string) => {
-  try {
-    return decodeURIComponent(
-      new URL(url).pathname.split("/").pop() || "image"
-    );
-  } catch {
-    return "image";
-  }
-};
-
-interface FieldPlan {
-  source: QaseSourceField;
-  fieldId: number;
-  target: QaseFieldTarget;
-}
-
-interface ImportState {
-  db: DbClient;
-  jobId: string;
-  importerId: string;
-  config: QaseMappingConfiguration;
-  analysis: QaseAnalysis;
-  progress: QaseImportProgress;
-  warnings: QaseImportWarning[];
-  warningKeys: Set<string>;
-  lastPersist: number;
-  copier: QaseFileCopier;
-  userNames: Map<string, string>;
-  tagIds: Map<string, number>;
-  templateId: number;
-  fields: FieldPlan[];
-}
-
-function warn(state: ImportState, warning: QaseImportWarning) {
-  const key = `${warning.code}:${warning.subject}`;
-  if (state.warningKeys.has(key) || state.warnings.length >= MAX_WARNINGS) {
-    return;
-  }
-  state.warningKeys.add(key);
-  state.warnings.push(warning);
-}
-
-async function persist(
-  state: ImportState,
-  entity: string | null,
-  force = false
-) {
-  const now = Date.now();
-  if (!force && now - state.lastPersist < PERSIST_EVERY_MS) {
-    return;
-  }
-  state.lastPersist = now;
-  const counted = ["folders", "sharedSteps", "cases"] as const;
-  const updated = await state.db.qaseImportJob.update({
-    where: { id: state.jobId },
-    data: {
-      currentEntity: entity,
-      entityProgress: state.progress as unknown as JsonObject,
-      activityLog: state.warnings as unknown as JsonObject[],
-      processedCount: counted.reduce(
-        (sum, key) => sum + state.progress[key].done,
-        0
-      ),
-      totalCount: counted.reduce(
-        (sum, key) => sum + state.progress[key].total,
-        0
-      ),
-    },
-    select: { cancelRequested: true },
-  });
-  if (updated.cancelRequested) {
-    throw new QaseImportCanceledError();
-  }
-}
-
-async function loadMappings(
-  db: DbClient,
-  jobId: string,
-  entity: string,
-  projectCode = ""
-): Promise<Map<string, string>> {
-  const rows = await db.qaseImportMapping.findMany({
-    where: { jobId, entity, projectCode },
-    select: { sourceId: true, targetId: true },
-  });
-  return new Map(rows.map((row) => [row.sourceId, row.targetId]));
-}
-
-async function remember(
-  client: DbClient | TxClient,
-  jobId: string,
-  entity: string,
-  projectCode: string,
-  sourceId: string,
-  targetId: string | number
-) {
-  await client.qaseImportMapping.create({
-    data: { jobId, entity, projectCode, sourceId, targetId: String(targetId) },
-  });
 }
 
 function toSystemName(displayName: string, taken: Set<string>): string {
@@ -510,61 +408,6 @@ async function prepareTemplate(state: ImportState): Promise<void> {
   });
 }
 
-async function resolveTag(
-  state: ImportState,
-  rawName: string
-): Promise<number | null> {
-  const name = rawName.trim().slice(0, 255);
-  if (!name) {
-    return null;
-  }
-  const key = name.toLowerCase();
-  const cached = state.tagIds.get(key);
-  if (cached) {
-    return cached;
-  }
-  const existing = await state.db.tags.findFirst({
-    where: { name: { equals: name, mode: "insensitive" } },
-    select: { id: true, isDeleted: true },
-  });
-  let id: number;
-  if (existing) {
-    id = existing.id;
-    if (existing.isDeleted) {
-      await state.db.tags.update({ where: { id }, data: { isDeleted: false } });
-    }
-  } else {
-    id = (await state.db.tags.create({ data: { name }, select: { id: true } }))
-      .id;
-  }
-  state.tagIds.set(key, id);
-  return id;
-}
-
-/** Copies the images a text refers to and returns where each now lives. */
-async function copyImages(
-  state: ImportState,
-  texts: unknown[],
-  subject: string
-): Promise<(url: string) => string | null> {
-  const resolved = new Map<string, string>();
-  for (const url of new Set(texts.flatMap(collectQaseImageUrls))) {
-    const copied = await state.copier.copy("docimage", url, fileNameOf(url));
-    if (copied) {
-      resolved.set(url, copied.url);
-      state.progress.files.done += 1;
-    } else {
-      warn(state, {
-        code: "image_failed",
-        subject,
-        detail: state.copier.failureOf("docimage", url),
-      });
-    }
-    state.progress.files.total += 1;
-  }
-  return (url) => resolved.get(url) ?? null;
-}
-
 interface BuiltStep {
   sharedHash?: string;
   step: JSONContent;
@@ -632,50 +475,6 @@ async function buildSteps(
     });
   }
   return { steps, files };
-}
-
-async function copyAttachments(
-  state: ImportState,
-  files: QaseFile[],
-  subject: string
-): Promise<{ file: QaseFile; copied: QaseCopiedFile }[]> {
-  const result: { file: QaseFile; copied: QaseCopiedFile }[] = [];
-  const seen = new Set<string>();
-  for (const file of files) {
-    if (seen.has(file.url)) {
-      continue;
-    }
-    seen.add(file.url);
-    state.progress.files.total += 1;
-    const copied = await state.copier.copy(
-      "attachment",
-      file.url,
-      file.filename,
-      file.mime
-    );
-    if (copied) {
-      state.progress.files.done += 1;
-      result.push({ file, copied });
-    } else {
-      warn(state, {
-        code: "attachment_failed",
-        subject: `${subject}: ${file.filename}`,
-        detail: state.copier.failureOf("attachment", file.url),
-      });
-    }
-  }
-  return result;
-}
-
-interface ProjectContext {
-  code: string;
-  title: string;
-  projectId: number;
-  repositoryId: number;
-  folderIds: Map<string, number>;
-  sharedStepIds: Map<string, number>;
-  fallbackFolderId: number | null;
-  defaultStateId: number;
 }
 
 async function importFolders(state: ImportState, project: ProjectContext) {
@@ -1093,6 +892,7 @@ async function importProject(
     sharedStepIds: new Map(),
     fallbackFolderId: null,
     defaultStateId: stateIds[0],
+    caseRecords: new Map(cases.map((record) => [String(record.id), record])),
   };
 
   await importFolders(state, project);
@@ -1119,6 +919,8 @@ async function importProject(
     state.progress.cases.done += 1;
     await persist(state, "cases");
   }
+
+  await importExecution(state, project);
   return projectId;
 }
 
@@ -1256,6 +1058,21 @@ export async function runQaseImport({
         config.users[sourceId] = { ...unmappedQaseUser(), mappedTo: userId };
       }
     }
+    for (const [slug, statusId] of await loadMappings(
+      db,
+      jobId,
+      "result_status"
+    )) {
+      const mapping = config.resultStatuses[slug];
+      if (mapping?.action === "create") {
+        config.resultStatuses[slug] = {
+          ...mapping,
+          action: "map",
+          mappedTo: Number(statusId),
+          name: "",
+        };
+      }
+    }
     const problems = validateQaseMapping(config, analysis);
     if (problems.length > 0) {
       throw new Error(
@@ -1282,6 +1099,9 @@ export async function runQaseImport({
       folders: { done: 0, total: 0 },
       sharedSteps: { done: 0, total: 0 },
       cases: { done: 0, total: 0 },
+      milestones: { done: 0, total: 0 },
+      runs: { done: 0, total: 0 },
+      results: { done: 0, total: 0 },
       files: earlierFiles(job.entityProgress),
     };
     const warnings = earlierWarnings(job.activityLog);
@@ -1306,6 +1126,25 @@ export async function runQaseImport({
       progress.sharedSteps.done += doneShared.size;
       progress.cases.total += cases.length;
       progress.cases.done += doneCases.size;
+      for (const [key, entity] of [
+        ["milestones", "milestone"],
+        ["runs", "run"],
+        ["results", "result"],
+      ] as const) {
+        progress[key].total += await db.qaseImportStaging.count({
+          where: { jobId, entity, projectCode: project.code },
+        });
+        progress[key].done += (
+          await loadMappings(db, jobId, entity, project.code)
+        ).size;
+      }
+    }
+    const systemFields = await loadQaseStaged(db, jobId, "system_field");
+    const authorUsers = new Map<string, string>();
+    for (const author of await loadQaseStaged(db, jobId, "author")) {
+      if (author.entity_type === "user" && asText(author.uuid)) {
+        authorUsers.set(asText(author.uuid), String(author.entity_id));
+      }
     }
 
     const state: ImportState = {
@@ -1334,6 +1173,10 @@ export async function runQaseImport({
       tagIds: new Map(),
       templateId: 0,
       fields: [],
+      statuses: new Map(),
+      statusSlugs: qaseResultStatusSlugs(systemFields),
+      customFields: await loadQaseStaged(db, jobId, "custom_field"),
+      authorUsers,
     };
     current = state;
     if (!analysis.storageConfigured) {
@@ -1344,6 +1187,7 @@ export async function runQaseImport({
     await prepareProjects(state);
     await prepareUsers(state);
     await prepareTemplate(state);
+    await prepareResultStatuses(state);
 
     const projectIds: number[] = [];
     for (const project of projects) {
