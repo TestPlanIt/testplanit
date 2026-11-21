@@ -96,6 +96,7 @@ import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { resolveEffectiveWindowSeconds } from "~/lib/services/editWindow";
 import { Link, useRouter } from "~/lib/navigation";
 import { getDateFnsLocale } from "~/utils/locales";
+import { sortStepResults } from "~/utils/sortStepResults";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import ReadOnlyRichText from "./tiptap/ReadOnlyRichText";
 
@@ -817,12 +818,14 @@ const ManualResultExpandedDetails = ({
           step: {
             select: {
               id: true,
+              order: true,
               step: true,
               expectedResult: true,
               sharedStepGroupId: true,
               sharedStepGroup: { select: { name: true } },
             },
           },
+          sharedStepItem: { select: { order: true } },
           issues: {
             include: {
               integration: {
@@ -831,10 +834,6 @@ const ManualResultExpandedDetails = ({
             },
           },
         },
-        orderBy: [
-          { step: { order: "asc" } },
-          { sharedStepItem: { order: "asc" } },
-        ],
         where: { isDeleted: false },
       },
     },
@@ -848,7 +847,7 @@ const ManualResultExpandedDetails = ({
     );
   }
 
-  const stepResults: StepResultDetail[] = (
+  const stepResults: StepResultDetail[] = sortStepResults(
     (details?.stepResults ?? []) as any[]
   ).map((stepResItem) => ({ ...stepResItem, status: stepResItem.stepStatus }));
 
