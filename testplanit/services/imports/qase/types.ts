@@ -24,6 +24,25 @@ export interface QaseFetchProgressEntry {
 
 export type QaseFetchProgress = Record<string, QaseFetchProgressEntry>;
 
+/** How far the import is, per kind of record. */
+export interface QaseImportProgressEntry {
+  done: number;
+  total: number;
+  failed?: number;
+}
+
+export type QaseImportProgress = Record<
+  "folders" | "sharedSteps" | "cases" | "files",
+  QaseImportProgressEntry
+>;
+
+/** Something the import could not bring over; `code` is translated in the UI. */
+export interface QaseImportWarning {
+  code: string;
+  subject: string;
+  detail?: string;
+}
+
 export interface QaseImportJobPayload {
   id: string;
   status: QaseImportStatusValue;
@@ -40,6 +59,9 @@ export interface QaseImportJobPayload {
   completedAt: string | null;
   canceledAt: string | null;
   durationMs: number | null;
+  importProgress: QaseImportProgress | null;
+  warnings: QaseImportWarning[];
+  hasConfiguration: boolean;
 }
 
-export type QaseImportMode = "fetch";
+export type QaseImportMode = "fetch" | "import";

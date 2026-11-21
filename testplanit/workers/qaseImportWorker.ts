@@ -12,7 +12,11 @@ import {
 import { QASE_IMPORT_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { captureAuditEvent } from "../lib/services/auditLog";
+import { enqueueWithAuditContext } from "../lib/auditContextEnqueue";
+import { getElasticsearchReindexQueue } from "../lib/queues";
 import { runQaseFetch } from "../services/imports/qase/runQaseFetch";
+import { runQaseImport } from "../services/imports/qase/runQaseImport";
 import type { QaseImportMode } from "../services/imports/qase/types";
 
 export type QaseImportJobData = ActorContextJobData<
@@ -30,6 +34,54 @@ export async function processor(job: Job<QaseImportJobData>) {
 
     if (mode === "fetch") {
       await runQaseFetch({ db, jobId });
+      return;
+    }
+    if (mode === "import") {
+      await runQaseImport({
+        db,
+        jobId,
+        onCompleted: async (projectIds) => {
+          const importJob = await db.qaseImportJob.findUnique({
+            where: { id: jobId },
+            select: { createdById: true, processedCount: true },
+          });
+          if (!importJob) {
+            return;
+          }
+          await captureAuditEvent({
+            action: "BULK_CREATE",
+            entityType: "QaseImportJob",
+            entityId: jobId,
+            metadata: { projectIds, processedCount: importJob.processedCount },
+          }).catch(() => {});
+          const reindexQueue = getElasticsearchReindexQueue();
+          if (!reindexQueue) {
+            return;
+          }
+          for (const projectId of projectIds) {
+            for (const entityType of [
+              "repositoryCases",
+              "sharedSteps",
+            ] as const) {
+              await enqueueWithAuditContext(
+                reindexQueue,
+                `reindex-after-qase-import-${jobId}-${projectId}-${entityType}`,
+                {
+                  entityType,
+                  projectId,
+                  userId: importJob.createdById,
+                  tenantId: job.data.tenantId,
+                }
+              ).catch((error) => {
+                console.error(
+                  "Failed to queue reindex after Qase import",
+                  error
+                );
+              });
+            }
+          }
+        },
+      });
       return;
     }
     throw new Error(`Unsupported Qase import mode: ${String(mode)}`);

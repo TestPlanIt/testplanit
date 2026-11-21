@@ -43,7 +43,14 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
+import { QaseMappingStep } from "./QaseMappingStep";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { apiFetch } from "~/lib/basePath";
 import { QASE_ENTITY_ORDER } from "~/services/imports/qase/entities";
@@ -78,6 +85,22 @@ const ACTIVE_STATUSES = new Set(["QUEUED", "RUNNING"]);
 const COUNTED_ENTITIES = QASE_ENTITY_ORDER.filter(
   (entity) => entity !== "author" && entity !== "system_field"
 );
+const IMPORT_PROGRESS_ROWS = [
+  "folders",
+  "sharedSteps",
+  "cases",
+  "files",
+] as const;
+const WARNING_CODES = new Set([
+  "option_unmatched",
+  "image_failed",
+  "attachment_failed",
+  "case_failed",
+  "shared_step_missing",
+  "shared_step_files_skipped",
+  "parameter_rows_skipped",
+  "storage_not_configured",
+]);
 
 type ErrorKey =
   | "unauthorized"
@@ -110,6 +133,7 @@ export function QaseImportPanel() {
   const [busy, setBusy] = useState<"connect" | "fetch" | "action" | null>(null);
   const [errorKey, setErrorKey] = useState<ErrorKey | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [showMapping, setShowMapping] = useState(false);
 
   const { data: job } = useQuery({
     queryKey: ["qase-import-job", jobId],
@@ -138,7 +162,25 @@ export function QaseImportPanel() {
     },
   });
 
-  const activeStep = jobId ? WizardStep.Fetch : WizardStep.Connect;
+  const jobStatus = job?.status;
+  useEffect(() => {
+    if (jobStatus) {
+      void queryClient.invalidateQueries({ queryKey: ["qase-import-jobs"] });
+    }
+  }, [jobStatus, queryClient]);
+
+  const inImport =
+    !!job &&
+    (job.phase === "IMPORTING" ||
+      job.status === "COMPLETED" ||
+      !!job.importProgress);
+  const activeStep = !jobId
+    ? WizardStep.Connect
+    : inImport
+      ? WizardStep.Import
+      : showMapping && job?.status === "READY"
+        ? WizardStep.Configure
+        : WizardStep.Fetch;
 
   const wizardSteps = useMemo<WizardStepDefinition[]>(
     () => [
@@ -152,6 +194,7 @@ export function QaseImportPanel() {
 
   const startOver = useCallback(() => {
     setJobId(null);
+    setShowMapping(false);
     setProjects(null);
     setSelectedCodes(new Set());
     setToken("");
@@ -276,6 +319,109 @@ export function QaseImportPanel() {
     job?.status === "READY" || job?.status === "COMPLETED"
       ? "completed"
       : "active";
+
+  const jobActions = (
+    <div className="flex flex-wrap gap-2">
+      {job?.status === "READY" && !inImport && (
+        <Button
+          type="button"
+          data-testid="qase-continue-mapping-button"
+          onClick={() => setShowMapping(true)}
+        >
+          {t("continueToMapping")}
+        </Button>
+      )}
+      {jobIsActive && (
+        <Button
+          type="button"
+          variant="outline"
+          data-testid="qase-cancel-button"
+          onClick={() => runJobAction("cancel")}
+          disabled={job?.cancelRequested || busy !== null}
+        >
+          {job?.cancelRequested
+            ? t("cancelRequested")
+            : inImport
+              ? t("cancelImport")
+              : t("cancel")}
+        </Button>
+      )}
+      {job?.status === "FAILED" && (
+        <Button
+          type="button"
+          data-testid="qase-retry-button"
+          onClick={() => runJobAction("retry")}
+          disabled={busy !== null}
+        >
+          {t("retry")}
+        </Button>
+      )}
+      {!jobIsActive && (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            data-testid="qase-start-over-button"
+            onClick={startOver}
+          >
+            {t("startOver")}
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="destructive"
+                data-testid="qase-delete-button"
+                disabled={busy !== null}
+              >
+                {t("deleteJob")}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t("deleteConfirmDescription")}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+                <AlertDialogAction
+                  data-testid="qase-delete-confirm"
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={deleteJob}
+                >
+                  {tCommon("actions.delete")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
+    </div>
+  );
+
+  const statusBadge = job && (
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge
+        data-testid="qase-job-status"
+        variant={
+          job.status === "FAILED" || job.status === "CANCELED"
+            ? "destructive"
+            : job.status === "READY" || job.status === "COMPLETED"
+              ? "secondary"
+              : "outline"
+        }
+      >
+        {t(`status.${job.status}`)}
+      </Badge>
+      <span className="text-sm text-muted-foreground">
+        {job.projects
+          .map((project) => `${project.title} (${project.code})`)
+          .join(", ")}
+      </span>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -402,25 +548,7 @@ export function QaseImportPanel() {
             <LoadingSpinner />
           ) : (
             <div className="space-y-4" data-testid="qase-fetch-status">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge
-                  data-testid="qase-job-status"
-                  variant={
-                    job.status === "FAILED" || job.status === "CANCELED"
-                      ? "destructive"
-                      : job.status === "READY" || job.status === "COMPLETED"
-                        ? "secondary"
-                        : "outline"
-                  }
-                >
-                  {t(`status.${job.status}`)}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {job.projects
-                    .map((project) => `${project.title} (${project.code})`)
-                    .join(", ")}
-                </span>
-              </div>
+              {statusBadge}
 
               {job.status === "READY" && (
                 <p className="text-sm">{t("fetchReady")}</p>
@@ -475,77 +603,125 @@ export function QaseImportPanel() {
                 </Table>
               )}
 
-              <div className="flex flex-wrap gap-2">
-                {jobIsActive && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    data-testid="qase-cancel-button"
-                    onClick={() => runJobAction("cancel")}
-                    disabled={job.cancelRequested || busy !== null}
-                  >
-                    {job.cancelRequested ? t("cancelRequested") : t("cancel")}
-                  </Button>
-                )}
-                {job.status === "FAILED" && (
-                  <Button
-                    type="button"
-                    data-testid="qase-retry-button"
-                    onClick={() => runJobAction("retry")}
-                    disabled={busy !== null}
-                  >
-                    {t("retry")}
-                  </Button>
-                )}
-                {!jobIsActive && (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      data-testid="qase-start-over-button"
-                      onClick={startOver}
-                    >
-                      {t("startOver")}
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          data-testid="qase-delete-button"
-                          disabled={busy !== null}
-                        >
-                          {t("deleteJob")}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            {t("deleteConfirmTitle")}
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            {t("deleteConfirmDescription")}
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>
-                            {tCommon("cancel")}
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            data-testid="qase-delete-confirm"
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={deleteJob}
-                          >
-                            {tCommon("actions.delete")}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </>
-                )}
-              </div>
+              {jobActions}
             </div>
           )}
+        </StepSection>
+      )}
+
+      {activeStep === WizardStep.Configure && jobId && (
+        <StepSection
+          stepNumber={3}
+          title={t("steps.mapping")}
+          status="active"
+          statusLabel=""
+          description={t("mapping.description")}
+        >
+          <QaseMappingStep
+            jobId={jobId}
+            onStarted={(started) => {
+              queryClient.setQueryData(["qase-import-job", jobId], started);
+              setShowMapping(false);
+              void queryClient.invalidateQueries({
+                queryKey: ["qase-import-jobs"],
+              });
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            data-testid="qase-mapping-back-button"
+            onClick={() => setShowMapping(false)}
+          >
+            {t("mapping.back")}
+          </Button>
+        </StepSection>
+      )}
+
+      {activeStep === WizardStep.Import && job && (
+        <StepSection
+          stepNumber={4}
+          title={t("steps.import")}
+          status={job.status === "COMPLETED" ? "completed" : "active"}
+          statusLabel=""
+          description={jobIsActive ? t("importDescription") : undefined}
+        >
+          <div className="space-y-4" data-testid="qase-import-status">
+            {statusBadge}
+
+            {job.status === "COMPLETED" && (
+              <p className="text-sm">{t("importCompleted")}</p>
+            )}
+            {job.status === "CANCELED" && (
+              <p className="text-sm">{t("importCanceled")}</p>
+            )}
+            {job.status === "FAILED" && (
+              <Alert variant="destructive">
+                <AlertTitle>{t("importFailed")}</AlertTitle>
+                {job.error && <AlertDescription>{job.error}</AlertDescription>}
+              </Alert>
+            )}
+
+            {job.importProgress && (
+              <Table data-testid="qase-import-counts">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("entityColumn")}</TableHead>
+                    <TableHead className="text-right">
+                      {t("importedColumn")}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {IMPORT_PROGRESS_ROWS.map((row) => {
+                    const entry = job.importProgress?.[row];
+                    return (
+                      <TableRow key={row} data-testid={`qase-imported-${row}`}>
+                        <TableCell>{t(`importEntities.${row}`)}</TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {entry
+                            ? t("countOfTotal", {
+                                fetched: entry.done - (entry.failed ?? 0),
+                                total: entry.total,
+                              })
+                            : "–"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+
+            {job.warnings.length > 0 && (
+              <div className="space-y-2" data-testid="qase-import-warnings">
+                <h4 className="text-sm font-semibold">
+                  {t("warningsHeading", { count: job.warnings.length })}
+                </h4>
+                <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
+                  {job.warnings.map((warning, index) => (
+                    <li key={`${warning.code}-${index}`}>
+                      {WARNING_CODES.has(warning.code)
+                        ? t(
+                            `warnings.${warning.code}` as "warnings.case_failed",
+                            {
+                              subject: warning.subject,
+                            }
+                          )
+                        : warning.subject}
+                      {warning.detail && (
+                        <span className="text-muted-foreground">
+                          {` (${warning.detail})`}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {jobActions}
+          </div>
         </StepSection>
       )}
 
@@ -558,6 +734,7 @@ export function QaseImportPanel() {
             value={jobId ?? ""}
             onValueChange={(value) => {
               setErrorKey(null);
+              setShowMapping(false);
               setJobId(value);
             }}
           >

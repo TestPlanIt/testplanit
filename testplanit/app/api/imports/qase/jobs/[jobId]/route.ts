@@ -44,7 +44,13 @@ const handlePOST = withAuditContext(
 
     const job = await db.qaseImportJob.findUnique({
       where: { id: jobId },
-      select: { id: true, status: true, cancelRequested: true, apiToken: true },
+      select: {
+        id: true,
+        status: true,
+        phase: true,
+        cancelRequested: true,
+        apiToken: true,
+      },
     });
     if (!job) {
       return notFound();
@@ -81,20 +87,23 @@ const handlePOST = withAuditContext(
           { status: 503 }
         );
       }
+      // A failed import continues from what it already created.
+      const mode =
+        job.phase === "IMPORTING" ? ("import" as const) : ("fetch" as const);
       const updated = await db.qaseImportJob.update({
         where: { id: jobId },
         data: {
           status: "QUEUED",
-          phase: "FETCHING",
+          phase: job.phase === "IMPORTING" ? "IMPORTING" : "FETCHING",
           statusMessage: "Queued",
           cancelRequested: false,
           error: null,
-          fetchProgress: {},
+          ...(mode === "fetch" ? { fetchProgress: {} } : {}),
         },
       });
       await enqueueWithAuditContext(queue, JOB_PROCESS_QASE_IMPORT, {
         jobId,
-        mode: "fetch" as const,
+        mode,
         tenantId: getCurrentTenantId(),
       });
       return NextResponse.json({ job: serializeQaseImportJob(updated) });

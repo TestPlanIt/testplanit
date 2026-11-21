@@ -223,6 +223,32 @@ describe("POST /api/imports/qase/jobs/[jobId]", () => {
     expect(mocks.enqueue).toHaveBeenCalledTimes(1);
   });
 
+  it("continues a failed import instead of fetching again", async () => {
+    mocks.db.qaseImportJob.findUnique.mockResolvedValue({
+      id: "job-1",
+      status: "FAILED",
+      phase: "IMPORTING",
+      cancelRequested: false,
+      apiToken: "enc:token",
+    });
+    mocks.db.qaseImportJob.update.mockResolvedValue(
+      jobRow({ phase: "IMPORTING" })
+    );
+
+    const response = await postAction(request({ action: "retry" }), context);
+
+    expect(response.status).toBe(200);
+    const update = mocks.db.qaseImportJob.update.mock.calls[0][0];
+    expect(update.data.phase).toBe("IMPORTING");
+    expect(update.data).not.toHaveProperty("fetchProgress");
+    expect(update.data).not.toHaveProperty("entityProgress");
+    expect(mocks.enqueue).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(String),
+      expect.objectContaining({ jobId: "job-1", mode: "import" })
+    );
+  });
+
   it("does not retry a canceled job, whose token is gone", async () => {
     mocks.db.qaseImportJob.findUnique.mockResolvedValue({
       id: "job-1",

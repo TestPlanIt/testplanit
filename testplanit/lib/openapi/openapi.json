@@ -373,6 +373,10 @@
       "description": "QaseImportJob operations"
     },
     {
+      "name": "qaseImportMapping",
+      "description": "QaseImportMapping operations"
+    },
+    {
       "name": "qaseImportStaging",
       "description": "QaseImportStaging operations"
     },
@@ -152183,6 +152187,1096 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/QaseImportStagingGroupByArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/qaseImportMapping/create": {
+      "post": {
+        "operationId": "createQaseImportMapping",
+        "description": "Create a new QaseImportMapping",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/QaseImportMapping",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QaseImportMappingCreateArgs"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/qaseImportMapping/createMany": {
+      "post": {
+        "operationId": "createManyQaseImportMapping",
+        "description": "Create several QaseImportMapping",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BatchPayload",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QaseImportMappingCreateManyArgs"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/qaseImportMapping/findUnique": {
+      "get": {
+        "operationId": "findUniqueQaseImportMapping",
+        "description": "Find one unique QaseImportMapping",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/QaseImportMapping",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QaseImportMappingFindUniqueArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/qaseImportMapping/findFirst": {
+      "get": {
+        "operationId": "findFirstQaseImportMapping",
+        "description": "Find the first QaseImportMapping matching the given condition",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/QaseImportMapping",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QaseImportMappingFindFirstArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/qaseImportMapping/findMany": {
+      "get": {
+        "operationId": "findManyQaseImportMapping",
+        "description": "Find a list of QaseImportMapping",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/QaseImportMapping"
+                      },
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QaseImportMappingFindManyArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/qaseImportMapping/update": {
+      "patch": {
+        "operationId": "updateQaseImportMapping",
+        "description": "Update a QaseImportMapping",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/QaseImportMapping",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QaseImportMappingUpdateArgs"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/qaseImportMapping/updateMany": {
+      "patch": {
+        "operationId": "updateManyQaseImportMapping",
+        "description": "Update QaseImportMappings matching the given condition",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BatchPayload",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QaseImportMappingUpdateManyArgs"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/qaseImportMapping/upsert": {
+      "post": {
+        "operationId": "upsertQaseImportMapping",
+        "description": "Upsert a QaseImportMapping",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/QaseImportMapping",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QaseImportMappingUpsertArgs"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/qaseImportMapping/delete": {
+      "delete": {
+        "operationId": "deleteQaseImportMapping",
+        "description": "Delete one unique QaseImportMapping",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/QaseImportMapping",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QaseImportMappingDeleteUniqueArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/qaseImportMapping/deleteMany": {
+      "delete": {
+        "operationId": "deleteManyQaseImportMapping",
+        "description": "Delete QaseImportMappings matching the given condition",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BatchPayload",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QaseImportMappingDeleteManyArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/qaseImportMapping/count": {
+      "get": {
+        "operationId": "countQaseImportMapping",
+        "description": "Find a list of QaseImportMapping",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "oneOf": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "$ref": "#/components/schemas/QaseImportMappingCountAggregateOutputType"
+                        }
+                      ],
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QaseImportMappingCountArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/qaseImportMapping/aggregate": {
+      "get": {
+        "operationId": "aggregateQaseImportMapping",
+        "description": "Aggregate QaseImportMappings",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AggregateQaseImportMapping",
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QaseImportMappingAggregateArgs"
+                }
+              }
+            }
+          },
+          {
+            "name": "meta",
+            "in": "query",
+            "description": "Superjson serialization metadata for parameter \"q\"",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/api/model/qaseImportMapping/groupBy": {
+      "get": {
+        "operationId": "groupByQaseImportMapping",
+        "description": "Group QaseImportMappings by fields",
+        "tags": [
+          "qaseImportMapping"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/QaseImportMappingGroupByOutputType"
+                      },
+                      "description": "The Prisma response data serialized with superjson"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/_Meta",
+                      "description": "The superjson serialization metadata for the \"data\" field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Error"
+                }
+              }
+            },
+            "description": "Request is unprocessable due to validation errors"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Superjson-serialized Prisma query object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QaseImportMappingGroupByArgs"
                 }
               }
             }
@@ -1329987,6 +1331081,12 @@
             "items": {
               "$ref": "#/components/schemas/QaseImportStaging"
             }
+          },
+          "mappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QaseImportMapping"
+            }
           }
         },
         "required": [
@@ -1330107,6 +1331207,16 @@
               }
             ]
           },
+          "mappings": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingFindManyArgs"
+              }
+            ]
+          },
           "_count": {
             "oneOf": [
               {
@@ -1330142,6 +1331252,16 @@
               }
             ]
           },
+          "mappings": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingFindManyArgs"
+              }
+            ]
+          },
           "_count": {
             "oneOf": [
               {
@@ -1330158,6 +1331278,9 @@
         "type": "object",
         "properties": {
           "staging": {
+            "type": "boolean"
+          },
+          "mappings": {
             "type": "boolean"
           }
         }
@@ -1330498,6 +1331621,9 @@
           },
           "staging": {
             "$ref": "#/components/schemas/QaseImportStagingListRelationFilter"
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingListRelationFilter"
           }
         }
       },
@@ -1330811,6 +1331937,9 @@
           },
           "staging": {
             "$ref": "#/components/schemas/QaseImportStagingListRelationFilter"
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingListRelationFilter"
           }
         }
       },
@@ -1331661,6 +1332790,9 @@
           },
           "staging": {
             "$ref": "#/components/schemas/QaseImportStagingOrderByRelationAggregateInput"
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingOrderByRelationAggregateInput"
           }
         }
       },
@@ -1333110,6 +1334242,9 @@
           },
           "staging": {
             "$ref": "#/components/schemas/QaseImportStagingCreateNestedManyWithoutJobInput"
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingCreateNestedManyWithoutJobInput"
           }
         },
         "required": [
@@ -1333416,6 +1334551,9 @@
           },
           "staging": {
             "$ref": "#/components/schemas/QaseImportStagingUpdateManyWithoutJobNestedInput"
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingUpdateManyWithoutJobNestedInput"
           }
         }
       },
@@ -1334128,6 +1335266,9 @@
           },
           "staging": {
             "$ref": "#/components/schemas/QaseImportStagingCreateNestedManyWithoutJobInput"
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingCreateNestedManyWithoutJobInput"
           }
         },
         "required": [
@@ -1334338,6 +1335479,9 @@
           },
           "staging": {
             "$ref": "#/components/schemas/QaseImportStagingUncheckedCreateNestedManyWithoutJobInput"
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingUncheckedCreateNestedManyWithoutJobInput"
           }
         },
         "required": [
@@ -1334640,6 +1335784,9 @@
           },
           "staging": {
             "$ref": "#/components/schemas/QaseImportStagingUpdateManyWithoutJobNestedInput"
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingUpdateManyWithoutJobNestedInput"
           }
         }
       },
@@ -1334938,6 +1336085,9 @@
           },
           "staging": {
             "$ref": "#/components/schemas/QaseImportStagingUncheckedUpdateManyWithoutJobNestedInput"
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingUncheckedUpdateManyWithoutJobNestedInput"
           }
         }
       },
@@ -1336175,6 +1337325,9 @@
           },
           "createdBy": {
             "$ref": "#/components/schemas/UserCreateNestedOneWithoutQaseImportJobsInput"
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingCreateNestedManyWithoutJobInput"
           }
         },
         "required": [
@@ -1336386,6 +1337539,9 @@
                 "format": "date-time"
               }
             ]
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingUncheckedCreateNestedManyWithoutJobInput"
           }
         },
         "required": [
@@ -1336689,6 +1337845,9 @@
           },
           "createdBy": {
             "$ref": "#/components/schemas/UserUpdateOneRequiredWithoutQaseImportJobsNestedInput"
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingUpdateManyWithoutJobNestedInput"
           }
         }
       },
@@ -1336994,6 +1338153,9 @@
                 "type": "null"
               }
             ]
+          },
+          "mappings": {
+            "$ref": "#/components/schemas/QaseImportMappingUncheckedUpdateManyWithoutJobNestedInput"
           }
         }
       },
@@ -1337125,6 +1338287,1176 @@
               },
               {
                 "$ref": "#/components/schemas/QaseImportJobUncheckedUpdateWithoutStagingInput"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportJobCreateWithoutMappingsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "$ref": "#/components/schemas/QaseImportStatus"
+          },
+          "statusMessage": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "phase": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportPhase"
+              }
+            ]
+          },
+          "apiHost": {
+            "type": "string"
+          },
+          "apiToken": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "projects": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "fetchProgress": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "startedAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "completedAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "canceledAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "cancelRequested": {
+            "type": "boolean"
+          },
+          "durationMs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "error": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "processedCount": {
+            "type": "integer"
+          },
+          "totalCount": {
+            "type": "integer"
+          },
+          "currentEntity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "estimatedTimeRemaining": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "processingRate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "activityLog": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "entityProgress": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "configuration": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "analysis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "lastImportStartedAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/UserCreateNestedOneWithoutQaseImportJobsInput"
+          },
+          "staging": {
+            "$ref": "#/components/schemas/QaseImportStagingCreateNestedManyWithoutJobInput"
+          }
+        },
+        "required": [
+          "apiHost",
+          "projects",
+          "createdBy"
+        ]
+      },
+      "QaseImportJobUncheckedCreateWithoutMappingsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdById": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/QaseImportStatus"
+          },
+          "statusMessage": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "phase": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportPhase"
+              }
+            ]
+          },
+          "apiHost": {
+            "type": "string"
+          },
+          "apiToken": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "projects": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "fetchProgress": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "startedAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "completedAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "canceledAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "cancelRequested": {
+            "type": "boolean"
+          },
+          "durationMs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "error": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "processedCount": {
+            "type": "integer"
+          },
+          "totalCount": {
+            "type": "integer"
+          },
+          "currentEntity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "estimatedTimeRemaining": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "processingRate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "activityLog": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "entityProgress": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "configuration": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "analysis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "lastImportStartedAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
+          "staging": {
+            "$ref": "#/components/schemas/QaseImportStagingUncheckedCreateNestedManyWithoutJobInput"
+          }
+        },
+        "required": [
+          "createdById",
+          "apiHost",
+          "projects"
+        ]
+      },
+      "QaseImportJobUpdateWithoutMappingsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "status": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportStatus"
+              },
+              {
+                "$ref": "#/components/schemas/EnumQaseImportStatusFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "statusMessage": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "phase": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportPhase"
+              },
+              {
+                "$ref": "#/components/schemas/NullableEnumQaseImportPhaseFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "apiHost": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "apiToken": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "projects": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "fetchProgress": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "startedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "completedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "canceledAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cancelRequested": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "durationMs": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "processedCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "totalCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "currentEntity": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "estimatedTimeRemaining": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "processingRate": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "activityLog": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "entityProgress": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "configuration": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "analysis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "lastImportStartedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/UserUpdateOneRequiredWithoutQaseImportJobsNestedInput"
+          },
+          "staging": {
+            "$ref": "#/components/schemas/QaseImportStagingUpdateManyWithoutJobNestedInput"
+          }
+        }
+      },
+      "QaseImportJobUncheckedUpdateWithoutMappingsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdById": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "status": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportStatus"
+              },
+              {
+                "$ref": "#/components/schemas/EnumQaseImportStatusFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "statusMessage": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "phase": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportPhase"
+              },
+              {
+                "$ref": "#/components/schemas/NullableEnumQaseImportPhaseFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "apiHost": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "apiToken": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "projects": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "fetchProgress": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "startedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "completedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "canceledAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cancelRequested": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "durationMs": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "processedCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "totalCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "currentEntity": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "estimatedTimeRemaining": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "processingRate": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "activityLog": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "entityProgress": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "configuration": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "analysis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "lastImportStartedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "staging": {
+            "$ref": "#/components/schemas/QaseImportStagingUncheckedUpdateManyWithoutJobNestedInput"
+          }
+        }
+      },
+      "QaseImportJobCreateOrConnectWithoutMappingsInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/QaseImportJobWhereUniqueInput"
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportJobCreateWithoutMappingsInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportJobUncheckedCreateWithoutMappingsInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "create"
+        ]
+      },
+      "QaseImportJobCreateNestedOneWithoutMappingsInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportJobCreateWithoutMappingsInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportJobUncheckedCreateWithoutMappingsInput"
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "$ref": "#/components/schemas/QaseImportJobCreateOrConnectWithoutMappingsInput"
+          },
+          "connect": {
+            "$ref": "#/components/schemas/QaseImportJobWhereUniqueInput"
+          }
+        }
+      },
+      "QaseImportJobUpsertWithoutMappingsInput": {
+        "type": "object",
+        "properties": {
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportJobUpdateWithoutMappingsInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportJobUncheckedUpdateWithoutMappingsInput"
+              }
+            ]
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportJobCreateWithoutMappingsInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportJobUncheckedCreateWithoutMappingsInput"
+              }
+            ]
+          },
+          "where": {
+            "$ref": "#/components/schemas/QaseImportJobWhereInput"
+          }
+        },
+        "required": [
+          "update",
+          "create"
+        ]
+      },
+      "QaseImportJobUpdateToOneWithWhereWithoutMappingsInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/QaseImportJobWhereInput"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportJobUpdateWithoutMappingsInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportJobUncheckedUpdateWithoutMappingsInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "QaseImportJobUpdateOneRequiredWithoutMappingsNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportJobCreateWithoutMappingsInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportJobUncheckedCreateWithoutMappingsInput"
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "$ref": "#/components/schemas/QaseImportJobCreateOrConnectWithoutMappingsInput"
+          },
+          "upsert": {
+            "$ref": "#/components/schemas/QaseImportJobUpsertWithoutMappingsInput"
+          },
+          "connect": {
+            "$ref": "#/components/schemas/QaseImportJobWhereUniqueInput"
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportJobUpdateToOneWithWhereWithoutMappingsInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportJobUpdateWithoutMappingsInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportJobUncheckedUpdateWithoutMappingsInput"
               }
             ]
           }
@@ -1340045,6 +1342377,2400 @@
           },
           "_avg": {
             "$ref": "#/components/schemas/QaseImportStagingAvgAggregateInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMapping": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "job": {
+            "$ref": "#/components/schemas/QaseImportJob"
+          },
+          "projectCode": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "job",
+          "projectCode",
+          "entity",
+          "sourceId",
+          "targetId",
+          "createdAt"
+        ]
+      },
+      "QaseImportMappingSelect": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "boolean"
+          },
+          "jobId": {
+            "type": "boolean"
+          },
+          "job": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportJobDefaultArgs"
+              }
+            ]
+          },
+          "projectCode": {
+            "type": "boolean"
+          },
+          "entity": {
+            "type": "boolean"
+          },
+          "sourceId": {
+            "type": "boolean"
+          },
+          "targetId": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QaseImportMappingInclude": {
+        "type": "object",
+        "properties": {
+          "job": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportJobDefaultArgs"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingWhereInput": {
+        "type": "object",
+        "properties": {
+          "AND": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+                }
+              }
+            ]
+          },
+          "OR": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+            }
+          },
+          "NOT": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+                }
+              }
+            ]
+          },
+          "id": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "jobId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "job": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportJobScalarRelationFilter"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportJobWhereInput"
+              }
+            ]
+          },
+          "projectCode": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "entity": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "sourceId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "targetId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingWhereUniqueInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "jobId_entity_projectCode_sourceId": {
+            "$ref": "#/components/schemas/QaseImportMappingJobIdEntityProjectCodeSourceIdCompoundUniqueInput"
+          },
+          "AND": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+                }
+              }
+            ]
+          },
+          "OR": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+            }
+          },
+          "NOT": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+                }
+              }
+            ]
+          },
+          "jobId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "job": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportJobScalarRelationFilter"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportJobWhereInput"
+              }
+            ]
+          },
+          "projectCode": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "entity": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "sourceId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "targetId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingJobIdEntityProjectCodeSourceIdCompoundUniqueInput": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "projectCode": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "jobId",
+          "entity",
+          "projectCode",
+          "sourceId"
+        ]
+      },
+      "QaseImportMappingScalarWhereInput": {
+        "type": "object",
+        "properties": {
+          "AND": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingScalarWhereInput"
+                }
+              }
+            ]
+          },
+          "OR": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QaseImportMappingScalarWhereInput"
+            }
+          },
+          "NOT": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingScalarWhereInput"
+                }
+              }
+            ]
+          },
+          "id": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "jobId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "projectCode": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "entity": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "sourceId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "targetId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingScalarWhereWithAggregatesInput": {
+        "type": "object",
+        "properties": {
+          "AND": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingScalarWhereWithAggregatesInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingScalarWhereWithAggregatesInput"
+                }
+              }
+            ]
+          },
+          "OR": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QaseImportMappingScalarWhereWithAggregatesInput"
+            }
+          },
+          "NOT": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingScalarWhereWithAggregatesInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingScalarWhereWithAggregatesInput"
+                }
+              }
+            ]
+          },
+          "id": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntWithAggregatesFilter"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "jobId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "projectCode": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "entity": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "sourceId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "targetId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeWithAggregatesFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingListRelationFilter": {
+        "type": "object",
+        "properties": {
+          "every": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+          },
+          "some": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+          },
+          "none": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+          }
+        }
+      },
+      "QaseImportMappingOrderByWithRelationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "jobId": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "job": {
+            "$ref": "#/components/schemas/QaseImportJobOrderByWithRelationInput"
+          },
+          "projectCode": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "entity": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "sourceId": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "targetId": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/SortOrder"
+          }
+        }
+      },
+      "QaseImportMappingOrderByRelationAggregateInput": {
+        "type": "object",
+        "properties": {
+          "_count": {
+            "$ref": "#/components/schemas/SortOrder"
+          }
+        }
+      },
+      "QaseImportMappingScalarFieldEnum": {
+        "type": "string",
+        "enum": [
+          "id",
+          "jobId",
+          "projectCode",
+          "entity",
+          "sourceId",
+          "targetId",
+          "createdAt"
+        ]
+      },
+      "QaseImportMappingCountAggregateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "boolean"
+          },
+          "jobId": {
+            "type": "boolean"
+          },
+          "projectCode": {
+            "type": "boolean"
+          },
+          "entity": {
+            "type": "boolean"
+          },
+          "sourceId": {
+            "type": "boolean"
+          },
+          "targetId": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "boolean"
+          },
+          "_all": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QaseImportMappingCountAggregateOutputType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "jobId": {
+            "type": "integer"
+          },
+          "projectCode": {
+            "type": "integer"
+          },
+          "entity": {
+            "type": "integer"
+          },
+          "sourceId": {
+            "type": "integer"
+          },
+          "targetId": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "integer"
+          },
+          "_all": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "projectCode",
+          "entity",
+          "sourceId",
+          "targetId",
+          "createdAt",
+          "_all"
+        ]
+      },
+      "QaseImportMappingMinAggregateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "boolean"
+          },
+          "jobId": {
+            "type": "boolean"
+          },
+          "projectCode": {
+            "type": "boolean"
+          },
+          "entity": {
+            "type": "boolean"
+          },
+          "sourceId": {
+            "type": "boolean"
+          },
+          "targetId": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QaseImportMappingMinAggregateOutputType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "jobId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "projectCode": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "entity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "sourceId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "targetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingMaxAggregateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "boolean"
+          },
+          "jobId": {
+            "type": "boolean"
+          },
+          "projectCode": {
+            "type": "boolean"
+          },
+          "entity": {
+            "type": "boolean"
+          },
+          "sourceId": {
+            "type": "boolean"
+          },
+          "targetId": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QaseImportMappingMaxAggregateOutputType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "jobId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "projectCode": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "entity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "sourceId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "targetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingSumAggregateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QaseImportMappingAvgAggregateInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QaseImportMappingSumAggregateOutputType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingAvgAggregateOutputType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          }
+        }
+      },
+      "AggregateQaseImportMapping": {
+        "type": "object",
+        "properties": {
+          "_count": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCountAggregateOutputType"
+              }
+            ]
+          },
+          "_avg": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingAvgAggregateOutputType"
+              }
+            ]
+          },
+          "_sum": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingSumAggregateOutputType"
+              }
+            ]
+          },
+          "_min": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingMinAggregateOutputType"
+              }
+            ]
+          },
+          "_max": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingMaxAggregateOutputType"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingGroupByOutputType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "projectCode": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_count": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCountAggregateOutputType"
+              }
+            ]
+          },
+          "_avg": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingAvgAggregateOutputType"
+              }
+            ]
+          },
+          "_sum": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingSumAggregateOutputType"
+              }
+            ]
+          },
+          "_min": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingMinAggregateOutputType"
+              }
+            ]
+          },
+          "_max": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingMaxAggregateOutputType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "projectCode",
+          "entity",
+          "sourceId",
+          "targetId",
+          "createdAt"
+        ]
+      },
+      "QaseImportMappingCreateInput": {
+        "type": "object",
+        "properties": {
+          "projectCode": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "job": {
+            "$ref": "#/components/schemas/QaseImportJobCreateNestedOneWithoutMappingsInput"
+          }
+        },
+        "required": [
+          "entity",
+          "sourceId",
+          "targetId",
+          "job"
+        ]
+      },
+      "QaseImportMappingUpdateInput": {
+        "type": "object",
+        "properties": {
+          "projectCode": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "entity": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "sourceId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "targetId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "job": {
+            "$ref": "#/components/schemas/QaseImportJobUpdateOneRequiredWithoutMappingsNestedInput"
+          }
+        }
+      },
+      "QaseImportMappingUpdateManyMutationInput": {
+        "type": "object",
+        "properties": {
+          "projectCode": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "entity": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "sourceId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "targetId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingCreateManyInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "projectCode": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "jobId",
+          "entity",
+          "sourceId",
+          "targetId"
+        ]
+      },
+      "QaseImportMappingCreateWithoutJobInput": {
+        "type": "object",
+        "properties": {
+          "projectCode": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "entity",
+          "sourceId",
+          "targetId"
+        ]
+      },
+      "QaseImportMappingUncheckedCreateWithoutJobInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "projectCode": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "entity",
+          "sourceId",
+          "targetId"
+        ]
+      },
+      "QaseImportMappingUpdateWithoutJobInput": {
+        "type": "object",
+        "properties": {
+          "projectCode": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "entity": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "sourceId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "targetId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingUncheckedUpdateWithoutJobInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "projectCode": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "entity": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "sourceId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "targetId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingCreateOrConnectWithoutJobInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCreateWithoutJobInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUncheckedCreateWithoutJobInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "create"
+        ]
+      },
+      "QaseImportMappingCreateManyJobInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "projectCode": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "entity",
+          "sourceId",
+          "targetId"
+        ]
+      },
+      "QaseImportMappingCreateManyJobInputEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCreateManyJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingCreateManyJobInput"
+                }
+              }
+            ]
+          },
+          "skipDuplicates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "QaseImportMappingCreateNestedManyWithoutJobInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCreateWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingCreateWithoutJobInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUncheckedCreateWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingUncheckedCreateWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCreateOrConnectWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingCreateOrConnectWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/QaseImportMappingCreateManyJobInputEnvelope"
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingUncheckedCreateNestedManyWithoutJobInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCreateWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingCreateWithoutJobInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUncheckedCreateWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingUncheckedCreateWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCreateOrConnectWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingCreateOrConnectWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/QaseImportMappingCreateManyJobInputEnvelope"
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingUpsertWithWhereUniqueWithoutJobInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUpdateWithoutJobInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUncheckedUpdateWithoutJobInput"
+              }
+            ]
+          },
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCreateWithoutJobInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUncheckedCreateWithoutJobInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "update",
+          "create"
+        ]
+      },
+      "QaseImportMappingUpdateWithWhereUniqueWithoutJobInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUpdateWithoutJobInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUncheckedUpdateWithoutJobInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "data"
+        ]
+      },
+      "QaseImportMappingUpdateManyWithWhereWithoutJobInput": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingScalarWhereInput"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUpdateManyMutationInput"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUncheckedUpdateManyWithoutJobInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "where",
+          "data"
+        ]
+      },
+      "QaseImportMappingUncheckedUpdateManyWithoutJobInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "projectCode": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "entity": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "sourceId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "targetId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/StringFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "$ref": "#/components/schemas/DateTimeFieldUpdateOperationsInput"
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingUpdateManyWithoutJobNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCreateWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingCreateWithoutJobInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUncheckedCreateWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingUncheckedCreateWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCreateOrConnectWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingCreateOrConnectWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "upsert": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUpsertWithWhereUniqueWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingUpsertWithWhereUniqueWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/QaseImportMappingCreateManyJobInputEnvelope"
+          },
+          "set": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUpdateWithWhereUniqueWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingUpdateWithWhereUniqueWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "updateMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUpdateManyWithWhereWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingUpdateManyWithWhereWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "deleteMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingScalarWhereInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingUncheckedUpdateManyWithoutJobNestedInput": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCreateWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingCreateWithoutJobInput"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUncheckedCreateWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingUncheckedCreateWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "connectOrCreate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCreateOrConnectWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingCreateOrConnectWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "upsert": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUpsertWithWhereUniqueWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingUpsertWithWhereUniqueWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "createMany": {
+            "$ref": "#/components/schemas/QaseImportMappingCreateManyJobInputEnvelope"
+          },
+          "set": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "connect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+                }
+              }
+            ]
+          },
+          "update": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUpdateWithWhereUniqueWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingUpdateWithWhereUniqueWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "updateMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingUpdateManyWithWhereWithoutJobInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingUpdateManyWithWhereWithoutJobInput"
+                }
+              }
+            ]
+          },
+          "deleteMany": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingScalarWhereInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingScalarWhereInput"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "QaseImportMappingFindManyArgs": {
+        "type": "object",
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/QaseImportMappingSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/QaseImportMappingInclude"
+          },
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+          },
+          "orderBy": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingOrderByWithRelationInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingOrderByWithRelationInput"
+                }
+              }
+            ]
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+          },
+          "take": {
+            "type": "integer"
+          },
+          "skip": {
+            "type": "integer"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMappingFindUniqueArgs": {
+        "type": "object",
+        "required": [
+          "where"
+        ],
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/QaseImportMappingSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/QaseImportMappingInclude"
+          },
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMappingFindFirstArgs": {
+        "type": "object",
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/QaseImportMappingSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/QaseImportMappingInclude"
+          },
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMappingCreateArgs": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/QaseImportMappingSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/QaseImportMappingInclude"
+          },
+          "data": {
+            "$ref": "#/components/schemas/QaseImportMappingCreateInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMappingCreateManyArgs": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCreateManyInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QaseImportMappingCreateManyInput"
+                }
+              }
+            ]
+          },
+          "skipDuplicates": {
+            "type": "boolean",
+            "description": "Do not insert records with unique fields or ID fields that already exist."
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMappingUpdateArgs": {
+        "type": "object",
+        "required": [
+          "where",
+          "data"
+        ],
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/QaseImportMappingSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/QaseImportMappingInclude"
+          },
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+          },
+          "data": {
+            "$ref": "#/components/schemas/QaseImportMappingUpdateInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMappingUpdateManyArgs": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+          },
+          "data": {
+            "$ref": "#/components/schemas/QaseImportMappingUpdateManyMutationInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMappingUpsertArgs": {
+        "type": "object",
+        "required": [
+          "create",
+          "update",
+          "where"
+        ],
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/QaseImportMappingSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/QaseImportMappingInclude"
+          },
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+          },
+          "create": {
+            "$ref": "#/components/schemas/QaseImportMappingCreateInput"
+          },
+          "update": {
+            "$ref": "#/components/schemas/QaseImportMappingUpdateInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMappingDeleteUniqueArgs": {
+        "type": "object",
+        "required": [
+          "where"
+        ],
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/QaseImportMappingSelect"
+          },
+          "include": {
+            "$ref": "#/components/schemas/QaseImportMappingInclude"
+          },
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMappingDeleteManyArgs": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMappingCountArgs": {
+        "type": "object",
+        "properties": {
+          "select": {
+            "$ref": "#/components/schemas/QaseImportMappingSelect"
+          },
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMappingAggregateArgs": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+          },
+          "orderBy": {
+            "$ref": "#/components/schemas/QaseImportMappingOrderByWithRelationInput"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereUniqueInput"
+          },
+          "take": {
+            "type": "integer"
+          },
+          "skip": {
+            "type": "integer"
+          },
+          "_count": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCountAggregateInput"
+              }
+            ]
+          },
+          "_min": {
+            "$ref": "#/components/schemas/QaseImportMappingMinAggregateInput"
+          },
+          "_max": {
+            "$ref": "#/components/schemas/QaseImportMappingMaxAggregateInput"
+          },
+          "_sum": {
+            "$ref": "#/components/schemas/QaseImportMappingSumAggregateInput"
+          },
+          "_avg": {
+            "$ref": "#/components/schemas/QaseImportMappingAvgAggregateInput"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/_Meta"
+          }
+        }
+      },
+      "QaseImportMappingGroupByArgs": {
+        "type": "object",
+        "properties": {
+          "where": {
+            "$ref": "#/components/schemas/QaseImportMappingWhereInput"
+          },
+          "orderBy": {
+            "$ref": "#/components/schemas/QaseImportMappingOrderByWithRelationInput"
+          },
+          "by": {
+            "$ref": "#/components/schemas/QaseImportMappingScalarFieldEnum"
+          },
+          "having": {
+            "$ref": "#/components/schemas/QaseImportMappingScalarWhereWithAggregatesInput"
+          },
+          "take": {
+            "type": "integer"
+          },
+          "skip": {
+            "type": "integer"
+          },
+          "_count": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/QaseImportMappingCountAggregateInput"
+              }
+            ]
+          },
+          "_min": {
+            "$ref": "#/components/schemas/QaseImportMappingMinAggregateInput"
+          },
+          "_max": {
+            "$ref": "#/components/schemas/QaseImportMappingMaxAggregateInput"
+          },
+          "_sum": {
+            "$ref": "#/components/schemas/QaseImportMappingSumAggregateInput"
+          },
+          "_avg": {
+            "$ref": "#/components/schemas/QaseImportMappingAvgAggregateInput"
           },
           "meta": {
             "$ref": "#/components/schemas/_Meta"

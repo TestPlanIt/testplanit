@@ -3,6 +3,8 @@ import type { QaseClient } from "./qaseClient";
 import type {
   QaseFetchProgress,
   QaseImportJobPayload,
+  QaseImportProgress,
+  QaseImportWarning,
   QaseProjectSummary,
 } from "./types";
 
@@ -78,5 +80,16 @@ export function serializeQaseImportJob(
     completedAt: toISO(job.completedAt),
     canceledAt: toISO(job.canceledAt),
     durationMs: job.durationMs ?? null,
+    importProgress:
+      job.entityProgress &&
+      typeof job.entityProgress === "object" &&
+      "cases" in job.entityProgress
+        ? (job.entityProgress as unknown as QaseImportProgress)
+        : null,
+    warnings: Array.isArray(job.activityLog)
+      ? (job.activityLog as unknown as QaseImportWarning[])
+      : [],
+    hasConfiguration:
+      !!job.configuration && typeof job.configuration === "object",
   };
 }

@@ -6946,6 +6946,7 @@ model QaseImportJob {
     analysis               Json?
     lastImportStartedAt    DateTime?
     staging                QaseImportStaging[]
+    mappings               QaseImportMapping[]
 
     @@index([createdById])
     @@index([status])
@@ -6968,6 +6969,23 @@ model QaseImportStaging {
 
     @@index([jobId, entity, rowIndex])
     @@index([jobId, entity, projectCode, sourceId])
+    @@deny('all', auth() == null)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// What an import already created or matched, so a retry does not duplicate it
+model QaseImportMapping {
+    id          Int           @id @default(autoincrement())
+    jobId       String
+    job         QaseImportJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    // Empty for workspace-level records
+    projectCode String        @default("")
+    entity      String
+    sourceId    String
+    targetId    String
+    createdAt   DateTime      @default(now())
+
+    @@unique([jobId, entity, projectCode, sourceId])
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
 }
