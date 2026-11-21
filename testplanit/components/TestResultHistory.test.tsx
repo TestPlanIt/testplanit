@@ -736,6 +736,69 @@ describe("TestResultHistory", () => {
     ).toBe(true);
   });
 
+  it("lists step results in the order of their steps", async () => {
+    const user = userEvent.setup();
+    const stepDoc = (text: string) => ({
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+    });
+    const stepResult = (id: number, order: number, text: string) => ({
+      id,
+      stepStatus: { name: "Passed", color: { value: "#22C55E" } },
+      notes: null,
+      evidence: null,
+      elapsed: 0,
+      sharedStepItemId: null,
+      sharedStepItem: null,
+      step: {
+        id: 400 + id,
+        order,
+        step: stepDoc(text),
+        expectedResult: null,
+        sharedStepGroupId: null,
+        sharedStepGroup: null,
+      },
+      issues: [],
+    });
+    mockUseFindUniqueTestRunResults.mockReturnValue({
+      data: {
+        notes: null,
+        iteration: null,
+        stepResults: [
+          stepResult(3, 2, "Third action"),
+          stepResult(2, 1, "Second action"),
+          stepResult(1, 0, "First action"),
+        ],
+      },
+      isLoading: false,
+    });
+    mockUseFindFirstRepositoryCases.mockReturnValue({
+      data: {
+        ...mockTestCase,
+        testRunCases: [
+          {
+            ...mockTestCase.testRunCases[0],
+            results: [
+              { ...mockManualResult, id: 2, stepResults: [{ elapsed: 0 }] },
+            ],
+          },
+        ],
+        junitResults: [],
+      },
+      isLoading: false,
+    });
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    await user.click(screen.getByTestId("expand-result-manual-2"));
+
+    const actions = screen
+      .getAllByTestId("tiptap-editor")
+      .map((el) => /(\w+ action)/.exec(el.textContent ?? "")?.[1])
+      .filter(Boolean);
+    expect(actions).toEqual(["First action", "Second action", "Third action"]);
+  });
+
   it("renders result notes stored as a bare string (older API clients)", async () => {
     const user = userEvent.setup();
     mockUseFindUniqueTestRunResults.mockReturnValue({
