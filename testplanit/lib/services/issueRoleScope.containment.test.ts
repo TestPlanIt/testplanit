@@ -460,6 +460,7 @@ const EXEMPT_INGESTION_IMPORT_FILES = [
   // the imported one would.
   "lib/services/generatedCaseStaging.ts",
   "workers/testmoImport/issueImports.ts",
+  "services/imports/qase/runQaseIssues.ts",
 ];
 
 // EXEMPT — requirement-scoped by design: this module builds the

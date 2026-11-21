@@ -142,6 +142,7 @@ configs — for example:
 | `audit-logs` | 3 | exponential | 5000ms | 1 year | This queue — forensic retention, auto-retry on transient issues |
 | `notifications` | 3 | exponential | 5000ms | 7 days | Analogous critical worker — notifications are transient so retention is shorter |
 | `testmo-imports` | 1 | n/a | n/a | 30 days | Single attempt by design — imports should not silently retry; users trigger them manually |
+| `qase-imports` | 1 | n/a | n/a | 30 days | Single attempt, as for `testmo-imports`; a failed import is continued from the Data Imports page |
 | `emails` | 5 | exponential | 10000ms | 30 days | Delivery reliability matters more than latency; backoff spread over longer horizon |
 
 `notificationQueue` (`_notificationQueue = new Queue(...)` in

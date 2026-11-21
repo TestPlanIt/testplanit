@@ -6,12 +6,19 @@ description: Bring data from external test management tools into TestPlanIt
 
 # Data Imports
 
-The **Administration → Data Imports** page brings data from external test-management tools into TestPlanIt. You upload an export file, review what it contains, map its entities to your TestPlanIt configuration, and run the import as a background job you can monitor.
+The **Administration → Data Imports** page brings data from external test-management tools into TestPlanIt. You give TestPlanIt the source data, review what it contains, map its entities to your TestPlanIt configuration, and run the import as a background job you can monitor.
 
-The page supports **Testmo JSON** exports.
+The page opens on a list of sources. Choose one to start:
+
+| Source | How the data is read |
+|---|---|
+| **Qase** | Through the Qase API, with an API token. See [Import from Qase](../import-qase.md). |
+| **Testmo** | From a JSON export file you upload. See [Import from Testmo](../import-testmo.md). |
+
+**Choose another source** returns to the list.
 
 :::note
-Only system administrators can run imports. Imports require object storage and a running background worker to be configured for your deployment.
+Only system administrators can run imports. Imports require a running background worker. A Testmo import also requires object storage; a Qase import copies attachments and images only when object storage is set up.
 :::
 
 ## How to access
@@ -19,7 +26,7 @@ Only system administrators can run imports. Imports require object storage and a
 1. Open the **Admin** area from the top navigation.
 2. Select **Data Imports** under **System** in the admin menu.
 
-## The import wizard
+## The Testmo import wizard
 
 The Testmo importer is a four-step wizard:
 
@@ -36,7 +43,7 @@ On the **Configure mapping** step you can **Export configuration** to download y
 
 Use **Review previous imports** to reload a past job for your account and pick up where it left off.
 
-## Running and monitoring
+## Running and monitoring a Testmo import
 
 - Imports run **asynchronously** on a background queue. You can leave the page and return, or refresh to see updated status.
 - **Cancellation is cooperative** — requesting a cancel sets a flag the worker checks between batches; it does not instantly stop an in-flight job.
@@ -48,9 +55,10 @@ When you choose **create new** for a Testmo user, the wizard generates a random 
 
 ## Auditing
 
-Import activity is recorded in the [audit log](audit-logs.md): an `IMPORT_STARTED` event when the job is enqueued, paired with a bulk-create event when the worker finishes writing the imported records.
+Import activity is recorded in the [audit log](audit-logs.md). A Testmo import writes an `IMPORT_STARTED` event when the job is enqueued, paired with a bulk-create event when the worker finishes writing the imported records. A Qase import writes the bulk-create event when it finishes.
 
 ## Related pages
 
+- [Import from Qase](../import-qase.md) — what a Qase import brings over and how to run it.
 - [Import from Testmo](../import-testmo.md) — details on preparing a Testmo export.
 - [Job Queues](queues.md) — monitor the background import worker.

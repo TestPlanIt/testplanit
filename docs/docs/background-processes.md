@@ -41,6 +41,7 @@ The application uses the following background processes:
 29. **Iteration Generation Worker** - Creates the iterations of a large parameterized test run in the background
 30. **SCIM Access Recompute Worker** - Recomputes users' access levels after a SCIM group mapping, role mapping, or fallback default changes
 31. **Scheduler** - Sets up recurring jobs (cron jobs)
+32. **Qase Import Worker** - Fetches Qase projects through the Qase API and imports them
 
 ## Workers
 
@@ -81,6 +82,13 @@ The application uses the following background processes:
 - Imports test cases, runs, and related data
 - Default concurrency: 1 (memory-intensive operations)
 - Location: `workers/testmoImportWorker.ts`
+
+### Qase Import Worker
+
+- Fetches the selected Qase projects through the Qase API, then imports them
+- Copies attachments and images into file storage
+- Default concurrency: 1
+- Location: `workers/qaseImportWorker.ts`
 
 ### Elasticsearch Reindex Worker
 
@@ -330,6 +338,7 @@ Every worker's `--max-old-space-size` is 75% of its `max_memory_restart` ceiling
 | Worker                         | `max_memory_restart` | `--max-old-space-size` | Why                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | ------------------------------ | -------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Sync Worker                    | 1G                   | 768M                   | Loads integration adapters + Elasticsearch sync extensions                                                                                                                                                                                                                                                                                                                                                                                       |
+| Qase Import Worker             | 1G                   | 768M                   | Holds a project's staged records and the files it copies from Qase                                                                                                                                                                                                                                                                                                                                                                               |
 | Testmo Import Worker           | 4G (configurable)    | 3072M (configurable)   | Streams and analyzes multi-GB Testmo JSON exports; the default 512 MB tier OOM-killed large imports. Override via `TESTMO_IMPORT_MAX_MEMORY_RESTART` for very large exports (e.g. `18G`), host RAM permitting                                                                                                                                                                                                                                    |
 | Forecast Worker                | 2G                   | 1536M                  | Recomputes run/case forecasts over large historical result sets; the default 512 MB tier was OOM-killed under production data volumes                                                                                                                                                                                                                                                                                                            |
 | Elasticsearch Reindex Worker   | 2G (configurable)    | 1536M (configurable)   | A full reindex sweeps every project's cases/runs/sessions/issues/milestones and bulk-loads them into Elasticsearch; the default 512 MB tier OOM-killed full-DB reindexes mid-job — PM2 SIGKILLs the worker, BullMQ redelivers the same job, and it restarts from the top, so runs never finish indexing. Override via `ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART` for very large tenants (many projects / large run history), host RAM permitting |
@@ -411,7 +420,7 @@ You can monitor worker health and performance using:
 
 ### Memory issues
 
-- Most workers run with a 512 MB ceiling; the sync worker runs with a 1 GB ceiling; the forecast, SCIM access recompute, and Elasticsearch reindex workers run with a 2 GB ceiling; the audit log worker, the three webhook workers (dispatch, outbox, retention), and the DataChangeLog retention, audit log retention, dataset lease sweep, and execution dispatch workers run with a 3 GB ceiling; the Testmo import worker runs with a 4 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
+- Most workers run with a 512 MB ceiling; the sync and Qase import workers run with a 1 GB ceiling; the forecast, SCIM access recompute, and Elasticsearch reindex workers run with a 2 GB ceiling; the audit log worker, the three webhook workers (dispatch, outbox, retention), and the DataChangeLog retention, audit log retention, dataset lease sweep, and execution dispatch workers run with a 3 GB ceiling; the Testmo import worker runs with a 4 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
 - If a worker is being killed and restarted by PM2 in a tight loop (visible as repeated `restart` events in `pm2 status`), raise its ceiling before assuming there is a real leak: `TESTMO_IMPORT_MAX_MEMORY_RESTART`, `ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART` or `REPO_CACHE_MAX_MEMORY_RESTART` for those workers, or `WORKER_MAX_MEMORY_RESTART` for the 512 MB tier. Other elevated workers are set in `ecosystem.config.js`.
 - Monitor with `pm2 monit`
 
@@ -436,6 +445,9 @@ You can configure concurrency for each worker using environment variables:
 # Testmo Import Worker (memory-intensive, default: 1)
 # Keep this low (1-2) as imports consume significant memory
 TESTMO_IMPORT_CONCURRENCY=1
+
+# Qase Import Worker (default: 1)
+QASE_IMPORT_CONCURRENCY=1
 
 # Memory ceiling for every worker that defaults to 512M. The heap follows at
 # 75% unless WORKER_MAX_OLD_SPACE_MB is set. Host RAM permitting.

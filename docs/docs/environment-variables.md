@@ -180,6 +180,7 @@ See [Background Processes](background-processes.md). Each variable sets how many
 | Variable                            | Default | Worker                       |
 | ----------------------------------- | ------- | ---------------------------- |
 | `TESTMO_IMPORT_CONCURRENCY`         | `1`     | Testmo import                |
+| `QASE_IMPORT_CONCURRENCY`           | `1`     | Qase import                  |
 | `SYNC_CONCURRENCY`                  | `2`     | Issue sync                   |
 | `EMAIL_CONCURRENCY`                 | `3`     | Email                        |
 | `NOTIFICATION_CONCURRENCY`          | `5`     | Notifications                |

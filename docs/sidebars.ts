@@ -205,8 +205,9 @@ const sidebars: SidebarsConfig = {
               items: [
                 'user-guide/app-config', // Corresponds to app-config.md
                 'user-guide/record-keys', // Project-prefixed record keys (cosmetic IDs)
-                'user-guide/data-imports', // Data Imports (Testmo JSON wizard)
+                'user-guide/data-imports', // Data Imports (Testmo and Qase)
                 'import-testmo', // Testmo import guide
+                'import-qase', // Qase import guide
                 'user-guide/search-engine', // Elasticsearch status, replicas, reindex
                 'user-guide/queues', // Background job queue management
                 'user-guide/audit-logs', // Audit logs for compliance and security

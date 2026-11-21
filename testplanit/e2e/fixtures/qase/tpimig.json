@@ -1,0 +1,2187 @@
+{
+  "projects": [
+    {
+      "title": "TestPlanIt import fixtures",
+      "code": "TPIMIG",
+      "counts": {
+        "cases": 6,
+        "suites": 5,
+        "milestones": 2,
+        "runs": {
+          "total": 2,
+          "active": 1
+        },
+        "defects": {
+          "total": 2,
+          "open": 2
+        }
+      }
+    }
+  ],
+  "staging": [
+    {
+      "entity": "user",
+      "projectCode": null,
+      "sourceId": "1",
+      "rowIndex": 0,
+      "data": {
+        "id": 1,
+        "name": "Qase Owner",
+        "email": "qase.owner@example.test",
+        "title": "Software Tester",
+        "status": 1
+      }
+    },
+    {
+      "entity": "author",
+      "projectCode": null,
+      "sourceId": "1",
+      "rowIndex": 0,
+      "data": {
+        "id": 1,
+        "uuid": "00000000-0000-4000-8000-000000000001",
+        "author_id": 491364,
+        "entity_type": "user",
+        "entity_id": 1,
+        "email": "qase.owner@example.test",
+        "name": "Qase Owner",
+        "is_active": true
+      }
+    },
+    {
+      "entity": "author",
+      "projectCode": null,
+      "sourceId": "296550",
+      "rowIndex": 1,
+      "data": {
+        "id": 296550,
+        "uuid": "00000000-0000-4000-8000-000000000002",
+        "author_id": 491365,
+        "entity_type": "app",
+        "entity_id": 296550,
+        "email": null,
+        "name": "Playwright",
+        "is_active": true
+      }
+    },
+    {
+      "entity": "author",
+      "projectCode": null,
+      "sourceId": "296551",
+      "rowIndex": 2,
+      "data": {
+        "id": 296551,
+        "uuid": "00000000-0000-4000-8000-000000000003",
+        "author_id": 491366,
+        "entity_type": "app",
+        "entity_id": 296551,
+        "email": null,
+        "name": "WebDriverIO [beta]",
+        "is_active": true
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "priority",
+      "rowIndex": 0,
+      "data": {
+        "title": "Priority",
+        "slug": "priority",
+        "default_value": "0",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 3,
+        "options": [
+          {
+            "id": 0,
+            "title": "Not set",
+            "slug": "undefined",
+            "color": "medium",
+            "icon": "minus",
+            "is_default": true,
+            "read_only": false
+          },
+          {
+            "id": 1,
+            "title": "High",
+            "slug": "high",
+            "color": "high",
+            "icon": "arrow-up",
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 2,
+            "title": "Medium",
+            "slug": "medium",
+            "color": "medium",
+            "icon": "genderless",
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 3,
+            "title": "Low",
+            "slug": "low",
+            "color": "low",
+            "icon": "arrow-down",
+            "is_default": false,
+            "read_only": false
+          }
+        ]
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "severity",
+      "rowIndex": 1,
+      "data": {
+        "title": "Severity",
+        "slug": "severity",
+        "default_value": "4",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 3,
+        "options": [
+          {
+            "id": 0,
+            "title": "Not set",
+            "slug": "undefined",
+            "color": "normal",
+            "icon": "minus",
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 1,
+            "title": "Blocker",
+            "slug": "blocker",
+            "color": "blocker",
+            "icon": "ban",
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 2,
+            "title": "Critical",
+            "slug": "critical",
+            "color": "critical",
+            "icon": "angle-double-up",
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 3,
+            "title": "Major",
+            "slug": "major",
+            "color": "major",
+            "icon": "angle-up",
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 4,
+            "title": "Normal",
+            "slug": "normal",
+            "color": "normal",
+            "icon": "genderless",
+            "is_default": true,
+            "read_only": false
+          },
+          {
+            "id": 5,
+            "title": "Minor",
+            "slug": "minor",
+            "color": "minor",
+            "icon": "angle-down",
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 6,
+            "title": "Trivial",
+            "slug": "trivial",
+            "color": "normal",
+            "icon": "angle-double-down",
+            "is_default": false,
+            "read_only": false
+          }
+        ]
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "type",
+      "rowIndex": 2,
+      "data": {
+        "title": "Type",
+        "slug": "type",
+        "default_value": "1",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 3,
+        "options": [
+          {
+            "id": 1,
+            "title": "Other",
+            "slug": "other",
+            "color": "#C2C2C2",
+            "icon": null,
+            "is_default": true,
+            "read_only": false
+          },
+          {
+            "id": 8,
+            "title": "Functional",
+            "slug": "functional",
+            "color": "#007bff",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 2,
+            "title": "Smoke",
+            "slug": "smoke",
+            "color": "#6610f2",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 3,
+            "title": "Regression",
+            "slug": "regression",
+            "color": "#e83e8c",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 4,
+            "title": "Security",
+            "slug": "security",
+            "color": "#fd7e14",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 5,
+            "title": "Usability",
+            "slug": "usability",
+            "color": "#28a745",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 6,
+            "title": "Performance",
+            "slug": "performance",
+            "color": "#20c997",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 7,
+            "title": "Acceptance",
+            "slug": "acceptance",
+            "color": "#17a2b8",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 9,
+            "title": "Compatibility",
+            "slug": "compatibility",
+            "color": "#6f42c1",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 10,
+            "title": "Integration",
+            "slug": "integration",
+            "color": "#dc3545",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 11,
+            "title": "Exploratory",
+            "slug": "exploratory",
+            "color": "#f8f9fa",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          }
+        ]
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "behavior",
+      "rowIndex": 3,
+      "data": {
+        "title": "Behavior",
+        "slug": "behavior",
+        "default_value": "1",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 3,
+        "options": [
+          {
+            "id": 1,
+            "title": "Not set",
+            "slug": "undefined",
+            "color": "#C2C2C2",
+            "icon": null,
+            "is_default": true,
+            "read_only": false
+          },
+          {
+            "id": 2,
+            "title": "Positive",
+            "slug": "positive",
+            "color": "#7ED321",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 3,
+            "title": "Negative",
+            "slug": "negative",
+            "color": "#D0021B",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 4,
+            "title": "Destructive",
+            "slug": "destructive",
+            "color": "#fd7e14",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          }
+        ]
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "description",
+      "rowIndex": 4,
+      "data": {
+        "title": "Description",
+        "slug": "description",
+        "default_value": "",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 2
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "preconditions",
+      "rowIndex": 5,
+      "data": {
+        "title": "Pre-conditions",
+        "slug": "preconditions",
+        "default_value": "",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 2
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "postconditions",
+      "rowIndex": 6,
+      "data": {
+        "title": "Post-conditions",
+        "slug": "postconditions",
+        "default_value": "",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 2
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "status",
+      "rowIndex": 7,
+      "data": {
+        "title": "Status",
+        "slug": "status",
+        "default_value": "0",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 3,
+        "options": [
+          {
+            "id": 0,
+            "title": "Actual",
+            "slug": "actual",
+            "color": "#7ED321",
+            "icon": null,
+            "is_default": true,
+            "read_only": false
+          },
+          {
+            "id": 1,
+            "title": "Draft",
+            "slug": "draft",
+            "color": "#C2C2C2",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 2,
+            "title": "Deprecated",
+            "slug": "deprecated",
+            "color": "#D0021B",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          }
+        ]
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "automation",
+      "rowIndex": 8,
+      "data": {
+        "title": "Automation status (deprecated)",
+        "slug": "automation",
+        "default_value": "0",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 3,
+        "options": [
+          {
+            "id": 0,
+            "title": "Manual",
+            "slug": "is-not-automated",
+            "color": "",
+            "icon": "hand-paper",
+            "is_default": true,
+            "read_only": false
+          },
+          {
+            "id": 1,
+            "title": "To be automated",
+            "slug": "to-be-automated",
+            "color": "",
+            "icon": "user-cog",
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 2,
+            "title": "Automated",
+            "slug": "automated",
+            "color": "var(--cf-icon-color-8)",
+            "icon": "cog",
+            "is_default": false,
+            "read_only": false
+          }
+        ]
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "isManual",
+      "rowIndex": 9,
+      "data": {
+        "title": "Automation status",
+        "slug": "isManual",
+        "default_value": "0",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 3,
+        "options": [
+          {
+            "id": 0,
+            "title": "Manual",
+            "slug": "manual",
+            "color": "",
+            "icon": "hand-paper",
+            "is_default": true,
+            "read_only": false
+          },
+          {
+            "id": 1,
+            "title": "Automated",
+            "slug": "automated",
+            "color": "var(--cf-icon-color-8)",
+            "icon": "cog",
+            "is_default": false,
+            "read_only": false
+          }
+        ]
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "isToBeAutomated",
+      "rowIndex": 10,
+      "data": {
+        "title": "To be automated",
+        "slug": "isToBeAutomated",
+        "default_value": "",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 4
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "layer",
+      "rowIndex": 11,
+      "data": {
+        "title": "Layer",
+        "slug": "layer",
+        "default_value": "0",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 3,
+        "options": [
+          {
+            "id": 0,
+            "title": "Not set",
+            "slug": "unknown",
+            "color": "",
+            "icon": null,
+            "is_default": true,
+            "read_only": false
+          },
+          {
+            "id": 1,
+            "title": "E2E",
+            "slug": "e2e",
+            "color": "",
+            "icon": "desktop",
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 2,
+            "title": "API",
+            "slug": "api",
+            "color": "",
+            "icon": "network-wired",
+            "is_default": false,
+            "read_only": false
+          },
+          {
+            "id": 3,
+            "title": "Unit",
+            "slug": "unit",
+            "color": "",
+            "icon": "cogs",
+            "is_default": false,
+            "read_only": false
+          }
+        ]
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "is_flaky",
+      "rowIndex": 12,
+      "data": {
+        "title": "Is flaky",
+        "slug": "is_flaky",
+        "default_value": "0",
+        "is_required": false,
+        "entity": 0,
+        "type": 0,
+        "input_type": 3,
+        "options": [
+          {
+            "id": 0,
+            "title": "No",
+            "slug": "no",
+            "color": "var(--cf-icon-color-8)",
+            "icon": null,
+            "is_default": true,
+            "read_only": false
+          },
+          {
+            "id": 1,
+            "title": "Yes",
+            "slug": "yes",
+            "color": "#D0021B",
+            "icon": null,
+            "is_default": false,
+            "read_only": false
+          }
+        ]
+      }
+    },
+    {
+      "entity": "system_field",
+      "projectCode": null,
+      "sourceId": "result_status",
+      "rowIndex": 13,
+      "data": {
+        "title": "Result status",
+        "slug": "result_status",
+        "default_value": "0",
+        "is_required": false,
+        "entity": 3,
+        "type": 0,
+        "input_type": 3,
+        "options": [
+          {
+            "id": 0,
+            "title": "Untested",
+            "slug": "untested",
+            "color": "#5A576D",
+            "icon": "fas fa-square-dashed",
+            "is_default": true,
+            "read_only": true
+          },
+          {
+            "id": 1,
+            "title": "Passed",
+            "slug": "passed",
+            "color": "#00875E",
+            "icon": "fas fa-check",
+            "is_default": false,
+            "read_only": true
+          },
+          {
+            "id": 2,
+            "title": "Failed",
+            "slug": "failed",
+            "color": "#DE1846",
+            "icon": "fas fa-xmark",
+            "is_default": false,
+            "read_only": true
+          },
+          {
+            "id": 3,
+            "title": "Blocked",
+            "slug": "blocked",
+            "color": "#D0A632",
+            "icon": "fas fa-ban",
+            "is_default": false,
+            "read_only": true
+          },
+          {
+            "id": 4,
+            "title": "Retest",
+            "slug": "retest",
+            "color": "#9196F1",
+            "icon": "fas fa-arrow-rotate-left",
+            "is_default": false,
+            "read_only": true
+          },
+          {
+            "id": 5,
+            "title": "Skipped",
+            "slug": "skipped",
+            "color": "#A3A1B2",
+            "icon": "fas fa-right-to-line",
+            "is_default": false,
+            "read_only": true
+          },
+          {
+            "id": 6,
+            "title": "Deleted",
+            "slug": "deleted",
+            "color": "normal",
+            "icon": "fas fa-trash-alt",
+            "is_default": false,
+            "read_only": true
+          },
+          {
+            "id": 7,
+            "title": "In progress",
+            "slug": "in_progress",
+            "color": "#1e54c5",
+            "icon": "fas fa-spinner",
+            "is_default": false,
+            "read_only": true
+          },
+          {
+            "id": 8,
+            "title": "Invalid",
+            "slug": "invalid",
+            "color": "#9425BD",
+            "icon": "fas fa-heart-broken",
+            "is_default": false,
+            "read_only": true
+          }
+        ]
+      }
+    },
+    {
+      "entity": "custom_field",
+      "projectCode": null,
+      "sourceId": "1",
+      "rowIndex": 0,
+      "data": {
+        "id": 1,
+        "title": "Browser",
+        "entity": "case",
+        "type": "selectbox",
+        "placeholder": null,
+        "default_value": null,
+        "value": "[{\"id\": 1, \"title\": \"Chrome\"}, {\"id\": 2, \"title\": \"Firefox\"}, {\"id\": 3, \"title\": \"Safari\"}]",
+        "is_required": false,
+        "is_visible": true,
+        "is_filterable": true,
+        "is_enabled_for_all_projects": false,
+        "created": "2026-11-21 01:20:48",
+        "updated": "2026-11-21 01:20:48",
+        "created_at": "2026-11-21T01:20:48+00:00",
+        "updated_at": "2026-11-21T01:20:48+00:00",
+        "projects_codes": ["TPIMIG"]
+      }
+    },
+    {
+      "entity": "custom_field",
+      "projectCode": null,
+      "sourceId": "2",
+      "rowIndex": 1,
+      "data": {
+        "id": 2,
+        "title": "Platforms",
+        "entity": "case",
+        "type": "Multiselect",
+        "placeholder": null,
+        "default_value": null,
+        "value": "[{\"id\": 1, \"title\": \"Web\"}, {\"id\": 2, \"title\": \"iOS\"}, {\"id\": 3, \"title\": \"Android\"}]",
+        "is_required": false,
+        "is_visible": true,
+        "is_filterable": true,
+        "is_enabled_for_all_projects": false,
+        "created": "2026-11-21 01:20:48",
+        "updated": "2026-11-21 01:20:48",
+        "created_at": "2026-11-21T01:20:48+00:00",
+        "updated_at": "2026-11-21T01:20:48+00:00",
+        "projects_codes": ["TPIMIG"]
+      }
+    },
+    {
+      "entity": "custom_field",
+      "projectCode": null,
+      "sourceId": "3",
+      "rowIndex": 2,
+      "data": {
+        "id": 3,
+        "title": "Risk",
+        "entity": "case",
+        "type": "Radio",
+        "placeholder": null,
+        "default_value": null,
+        "value": "[{\"id\": 1, \"title\": \"Low\"}, {\"id\": 2, \"title\": \"Medium\"}, {\"id\": 3, \"title\": \"High\"}]",
+        "is_required": false,
+        "is_visible": true,
+        "is_filterable": true,
+        "is_enabled_for_all_projects": false,
+        "created": "2026-11-21 01:20:49",
+        "updated": "2026-11-21 01:20:49",
+        "created_at": "2026-11-21T01:20:49+00:00",
+        "updated_at": "2026-11-21T01:20:49+00:00",
+        "projects_codes": ["TPIMIG"]
+      }
+    },
+    {
+      "entity": "custom_field",
+      "projectCode": null,
+      "sourceId": "4",
+      "rowIndex": 3,
+      "data": {
+        "id": 4,
+        "title": "Requirement ref",
+        "entity": "case",
+        "type": "string",
+        "placeholder": "REQ-000",
+        "default_value": null,
+        "value": null,
+        "is_required": false,
+        "is_visible": true,
+        "is_filterable": false,
+        "is_enabled_for_all_projects": false,
+        "created": "2026-11-21 01:20:49",
+        "updated": "2026-11-21 01:20:49",
+        "created_at": "2026-11-21T01:20:49+00:00",
+        "updated_at": "2026-11-21T01:20:49+00:00",
+        "projects_codes": ["TPIMIG"]
+      }
+    },
+    {
+      "entity": "custom_field",
+      "projectCode": null,
+      "sourceId": "5",
+      "rowIndex": 4,
+      "data": {
+        "id": 5,
+        "title": "Reviewer notes",
+        "entity": "case",
+        "type": "text",
+        "placeholder": null,
+        "default_value": null,
+        "value": null,
+        "is_required": false,
+        "is_visible": true,
+        "is_filterable": false,
+        "is_enabled_for_all_projects": false,
+        "created": "2026-11-21 01:20:50",
+        "updated": "2026-11-21 01:20:50",
+        "created_at": "2026-11-21T01:20:50+00:00",
+        "updated_at": "2026-11-21T01:20:50+00:00",
+        "projects_codes": ["TPIMIG"]
+      }
+    },
+    {
+      "entity": "custom_field",
+      "projectCode": null,
+      "sourceId": "6",
+      "rowIndex": 5,
+      "data": {
+        "id": 6,
+        "title": "Effort points",
+        "entity": "case",
+        "type": "number",
+        "placeholder": null,
+        "default_value": "1",
+        "value": null,
+        "is_required": false,
+        "is_visible": true,
+        "is_filterable": true,
+        "is_enabled_for_all_projects": false,
+        "created": "2026-11-21 01:20:50",
+        "updated": "2026-11-21 01:20:50",
+        "created_at": "2026-11-21T01:20:50+00:00",
+        "updated_at": "2026-11-21T01:20:50+00:00",
+        "projects_codes": ["TPIMIG"]
+      }
+    },
+    {
+      "entity": "custom_field",
+      "projectCode": null,
+      "sourceId": "7",
+      "rowIndex": 6,
+      "data": {
+        "id": 7,
+        "title": "Needs review",
+        "entity": "case",
+        "type": "Checkbox",
+        "placeholder": null,
+        "default_value": null,
+        "value": null,
+        "is_required": false,
+        "is_visible": true,
+        "is_filterable": true,
+        "is_enabled_for_all_projects": false,
+        "created": "2026-11-21 01:20:51",
+        "updated": "2026-11-21 01:20:51",
+        "created_at": "2026-11-21T01:20:51+00:00",
+        "updated_at": "2026-11-21T01:20:51+00:00",
+        "projects_codes": ["TPIMIG"]
+      }
+    },
+    {
+      "entity": "custom_field",
+      "projectCode": null,
+      "sourceId": "8",
+      "rowIndex": 7,
+      "data": {
+        "id": 8,
+        "title": "Spec link",
+        "entity": "case",
+        "type": "Url",
+        "placeholder": null,
+        "default_value": null,
+        "value": null,
+        "is_required": false,
+        "is_visible": true,
+        "is_filterable": false,
+        "is_enabled_for_all_projects": false,
+        "created": "2026-11-21 01:20:51",
+        "updated": "2026-11-21 01:20:51",
+        "created_at": "2026-11-21T01:20:51+00:00",
+        "updated_at": "2026-11-21T01:20:51+00:00",
+        "projects_codes": ["TPIMIG"]
+      }
+    },
+    {
+      "entity": "custom_field",
+      "projectCode": null,
+      "sourceId": "9",
+      "rowIndex": 8,
+      "data": {
+        "id": 9,
+        "title": "Review due",
+        "entity": "case",
+        "type": "Datetime",
+        "placeholder": null,
+        "default_value": null,
+        "value": null,
+        "is_required": false,
+        "is_visible": true,
+        "is_filterable": true,
+        "is_enabled_for_all_projects": false,
+        "created": "2026-11-21 01:20:52",
+        "updated": "2026-11-21 01:20:52",
+        "created_at": "2026-11-21T01:20:52+00:00",
+        "updated_at": "2026-11-21T01:20:52+00:00",
+        "projects_codes": ["TPIMIG"]
+      }
+    },
+    {
+      "entity": "custom_field",
+      "projectCode": null,
+      "sourceId": "10",
+      "rowIndex": 9,
+      "data": {
+        "id": 10,
+        "title": "Build number",
+        "entity": "run",
+        "type": "string",
+        "placeholder": null,
+        "default_value": null,
+        "value": null,
+        "is_required": false,
+        "is_visible": true,
+        "is_filterable": false,
+        "is_enabled_for_all_projects": false,
+        "created": "2026-11-21 01:20:53",
+        "updated": "2026-11-21 01:20:53",
+        "created_at": "2026-11-21T01:20:53+00:00",
+        "updated_at": "2026-11-21T01:20:53+00:00",
+        "projects_codes": ["TPIMIG"]
+      }
+    },
+    {
+      "entity": "custom_field",
+      "projectCode": null,
+      "sourceId": "11",
+      "rowIndex": 10,
+      "data": {
+        "id": 11,
+        "title": "Root cause",
+        "entity": "defect",
+        "type": "selectbox",
+        "placeholder": null,
+        "default_value": null,
+        "value": "[{\"id\": 1, \"title\": \"Code\"}, {\"id\": 2, \"title\": \"Config\"}, {\"id\": 3, \"title\": \"Data\"}]",
+        "is_required": false,
+        "is_visible": true,
+        "is_filterable": true,
+        "is_enabled_for_all_projects": false,
+        "created": "2026-11-21 01:20:53",
+        "updated": "2026-11-21 01:20:53",
+        "created_at": "2026-11-21T01:20:53+00:00",
+        "updated_at": "2026-11-21T01:20:53+00:00",
+        "projects_codes": ["TPIMIG"]
+      }
+    },
+    {
+      "entity": "shared_parameter",
+      "projectCode": null,
+      "sourceId": "01a1fbb1-2ce0-724a-a8a2-0410b6e50ba3",
+      "rowIndex": 0,
+      "data": {
+        "id": "01a1fbb1-2ce0-724a-a8a2-0410b6e50ba3",
+        "title": "Locale",
+        "type": "single",
+        "project_codes": ["TPIMIG"],
+        "is_enabled_for_all_projects": false,
+        "parameters": [
+          {
+            "title": "locale",
+            "values": ["en-US", "de-DE", "ja-JP"]
+          }
+        ]
+      }
+    },
+    {
+      "entity": "shared_parameter",
+      "projectCode": null,
+      "sourceId": "01a1fbb1-2ed2-71bd-8921-e5a6fde4680f",
+      "rowIndex": 1,
+      "data": {
+        "id": "01a1fbb1-2ed2-71bd-8921-e5a6fde4680f",
+        "title": "Account tiers",
+        "type": "group",
+        "project_codes": ["TPIMIG"],
+        "is_enabled_for_all_projects": false,
+        "parameters": [
+          {
+            "title": "tier",
+            "values": ["free", "pro"]
+          },
+          {
+            "title": "seats",
+            "values": ["1", "25"]
+          }
+        ]
+      }
+    },
+    {
+      "entity": "suite",
+      "projectCode": "TPIMIG",
+      "sourceId": "1",
+      "rowIndex": 0,
+      "data": {
+        "id": 1,
+        "title": "Authentication",
+        "description": "Everything about **signing in**.\n\n- password\n- SSO",
+        "preconditions": "A user account exists.",
+        "position": 1,
+        "cases_count": 0,
+        "parent_id": null,
+        "created": "2026-11-21 01:20:55",
+        "updated": "2026-11-21 01:20:55",
+        "created_at": "2026-11-21T01:20:55+00:00",
+        "updated_at": "2026-11-21T01:20:55+00:00"
+      }
+    },
+    {
+      "entity": "suite",
+      "projectCode": "TPIMIG",
+      "sourceId": "2",
+      "rowIndex": 1,
+      "data": {
+        "id": 2,
+        "title": "Login",
+        "description": "Login form cases.",
+        "preconditions": null,
+        "position": 1,
+        "cases_count": 2,
+        "parent_id": 1,
+        "created": "2026-11-21 01:20:56",
+        "updated": "2026-11-21 01:20:56",
+        "created_at": "2026-11-21T01:20:56+00:00",
+        "updated_at": "2026-11-21T01:20:56+00:00"
+      }
+    },
+    {
+      "entity": "suite",
+      "projectCode": "TPIMIG",
+      "sourceId": "3",
+      "rowIndex": 2,
+      "data": {
+        "id": 3,
+        "title": "Two-factor",
+        "description": null,
+        "preconditions": null,
+        "position": 1,
+        "cases_count": 1,
+        "parent_id": 2,
+        "created": "2026-11-21 01:20:56",
+        "updated": "2026-11-21 01:20:56",
+        "created_at": "2026-11-21T01:20:56+00:00",
+        "updated_at": "2026-11-21T01:20:56+00:00"
+      }
+    },
+    {
+      "entity": "suite",
+      "projectCode": "TPIMIG",
+      "sourceId": "4",
+      "rowIndex": 3,
+      "data": {
+        "id": 4,
+        "title": "Billing & Invoices",
+        "description": "Has an ampersand, a slash / and \"quotes\" in its text.",
+        "preconditions": null,
+        "position": 2,
+        "cases_count": 2,
+        "parent_id": null,
+        "created": "2026-11-21 01:20:57",
+        "updated": "2026-11-21 01:20:57",
+        "created_at": "2026-11-21T01:20:57+00:00",
+        "updated_at": "2026-11-21T01:20:57+00:00"
+      }
+    },
+    {
+      "entity": "suite",
+      "projectCode": "TPIMIG",
+      "sourceId": "5",
+      "rowIndex": 4,
+      "data": {
+        "id": 5,
+        "title": "Empty suite",
+        "description": null,
+        "preconditions": null,
+        "position": 3,
+        "cases_count": 0,
+        "parent_id": null,
+        "created": "2026-11-21 01:20:57",
+        "updated": "2026-11-21 01:20:57",
+        "created_at": "2026-11-21T01:20:57+00:00",
+        "updated_at": "2026-11-21T01:20:57+00:00"
+      }
+    },
+    {
+      "entity": "shared_step",
+      "projectCode": "TPIMIG",
+      "sourceId": "f9ee47bb05d07e7c74b2b3d4237fe2eeef914acc",
+      "rowIndex": 0,
+      "data": {
+        "hash": "f9ee47bb05d07e7c74b2b3d4237fe2eeef914acc",
+        "title": "Open the login page",
+        "action": "Open the application URL",
+        "expected_result": "The landing page loads",
+        "data": "https://staging.example.test",
+        "steps": [
+          {
+            "hash": "b7b427ccc21d16beb06a9f86ac5a51ca459b5dcf",
+            "action": "Open the application URL",
+            "expected_result": "The landing page loads",
+            "data": "https://staging.example.test",
+            "attachments": [],
+            "steps": []
+          },
+          {
+            "hash": "78adf99f5cbdf4b6ff533ad39f8c78bc23d49fe3",
+            "action": "Click **Sign in**",
+            "expected_result": "The login form is shown",
+            "data": "",
+            "attachments": [],
+            "steps": []
+          }
+        ],
+        "cases": [6],
+        "cases_count": 1,
+        "created": "2026-11-21 01:21:02",
+        "updated": "2026-11-21 01:21:02",
+        "created_at": "2026-11-21T01:21:02+00:00",
+        "updated_at": "2026-11-21T01:21:02+00:00"
+      }
+    },
+    {
+      "entity": "case",
+      "projectCode": "TPIMIG",
+      "sourceId": "1",
+      "rowIndex": 0,
+      "data": {
+        "id": 1,
+        "position": 1,
+        "title": "Sign in with a valid password",
+        "description": "Checks a normal sign-in.\n\n| Field | Value |\n|---|---|\n| User | `demo` |\n| Role | Admin |\n\n\n\n1. first\n2. second\n\n> A quoted note with a [link](https://example.test/docs).",
+        "preconditions": "The user `demo` exists and is **active**.",
+        "postconditions": "Sign the user out.",
+        "severity": 2,
+        "priority": 1,
+        "type": 1,
+        "layer": 1,
+        "is_flaky": 0,
+        "is_muted": false,
+        "behavior": 2,
+        "automation": 0,
+        "isManual": true,
+        "isToBeAutomated": false,
+        "status": 0,
+        "milestone_id": 2,
+        "suite_id": 2,
+        "links": [],
+        "custom_fields": [
+          {
+            "id": 9,
+            "value": "2026-12-01T15:00:00Z"
+          },
+          {
+            "id": 8,
+            "value": "https://example.test/spec/login"
+          },
+          {
+            "id": 7,
+            "value": "1"
+          },
+          {
+            "id": 6,
+            "value": "5"
+          },
+          {
+            "id": 5,
+            "value": "Reviewed by **QA**.\n\nSecond paragraph."
+          },
+          {
+            "id": 4,
+            "value": "REQ-101"
+          },
+          {
+            "id": 3,
+            "value": "3"
+          },
+          {
+            "id": 2,
+            "value": "1"
+          },
+          {
+            "id": 2,
+            "value": "3"
+          },
+          {
+            "id": 1,
+            "value": "2"
+          }
+        ],
+        "attachments": [],
+        "steps_type": "classic",
+        "steps": [
+          {
+            "hash": "00ded8ee5c68f64aa31ea369688bb8dad7b120a5",
+            "position": 1,
+            "shared_step_hash": null,
+            "shared_step_nested_hash": null,
+            "attachments": [],
+            "action": "Enter the user name",
+            "expected_result": "The name is shown in the field",
+            "data": "demo",
+            "steps": []
+          },
+          {
+            "hash": "b03248f37f1103a5a382c3c8ec3e322eca056363",
+            "position": 2,
+            "shared_step_hash": null,
+            "shared_step_nested_hash": null,
+            "attachments": [],
+            "action": "Enter the password",
+            "expected_result": "The password is masked",
+            "data": "a valid password",
+            "steps": [
+              {
+                "hash": "5acf28a7fe0c6a31f3a2db821e39d8f25514971a",
+                "position": 1,
+                "shared_step_hash": null,
+                "shared_step_nested_hash": null,
+                "attachments": [],
+                "action": "Click the eye icon",
+                "expected_result": "The password is readable",
+                "data": null,
+                "steps": [
+                  {
+                    "hash": "527c0edee432b1e63c09c282ddfd9cffb3d66869",
+                    "position": 1,
+                    "shared_step_hash": null,
+                    "shared_step_nested_hash": null,
+                    "attachments": [],
+                    "action": "Click the eye icon again",
+                    "expected_result": "The password is masked again",
+                    "data": null,
+                    "steps": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "hash": "cbb3dddcf1da45b8b2bd73d78e02c30638febbb8",
+            "position": 3,
+            "shared_step_hash": null,
+            "shared_step_nested_hash": null,
+            "attachments": [],
+            "action": "Click **Sign in**",
+            "expected_result": "The dashboard opens",
+            "data": null,
+            "steps": []
+          }
+        ],
+        "params": {
+          "browser": ["chrome", "firefox"],
+          "locale": ["en-US", "de-DE", "ja-JP"]
+        },
+        "parameters": [
+          {
+            "shared_id": null,
+            "type": "single",
+            "item": {
+              "title": "browser",
+              "values": ["chrome", "firefox"]
+            }
+          },
+          {
+            "shared_id": "01a1fbb1-2ce0-724a-a8a2-0410b6e50ba3",
+            "type": "single",
+            "item": {
+              "title": "locale",
+              "values": ["en-US", "de-DE", "ja-JP"]
+            }
+          }
+        ],
+        "member_id": 1,
+        "author_id": 491364,
+        "author_uuid": "00000000-0000-4000-8000-000000000001",
+        "tags": [
+          {
+            "title": "smoke",
+            "internal_id": 2
+          },
+          {
+            "title": "login",
+            "internal_id": 3
+          },
+          {
+            "title": "tag with spaces",
+            "internal_id": 4
+          }
+        ],
+        "deleted": null,
+        "created": "2026-11-21T01:21:16.000000Z",
+        "updated": "2026-11-21T01:21:17.000000Z",
+        "created_at": "2026-11-21T01:21:16+00:00",
+        "updated_at": "2026-11-21T01:21:17+00:00",
+        "external_issues": []
+      }
+    },
+    {
+      "entity": "case",
+      "projectCode": "TPIMIG",
+      "sourceId": "5",
+      "rowIndex": 1,
+      "data": {
+        "id": 5,
+        "position": 2,
+        "title": "Lock the account after five failures",
+        "description": "Gherkin case.",
+        "preconditions": null,
+        "postconditions": null,
+        "severity": 1,
+        "priority": 1,
+        "type": 2,
+        "layer": 0,
+        "is_flaky": 0,
+        "is_muted": false,
+        "behavior": 1,
+        "automation": 0,
+        "isManual": true,
+        "isToBeAutomated": false,
+        "status": 0,
+        "milestone_id": null,
+        "suite_id": 2,
+        "links": [],
+        "custom_fields": [],
+        "attachments": [],
+        "steps_type": "gherkin",
+        "steps": [
+          {
+            "action": "Given a user \"demo\" exists\nWhen they enter a wrong password 5 times\nThen the account is locked\nAnd an email is sent"
+          }
+        ],
+        "params": [],
+        "parameters": [],
+        "member_id": 1,
+        "author_id": 491364,
+        "author_uuid": "00000000-0000-4000-8000-000000000001",
+        "tags": [
+          {
+            "title": "security",
+            "internal_id": 5
+          }
+        ],
+        "deleted": null,
+        "created": "2026-11-21T01:21:53.000000Z",
+        "updated": "2026-11-21T01:21:53.000000Z",
+        "created_at": "2026-11-21T01:21:53+00:00",
+        "updated_at": "2026-11-21T01:21:53+00:00",
+        "external_issues": []
+      }
+    },
+    {
+      "entity": "case",
+      "projectCode": "TPIMIG",
+      "sourceId": "6",
+      "rowIndex": 2,
+      "data": {
+        "id": 6,
+        "position": 1,
+        "title": "Sign in with a one-time code",
+        "description": null,
+        "preconditions": "Two-factor is switched on for the user.",
+        "postconditions": null,
+        "severity": 3,
+        "priority": 2,
+        "type": 1,
+        "layer": 2,
+        "is_flaky": 0,
+        "is_muted": false,
+        "behavior": 1,
+        "automation": 1,
+        "isManual": true,
+        "isToBeAutomated": true,
+        "status": 1,
+        "milestone_id": null,
+        "suite_id": 3,
+        "links": [],
+        "custom_fields": [
+          {
+            "id": 1,
+            "value": "1"
+          }
+        ],
+        "attachments": [],
+        "steps_type": "classic",
+        "steps": [
+          {
+            "hash": "edacb81b599b42891246cce88b20c433a2259732",
+            "position": 1,
+            "shared_step_hash": "f9ee47bb05d07e7c74b2b3d4237fe2eeef914acc",
+            "shared_step_nested_hash": "b7b427ccc21d16beb06a9f86ac5a51ca459b5dcf",
+            "attachments": [],
+            "action": "Open the application URL",
+            "expected_result": "The landing page loads",
+            "data": "https://staging.example.test",
+            "steps": []
+          },
+          {
+            "hash": "edacb81b599b42891246cce88b20c433a2259732",
+            "position": 2,
+            "shared_step_hash": "f9ee47bb05d07e7c74b2b3d4237fe2eeef914acc",
+            "shared_step_nested_hash": "78adf99f5cbdf4b6ff533ad39f8c78bc23d49fe3",
+            "attachments": [],
+            "action": "Click **Sign in**",
+            "expected_result": "The login form is shown",
+            "data": "",
+            "steps": []
+          },
+          {
+            "hash": "dcc73615333b70625365c25ebd988514e9a74d0b",
+            "position": 3,
+            "shared_step_hash": null,
+            "shared_step_nested_hash": null,
+            "attachments": [],
+            "action": "Enter the one-time code",
+            "expected_result": "The dashboard opens",
+            "data": "123456",
+            "steps": []
+          }
+        ],
+        "params": [],
+        "parameters": [],
+        "member_id": 1,
+        "author_id": 491364,
+        "author_uuid": "00000000-0000-4000-8000-000000000001",
+        "tags": [
+          {
+            "title": "login",
+            "internal_id": 3
+          }
+        ],
+        "deleted": null,
+        "created": "2026-11-21T01:21:53.000000Z",
+        "updated": "2026-11-21T01:21:54.000000Z",
+        "created_at": "2026-11-21T01:21:53+00:00",
+        "updated_at": "2026-11-21T01:21:54+00:00",
+        "external_issues": []
+      }
+    },
+    {
+      "entity": "case",
+      "projectCode": "TPIMIG",
+      "sourceId": "7",
+      "rowIndex": 3,
+      "data": {
+        "id": 7,
+        "position": 1,
+        "title": "Invoice totals are rounded to two decimals",
+        "description": "No suite; automated; deprecated; flaky.",
+        "preconditions": null,
+        "postconditions": null,
+        "severity": 4,
+        "priority": 3,
+        "type": 3,
+        "layer": 3,
+        "is_flaky": 1,
+        "is_muted": false,
+        "behavior": 3,
+        "automation": 2,
+        "isManual": false,
+        "isToBeAutomated": false,
+        "status": 2,
+        "milestone_id": null,
+        "suite_id": null,
+        "links": [],
+        "custom_fields": [],
+        "attachments": [],
+        "steps_type": "classic",
+        "steps": [
+          {
+            "hash": "09843bcf61baca1d3ec6e3c9790064a86241ce86",
+            "position": 1,
+            "shared_step_hash": null,
+            "shared_step_nested_hash": null,
+            "attachments": [],
+            "action": "Create an invoice of 10.005",
+            "expected_result": "The total shows 10.01",
+            "data": null,
+            "steps": []
+          }
+        ],
+        "params": [],
+        "parameters": [],
+        "member_id": 1,
+        "author_id": 491364,
+        "author_uuid": "00000000-0000-4000-8000-000000000001",
+        "tags": [],
+        "deleted": null,
+        "created": "2026-11-21T01:21:54.000000Z",
+        "updated": "2026-11-21T01:21:55.000000Z",
+        "created_at": "2026-11-21T01:21:54+00:00",
+        "updated_at": "2026-11-21T01:21:55+00:00",
+        "external_issues": []
+      }
+    },
+    {
+      "entity": "case",
+      "projectCode": "TPIMIG",
+      "sourceId": "8",
+      "rowIndex": 4,
+      "data": {
+        "id": 8,
+        "position": 1,
+        "title": "Upgrade the plan",
+        "description": null,
+        "preconditions": null,
+        "postconditions": null,
+        "severity": 2,
+        "priority": 2,
+        "type": 1,
+        "layer": 0,
+        "is_flaky": 0,
+        "is_muted": false,
+        "behavior": 1,
+        "automation": 0,
+        "isManual": true,
+        "isToBeAutomated": false,
+        "status": 0,
+        "milestone_id": 1,
+        "suite_id": 4,
+        "links": [],
+        "custom_fields": [],
+        "attachments": [],
+        "steps_type": "classic",
+        "steps": [
+          {
+            "hash": "f0754fb5f91a42eaf7cab12b609c7a5061724918",
+            "position": 1,
+            "shared_step_hash": null,
+            "shared_step_nested_hash": null,
+            "attachments": [],
+            "action": "Open **Billing**",
+            "expected_result": null,
+            "data": null,
+            "steps": []
+          },
+          {
+            "hash": "b460801ccd0b88fe6ce50631322c2cef96f4c545",
+            "position": 2,
+            "shared_step_hash": null,
+            "shared_step_nested_hash": null,
+            "attachments": [],
+            "action": "Choose the new plan",
+            "expected_result": "The price updates",
+            "data": null,
+            "steps": []
+          }
+        ],
+        "params": {
+          "from": ["free", "pro"],
+          "to": ["pro", "enterprise"],
+          "tier": ["free", "pro"],
+          "seats": ["1", "25"]
+        },
+        "parameters": [
+          {
+            "shared_id": null,
+            "type": "group",
+            "items": [
+              {
+                "title": "from",
+                "values": ["free", "pro"]
+              },
+              {
+                "title": "to",
+                "values": ["pro", "enterprise"]
+              }
+            ]
+          },
+          {
+            "shared_id": "01a1fbb1-2ed2-71bd-8921-e5a6fde4680f",
+            "type": "group",
+            "items": [
+              {
+                "title": "tier",
+                "values": ["free", "pro"]
+              },
+              {
+                "title": "seats",
+                "values": ["1", "25"]
+              }
+            ]
+          }
+        ],
+        "member_id": 1,
+        "author_id": 491364,
+        "author_uuid": "00000000-0000-4000-8000-000000000001",
+        "tags": [
+          {
+            "title": "billing",
+            "internal_id": 6
+          },
+          {
+            "title": "smoke",
+            "internal_id": 2
+          }
+        ],
+        "deleted": null,
+        "created": "2026-11-21T01:21:55.000000Z",
+        "updated": "2026-11-21T01:21:55.000000Z",
+        "created_at": "2026-11-21T01:21:55+00:00",
+        "updated_at": "2026-11-21T01:21:55+00:00",
+        "external_issues": []
+      }
+    },
+    {
+      "entity": "case",
+      "projectCode": "TPIMIG",
+      "sourceId": "9",
+      "rowIndex": 5,
+      "data": {
+        "id": 9,
+        "position": 2,
+        "title": "Case with a title only",
+        "description": null,
+        "preconditions": null,
+        "postconditions": null,
+        "severity": 4,
+        "priority": 0,
+        "type": 1,
+        "layer": 0,
+        "is_flaky": 0,
+        "is_muted": false,
+        "behavior": 1,
+        "automation": 0,
+        "isManual": true,
+        "isToBeAutomated": false,
+        "status": 0,
+        "milestone_id": null,
+        "suite_id": 4,
+        "links": [],
+        "custom_fields": [],
+        "attachments": [],
+        "steps_type": null,
+        "steps": [],
+        "params": [],
+        "parameters": [],
+        "member_id": 1,
+        "author_id": 491364,
+        "author_uuid": "00000000-0000-4000-8000-000000000001",
+        "tags": [],
+        "deleted": null,
+        "created": "2026-11-21T01:21:55.000000Z",
+        "updated": "2026-11-21T01:21:55.000000Z",
+        "created_at": "2026-11-21T01:21:55+00:00",
+        "updated_at": "2026-11-21T01:21:55+00:00",
+        "external_issues": []
+      }
+    },
+    {
+      "entity": "milestone",
+      "projectCode": "TPIMIG",
+      "sourceId": "1",
+      "rowIndex": 0,
+      "data": {
+        "id": 1,
+        "title": "Release 1.0",
+        "description": "First release.",
+        "status": "completed",
+        "due_date": "2026-09-21T00:00:00+00:00",
+        "created": "2026-11-21 01:20:58",
+        "updated": "2026-11-21 01:20:58",
+        "created_at": "2026-11-21T01:20:58+00:00",
+        "updated_at": "2026-11-21T01:20:58+00:00"
+      }
+    },
+    {
+      "entity": "milestone",
+      "projectCode": "TPIMIG",
+      "sourceId": "2",
+      "rowIndex": 1,
+      "data": {
+        "id": 2,
+        "title": "Release 1.1",
+        "description": null,
+        "status": "active",
+        "due_date": "2027-01-15T00:00:00+00:00",
+        "created": "2026-11-21 01:20:58",
+        "updated": "2026-11-21 01:20:58",
+        "created_at": "2026-11-21T01:20:58+00:00",
+        "updated_at": "2026-11-21T01:20:58+00:00"
+      }
+    },
+    {
+      "entity": "environment",
+      "projectCode": "TPIMIG",
+      "sourceId": "1",
+      "rowIndex": 0,
+      "data": {
+        "id": 1,
+        "title": "Staging",
+        "description": "Pre-production.",
+        "slug": "staging",
+        "host": "https://staging.example.test",
+        "type": "static"
+      }
+    },
+    {
+      "entity": "environment",
+      "projectCode": "TPIMIG",
+      "sourceId": "2",
+      "rowIndex": 1,
+      "data": {
+        "id": 2,
+        "title": "Production",
+        "description": null,
+        "slug": "production",
+        "host": "https://example.test",
+        "type": "static"
+      }
+    },
+    {
+      "entity": "configuration",
+      "projectCode": "TPIMIG",
+      "sourceId": "1",
+      "rowIndex": 0,
+      "data": {
+        "title": "Operating system",
+        "configurations": [
+          {
+            "title": "Windows",
+            "id": 2
+          },
+          {
+            "title": "macOS",
+            "id": 1
+          }
+        ],
+        "id": 1
+      }
+    },
+    {
+      "entity": "configuration",
+      "projectCode": "TPIMIG",
+      "sourceId": "2",
+      "rowIndex": 1,
+      "data": {
+        "title": "Browser",
+        "configurations": [
+          {
+            "title": "Chrome",
+            "id": 3
+          }
+        ],
+        "id": 2
+      }
+    },
+    {
+      "entity": "run",
+      "projectCode": "TPIMIG",
+      "sourceId": "1",
+      "rowIndex": 0,
+      "data": {
+        "id": 1,
+        "title": "Release 1.1 regression",
+        "description": "Full pass on **staging**.",
+        "status": 3,
+        "status_text": "failed",
+        "start_time": "2026-11-21T01:21:57+00:00",
+        "end_time": "2026-11-21T01:22:01+00:00",
+        "public": false,
+        "stats": {
+          "total": 15,
+          "statuses": {
+            "untested": 9,
+            "passed": 2,
+            "failed": 1,
+            "blocked": 1,
+            "skipped": 1,
+            "invalid": 1
+          },
+          "untested": 9,
+          "passed": 2,
+          "failed": 1,
+          "blocked": 1,
+          "skipped": 1,
+          "retest": 0,
+          "in_progress": 0,
+          "invalid": 1
+        },
+        "time_spent": 146500,
+        "elapsed_time": 96500,
+        "user_id": 1,
+        "environment": {
+          "title": "Staging",
+          "description": "Pre-production.",
+          "slug": "staging",
+          "host": "https://staging.example.test"
+        },
+        "milestone": {
+          "title": "Release 1.1",
+          "description": ""
+        },
+        "custom_fields": [
+          {
+            "id": 10,
+            "value": "1.1.0-rc2"
+          }
+        ],
+        "tags": [
+          {
+            "title": "regression",
+            "internal_id": 7
+          },
+          {
+            "title": "nightly",
+            "internal_id": 8
+          }
+        ],
+        "configurations": [1, 3],
+        "cases": [1, 1, 1, 1, 1, 1, 5, 6, 7, 8, 8, 8, 8, 9, 8],
+        "defects": [2],
+        "external_issue": null
+      }
+    },
+    {
+      "entity": "run",
+      "projectCode": "TPIMIG",
+      "sourceId": "2",
+      "rowIndex": 1,
+      "data": {
+        "id": 2,
+        "title": "Production smoke",
+        "description": null,
+        "status": 0,
+        "status_text": "in_progress",
+        "start_time": "2026-11-21T01:22:02+00:00",
+        "end_time": null,
+        "public": false,
+        "stats": {
+          "total": 11,
+          "statuses": {
+            "untested": 10,
+            "passed": 1
+          },
+          "untested": 10,
+          "passed": 1,
+          "failed": 0,
+          "blocked": 0,
+          "skipped": 0,
+          "retest": 0,
+          "in_progress": 0,
+          "invalid": 0
+        },
+        "time_spent": 1500,
+        "elapsed_time": 1500,
+        "user_id": 1,
+        "environment": {
+          "title": "Production",
+          "description": "",
+          "slug": "production",
+          "host": "https://example.test"
+        },
+        "milestone": null,
+        "custom_fields": [],
+        "tags": [],
+        "configurations": [2],
+        "cases": [1, 1, 1, 1, 1, 1, 8, 8, 8, 8, 9],
+        "defects": [],
+        "external_issue": null
+      }
+    },
+    {
+      "entity": "result",
+      "projectCode": "TPIMIG",
+      "sourceId": "8fe9c85dd0fc7e0e42d669f85a77a85e21959e39",
+      "rowIndex": 0,
+      "data": {
+        "hash": "8fe9c85dd0fc7e0e42d669f85a77a85e21959e39",
+        "comment": "All good on **chrome**.",
+        "stacktrace": null,
+        "run_id": 1,
+        "case_id": 1,
+        "steps": [
+          {
+            "status": 1,
+            "comment": "ok",
+            "attachments": [],
+            "position": 1
+          },
+          {
+            "steps": [
+              {
+                "steps": [
+                  {
+                    "status": 1,
+                    "attachments": [],
+                    "position": 1
+                  }
+                ],
+                "status": 1,
+                "attachments": [],
+                "position": 1
+              }
+            ],
+            "status": 1,
+            "attachments": [],
+            "position": 2
+          },
+          {
+            "status": 1,
+            "attachments": [],
+            "position": 3
+          }
+        ],
+        "status": "passed",
+        "is_api_result": true,
+        "time_spent_ms": 93500,
+        "end_time": "2026-11-21T01:21:57+00:00",
+        "attachments": [],
+        "author_uuid": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "entity": "result",
+      "projectCode": "TPIMIG",
+      "sourceId": "1ac09600ffc9b6d37328ac84d4ae317e1b85c4ea",
+      "rowIndex": 1,
+      "data": {
+        "hash": "1ac09600ffc9b6d37328ac84d4ae317e1b85c4ea",
+        "comment": "Fails on firefox.",
+        "stacktrace": "AssertionError: dashboard not shown\n  at login.spec.ts:42",
+        "run_id": 1,
+        "case_id": 1,
+        "steps": [
+          {
+            "status": 1,
+            "attachments": [],
+            "position": 1
+          },
+          {
+            "status": 1,
+            "attachments": [],
+            "position": 2
+          },
+          {
+            "status": 2,
+            "comment": "Spinner never ends.",
+            "attachments": [],
+            "position": 3
+          }
+        ],
+        "status": "failed",
+        "is_api_result": true,
+        "time_spent_ms": 41000,
+        "end_time": "2026-11-21T01:21:58+00:00",
+        "attachments": [],
+        "author_uuid": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "entity": "result",
+      "projectCode": "TPIMIG",
+      "sourceId": "6ace5e73228dbb8f1d470e0c3d9c9070e546d36b",
+      "rowIndex": 2,
+      "data": {
+        "hash": "6ace5e73228dbb8f1d470e0c3d9c9070e546d36b",
+        "comment": "",
+        "stacktrace": null,
+        "run_id": 1,
+        "case_id": 5,
+        "steps": null,
+        "status": "passed",
+        "is_api_result": true,
+        "time_spent_ms": 12000,
+        "end_time": "2026-11-21T01:21:58+00:00",
+        "attachments": [],
+        "author_uuid": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "entity": "result",
+      "projectCode": "TPIMIG",
+      "sourceId": "9d257f356b50a38f196ccb46f5b9614060d4ee4e",
+      "rowIndex": 3,
+      "data": {
+        "hash": "9d257f356b50a38f196ccb46f5b9614060d4ee4e",
+        "comment": "No test phone available.",
+        "stacktrace": null,
+        "run_id": 1,
+        "case_id": 6,
+        "steps": null,
+        "status": "blocked",
+        "is_api_result": true,
+        "time_spent_ms": 0,
+        "end_time": "2026-11-21T01:21:59+00:00",
+        "attachments": [],
+        "author_uuid": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "entity": "result",
+      "projectCode": "TPIMIG",
+      "sourceId": "f0570e464f76a11472e3ad81f7cfdb45cd9e32a8",
+      "rowIndex": 4,
+      "data": {
+        "hash": "f0570e464f76a11472e3ad81f7cfdb45cd9e32a8",
+        "comment": "",
+        "stacktrace": null,
+        "run_id": 1,
+        "case_id": 7,
+        "steps": null,
+        "status": "skipped",
+        "is_api_result": true,
+        "time_spent_ms": 0,
+        "end_time": "2026-11-21T01:21:59+00:00",
+        "attachments": [],
+        "author_uuid": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "entity": "result",
+      "projectCode": "TPIMIG",
+      "sourceId": "7342c98b26e1df9a3d89d72d1742ebd1306f57f9",
+      "rowIndex": 5,
+      "data": {
+        "hash": "7342c98b26e1df9a3d89d72d1742ebd1306f57f9",
+        "comment": "Case is out of date.",
+        "stacktrace": null,
+        "run_id": 1,
+        "case_id": 8,
+        "steps": null,
+        "status": "invalid",
+        "is_api_result": true,
+        "time_spent_ms": 0,
+        "end_time": "2026-11-21T01:22:00+00:00",
+        "attachments": [],
+        "author_uuid": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "entity": "result",
+      "projectCode": "TPIMIG",
+      "sourceId": "75a884d42682b916e0c4e5b28c0cff4728764a9a",
+      "rowIndex": 6,
+      "data": {
+        "hash": "75a884d42682b916e0c4e5b28c0cff4728764a9a",
+        "comment": "",
+        "stacktrace": null,
+        "run_id": 2,
+        "case_id": 9,
+        "steps": null,
+        "status": "passed",
+        "is_api_result": true,
+        "time_spent_ms": 1500,
+        "end_time": "2026-11-21T01:22:02+00:00",
+        "attachments": [],
+        "author_uuid": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "entity": "defect",
+      "projectCode": "TPIMIG",
+      "sourceId": "1",
+      "rowIndex": 0,
+      "data": {
+        "id": 1,
+        "title": "Invoice PDF shows the wrong currency",
+        "actual_result": "The PDF shows **USD** for a EUR account.",
+        "status": "open",
+        "milestone_id": 2,
+        "severity": "critical",
+        "member_id": 1,
+        "author_id": 491364,
+        "author_uuid": "00000000-0000-4000-8000-000000000001",
+        "attachments": [],
+        "custom_fields": [
+          {
+            "id": 11,
+            "value": "2"
+          }
+        ],
+        "external_data": "{}",
+        "runs": [],
+        "results": [],
+        "resolved_at": null,
+        "created": "2026-11-21 01:21:56",
+        "updated": "2026-11-21 01:21:56",
+        "created_at": "2026-11-21T01:21:56+00:00",
+        "updated_at": "2026-11-21T01:21:56+00:00",
+        "tags": [
+          {
+            "title": "billing",
+            "internal_id": 6
+          }
+        ]
+      }
+    },
+    {
+      "entity": "defect",
+      "projectCode": "TPIMIG",
+      "sourceId": "2",
+      "rowIndex": 1,
+      "data": {
+        "id": 2,
+        "title": "Sign in with a valid password",
+        "actual_result": "Fails on firefox.",
+        "status": "open",
+        "milestone_id": null,
+        "severity": "critical",
+        "member_id": 1,
+        "author_id": 491364,
+        "author_uuid": "00000000-0000-4000-8000-000000000001",
+        "attachments": [],
+        "custom_fields": [],
+        "external_data": "{}",
+        "runs": [1],
+        "results": ["1ac09600ffc9b6d37328ac84d4ae317e1b85c4ea"],
+        "resolved_at": null,
+        "created": "2026-11-21 01:21:58",
+        "updated": "2026-11-21 01:21:58",
+        "created_at": "2026-11-21T01:21:58+00:00",
+        "updated_at": "2026-11-21T01:21:58+00:00",
+        "tags": []
+      }
+    }
+  ]
+}
