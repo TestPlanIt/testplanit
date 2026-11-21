@@ -154,6 +154,7 @@ import { DeleteCaseModal } from "../DeleteCase";
 import { QuickScriptModal } from "../QuickScriptModal";
 import { FolderNode } from "../TreeView";
 import FieldValueRenderer from "./FieldValueRenderer";
+import { isCaseFieldValueEmpty } from "./isCaseFieldValueEmpty";
 import { StepsDisplay } from "./StepsDisplay";
 import { type LinkAttachmentInput } from "@/components/UploadAttachments";
 import TestCaseFormControls from "./TestCaseFormControl";
@@ -2955,10 +2956,13 @@ export function TestCaseDetailsView({
                         // array as empty, which collapses the row for every
                         // viewer who lacks canAddEdit no matter how many steps
                         // the case actually has.
-                        const isFieldEmpty = isStepsField
-                          ? ((fieldValue as unknown[] | undefined)?.length ??
-                              0) === 0
-                          : isTiptapEmpty(fieldValue);
+                        //
+                        // A Multi-Select value is an array of option ids and
+                        // is judged the same way.
+                        const isFieldEmpty = isCaseFieldValueEmpty(
+                          field.caseField.type.type,
+                          fieldValue
+                        );
                         const isEditableStepsField = isStepsField && canAddEdit;
                         if (isEditMode && !isEnabledField(field)) return null;
                         if (
