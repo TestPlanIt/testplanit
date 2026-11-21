@@ -29,7 +29,6 @@
     "searchGroups": "Search for groups...",
     "searchCases": "{count, plural, =0 {Search cases} one {Search # case} other {Search # cases}}",
     "searchProjects": "{count, plural, =0 {Search projects} one {Search # project} other {Search # projects}}",
-    "searchTags": "Search for tags...",
     "searchRuns": "{count, plural, =0 {Search test runs} one {Search # test run} other {Search # test runs}}",
     "searchSessions": "{count, plural, =0 {Search sessions} one {Search # session} other {Search # sessions}}",
     "searchMilestones": "{count, plural, =0 {Search milestones} one {Search # milestone} other {Search # milestones}}",
@@ -100,8 +99,6 @@
       "addedToTestRun": "Added to Test Run",
       "addedToTestRunDescription": "The test case has been added to the Test Run.",
       "noAvailableTestRuns": "All active Test Runs already include this Test Case.",
-      "resultUpdateError": "Failed to update test result",
-      "resultDeleteError": "Failed to delete test result",
       "selectStatus": "Select Status",
       "addToTestRun": "Add to Test Run",
       "status": "Status",
@@ -225,7 +222,6 @@
       "notApplicable": "N/A",
       "redirecting": "Redirecting...",
       "pendingDelete": "Will be deleted",
-      "pendingChanges": "Pending changes",
       "importing": "Importing...",
       "addingTestCases": "Adding test cases..."
     },
@@ -335,7 +331,6 @@
       "notificationMode": "Notifications",
       "value": "Value",
       "key": "Key",
-      "configurationDetails": "Configuration Details",
       "isActive": "Active",
       "members": "Members",
       "milestoneTypes": "Milestone Types",
@@ -411,7 +406,6 @@
       "API": "API",
       "folder": "Folder",
       "parentFolder": "Parent Folder for new cases",
-      "multipleValues": "Multiple Values",
       "multipleValuesCount": "Multiple Values ({count, number})",
       "provider": "Provider",
       "updatedAt": "Updated At",
@@ -482,8 +476,6 @@
       "invalidDuration": "Please enter a valid duration",
       "maxDuration": "Duration cannot exceed {max} minutes",
       "minLength": "{field} must be at least {min} characters",
-      "emailFormat": "Invalid email format",
-      "passwordMatch": "Passwords must match",
       "unique": "{field} must be unique",
       "roleRequired": "Role is required",
       "nameMinLength": "Name must be at least 2 characters",
@@ -547,7 +539,6 @@
       "deleteSuccess": "Item deleted successfully",
       "deleteError": "An error occurred while deleting the item",
       "moveSuccess": "Item moved successfully",
-      "moveError": "An error occurred while moving the item",
       "updateSuccess": "Item updated successfully",
       "updateSuccessCount": "{count, number} items updated successfully",
       "updateError": "An error occurred while updating the item",
@@ -555,7 +546,6 @@
       "copyFailed": "Failed to copy link to clipboard",
       "created": "Created successfully",
       "createdItem": "{item} created successfully",
-      "createdDescription": "The test run has been created and is now visible in the Test Runs list.",
       "createError": "An unknown error occurred. Please try again.",
       "emptyActive": "No active Test Runs",
       "emptyCompleted": "No completed Test Runs",
@@ -633,7 +623,6 @@
       "defaultNotFound": "Default value not found",
       "emailExists": "A user with this email already exists",
       "nameExists": "A user with this name already exists",
-      "duplicateValue": "This value is already in use",
       "unauthorized": "You are not authorized to perform this action.",
       "accessDenied": "Access Denied",
       "sessionNotFound": "Session not found or invalid.",
@@ -659,8 +648,6 @@
         "unlinkError": "Error unlinking issue",
         "noActiveIntegration": "No active integration found for this project"
       },
-      "roleRequiredForSpecificRole": "Role is required when access type is Specific Role.",
-      "projectCreationFailed": "Project creation failed, no ID returned.",
       "invalidRoleId": "Invalid Role ID",
       "workflowStateExists": "Workflow State already exists. Please choose a new name.",
       "failedToLoadCaseData": "Failed to load case data. Cannot save.",
@@ -704,11 +691,9 @@
       "resultSubmitPermissionDenied": "You can’t submit results for this case. Ask a project admin to assign it to you.",
       "dependenciesNotPassed": "Blocked by dependencies",
       "dependenciesNotPassedDescription": "This test case can't be executed until {count, plural, =0 {the cases it depends on have} =1 {the case it depends on has} other {all # cases it depends on have}} passed in this run.",
-      "justificationRequired": "Justification required",
       "justificationRequiredDescription": "Flipping a completed result to a different outcome requires Result Details explaining the change.",
       "requiredFieldMissing": "A required result field is missing a value.",
       "editWindowExpired": "This result's edit window has closed. Record a new attempt instead.",
-      "issueRequiredOnFailure": "Linked issue required",
       "issueRequiredOnFailureDescription": "A failure result requires at least one linked issue. Link an issue before saving.",
       "noModelsFound": "No models found",
       "failedToFetchModels": "Failed to fetch models",
@@ -745,7 +730,6 @@
       "reports": "Reports",
       "adminSamlConfig": "Admin - SAML Configuration",
       "apiDocumentation": "API Documentation",
-      "sharedContent": "Shared Content",
       "impact": "Impact Analysis",
       "alerts": "Notifications & Alerts",
       "triage": "Failure Patterns",
@@ -807,7 +791,6 @@
       "unknownGroup": "Unknown Group",
       "file": "file",
       "files": "files",
-      "existingAttachments": "Existing Attachments",
       "new": "New",
       "noElapsedTime": "No time recorded",
       "runDurationHint": "Time from first to last result",
@@ -846,7 +829,6 @@
       "noOptions": "No options available",
       "multiConfiguration": "Part of a multi-configuration group",
       "compositionLocked": "Composition locked — the case set is frozen",
-      "otherConfigurations": "Other configurations",
       "noConfiguration": "No configuration",
       "configurationWithName": "{configuration} — {name}",
       "selected": "Selected: {count}",
@@ -856,7 +838,6 @@
       "successRate": "Success Rate",
       "unassigned": "Unassigned",
       "testRunName": "Test Run Name",
-      "estimatesEllipsis": "Estimates...",
       "access": {
         "noAccess": "No Access",
         "globalRole": "Use Global Role",
@@ -876,9 +857,7 @@
       "sessions": "No Sessions",
       "activeSessions": "No active Sessions",
       "completedSessions": "No completed Sessions",
-      "testCase": "No test case found",
-      "noTestCasesOrSessions": "No test cases or Sessions found",
-      "noTestCasesSessionsOrRuns": "No test cases, Sessions or runs found"
+      "testCase": "No test case found"
     },
     "or": "or",
     "for": "for",
@@ -893,7 +872,6 @@
         "resetColumns": "Reset columns to default"
       },
       "filter": "Filter list...",
-      "selectNone": "Select None",
       "sort": "Sort column",
       "sortAscending": "Sorted ascending",
       "sortDescending": "Sorted descending",
@@ -917,7 +895,6 @@
       "showing": "Showing",
       "total": "total {count, plural, =1 {# item} other {# items}}",
       "filtered": "filtered from",
-      "pageOfPages": "Page {current} of {total}",
       "loadedOfTotal": "{loaded, number} of {total, number}"
     },
     "upload": {
@@ -928,7 +905,6 @@
         "description": "Drag and drop your files or click the button below to select files.",
         "selectFiles": "{count, plural, =0 {Select Files} =1 {1 Selected File} other {# Selected Files}}",
         "selectFile": "{count, plural, =0 {Select File} other {1 Selected File}}",
-        "filesSelected": "{count, plural, =1 {1 file selected} other {# files selected}}",
         "addMoreFiles": "Add more files...",
         "replaceFile": "Replace file...",
         "invalidFileType": "Invalid file type. Only {types} files are allowed.",
@@ -953,8 +929,7 @@
       "dropToImportTestResults": "Drop file to import test results",
       "supportedCsvFormats": "Supported: .csv",
       "supportedResultFormats": "Supported: .xml, .trx, .json",
-      "unsupportedFileType": "Unsupported file type. Expected: {expected}",
-      "noFilesDetected": "No files detected in drop"
+      "unsupportedFileType": "Unsupported file type. Expected: {expected}"
     },
     "editor": {
       "bold": "Bold",
@@ -1009,9 +984,7 @@
         "strikethrough": "Strikethrough",
         "code": "Code",
         "codeBlock": "Code block",
-        "highlightText": "Highlight text",
         "textColor": "Text color",
-        "moreOptions": "More options",
         "subscript": "Subscript",
         "superscript": "Superscript",
         "alignLeft": "Align left",
@@ -1019,9 +992,7 @@
         "alignRight": "Align right",
         "justify": "Justify",
         "setLink": "Set Link",
-        "editLink": "Edit link",
-        "removeLink": "Remove link",
-        "resetColorToDefault": "Reset color to default"
+        "removeLink": "Remove link"
       }
     },
     "ai": {
@@ -1078,9 +1049,6 @@
       "breadcrumb": {
         "more": "More"
       },
-      "clickToViewDetails": "Click to view details",
-      "clickToExpand": "Click to expand",
-      "clickToCollapse": "Click to collapse",
       "search": {
         "filters": "Filters",
         "noResultsFound": "No results found",
@@ -1098,10 +1066,8 @@
         "openInExternalSystem": "Open in {provider}",
         "assignee": "Assignee",
         "status": "Status: ",
-        "clickToOpenInNewTab": "Click to open in new tab",
         "url": "URL: ",
         "externalId": "External ID: ",
-        "viewIn": "View in",
         "fieldType": "Field type: ",
         "richTextContent": "Rich text content",
         "fieldInformation": "Field Information"
@@ -1120,10 +1086,7 @@
       },
       "import": {
         "encoding": {
-          "utf8": "UTF-8",
-          "iso88591": "ISO-8859-1",
-          "iso885915": "ISO-8859-15",
-          "windows1252": "Windows-1252"
+          "utf8": "UTF-8"
         }
       },
       "loadingIssueTracker": "Loading issue tracker info...",
@@ -1194,8 +1157,7 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "Iteration index {index} exceeds the maximum supported value of {cap}. Reduce the iteration count or split the run.",
-        "iterationCapExceededMulti": "{count} test cases request iteration indexes above the maximum supported value of {cap}. Reduce the iteration count or split the run."
+        "iterationCapExceeded": "Iteration index {index} exceeds the maximum supported value of {cap}. Reduce the iteration count or split the run."
       }
     }
   },
@@ -1208,8 +1170,7 @@
         "apple": "Continue with Apple",
         "microsoft": "Continue with Microsoft",
         "samlProvider": "Sign in with {name}",
-        "magicLink": "Sign in with single-use Magic Link",
-        "emailLogin": "Continue with email"
+        "magicLink": "Sign in with single-use Magic Link"
       },
       "magicLink": {
         "description": "Enter your email address and we'll send you a secure link to sign in. No password required. You must already have an account.",
@@ -1280,7 +1241,6 @@
       "error": "Failed to verify email",
       "expired": "Verification link has expired",
       "invalid": "Invalid verification link",
-      "alreadyVerified": "Email already verified",
       "toast": {
         "verifySuccess": {
           "description": "You can now sign in to your account."
@@ -1315,7 +1275,6 @@
       "title": "Verify Your Identity",
       "description": "Enter the 6-digit code from your authenticator app to continue.",
       "backupCodeLabel": "Backup Code",
-      "backupCodeHint": "You can also enter an 8-character backup code",
       "useAuthenticator": "Use authenticator code instead",
       "useBackupCode": "Use a backup code instead",
       "signOut": "Sign out and use a different account"
@@ -1328,24 +1287,14 @@
       "confirmPasswordLabel": "Confirm New Password",
       "signOut": "Sign out instead",
       "passwordsMustMatch": "Passwords do not match.",
-      "genericError": "An error occurred. Please try again.",
-      "policyTitle": "Password Requirements:",
-      "policyMinLength": "At least {count, number} characters",
-      "policyUppercase": "At least one uppercase letter",
-      "policyLowercase": "At least one lowercase letter",
-      "policyNumbers": "At least one number",
-      "policySpecialChars": "At least one special character ({chars})"
+      "genericError": "An error occurred. Please try again."
     }
   },
   "account": {
     "linkSso": {
       "description": "Link your account with a Single Sign-On provider",
-      "availableProviders": "Available SSO Providers",
-      "linkWithGoogle": "Link with Google",
-      "linkWithSaml": "Link with {name}",
       "accountLinked": "Account linked successfully",
       "linkingFailed": "Failed to link account",
-      "noProvidersAvailable": "No SSO providers are currently available for linking",
       "linkingInfo": "Linking an SSO provider allows you to sign in using that provider instead of your password. Your existing account data will remain unchanged.",
       "signInWithGoogle": "Sign in with Google",
       "enterpriseSamlSso": "Enterprise SAML SSO",
@@ -1389,7 +1338,6 @@
       "seeAllMilestones": "{count, plural, =1 {See # Milestone} =2 {See both Milestones} other {See all # Milestones}}",
       "seeAllTestCases": "{count, plural, =1 {See # Test Case} =2 {See both Test Cases} other {See all # Test Cases}}",
       "latestTestCases": "Latest Test Cases",
-      "createdOn": "Created on",
       "seeAllTagsCount": "{count, plural, =1 {See # Tag} =2 {See both Tags} other {See all # Tags}}",
       "seeAllActiveSessions": "{count, plural, =1 {See # Active Session} =2 {See both Active Sessions} other {See all # Active Sessions}}",
       "latestSessions": "Latest Sessions",
@@ -1412,8 +1360,6 @@
     },
     "settings": {
       "description": "Manage settings for {projectName}",
-      "moreSettingsComingSoon": "More Settings Coming Soon",
-      "moreSettingsDescription": "Additional project configuration options will be available here in future updates",
       "junitIterationProperties": {
         "title": "Iteration Property Mapping",
         "description": "On import, the iteration index for each test case is read from a property, attribute, or trait whose name matches one of these entries (JUnit property, TestNG attribute, xUnit trait, NUnit property). Add the names your emitter uses; lookup is case-insensitive.",
@@ -1435,23 +1381,17 @@
         "description": "Manage third-party issue integrations for this project",
         "availableIntegrations": "Available Issue Integrations",
         "availableDescription": "Select an issue integration to connect to this project",
-        "configuredIntegration": "Configured Integration",
         "noIntegrationAssigned": "No issue integration assigned",
         "noIntegrationDescription": "Select an issue integration from the available options to get started",
         "selectIntegration": "Select an issue integration to configure",
         "integration": {
-          "assignError": "Failed to assign issue integration",
           "updateSuccess": "Integration settings updated",
           "updateError": "Failed to update issue integration settings",
           "removeError": "Failed to remove issue integration",
           "removeIntegration": "Remove Integration",
           "confirmRemove": "Are you sure you want to remove the {name} integration?",
-          "authDescription": "You need to authenticate with {provider} to use this issue integration",
           "authenticating": "Authenticating...",
-          "authSuccess": "Authentication successful",
           "selectProject": "Select {provider} Project",
-          "selectProjectPlaceholder": "Choose a project to link",
-          "linkedProject": "Linked Project",
           "loadProjectsError": "Failed to load projects",
           "settingsSaved": "Integration settings saved successfully",
           "saveSettingsError": "Failed to save issue integration settings",
@@ -1462,22 +1402,12 @@
           "authorizeIntegration": "Authorize {name}",
           "integrationSettings": "{name} Settings",
           "integrationSettingsDescription": "Configure issue integration settings for this project",
-          "selectExternalProject": "Select external project",
-          "refreshProjects": "Refresh Projects",
           "defaultIssueType": "Default Issue Type",
           "selectDefaultIssueType": "Select default issue type",
-          "defaultIssueTypeDescription": "This issue type will be pre-selected when creating new issues",
-          "issueTypePlaceholder": "e.g., Bug, Task, Story",
-          "defaultComponent": "Default Component",
-          "componentPlaceholder": "e.g., Frontend, Backend",
           "automaticSync": "Automatic Sync",
-          "automaticSyncDescription": "Automatically sync issues between TestPlanIt and the external system",
           "simpleUrlDescription": "This issue integration uses a simple URL pattern to link to external issues. Issues will be opened in a new tab using the configured URL pattern.",
-          "externalProjectHelp": "This sets the default project for creating new issues from TestPlanIt. You can still link and sync issues from other external projects - each issue tracks its own source project.",
           "linkedProjects": "Linked External Projects",
           "linkedProjectsDescription": "External projects connected through this integration",
-          "noLinkedProjects": "No external projects linked",
-          "noLinkedProjectsDescription": "Add an external project to enable issue search and sync.",
           "addProjects": "Add Projects",
           "addSelected": "Add Selected",
           "setAsDefault": "Set as Default",
@@ -1489,8 +1419,6 @@
           "syncStatusCompleted": "Synced",
           "syncStatusError": "Sync Error",
           "fanOutPartialFailure": "{count} project(s) could not be reached. Showing results from {successCount} project(s).",
-          "projectSelectorLabel": "Project",
-          "defaultIssueTypeHelp": "When creating new issues from TestPlanIt, this issue type will be automatically selected. This saves time if you typically create the same type of issues.",
           "automaticSyncHelp": "When enabled, issues will automatically sync when changes are detected in the external system (via webhooks). Manual sync is always available.",
           "removeWarningTitle": "Removing this issue integration will:",
           "removeWarning1": "Disconnect all linked issues from this issue integration (issues remain in database)",
@@ -1651,12 +1579,10 @@
         "outboundCreateUrlHelp": "The destination URL. Slack incoming-webhook URLs are detected automatically.",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "Detected: Slack",
-        "outboundDetectedHmac": "Detected: Generic HMAC",
         "adapterLabelSlack": "Slack",
         "adapterLabelGenericHmac": "Generic HMAC webhook",
         "outboundCreateSubscriptionsTitle": "Subscriptions",
         "outboundCreateSubscriptionsHelp": "Choose which events fire to this destination. You can change these later.",
-        "outboundSubsTestRunsAndSessions": "Test Runs & Sessions",
         "outboundSubsTestRuns": "Test Runs",
         "outboundSubsSessions": "Sessions",
         "outboundSubsScimUsers": "SCIM Users",
@@ -1682,7 +1608,6 @@
           "scimGroupMemberAddedSummary": "Members added (bulk-sync summary)",
           "triggered": "Triggered"
         },
-        "iterationResultHelp": "Fires every time an iteration result is recorded — pass, fail, skip, or any other status. Use sparingly on long automation runs (one event per iteration).",
         "events": {
           "testRunCreated": "Test run created",
           "testRunStateChanged": "Test run state changed",
@@ -1714,7 +1639,6 @@
         },
         "outboundSubsIssues": "Issues",
         "outboundSubsCases": "Cases",
-        "outboundSubsSelectAll": "Select all in this section",
         "outboundCreateSubmit": "Create webhook",
         "outboundCreateSuccess": "Outbound webhook created.",
         "outboundCreateError": "Failed to create outbound webhook.",
@@ -1795,14 +1719,11 @@
         "filterConfigPlaceholder": "All webhooks",
         "filterEventPlaceholder": "All events",
         "filterStatusFailed": "Failed",
-        "filterSinceDefault": "Since…",
-        "filterUntilDefault": "Until…",
         "filterReset": "Reset filters",
         "filterBulkReplayButton": "Bulk replay {count, number} outbound failures",
         "filterBulkReplayHidden": "All visible failures are inbound — re-trigger the upstream event instead.",
         "deliveriesEmpty": "No deliveries match these filters.",
         "deliveriesResetFilters": "Reset filters",
-        "deliveriesLoadMore": "Load more",
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "Event",
         "tableHeaderSubjectRef": "Reference",
@@ -1941,8 +1862,7 @@
           "autoExecute": "Execute automated cases",
           "autoExecuteHelp": "After the run is composed, request automated execution of its automated cases on this target. Manual cases stay in the run for testers.",
           "autoExecuteNoTargets": "No execution target is configured for this project. <link>Add one</link> to execute runs automatically.",
-          "autoExecuteTargetMissing": "The chosen execution target was deleted or disabled. Runs are still composed, but no execution is requested until you choose another target.",
-          "autoExecuteSaveError": "Could not save the automated execution settings"
+          "autoExecuteTargetMissing": "The chosen execution target was deleted or disabled. Runs are still composed, but no execution is requested until you choose another target."
         },
         "inboundEmptyState": "No inbound webhooks yet. <link>Add one</link> to receive issue updates from your issue tracker, or pull requests and pushes from a connected repository.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -1961,8 +1881,6 @@
       "aiModels": {
         "description": "Configure AI models for intelligent test case generation and analysis",
         "availableModelsDescription": "Choose a default AI model for this project from those configured by your system administrator.",
-        "currentModelSettings": "Current Model Settings",
-        "currentModelDescription": "Configuration details for the currently active AI model: {name}",
         "noModelsAvailable": "No AI models are currently available. Contact your system administrator to configure AI models for your organization.",
         "monthlyBudget": "Monthly Budget",
         "model": "Model",
@@ -1971,7 +1889,6 @@
         "systemDefault": "System Default",
         "setAsDefault": "Set as Default",
         "clearDefault": "Clear Default",
-        "useForProject": "Use for Project",
         "removeModel": "Clear Default",
         "removeWarningTitle": "Clearing the default AI model will:",
         "removeWarning1": "Disable AI-powered features unless per-feature overrides are configured",
@@ -2035,10 +1952,6 @@
           "assignments": "In use by"
         },
         "versionLabel": "v{version, number}",
-        "assignmentsCount": "{count, plural, =0 {0 cases} =1 {# case} other {# cases}}",
-        "rowsCount": "{count, plural, =0 {0 rows} =1 {# row} other {# rows}}",
-        "columnsCount": "{count, plural, =0 {0 columns} =1 {# column} other {# columns}}",
-        "actionsMenuLabel": "Open dataset actions",
         "actionOpen": "Open editor",
         "openLink": "Open",
         "create": {
@@ -2071,9 +1984,6 @@
           "saving": "Saving",
           "savedHint": "All changes saved at version {version, number}",
           "unsavedHint": "Unsaved changes",
-          "currentVersionLabel": "v{version, number} (current)",
-          "currentVersionInitialLabel": "Current",
-          "historicalVersionLabel": "v{version, number}",
           "historicalReadOnlyBanner": "You are viewing version {version, number}. Editing will create a new version branched from this one.",
           "branchingBanner": "Saving will create a new version branched from v{version, number}.",
           "saveError": "Could not save dataset",
@@ -2088,9 +1998,7 @@
           "historicalItemLabel": "v{version, number}",
           "historicalItemBy": "by {name}",
           "noVersionsYet": "No saved versions yet"
-        },
-        "datasetTabSharedReadOnlyHint": "Read-only view of version {version, number}. Switch to the current version to edit.",
-        "datasetTabSharedEditorHint": "Click Save when you are done. Each Save creates a new version."
+        }
       },
       "quickScript": {
         "description": "Enable QuickScript and connect a code repository for AI-assisted test generation.",
@@ -2169,7 +2077,6 @@
           "pathLabel": "Path",
           "patternLabel": "Pattern",
           "previewFiles": "Preview Files",
-          "scanningRepo": "Scanning repository files… ({seconds}s)",
           "title": "Path Patterns",
           "truncatedBadge": "Results may be incomplete (provider limit)"
         },
@@ -2182,8 +2089,6 @@
         },
         "refreshComplete": "Cache refreshed: {fileCount} files",
         "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
-        "refreshRateLimited": "Cache refreshed: {fileCount} files listed, {contentCached}/{fileCount} contents cached (rate limited — refresh again to complete)",
-        "refreshSuccess": "Cache refreshed: {fileCount} files ({contentCached} contents cached)",
         "repository": {
           "branchLabel": "Branch",
           "branchesTruncatedHint": "Showing the first {count, number} branches. Type to search the whole repository.",
@@ -2483,26 +2388,18 @@
       }
     },
     "matrix": {
-      "metaTitle": "Matrix View",
       "pageTitle": "Parameterized Test Iteration Matrix",
       "loading": "Loading matrix…",
       "loadError": "Could not load the matrix view. Try again or narrow your filters.",
-      "cellCapShort": "This matrix would render {cells, number} cells, which exceeds the {threshold, number} cell limit. Narrow the filters to continue.",
       "caseColumnHeader": "Case / parameter row",
       "cellSummary": "{pass, number} passed, {fail, number} failed, {notRun, number} not run",
       "popoverTitle": "{count, plural, =1 {# iteration} other {# iterations}}",
-      "iterationUnlabeled": "Iteration #{index, number}",
       "popoverInflightHint": "In-flight iterations appear here once recorded.",
       "popoverNoTimestamp": "—",
-      "filterStatus": "{count, plural, =0 {Status} one {Status (#)} other {Status (#)}}",
-      "filterConfig": "{count, plural, =0 {Configuration} one {Configuration (#)} other {Configuration (#)}}",
-      "filterDataset": "{count, plural, =0 {Dataset} one {Dataset (#)} other {Dataset (#)}}",
       "filterDatasetLabel": "Dataset",
       "filterStatusPlaceholder": "Any status",
       "filterConfigPlaceholder": "Any configuration",
       "filterDatasetPlaceholder": "Any dataset",
-      "filterDateFrom": "From",
-      "filterDateTo": "To",
       "configNone": "(no configuration)",
       "clearFilter": "Clear",
       "resetFilters": "Reset filters",
@@ -2583,7 +2480,6 @@
       "reopen": "Reopen"
     },
     "dates": {
-      "pickStartDate": "Pick start date",
       "pickCompletionDate": "Pick completion date",
       "selectDate": "Select date...",
       "completionWarning": "Warning: This will mark the milestone as completed"
@@ -2666,7 +2562,6 @@
       "providerJira": "Jira",
       "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
-      "syncNow": "Sync now",
       "unlinkMenuItem": "Unlink from {provider}",
       "unlinkConfirmTitle": "Unlink milestone?",
       "unlinkConfirmDescription": "This stops syncing with the tracker: fields become editable again, synced issue links become manual (yours to keep or remove), and re-linking is possible later by importing this artifact again.",
@@ -2702,10 +2597,6 @@
       "columnCoverage": "Coverage",
       "columnSource": "Source",
       "sourceSynced": "Synced",
-      "coveragePassed": "Passed",
-      "coverageFailed": "Failed",
-      "coverageInProgress": "In Progress",
-      "coverageNotRun": "Not Run",
       "coverageUncovered": "Uncovered",
       "filterAllCoverage": "All coverage",
       "filterAllSources": "All sources",
@@ -2724,7 +2615,6 @@
       "overflowImportAction": "Import & link",
       "overflowImportSuccess": "Import started — issues will appear as they sync.",
       "overflowImportError": "Failed to import member issues from Jira.",
-      "emptyCta": "Link an issue to get started.",
       "unlinkConfirmTitle": "Unlink issue?",
       "unlinkConfirmDescription": "This removes the issue from this milestone. The issue itself is kept and can be linked again later.",
       "totalsUncovered": "{count, plural, one {# uncovered issue} other {# uncovered issues}}",
@@ -2781,9 +2671,7 @@
     },
     "messages": {
       "createSuccess": "Session created successfully",
-      "createSuccessMultiple": "{count, number} Sessions created successfully",
-      "duplicateSuccess": "Session duplicated successfully",
-      "duplicateSuccessMultiple": "{count} Sessions duplicated successfully"
+      "createSuccessMultiple": "{count, number} Sessions created successfully"
     },
     "duplicateDialog": {
       "title": "Duplicate Session",
@@ -2795,8 +2683,7 @@
       "failedToCreate": "Failed to create new session",
       "failedToCreateVersion": "Failed to create session version",
       "nameAlreadyExists": "Session name already exists. Please choose a new name",
-      "createFailed": "Failed to create session",
-      "duplicateFailed": "Failed to duplicate session"
+      "createFailed": "Failed to create session"
     },
     "validation": {
       "nameMinLength": "Name must be at least 2 characters.",
@@ -2835,7 +2722,6 @@
     "summary": {
       "workDistributionDescription": "Total estimated time remaining:",
       "recentResultsTitle": "Recent Results Summary",
-      "recentResultsDescription": "Summary of Session results.",
       "noRecentResults": "No Session results recorded recently.",
       "completionTrendTitle": "Completion Trend",
       "completionTrendDescription": "Sessions completed per month.",
@@ -2965,8 +2851,6 @@
         "title": "Edit Profile",
         "timezonePlaceholder": "Select or search timezone...",
         "timezoneRequired": "Timezone is required.",
-        "avatarUpdated": "Avatar updated successfully.",
-        "avatarUpdateError": "Failed to update avatar.",
         "deleteAvatar": "Delete Avatar",
         "deleteAvatarConfirm": "Are you sure you want to delete your {name}?",
         "emailDisabledForSso": "Email cannot be changed for SSO accounts. Please update it through your identity provider.",
@@ -3010,7 +2894,6 @@
       "notifications": {
         "title": "Notification Preferences",
         "description": "Customize how you receive notifications",
-        "currentGlobal": "Current global setting: {mode}",
         "mode": {
           "label": "Notification Mode",
           "useGlobal": "Use Global Settings"
@@ -3154,7 +3037,6 @@
         "loadMore": "Loading",
         "viewDetails": "View details",
         "columnAction": "Action",
-        "columnTimestamp": "Timestamp",
         "allActions": "All Actions",
         "allTypes": "All Types",
         "noMatchingEntries": "No entries match the selected filters.",
@@ -3323,22 +3205,16 @@
       "removedFromCase": "Removed from test case",
       "confirmDelete": "Confirm delete Step {number, number}?",
       "createSharedSteps": "Create Shared {number, plural, one {Step} other {Steps}}",
-      "sharedStepsName": "Shared Steps Name",
       "sharedStepsDescription": "Enter a name for your new shared {number, plural, one {step} other {steps}}. This will include {number, plural, one {# selected step} other {# selected steps}}.",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "Please select steps and enter a name to create shared steps.",
-        "failedToCreateSharedStepGroupError": "Failed to create the shared steps. Please try again.",
-        "sharedStepGroupCreatedSuccess": "Shared steps created successfully!",
-        "genericSharedStepCreationError": "An unknown error occurred while creating the shared steps. Please try again.",
         "errorCreatingSharedGroup": "Failed to create shared steps. Please try again.",
         "sharedGroupCreatedSuccess": "Shared step group created successfully!",
         "failedToCreateSharedGroupError": "Failed to create the shared group. Please try again."
       },
       "selectSharedStepsTitle": "Select Shared Steps",
       "selectSharedStepsDescription": "Choose shared steps to add to your test case.",
-      "sharedStepsListPlaceholder": "Loading shared steps...",
       "sharedStepsNamePlaceholder": "Enter a name to identify the shared steps",
-      "noSharedStepsFound": "No shared steps found for this project.",
       "sharedStepGroupTitle": "Shared Steps: {name}",
       "confirmDeleteSharedStepBlock": "Are you sure you want to remove the shared step block \"{name}\" from this test case? This will not delete the shared step group itself.",
       "removeBlockButton": "Remove Block",
@@ -3347,7 +3223,6 @@
       "searchSharedStepsPlaceholder": "Select shared steps...",
       "stepsCountLabel": "{count, plural, =0 {# steps} =1 {# step} other {# steps}}",
       "reviewSelectedStepsTitle": "Review Selected Steps",
-      "noStepsInSelectedGroup": "The selected group has no steps.",
       "sharedGroupSuffix": "(Shared Steps)",
       "unnamedSharedGroup": "Unnamed Shared Steps",
       "noStepsInSelectedSharedGroup": "The selected shared group has no steps.",
@@ -3358,8 +3233,6 @@
       }
     },
     "testCase": {
-      "toggleAutomated": "Toggle automated testing",
-      "editAttachmentsIndividually": "Edit attachments individually.",
       "automatedStatus": "Automated testing is {status}"
     },
     "templateNotAssignedWarning": "This test case uses the template \"{templateName}\" which is not currently assigned to the project \"{projectName}\". You may need to assign this template to the project or change the test case to use a different template.",
@@ -3390,12 +3263,10 @@
     },
     "dragDrop": {
       "move": "Move",
-      "promptTitle": "What would you like to do?",
       "copying": "Copying…",
       "copyComplete": "{count, plural, =1 {Copied 1 case to {folder}} other {Copied # cases to {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "moveComplete": "{count, plural, =1 {Moved 1 case to {folder}} other {Moved # cases to {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "copyError": "{count, plural, =1 {Failed to copy 1 case to {folder}} other {Failed to copy # cases to {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
-      "moveError": "{count, plural, =1 {Failed to move 1 case to {folder}} other {Failed to move # cases to {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "copyAlreadyRunning": "Another copy is already in progress. Please wait for it to finish.",
       "currentSuffix": "(Current)",
       "moveDisabledSameFolder": "Cases are already in this folder",
@@ -3446,7 +3317,6 @@
       "currentRunTooltip": "The test run you are viewing",
       "attempt": "Attempt",
       "invalidProject": "Invalid project",
-      "noSearchResults": "No cases match your search criteria.",
       "bulkEdit": "Bulk Edit",
       "createTestRun": "Create Test Run",
       "addToRunDraftBlocked": "Draft cases cannot be added to runs while \"Exclude draft cases from test runs\" is on for this project.",
@@ -3670,10 +3540,7 @@
       "anyIssue": "Any Issue",
       "noIssues": "No Issues"
     },
-    "noFoldersTitle": "No Folders Yet",
-    "noFoldersDescription": "Get started by creating your first folder to organize your test cases.",
     "noFoldersOrCasesNoPermission": "There are no folders or test cases to display.",
-    "createFirstFolder": "Create your first folder",
     "bulkEdit": {
       "title": "Bulk Edit {count, plural, one {# Case} other {# Cases}}",
       "description": "Editing {count, plural, one {# selected case} other {# selected cases}}. Check a field to enable editing.",
@@ -3692,19 +3559,12 @@
         }
       },
       "errors": {
-        "fetchErrorTitle": "Error Loading Cases",
-        "fetchErrorDescription": "Could not load data for the selected cases. Please close the modal and try again.",
-        "updateErrorTitle": "Update Failed",
-        "updateFailed": "An error occurred while saving changes. Please check the data and try again.",
-        "fetchError": "Error fetching case data."
+        "updateFailed": "An error occurred while saving changes. Please check the data and try again."
       },
       "success": {
         "casesUpdated": "{count, number} cases updated successfully"
       },
       "validationError": "Validation Error",
-      "stepsCannotBeBulkEdited": "Steps cannot be bulk edited",
-      "stepsInfoTitle": "Steps Info",
-      "stepsCannotBeBulkEditedInfo": "Steps cannot be bulk edited. Edit steps by editing the cases individually.",
       "confirmDeleteCases": "Are you sure you want to delete {count, plural, one {# selected case} other {# selected cases}}? This action cannot be undone.",
       "replaceAll": "Replace All",
       "searchReplace": "Search & Replace",
@@ -3765,7 +3625,6 @@
         "single": "Single Row per Case",
         "multi": "Multiple Rows per Step"
       },
-      "comingSoon": "Coming Soon",
       "exportError": "Export failed. Please try again."
     },
     "quickScript": {
@@ -3846,19 +3705,13 @@
       "loadingDetails": "Loading case details...",
       "caseDetailsError": "Failed to load case details.",
       "sourceLabel": "Source",
-      "fieldValuesLabel": "Field Values",
       "lastRunLabel": "Last Run",
-      "noFieldValues": "No field values",
       "noLastRun": "Never run",
-      "stepExpectedResult": "{step} → {result}",
-      "runStatusDate": "{status} — {date}",
       "noFolder": "No folder",
       "duplicateWarning": "Possible duplicates found",
       "duplicateWarningDescription": "{count, plural, one {# existing case} other {# existing cases}} may cover similar functionality",
       "duplicateWarningReview": "Review",
-      "importWarning": "Possible duplicate",
       "importWarningTooltip": "This case name is similar to {count, plural, one {# existing case} other {# existing cases}}: {names}",
-      "importIntraWarning": "Duplicate within import",
       "importIntraWarningTooltip": "Rows {rows} in this import have the same or very similar name",
       "checkingDuplicates": "Checking for duplicates..."
     },
@@ -3888,12 +3741,8 @@
         "currentFolder": "current folder",
         "fromIssue": "From Issue",
         "fromDocument": "From Document",
-        "documentTitle": "Document Title",
-        "documentTitlePlaceholder": "Enter the title of your requirements document",
         "documentDescription": "Requirements Document",
         "documentDescriptionPlaceholder": "Paste your requirements document content here...",
-        "documentPriority": "Priority (Optional)",
-        "selectPriority": "Select priority",
         "saveDocument": "Save Document Requirements",
         "fromUrl": "From URL",
         "recentGenerations": "Recent Generate Test Cases from URL jobs",
@@ -3960,15 +3809,11 @@
         "title": "Review Generated Test Cases",
         "description": "Review the AI-generated test cases, make any necessary edits, and select which ones to import.",
         "selected": "{count, number} of {total, number} selected",
-        "moreSteps": "... and {count, plural, one {# more step} other {# more steps}}",
         "templateFields": "Template Fields:",
-        "moreFields": "... and {count, plural, one {# more field} other {# more fields}}",
-        "crawledUrls": "{count, plural, one {# page crawled} other {# pages crawled}}",
         "spaWarning": "This page may require JavaScript rendering. Results may be incomplete.",
         "filterByPage": "Filter by page",
         "allPages": "All pages ({pages, plural, one {# page} other {# pages}}, {cases, plural, one {# case} other {# cases}})"
       },
-      "generatingLegacy": "Generating test cases with AI...",
       "expandProgress": "{done, number} of {total, number} generated",
       "import": "{count, plural, =0 {Import Test Cases} =1 {Import 1 Test Case} other {Import # Test Cases}}",
       "stage": "{count, plural, =0 {Stage Test Cases} =1 {Stage 1 Test Case} other {Stage # Test Cases}}",
@@ -4010,11 +3855,6 @@
         "repositoryNotFound": "Project repository not found. Please contact your administrator.",
         "workflowNotConfigured": "Project workflow not configured. Please verify project settings.",
         "authenticationError": "Authentication error. Please refresh the page and try again.",
-        "caseCreationFailed": "Failed to create test case: {name}",
-        "caseAlreadyExists": "Test case \"{name}\" already exists in this folder.",
-        "invalidTemplateConfig": "Invalid template configuration for test case \"{name}\".",
-        "nameTooLong": "Test case name \"{name}\" is too long. Please use a shorter name.",
-        "caseCreationError": "Failed to create \"{name}\": {error}",
         "templateNotFound": "Selected template could not be found. Please refresh and try again.",
         "repositoryConfigError": "Project repository configuration error. Please contact your administrator.",
         "workflowConfigError": "Project workflow configuration error. Please verify project settings.",
@@ -4022,9 +3862,7 @@
         "validationFailed": "Data validation failed. Please check test case content and try again.",
         "databaseError": "Database connection error. Please try again in a moment.",
         "genericImportError": "Import failed: {error}",
-        "networkRoutingError": "Network routing or server configuration issue - received HTML error page instead of API response",
         "invalidSourceConfig": "Invalid source configuration",
-        "failedToCreateCaseVersion": "Failed to create case version",
         "noUrlProvided": "Please enter a URL to generate test cases from",
         "urlFetchFailed": "Failed to fetch content from the provided URL. Please check the URL and try again.",
         "llm": {
@@ -4230,7 +4068,6 @@
       "startLine": "Start line",
       "symbolHint": "The declaration is located by name in the file.",
       "symbolNoneDetected": "No symbols detected, type a name.",
-      "symbolPlaceholder": "functionName",
       "symbolSelectPlaceholder": "Select or type a symbol...",
       "updateSuccess": "Pin updated",
       "updateFailed": "Could not update the pin",
@@ -4257,9 +4094,6 @@
     "add": {
       "button": "Add Tag",
       "title": "Add New Tag",
-      "fields": {
-        "name_error": "Tag name is required"
-      },
       "errors": {
         "nameExists": "A tag with this name already exists"
       }
@@ -4368,7 +4202,6 @@
       "filterEntityTypeRun": "Test runs",
       "filterAllProjects": "All projects",
       "actionRevert": "Revert decision",
-      "revertedBadge": "Reverted",
       "revertedBadgeTooltip": "{count, plural, =1 {Reverted once before} other {Reverted # times before}}"
     },
     "requester": {
@@ -4387,9 +4220,7 @@
       "cannotSelfAssign": "You can't assign a review to yourself; pick another user or a role.",
       "defaultComment": "Please review the transition from {fromState} → {toState}.",
       "defaultCommentRole": "Requesting approval from the {roleName} group to transition from {fromState} → {toState}.",
-      "ineligibleAssigneeError": "This user/role can't approve reviews for this area. Pick someone else.",
-      "ineligibleAssigneeErrorUser": "{name} can't approve reviews for this area. Pick another user or a role.",
-      "ineligibleAssigneeErrorRole": "The {roleName} role can't approve reviews for this area. Pick another role or a user."
+      "ineligibleAssigneeError": "This user/role can't approve reviews for this area. Pick someone else."
     },
     "bulkRequester": {
       "saveAndRequestButton": "Save & request review",
@@ -4428,8 +4259,7 @@
       "rejectSuccess": "Review rejected.",
       "ineligibleError": "You are no longer eligible to decide this review request.",
       "alreadyDecidedError": "This review has already been decided.",
-      "decideError": "Could not record your decision. Try again in a moment.",
-      "panelSummary": "Review request from {requesterName}: transition to {targetStateName}"
+      "decideError": "Could not record your decision. Try again in a moment."
     },
     "revert": {
       "confirm": "Revert decision",
@@ -4545,17 +4375,12 @@
         "noMatchesDescription": "The test run name and description didn't match any test cases. Go back to the previous step and add more specific details like feature names, component names, or keywords that appear in your test cases.",
         "maxResultsTitle": "Maximum Number of Test Cases Match",
         "maxResultsDescription": "The search criteria matched a large number of test cases. For more targeted results, go back to the previous step and add more specific details to the test run.",
-        "batchSize": "Batch size",
-        "batchSizeAll": "All cases (single request)",
-        "batchSizePercent": "{percent}% ({count} cases)",
-        "requestsNeeded": "{count, plural, =1 {# AI request will be made} other {# AI requests will be made}}",
-        "batchNote": "Results from all batches will be combined"
+        "batchSize": "Batch size"
       },
       "loading": {
         "batch": "Processing batch {current} of {total}",
         "analyzing": "Analyzing test cases...",
         "progress": "Analyzed {analyzed, number} of {total, number} test cases...",
-        "waitingForAi": "Waiting for AI response (batch {batch} of {total})...",
         "selectedSoFar": "{count, plural, =1 {# test case selected so far} other {# test cases selected so far}}",
         "resolving_integration": "Resolving AI integration...",
         "fetching_cases": "Fetching test cases..."
@@ -4578,7 +4403,6 @@
       },
       "actions": {
         "start": "Analyze Test Cases",
-        "startBatched": "Analyze Test Cases ({count, plural, one {# batch} other {# batches}})",
         "accept": "Add to Selection"
       },
       "errors": {
@@ -4603,13 +4427,8 @@
     "summary": {
       "title": "Test Run Summary",
       "description": "View the summary of the test run",
-      "activeRunsAndEstTime": "Active Runs & Est. Time",
-      "activeRunsLabel": "Runs",
-      "totalEstTime": "Total Est. Time",
-      "responsibleUsers": "Responsible Users",
       "allActiveRuns": "All Active Runs",
       "recentResultsTitle": "Recent Manual Results",
-      "recentResultsDescription": "View the recent results of the test run",
       "recentAutomatedResultsTitle": "Recent Automated Results",
       "noRecentAutomatedResults": "No recent automated results found.",
       "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
@@ -4632,13 +4451,11 @@
       "fields": {
         "duplicateScope": {
           "label": "Test Cases to Duplicate",
-          "allCases": "All test cases",
-          "specificStatuses": "Test cases with specific statuses"
+          "allCases": "All test cases"
         },
         "statusesToInclude": {
           "label": "Test Cases to Include",
           "description": "Select the statuses of test cases you want to include in the duplicated test run.",
-          "noStatuses": "No specific statuses found in this test run, or results are still loading.",
           "noStatusesRecorded": "No specific statuses recorded in this run. Duplicating will include all test cases (typically as 'Untested')."
         },
         "copyAssignments": {
@@ -4717,9 +4534,7 @@
         "previousAnalysisPlaceholder": "Select an analysis...",
         "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# affected test} other {# affected tests}}",
         "sameCommit": "Base and head are the same commit.",
-        "swapped": "Base and head were swapped so the changes read forward.",
-        "loadingCommits": "Loading commits…",
-        "noCommits": "No commits found."
+        "swapped": "Base and head were swapped so the changes read forward."
       },
       "diff": {
         "summary": "{files, plural, one {# file} other {# files}} changed · +{additions, number} −{deletions, number}",
@@ -4727,13 +4542,9 @@
         "noChanges": "No changes between these commits.",
         "statusModified": "Modified",
         "statusRenamed": "Renamed",
-        "showPatch": "Show changes",
-        "hidePatch": "Hide changes",
-        "largePatch": "Large patch ({lines, number} lines)",
         "showFullPatch": "Show full patch",
         "binary": "Binary file",
         "noPatch": "Patch not available",
-        "pinnedFiles": "{count, plural, one {# pin} other {# pins}}",
         "loading": "Comparing commits…"
       },
       "loading": {
@@ -4819,7 +4630,6 @@
       },
       "actions": {
         "analyze": "Analyze",
-        "reanalyze": "Analyze again",
         "refine": "Back to changes",
         "accept": "{count, plural, one {Add # case} other {Add # cases}}",
         "cancelAnalysis": "Cancel analysis"
@@ -4930,11 +4740,6 @@
         "analyzing": "Analyzing...",
         "reset": "Clear results",
         "job": {
-          "discoveringDatasets": "Discovering datasets...",
-          "scanningFile": "Scanning testmo export file...",
-          "rowsProcessed": "{value, number} rows processed",
-          "itemsProcessed": "{processed, number} of {total, number} items processed",
-          "analysisInProgress": "Analyzing export…",
           "cancel": "Cancel import",
           "cancelRequested": "Cancel requested",
           "processingRate": "Rate:",
@@ -4966,12 +4771,9 @@
         "mappingDescription": "Review the analysis details and map Testmo entities to existing TestPlanIt records, or choose to create new ones.",
         "mappingAnalysisError": "We couldn't generate mapping analysis. Try again.",
         "mappingLoading": "Building mapping analysis…",
-        "mappingSummaryHeading": "Detected entities",
-        "mappingSummaryPending": "{count, plural, =1 {# pending} other {# pending}}",
         "mappingOutstandingTitle": "Resolve outstanding mappings",
         "mappingOutstandingDescription": "Complete the remaining mappings before starting the import.",
         "mappingOutstandingItem": "{count, plural, =1 {# unresolved item} other {# unresolved items}} in {label}",
-        "mappingSummaryTemplateFields": "Template fields",
         "mappingDatasetLabels": {
           "field_values": "Field values",
           "repository_case_values": "Repository case values",
@@ -5048,7 +4850,6 @@
         "mappingDatasetEmptyTitle": "No datasets preserved",
         "mappingDatasetEmptyDescription": "The analysis did not preserve any datasets for configuration. Upload a different export if you expect additional data.",
         "importProgressTitle": "Import progress",
-        "importProgressDescription": "{count, plural, =0 {All records imported across tracked entities.} =1 {1 record remaining across tracked entities.} other {# records remaining across tracked entities.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {No remaining records} =1 {1 record remaining} other {# records remaining}}",
         "importProgressProcessed": "{processed, number}/{total, number} records imported",
         "importProgressAria": "{percent, number}% of import complete",
@@ -5073,7 +4874,6 @@
         "jobLoadFailed": "We couldn't load that import job.",
         "uploadProgressAnalyzing": "Upload complete. Analyzing file…",
         "uploadProgressComplete": "Upload finished",
-        "etaLabel": "ETA: {time}",
         "startImportButton": "Start import",
         "workflowCreate": {
           "nameLabel": "Workflow name",
@@ -5083,18 +4883,11 @@
           "typeLabel": "Workflow type",
           "scopeLabel": "Workflow scope"
         },
-        "mappingDatasets": "Datasets requiring review",
         "mappingImportConfiguration": "Import configuration",
         "mappingExportConfiguration": "Export configuration",
         "mappingImportConfigurationFailed": "We couldn't import that configuration file. Please verify it is valid JSON and try again.",
-        "mappingInvalidConfiguration": "Configuration must be valid JSON.",
-        "mappingSaveFailed": "We couldn't save the configuration. Please try again.",
         "mappingSaveConfiguration": "Save configuration",
-        "mappingSavingConfiguration": "Saving…",
-        "mappingStartImport": "Start background import",
-        "mappingStartingImport": "Starting import…",
         "mappingImportFailed": "We couldn't start the background import. Please try again.",
-        "mappingImportDisabled": "Save a configuration before starting the background import.",
         "mappingImportInProgress": "Background import in progress",
         "mappingImportInProgressDescription": "The import worker is processing the configuration. You can monitor status above.",
         "mapping": {
@@ -5154,11 +4947,7 @@
           "templateFieldTargetResult": "Result field",
           "templateFieldSelectPlaceholder": "Select field",
           "templateFieldNoExistingTargets": "No fields available to map.",
-          "templateFieldTypePlaceholder": "Select field type",
           "templateFieldRestrictedLabel": "Restricted field",
-          "templateFieldOptionsLabel": "Dropdown options",
-          "templateFieldOptionsPlaceholder": "Enter one option per line",
-          "templateFieldOptionsHint": "Separate each option with a new line.",
           "templateFieldOptionsListLabel": "Options",
           "templateFieldOptionsCheckedLabel": "Checked by default",
           "templateFieldOptionsMinValueLabel": "Minimum value",
@@ -5211,7 +5000,6 @@
           "milestoneNamePlaceholder": "Enter a milestone type name",
           "milestoneDefaultLabel": "Default milestone type",
           "milestoneIconRequired": "Select an icon",
-          "statusColorPlaceholder": "Color hex (optional)",
           "issueTargetSelectPlaceholder": "Select integration...",
           "noIssueTargetsAvailable": "No issue integrations available",
           "issueTargetNamePlaceholder": "Integration name...",
@@ -5498,8 +5286,7 @@
         "delete": "Delete provider",
         "entryPoint": "Entry Point: ",
         "autoProvision": "Auto-provision: ",
-        "defaultAccess": "Default Access: ",
-        "configurationMessage": "SAML configuration not set up. Click the settings button to configure."
+        "defaultAccess": "Default Access: "
       },
       "samlConfiguration": {
         "title": "Configure SAML Provider",
@@ -5571,7 +5358,6 @@
         "magicLinkDisabled": "Magic Link authentication disabled",
         "magicLinkCreated": "Magic Link provider created",
         "magicLinkUpdateFailed": "Failed to update Magic Link provider",
-        "samlConfigSaved": "SAML configuration saved successfully",
         "configureFirst": "Please configure the provider before enabling it",
         "domainRestrictionEnabled": "Email domain restriction enabled",
         "domainRestrictionDisabled": "Email domain restriction disabled",
@@ -5589,7 +5375,6 @@
         "defaultAccessUpdated": "Default access level updated",
         "defaultAccessUpdateFailed": "Failed to update default access level",
         "emailVerificationEnabled": "Email verification is now required for new users",
-        "emailVerificationDisabled": "Email verification is no longer required for new users",
         "emailVerificationDisabledAndVerified": "Email verification disabled and {count, plural, one {# user account} other {# user accounts}} verified",
         "emailVerificationUpdateFailed": "Failed to update email verification setting",
         "emailServerNotConfigured": "Cannot enable email verification: Email server is not configured",
@@ -5643,10 +5428,6 @@
           "issuer": "Issuer (Entity ID)",
           "callbackUrl": "ACS (Callback) URL",
           "logoutUrl": "SLO Logout URL (Optional)",
-          "entryPointPlaceholder": "https://your-idp.com/sso/saml",
-          "issuerPlaceholder": "urn:your-idp:entity-id",
-          "certPlaceholder": "-----BEGIN CERTIFICATE-----...",
-          "logoutUrlPlaceholder": "https://your-idp.com/slo/saml",
           "instructions": {
             "title": "To configure SAML:",
             "step1": "Contact your SAML Identity Provider administrator",
@@ -5720,10 +5501,7 @@
       },
       "add": {
         "button": "Add Project",
-        "title": "Add New Project",
-        "defaultFields": "Default Template, Default Milestone Type, and all Workflows and Statuses will be added to the project when it is created.",
-        "selectIssueTracker": "Select Issue Tracker",
-        "issueTrackerRequired": "Issue Tracker is required"
+        "title": "Add New Project"
       },
       "wizard": {
         "title": "Create New Project",
@@ -5754,7 +5532,6 @@
           "noConfigurations": "No configurations are currently defined. You can add them later in Administration."
         },
         "actions": {
-          "selectDefault": "Use Default",
           "create": "Create Project",
           "creating": "Creating Project..."
         },
@@ -5779,12 +5556,6 @@
           "userPermissions": "User Permissions",
           "noEffect": "No Effect",
           "access": {
-            "groupsGlobalRole": "Group's Global Role",
-            "groupDefault": "Group Default",
-            "groupSpecificRole": "Group Specific Role",
-            "groupProjectDefault": "Group Project Default",
-            "groupProjectNoAccess": "Group Project No Access",
-            "groupProjectSpecificRole": "Group Project Specific Role",
             "effectiveAccess": "Effective Access"
           },
           "accessHints": {
@@ -5795,11 +5566,7 @@
         },
         "placeholders": {
           "selectDefaultAccess": "Select Default Access",
-          "groupPermissionsUI": "Group Permissions Management UI Goes Here...",
-          "userPermissionsUI": "User Permissions Management UI Goes Here...",
-          "selectAccess": "Select access...",
-          "selectRole": "Select role...",
-          "searchUsersToAdd": "Search users to add..."
+          "selectAccess": "Select access..."
         },
         "tableHeaders": {
           "globalRole": "Global Role",
@@ -5982,9 +5749,7 @@
         "button": "Add User",
         "title": "Add New User",
         "fields": {
-          "email_invalid": "Invalid email address",
           "password_error": "Password is required",
-          "confirmPassword_error": "Confirm Password is required",
           "passwordOptionalHelp": "Leave blank to require the user to sign in via magic link or SSO."
         }
       },
@@ -6025,19 +5790,12 @@
       "title": "Security",
       "description": "Configure sign-in enforcement, password policy, lockout settings, and enforcement actions",
       "passwordPolicyTitle": "Password Policy",
-      "passwordPolicyDescription": "Set requirements for user passwords",
       "lockoutPolicyTitle": "Lockout Policy",
-      "lockoutPolicyDescription": "Configure account lockout after failed login attempts",
       "enforcementTitle": "Enforcement Actions",
-      "enforcementDescription": "Force password changes for credential-based users",
       "signInEnforcementTitle": "Sign-in Enforcement",
-      "signInEnforcementDescription": "Require SSO and enforce two-factor authentication",
       "forceSsoTitle": "Force SSO Login",
-      "forceSsoDescription": "Disable email login and require users to use SSO",
       "force2FANonSSOTitle": "Require 2FA for Password Logins",
-      "force2FANonSSODescription": "Users signing in with email/password must set up and use two-factor authentication",
       "force2FAAllLoginsTitle": "Require 2FA for All Logins",
-      "force2FAAllLoginsDescription": "All users must verify with 2FA after signing in, including SSO users",
       "forceSsoEnabled": "Force SSO enabled globally",
       "forceSsoDisabled": "Force SSO disabled globally",
       "forceSsoUpdateFailed": "Failed to update force SSO setting",
@@ -6087,7 +5845,6 @@
       "noExpiry": "No Expiry",
       "revokeToken": "Revoke Token",
       "revokeConfirmTitle": "Revoke API Token",
-      "revokeConfirmMessage": "Are you sure you want to revoke this API token? This action cannot be undone.",
       "revokeConfirmDescription": "The token \"{name}\" belonging to {user} will be immediately revoked and can no longer be used for API access.",
       "revokeSuccess": "API token revoked successfully",
       "revokeError": "Failed to revoke API token",
@@ -6111,9 +5868,6 @@
       "noTokens": "No SCIM tokens have been created yet.",
       "emptyTitle": "No SCIM tokens yet",
       "emptyBody": "Mint a token to let your identity provider create and update users in TestPlanIt automatically.",
-      "emptyCta": "Mint your first token",
-      "sectionConflicts": "External-ID conflicts",
-      "conflictsPlaceholder": "No conflicts. Conflict tracking ships in a later release.",
       "conflicts": {
         "title": "External-ID conflict log",
         "description": "SCIM identity events that required system intervention (linking, resurrection, displayName overwrite, skipped members).",
@@ -6197,7 +5951,6 @@
         "networkError": "Couldn't reach the SCIM endpoint. Retry."
       },
       "fallbackDefaultTitle": "Default Mapped Access",
-      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
       "fallbackDefaultLabel": "Default access tier",
       "fallbackDefaultSaved": "Fallback default saved",
       "rotate": {
@@ -6263,7 +6016,6 @@
         "remindersToggleAriaLabel": "Toggle review reminder notifications",
         "thresholdLabel": "Remind reviewers after",
         "thresholdUnit": "{count, plural, one {day} other {days}}",
-        "thresholdHelp": "How many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
         "thresholdUpdateSuccess": "Review reminder settings updated.",
         "thresholdUpdateError": "Failed to update reminder settings. Try again in a moment.",
         "revertPolicy": {
@@ -6329,9 +6081,6 @@
       "add": {
         "button": "Add Role",
         "title": "Add New Role",
-        "fields": {
-          "name_error": "Role name is required"
-        },
         "errors": {
           "nameExists": "A role with this name already exists"
         }
@@ -6394,7 +6143,6 @@
       "edit": {
         "title": "Edit Status",
         "systemNameHelp": "System name identifies this status for automated processes. Cannot be changed after creation.",
-        "unmodifiableHelp": "The 'untested' status is a system status and cannot be modified.",
         "untestedHelp": "The name 'untested' is reserved for a system status and cannot be used.",
         "success": "Status updated successfully"
       },
@@ -6410,9 +6158,6 @@
       "fields": {
         "final": "Final",
         "system": "System Status",
-        "forTestCase": "For Test Case",
-        "forTestRun": "For Test Run",
-        "forSession": "For Session",
         "color": "Color"
       }
     },
@@ -6434,9 +6179,7 @@
       "description": "Manage global application configurations",
       "addConfig": "Add Application Configuration",
       "editConfig": "Edit Application Configuration",
-      "keyPlaceholder": "Enter configuration key...",
       "valuePlaceholder": "Enter JSON value...",
-      "currentTranslation": "Current Translation",
       "filterPlaceholder": "Filter by key...",
       "errors": {
         "keyRequired": "Key is required",
@@ -6456,7 +6199,6 @@
         "noneAssigned": "Not assigned to any projects (you can assign them from the configurations admin later)."
       },
       "addConfiguration": "Add Configurations",
-      "editConfiguration": "Edit Configuration",
       "filterPlaceholder": "Filter configurations...",
       "allProjects": "All projects",
       "selectAllTooltip": "Select/Deselect all configurations on this page",
@@ -6476,8 +6218,6 @@
       "categories": {
         "title": "Categories",
         "description": "Manage global categories",
-        "editCategory": "Edit Category",
-        "selectCategory": "Select Category",
         "filterPlaceholder": "Filter categories...",
         "add": {
           "title": "Add New Category"
@@ -6497,8 +6237,6 @@
         "title": "Combinations",
         "description": "Manage global combinations",
         "confirmDescription": "The following {count, number} Configurations will be created:",
-        "addCombination": "Add Combination",
-        "editCombination": "Edit Combination",
         "selectCombination": "Select Combinations",
         "selectCombinationDescription": "Select the variant combinations to add. Any combinations that already exist are shown disabled.",
         "alreadyExists": "(already exists)",
@@ -6549,7 +6287,6 @@
         "deleteGroupDescription": "This action will delete the group and all associated users.",
         "confirmMessage": "Are you sure you want to delete this group?"
       },
-      "noUsersSelected": "No users selected yet.",
       "noUsersAssigned": "No users assigned to this group.",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Managed by SCIM. Manage from the SCIM admin page.",
@@ -6572,7 +6309,6 @@
       "downgradeConfirmTitle": "Confirm Access Change",
       "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
       "downgradeConfirmApplyAnyway": "Apply anyway",
-      "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
@@ -6586,7 +6322,6 @@
       "defaultLockedDescription": "To change the default, edit a different Milestone Type and set it as the default.",
       "wizard": {
         "selectProjects": "Select Projects",
-        "projectsSelected": "{count, plural, =0 {No projects selected} one {# project selected} other {# projects selected}}",
         "createMilestone": "Create Milestone",
         "noCommonTypesTitle": "No Common Milestone Types",
         "noCommonTypesDescription": "The selected projects do not have any milestone types in common. Please ensure all selected projects have at least one shared milestone type, or select different projects."
@@ -6630,44 +6365,23 @@
       }
     },
     "issue_config": {
-      "link_title": "Link Issue Tracker",
-      "link_description": "Configure the base URL for manually linked issues. When linking an issue using only an External ID, this Base URL will be prepended to create the full link.",
-      "filter": {
-        "show_inactive": "Show Inactive Configurations",
-        "search_placeholder": "Filter by configuration name..."
-      },
       "base_url": "Base URL",
-      "link_update_success": "Link configuration updated successfully",
-      "link_update_error": "Failed to update link configuration",
       "description": "Configure integrations with external issue tracking systems.",
       "delete": {
         "title": "Delete Issue Configuration",
         "confirmMessage": "Are you sure you want to delete configuration <bold>{name}</bold>?",
         "warning": "This action cannot be undone. Any projects currently assigned to this tracker will be reassigned to the default tracker. Consider deactivating the configuration instead.",
-        "cannotDeleteDefault": "The default issue tracker cannot be deleted.",
-        "noDefaultFound": "Cannot delete: No default issue tracker found to reassign projects to."
+        "cannotDeleteDefault": "The default issue tracker cannot be deleted."
       },
       "add": {
         "title": "Add Issue Tracker",
         "description": "Create a new configuration for an issue tracking system.",
         "name": "Configuration Name",
-        "name_placeholder": "e.g., Project Jira Links",
-        "system_type": "System Type",
-        "select_system_type": "Select System Type",
-        "base_url": "Base URL including the issue placeholder",
-        "base_url_placeholder": "e.g., https://your-tracker.com/issues/'{issueId}'",
-        "create_success": "Issue configuration created successfully",
-        "create_error": "Error creating issue configuration",
-        "setDefaultWarning": "Setting this as default will remove the default status from the current default configuration."
+        "base_url": "Base URL including the issue placeholder"
       },
       "edit": {
         "title": "Edit Issue Tracker",
-        "description": "Update the details for this issue configuration.",
-        "name_placeholder": "Enter configuration name",
-        "select_project": "Select projects...",
-        "update_success": "Issue configuration updated successfully",
-        "update_error": "Failed to update issue configuration",
-        "edit_not_supported": "Editing configuration for this system type is not currently supported."
+        "description": "Update the details for this issue configuration."
       }
     },
     "issues": {
@@ -6870,14 +6584,11 @@
         "message": "No issue integrations configured yet"
       },
       "addIntegration": "Add Issue Integration",
-      "allIntegrations": "All Issue Integrations",
-      "manageDescription": "Configure and manage your external service issue integrations",
       "status": {
         "active": "Active",
         "inactive": "Inactive",
         "awaitingAuthorization": "Awaiting authorization"
       },
-      "connectedProjects": "Connected Projects",
       "noIntegrations": "No issue integrations configured",
       "testConnection": "Test Connection",
       "testSuccess": "Connection Successful",
@@ -6966,14 +6677,11 @@
         "successDescription": "The issue integration settings have been saved"
       },
       "editIntegration": "Edit Issue Integration",
-      "saveIntegration": "Save Issue Integration",
       "deleteIntegration": "Delete Issue Integration",
       "config": {
         "name": "Issue Integration Name",
         "namePlaceholder": "Enter a name for this issue integration",
-        "nameHelp": "A descriptive name to identify this issue integration",
         "authType": "Authentication Type",
-        "authTypeHelp": "Choose how to authenticate with the external service",
         "emailPlaceholder": "your-email@example.com",
         "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
         "apiToken": "API Token",
@@ -6995,15 +6703,9 @@
         "clientSecretPlaceholder": "Enter your OAuth Client Secret",
         "clientSecretHelp": "The Client Secret from your OAuth application",
         "cloudId": "Cloud ID",
-        "cloudIdPlaceholder": "Enter your Atlassian Cloud ID",
-        "cloudIdHelp": "Your Atlassian Cloud instance ID (found in your Jira URL)",
-        "apiUrl": "API URL",
-        "apiUrlPlaceholder": "https://api.example.com",
-        "apiUrlHelp": "The base URL for the service API",
         "personalAccessTokenPlaceholder": "Enter your personal access token",
         "personalAccessTokenHelp": "A personal access token with appropriate permissions",
         "apiKeyPlaceholder": "Enter your API key",
-        "apiKeyHelp": "The API key for authentication",
         "baseUrl": "URL Pattern",
         "baseUrlPlaceholder": "https://example.com/issues/'{issueId}'",
         "baseUrlHelp": "URL pattern for issues. Use {issueId} as placeholder",
@@ -7027,7 +6729,6 @@
         "repoPlaceholder": "repository-name",
         "repoHelp": "The name of the Gitea repository",
         "encrypted": "Encrypted",
-        "encryptedHelp": "This field is encrypted and stored securely",
         "leaveBlankToKeep": "Leave blank to keep existing value",
         "apiKeyWarningTitle": "API Key Authentication Notice",
         "apiKeyWarningDescription": "With API key authentication, the reporter on created issues may not match the TestPlanIt user who created them — even when emails match:",
@@ -7076,12 +6777,7 @@
       },
       "validation": {
         "nameRequired": "Issue Integration name is required",
-        "clientIdRequired": "Client ID is required",
-        "clientSecretRequired": "Client Secret is required",
-        "cloudIdRequired": "Cloud ID is required",
-        "apiUrlRequired": "API URL is required",
-        "tokenRequired": "Personal Access Token is required",
-        "apiKeyRequired": "API Key is required"
+        "tokenRequired": "Personal Access Token is required"
       },
       "errors": {
         "updateFailed": "Failed to update issue integration",
@@ -7100,12 +6796,8 @@
         "testing": "Testing connection..."
       },
       "oauth": {
-        "connectAccount": "Connect Account",
         "connected": "Connected",
-        "notConnected": "Not Connected",
-        "authDescription": "You need to authenticate with {provider} to use this integration",
-        "authError": "Authentication failed",
-        "authErrorDescription": "Unable to authenticate with the external service"
+        "authError": "Authentication failed"
       }
     },
     "llm": {
@@ -7150,7 +6842,6 @@
         "monthlyBudgetDescription": "Optional spending target for notifications (does not block usage)",
         "billingPeriodStartDay": "Billing period start day",
         "billingPeriodStartDayPlaceholder": "1",
-        "billingPeriodStartDayDescription": "Day of month (1-31) when your billing period starts. Values 29-31 use the last day of shorter months.",
         "defaultTemperature": "Default Temperature",
         "defaultMaxTokens": "Default Max Tokens",
         "repoContextBudgetLabel": "Repository Context Budget (QuickScript)",
@@ -7182,7 +6873,6 @@
       "edit": {
         "title": "Edit AI Model Integration",
         "description": "Update the configuration for the {name} AI model integration",
-        "statusDescription": "Enable or disable this integration",
         "apiKeyPlaceholder": "Enter new API key to update...",
         "update": "Update",
         "modelListUpdated": "Model list updated successfully",
@@ -7229,10 +6919,8 @@
       },
       "budgetAlert": {
         "budgetDisclaimer": "Setting a monthly budget does not prevent LLM usage from exceeding it. Budget limits are informational only for admin decision-making.",
-        "budgetDisclaimerShort": "Budget limits are informational only and do not block usage.",
         "spendLabel": "Current Month Spend",
         "spendOfBudget": "{currentSpend} of {budgetLimit}",
-        "overBudget": "Over budget",
         "budgetPercentage": "{percentage}% of budget used",
         "spendReset": "Current month spend has been reset"
       }
@@ -7243,7 +6931,6 @@
       "addPromptConfig": "Add Prompt Configuration",
       "filterPlaceholder": "Filter prompt configurations...",
       "features": "Features",
-      "featureCount": "{count, plural, one {# feature} other {# features}}",
       "llmIntegration": "LLM Integration",
       "modelOverride": "Model Override",
       "modelOverridePlaceholder": "Integration Default",
@@ -7255,7 +6942,6 @@
       "maxOutputTokens": "Max Output Tokens",
       "variables": "Variables",
       "insertVariable": "Insert variable",
-      "noConfigs": "No prompt configurations found. Add your first configuration to get started.",
       "add": {
         "title": "Add Prompt Configuration",
         "description": "Create a new AI prompt configuration with prompts for each feature. Defaults have been applied automaticallty."
@@ -7385,7 +7071,6 @@
       "concurrency": {
         "title": "Worker Concurrency",
         "description": "Concurrency controls how many jobs each worker processes simultaneously. Higher values can improve throughput but use more system resources (CPU and memory).",
-        "configureTitle": "Configuring Concurrency",
         "configureDescription": "To adjust concurrency, set environment variables and restart workers. See documentation for details.",
         "envVars": {
           "TESTMO_IMPORT_CONCURRENCY": "Testmo imports (default: 1, memory-intensive)",
@@ -7420,12 +7105,7 @@
         "irreversible": "This action cannot be undone. Please confirm you want to proceed."
       },
       "success": {
-        "actionCompleted": "Action Completed",
-        "queuePaused": "Queue has been paused",
-        "queueResumed": "Queue has been resumed",
-        "queueCleaned": "Queue has been cleaned",
-        "queueDrained": "Queue has been drained",
-        "queueObliterated": "Queue has been obliterated"
+        "actionCompleted": "Action Completed"
       },
       "error": {
         "loadFailed": "Failed to load queues",
@@ -7451,10 +7131,7 @@
           "finished": "Finished"
         },
         "success": {
-          "actionCompleted": "Job action completed",
-          "jobRetried": "Job has been retried",
-          "jobPromoted": "Job has been promoted",
-          "jobRemoved": "Job has been removed"
+          "actionCompleted": "Job action completed"
         },
         "error": {
           "loadFailed": "Failed to load jobs",
@@ -7504,17 +7181,12 @@
       "exportCsv": "Export CSV",
       "timeRange": "Time range",
       "timeRangeOptions": {
-        "last24h": "Last 24 hours",
-        "last7d": "Last 7 days",
-        "last30d": "Last 30 days",
-        "last90d": "Last 90 days",
         "allTime": "All time"
       },
       "systemActor": "System",
       "systemActorTooltip": "Action performed by the system, not a logged-in user",
       "sourceScim": "SCIM",
-      "relatedChanges": "related changes",
-      "groupedEntry": "Grouped changes from a single action"
+      "relatedChanges": "related changes"
     }
   },
   "components": {
@@ -7568,7 +7240,6 @@
         "shareLinkAccessedTitle": "Share Link Accessed",
         "shareLinkAccessedAnonymousViewer": "Someone",
         "shareLinkAccessedMessage": "{viewer} viewed your shared report: \"{shareTitle}\"",
-        "viewedYourSharedLink": "viewed your shared link",
         "viewedAt": "Viewed at",
         "userRegisteredTitle": "New User Registration",
         "userRegisteredMessageSso": "{userName} ({userEmail}) has registered via SSO",
@@ -7631,7 +7302,6 @@
         "alertTriggeredRule": "Rule: {ruleName}",
         "alertTriggeredEmailMessage": "Alert \"{ruleName}\" fired for {subjectLabel} \"{subjectName}\" in project \"{projectName}\": {detail}",
         "alertTriggeredEmailMessageSystem": "Alert \"{ruleName}\" fired for {subjectLabel} \"{subjectName}\": {detail}",
-        "alertTriggeredReason": "You are receiving this because you are subscribed to this alert.",
         "alertSubject": {
           "CASE": "test case",
           "RUN": "test run",
@@ -7686,8 +7356,7 @@
     },
     "issues": {
       "manage_issues": {
-        "placeholder": "Search or link issues...",
-        "create_label": "Link Issue \"{name}\""
+        "placeholder": "Search or link issues..."
       },
       "create_issue_dialog": {
         "placeholders": {
@@ -7705,16 +7374,8 @@
             "helper": "Select the project in the external issue tracker"
           }
         },
-        "loading_metadata": "Loading integration settings...",
-        "errors": {
-          "creation_failed": "Failed to create issue. Please try again."
-        },
         "success": {
-          "created": "Issue created successfully",
-          "external_created": "Issue created and linked to external tracker"
-        },
-        "warnings": {
-          "external_failed": "Issue created locally but could not sync with external tracker"
+          "created": "Issue created successfully"
         }
       },
       "integration_auth_prompt": {
@@ -7775,16 +7436,9 @@
   },
   "issues": {
     "linkedIssues": "Linked Issues",
-    "linkedIssuesDescription": "Issues associated with this item",
     "refreshed": "Issues Refreshed",
-    "refreshedDescription": "The linked issues list has been updated",
     "unlinked": "Issue Unlinked",
-    "unlinkedDescription": "The issue has been removed from this item",
     "linked": "Issue Linked",
-    "linkedDescription": "The issue has been linked to this item",
-    "searchAndLink": "Search and Link",
-    "createAndLink": "Create and Link",
-    "noLinkedIssues": "No linked issues",
     "viewExternal": "View in {provider}",
     "unlink": "Unlink",
     "linkError": "Failed to link issue",
@@ -7799,8 +7453,6 @@
     "alreadyLinked": "Already linked",
     "authenticate": "Authenticate",
     "authenticationRequired": "Authentication Required",
-    "authenticationDescription": "You need to authenticate with {provider} to search for issues.",
-    "searchIn": "Search in {provider}",
     "searchPlaceholder": "Search issues...",
     "searchIssues": "Search Issues",
     "searchIssuesDescription": "Search for internal issues to link to this item.",
@@ -7817,32 +7469,22 @@
     "createIssueDescriptionWithIntegration": "Create a new issue using {provider}",
     "createIssueDescriptionSimpleUrl": "Create a new internal issue (Simple URL integration)",
     "iterationContextHint": "Body auto-filled with iteration parameter values and deep link. Edit as needed before creating.",
-    "creatingWith": "Creating issue with {provider}",
-    "authenticatedAndReady": "Authenticated and ready to create issues",
     "created": "Issue Created",
     "createdInExternal": "Issue created in {provider}",
     "createdInternal": "Issue created locally",
     "createdInternalSimpleUrl": "Issue created internally and can be linked via Simple URL",
     "createError": "Failed to create issue",
     "useIntegration": "Use {provider}",
-    "useIntegrationDescription": "Create issue in external system",
     "externalProject": "External Project",
     "issueType": "Issue Type",
     "selectIssueType": "Select issue type",
-    "noIssueTypes": "No issue types available",
     "assignees": "Assignees",
     "selectAssignees": "Select assignees",
     "assigneesLimit": "Up to {max} assignees",
     "priorityUrgent": "Urgent",
     "additionalFields": "Additional Fields",
     "createIssueInJira": "Create Issue in Jira",
-    "createIssueInJiraDescription": "Use Jira's interface to create a new issue with all available fields and options",
-    "createIssueInJiraFallbackDescription": "Open Jira in a new tab to create an issue with pre-filled information",
-    "jiraIframeError": "Unable to load Jira interface. Please try opening in a new tab.",
-    "jiraIframeFallback": "Jira requires opening in a new tab for security reasons. Click the button below to create your issue.",
-    "jiraFallbackNote": "After creating the issue in Jira, return here to continue linking it to your test case.",
     "openInNewTab": "Open in New Tab",
-    "jiraIframeNote": "After creating the issue in Jira, you can close this dialog and refresh the issue list.",
     "fillInRequiredFields": "Fill in the required fields to create a new issue",
     "failedToFetchFields": "Failed to fetch issue fields from Jira",
     "enterSummary": "Enter a brief summary of the issue",
@@ -7852,7 +7494,6 @@
     "addLabel": "Add a label and press Enter",
     "labelHint": "Spaces will be replaced with hyphens",
     "labelFormatNote": "Labels cannot contain spaces. Spaces will be automatically replaced with hyphens.",
-    "enterIssueKey": "Enter issue key (e.g., PROJ-123)",
     "issueLinkHelp": "Enter the key of an existing issue to link",
     "searchForIssue": "Search for an issue to link",
     "searchUsers": "Search for users",
@@ -7958,8 +7599,7 @@
       "dialogTitle": "Edit Requirement",
       "submit": "Save Changes",
       "success": "Requirement updated.",
-      "failed": "Failed to update requirement.",
-      "lockedTooltip": "This requirement is synced from the connected tracker. Detach it to rename."
+      "failed": "Failed to update requirement."
     },
     "delete": {
       "dialogTitle": "Delete Requirement",
@@ -7967,13 +7607,10 @@
       "confirmWithChildren": "This requirement has {count, plural, one {{count} descendant} other {{count} descendants}} that will also be deleted. This action can be undone.",
       "success": "Requirement deleted.",
       "failed": "Failed to delete requirement.",
-      "undo": "Undo",
-      "undoSuccess": "Requirement restored.",
-      "undoFailed": "Failed to restore requirement."
+      "undo": "Undo"
     },
     "attachments": {
       "empty": "No attachments",
-      "uploadSuccess": "Attachment uploaded.",
       "uploadFailed": "Failed to upload attachment.",
       "removeSuccess": "Attachment removed.",
       "removeFailed": "Failed to remove attachment."
@@ -8027,13 +7664,9 @@
     "coverage": {
       "title": "Coverage",
       "uncovered": "Uncovered",
-      "uncoveredTooltip": "No test cases are linked to this requirement or any of its descendants.",
       "statusPassed": "Passed",
       "statusFailed": "Failed",
       "statusNotRun": "Not run",
-      "countLabel": "{passed}/{total}",
-      "breakdownTooltip": "Passed: {passed} · Failed: {failed} · In progress: {inProgress} · Not run: {notRun}",
-      "showOnlyUncovered": "Show only uncovered",
       "showOnlyUncoveredUnavailable": "Coverage data isn't available right now.",
       "loadFailed": "Failed to load coverage.",
       "retry": "Retry",
@@ -8150,7 +7783,6 @@
       "deleted": "Execution target deleted",
       "enabledToast": "Target enabled",
       "disabledToast": "Target disabled",
-      "revealedSecretTitle": "Copy the signing secret now",
       "revealedSecretWarning": "This secret is shown once. Your receiver uses it to verify the X-TestPlanIt-Signature header on each dispatch; systems that authenticate another way (a Jenkins trigger token, for example) can ignore it. Store it in your CI system's secret store; TestPlanIt cannot display it again.",
       "secretCopied": "Secret copied",
       "errors": {
@@ -8283,7 +7915,6 @@
     "seconds": "{seconds}s",
     "testCases": "{count, plural, one {# test case} other {# test cases}}",
     "estimate": "Est: {value}",
-    "partOf": "(Part of {parent})",
     "status": "Status: {status}",
     "lane": "Lane {number}",
     "worker": "Worker {id}"
@@ -8420,8 +8051,6 @@
       "overview": "## Projects\nProjects are the top-level containers for your test cases, runs, sessions, and milestones. Create and manage every project from here.",
       "settings": {
         "integrations": {
-          "externalProjectHelp": "## External Project\nSelect the project or repository in the external system to link with this TestPlanIt project.\n\n- Issues created from TestPlanIt will be created in this project\n- Enables issue tracking integration between systems\n- Must have appropriate permissions in the external system",
-          "defaultIssueTypeHelp": "## Default Issue Type\nThe issue type that will be pre-selected when creating new issues from TestPlanIt.\n\n- Saves time by defaulting to your most common issue type\n- Can be overridden when creating individual issues\n- Must be a valid issue type for the selected external project\n- Update this if your workflow changes",
           "automaticSyncHelp": "## Automatic Sync\nEnables automatic synchronization of issue status between TestPlanIt and the external system.\n\n- Issues linked to test cases will update their status automatically\n- Helps keep issue tracking consistent across systems\n- May increase API usage with the external service\n- Can be disabled if manual control is preferred"
         }
       }
@@ -8593,7 +8222,6 @@
     "issueConfig": {
       "name": "## Issue Configuration Name\nA clear, descriptive name that is used across all projects.\n\n- Helps describe the issue configuration (e.g. Jira, GitHub, etc.).",
       "baseUrl": "## Base URL\nThe base URL for the issue configuration including the issue placeholder (e.g. https://your-jira-instance.atlassian.net/browse/'{issueId}').",
-      "systemType": "## System Type\nThe type of issue tracking system (e.g. LINK Jira, etc.).",
       "isActive": "## Active\nIndicates whether this issue configuration is active.",
       "isDefault": "## Default\nIndicates whether this issue configuration is the default for your project.\n\n- Default issue configuration is pre-selected for new issues\n- Can be changed at any time",
       "projects": "## Projects\nIndicates the projects that are assigned to this issue configuration."
@@ -9053,13 +8681,9 @@
       },
       "reportsTabDescription": "View and analyze pre-built reports for your project",
       "reportType": "Report Type",
-      "selectReportType": "Select report type",
       "selectReport": "Select Report",
       "dimensions": "Dimensions",
-      "dimensionsSubtitle": "Dimensions (drag to reorder, add below)",
       "metrics": "Metrics",
-      "addDimension": "Add dimension...",
-      "addMetric": "Add metric...",
       "runReport": "Run Report",
       "exportCsv": "Export CSV",
       "noResultsFound": "No results found.",
@@ -9068,8 +8692,6 @@
       "noDataMatchingCriteriaWithDateFilter": "No data found matching the selected dimensions and metrics. Try adjusting your date range filter.",
       "noDataAvailable": "No data available for this report.",
       "generatedAt": "Report generated at",
-      "crossProjectAnalytics": "Cross-Project Analytics & Reporting",
-      "unauthorizedAdmin": "Unauthorized: Admin access required.",
       "title": "Report Builder",
       "description": "Build custom reports to analyze your project data",
       "crossProjectDescription": "Analyze data across all projects in your workspace",
@@ -9244,7 +8866,6 @@
         "newest": "New",
         "oldest": "Old",
         "noFlakyTests": "No flaky tests found matching the criteria",
-        "includeFilter": "Include",
         "caseTags": "Test Case Tags",
         "runTags": "Test Run Tags",
         "testRunDeleted": "Test run has been deleted",
@@ -9268,7 +8889,6 @@
         "minExecutionsHelp": "Minimum number of executions required to calculate meaningful pass rate statistics (3-20).",
         "lookbackDays": "Lookback Period",
         "lookbackDaysHelp": "Number of days to analyze execution history (30-365).",
-        "includeFilter": "Include",
         "staleFilter": "Staleness",
         "stale": "Stale",
         "notStale": "Not Stale",
@@ -9278,11 +8898,9 @@
         "executions": "Executions",
         "passCount": "Passes",
         "failCount": "Failures",
-        "daysSince": "Days since execution",
         "count": "Count",
         "totalTests": "test cases",
         "noData": "No test cases found",
-        "noExecutedTests": "No executed tests to display",
         "healthStatus": {
           "healthy": "Healthy",
           "stale": "Stale",
@@ -9291,11 +8909,7 @@
           "alwaysFailing": "Always Failing"
         },
         "chart": {
-          "distribution": "Status Distribution",
-          "healthyRecent": "Healthy & Recent",
-          "unhealthyStale": "Needs attention",
-          "daysAxis": "Days Since Last Execution",
-          "healthScoreAxis": "Health Score"
+          "distribution": "Status Distribution"
         },
         "stats": {
           "totalTests": "Total Tests",
@@ -9423,9 +9037,6 @@
         }
       },
       "issueTestCoverage": {
-        "viewMode": "View Mode",
-        "summaryView": "Summary (by Issue)",
-        "detailView": "Detail (by Test Case)",
         "issue": "Issue",
         "testCase": "Test Case",
         "testCases": "{count, plural, =1 {Test Case} other {Test Cases}}",
@@ -9437,18 +9048,15 @@
         "lastExecuted": "Last Executed",
         "notTested": "Not Tested",
         "noData": "No issues with linked test cases found",
-        "noIssuesNeedingAttention": "All issues have passing tests - great work!",
         "stats": {
           "totalIssues": "Total Issues",
           "issuesWithFailures": "With Failures",
           "issuesWithFailuresTooltip": "Issues with at least one failing test case",
           "issuesWithUntested": "With Untested",
           "issuesWithUntestedTooltip": "Issues with at least one test case that has not been executed",
-          "issuesAllPassing": "All Passing",
-          "numberOfIssues": "Number of Issues"
+          "issuesAllPassing": "All Passing"
         },
         "charts": {
-          "passRateDistribution": "Test Pass Rate Distribution",
           "linkedTestCases": "Number of Linked Test Cases",
           "untestedTestCases": "Number of Untested Test Cases",
           "testCoverageVsExecution": "Test Coverage vs Execution Status"
@@ -9482,7 +9090,6 @@
         "otherRoots": "Other ({count, plural, one {# hierarchy} other {# hierarchies}})",
         "snapshotLabel": "Snapshot",
         "snapshotLive": "Live matrix",
-        "snapshotHelp": "Show a saved point-in-time snapshot of the matrix instead of the live data. Snapshots are immutable records you can export, share, and compare.",
         "snapshotPlaceholder": "Choose a snapshot",
         "snapshotRequirementsCount": "{count, plural, one {# requirement} other {# requirements}}",
         "snapshotUncoveredCount": "{count} uncovered",
@@ -9613,7 +9220,6 @@
         "triggerPush": "Push",
         "outcomeNotExecuted": "Not executed",
         "outcomeNoRun": "No run",
-        "allRepositories": "All repositories",
         "analysis": "Analysis",
         "changedFiles": "Changed files",
         "changedFilesDetail": "{files, number} files · +{additions, number} −{deletions, number}",
@@ -9734,23 +9340,15 @@
     },
     "errors": {
       "adminOnly": "Only Project Administrators and Administrators can access project reports.",
-      "projectIdRequired": "Project ID is required",
       "missingRequiredFields": "Missing required fields",
-      "unsupportedDimension": "Unsupported dimension: {dimension}",
-      "unsupportedMetric": "Unsupported metric: {metric}",
       "atLeastOneDimensionMetricRequired": "At least one dimension and one metric required",
-      "atLeastOneMetricRequired": "At least one metric must be specified",
-      "projectDimensionsMetricsRequired": "Project ID, dimensions, and metrics are required",
-      "unsupportedDimensions": "Unsupported dimension(s): {dimensions}",
-      "unsupportedMetrics": "Unsupported metric(s): {metrics}",
-      "unexpectedError": "An unexpected error occurred."
+      "atLeastOneMetricRequired": "At least one metric must be specified"
     },
     "dimensions": {
       "executor": "Executor",
       "assignedTo": "Assigned To",
       "executionDate": "Execution Date",
       "creationDate": "Creation Date",
-      "activityDate": "Activity Date",
       "testCase": "Test Case",
       "creator": "Creator",
       "source": "Source",
@@ -9900,9 +9498,6 @@
           "title": "Share Link Expired",
           "description": "This share link has expired and is no longer accessible."
         }
-      },
-      "footer": {
-        "poweredBy": "Powered by"
       },
       "manageShares": {
         "title": "Manage Shares",
@@ -10255,8 +9850,6 @@
     },
     "startTyping": "Start typing to search",
     "typesSelected": "{count, plural, one {# type} other {# types}}",
-    "customFieldFilters": "Custom Field Filters",
-    "customFiltersApplied": "custom filters",
     "customFields": "Custom Fields",
     "addFilter": "Add Filter",
     "filter": "Filter",
@@ -10321,14 +9914,12 @@
       "junit": "JUnit",
       "hybrid": "Hybrid",
       "automatedOnly": "Automated Only",
-      "archivedOnly": "Archived Only",
       "completedOnly": "Completed Only",
       "manualOnly": "Manual Only",
       "estimateRange": "Estimate Range",
       "elapsedRange": "Elapsed Time Range",
       "minValue": "Min",
       "maxValue": "Max",
-      "dueDateRange": "Due Date Range",
       "milestoneType": "Milestone Type",
       "minutes": "minutes",
       "hours": "hours",
@@ -10433,11 +10024,7 @@
   },
   "autoTag": {
     "actions": {
-      "aiTag": "AI Tag",
-      "tagAll": "Tag All",
       "aiAutoTag": "Auto-Tag",
-      "tagActions": "Tag Actions",
-      "startTagging": "Start Tagging",
       "selectEntityType": "Select entity type",
       "selectProject": "Select a project",
       "entityTypes": {
@@ -10449,11 +10036,8 @@
     "review": {
       "title": "Review Tag Suggestions",
       "description": "Click tags to toggle acceptance. Double-click to edit a tag name.",
-      "selectEntity": "Select an entity to view tag suggestions.",
       "noTagsSelected": "No tags selected",
-      "footerSummary": "{assignCount, plural, one {# tag} other {# tags}} will be assigned, {newCount, plural, one {# new tag} other {# new tags}} will be created",
       "footerAssignCount": "{assignCount, plural, one {# tag} other {# tags}} will be assigned",
-      "footerNewCount": "{newCount, plural, one {# new tag} other {# new tags}} will be created",
       "newTagsPopoverTitle": "New tags to create",
       "applying": "Applying...",
       "applySuccess": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}",
@@ -10472,7 +10056,6 @@
       "tooltipExisting": "Existing tag",
       "tooltipNew": "New tag — will be created",
       "tooltipAssign": "Assign existing tag",
-      "toggleFailed": "Show/hide failed entities",
       "showFailed": "Show failed"
     },
     "progress": {
@@ -10610,7 +10193,6 @@
     "datasetRowResultEmpty": "—",
     "pasteCsvPlaceholder": "Paste CSV rows here. The first line is treated as the header.",
     "pasteCsvParseButton": "Parse",
-    "pasteCsvReplaceWarning": "Existing dataset rows ({existingCount}) will be deleted.",
     "cellErrorString": "Value cannot be empty for required field.",
     "cellErrorInteger": "Must be a whole number.",
     "cellErrorSelect": "Value must be one of: {allowed}.",
@@ -10655,14 +10237,8 @@
     "chooserEmpty": "No parameters declared yet.",
     "chooserConfigureLink": "Configure parameters",
     "autocompleteEmpty": "No matching parameters. Type to search or use the toolbar to insert.",
-    "chipTooltipType": "Type: {type}",
-    "chipTooltipDefault": "Default: {value}",
-    "chipTooltipNoDefault": "Default: (none)",
-    "chipTooltipUndeclared": "\"@{name}\" is not a declared parameter. Open Configure parameters to add it.",
     "editorUndeclaredWarning": "Undeclared references: {names}. Add them via Configure parameters to enable iteration substitution.",
     "runProgressTitle": "Generating iterations for \"{runName}\"",
-    "runProgressDescriptionAsync": "Creating {count, plural, =1 {# iteration} other {# iterations}} in the background. You can keep working — we'll notify you when this finishes.",
-    "runProgressDescriptionSync": "Created {count, plural, =1 {# iteration} other {# iterations}}.",
     "runProgressFailed": "Could not start iteration generation",
     "runHardRefuseTitle": "Too many iterations to create",
     "runHardRefuseDescription": "This run would create {count} iterations, exceeding the limit of {cap}. Reduce the dataset row count, deselect cases, or split into multiple runs.",
@@ -10670,7 +10246,6 @@
     "runPreflightAsync": "Will create {n, plural, =1 {# iteration} other {# iterations}} (background job)",
     "runPreflightSoftConfirm": "Will create {n, plural, =1 {# iteration} other {# iterations}} — confirmation required",
     "runPreflightHardRefuse": "Cannot create — {n} exceeds the {cap} cap",
-    "runPreflightTooltip": "{iterations, plural, =1 {# iteration} other {# iterations}} = {cases, plural, =1 {# case} other {# cases}} × {configs, plural, =1 {# config} other {# configs}} × dataset rows",
     "runPreflightTooltipHeader": "{iterations, plural, =1 {# iteration} other {# iterations}} across {cases, plural, =1 {# parameterized case} other {# parameterized cases}} × {configs, plural, =1 {# config} other {# configs}}",
     "runPreflightTooltipCaseRow": "{title} — {rows, plural, =1 {# row} other {# rows}}",
     "chipClickToReveal": "Click to reveal",
@@ -10682,7 +10257,6 @@
     "iterationAddResult": "Add result",
     "iterationPassAndNext": "Pass & Next iteration",
     "iterationOtherStatuses": "Other statuses",
-    "iterationAllComplete": "All iterations complete",
     "hardRefuseTitle": "Cannot create — too many iterations",
     "hardRefuseDescription": "Test run creation is capped at {cap} iterations to keep the system responsive. Reduce one of the contributors below.",
     "hardRefuseColumnCase": "Case",
@@ -10705,15 +10279,12 @@
     "iterationsHeaderCount": "{complete}/{total}",
     "iterationsHeaderCountPending": "0/{total} (generating)",
     "iterationStatusLegendAria": "Status legend",
-    "iterationActionSkipped": "Skipped",
     "iterationBulkPickStatusPrompt": "Pick a status to apply to the selected iterations.",
-    "iterationBulkApplyStatus": "Mark with status…",
     "iterationSelectAria": "Select iteration {n}",
     "iterationRowMenuAria": "Iteration {n} actions",
     "iterationOverrideValues": "Override values…",
     "iterationSkip": "Mark with status…",
     "iterationReset": "Reset iteration result",
-    "iterationSelectedCount": "{count} selected",
     "iterationBulkSkip": "Mark {count, plural, =1 {# iteration} other {# iterations}} with status…",
     "iterationIssueTitleSnapshot": "Iteration {n} of {total} issue: {caseName}",
     "iterationIssueTitleCiExtended": "Iteration {n} (CI-extended) issue: {caseName}",
@@ -10754,13 +10325,7 @@
     "iterationBulkReasonHelp": "Recorded on each result.",
     "iterationBulkSuccess": "{count, plural, =1 {# iteration} other {# iterations}} marked {action}",
     "iterationBulkError": "Could not mark iterations",
-    "iterationBulkNa": "Mark N/A",
-    "iterationListLoadError": "Couldn't load iterations.",
     "iterationResetUntestedMissing": "Untested status not found",
-    "overrideTitle": "Override values for iteration {n}",
-    "overrideDescription": "Changes affect only this iteration. The dataset snapshot and source dataset remain unchanged. This action is audit-logged.",
-    "overrideValidationItem": "@{param}: {message}",
-    "overrideSensitiveDenied": "You don't have permission to edit sensitive values.",
     "datasetSourceLocal": "Local",
     "datasetSourceShared": "Shared",
     "datasetSharedRefBadge": "+ shared ref",
@@ -10895,7 +10460,6 @@
     },
     "history": "History",
     "subscribers": "Subscribers",
-    "subscriberCount": "{count, plural, =0 {No subscribers} one {# subscriber} other {# subscribers}}",
     "toasts": {
       "created": "Rule created.",
       "updated": "Rule updated.",
@@ -10905,7 +10469,6 @@
       "subscribed": "You will be notified when this rule fires.",
       "unsubscribed": "You will no longer be notified by this rule.",
       "subscriberAdded": "{name} subscribed.",
-      "subscriberRemoved": "{name} unsubscribed.",
       "saveError": "Could not save the rule.",
       "subscriptionError": "Could not update the subscription."
     },
@@ -10927,7 +10490,6 @@
       "scopeRunNamePlaceholder": "e.g. Nightly",
       "scopePickFolder": "Select a folder",
       "scopePickTag": "Select a tag",
-      "scopePickCase": "Select a test case",
       "scopePickMilestone": "Select a milestone",
       "scopeWebhook": "Webhook",
       "scopePickWebhook": "Select a webhook",
@@ -11324,8 +10886,7 @@
     "unclassified": "No root cause",
     "source": {
       "AI": "Root cause suggested by AI",
-      "labelAI": "AI",
-      "labelMANUAL": "Manual"
+      "labelAI": "AI"
     },
     "columns": {
       "classification": "Root cause",
