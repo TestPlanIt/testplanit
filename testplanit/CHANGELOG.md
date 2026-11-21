@@ -1,3 +1,9 @@
+## [1.2.8](https://github.com/TestPlanIt/testplanit/compare/v1.2.7...v1.2.8) (2026-11-21)
+
+### Bug Fixes
+
+* **runs:** list step results in step order in the result history ([#762](https://github.com/TestPlanIt/testplanit/issues/762)) ([2be0261](https://github.com/TestPlanIt/testplanit/commit/2be0261bfde199df229bbc847137a575f4b37fef))
+
 ## [1.2.7](https://github.com/TestPlanIt/testplanit/compare/v1.2.6...v1.2.7) (2026-11-21)
 
 ### Bug Fixes
