@@ -1,3 +1,9 @@
+## [1.2.7](https://github.com/TestPlanIt/testplanit/compare/v1.2.6...v1.2.7) (2026-11-21)
+
+### Bug Fixes
+
+* **repository:** show Multi-Select field values when viewing a test case ([#761](https://github.com/TestPlanIt/testplanit/issues/761)) ([0162dd0](https://github.com/TestPlanIt/testplanit/commit/0162dd07f006227d892e83d3c0f2ac41746819b5))
+
 ## [1.2.6](https://github.com/TestPlanIt/testplanit/compare/v1.2.5...v1.2.6) (2026-11-20)
 
 ### Bug Fixes
