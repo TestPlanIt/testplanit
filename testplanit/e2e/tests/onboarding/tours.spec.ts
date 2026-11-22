@@ -42,6 +42,20 @@ async function placement(page: Page, anchor: ReturnType<Page["locator"]>) {
   };
 }
 
+const PROJECT_TOUR_PAGES: Record<string, string> = {
+  "#project-requirements-link": "requirements",
+  "#test-cases-link": "repository",
+  "#shared-steps-link": "shared-steps",
+  "#test-runs-link": "runs",
+  "#exploratory-link": "sessions",
+  "#project-tags-link": "tags",
+  "#project-issues-link": "issues",
+  "#project-triage-link": "triage",
+  "#reports-link": "reports",
+  "#audit-logs-link": "audit-logs",
+  "#settings-integrations-link": "settings",
+};
+
 async function walkTour(page: Page, tourName: string) {
   // Steps for optional menu entries are added as permissions load, so start
   // once the page has settled, as a person using the Help menu would.
@@ -79,6 +93,16 @@ async function walkTour(page: Page, tourName: string) {
         highlightOnAnchor: true,
       });
     }).toPass({ timeout: 10000 });
+    const projectPage =
+      tourName === "projectTour" ? PROJECT_TOUR_PAGES[selector!] : undefined;
+    if (projectPage) {
+      await expect(
+        page,
+        `${tourName} step ${step} is on the ${projectPage} page`
+      ).toHaveURL(new RegExp(`/projects/${projectPage}/\\d+`), {
+        timeout: 20000,
+      });
+    }
     selectors.push(selector!);
     await page.getByTestId("tour-card-next").click();
   }

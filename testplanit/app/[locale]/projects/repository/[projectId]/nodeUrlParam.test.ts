@@ -1,4 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  notePendingNavigation,
+  resetPendingNavigation,
+} from "~/utils/pendingNavigation";
 import { syncNodeUrlParam } from "./nodeUrlParam";
 
 describe("syncNodeUrlParam", () => {
@@ -6,6 +10,7 @@ describe("syncNodeUrlParam", () => {
   let replaceState: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
+    resetPendingNavigation();
     original({}, "", "/en-US/projects/repository/1?page=1&pageSize=10&node=5");
     replaceState = vi.spyOn(window.history, "replaceState");
   });
@@ -35,6 +40,12 @@ describe("syncNodeUrlParam", () => {
 
     replaceState.mockClear();
     expect(syncNodeUrlParam(null)).toBe(false);
+    expect(replaceState).not.toHaveBeenCalled();
+  });
+
+  it("leaves history alone once a move to another page has started", () => {
+    notePendingNavigation("/en-US/projects/shared-steps/1");
+    expect(syncNodeUrlParam(7)).toBe(false);
     expect(replaceState).not.toHaveBeenCalled();
   });
 });

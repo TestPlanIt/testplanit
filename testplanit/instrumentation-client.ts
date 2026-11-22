@@ -4,6 +4,7 @@
 // install is a no-op. See lib/basePath.ts.
 import { z } from "zod";
 import { installBasePathFetch } from "~/lib/basePath";
+import { notePendingNavigation } from "~/utils/pendingNavigation";
 
 installBasePathFetch(globalThis);
 
@@ -12,3 +13,7 @@ installBasePathFetch(globalThis);
 // caught and Zod falls back by itself, but every page load would report a
 // violation. Skip the JIT in the browser, before any schema runs.
 z.config({ jitless: true });
+
+export function onRouterTransitionStart(url: string) {
+  notePendingNavigation(url);
+}

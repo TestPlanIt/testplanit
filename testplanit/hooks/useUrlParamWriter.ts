@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { usePathname, useRouter } from "~/lib/navigation";
+import { isLeavingPage } from "~/utils/pendingNavigation";
 import {
   composeUrlSearch,
   releaseUrlWriteOverlay,
@@ -26,6 +27,11 @@ import {
  * does, so Back closes it. Either way `scroll` is suppressed: these are
  * same-page param updates, and jumping a long table to the top on one is not
  * wanted.
+ *
+ * A replace does nothing once the person has started moving to another page:
+ * the router runs one navigation at a time, so the write would take the place
+ * of that move and keep them here. A push is the person's own later click and
+ * still goes through.
  */
 export type UrlWriteOptions = { history?: "replace" | "push" };
 
@@ -49,6 +55,7 @@ export function useUrlParamWriter(
 
   return useCallback(
     (mutate: (params: URLSearchParams) => void, options?: UrlWriteOptions) => {
+      if (options?.history !== "push" && isLeavingPage()) return;
       const next = composeUrlSearch(pathname, window.location.search, mutate);
       if (next === null) return;
       const qs = transform ? transform(next) : next;

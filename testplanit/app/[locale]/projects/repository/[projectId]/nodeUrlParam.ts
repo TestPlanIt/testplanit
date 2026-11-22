@@ -1,3 +1,5 @@
+import { isLeavingPage } from "~/utils/pendingNavigation";
+
 /**
  * Mirror the selected folder into the URL's `node` param in place, and only
  * when the value actually changes.
@@ -10,9 +12,13 @@
  * change, so a redundant write that leaves the URL as it was drops those
  * params for good. Skipping it keeps the retry path alive.
  *
+ * The same rule makes the write unsafe once the person has started moving to
+ * another page: it would cancel that move, so it is skipped.
+ *
  * Returns whether the URL was written.
  */
 export function syncNodeUrlParam(folderId: number | null): boolean {
+  if (isLeavingPage()) return false;
   const url = new URL(window.location.href);
   const current = url.searchParams.get("node");
   const next = folderId === null ? null : String(folderId);
