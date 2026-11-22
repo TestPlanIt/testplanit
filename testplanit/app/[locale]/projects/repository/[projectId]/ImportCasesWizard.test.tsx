@@ -597,6 +597,86 @@ describe("ImportCasesWizard", () => {
     });
   });
 
+  describe("TestLink XML", () => {
+    const specXml = `<?xml version="1.0" encoding="UTF-8"?>
+<testsuite id="" name="" ><node_order><![CDATA[]]></node_order><details><![CDATA[]]></details>
+<testsuite id="5" name="Checkout" ><node_order><![CDATA[1]]></node_order><details><![CDATA[<p>Payments</p>]]></details>
+<testcase internalid="9" name="Pay by card">
+<externalid><![CDATA[1]]></externalid><fullexternalid><![CDATA[SHOP-1]]></fullexternalid>
+<summary><![CDATA[<p>Card payment</p>]]></summary>
+<execution_type><![CDATA[1]]></execution_type><importance><![CDATA[3]]></importance>
+<steps><step><step_number><![CDATA[1]]></step_number><actions><![CDATA[<p>Pay</p>]]></actions><expectedresults><![CDATA[<p>Paid</p>]]></expectedresults></step></steps>
+<keywords><keyword name="Smoke"><notes><![CDATA[]]></notes></keyword></keywords>
+<attachments><attachment><id><![CDATA[3]]></id><name><![CDATA[a.txt]]></name><content><![CDATA[aGVsbG8=]]></content></attachment></attachments>
+</testcase>
+<relation><source version="1">SHOP-1</source><destination version="1">SHOP-2</destination><type>1</type></relation>
+</testsuite></testsuite>`;
+
+    const upload = async (content: string, name = "testproject.xml") => {
+      // The mocked upload input only declares .csv.
+      const user = userEvent.setup({ applyAccept: false });
+      render(<ImportCasesWizard open={true} onClose={vi.fn()} />);
+      await user.upload(
+        screen.getByTestId("file-upload"),
+        new File([content], name, { type: "text/xml" })
+      );
+    };
+
+    it("summarizes the export and says what is left out", async () => {
+      await upload(specXml);
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("testlink-import-summary")
+        ).toBeInTheDocument();
+      });
+      const summary = screen.getByTestId("testlink-import-summary");
+      expect(summary).toHaveTextContent("importWizard.testLink.attachments");
+      expect(summary).toHaveTextContent("importWizard.testLink.relations");
+      expect(
+        screen.queryByTestId("testrail-import-summary")
+      ).not.toBeInTheDocument();
+      // CSV-only options stay hidden.
+      expect(screen.queryByLabelText("hasHeaders")).not.toBeInTheDocument();
+      // The suite tree needs folders, so the single-folder target is left.
+      expect(screen.queryByTestId("folder-select")).not.toBeInTheDocument();
+    });
+
+    it("reports an export without test cases", async () => {
+      await upload('<testsuite name=""><testsuite name="Empty"/></testsuite>');
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("importWizard.testLink.errors.noCases")
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("lists the TestLink columns on the mapping page", async () => {
+      await upload(specXml);
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("testlink-import-summary")
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("template-select"));
+      fireEvent.click(screen.getByTestId("next-button"));
+
+      await waitFor(() => {
+        expect(screen.getByText("TestLink ID")).toBeInTheDocument();
+      });
+      for (const column of [
+        "Test Suite",
+        "Summary",
+        "Importance",
+        "Keywords",
+      ]) {
+        expect(screen.getByText(column)).toBeInTheDocument();
+      }
+    });
+  });
+
   describe("Import functionality", () => {
     it("shows import button on final page", async () => {
       const user = userEvent.setup();

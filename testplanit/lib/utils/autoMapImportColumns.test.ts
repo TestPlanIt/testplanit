@@ -61,6 +61,26 @@ describe("autoMapImportColumns", () => {
     });
   });
 
+  it("maps the columns of a TestLink export", () => {
+    const mapped = mapOf([
+      "Name",
+      "Test Suite",
+      "TestLink ID",
+      "Preconditions",
+      "Steps",
+      "Keywords",
+    ]);
+
+    expect(mapped).toEqual({
+      Name: "name",
+      "Test Suite": "folder",
+      "TestLink ID": null,
+      Preconditions: "preconditions",
+      Steps: "steps",
+      Keywords: "tags",
+    });
+  });
+
   it("maps Case ID only from exact headers", () => {
     expect(mapOf(["ID"])["ID"]).toBe("id");
     expect(mapOf(["Case ID"])["Case ID"]).toBe("id");

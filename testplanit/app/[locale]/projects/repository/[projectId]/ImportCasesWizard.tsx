@@ -87,6 +87,17 @@ import {
   TestRailXmlError,
   type TestRailSuite,
 } from "~/utils/testRailXmlParser";
+import {
+  convertTestLinkSpecToImportData,
+  isTestLinkXml,
+  parseTestLinkXml,
+  testLinkAttachmentToFile,
+  TestLinkXmlError,
+  TESTLINK_COLUMNS,
+  type TestLinkAttachment,
+  type TestLinkSpec,
+} from "~/utils/testLinkXmlParser";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { generateHTMLFallback } from "~/utils/tiptapToHtml";
 import { apiFetch } from "~/lib/basePath";
@@ -98,8 +109,9 @@ interface ImportCasesWizardProps {
   initialFile?: File | null;
 }
 
-type FileType = "csv" | "markdown" | "testrail";
+type FileType = "csv" | "markdown" | "testrail" | "testlink";
 
+// An XML file starts out as TestRail; reading it tells the two exports apart.
 const detectFileType = (file: File): FileType => {
   const ext = file.name.split(".").pop()?.toLowerCase();
   if (ext === "xml") return "testrail";
@@ -212,6 +224,12 @@ export function ImportCasesWizard({
   const [testRailError, setTestRailError] = useState<
     "invalid_xml" | "not_a_suite" | "no_cases" | null
   >(null);
+  const [testLinkSpec, setTestLinkSpec] = useState<TestLinkSpec | null>(null);
+  const [testLinkNotes, setTestLinkNotes] = useState<{
+    attachments: TestLinkAttachment[][];
+    unreadEstimates: number;
+    folderDescriptions: { path: string[]; description: string }[];
+  } | null>(null);
   // What the last conversion of the TestRail file left out or changed.
   const [testRailNotes, setTestRailNotes] = useState<{
     imageCount: number;
@@ -289,13 +307,37 @@ export function ImportCasesWizard({
     setTestRailTemplate(ALL_TESTRAIL_TEMPLATES);
     setTestRailNotes(null);
     setTestRailError(null);
-    if (!selectedFile || fileType !== "testrail") return;
+    setTestLinkSpec(null);
+    setTestLinkNotes(null);
+    if (!selectedFile || (fileType !== "testrail" && fileType !== "testlink")) {
+      return;
+    }
 
     let cancelled = false;
     selectedFile
       .text()
       .then((text) => {
         if (cancelled) return;
+        if (fileType === "testrail" && isTestLinkXml(text)) {
+          setFileType("testlink");
+          return;
+        }
+        if (fileType === "testlink") {
+          const spec = parseTestLinkXml(text);
+          if (spec.cases.length === 0) {
+            setTestRailError("no_cases");
+            return;
+          }
+          setTestLinkSpec(spec);
+          // The suite tree is the point of this export; a single target
+          // folder would flatten it.
+          if (spec.suites.length > 0) {
+            setImportLocation((current) =>
+              current === "single_folder" ? "top_level" : current
+            );
+          }
+          return;
+        }
         const suite = parseTestRailXml(text);
         if (suite.cases.length === 0) {
           setTestRailError("no_cases");
@@ -316,7 +358,8 @@ export function ImportCasesWizard({
       .catch((error) => {
         if (cancelled) return;
         setTestRailError(
-          error instanceof TestRailXmlError && error.code === "not_a_suite"
+          (error instanceof TestRailXmlError && error.code === "not_a_suite") ||
+            (error instanceof TestLinkXmlError && error.code === "not_testlink")
             ? "not_a_suite"
             : "invalid_xml"
         );
@@ -890,6 +933,19 @@ export function ImportCasesWizard({
   };
 
   // Helper to detect columns from LLM-parsed cases
+  // Convert the TestLink export read on file selection into mappable rows.
+  const convertTestLinkFile = () => {
+    if (!testLinkSpec) return;
+    const data = convertTestLinkSpecToImportData(testLinkSpec);
+    setParsedData(data.rows as ParsedCase[]);
+    setFieldMappings(createFieldMappings(data.columns));
+    setTestLinkNotes({
+      attachments: data.attachments,
+      unreadEstimates: data.unreadEstimates,
+      folderDescriptions: data.folderDescriptions,
+    });
+  };
+
   const detectColumnsFromLlmCases = (cases: ParsedMarkdownCase[]): string[] => {
     const columns = new Set<string>();
     columns.add("name");
@@ -1007,7 +1063,10 @@ export function ImportCasesWizard({
 
     // A TestRail file is read on selection; without a suite there is
     // nothing to map, and the file field already says why.
-    if (fileType === "testrail" && !testRailSuite) {
+    if (
+      (fileType === "testrail" && !testRailSuite) ||
+      (fileType === "testlink" && !testLinkSpec)
+    ) {
       setValidationErrors({});
       return false;
     }
@@ -1032,6 +1091,57 @@ export function ImportCasesWizard({
           message: rowError.error,
         });
 
+  // The files embedded in a TestLink export are uploaded before the import,
+  // which links them to their test cases by address. Nothing is uploaded when
+  // the Attachments column is not mapped to the Attachments field.
+  const withUploadedTestLinkAttachments = async (rows: ParsedCase[]) => {
+    const files = testLinkNotes?.attachments;
+    const mapped = getMappedFields().some(
+      (mapping) =>
+        mapping.csvColumn === TESTLINK_COLUMNS.attachments &&
+        mapping.templateField === "attachments"
+    );
+    if (fileType !== "testlink" || !files || !mapped) return rows;
+
+    const uploaded: ParsedCase[] = [];
+    for (const [index, row] of rows.entries()) {
+      const rowFiles = files[index] ?? [];
+      if (rowFiles.length === 0) {
+        uploaded.push(row);
+        continue;
+      }
+      const attachments = [];
+      for (const attachment of rowFiles) {
+        try {
+          const file = testLinkAttachmentToFile(attachment);
+          const url = await fetchSignedUrl(
+            file,
+            `/api/get-attachment-url/`,
+            `${projectId}/testlink-import`
+          );
+          attachments.push({
+            url,
+            name: file.name,
+            note: attachment.title,
+            size: file.size,
+            mimeType: file.type,
+          });
+        } catch {
+          throw new Error(
+            t("importWizard.testLink.errors.attachmentUpload", {
+              name: attachment.name,
+            })
+          );
+        }
+      }
+      uploaded.push({
+        ...row,
+        [TESTLINK_COLUMNS.attachments]: JSON.stringify(attachments),
+      });
+    }
+    return uploaded;
+  };
+
   const handleImport = async () => {
     setIsImporting(true);
     setImportProgress(0);
@@ -1039,6 +1149,10 @@ export function ImportCasesWizard({
     setImportWarnings([]);
 
     try {
+      const rowsToImport =
+        fileType !== "csv"
+          ? await withUploadedTestLinkAttachments(parsedData)
+          : undefined;
       const response = await apiFetch(`/api/repository/import`, {
         method: "POST",
         headers: {
@@ -1058,11 +1172,15 @@ export function ImportCasesWizard({
           folderSplitMode:
             importLocation !== "single_folder" ? folderSplitMode : null,
           rowMode: fileType === "csv" ? rowMode : "single",
-          parsedData: fileType !== "csv" ? parsedData : undefined,
+          parsedData: rowsToImport,
           folderDescriptions:
-            fileType === "testrail" && importLocation !== "single_folder"
-              ? testRailNotes?.folderDescriptions
-              : undefined,
+            importLocation === "single_folder"
+              ? undefined
+              : fileType === "testrail"
+                ? testRailNotes?.folderDescriptions
+                : fileType === "testlink"
+                  ? testLinkNotes?.folderDescriptions
+                  : undefined,
         }),
       });
 
@@ -1206,7 +1324,9 @@ export function ImportCasesWizard({
     (testRailError === "not_a_suite"
       ? t("importWizard.testRail.errors.notASuite")
       : testRailError === "no_cases"
-        ? t("importWizard.testRail.errors.noCases")
+        ? fileType === "testlink"
+          ? t("importWizard.testLink.errors.noCases")
+          : t("importWizard.testRail.errors.noCases")
         : testRailError === "invalid_xml"
           ? t("importWizard.testRail.errors.invalidXml")
           : undefined);
@@ -1246,6 +1366,42 @@ export function ImportCasesWizard({
           </div>
         </div>
       </div>
+
+      {fileType === "testlink" && testLinkSpec && (
+        <Alert data-testid="testlink-import-summary">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <p>
+              {t("importWizard.testLink.summary", {
+                cases: testLinkSpec.cases.length,
+                suites: testLinkSpec.suites.length,
+              })}
+            </p>
+            <p className="mt-1">{t("importWizard.testLink.notIncluded")}</p>
+            {testLinkSpec.caseAttachmentCount > 0 && (
+              <p className="mt-1">
+                {t("importWizard.testLink.attachments", {
+                  count: testLinkSpec.caseAttachmentCount,
+                })}
+              </p>
+            )}
+            {testLinkSpec.suiteAttachmentCount > 0 && (
+              <p className="mt-1">
+                {t("importWizard.testLink.suiteAttachments", {
+                  count: testLinkSpec.suiteAttachmentCount,
+                })}
+              </p>
+            )}
+            {testLinkSpec.relationCount > 0 && (
+              <p className="mt-1">
+                {t("importWizard.testLink.relations", {
+                  count: testLinkSpec.relationCount,
+                })}
+              </p>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {fileType === "testrail" && testRailSuite && (
         <Alert data-testid="testrail-import-summary">
@@ -1571,9 +1727,11 @@ export function ImportCasesWizard({
       <p className="text-sm text-muted-foreground">
         {fileType === "testrail"
           ? t("importWizard.page2.descriptionTestRail")
-          : fileType === "markdown"
-            ? t("importWizard.page2.descriptionMarkdown")
-            : t("importWizard.page2.description")}
+          : fileType === "testlink"
+            ? t("importWizard.page2.descriptionTestLink")
+            : fileType === "markdown"
+              ? t("importWizard.page2.descriptionMarkdown")
+              : t("importWizard.page2.description")}
       </p>
 
       {fileType === "csv" && fieldMappings.length > 0 && (
@@ -1711,76 +1869,78 @@ export function ImportCasesWizard({
           </CardContent>
         </Card>
 
-        {hasFolderMapping && fileType !== "testrail" && (
-          <div>
-            <Label>{t("importWizard.page3.folderSplitMode.label")}</Label>
-            <RadioGroup
-              value={folderSplitMode}
-              onValueChange={(v) => setFolderSplitMode(v as FolderSplitMode)}
-              className="mt-2 space-y-4"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="plain" id="split_plain" />
-                  <Label
-                    htmlFor="split_plain"
-                    className="cursor-pointer font-normal"
-                  >
-                    {t("importWizard.page3.folderSplitMode.plain")}
-                  </Label>
+        {hasFolderMapping &&
+          fileType !== "testrail" &&
+          fileType !== "testlink" && (
+            <div>
+              <Label>{t("importWizard.page3.folderSplitMode.label")}</Label>
+              <RadioGroup
+                value={folderSplitMode}
+                onValueChange={(v) => setFolderSplitMode(v as FolderSplitMode)}
+                className="mt-2 space-y-4"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="plain" id="split_plain" />
+                    <Label
+                      htmlFor="split_plain"
+                      className="cursor-pointer font-normal"
+                    >
+                      {t("importWizard.page3.folderSplitMode.plain")}
+                    </Label>
+                  </div>
+                  <p className="ms-6 text-sm text-muted-foreground">
+                    {t("importWizard.page3.folderSplitMode.plainExample")}
+                  </p>
                 </div>
-                <p className="ms-6 text-sm text-muted-foreground">
-                  {t("importWizard.page3.folderSplitMode.plainExample")}
-                </p>
-              </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="slash" id="split_slash" />
-                  <Label
-                    htmlFor="split_slash"
-                    className="cursor-pointer font-normal"
-                  >
-                    {t("importWizard.page3.folderSplitMode.slash")}
-                  </Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="slash" id="split_slash" />
+                    <Label
+                      htmlFor="split_slash"
+                      className="cursor-pointer font-normal"
+                    >
+                      {t("importWizard.page3.folderSplitMode.slash")}
+                    </Label>
+                  </div>
+                  <p className="ms-6 text-sm text-muted-foreground">
+                    {t("importWizard.page3.folderSplitMode.slashExample")}
+                  </p>
                 </div>
-                <p className="ms-6 text-sm text-muted-foreground">
-                  {t("importWizard.page3.folderSplitMode.slashExample")}
-                </p>
-              </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="dot" id="split_dot" />
-                  <Label
-                    htmlFor="split_dot"
-                    className="cursor-pointer font-normal"
-                  >
-                    {t("importWizard.page3.folderSplitMode.dot")}
-                  </Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="dot" id="split_dot" />
+                    <Label
+                      htmlFor="split_dot"
+                      className="cursor-pointer font-normal"
+                    >
+                      {t("importWizard.page3.folderSplitMode.dot")}
+                    </Label>
+                  </div>
+                  <p className="ms-6 text-sm text-muted-foreground">
+                    {t("importWizard.page3.folderSplitMode.dotExample")}
+                  </p>
                 </div>
-                <p className="ms-6 text-sm text-muted-foreground">
-                  {t("importWizard.page3.folderSplitMode.dotExample")}
-                </p>
-              </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="greater_than" id="split_greater" />
-                  <Label
-                    htmlFor="split_greater"
-                    className="cursor-pointer font-normal"
-                  >
-                    {t("importWizard.page3.folderSplitMode.greaterThan")}
-                  </Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="greater_than" id="split_greater" />
+                    <Label
+                      htmlFor="split_greater"
+                      className="cursor-pointer font-normal"
+                    >
+                      {t("importWizard.page3.folderSplitMode.greaterThan")}
+                    </Label>
+                  </div>
+                  <p className="ms-6 text-sm text-muted-foreground">
+                    {t("importWizard.page3.folderSplitMode.greaterThanExample")}
+                  </p>
                 </div>
-                <p className="ms-6 text-sm text-muted-foreground">
-                  {t("importWizard.page3.folderSplitMode.greaterThanExample")}
-                </p>
-              </div>
-            </RadioGroup>
-          </div>
-        )}
+              </RadioGroup>
+            </div>
+          )}
       </div>
     );
   };
@@ -1951,6 +2111,18 @@ export function ImportCasesWizard({
             current={currentMapping}
           />
         )}
+        {fileType === "testlink" &&
+          testLinkNotes &&
+          testLinkNotes.unreadEstimates > 0 && (
+            <Alert data-testid="testlink-import-notes">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {t("importWizard.testRail.unreadEstimates", {
+                  count: testLinkNotes.unreadEstimates,
+                })}
+              </AlertDescription>
+            </Alert>
+          )}
         {fileType === "testrail" &&
           testRailNotes &&
           (testRailNotes.imageCount > 0 ||
@@ -2239,6 +2411,9 @@ export function ImportCasesWizard({
         } else if (fileType === "testrail") {
           convertTestRailFile();
           setCurrentPage(currentPage + 1);
+        } else if (fileType === "testlink") {
+          convertTestLinkFile();
+          setCurrentPage(currentPage + 1);
         } else {
           await parseMarkdownFile();
           setCurrentPage(currentPage + 1);
@@ -2264,9 +2439,11 @@ export function ImportCasesWizard({
             {currentPage === 2 &&
               (fileType === "testrail"
                 ? t("importWizard.page2.titleTestRail")
-                : fileType === "markdown"
-                  ? t("importWizard.page2.titleMarkdown")
-                  : t("importWizard.page2.title"))}
+                : fileType === "testlink"
+                  ? t("importWizard.page2.titleTestLink")
+                  : fileType === "markdown"
+                    ? t("importWizard.page2.titleMarkdown")
+                    : t("importWizard.page2.title"))}
             {currentPage === 3 && t("importWizard.page3.title")}
             {currentPage === 4 && t("importWizard.page4.title")}
           </DialogDescription>

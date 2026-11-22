@@ -666,6 +666,69 @@ describe("CSV Import API Route", () => {
       expect(created[1].docs).toBeUndefined();
     });
 
+    it("splits a TestLink multi-value custom field on its vertical bars", async () => {
+      mockEnhancedDb.templates.findUnique.mockResolvedValue({
+        ...mockTemplate,
+        caseFields: [
+          ...mockTemplate.caseFields,
+          {
+            caseField: {
+              id: 77,
+              systemName: "browsers",
+              displayName: "Browsers",
+              isRequired: false,
+              type: { type: "Multi-select" },
+              minValue: null,
+              maxValue: null,
+              fieldOptions: [
+                { fieldOption: { id: 11, name: "Chrome" } },
+                { fieldOption: { id: 12, name: "Firefox" } },
+              ],
+            },
+          },
+        ],
+      });
+      const request = createRequest({
+        projectId: 1,
+        fileType: "testlink",
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "top_level",
+        fieldMappings: [
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Summary", templateField: "description" },
+          { csvColumn: "Test Suite", templateField: "folder" },
+          { csvColumn: "Browsers", templateField: "browsers" },
+        ],
+        rowMode: "single",
+        parsedData: [
+          {
+            Name: "Pay with a saved card",
+            Summary: "<p>Pays with the card on file.</p>",
+            "Test Suite": ["Checkout", "Refunds / returns"],
+            Browsers: "Chrome|Firefox",
+          },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete).toBeDefined();
+      expect(
+        mockEnhancedDb.repositoryFolders.create.mock.calls.map(
+          ([args]: any) => args.data.name
+        )
+      ).toEqual(["Checkout", "Refunds / returns"]);
+      expect(
+        mockEnhancedDb.caseFieldValues.create.mock.calls
+          .map(([args]: any) => args.data)
+          .find((data: any) => data.fieldId === 77)?.value
+      ).toEqual([11, 12]);
+    });
+
     it("turns TestRail variables in steps into parameters", async () => {
       mockEnhancedDb.templates.findUnique.mockResolvedValue({
         ...mockTemplate,

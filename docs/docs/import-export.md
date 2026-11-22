@@ -14,6 +14,7 @@ The import/export system supports:
 - **CSV Import/Export** for test cases and bulk data operations
 - **[Markdown Import](./import-markdown.md)** for importing test cases from `.md` files (with optional AI-assisted parsing)
 - **[TestRail Import](./import-testrail.md)** for importing the test cases and sections of a TestRail suite from its XML export
+- **[TestLink Import](./import-testlink.md)** for importing the test cases and test suites of a TestLink XML export
 - **Markdown support** for rich text fields during CSV import and export
 - **Automated Test Results Import** for multiple formats (JUnit, TestNG, NUnit, xUnit, MSTest, Mocha, Cucumber)
 - **Field Mapping** for flexible data transformation with auto-matching

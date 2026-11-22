@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite id="" name="" >
+<node_order><![CDATA[]]></node_order>
+<details><![CDATA[]]> 
+</details><testsuite id="101" name="Checkout" >
+<node_order><![CDATA[1]]></node_order>
+<details><![CDATA[<p>Everything a shopper does between the <strong>basket</strong> and the receipt.</p>]]> 
+</details>
+<attachments>
+	<attachment>
+		<id><![CDATA[9]]></id>
+		<name><![CDATA[checkout-flow.txt]]></name>
+		<file_type><![CDATA[text/plain]]></file_type>
+		<file_size><![CDATA[5]]></file_size>
+		<title><![CDATA[Flow]]></title>
+		<date_added><![CDATA[2025-03-01 10:00:00]]></date_added>
+		<content><![CDATA[aGVsbG8=]]></content>
+	</attachment>
+</attachments>
+<testcase internalid="210" name="Pay with a saved card">
+	<node_order><![CDATA[1000]]></node_order>
+	<externalid><![CDATA[1]]></externalid>
+	<fullexternalid><![CDATA[SHOP-1]]></fullexternalid>
+	<version><![CDATA[3]]></version>
+	<summary><![CDATA[<p>A returning shopper pays with the card on file.</p>]]></summary>
+	<preconditions><![CDATA[<ul><li>The shopper is signed in</li><li>A card is saved</li></ul>]]></preconditions>
+	<execution_type><![CDATA[1]]></execution_type>
+	<importance><![CDATA[3]]></importance>
+	<estimated_exec_duration>2.50</estimated_exec_duration>
+	<status>7</status>
+	<is_open>1</is_open>
+	<active>1</active>
+<steps>
+<step>
+	<step_number><![CDATA[2]]></step_number>
+	<actions><![CDATA[<p>Choose the saved card and confirm</p>]]></actions>
+	<expectedresults><![CDATA[<p>The receipt page shows the order total</p>]]></expectedresults>
+	<execution_type><![CDATA[1]]></execution_type>
+</step>
+
+<step>
+	<step_number><![CDATA[1]]></step_number>
+	<actions><![CDATA[<p>Open the basket and select <em>Pay</em></p>]]></actions>
+	<expectedresults><![CDATA[<p>The saved card is offered first</p>]]></expectedresults>
+	<execution_type><![CDATA[1]]></execution_type>
+</step>
+</steps>
+<keywords><keyword name="Smoke"><notes><![CDATA[
+Run on every build
+]]></notes></keyword>
+<keyword name="Payments, cards"><notes><![CDATA[
+
+]]></notes></keyword>
+</keywords>		<custom_fields>
+			<custom_field>
+			<name><![CDATA[Browsers]]></name>
+			<value><![CDATA[Chrome|Firefox]]></value>
+			</custom_field>
+			<custom_field>
+			<name><![CDATA[Status]]></name>
+			<value><![CDATA[Reviewed by QA]]></value>
+			</custom_field>
+			<custom_field>
+			<name><![CDATA[Owner team]]></name>
+			<value><![CDATA[]]></value>
+			</custom_field>
+		</custom_fields>
+<platforms><platform><platform_id>4</platform_id><name>Desktop</name><notes></notes><enable_on_design>1</enable_on_design><enable_on_execution>1</enable_on_execution></platform><platform><platform_id>5</platform_id><name>Mobile</name><notes></notes><enable_on_design>1</enable_on_design><enable_on_execution>1</enable_on_execution></platform></platforms>
+	<requirements>
+		<requirement>
+			<req_spec_title><![CDATA[Payments]]></req_spec_title>
+			<doc_id><![CDATA[PAY-010]]></doc_id>
+			<version><![CDATA[2]]></version>
+			<title><![CDATA[Saved cards]]></title>
+		</requirement>
+		<requirement>
+			<req_spec_title><![CDATA[Payments]]></req_spec_title>
+			<doc_id><![CDATA[PAY-014]]></doc_id>
+			<version><![CDATA[1]]></version>
+			<title><![CDATA[Receipts]]></title>
+		</requirement>
+	</requirements>
+	<attachments>
+		<attachment>
+			<id><![CDATA[12]]></id>
+			<name><![CDATA[card-form.txt]]></name>
+			<file_type><![CDATA[text/plain]]></file_type>
+			<file_size><![CDATA[5]]></file_size>
+			<title><![CDATA[]]></title>
+			<date_added><![CDATA[2025-03-02 09:30:00]]></date_added>
+			<content><![CDATA[aGVsbG8=]]></content>
+		</attachment>
+	</attachments>
+</testcase>
+<testsuite id="102" name="Refunds / returns" >
+<node_order><![CDATA[2]]></node_order>
+<details><![CDATA[]]> 
+</details>
+<testcase internalid="220" name="Refund a delivered order">
+	<node_order><![CDATA[1000]]></node_order>
+	<externalid><![CDATA[2]]></externalid>
+	<fullexternalid><![CDATA[SHOP-2]]></fullexternalid>
+	<version><![CDATA[1]]></version>
+	<summary><![CDATA[]]></summary>
+	<preconditions><![CDATA[]]></preconditions>
+	<execution_type><![CDATA[2]]></execution_type>
+	<importance><![CDATA[1]]></importance>
+	<estimated_exec_duration></estimated_exec_duration>
+	<status>1</status>
+	<is_open>1</is_open>
+	<active>0</active>
+<steps>
+<step>
+	<step_number><![CDATA[1]]></step_number>
+	<actions><![CDATA[]]></actions>
+	<expectedresults><![CDATA[]]></expectedresults>
+	<execution_type><![CDATA[2]]></execution_type>
+</step>
+</steps>
+</testcase>
+	<relation>
+		<source version="1">SHOP-2</source>
+		<destination version="3">SHOP-1</destination>
+		<type>1</type>
+	</relation>
+</testsuite></testsuite><testsuite id="103" name="Empty suite" >
+<node_order><![CDATA[3]]></node_order>
+<details><![CDATA[<p>Nothing here yet.</p>]]> 
+</details></testsuite></testsuite>

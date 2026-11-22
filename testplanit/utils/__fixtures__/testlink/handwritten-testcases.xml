@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testcases>
+<testcase internalid="31" name="Sign in with a wrong password">
+	<node_order><![CDATA[0]]></node_order>
+	<externalid><![CDATA[7]]></externalid>
+	<summary><![CDATA[<p>The account stays locked out of reach.</p>]]></summary>
+	<steps><![CDATA[<p>Enter a wrong password three times</p>]]></steps>
+	<expectedresults><![CDATA[<p>The form reports a wrong password each time</p>]]></expectedresults>
+	<executiontype><![CDATA[2]]></executiontype>
+	<importance><![CDATA[2]]></importance>
+</testcase>
+<testcase internalid="32" name="Sign out">
+	<node_order><![CDATA[1]]></node_order>
+	<externalid><![CDATA[8]]></externalid>
+	<version><![CDATA[1]]></version>
+	<summary><![CDATA[]]></summary>
+	<preconditions><![CDATA[]]></preconditions>
+	<execution_type><![CDATA[1]]></execution_type>
+	<importance><![CDATA[9]]></importance>
+	<estimated_exec_duration>soon</estimated_exec_duration>
+	<status>42</status>
+</testcase>
+</testcases>

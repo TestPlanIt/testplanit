@@ -141,7 +141,7 @@ interface FieldMapping {
 interface ImportRequest {
   projectId: number;
   file?: string;
-  fileType?: "csv" | "markdown" | "testrail";
+  fileType?: "csv" | "markdown" | "testrail" | "testlink";
   delimiter: string;
   hasHeaders: boolean;
   encoding: string;
@@ -284,10 +284,12 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
         let rows: any[];
 
         if (
-          (body.fileType === "markdown" || body.fileType === "testrail") &&
+          (body.fileType === "markdown" ||
+            body.fileType === "testrail" ||
+            body.fileType === "testlink") &&
           body.parsedData
         ) {
-          // The wizard has already parsed Markdown and TestRail files
+          // The wizard has already parsed Markdown, TestRail and TestLink files
           rows = body.parsedData;
         } else {
           // CSV parsing
@@ -448,8 +450,16 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
               ) as any;
               if (field) {
                 try {
+                  // TestLink separates the values of a multi-value custom
+                  // field with a vertical bar.
+                  const fieldInput =
+                    body.fileType === "testlink" &&
+                    field.caseField.type.type === "Multi-select" &&
+                    typeof csvValue === "string"
+                      ? csvValue.split("|").join(",")
+                      : csvValue;
                   const validatedValue = validateFieldValue(
-                    csvValue,
+                    fieldInput,
                     field.caseField,
                     rowIndex + 1,
                     stepOptions
@@ -1190,7 +1200,9 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
                   ? "Markdown Import"
                   : body.fileType === "testrail"
                     ? "TestRail Import"
-                    : "CSV Import",
+                    : body.fileType === "testlink"
+                      ? "TestLink Import"
+                      : "CSV Import",
               templateId: body.templateId,
               importLocation: body.importLocation,
             }

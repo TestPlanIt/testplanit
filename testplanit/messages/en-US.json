@@ -3396,9 +3396,11 @@
           "title": "Map CSV Columns to Fields",
           "titleMarkdown": "Map Markdown Fields to Template Fields",
           "titleTestRail": "Map TestRail Fields to Template Fields",
+          "titleTestLink": "Map TestLink Fields to Template Fields",
           "description": "Map each CSV column to a field in the template or choose to ignore it.",
           "descriptionMarkdown": "Map each field found in the Markdown file to a field in the template or choose to ignore it.",
           "descriptionTestRail": "Map each TestRail field to a field in the template or choose to ignore it.",
+          "descriptionTestLink": "Map each TestLink field to a field in the template or choose to ignore it.",
           "ignoreColumn": "Ignore Column",
           "requiredFieldsWarning": "{count, plural, one {# required field is} other {# required fields are}} not mapped",
           "caseIdHint": "This must be the numeric Case ID — matching cases are overwritten."
@@ -3448,8 +3450,19 @@
           "unreadEstimates": "{count, plural, one {The estimate of # test case could not be read and is left empty.} other {The estimates of # test cases could not be read and are left empty.}}",
           "errors": {
             "invalidXml": "This file could not be read as XML.",
-            "notASuite": "This XML file is not a TestRail test suite export. In TestRail, open the suite's Test Cases page and export it as XML.",
+            "notASuite": "This XML file is not a TestRail or TestLink export. In TestRail, open the suite's Test Cases page and export it as XML. In TestLink, export the test project or a test suite as XML.",
             "noCases": "This TestRail export holds no test cases."
+          }
+        },
+        "testLink": {
+          "summary": "{cases, plural, one {This TestLink export holds # test case in {suites, plural, =0 {no test suite} one {# test suite} other {# test suites}}.} other {This TestLink export holds # test cases in {suites, plural, =0 {no test suite} one {# test suite} other {# test suites}}.}}",
+          "notIncluded": "The export holds the latest version of each test case. Test plans, builds, executions, users and earlier versions are not in the file. Templates and fields are not created by the import, so set up the template before you import.",
+          "attachments": "{count, plural, one {The export holds # file attached to a test case. It is imported when the Attachments column is mapped to Attachments.} other {The export holds # files attached to test cases. They are imported when the Attachments column is mapped to Attachments.}}",
+          "suiteAttachments": "{count, plural, one {# file attached to a test suite is not imported.} other {# files attached to test suites are not imported.}}",
+          "relations": "{count, plural, one {The export holds # relation between test cases. It is not imported.} other {The export holds # relations between test cases. They are not imported.}}",
+          "errors": {
+            "noCases": "This TestLink export holds no test cases.",
+            "attachmentUpload": "The attached file \"{name}\" could not be uploaded. Nothing was imported."
           }
         }
       }
