@@ -29,7 +29,6 @@
     "searchGroups": "Zoeken naar groepen...",
     "searchCases": "{count, plural, =0 {Zoek gevallen} one {Zoek # geval} other {Zoek # gevallen}}",
     "searchProjects": "{count, plural, =0 {Zoek projecten} one {Zoek # project} other {Zoek # projecten}}",
-    "searchTags": "Zoeken naar tags...",
     "searchRuns": "{count, plural, =0 {Zoek testruns} one {Zoek # testrun} other {Zoek # testruns}}",
     "searchSessions": "{count, plural, =0 {Zoek sessies} one {Zoek # sessie} other {Zoek # sessies}}",
     "searchMilestones": "{count, plural, =0 {Zoek mijlpalen} one {Zoek # mijlpaal} other {Zoek # mijlpalen}}",
@@ -100,8 +99,6 @@
       "addedToTestRun": "Toegevoegd aan testrun",
       "addedToTestRunDescription": "De testcase is toegevoegd aan de Test Run.",
       "noAvailableTestRuns": "Alle actieve testruns bevatten deze testcase al.",
-      "resultUpdateError": "Het is niet gelukt om het testresultaat bij te werken",
-      "resultDeleteError": "Het is niet gelukt om het testresultaat te verwijderen",
       "selectStatus": "Selecteer status",
       "addToTestRun": "Toevoegen aan testrun",
       "status": "Status",
@@ -225,7 +222,6 @@
       "notApplicable": "N.v.t.",
       "redirecting": "Omleiden...",
       "pendingDelete": "Wordt verwijderd",
-      "pendingChanges": "Wijzigingen in behandeling",
       "importing": "Importeren...",
       "addingTestCases": "Testgevallen toevoegen..."
     },
@@ -335,7 +331,6 @@
       "notificationMode": "Meldingen",
       "value": "Waarde",
       "key": "Sleutel",
-      "configurationDetails": "Configuratiedetails",
       "isActive": "Actief",
       "members": "Leden",
       "milestoneTypes": "Mijlpaaltypen",
@@ -411,7 +406,6 @@
       "API": "API",
       "folder": "Map",
       "parentFolder": "Oudermap voor nieuwe gevallen",
-      "multipleValues": "Meerdere waarden",
       "multipleValuesCount": "Meerdere waarden ({count, number})",
       "provider": "Aanbieder",
       "updatedAt": "Bijgewerkt op",
@@ -482,8 +476,6 @@
       "invalidDuration": "Voer een geldige duur in",
       "maxDuration": "De duur mag niet langer zijn dan {max} minuten",
       "minLength": "{field} moet minimaal {min} tekens bevatten",
-      "emailFormat": "Ongeldig e-mailadres",
-      "passwordMatch": "Wachtwoorden moeten overeenkomen",
       "unique": "{field} moet uniek zijn",
       "roleRequired": "Rol is vereist",
       "nameMinLength": "Naam moet minimaal 2 tekens lang zijn",
@@ -547,7 +539,6 @@
       "deleteSuccess": "Item succesvol verwijderd",
       "deleteError": "Er is een fout opgetreden bij het verwijderen van het item",
       "moveSuccess": "Item succesvol verplaatst",
-      "moveError": "Er is een fout opgetreden bij het verplaatsen van het item",
       "updateSuccess": "Item succesvol bijgewerkt",
       "updateSuccessCount": "{count, number} items succesvol bijgewerkt",
       "updateError": "Er is een fout opgetreden tijdens het bijwerken van het item",
@@ -555,7 +546,6 @@
       "copyFailed": "Het is niet gelukt om de link naar het klembord te kopiëren",
       "created": "Succesvol aangemaakt",
       "createdItem": "{item} succesvol aangemaakt",
-      "createdDescription": "De testrun is gemaakt en is nu zichtbaar in de lijst Testruns.",
       "createError": "Er is een onbekende fout opgetreden. Probeer het opnieuw.",
       "emptyActive": "Geen actieve testruns",
       "emptyCompleted": "Geen voltooide testruns",
@@ -633,7 +623,6 @@
       "defaultNotFound": "Standaardwaarde niet gevonden",
       "emailExists": "Er bestaat al een gebruiker met dit e-mailadres",
       "nameExists": "Er bestaat al een gebruiker met deze naam",
-      "duplicateValue": "Deze waarde is al in gebruik",
       "unauthorized": "U bent niet bevoegd om deze actie uit te voeren.",
       "accessDenied": "Toegang geweigerd",
       "sessionNotFound": "Sessie niet gevonden of ongeldig.",
@@ -659,8 +648,6 @@
         "unlinkError": "Fout bij het loskoppelen",
         "noActiveIntegration": "Er is geen actieve integratie gevonden voor dit project"
       },
-      "roleRequiredForSpecificRole": "Rol is vereist wanneer het toegangstype Specifieke rol is.",
-      "projectCreationFailed": "Het aanmaken van het project is mislukt, er is geen ID geretourneerd.",
       "invalidRoleId": "Ongeldige rol-ID",
       "workflowStateExists": "Workflowstatus bestaat al. Kies een nieuwe naam.",
       "failedToLoadCaseData": "Het laden van de casusgegevens is mislukt. Kan niet worden opgeslagen.",
@@ -704,11 +691,9 @@
       "resultSubmitPermissionDenied": "Je kunt voor dit testgeval geen resultaten indienen. Vraag een projectbeheerder om dit testgeval aan je toe te wijzen.",
       "dependenciesNotPassed": "Geblokkeerd door afhankelijkheden",
       "dependenciesNotPassedDescription": "Dit testgeval kan niet worden uitgevoerd totdat {count, plural, =0 {de gevallen waarvan het afhangt in deze uitvoering zijn geslaagd} =1 {het geval waarvan het afhangt in deze uitvoering is geslaagd} other {alle # gevallen waarvan het afhangt in deze uitvoering zijn geslaagd}}.",
-      "justificationRequired": "Rechtvaardiging vereist",
       "justificationRequiredDescription": "Om een voltooid resultaat om te zetten naar een andere uitkomst, zijn resultaatdetails nodig die de wijziging toelichten.",
       "requiredFieldMissing": "Een verplicht resultaatveld mist een waarde.",
       "editWindowExpired": "Het bewerkingsvenster voor dit resultaat is gesloten. Probeer het opnieuw.",
-      "issueRequiredOnFailure": "Gekoppeld probleem vereist",
       "issueRequiredOnFailureDescription": "Een foutmelding vereist ten minste één gekoppeld probleem. Koppel een probleem voordat u opslaat.",
       "noModelsFound": "Geen modellen gevonden",
       "failedToFetchModels": "Het ophalen van modellen is mislukt",
@@ -745,7 +730,6 @@
       "reports": "Rapporten",
       "adminSamlConfig": "Beheerder - SAML-configuratie",
       "apiDocumentation": "API-documentatie",
-      "sharedContent": "Gedeelde inhoud",
       "impact": "Impactanalyse",
       "alerts": "Meldingen en waarschuwingen",
       "triage": "Foutpatronen",
@@ -807,7 +791,6 @@
       "unknownGroup": "Onbekende groep",
       "file": "bestand",
       "files": "bestanden",
-      "existingAttachments": "Bestaande bijlagen",
       "new": "Nieuw",
       "noElapsedTime": "Geen tijd geregistreerd",
       "runDurationHint": "Tijd van eerste tot laatste resultaat",
@@ -846,7 +829,6 @@
       "noOptions": "Geen opties beschikbaar",
       "multiConfiguration": "Onderdeel van een groep met meerdere configuraties",
       "compositionLocked": "Samenstelling vergrendeld — de set testgevallen is bevroren",
-      "otherConfigurations": "Andere configuraties",
       "noConfiguration": "Geen configuratie",
       "configurationWithName": "{configuration} — {name}",
       "selected": "Geselecteerd: {count}",
@@ -856,7 +838,6 @@
       "successRate": "Succespercentage",
       "unassigned": "Niet toegewezen",
       "testRunName": "Testrunnaam",
-      "estimatesEllipsis": "Schattingen...",
       "access": {
         "noAccess": "Geen toegang",
         "globalRole": "Globale rol gebruiken",
@@ -876,9 +857,7 @@
       "sessions": "Geen sessies",
       "activeSessions": "Geen actieve sessies",
       "completedSessions": "Geen voltooide sessies",
-      "testCase": "Geen testcase gevonden",
-      "noTestCasesOrSessions": "Geen testcases of sessies gevonden",
-      "noTestCasesSessionsOrRuns": "Geen testcases, sessies of runs gevonden"
+      "testCase": "Geen testcase gevonden"
     },
     "or": "of",
     "for": "voor",
@@ -893,7 +872,6 @@
         "resetColumns": "Kolommen terugzetten naar standaardinstelling"
       },
       "filter": "Filterlijst...",
-      "selectNone": "Selecteer niets",
       "sort": "Kolom sorteren",
       "sortAscending": "Oplopend gesorteerd",
       "sortDescending": "Aflopend gesorteerd",
@@ -917,7 +895,6 @@
       "showing": "Tonen",
       "total": "totaal {count, plural, =1 {# item} other {# items}}",
       "filtered": "gefilterd van",
-      "pageOfPages": "Pagina {current} van {total}",
       "loadedOfTotal": "{loaded, number} van {total, number}"
     },
     "upload": {
@@ -928,7 +905,6 @@
         "description": "Versleep uw bestanden of klik op de onderstaande knop om bestanden te selecteren.",
         "selectFiles": "{count, plural, =0 {Selecteer bestanden} =1 {1 geselecteerd bestand} other {# geselecteerde bestanden}}",
         "selectFile": "{count, plural, =0 {Bestand selecteren} other {1 Geselecteerd bestand}}",
-        "filesSelected": "{count, plural, =1 {1 bestand geselecteerd} other {# bestanden geselecteerd}}",
         "addMoreFiles": "Voeg meer bestanden toe...",
         "replaceFile": "Bestand vervangen...",
         "invalidFileType": "Ongeldig bestandstype. Alleen {types} bestanden zijn toegestaan.",
@@ -953,8 +929,7 @@
       "dropToImportTestResults": "Sleep het bestand hierheen om de testresultaten te importeren.",
       "supportedCsvFormats": "Ondersteunde bestandsformaten: .csv",
       "supportedResultFormats": "Ondersteunde bestandsformaten: .xml, .trx, .json",
-      "unsupportedFileType": "Niet-ondersteund bestandstype. Verwacht: {expected}",
-      "noFilesDetected": "Geen bestanden gevonden in de drop."
+      "unsupportedFileType": "Niet-ondersteund bestandstype. Verwacht: {expected}"
     },
     "editor": {
       "bold": "Vetgedrukt",
@@ -1009,9 +984,7 @@
         "strikethrough": "Doorhalen",
         "code": "Code",
         "codeBlock": "Codeblok",
-        "highlightText": "Markeer tekst",
         "textColor": "Tekstkleur",
-        "moreOptions": "Meer opties",
         "subscript": "Subscript",
         "superscript": "Superscript",
         "alignLeft": "Links uitlijnen",
@@ -1019,9 +992,7 @@
         "alignRight": "Rechts uitlijnen",
         "justify": "Verantwoorden",
         "setLink": "Link instellen",
-        "editLink": "Link bewerken",
-        "removeLink": "Link verwijderen",
-        "resetColorToDefault": "Kleur terugzetten naar standaardinstelling"
+        "removeLink": "Link verwijderen"
       }
     },
     "ai": {
@@ -1078,9 +1049,6 @@
       "breadcrumb": {
         "more": "Meer"
       },
-      "clickToViewDetails": "Klik om details te bekijken",
-      "clickToExpand": "Klik om uit te breiden",
-      "clickToCollapse": "Klik om in te klappen",
       "search": {
         "filters": "Filters",
         "noResultsFound": "Geen resultaten gevonden",
@@ -1098,10 +1066,8 @@
         "openInExternalSystem": "Openen in {provider}",
         "assignee": "Cessionaris",
         "status": "Status: ",
-        "clickToOpenInNewTab": "Klik om te openen in een nieuw tabblad",
         "url": "URL: ",
         "externalId": "Externe ID: ",
-        "viewIn": "Bekijk in",
         "fieldType": "Veldtype: ",
         "richTextContent": "Rich text-inhoud",
         "fieldInformation": "Veldinformatie"
@@ -1120,10 +1086,7 @@
       },
       "import": {
         "encoding": {
-          "utf8": "UTF-8",
-          "iso88591": "ISO-8859-1",
-          "iso885915": "ISO-8859-15",
-          "windows1252": "Windows-1252"
+          "utf8": "UTF-8"
         }
       },
       "loadingIssueTracker": "Informatie over de issue tracker wordt geladen...",
@@ -1194,8 +1157,7 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "De iteratie-index {index} overschrijdt de maximaal ondersteunde waarde van {cap}. Verlaag het aantal iteraties of splits de uitvoering op.",
-        "iterationCapExceededMulti": "Testgevallen {count} vereisen iteratie-indexen die hoger zijn dan de maximaal ondersteunde waarde van {cap}. Verlaag het aantal iteraties of splits de uitvoering op."
+        "iterationCapExceeded": "De iteratie-index {index} overschrijdt de maximaal ondersteunde waarde van {cap}. Verlaag het aantal iteraties of splits de uitvoering op."
       }
     }
   },
@@ -1208,8 +1170,7 @@
         "apple": "Doorgaan met Apple",
         "microsoft": "Ga verder met Microsoft",
         "samlProvider": "Meld je aan met {name}",
-        "magicLink": "Aanmelden met eenmalige Magic Link",
-        "emailLogin": "Doorgaan met e-mail"
+        "magicLink": "Aanmelden met eenmalige Magic Link"
       },
       "magicLink": {
         "description": "Voer uw e-mailadres in en wij sturen u een beveiligde link om in te loggen. Geen wachtwoord vereist. U moet al een account hebben.",
@@ -1280,7 +1241,6 @@
       "error": "E-mailadres kan niet worden geverifieerd",
       "expired": "Verificatielink is verlopen",
       "invalid": "Ongeldige verificatielink",
-      "alreadyVerified": "E-mail al geverifieerd",
       "toast": {
         "verifySuccess": {
           "description": "U kunt nu inloggen op uw account."
@@ -1315,7 +1275,6 @@
       "title": "Verifieer uw identiteit",
       "description": "Voer de 6-cijferige code van uw authenticatie-app in om verder te gaan.",
       "backupCodeLabel": "Back-upcode",
-      "backupCodeHint": "U kunt ook een back-upcode van 8 tekens invoeren.",
       "useAuthenticator": "Gebruik in plaats daarvan de authenticatiecode.",
       "useBackupCode": "Gebruik in plaats daarvan een back-upcode.",
       "signOut": "Meld u af en gebruik een ander account."
@@ -1328,24 +1287,14 @@
       "confirmPasswordLabel": "Nieuw wachtwoord bevestigen",
       "signOut": "Meld je in plaats daarvan af.",
       "passwordsMustMatch": "De wachtwoorden komen niet overeen.",
-      "genericError": "Er is een fout opgetreden. Probeer het opnieuw.",
-      "policyTitle": "Wachtwoordvereisten:",
-      "policyMinLength": "Ten minste {count, number} tekens",
-      "policyUppercase": "Ten minste één hoofdletter",
-      "policyLowercase": "Ten minste één kleine letter",
-      "policyNumbers": "Ten minste één getal",
-      "policySpecialChars": "Ten minste één speciaal teken ({chars})"
+      "genericError": "Er is een fout opgetreden. Probeer het opnieuw."
     }
   },
   "account": {
     "linkSso": {
       "description": "Koppel uw account aan een Single Sign-On-provider",
-      "availableProviders": "Beschikbare SSO-providers",
-      "linkWithGoogle": "Link met Google",
-      "linkWithSaml": "Link met {name}",
       "accountLinked": "Account succesvol gekoppeld",
       "linkingFailed": "Account koppelen mislukt",
-      "noProvidersAvailable": "Er zijn momenteel geen SSO-providers beschikbaar voor koppeling",
       "linkingInfo": "Door een SSO-provider te koppelen, kunt u inloggen met die provider in plaats van met uw wachtwoord. Uw bestaande accountgegevens blijven ongewijzigd.",
       "signInWithGoogle": "Aanmelden met Google",
       "enterpriseSamlSso": "Enterprise SAML SSO",
@@ -1389,7 +1338,6 @@
       "seeAllMilestones": "{count, plural, =1 {Zie # Mijlpaal} =2 {Zie beide Mijlpalen} other {Zie alle # Mijlpalen}}",
       "seeAllTestCases": "{count, plural, =1 {Zie # Testgeval} =2 {Zie beide Testgevallen} other {Zie alle # Testgevallen}}",
       "latestTestCases": "Laatste testgevallen",
-      "createdOn": "Gemaakt op",
       "seeAllTagsCount": "{count, plural, =1 {Zie # Tag} =2 {Zie beide Tags} other {Zie alle # Tags}}",
       "seeAllActiveSessions": "{count, plural, =1 {Zie # Actieve Sessie} =2 {Zie beide Actieve Sessies} other {Zie alle # Actieve Sessies}}",
       "latestSessions": "Laatste sessies",
@@ -1412,8 +1360,6 @@
     },
     "settings": {
       "description": "Beheer instellingen voor {projectName}",
-      "moreSettingsComingSoon": "Binnenkort meer instellingen",
-      "moreSettingsDescription": "In toekomstige updates zullen hier aanvullende projectconfiguratieopties beschikbaar zijn",
       "junitIterationProperties": {
         "title": "Iteratie-eigenschapmapping",
         "description": "Bij het importeren wordt de iteratie-index voor elk testgeval gelezen uit een eigenschap, attribuut of trait waarvan de naam overeenkomt met een van deze vermeldingen (JUnit-eigenschap, TestNG-attribuut, xUnit-trait, NUnit-eigenschap). Voeg de namen toe die uw emitter gebruikt; er wordt niet op hoofdletters of kleine letters gelet.",
@@ -1435,23 +1381,17 @@
         "description": "Beheer integraties van problemen van derden voor dit project",
         "availableIntegrations": "Beschikbare probleemintegraties",
         "availableDescription": "Selecteer een probleemintegratie om verbinding te maken met dit project",
-        "configuredIntegration": "Geconfigureerde integratie",
         "noIntegrationAssigned": "Geen probleemintegratie toegewezen",
         "noIntegrationDescription": "Selecteer een probleemintegratie uit de beschikbare opties om aan de slag te gaan",
         "selectIntegration": "Selecteer een probleemintegratie om te configureren",
         "integration": {
-          "assignError": "Het is niet gelukt om de probleemintegratie toe te wijzen",
           "updateSuccess": "Integratie-instellingen bijgewerkt",
           "updateError": "Het is niet gelukt om de integratie-instellingen voor het probleem bij te werken",
           "removeError": "Het is niet gelukt om de probleemintegratie te verwijderen",
           "removeIntegration": "Integratie verwijderen",
           "confirmRemove": "Weet je zeker dat je de {name} integratie wilt verwijderen?",
-          "authDescription": "U moet zich authenticeren met {provider} om deze probleemintegratie te gebruiken",
           "authenticating": "Authenticatie...",
-          "authSuccess": "Authenticatie succesvol",
           "selectProject": "Selecteer {provider} Project",
-          "selectProjectPlaceholder": "Kies een project om te linken",
-          "linkedProject": "Gekoppeld project",
           "loadProjectsError": "Projecten konden niet worden geladen",
           "settingsSaved": "Integratie-instellingen succesvol opgeslagen",
           "saveSettingsError": "Het is niet gelukt om de integratie-instellingen voor het probleem op te slaan",
@@ -1462,22 +1402,12 @@
           "authorizeIntegration": "Autoriseren {name}",
           "integrationSettings": "{name} Instellingen",
           "integrationSettingsDescription": "Configureer probleemintegratie-instellingen voor dit project",
-          "selectExternalProject": "Selecteer extern project",
-          "refreshProjects": "Projecten vernieuwen",
           "defaultIssueType": "Standaard probleemtype",
           "selectDefaultIssueType": "Selecteer standaardprobleemtype",
-          "defaultIssueTypeDescription": "Dit probleemtype wordt vooraf geselecteerd bij het maken van nieuwe problemen",
-          "issueTypePlaceholder": "bijv. Bug, Taak, Verhaal",
-          "defaultComponent": "Standaardcomponent",
-          "componentPlaceholder": "bijv. Frontend, Backend",
           "automaticSync": "Automatische synchronisatie",
-          "automaticSyncDescription": "Synchroniseer automatisch problemen tussen TestPlanIt en het externe systeem",
           "simpleUrlDescription": "Deze issue-integratie maakt gebruik van een eenvoudig URL-patroon om te linken naar externe issues. Issues worden geopend in een nieuw tabblad met behulp van het geconfigureerde URL-patroon.",
-          "externalProjectHelp": "Hiermee wordt het standaardproject ingesteld voor het maken van nieuwe issues vanuit TestPlanIt. U kunt nog steeds issues vanuit andere externe projecten koppelen en synchroniseren - elke issue volgt zijn eigen bronproject.",
           "linkedProjects": "Gekoppelde externe projecten",
           "linkedProjectsDescription": "Externe projecten die via deze integratie met elkaar verbonden zijn",
-          "noLinkedProjects": "Geen externe projecten gekoppeld",
-          "noLinkedProjectsDescription": "Voeg een extern project toe om het zoeken naar problemen en de synchronisatie ervan mogelijk te maken.",
           "addProjects": "Projecten toevoegen",
           "addSelected": "Geselecteerde toevoegen",
           "setAsDefault": "Instellen als standaard",
@@ -1489,8 +1419,6 @@
           "syncStatusCompleted": "Gesynchroniseerd",
           "syncStatusError": "Synchronisatiefout",
           "fanOutPartialFailure": "Project(en) {count} konden niet worden bereikt. Resultaten van project(en) {successCount} worden weergegeven.",
-          "projectSelectorLabel": "Project",
-          "defaultIssueTypeHelp": "Bij het aanmaken van nieuwe issues vanuit TestPlanIt wordt dit issuetype automatisch geselecteerd. Dit bespaart tijd als u doorgaans hetzelfde type issues aanmaakt.",
           "automaticSyncHelp": "Wanneer ingeschakeld, worden problemen automatisch gesynchroniseerd wanneer er wijzigingen in het externe systeem worden gedetecteerd (via webhooks). Handmatige synchronisatie is altijd beschikbaar.",
           "removeWarningTitle": "Het verwijderen van deze probleemintegratie zal het volgende tot gevolg hebben:",
           "removeWarning1": "Koppel alle gekoppelde problemen los van deze probleemintegratie (problemen blijven in de database)",
@@ -1651,12 +1579,10 @@
         "outboundCreateUrlHelp": "De bestemmings-URL. Slack-webhook-URL's voor inkomende berichten worden automatisch gedetecteerd.",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "Gedetecteerd: Slack",
-        "outboundDetectedHmac": "Gedetecteerd: Generieke HMAC",
         "adapterLabelSlack": "Slack",
         "adapterLabelGenericHmac": "Generieke HMAC-webhook",
         "outboundCreateSubscriptionsTitle": "Abonnementen",
         "outboundCreateSubscriptionsHelp": "Kies welke gebeurtenissen naar deze bestemming worden verzonden. Je kunt dit later wijzigen.",
-        "outboundSubsTestRunsAndSessions": "Testruns en -sessies",
         "outboundSubsTestRuns": "Testruns",
         "outboundSubsSessions": "Sessies",
         "outboundSubsScimUsers": "SCIM-gebruikers",
@@ -1682,7 +1608,6 @@
           "scimGroupMemberAddedSummary": "Toegevoegde leden (samenvatting bulksynchronisatie)",
           "triggered": "Geactiveerd"
         },
-        "iterationResultHelp": "Wordt geactiveerd telkens wanneer een iteratieresultaat wordt vastgelegd — geslaagd, mislukt, overgeslagen of een andere status. Gebruik dit spaarzaam bij lange automatiseringsruns (één gebeurtenis per iteratie).",
         "events": {
           "testRunCreated": "Testrun aangemaakt",
           "testRunStateChanged": "Testuitvoeringsstatus gewijzigd",
@@ -1714,7 +1639,6 @@
         },
         "outboundSubsIssues": "Problemen",
         "outboundSubsCases": "gevallen",
-        "outboundSubsSelectAll": "Selecteer alles in deze sectie",
         "outboundCreateSubmit": "Webhook aanmaken",
         "outboundCreateSuccess": "Uitgaande webhook aangemaakt.",
         "outboundCreateError": "Het aanmaken van een uitgaande webhook is mislukt.",
@@ -1795,14 +1719,11 @@
         "filterConfigPlaceholder": "Alle webhooks",
         "filterEventPlaceholder": "Alle gebeurtenissen",
         "filterStatusFailed": "Mislukt",
-        "filterSinceDefault": "Sinds…",
-        "filterUntilDefault": "Totdat…",
         "filterReset": "Filters resetten",
         "filterBulkReplayButton": "Massale herhaling {count, number} uitgaande fouten",
         "filterBulkReplayHidden": "Alle zichtbare fouten zijn inkomend — activeer in plaats daarvan de upstream-gebeurtenis opnieuw.",
         "deliveriesEmpty": "Geen leveringen voldoen aan deze filters.",
         "deliveriesResetFilters": "Filters resetten",
-        "deliveriesLoadMore": "Meer laden",
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "Evenement",
         "tableHeaderSubjectRef": "Referentie",
@@ -1941,8 +1862,7 @@
           "autoExecute": "Geautomatiseerde cases uitvoeren",
           "autoExecuteHelp": "Vraag na het samenstellen van de run geautomatiseerde uitvoering van de geautomatiseerde cases ervan aan op dit doel. Handmatige cases blijven in de run voor testers.",
           "autoExecuteNoTargets": "Er is geen uitvoeringsdoel geconfigureerd voor dit project. <link>Voeg er een toe</link> om runs automatisch uit te voeren.",
-          "autoExecuteTargetMissing": "Het gekozen uitvoeringsdoel is verwijderd of uitgeschakeld. Runs worden nog steeds samengesteld, maar er wordt geen uitvoering aangevraagd totdat u een ander doel kiest.",
-          "autoExecuteSaveError": "Kan de instellingen voor geautomatiseerde uitvoering niet opslaan"
+          "autoExecuteTargetMissing": "Het gekozen uitvoeringsdoel is verwijderd of uitgeschakeld. Runs worden nog steeds samengesteld, maar er wordt geen uitvoering aangevraagd totdat u een ander doel kiest."
         },
         "inboundEmptyState": "Nog geen inkomende webhooks. <link>Voeg één toe</link> om issue-updates van uw issue tracker of pull requests en pushes van een verbonden repository te ontvangen.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -1961,8 +1881,6 @@
       "aiModels": {
         "description": "Configureer AI-modellen voor het genereren en analyseren van intelligente testcases",
         "availableModelsDescription": "Kies voor dit project een standaard AI-model uit de modellen die door uw systeembeheerder zijn geconfigureerd.",
-        "currentModelSettings": "Huidige modelinstellingen",
-        "currentModelDescription": "Configuratiegegevens voor het momenteel actieve AI-model: {name}",
         "noModelsAvailable": "Er zijn momenteel geen AI-modellen beschikbaar. Neem contact op met uw systeembeheerder om AI-modellen voor uw organisatie te configureren.",
         "monthlyBudget": "Maandelijks budget",
         "model": "Model",
@@ -1971,7 +1889,6 @@
         "systemDefault": "Systeemstandaard",
         "setAsDefault": "Instellen als standaard",
         "clearDefault": "Standaardwaarde wissen",
-        "useForProject": "Gebruik voor project",
         "removeModel": "Standaardwaarde wissen",
         "removeWarningTitle": "Door het standaard AI-model te wissen, wordt het volgende bereikt:",
         "removeWarning1": "Schakel AI-gestuurde functies uit, tenzij er per functie uitzonderingen zijn geconfigureerd.",
@@ -2035,10 +1952,6 @@
           "assignments": "In gebruik bij"
         },
         "versionLabel": "v{version, number}",
-        "assignmentsCount": "{count, plural, =0 {0 gevallen} =1 {# geval} other {# gevallen}}",
-        "rowsCount": "{count, plural, =0 {0 rijen} =1 {# rij} other {# rijen}}",
-        "columnsCount": "{count, plural, =0 {0 kolommen} =1 {# kolom} other {# kolommen}}",
-        "actionsMenuLabel": "Open dataset-acties",
         "actionOpen": "Editor openen",
         "openLink": "Open",
         "create": {
@@ -2071,9 +1984,6 @@
           "saving": "Besparing",
           "savedHint": "Alle wijzigingen zijn opgeslagen in versie {version, number}",
           "unsavedHint": "Niet-opgeslagen wijzigingen",
-          "currentVersionLabel": "v{version, number} (huidig)",
-          "currentVersionInitialLabel": "Huidig",
-          "historicalVersionLabel": "v{version, number}",
           "historicalReadOnlyBanner": "Je bekijkt versie {version, number}. Bewerken zal een nieuwe versie creëren die van deze is afgeleid.",
           "branchingBanner": "Opslaan zal een nieuwe versie creëren die is afgeleid van v{version, number}.",
           "saveError": "Kon de dataset niet opslaan.",
@@ -2088,9 +1998,7 @@
           "historicalItemLabel": "v{version, number}",
           "historicalItemBy": "door {name}",
           "noVersionsYet": "Er zijn nog geen opgeslagen versies beschikbaar."
-        },
-        "datasetTabSharedReadOnlyHint": "Alleen-lezen weergave van versie {version, number}. Schakel over naar de huidige versie om te bewerken.",
-        "datasetTabSharedEditorHint": "Klik op 'Opslaan' als je klaar bent. Elke keer dat je opslaat, wordt een nieuwe versie aangemaakt."
+        }
       },
       "quickScript": {
         "description": "Schakel QuickScript in en verbind een codeopslagplaats voor het genereren van tests met behulp van AI.",
@@ -2169,7 +2077,6 @@
           "pathLabel": "Pad",
           "patternLabel": "Patroon",
           "previewFiles": "Voorbeeldbestanden",
-          "scanningRepo": "Bestanden in de repository scannen… ({seconds}s)",
           "title": "Padpatronen",
           "truncatedBadge": "De resultaten kunnen onvolledig zijn (beperkingen van de aanbieder)"
         },
@@ -2182,8 +2089,6 @@
         },
         "refreshComplete": "Cache vernieuwd: {fileCount} bestanden",
         "refreshInProgress": "Het vernieuwen van de cache wordt nog op de achtergrond uitgevoerd. Dit wordt hier bijgewerkt zodra het is voltooid.",
-        "refreshRateLimited": "Cache vernieuwd: {fileCount} bestanden weergegeven, {contentCached}/{fileCount} inhoud in cache opgeslagen (snelheid beperkt — vernieuw opnieuw om te voltooien)",
-        "refreshSuccess": "Cache vernieuwd: {fileCount} bestanden ({contentCached} inhoud in cache opgeslagen)",
         "repository": {
           "branchLabel": "Tak",
           "branchesTruncatedHint": "De eerste {count, number} branches worden weergegeven. Typ om de hele opslagplaats te doorzoeken.",
@@ -2483,26 +2388,18 @@
       }
     },
     "matrix": {
-      "metaTitle": "Matrixweergave",
       "pageTitle": "Geparameteriseerde testiteratiematrix",
       "loading": "Laadmatrix…",
       "loadError": "De matrixweergave kon niet worden geladen. Probeer het opnieuw of pas uw filters aan.",
-      "cellCapShort": "Deze matrix zou {cells, number} cellen opleveren, wat de limiet van {threshold, number} cellen overschrijdt. Verfijn de filters om verder te gaan.",
       "caseColumnHeader": "Geval / parameterregel",
       "cellSummary": "{pass, number} geslaagd, {fail, number} mislukt, {notRun, number} niet uitgevoerd",
       "popoverTitle": "{count, plural, =1 {# iteratie} other {# iteraties}}",
-      "iterationUnlabeled": "Iteratie #{index, number}",
       "popoverInflightHint": "Iteraties die tijdens de vlucht zijn gemaakt, verschijnen hier zodra ze zijn vastgelegd.",
       "popoverNoTimestamp": "—",
-      "filterStatus": "{count, plural, =0 {Status} one {Status (#)} other {Status (#)}}",
-      "filterConfig": "{count, plural, =0 {Configuratie} one {Configuratie (#)} other {Configuratie (#)}}",
-      "filterDataset": "{count, plural, =0 {Dataset} one {Dataset (#)} other {Dataset (#)}}",
       "filterDatasetLabel": "Dataset",
       "filterStatusPlaceholder": "Elke status",
       "filterConfigPlaceholder": "Elke configuratie",
       "filterDatasetPlaceholder": "Elke dataset",
-      "filterDateFrom": "Van",
-      "filterDateTo": "Naar",
       "configNone": "(geen configuratie)",
       "clearFilter": "Duidelijk",
       "resetFilters": "Filters resetten",
@@ -2583,7 +2480,6 @@
       "reopen": "Heropenen"
     },
     "dates": {
-      "pickStartDate": "Kies startdatum",
       "pickCompletionDate": "Kies voltooiingsdatum",
       "selectDate": "Selecteer datum...",
       "completionWarning": "Waarschuwing: Hiermee wordt de mijlpaal als voltooid gemarkeerd"
@@ -2666,7 +2562,6 @@
       "providerJira": "Jira",
       "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
-      "syncNow": "Nu synchroniseren",
       "unlinkMenuItem": "Ontkoppelen van {provider}",
       "unlinkConfirmTitle": "Mijlpaal ontkoppelen?",
       "unlinkConfirmDescription": "Dit stopt de synchronisatie met de tracker: velden worden weer bewerkbaar, gesynchroniseerde probleemkoppelingen worden handmatig (u kunt ze behouden of verwijderen), en opnieuw koppelen is later mogelijk door dit artefact opnieuw te importeren.",
@@ -2702,10 +2597,6 @@
       "columnCoverage": "Dekking",
       "columnSource": "Bron",
       "sourceSynced": "Gesynchroniseerd",
-      "coveragePassed": "Geslaagd",
-      "coverageFailed": "Mislukt",
-      "coverageInProgress": "In behandeling",
-      "coverageNotRun": "Niet uitgevoerd",
       "coverageUncovered": "Niet gedekt",
       "filterAllCoverage": "Alle dekking",
       "filterAllSources": "Alle bronnen",
@@ -2724,7 +2615,6 @@
       "overflowImportAction": "Importeren & koppelen",
       "overflowImportSuccess": "Import gestart — problemen verschijnen zodra ze zijn gesynchroniseerd.",
       "overflowImportError": "Het importeren van gekoppelde problemen uit Jira is mislukt.",
-      "emptyCta": "Koppel een probleem om te beginnen.",
       "unlinkConfirmTitle": "Probleem ontkoppelen?",
       "unlinkConfirmDescription": "Dit verwijdert het probleem van deze mijlpaal. Het probleem zelf blijft behouden en kan later opnieuw worden gekoppeld.",
       "totalsUncovered": "{count, plural, one {# niet-gedekt probleem} other {# niet-gedekte problemen}}",
@@ -2781,9 +2671,7 @@
     },
     "messages": {
       "createSuccess": "Sessie succesvol aangemaakt",
-      "createSuccessMultiple": "{count, number} Sessies succesvol aangemaakt",
-      "duplicateSuccess": "Sessie succesvol gedupliceerd",
-      "duplicateSuccessMultiple": "{count} Sessies succesvol gedupliceerd"
+      "createSuccessMultiple": "{count, number} Sessies succesvol aangemaakt"
     },
     "duplicateDialog": {
       "title": "Dubbele sessie",
@@ -2795,8 +2683,7 @@
       "failedToCreate": "Het is niet gelukt om een nieuwe sessie te maken",
       "failedToCreateVersion": "Het is niet gelukt om een sessieversie te maken",
       "nameAlreadyExists": "Sessienaam bestaat al. Kies een nieuwe naam.",
-      "createFailed": "Sessie aanmaken mislukt",
-      "duplicateFailed": "Het dupliceren van de sessie is mislukt."
+      "createFailed": "Sessie aanmaken mislukt"
     },
     "validation": {
       "nameMinLength": "De naam moet minimaal 2 tekens bevatten.",
@@ -2835,7 +2722,6 @@
     "summary": {
       "workDistributionDescription": "Geschatte totale resterende tijd:",
       "recentResultsTitle": "Samenvatting van recente resultaten",
-      "recentResultsDescription": "Samenvatting van de sessieresultaten.",
       "noRecentResults": "Er zijn recentelijk geen sessieresultaten geregistreerd.",
       "completionTrendTitle": "Voltooiingstrend",
       "completionTrendDescription": "Voltooide sessies per maand.",
@@ -2965,8 +2851,6 @@
         "title": "Profiel bewerken",
         "timezonePlaceholder": "Selecteer of zoek tijdzone...",
         "timezoneRequired": "Tijdzone is vereist.",
-        "avatarUpdated": "Avatar succesvol bijgewerkt.",
-        "avatarUpdateError": "Avatar kon niet worden bijgewerkt.",
         "deleteAvatar": "Avatar verwijderen",
         "deleteAvatarConfirm": "Weet je zeker dat je je {name} wilt verwijderen?",
         "emailDisabledForSso": "E-mailadres kan niet worden gewijzigd voor SSO-accounts. Werk het bij via uw identiteitsprovider.",
@@ -3010,7 +2894,6 @@
       "notifications": {
         "title": "Meldingsvoorkeuren",
         "description": "Pas aan hoe u meldingen ontvangt",
-        "currentGlobal": "Huidige globale instelling: {mode}",
         "mode": {
           "label": "Meldingsmodus",
           "useGlobal": "Gebruik algemene instellingen"
@@ -3154,7 +3037,6 @@
         "loadMore": "Bezig met laden",
         "viewDetails": "Bekijk details",
         "columnAction": "Actie",
-        "columnTimestamp": "Tijdstempel",
         "allActions": "Alle acties",
         "allTypes": "Alle typen",
         "noMatchingEntries": "Geen items komen overeen met de geselecteerde filters.",
@@ -3323,22 +3205,16 @@
       "removedFromCase": "Verwijderd uit testgeval",
       "confirmDelete": "Bevestig verwijderingsstap {number, number}?",
       "createSharedSteps": "Gedeelde {number, plural, one {Stap} other {Stappen}} maken",
-      "sharedStepsName": "Naam gedeelde stappen",
       "sharedStepsDescription": "Voer een naam in voor je nieuwe gedeelde {number, plural, one {stap} other {stappen}}. Dit omvat {number, plural, one {# geselecteerde stap} other {# geselecteerde stappen}}.",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "Selecteer stappen en voer een naam in om gedeelde stappen te maken.",
-        "failedToCreateSharedStepGroupError": "Het aanmaken van de gedeelde stappen is mislukt. Probeer het opnieuw.",
-        "sharedStepGroupCreatedSuccess": "Gedeelde stappen succesvol aangemaakt!",
-        "genericSharedStepCreationError": "Er is een onbekende fout opgetreden bij het aanmaken van de gedeelde stappen. Probeer het opnieuw.",
         "errorCreatingSharedGroup": "Het aanmaken van gedeelde stappen is mislukt. Probeer het opnieuw.",
         "sharedGroupCreatedSuccess": "Gedeelde stappengroep succesvol aangemaakt!",
         "failedToCreateSharedGroupError": "Het aanmaken van de gedeelde groep is mislukt. Probeer het opnieuw."
       },
       "selectSharedStepsTitle": "Selecteer gedeelde stappen",
       "selectSharedStepsDescription": "Kies gedeelde stappen die u aan uw testcase wilt toevoegen.",
-      "sharedStepsListPlaceholder": "Gedeelde stappen laden...",
       "sharedStepsNamePlaceholder": "Voer een naam in om de gedeelde stappen te identificeren",
-      "noSharedStepsFound": "Er zijn geen gedeelde stappen gevonden voor dit project.",
       "sharedStepGroupTitle": "Gedeelde stappen: {name}",
       "confirmDeleteSharedStepBlock": "Weet u zeker dat u het gedeelde stappenblok \"{name}\" uit deze testcase wilt verwijderen? Hiermee wordt de gedeelde stappengroep zelf niet verwijderd.",
       "removeBlockButton": "Blok verwijderen",
@@ -3347,7 +3223,6 @@
       "searchSharedStepsPlaceholder": "Selecteer gedeelde stappen...",
       "stepsCountLabel": "{count, plural, =0 {# stappen} =1 {# stap} other {# stappen}}",
       "reviewSelectedStepsTitle": "Bekijk geselecteerde stappen",
-      "noStepsInSelectedGroup": "De geselecteerde groep heeft geen stappen.",
       "sharedGroupSuffix": "(Gedeelde stappen)",
       "unnamedSharedGroup": "Naamloze gedeelde stappen",
       "noStepsInSelectedSharedGroup": "De geselecteerde gedeelde groep heeft geen stappen.",
@@ -3358,8 +3233,6 @@
       }
     },
     "testCase": {
-      "toggleAutomated": "Schakel geautomatiseerd testen in",
-      "editAttachmentsIndividually": "Bewerk bijlagen afzonderlijk.",
       "automatedStatus": "Geautomatiseerd testen is {status}"
     },
     "templateNotAssignedWarning": "Deze testcase gebruikt de sjabloon \"{templateName}\", die momenteel niet is toegewezen aan het project \"{projectName}\". Mogelijk moet u deze sjabloon aan het project toewijzen of de testcase aanpassen om een andere sjabloon te gebruiken.",
@@ -3390,12 +3263,10 @@
     },
     "dragDrop": {
       "move": "Beweging",
-      "promptTitle": "Wat zou je graag willen doen?",
       "copying": "… kopiëren",
       "copyComplete": "{count, plural, =1 {1 case gekopieerd naar {folder}} other {# cases gekopieerd naar {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "moveComplete": "{count, plural, =1 {1 case verplaatst naar {folder}} other {# cases verplaatst naar {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "copyError": "{count, plural, =1 {Kan 1 case niet kopiëren naar {folder}} other {Kan # cases niet kopiëren naar {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
-      "moveError": "{count, plural, =1 {Kan 1 case niet verplaatsen naar {folder}} other {Kan # cases niet verplaatsen naar {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "copyAlreadyRunning": "Een andere kopie is al in bewerking. Wacht alstublieft tot deze klaar is.",
       "currentSuffix": "(Huidig)",
       "moveDisabledSameFolder": "De testgevallen bevinden zich al in deze map.",
@@ -3446,7 +3317,6 @@
       "currentRunTooltip": "De testrun die u bekijkt",
       "attempt": "Poging",
       "invalidProject": "Ongeldig project",
-      "noSearchResults": "Er zijn geen cases gevonden die aan uw zoekcriteria voldoen.",
       "bulkEdit": "Bulkbewerking",
       "createTestRun": "Testrun maken",
       "addToRunDraftBlocked": "Conceptcases kunnen niet aan testruns worden toegevoegd als de optie \"Conceptcases uitsluiten van testruns\" voor dit project is ingeschakeld.",
@@ -3670,10 +3540,7 @@
       "anyIssue": "Elk probleem",
       "noIssues": "Geen problemen"
     },
-    "noFoldersTitle": "Nog geen mappen",
-    "noFoldersDescription": "Begin met het maken van uw eerste map om uw testcases te organiseren.",
     "noFoldersOrCasesNoPermission": "Er zijn geen mappen of testcases om weer te geven.",
-    "createFirstFolder": "Maak uw eerste map aan",
     "bulkEdit": {
       "title": "Bulk bewerken {count, plural, one {# Geval} other {# Gevallen}}",
       "description": "Bewerken {count, plural, one {# geselecteerd geval} other {# geselecteerde gevallen}}. Vink een veld aan om bewerken mogelijk te maken.",
@@ -3692,19 +3559,12 @@
         }
       },
       "errors": {
-        "fetchErrorTitle": "Fout bij het laden van gevallen",
-        "fetchErrorDescription": "Gegevens voor de geselecteerde cases konden niet worden geladen. Sluit het venster en probeer het opnieuw.",
-        "updateErrorTitle": "Update mislukt",
-        "updateFailed": "Er is een fout opgetreden bij het opslaan van de wijzigingen. Controleer de gegevens en probeer het opnieuw.",
-        "fetchError": "Fout bij het ophalen van de casusgegevens."
+        "updateFailed": "Er is een fout opgetreden bij het opslaan van de wijzigingen. Controleer de gegevens en probeer het opnieuw."
       },
       "success": {
         "casesUpdated": "{count, number} gevallen succesvol bijgewerkt"
       },
       "validationError": "Validatiefout",
-      "stepsCannotBeBulkEdited": "Stappen kunnen niet in bulk worden bewerkt",
-      "stepsInfoTitle": "Stappen Info",
-      "stepsCannotBeBulkEditedInfo": "Stappen kunnen niet in bulk worden bewerkt. Bewerk stappen door de cases afzonderlijk te bewerken.",
       "confirmDeleteCases": "Weet u zeker dat u {count, plural, one {# geselecteerde case} other {# geselecteerde cases}} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
       "replaceAll": "Alles vervangen",
       "searchReplace": "Zoeken en vervangen",
@@ -3765,7 +3625,6 @@
         "single": "Eén rij per geval",
         "multi": "Meerdere rijen per stap"
       },
-      "comingSoon": "Binnenkort beschikbaar",
       "exportError": "Exporteren is mislukt. Probeer het opnieuw."
     },
     "quickScript": {
@@ -3846,19 +3705,13 @@
       "loadingDetails": "Details van het testgeval worden geladen...",
       "caseDetailsError": "Het laden van de casusdetails is mislukt.",
       "sourceLabel": "Bron",
-      "fieldValuesLabel": "Veldwaarden",
       "lastRunLabel": "Laatste run",
-      "noFieldValues": "Geen veldwaarden",
       "noLastRun": "Nooit uitgevoerd",
-      "stepExpectedResult": "{step} → {result}",
-      "runStatusDate": "{status} — {date}",
       "noFolder": "Geen map",
       "duplicateWarning": "Mogelijke duplicaten gevonden",
       "duplicateWarningDescription": "{count, plural, one {# bestaand geval kan vergelijkbare functionaliteit omvatten} other {# bestaande gevallen kunnen vergelijkbare functionaliteit omvatten}}",
       "duplicateWarningReview": "Beoordeling",
-      "importWarning": "Mogelijk een duplicaat",
       "importWarningTooltip": "Deze casusnaam is vergelijkbaar met {count, plural, one {# bestaande casus} other {# bestaande casussen}}: {names}",
-      "importIntraWarning": "Duplicaat binnen import",
       "importIntraWarningTooltip": "Rijen {rows} in deze import hebben dezelfde of een zeer vergelijkbare naam.",
       "checkingDuplicates": "Controleren op duplicaten..."
     },
@@ -3888,12 +3741,8 @@
         "currentFolder": "huidige map",
         "fromIssue": "Van probleem",
         "fromDocument": "Van document",
-        "documentTitle": "Documenttitel",
-        "documentTitlePlaceholder": "Voer de titel van uw vereistendocument in",
         "documentDescription": "Vereisten Document",
         "documentDescriptionPlaceholder": "Plak hier de inhoud van uw vereistendocument...",
-        "documentPriority": "Prioriteit (optioneel)",
-        "selectPriority": "Selecteer prioriteit",
         "saveDocument": "Vereisten voor het opslaan van documenten",
         "fromUrl": "Van URL",
         "recentGenerations": "Recente taken: Testcases genereren vanuit URL",
@@ -3960,15 +3809,11 @@
         "title": "Gegenereerde testcases beoordelen",
         "description": "Bekijk de door de AI gegenereerde testcases, breng eventuele wijzigingen aan en selecteer welke u wilt importeren.",
         "selected": "{count, number} van {total, number} geselecteerd",
-        "moreSteps": "... en {count, plural, one {# volgende stap} other {# volgende stappen}}",
         "templateFields": "Sjabloonvelden:",
-        "moreFields": "... en nog {count, plural, one {# veld} other {# velden}}",
-        "crawledUrls": "{count, plural, one {# pagina gecrawld} other {# pagina's gecrawld}}",
         "spaWarning": "Deze pagina vereist mogelijk JavaScript voor weergave. De resultaten kunnen onvolledig zijn.",
         "filterByPage": "Filteren op pagina",
         "allPages": "Alle pagina's ({pages, plural, one {# pagina} other {# pagina's}}, {cases, plural, one {# geval} other {# gevallen}})"
       },
-      "generatingLegacy": "Testgevallen genereren met AI...",
       "expandProgress": "{done, number} van {total, number} gegenereerd",
       "import": "{count, plural, =0 {Testcases importeren} =1 {1 testcase importeren} other {# Testcases importeren}}",
       "stage": "{count, plural, =0 {Testcases voorbereiden} =1 {1 testcase voorbereiden} other {# testcases voorbereiden}}",
@@ -4010,11 +3855,6 @@
         "repositoryNotFound": "Projectrepository niet gevonden. Neem contact op met uw beheerder.",
         "workflowNotConfigured": "Projectworkflow niet geconfigureerd. Controleer de projectinstellingen.",
         "authenticationError": "Authenticatiefout. Vernieuw de pagina en probeer het opnieuw.",
-        "caseCreationFailed": "Het is niet gelukt om een testcase aan te maken: {name}",
-        "caseAlreadyExists": "Testgeval \"{name}\" bestaat al in deze map.",
-        "invalidTemplateConfig": "Ongeldige sjabloonconfiguratie voor testgeval \"{name}\".",
-        "nameTooLong": "De testcasenaam \"{name}\" is te lang. Gebruik een kortere naam.",
-        "caseCreationError": "Het is niet gelukt om \"{name}\" te maken: {error}",
         "templateNotFound": "Het geselecteerde sjabloon kon niet worden gevonden. Vernieuw de pagina en probeer het opnieuw.",
         "repositoryConfigError": "Fout in de configuratie van de projectrepository. Neem contact op met uw beheerder.",
         "workflowConfigError": "Fout in de projectworkflowconfiguratie. Controleer de projectinstellingen.",
@@ -4022,9 +3862,7 @@
         "validationFailed": "Gegevensvalidatie is mislukt. Controleer de inhoud van de testcase en probeer het opnieuw.",
         "databaseError": "Fout bij de databaseverbinding. Probeer het over een moment opnieuw.",
         "genericImportError": "Import mislukt: {error}",
-        "networkRoutingError": "Probleem met netwerkroutering of serverconfiguratie - HTML-foutpagina ontvangen in plaats van API-antwoord",
         "invalidSourceConfig": "Ongeldige bronconfiguratie",
-        "failedToCreateCaseVersion": "Het is niet gelukt om een case-versie aan te maken.",
         "noUrlProvided": "Voer een URL in om testcases te genereren.",
         "urlFetchFailed": "Het ophalen van content van de opgegeven URL is mislukt. Controleer de URL en probeer het opnieuw.",
         "llm": {
@@ -4230,7 +4068,6 @@
       "startLine": "Startlijn",
       "symbolHint": "De verklaring wordt op naam in het bestand gevonden.",
       "symbolNoneDetected": "Geen symbolen gedetecteerd, typ een naam.",
-      "symbolPlaceholder": "functionName",
       "symbolSelectPlaceholder": "Selecteer of typ een symbool...",
       "updateSuccess": "Pin bijgewerkt",
       "updateFailed": "Kon de pin niet bijwerken",
@@ -4257,9 +4094,6 @@
     "add": {
       "button": "Tag toevoegen",
       "title": "Nieuwe tag toevoegen",
-      "fields": {
-        "name_error": "Tagnaam is vereist"
-      },
       "errors": {
         "nameExists": "Er bestaat al een tag met deze naam."
       }
@@ -4368,7 +4202,6 @@
       "filterEntityTypeRun": "Testruns",
       "filterAllProjects": "Alle projecten",
       "actionRevert": "Beslissing terugdraaien",
-      "revertedBadge": "Teruggedraaid",
       "revertedBadgeTooltip": "{count, plural, =1 {Eenmaal eerder teruggedraaid} other {# keer eerder teruggedraaid}}"
     },
     "requester": {
@@ -4387,9 +4220,7 @@
       "cannotSelfAssign": "Je kunt jezelf geen beoordeling toewijzen; kies een andere gebruiker of een rol.",
       "defaultComment": "Bekijk de overgang van {fromState} → {toState}.",
       "defaultCommentRole": "Goedkeuring aanvragen van de {roleName} -groep voor de overgang van {fromState} → {toState}.",
-      "ineligibleAssigneeError": "Deze gebruiker/rol kan geen beoordelingen voor dit gebied goedkeuren. Kies iemand anders.",
-      "ineligibleAssigneeErrorUser": "{name} kan geen beoordelingen voor dit gebied goedkeuren. Kies een andere gebruiker of een rol.",
-      "ineligibleAssigneeErrorRole": "De rol {roleName} kan geen beoordelingen voor dit gebied goedkeuren. Kies een andere rol of een gebruiker."
+      "ineligibleAssigneeError": "Deze gebruiker/rol kan geen beoordelingen voor dit gebied goedkeuren. Kies iemand anders."
     },
     "bulkRequester": {
       "saveAndRequestButton": "Opslaan & beoordeling aanvragen",
@@ -4428,8 +4259,7 @@
       "rejectSuccess": "Beoordeling afgewezen.",
       "ineligibleError": "U bent niet langer bevoegd om over dit herzieningsverzoek te beslissen.",
       "alreadyDecidedError": "Over deze beoordeling is al besloten.",
-      "decideError": "Uw beslissing kon niet worden opgeslagen. Probeer het over een moment opnieuw.",
-      "panelSummary": "Reviewverzoek van {requesterName}: overgang naar {targetStateName}"
+      "decideError": "Uw beslissing kon niet worden opgeslagen. Probeer het over een moment opnieuw."
     },
     "revert": {
       "confirm": "Beslissing terugdraaien",
@@ -4545,17 +4375,12 @@
         "noMatchesDescription": "De naam en beschrijving van de testrun komen niet overeen met testgevallen. Ga terug naar de vorige stap en voeg specifiekere details toe, zoals functienamen, componentnamen of trefwoorden die in uw testgevallen voorkomen.",
         "maxResultsTitle": "Maximaal aantal testgevallen komt overeen",
         "maxResultsDescription": "De zoekcriteria kwamen overeen met een groot aantal testgevallen. Voor meer gerichte resultaten kunt u teruggaan naar de vorige stap en meer specifieke details aan de testuitvoering toevoegen.",
-        "batchSize": "Batchgrootte",
-        "batchSizeAll": "Alle gevallen (één aanvraag)",
-        "batchSizePercent": "{percent}% ({count} gevallen)",
-        "requestsNeeded": "{count, plural, =1 {# AI-verzoek wordt gedaan} other {# AI-verzoeken worden gedaan}}",
-        "batchNote": "De resultaten van alle batches worden gecombineerd."
+        "batchSize": "Batchgrootte"
       },
       "loading": {
         "batch": "Batch {current} van {total} wordt verwerkt",
         "analyzing": "Testgevallen analyseren...",
         "progress": "Geanalyseerde {analyzed, number} van {total, number} testgevallen...",
-        "waitingForAi": "Wachten op AI-reactie (batch {batch} van {total})...",
         "selectedSoFar": "{count, plural, =1 {# tot nu toe geselecteerd testgeval} other {# tot nu toe geselecteerde testgevallen}}",
         "resolving_integration": "Het oplossen van AI-integratieproblemen...",
         "fetching_cases": "Testgevallen ophalen..."
@@ -4578,7 +4403,6 @@
       },
       "actions": {
         "start": "Testgevallen analyseren",
-        "startBatched": "Testgevallen analyseren ({count, plural, one {# batch} other {# batches}})",
         "accept": "Toevoegen aan selectie"
       },
       "errors": {
@@ -4603,13 +4427,8 @@
     "summary": {
       "title": "Samenvatting van de testrun",
       "description": "Bekijk de samenvatting van de testrun",
-      "activeRunsAndEstTime": "Actieve runs en geschatte tijd",
-      "activeRunsLabel": "Runs",
-      "totalEstTime": "Totale geschatte tijd",
-      "responsibleUsers": "Verantwoordelijke gebruikers",
       "allActiveRuns": "Alle actieve runs",
       "recentResultsTitle": "Recente handmatige resultaten",
-      "recentResultsDescription": "Bekijk de recente resultaten van de testrun",
       "recentAutomatedResultsTitle": "Recente geautomatiseerde resultaten",
       "noRecentAutomatedResults": "Geen recente geautomatiseerde resultaten gevonden.",
       "automationRunsInProgress": "{count, plural, =1 {# Automatiseringsrun in uitvoering} other {# Automatiseringsruns in uitvoering}}",
@@ -4632,13 +4451,11 @@
       "fields": {
         "duplicateScope": {
           "label": "Testgevallen om te dupliceren",
-          "allCases": "Alle testgevallen",
-          "specificStatuses": "Testgevallen met specifieke statussen"
+          "allCases": "Alle testgevallen"
         },
         "statusesToInclude": {
           "label": "Testgevallen om op te nemen",
           "description": "Selecteer de statussen van testcases die u wilt opnemen in de gedupliceerde testrun.",
-          "noStatuses": "Er zijn geen specifieke statussen gevonden tijdens deze testrun of de resultaten worden nog geladen.",
           "noStatusesRecorded": "Er zijn geen specifieke statussen geregistreerd in deze run. Dupliceren omvat alle testcases (meestal als 'Niet getest')."
         },
         "copyAssignments": {
@@ -4717,9 +4534,7 @@
         "previousAnalysisPlaceholder": "Selecteer een analyse...",
         "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# beïnvloede test} other {# beïnvloede tests}}",
         "sameCommit": "Basis en kop zijn dezelfde commit.",
-        "swapped": "Basis en kop zijn omgewisseld, zodat de wijzigingen voorwaarts lezen.",
-        "loadingCommits": "Commits laden…",
-        "noCommits": "Geen commits gevonden."
+        "swapped": "Basis en kop zijn omgewisseld, zodat de wijzigingen voorwaarts lezen."
       },
       "diff": {
         "summary": "{files, plural, one {# bestand} other {# bestanden}} gewijzigd · +{additions, number} −{deletions, number}",
@@ -4727,13 +4542,9 @@
         "noChanges": "Geen wijzigingen tussen deze commits.",
         "statusModified": "Gewijzigd",
         "statusRenamed": "Hernoemd",
-        "showPatch": "Wijzigingen weergeven",
-        "hidePatch": "Wijzigingen verbergen",
-        "largePatch": "Grote patch ({lines, number} regels)",
         "showFullPatch": "Volledige patch weergeven",
         "binary": "Binair bestand",
         "noPatch": "Patch niet beschikbaar",
-        "pinnedFiles": "{count, plural, one {# pin} other {# pins}}",
         "loading": "Commits vergelijken…"
       },
       "loading": {
@@ -4819,7 +4630,6 @@
       },
       "actions": {
         "analyze": "Analyseren",
-        "reanalyze": "Opnieuw analyseren",
         "refine": "Terug naar wijzigingen",
         "accept": "{count, plural, one {Voeg # case toe} other {Voeg # cases toe}}",
         "cancelAnalysis": "Analyse annuleren"
@@ -4930,11 +4740,6 @@
         "analyzing": "Analyseren...",
         "reset": "Duidelijke resultaten",
         "job": {
-          "discoveringDatasets": "Datasets ontdekken...",
-          "scanningFile": "Testmo-exportbestand scannen...",
-          "rowsProcessed": "{value, number} rijen verwerkt",
-          "itemsProcessed": "{processed, number} van {total, number} items verwerkt",
-          "analysisInProgress": "Export analyseren…",
           "cancel": "Import annuleren",
           "cancelRequested": "Annuleren aangevraagd",
           "processingRate": "Tarief:",
@@ -4966,12 +4771,9 @@
         "mappingDescription": "Bekijk de analysedetails en wijs Testmo-entiteiten toe aan bestaande TestPlanIt-records, of kies ervoor om nieuwe te maken.",
         "mappingAnalysisError": "We konden geen kaartanalyse genereren. Probeer het opnieuw.",
         "mappingLoading": "Analyse van gebouwkaarten…",
-        "mappingSummaryHeading": "Gedetecteerde entiteiten",
-        "mappingSummaryPending": "{count, plural, =1 {# in behandeling} other {# in behandeling}}",
         "mappingOutstandingTitle": "Los openstaande toewijzingen op",
         "mappingOutstandingDescription": "Voltooi de resterende toewijzingen voordat u met importeren begint.",
         "mappingOutstandingItem": "{count, plural, =1 {# onopgelost item} other {# onopgeloste items}} in {label}",
-        "mappingSummaryTemplateFields": "Sjabloonvelden",
         "mappingDatasetLabels": {
           "field_values": "Veldwaarden",
           "repository_case_values": "Repository case-waarden",
@@ -5048,7 +4850,6 @@
         "mappingDatasetEmptyTitle": "Geen datasets bewaard",
         "mappingDatasetEmptyDescription": "De analyse heeft geen datasets bewaard voor configuratie. Upload een andere export als u aanvullende gegevens verwacht.",
         "importProgressTitle": "Importvoortgang",
-        "importProgressDescription": "{count, plural, =0 {Alle records geïmporteerd over de gevolgde entiteiten.} =1 {1 record resterend over de gevolgde entiteiten.} other {# records resterend over de gevolgde entiteiten.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {Geen resterende records} =1 {1 record resterend} other {# records resterend}}",
         "importProgressProcessed": "{processed, number}/{total, number} records geïmporteerd",
         "importProgressAria": "{percent, number}% van de import voltooid",
@@ -5073,7 +4874,6 @@
         "jobLoadFailed": "We konden die importtaak niet laden.",
         "uploadProgressAnalyzing": "Uploaden voltooid. Bestand…analyseren",
         "uploadProgressComplete": "Upload voltooid",
-        "etaLabel": "Verwachte aankomsttijd: {time}",
         "startImportButton": "Importeren starten",
         "workflowCreate": {
           "nameLabel": "Workflownaam",
@@ -5083,18 +4883,11 @@
           "typeLabel": "Workflowtype",
           "scopeLabel": "Werkstroombereik"
         },
-        "mappingDatasets": "Datasets die beoordeeld moeten worden",
         "mappingImportConfiguration": "Configuratie importeren",
         "mappingExportConfiguration": "Configuratie exporteren",
         "mappingImportConfigurationFailed": "We konden dat configuratiebestand niet importeren. Controleer of het een geldige JSON is en probeer het opnieuw.",
-        "mappingInvalidConfiguration": "Configuratie moet geldige JSON zijn.",
-        "mappingSaveFailed": "De configuratie kon niet worden opgeslagen. Probeer het opnieuw.",
         "mappingSaveConfiguration": "Configuratie opslaan",
-        "mappingSavingConfiguration": "Opslaan…",
-        "mappingStartImport": "Achtergrondimport starten",
-        "mappingStartingImport": "Import starten…",
         "mappingImportFailed": "Het importeren op de achtergrond kon niet worden gestart. Probeer het opnieuw.",
-        "mappingImportDisabled": "Sla een configuratie op voordat u met de achtergrondimport begint.",
         "mappingImportInProgress": "Achtergrondimport bezig",
         "mappingImportInProgressDescription": "De importworker verwerkt de configuratie. U kunt de status hierboven bekijken.",
         "mapping": {
@@ -5154,11 +4947,7 @@
           "templateFieldTargetResult": "Resultaatveld",
           "templateFieldSelectPlaceholder": "Selecteer veld",
           "templateFieldNoExistingTargets": "Er zijn geen velden beschikbaar om in kaart te brengen.",
-          "templateFieldTypePlaceholder": "Selecteer veldtype",
           "templateFieldRestrictedLabel": "Beperkt veld",
-          "templateFieldOptionsLabel": "Keuzemenu-opties",
-          "templateFieldOptionsPlaceholder": "Voer één optie per regel in",
-          "templateFieldOptionsHint": "Scheid elke optie met een nieuwe regel.",
           "templateFieldOptionsListLabel": "Opties",
           "templateFieldOptionsCheckedLabel": "Standaard aangevinkt",
           "templateFieldOptionsMinValueLabel": "Minimale waarde",
@@ -5211,7 +5000,6 @@
           "milestoneNamePlaceholder": "Voer een naam in voor het mijlpaaltype",
           "milestoneDefaultLabel": "Standaard mijlpaaltype",
           "milestoneIconRequired": "Selecteer een pictogram",
-          "statusColorPlaceholder": "Kleur hex (optioneel)",
           "issueTargetSelectPlaceholder": "Selecteer integratie...",
           "noIssueTargetsAvailable": "Geen probleemintegraties beschikbaar",
           "issueTargetNamePlaceholder": "Integratienaam...",
@@ -5498,8 +5286,7 @@
         "delete": "Provider verwijderen",
         "entryPoint": "Ingangspunt: ",
         "autoProvision": "Automatische voorziening: ",
-        "defaultAccess": "Standaardtoegang: ",
-        "configurationMessage": "SAML-configuratie niet ingesteld. Klik op de instellingenknop om te configureren."
+        "defaultAccess": "Standaardtoegang: "
       },
       "samlConfiguration": {
         "title": "SAML-provider configureren",
@@ -5571,7 +5358,6 @@
         "magicLinkDisabled": "Magic Link-authenticatie uitgeschakeld",
         "magicLinkCreated": "Magic Link-aanbieder gemaakt",
         "magicLinkUpdateFailed": "Het bijwerken van de Magic Link-provider is mislukt.",
-        "samlConfigSaved": "SAML-configuratie succesvol opgeslagen",
         "configureFirst": "Configureer de provider voordat u deze inschakelt",
         "domainRestrictionEnabled": "E-maildomeinbeperking ingeschakeld",
         "domainRestrictionDisabled": "E-maildomeinbeperking uitgeschakeld",
@@ -5589,7 +5375,6 @@
         "defaultAccessUpdated": "Standaard toegangsniveau bijgewerkt",
         "defaultAccessUpdateFailed": "Het bijwerken van het standaardtoegangsniveau is mislukt.",
         "emailVerificationEnabled": "E-mailverificatie is nu vereist voor nieuwe gebruikers.",
-        "emailVerificationDisabled": "E-mailverificatie is niet langer vereist voor nieuwe gebruikers.",
         "emailVerificationDisabledAndVerified": "E-mailverificatie uitgeschakeld en {count, plural, one {# gebruikersaccount} other {# gebruikersaccounts}} geverifieerd",
         "emailVerificationUpdateFailed": "Het bijwerken van de e-mailverificatie-instellingen is mislukt.",
         "emailServerNotConfigured": "E-mailverificatie kan niet worden ingeschakeld: de e-mailserver is niet geconfigureerd.",
@@ -5643,10 +5428,6 @@
           "issuer": "Uitgever (Entiteits-ID)",
           "callbackUrl": "ACS (terugbel-) URL",
           "logoutUrl": "SLO-uitlog-URL (optioneel)",
-          "entryPointPlaceholder": "https://uw-idp.com/sso/saml",
-          "issuerPlaceholder": "urn:uw-idp:entiteits-id",
-          "certPlaceholder": "-----BEGIN CERTIFICAAT-----...",
-          "logoutUrlPlaceholder": "https://uw-idp.com/slo/saml",
           "instructions": {
             "title": "Om SAML te configureren:",
             "step1": "Neem contact op met uw SAML Identity Provider-beheerder",
@@ -5720,10 +5501,7 @@
       },
       "add": {
         "button": "Project toevoegen",
-        "title": "Nieuw project toevoegen",
-        "defaultFields": "Standaard sjabloon, standaard mijlpaaltype en alle workflows en statussen worden toegevoegd aan het project wanneer het wordt aangemaakt.",
-        "selectIssueTracker": "Selecteer Issue Tracker",
-        "issueTrackerRequired": "Issue Tracker is vereist"
+        "title": "Nieuw project toevoegen"
       },
       "wizard": {
         "title": "Nieuw project maken",
@@ -5754,7 +5532,6 @@
           "noConfigurations": "Er zijn momenteel geen configuraties gedefinieerd. U kunt deze later toevoegen in het beheerderspaneel."
         },
         "actions": {
-          "selectDefault": "Standaard gebruiken",
           "create": "Project maken",
           "creating": "Project maken..."
         },
@@ -5779,12 +5556,6 @@
           "userPermissions": "Gebruikersrechten",
           "noEffect": "Geen effect",
           "access": {
-            "groupsGlobalRole": "De wereldwijde rol van de Groep",
-            "groupDefault": "Groepsstandaard",
-            "groupSpecificRole": "Groepsspecifieke rol",
-            "groupProjectDefault": "Groepsproject Standaard",
-            "groupProjectNoAccess": "Groepsproject Geen toegang",
-            "groupProjectSpecificRole": "Groepsprojectspecifieke rol",
             "effectiveAccess": "Effectieve toegang"
           },
           "accessHints": {
@@ -5795,11 +5566,7 @@
         },
         "placeholders": {
           "selectDefaultAccess": "Selecteer standaardtoegang",
-          "groupPermissionsUI": "Gebruikersinterface voor beheer van groepsmachtigingen komt hier...",
-          "userPermissionsUI": "De gebruikersinterface voor beheer van gebruikersrechten komt hier...",
-          "selectAccess": "Selecteer toegang...",
-          "selectRole": "Selecteer rol...",
-          "searchUsersToAdd": "Zoek gebruikers om toe te voegen..."
+          "selectAccess": "Selecteer toegang..."
         },
         "tableHeaders": {
           "globalRole": "Wereldwijde rol",
@@ -5982,9 +5749,7 @@
         "button": "Gebruiker toevoegen",
         "title": "Nieuwe gebruiker toevoegen",
         "fields": {
-          "email_invalid": "Ongeldig e-mailadres",
           "password_error": "Wachtwoord is vereist",
-          "confirmPassword_error": "Bevestig wachtwoord is vereist",
           "passwordOptionalHelp": "Laat dit veld leeg als de gebruiker zich moet aanmelden via een magic link of SSO."
         }
       },
@@ -6025,19 +5790,12 @@
       "title": "Beveiliging",
       "description": "Configureer de handhaving van aanmeldingen, het wachtwoordbeleid, de vergrendelingsinstellingen en de handhavingsacties.",
       "passwordPolicyTitle": "Wachtwoordbeleid",
-      "passwordPolicyDescription": "Stel vereisten in voor gebruikerswachtwoorden.",
       "lockoutPolicyTitle": "Uitsluitingsbeleid",
-      "lockoutPolicyDescription": "Configureer accountvergrendeling na mislukte inlogpogingen.",
       "enforcementTitle": "Handhavingsmaatregelen",
-      "enforcementDescription": "Wachtwoordwijzigingen afdwingen voor gebruikers met inloggegevens",
       "signInEnforcementTitle": "Handhaving van de aanmeldplicht",
-      "signInEnforcementDescription": "Vereis SSO en dwing tweefactorauthenticatie af.",
       "forceSsoTitle": "SSO-aanmelding afdwingen",
-      "forceSsoDescription": "Schakel inloggen via e-mail uit en vereis dat gebruikers SSO gebruiken.",
       "force2FANonSSOTitle": "Vereis tweefactorauthenticatie (2FA) voor wachtwoordaanmeldingen.",
-      "force2FANonSSODescription": "Gebruikers die inloggen met e-mail/wachtwoord moeten tweefactorauthenticatie instellen en gebruiken.",
       "force2FAAllLoginsTitle": "Vereis tweefactorauthenticatie voor alle aanmeldingen.",
-      "force2FAAllLoginsDescription": "Alle gebruikers moeten zich na het inloggen verifiëren met tweefactorauthenticatie (2FA), inclusief gebruikers met single sign-on (SSO).",
       "forceSsoEnabled": "SSO wereldwijd geforceerd inschakelen",
       "forceSsoDisabled": "SSO wereldwijd geforceerd uitschakelen",
       "forceSsoUpdateFailed": "Het is niet gelukt om de instelling voor geforceerde SSO bij te werken.",
@@ -6087,7 +5845,6 @@
       "noExpiry": "Geen vervaldatum",
       "revokeToken": "Token intrekken",
       "revokeConfirmTitle": "API-token intrekken",
-      "revokeConfirmMessage": "Weet u zeker dat u dit API-token wilt intrekken? Deze actie kan niet ongedaan worden gemaakt.",
       "revokeConfirmDescription": "Het token \"{name}\" dat bij {user} hoort, wordt onmiddellijk ingetrokken en kan niet langer worden gebruikt voor API-toegang.",
       "revokeSuccess": "API-token succesvol ingetrokken",
       "revokeError": "Het intrekken van het API-token is mislukt.",
@@ -6111,9 +5868,6 @@
       "noTokens": "Er zijn nog geen SCIM-tokens aangemaakt.",
       "emptyTitle": "Nog geen SCIM-tokens beschikbaar",
       "emptyBody": "Genereer een token waarmee uw identiteitsprovider automatisch gebruikers in TestPlanIt kan aanmaken en bijwerken.",
-      "emptyCta": "Maak je eerste token aan.",
-      "sectionConflicts": "Externe-ID-conflicten",
-      "conflictsPlaceholder": "Geen conflicten. Conflicttracking wordt in een latere versie toegevoegd.",
       "conflicts": {
         "title": "Logboek voor conflicten met externe ID's",
         "description": "SCIM-identiteitsgebeurtenissen die systeeminterventie vereisten (koppelen, herstellen, displayName overschrijven, overgeslagen leden).",
@@ -6197,7 +5951,6 @@
         "networkError": "Het SCIM-eindpunt kon niet worden bereikt. Probeer het opnieuw."
       },
       "fallbackDefaultTitle": "Standaard gekoppelde toegang",
-      "fallbackDefaultDescription": "Toegangsniveau toegewezen aan gebruikers die niet onder een groepskoppeling vallen.",
       "fallbackDefaultLabel": "Standaard toegangsniveau",
       "fallbackDefaultSaved": "Fallback-standaard opgeslagen",
       "rotate": {
@@ -6263,7 +6016,6 @@
         "remindersToggleAriaLabel": "Meldingen voor beoordelingsherinneringen in- of uitschakelen",
         "thresholdLabel": "Herinner de beoordelaars eraan na",
         "thresholdUnit": "{count, plural, one {dag} other {dagen}}",
-        "thresholdHelp": "Hoeveel dagen een beoordelingsverzoek in behandeling mag blijven voordat beoordelaars een herinneringsmelding ontvangen. Voor nieuwe verzoeken begint de teller te lopen vanaf het moment van indiening.",
         "thresholdUpdateSuccess": "Controleer of de herinneringsinstellingen zijn bijgewerkt.",
         "thresholdUpdateError": "Het bijwerken van de herinneringsinstellingen is mislukt. Probeer het over een moment opnieuw.",
         "revertPolicy": {
@@ -6329,9 +6081,6 @@
       "add": {
         "button": "Rol toevoegen",
         "title": "Nieuwe rol toevoegen",
-        "fields": {
-          "name_error": "Rolnaam is vereist"
-        },
         "errors": {
           "nameExists": "Er bestaat al een rol met deze naam"
         }
@@ -6394,7 +6143,6 @@
       "edit": {
         "title": "Bewerkingsstatus",
         "systemNameHelp": "De systeemnaam identificeert deze status voor geautomatiseerde processen. Kan na aanmaak niet meer worden gewijzigd.",
-        "unmodifiableHelp": "De status 'niet getest' is een systeemstatus en kan niet worden gewijzigd.",
         "untestedHelp": "De naam 'niet getest' is gereserveerd voor een systeemstatus en kan niet worden gebruikt.",
         "success": "Status succesvol bijgewerkt"
       },
@@ -6410,9 +6158,6 @@
       "fields": {
         "final": "Eindstand",
         "system": "Systeemstatus",
-        "forTestCase": "Voor testcase",
-        "forTestRun": "Voor testrun",
-        "forSession": "Voor sessie",
         "color": "Kleur"
       }
     },
@@ -6434,9 +6179,7 @@
       "description": "Beheer globale applicatieconfiguraties",
       "addConfig": "Toepassingsconfiguratie toevoegen",
       "editConfig": "Applicatieconfiguratie bewerken",
-      "keyPlaceholder": "Voer configuratiesleutel in...",
       "valuePlaceholder": "Voer JSON-waarde in...",
-      "currentTranslation": "Huidige vertaling",
       "filterPlaceholder": "Filter op sleutel...",
       "errors": {
         "keyRequired": "Sleutel is vereist",
@@ -6456,7 +6199,6 @@
         "noneAssigned": "Niet toegewezen aan projecten (u kunt ze later toewijzen via het configuratiebeheer)."
       },
       "addConfiguration": "Configuraties toevoegen",
-      "editConfiguration": "Configuratie bewerken",
       "filterPlaceholder": "Filterconfiguraties...",
       "allProjects": "Alle projecten",
       "selectAllTooltip": "Selecteer/deselecteer alle configuraties op deze pagina",
@@ -6476,8 +6218,6 @@
       "categories": {
         "title": "Categorieën",
         "description": "Globale categorieën beheren",
-        "editCategory": "Categorie bewerken",
-        "selectCategory": "Selecteer categorie",
         "filterPlaceholder": "Categorieën filteren...",
         "add": {
           "title": "Nieuwe categorie toevoegen"
@@ -6497,8 +6237,6 @@
         "title": "Combinaties",
         "description": "Beheer globale combinaties",
         "confirmDescription": "De volgende {count, number} configuraties zullen worden aangemaakt:",
-        "addCombination": "Combinatie toevoegen",
-        "editCombination": "Combinatie bewerken",
         "selectCombination": "Selecteer combinaties",
         "selectCombinationDescription": "Selecteer de variantcombinaties die u wilt toevoegen. Combinaties die al bestaan, worden uitgeschakeld weergegeven.",
         "alreadyExists": "(bestaat al)",
@@ -6549,7 +6287,6 @@
         "deleteGroupDescription": "Met deze actie worden de groep en alle bijbehorende gebruikers verwijderd.",
         "confirmMessage": "Weet u zeker dat u deze groep wilt verwijderen?"
       },
-      "noUsersSelected": "Er zijn nog geen gebruikers geselecteerd.",
       "noUsersAssigned": "Er zijn geen gebruikers aan deze groep toegewezen.",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Beheerd door SCIM. Beheer via de SCIM-beheerpagina.",
@@ -6572,7 +6309,6 @@
       "downgradeConfirmTitle": "Toegangswijziging bevestigen",
       "downgradeConfirmDescription": "{count, plural, one {# gebruiker zou een lager toegangsniveau krijgen.} other {# gebruikers zouden een lager toegangsniveau krijgen.}} Doorgaan?",
       "downgradeConfirmApplyAnyway": "Toch toepassen",
-      "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
@@ -6586,7 +6322,6 @@
       "defaultLockedDescription": "Om de standaard te wijzigen, bewerkt u een ander mijlpaaltype en stelt u dit in als standaard.",
       "wizard": {
         "selectProjects": "Selecteer projecten",
-        "projectsSelected": "{count, plural, =0 {Geen projecten geselecteerd} one {# project geselecteerd} other {# projecten geselecteerd}}",
         "createMilestone": "Mijlpaal maken",
         "noCommonTypesTitle": "Geen gemeenschappelijke mijlpaaltypen",
         "noCommonTypesDescription": "De geselecteerde projecten hebben geen gemeenschappelijke mijlpaaltypen. Zorg ervoor dat alle geselecteerde projecten ten minste één gemeenschappelijk mijlpaaltype hebben, of selecteer verschillende projecten."
@@ -6630,44 +6365,23 @@
       }
     },
     "issue_config": {
-      "link_title": "Link Probleem Tracker",
-      "link_description": "Configureer de basis-URL voor handmatig gekoppelde issues. Wanneer u een issue koppelt met alleen een externe ID, wordt deze basis-URL voorafgegaan om de volledige link te creëren.",
-      "filter": {
-        "show_inactive": "Inactieve configuraties weergeven",
-        "search_placeholder": "Filteren op configuratienaam..."
-      },
       "base_url": "Basis-URL",
-      "link_update_success": "Linkconfiguratie succesvol bijgewerkt",
-      "link_update_error": "Het is niet gelukt de linkconfiguratie bij te werken",
       "description": "Configureer integraties met externe issue tracking-systemen.",
       "delete": {
         "title": "Probleemconfiguratie verwijderen",
         "confirmMessage": "Weet u zeker dat u configuratie <bold>{name}</bold>wilt verwijderen?",
         "warning": "Deze actie kan niet ongedaan worden gemaakt. Alle projecten die momenteel aan deze tracker zijn toegewezen, worden opnieuw toegewezen aan de standaardtracker. Overweeg in plaats daarvan de configuratie te deactiveren.",
-        "cannotDeleteDefault": "De standaard issue tracker kan niet worden verwijderd.",
-        "noDefaultFound": "Kan niet verwijderen: Er is geen standaard issue tracker gevonden waaraan projecten opnieuw kunnen worden toegewezen."
+        "cannotDeleteDefault": "De standaard issue tracker kan niet worden verwijderd."
       },
       "add": {
         "title": "Probleemtracker toevoegen",
         "description": "Maak een nieuwe configuratie voor een probleemopsporingssysteem.",
         "name": "Configuratienaam",
-        "name_placeholder": "bijv. Project Jira Links",
-        "system_type": "Systeemtype",
-        "select_system_type": "Selecteer systeemtype",
-        "base_url": "Basis-URL inclusief de probleemplaceholder",
-        "base_url_placeholder": "bijvoorbeeld https://your-tracker.com/issues/'{issueId}'",
-        "create_success": "Probleemconfiguratie succesvol aangemaakt",
-        "create_error": "Fout bij het maken van de probleemconfiguratie",
-        "setDefaultWarning": "Als u dit als standaard instelt, wordt de standaardstatus uit de huidige standaardconfiguratie verwijderd."
+        "base_url": "Basis-URL inclusief de probleemplaceholder"
       },
       "edit": {
         "title": "Bewerk probleemtracker",
-        "description": "Werk de details voor deze probleemconfiguratie bij.",
-        "name_placeholder": "Voer de configuratienaam in",
-        "select_project": "Selecteer projecten...",
-        "update_success": "Probleemconfiguratie succesvol bijgewerkt",
-        "update_error": "Het is niet gelukt om de probleemconfiguratie bij te werken",
-        "edit_not_supported": "Het bewerken van de configuratie voor dit systeemtype wordt momenteel niet ondersteund."
+        "description": "Werk de details voor deze probleemconfiguratie bij."
       }
     },
     "issues": {
@@ -6870,14 +6584,11 @@
         "message": "Er zijn nog geen probleemintegraties geconfigureerd"
       },
       "addIntegration": "Integratie van problemen toevoegen",
-      "allIntegrations": "Alle Issue Integrations",
-      "manageDescription": "Configureer en beheer uw externe serviceprobleemintegraties",
       "status": {
         "active": "Actief",
         "inactive": "Inactief",
         "awaitingAuthorization": "Wachten op autorisatie"
       },
-      "connectedProjects": "Verbonden projecten",
       "noIntegrations": "Geen probleemintegraties geconfigureerd",
       "testConnection": "Testverbinding",
       "testSuccess": "Verbinding succesvol",
@@ -6966,14 +6677,11 @@
         "successDescription": "De instellingen voor probleemintegratie zijn opgeslagen."
       },
       "editIntegration": "Integratie van bewerkingsprobleem",
-      "saveIntegration": "Integratie van problemen opslaan",
       "deleteIntegration": "Integratie van problemen verwijderen",
       "config": {
         "name": "Naam van de probleemintegratie",
         "namePlaceholder": "Voer een naam in voor deze integratie van problemen.",
-        "nameHelp": "Een beschrijvende naam om deze integratieproblematiek te identificeren",
         "authType": "Authenticatietype",
-        "authTypeHelp": "Kies hoe u wilt authenticeren met de externe service",
         "emailPlaceholder": "uw-e-mailadres@voorbeeld.com",
         "emailHelp": "Het e-mailadres van uw account. Vereist voor Jira Cloud (in combinatie met een API-token hieronder). Niet gebruikt voor Jira Server / Data Center — laat dit veld daar leeg en gebruik ofwel alleen het veld API-token (Persoonlijk toegangstoken) of de velden Gebruikersnaam / Wachtwoord hieronder.",
         "apiToken": "API-token",
@@ -6995,15 +6703,9 @@
         "clientSecretPlaceholder": "Voer uw OAuth-clientgeheim in",
         "clientSecretHelp": "Het clientgeheim van uw OAuth-applicatie",
         "cloudId": "Cloud-ID",
-        "cloudIdPlaceholder": "Voer uw Atlassian Cloud ID in",
-        "cloudIdHelp": "Uw Atlassian Cloud-instance-ID (te vinden in uw Jira-URL)",
-        "apiUrl": "API-URL",
-        "apiUrlPlaceholder": "https://api.example.com",
-        "apiUrlHelp": "De basis-URL voor de service-API",
         "personalAccessTokenPlaceholder": "Voer uw persoonlijke toegangstoken in",
         "personalAccessTokenHelp": "Een persoonlijke toegangstoken met de juiste machtigingen",
         "apiKeyPlaceholder": "Voer uw API-sleutel in",
-        "apiKeyHelp": "De API-sleutel voor authenticatie",
         "baseUrl": "URL-patroon",
         "baseUrlPlaceholder": "https://example.com/issues/'{issueId}'",
         "baseUrlHelp": "URL-patroon voor problemen. Gebruik {issueId} als tijdelijke aanduiding.",
@@ -7027,7 +6729,6 @@
         "repoPlaceholder": "repository-naam",
         "repoHelp": "De naam van de Gitea-repository",
         "encrypted": "Versleuteld",
-        "encryptedHelp": "Dit veld is gecodeerd en veilig opgeslagen",
         "leaveBlankToKeep": "Laat leeg om de bestaande waarde te behouden",
         "apiKeyWarningTitle": "Kennisgeving API-sleutelauthenticatie",
         "apiKeyWarningDescription": "Bij authenticatie met een API-sleutel komt de melder van aangemaakte problemen mogelijk niet overeen met de TestPlanIt-gebruiker die ze heeft aangemaakt, zelfs als de e-mailadressen overeenkomen:",
@@ -7076,12 +6777,7 @@
       },
       "validation": {
         "nameRequired": "De naam van de issue-integratie is vereist.",
-        "clientIdRequired": "Client-ID is vereist",
-        "clientSecretRequired": "Clientgeheim is vereist",
-        "cloudIdRequired": "Cloud-ID is vereist",
-        "apiUrlRequired": "API-URL is vereist",
-        "tokenRequired": "Persoonlijke toegangstoken is vereist",
-        "apiKeyRequired": "API-sleutel is vereist"
+        "tokenRequired": "Persoonlijke toegangstoken is vereist"
       },
       "errors": {
         "updateFailed": "Het bijwerken van de probleemintegratie is mislukt.",
@@ -7100,12 +6796,8 @@
         "testing": "Verbinding testen..."
       },
       "oauth": {
-        "connectAccount": "Account verbinden",
         "connected": "Aangesloten",
-        "notConnected": "Niet verbonden",
-        "authDescription": "U moet zich authenticeren met {provider} om deze integratie te gebruiken",
-        "authError": "Authenticatie mislukt",
-        "authErrorDescription": "Kan niet authenticeren met de externe service"
+        "authError": "Authenticatie mislukt"
       }
     },
     "llm": {
@@ -7150,7 +6842,6 @@
         "monthlyBudgetDescription": "Optioneel bestedingsdoel voor meldingen (blokkeert het gebruik niet)",
         "billingPeriodStartDay": "Begindatum van de factureringsperiode",
         "billingPeriodStartDayPlaceholder": "1",
-        "billingPeriodStartDayDescription": "De dag van de maand (1-31) waarop uw factureringsperiode begint. Bij waarden 29-31 wordt de laatste dag van kortere maanden gebruikt.",
         "defaultTemperature": "Standaardtemperatuur",
         "defaultMaxTokens": "Standaard Max Tokens",
         "repoContextBudgetLabel": "Repository-contextbudget (QuickScript)",
@@ -7182,7 +6873,6 @@
       "edit": {
         "title": "Bewerken AI-modelintegratie",
         "description": "Werk de configuratie bij voor de integratie van het {name} AI-model",
-        "statusDescription": "Deze integratie in- of uitschakelen",
         "apiKeyPlaceholder": "Voer een nieuwe API-sleutel in om te updaten...",
         "update": "Update",
         "modelListUpdated": "Modellijst succesvol bijgewerkt",
@@ -7229,10 +6919,8 @@
       },
       "budgetAlert": {
         "budgetDisclaimer": "Het instellen van een maandelijks budget voorkomt niet dat het LLM-gebruik dit budget overschrijdt. Budgetlimieten dienen uitsluitend ter informatie voor administratieve besluitvorming.",
-        "budgetDisclaimerShort": "Budgetlimieten zijn uitsluitend ter informatie en blokkeren het gebruik niet.",
         "spendLabel": "Uitgaven van deze maand",
         "spendOfBudget": "{currentSpend} van {budgetLimit}",
-        "overBudget": "Budget overschreden",
         "budgetPercentage": "{percentage}% van het budget gebruikt",
         "spendReset": "De uitgaven van de huidige maand zijn gereset."
       }
@@ -7243,7 +6931,6 @@
       "addPromptConfig": "Voeg promptconfiguratie toe",
       "filterPlaceholder": "Filterpromptconfiguraties...",
       "features": "Functies",
-      "featureCount": "{count, plural, one {# functie} other {# functies}}",
       "llmIntegration": "LLM-integratie",
       "modelOverride": "Modeloverride",
       "modelOverridePlaceholder": "Integratiestandaard",
@@ -7255,7 +6942,6 @@
       "maxOutputTokens": "Maximale uitvoer van tokens",
       "variables": "Variabelen",
       "insertVariable": "Variabele invoegen",
-      "noConfigs": "Er zijn geen promptconfiguraties gevonden. Voeg uw eerste configuratie toe om te beginnen.",
       "add": {
         "title": "Voeg promptconfiguratie toe",
         "description": "Maak een nieuwe AI-promptconfiguratie met prompts voor elke functie. Standaardinstellingen zijn automatisch toegepast."
@@ -7385,7 +7071,6 @@
       "concurrency": {
         "title": "Werknemersgelijktijdigheid",
         "description": "Gelijktijdigheid bepaalt hoeveel taken elke werker tegelijkertijd verwerkt. Hogere waarden kunnen de doorvoer verbeteren, maar gebruiken meer systeembronnen (CPU en geheugen).",
-        "configureTitle": "Gelijktijdigheid configureren",
         "configureDescription": "Om gelijktijdigheid aan te passen, stelt u omgevingsvariabelen in en start u workers opnieuw. Zie de documentatie voor details.",
         "envVars": {
           "TESTMO_IMPORT_CONCURRENCY": "Testmo-import (standaard: 1, geheugenintensief)",
@@ -7420,12 +7105,7 @@
         "irreversible": "Deze actie kan niet ongedaan worden gemaakt. Bevestig dat u wilt doorgaan."
       },
       "success": {
-        "actionCompleted": "Actie voltooid",
-        "queuePaused": "Wachtrij is gepauzeerd",
-        "queueResumed": "De wachtrij is hervat",
-        "queueCleaned": "Wachtrij is opgeschoond",
-        "queueDrained": "De wachtrij is leeggemaakt",
-        "queueObliterated": "De wachtrij is verwijderd"
+        "actionCompleted": "Actie voltooid"
       },
       "error": {
         "loadFailed": "Het laden van wachtrijen is mislukt",
@@ -7451,10 +7131,7 @@
           "finished": "Afgerond"
         },
         "success": {
-          "actionCompleted": "Taakactie voltooid",
-          "jobRetried": "Taak is opnieuw geprobeerd",
-          "jobPromoted": "De baan is gepromoveerd",
-          "jobRemoved": "Taak is verwijderd"
+          "actionCompleted": "Taakactie voltooid"
         },
         "error": {
           "loadFailed": "Het laden van taken is mislukt",
@@ -7504,17 +7181,12 @@
       "exportCsv": "Exporteer naar CSV",
       "timeRange": "Tijdsbereik",
       "timeRangeOptions": {
-        "last24h": "Afgelopen 24 uur",
-        "last7d": "Afgelopen 7 dagen",
-        "last30d": "Afgelopen 30 dagen",
-        "last90d": "Afgelopen 90 dagen",
         "allTime": "Alle tijden"
       },
       "systemActor": "Systeem",
       "systemActorTooltip": "Actie uitgevoerd door het systeem, niet door een ingelogde gebruiker.",
       "sourceScim": "SCIM",
-      "relatedChanges": "gerelateerde wijzigingen",
-      "groupedEntry": "Gegroepeerde wijzigingen van één actie"
+      "relatedChanges": "gerelateerde wijzigingen"
     }
   },
   "components": {
@@ -7568,7 +7240,6 @@
         "shareLinkAccessedTitle": "Deellink geopend",
         "shareLinkAccessedAnonymousViewer": "Iemand",
         "shareLinkAccessedMessage": "{viewer} heeft uw gedeelde rapport bekeken: \"{shareTitle}\"",
-        "viewedYourSharedLink": "Ik heb je gedeelde link bekeken.",
         "viewedAt": "Bekeken op",
         "userRegisteredTitle": "Nieuwe gebruikersregistratie",
         "userRegisteredMessageSso": "{userName} ({userEmail}) heeft zich geregistreerd via SSO",
@@ -7631,7 +7302,6 @@
         "alertTriggeredRule": "Regel: {ruleName}",
         "alertTriggeredEmailMessage": "Waarschuwing \"{ruleName}\" geactiveerd voor {subjectLabel} \"{subjectName}\" in project \"{projectName}\": {detail}",
         "alertTriggeredEmailMessageSystem": "Waarschuwing \"{ruleName}\" geactiveerd voor {subjectLabel} \"{subjectName}\": {detail}",
-        "alertTriggeredReason": "U ontvangt dit omdat u bent geabonneerd op deze waarschuwing.",
         "alertSubject": {
           "CASE": "testgeval",
           "RUN": "testrun",
@@ -7686,8 +7356,7 @@
     },
     "issues": {
       "manage_issues": {
-        "placeholder": "Problemen met zoeken of koppelen...",
-        "create_label": "Linkprobleem \"{name}\""
+        "placeholder": "Problemen met zoeken of koppelen..."
       },
       "create_issue_dialog": {
         "placeholders": {
@@ -7705,16 +7374,8 @@
             "helper": "Selecteer het project in de externe issue tracker"
           }
         },
-        "loading_metadata": "Integratie-instellingen laden...",
-        "errors": {
-          "creation_failed": "Het probleem kon niet worden veroorzaakt. Probeer het opnieuw."
-        },
         "success": {
-          "created": "Probleem succesvol aangemaakt",
-          "external_created": "Probleem gecreëerd en gekoppeld aan externe tracker"
-        },
-        "warnings": {
-          "external_failed": "Probleem lokaal gecreëerd, maar kon niet worden gesynchroniseerd met externe tracker"
+          "created": "Probleem succesvol aangemaakt"
         }
       },
       "integration_auth_prompt": {
@@ -7775,16 +7436,9 @@
   },
   "issues": {
     "linkedIssues": "Gekoppelde problemen",
-    "linkedIssuesDescription": "Problemen met dit item",
     "refreshed": "Problemen vernieuwd",
-    "refreshedDescription": "De lijst met gekoppelde problemen is bijgewerkt",
     "unlinked": "Probleem niet gekoppeld",
-    "unlinkedDescription": "Het probleem is uit dit item verwijderd",
     "linked": "Probleem gekoppeld",
-    "linkedDescription": "Het probleem is gekoppeld aan dit item",
-    "searchAndLink": "Zoeken en koppelen",
-    "createAndLink": "Maken en koppelen",
-    "noLinkedIssues": "Geen gekoppelde problemen",
     "viewExternal": "Bekijk in {provider}",
     "unlink": "Ontkoppelen",
     "linkError": "Probleem met koppelen mislukt",
@@ -7799,8 +7453,6 @@
     "alreadyLinked": "Al gekoppeld",
     "authenticate": "Authenticeren",
     "authenticationRequired": "Authenticatie vereist",
-    "authenticationDescription": "U moet zich verifiëren met {provider} om naar problemen te zoeken.",
-    "searchIn": "Zoeken in {provider}",
     "searchPlaceholder": "Zoekproblemen...",
     "searchIssues": "Zoekproblemen",
     "searchIssuesDescription": "Zoek naar interne problemen om naar dit item te linken.",
@@ -7817,32 +7469,22 @@
     "createIssueDescriptionWithIntegration": "Maak een nieuw probleem met {provider}",
     "createIssueDescriptionSimpleUrl": "Een nieuw intern probleem aanmaken (eenvoudige URL-integratie)",
     "iterationContextHint": "De body wordt automatisch ingevuld met iteratieparameterwaarden en een deep link. Bewerk deze naar behoefte voordat u de body aanmaakt.",
-    "creatingWith": "Probleem met {provider}creëren",
-    "authenticatedAndReady": "Geverifieerd en klaar om problemen te creëren",
     "created": "Probleem gecreëerd",
     "createdInExternal": "Probleem gecreëerd in {provider}",
     "createdInternal": "Probleem lokaal gecreëerd",
     "createdInternalSimpleUrl": "Probleem intern aangemaakt en kan via een eenvoudige URL worden gekoppeld",
     "createError": "Het is niet gelukt om een probleem te creëren",
     "useIntegration": "Gebruik {provider}",
-    "useIntegrationDescription": "Probleem creëren in extern systeem",
     "externalProject": "Extern project",
     "issueType": "Probleemtype",
     "selectIssueType": "Selecteer het type probleem",
-    "noIssueTypes": "Geen probleemtypen beschikbaar",
     "assignees": "Toegewezen aan",
     "selectAssignees": "Selecteer toegewezen personen",
     "assigneesLimit": "Tot {max} toegewezen personen",
     "priorityUrgent": "Dringend",
     "additionalFields": "Extra velden",
     "createIssueInJira": "Probleem aanmaken in Jira",
-    "createIssueInJiraDescription": "Gebruik de interface van Jira om een nieuw probleem te maken met alle beschikbare velden en opties",
-    "createIssueInJiraFallbackDescription": "Open Jira in een nieuw tabblad om een probleem te maken met vooraf ingevulde informatie",
-    "jiraIframeError": "Kan de Jira-interface niet laden. Probeer het in een nieuw tabblad te openen.",
-    "jiraIframeFallback": "Jira vereist om veiligheidsredenen een nieuw tabblad. Klik op de onderstaande knop om uw probleem aan te maken.",
-    "jiraFallbackNote": "Nadat u het probleem in Jira hebt aangemaakt, kunt u hier terugkeren om het probleem aan uw testcase te koppelen.",
     "openInNewTab": "Openen in nieuw tabblad",
-    "jiraIframeNote": "Nadat u het probleem in Jira hebt aangemaakt, kunt u dit dialoogvenster sluiten en de probleemlijst vernieuwen.",
     "fillInRequiredFields": "Vul de vereiste velden in om een nieuw probleem aan te maken",
     "failedToFetchFields": "Het is niet gelukt om probleemvelden uit Jira op te halen",
     "enterSummary": "Geef een korte samenvatting van het probleem",
@@ -7852,7 +7494,6 @@
     "addLabel": "Voeg een label toe en druk op Enter",
     "labelHint": "Spaties worden vervangen door koppeltekens",
     "labelFormatNote": "Labels mogen geen spaties bevatten. Spaties worden automatisch vervangen door koppeltekens.",
-    "enterIssueKey": "Voer de probleemsleutel in (bijv. PROJ-123)",
     "issueLinkHelp": "Voer de sleutel van een bestaand probleem in om te koppelen",
     "searchForIssue": "Zoek naar een probleem om te linken",
     "searchUsers": "Zoeken naar gebruikers",
@@ -7958,8 +7599,7 @@
       "dialogTitle": "Vereiste bewerken",
       "submit": "Wijzigingen opslaan",
       "success": "Vereiste bijgewerkt.",
-      "failed": "Het bijwerken van de vereiste is mislukt.",
-      "lockedTooltip": "Deze vereiste is gesynchroniseerd vanuit de gekoppelde tracker. Ontkoppel deze om de naam te wijzigen."
+      "failed": "Het bijwerken van de vereiste is mislukt."
     },
     "delete": {
       "dialogTitle": "Vereiste verwijderen",
@@ -7967,13 +7607,10 @@
       "confirmWithChildren": "Deze vereiste heeft {count, plural, one {{count} onderliggend item dat ook wordt verwijderd} other {{count} onderliggende items die ook worden verwijderd}}. Deze actie kan ongedaan worden gemaakt.",
       "success": "Vereiste verwijderd.",
       "failed": "Het verwijderen van de vereiste is mislukt.",
-      "undo": "Ongedaan maken",
-      "undoSuccess": "Vereiste hersteld.",
-      "undoFailed": "Het herstellen van de vereiste is mislukt."
+      "undo": "Ongedaan maken"
     },
     "attachments": {
       "empty": "Geen bijlagen",
-      "uploadSuccess": "Bijlage geüpload.",
       "uploadFailed": "Het uploaden van de bijlage is mislukt.",
       "removeSuccess": "Bijlage verwijderd.",
       "removeFailed": "Het verwijderen van de bijlage is mislukt."
@@ -8027,13 +7664,9 @@
     "coverage": {
       "title": "Dekking",
       "uncovered": "Niet gedekt",
-      "uncoveredTooltip": "Er zijn geen testcases gekoppeld aan deze vereiste of een van de onderliggende items.",
       "statusPassed": "Geslaagd",
       "statusFailed": "Mislukt",
       "statusNotRun": "Niet uitgevoerd",
-      "countLabel": "{passed}/{total}",
-      "breakdownTooltip": "Geslaagd: {passed} · Mislukt: {failed} · Bezig: {inProgress} · Niet uitgevoerd: {notRun}",
-      "showOnlyUncovered": "Alleen niet-gedekte tonen",
       "showOnlyUncoveredUnavailable": "Dekkingsgegevens zijn momenteel niet beschikbaar.",
       "loadFailed": "Het laden van de dekking is mislukt.",
       "retry": "Opnieuw proberen",
@@ -8150,7 +7783,6 @@
       "deleted": "Executiedoel verwijderd",
       "enabledToast": "Doel ingeschakeld",
       "disabledToast": "Doel uitgeschakeld",
-      "revealedSecretTitle": "Kopieer nu het ondertekeningsgeheim",
       "revealedSecretWarning": "Dit geheim wordt eenmaal weergegeven. Uw ontvanger gebruikt het om de X-TestPlanIt-Signature-header op elke dispatch te verifiëren; systemen die anders verifiëren (bijvoorbeeld een Jenkins trigger-token) kunnen het negeren. Sla het op in het geheime archief van uw CI-systeem; TestPlanIt kan het niet opnieuw weergeven.",
       "secretCopied": "Geheim gekopieerd",
       "errors": {
@@ -8283,7 +7915,6 @@
     "seconds": "{seconds}s",
     "testCases": "{count, plural, one {# testgeval} other {# testgevallen}}",
     "estimate": "Schatting: {value}",
-    "partOf": "(Deel van {parent})",
     "status": "Status: {status}",
     "lane": "Baan {number}",
     "worker": "Werker {id}"
@@ -8420,8 +8051,6 @@
       "overview": "## Projecten\nProjecten zijn de containers op het hoogste niveau voor uw testgevallen, runs, sessies en mijlpalen. Maak en beheer hier elk project.",
       "settings": {
         "integrations": {
-          "externalProjectHelp": "## Extern project\nSelecteer het project of de repository in het externe systeem om te koppelen aan dit TestPlanIt-project.\n\n- Problemen die vanuit TestPlanIt worden aangemaakt, worden in dit project aangemaakt.\n- Maakt integratie van probleemregistratie tussen systemen mogelijk.\n- Vereist de juiste machtigingen in het externe systeem.",
-          "defaultIssueTypeHelp": "## Standaardprobleemtype\nHet probleemtype dat vooraf wordt geselecteerd bij het maken van nieuwe problemen vanuit TestPlanIt.\n\n- Bespaart tijd door standaard uw meest voorkomende probleemtype te gebruiken\n- Kan worden overschreven bij het maken van individuele problemen\n- Moet een geldig probleemtype zijn voor het geselecteerde externe project\n- Werk dit bij als uw workflow verandert",
           "automaticSyncHelp": "## Automatische synchronisatie\nMaakt automatische synchronisatie van de probleemstatus tussen TestPlanIt en het externe systeem mogelijk.\n\n- Problemen die aan testcases zijn gekoppeld, werken hun status automatisch bij.\n- Helpt de probleemtracking consistent te houden in alle systemen.\n- Kan het API-gebruik met de externe service verhogen.\n- Kan worden uitgeschakeld als handmatige controle de voorkeur heeft."
         }
       }
@@ -8593,7 +8222,6 @@
     "issueConfig": {
       "name": "## Probleemconfiguratienaam\nEen duidelijke, beschrijvende naam die in alle projecten wordt gebruikt.\n\n- Helpt de probleemconfiguratie te beschrijven (bijv. Jira, GitHub, enz.).",
       "baseUrl": "## Basis-URL\nDe basis-URL voor de probleemconfiguratie inclusief de probleemplaceholder (bijv. https://your-jira-instance.atlassian.net/browse/'{issueId}').",
-      "systemType": "## Systeemtype\nHet type probleemvolgsysteem (bijv. LINK Jira, enz.).",
       "isActive": "## Actief\nGeeft aan of deze probleemconfiguratie actief is.",
       "isDefault": "## Standaard\nGeeft aan of deze probleemconfiguratie de standaard is voor uw project.\n\n- Standaardprobleemconfiguratie is vooraf geselecteerd voor nieuwe problemen.\n- Kan op elk moment worden gewijzigd.",
       "projects": "## Projecten\nGeeft de projecten aan die aan deze probleemconfiguratie zijn toegewezen."
@@ -9053,13 +8681,9 @@
       },
       "reportsTabDescription": "Bekijk en analyseer vooraf samengestelde rapporten voor uw project.",
       "reportType": "Rapporttype",
-      "selectReportType": "Selecteer rapporttype",
       "selectReport": "Rapport selecteren",
       "dimensions": "Afmetingen",
-      "dimensionsSubtitle": "Afmetingen (slepen om opnieuw te ordenen, hieronder toevoegen)",
       "metrics": "Metrieken",
-      "addDimension": "Voeg dimensie toe...",
-      "addMetric": "Metrisch toevoegen...",
       "runReport": "Rapport uitvoeren",
       "exportCsv": "Exporteer naar CSV",
       "noResultsFound": "Geen resultaten gevonden.",
@@ -9068,8 +8692,6 @@
       "noDataMatchingCriteriaWithDateFilter": "Er zijn geen gegevens gevonden die overeenkomen met de geselecteerde dimensies en statistieken. Probeer uw filter voor het datumbereik aan te passen.",
       "noDataAvailable": "Er zijn geen gegevens beschikbaar voor dit rapport.",
       "generatedAt": "Rapport gegenereerd op",
-      "crossProjectAnalytics": "Projectoverschrijdende analyse en rapportage",
-      "unauthorizedAdmin": "Niet geautoriseerd: beheerdersrechten vereist.",
       "title": "Rapportbouwer",
       "description": "Maak aangepaste rapporten om uw projectgegevens te analyseren",
       "crossProjectDescription": "Analyseer gegevens in alle projecten in uw werkruimte",
@@ -9244,7 +8866,6 @@
         "newest": "Nieuw",
         "oldest": "Oud",
         "noFlakyTests": "Er zijn geen onbetrouwbare tests gevonden die aan de criteria voldoen.",
-        "includeFilter": "Erbij betrekken",
         "caseTags": "Testcase-tags",
         "runTags": "Testrun-tags",
         "testRunDeleted": "De testrun is verwijderd.",
@@ -9268,7 +8889,6 @@
         "minExecutionsHelp": "Minimum aantal uitvoeringen vereist om zinvolle statistieken over het slagingspercentage te berekenen (3-20).",
         "lookbackDays": "Terugkijkperiode",
         "lookbackDaysHelp": "Aantal dagen om de uitvoeringsgeschiedenis te analyseren (30-365).",
-        "includeFilter": "Erbij betrekken",
         "staleFilter": "Veroudering",
         "stale": "Muf",
         "notStale": "Niet oud",
@@ -9278,11 +8898,9 @@
         "executions": "Executies",
         "passCount": "Passen",
         "failCount": "Mislukkingen",
-        "daysSince": "Aantal dagen sinds de executie",
         "count": "Graaf",
         "totalTests": "testgevallen",
         "noData": "Geen testgevallen gevonden",
-        "noExecutedTests": "Geen uitgevoerde tests om weer te geven",
         "healthStatus": {
           "healthy": "Gezond",
           "stale": "Muf",
@@ -9291,11 +8909,7 @@
           "alwaysFailing": "Altijd falen"
         },
         "chart": {
-          "distribution": "Statusverdeling",
-          "healthyRecent": "Gezond en recent",
-          "unhealthyStale": "Vereist aandacht",
-          "daysAxis": "Aantal dagen sinds laatste executie",
-          "healthScoreAxis": "Gezondheidsscore"
+          "distribution": "Statusverdeling"
         },
         "stats": {
           "totalTests": "Totaal aantal tests",
@@ -9423,9 +9037,6 @@
         }
       },
       "issueTestCoverage": {
-        "viewMode": "Weergavemodus",
-        "summaryView": "Samenvatting (per probleem)",
-        "detailView": "Details (per testgeval)",
         "issue": "Probleem",
         "testCase": "Testgeval",
         "testCases": "{count, plural, =1 {Testgeval} other {Testgevallen}}",
@@ -9437,18 +9048,15 @@
         "lastExecuted": "Laatst uitgevoerd",
         "notTested": "Niet getest",
         "noData": "Er zijn geen problemen gevonden met gekoppelde testgevallen.",
-        "noIssuesNeedingAttention": "Alle problemen zijn geslaagd voor de tests - geweldig werk!",
         "stats": {
           "totalIssues": "Totaal aantal problemen",
           "issuesWithFailures": "Met mislukkingen",
           "issuesWithFailuresTooltip": "Problemen met ten minste één mislukte testcase.",
           "issuesWithUntested": "Met ongetest",
           "issuesWithUntestedTooltip": "Problemen met ten minste één testgeval dat nog niet is uitgevoerd.",
-          "issuesAllPassing": "Alle passerende",
-          "numberOfIssues": "Aantal problemen"
+          "issuesAllPassing": "Alle passerende"
         },
         "charts": {
-          "passRateDistribution": "Verdeling van het slagingspercentage van de test",
           "linkedTestCases": "Aantal gekoppelde testgevallen",
           "untestedTestCases": "Aantal niet-geteste testgevallen",
           "testCoverageVsExecution": "Testdekking versus uitvoeringsstatus"
@@ -9482,7 +9090,6 @@
         "otherRoots": "Overig ({count, plural, one {# hiërarchie} other {# hiërarchieën}})",
         "snapshotLabel": "Momentopname",
         "snapshotLive": "Live-matrix",
-        "snapshotHelp": "Toon een opgeslagen momentopname van de matrix op een bepaald tijdstip in plaats van de live gegevens. Momentopnamen zijn onveranderlijke records die u kunt exporteren, delen en vergelijken.",
         "snapshotPlaceholder": "Kies een momentopname",
         "snapshotRequirementsCount": "{count, plural, one {# vereiste} other {# vereisten}}",
         "snapshotUncoveredCount": "{count} niet gedekt",
@@ -9613,7 +9220,6 @@
         "triggerPush": "Push",
         "outcomeNotExecuted": "Niet uitgevoerd",
         "outcomeNoRun": "Geen run",
-        "allRepositories": "Alle repositories",
         "analysis": "Analyse",
         "changedFiles": "Gewijzigde bestanden",
         "changedFilesDetail": "{files, number} bestanden · +{additions, number} −{deletions, number}",
@@ -9734,23 +9340,15 @@
     },
     "errors": {
       "adminOnly": "Alleen projectbeheerders en beheerders hebben toegang tot projectrapporten.",
-      "projectIdRequired": "Project-ID is vereist",
       "missingRequiredFields": "Ontbrekende verplichte velden",
-      "unsupportedDimension": "Niet-ondersteunde dimensie: {dimension}",
-      "unsupportedMetric": "Niet-ondersteunde metriek: {metric}",
       "atLeastOneDimensionMetricRequired": "Er is minimaal één dimensie en één metriek vereist",
-      "atLeastOneMetricRequired": "Er moet minimaal één metriek worden opgegeven",
-      "projectDimensionsMetricsRequired": "Project-ID, dimensies en statistieken zijn vereist",
-      "unsupportedDimensions": "Niet-ondersteunde dimensie(s): {dimensions}",
-      "unsupportedMetrics": "Niet-ondersteunde metriek(en): {metrics}",
-      "unexpectedError": "Er is een onverwachte fout opgetreden."
+      "atLeastOneMetricRequired": "Er moet minimaal één metriek worden opgegeven"
     },
     "dimensions": {
       "executor": "Uitvoerder",
       "assignedTo": "Toegewezen aan",
       "executionDate": "Uitvoeringsdatum",
       "creationDate": "Aanmaakdatum",
-      "activityDate": "Activiteitsdatum",
       "testCase": "Testgeval",
       "creator": "Schepper",
       "source": "Bron",
@@ -9900,9 +9498,6 @@
           "title": "Deellink verlopen",
           "description": "Deze deelbare link is verlopen en niet langer toegankelijk."
         }
-      },
-      "footer": {
-        "poweredBy": "Mogelijk gemaakt door"
       },
       "manageShares": {
         "title": "Aandelen beheren",
@@ -10255,8 +9850,6 @@
     },
     "startTyping": "Begin met typen om te zoeken",
     "typesSelected": "{count, plural, one {# type} other {# types}}",
-    "customFieldFilters": "Aangepaste veldfilters",
-    "customFiltersApplied": "aangepaste filters",
     "customFields": "Aangepaste velden",
     "addFilter": "Filter toevoegen",
     "filter": "Filter",
@@ -10321,14 +9914,12 @@
       "junit": "JUnit",
       "hybrid": "Hybride",
       "automatedOnly": "Alleen geautomatiseerd",
-      "archivedOnly": "Alleen gearchiveerd",
       "completedOnly": "Alleen voltooid",
       "manualOnly": "Alleen handmatig",
       "estimateRange": "Schattingsbereik",
       "elapsedRange": "Verstreken tijdsbereik",
       "minValue": "Min",
       "maxValue": "Maximaal",
-      "dueDateRange": "Vervaldatumbereik",
       "milestoneType": "Mijlpaaltype",
       "minutes": "notulen",
       "hours": "uren",
@@ -10433,11 +10024,7 @@
   },
   "autoTag": {
     "actions": {
-      "aiTag": "AI-tag",
-      "tagAll": "Alles taggen",
       "aiAutoTag": "Auto-Tag",
-      "tagActions": "Tagacties",
-      "startTagging": "Beginnen met taggen",
       "selectEntityType": "Selecteer entiteitstype",
       "selectProject": "Selecteer een project",
       "entityTypes": {
@@ -10449,11 +10036,8 @@
     "review": {
       "title": "Suggesties voor reviewtags",
       "description": "Klik op tags om de acceptatie ervan in of uit te schakelen. Dubbelklik om een tagnaam te bewerken.",
-      "selectEntity": "Selecteer een entiteit om suggesties voor tags te bekijken.",
       "noTagsSelected": "Geen tags geselecteerd",
-      "footerSummary": "{assignCount, plural, one {# tag wordt toegewezen} other {# tags worden toegewezen}}, {newCount, plural, one {# nieuwe tag wordt aangemaakt} other {# nieuwe tags worden aangemaakt}}",
       "footerAssignCount": "{assignCount, plural, one {# tag zal worden toegewezen} other {# tags zullen worden toegewezen}}",
-      "footerNewCount": "{newCount, plural, one {# nieuwe tag wordt aangemaakt} other {# nieuwe tags worden aangemaakt}}",
       "newTagsPopoverTitle": "Nieuwe tags om te maken",
       "applying": "Aanvragen...",
       "applySuccess": "{tagCount, plural, one {# tag} other {# tags}} toegepast op {entityCount, plural, one {# entiteit} other {# entiteiten}}",
@@ -10472,7 +10056,6 @@
       "tooltipExisting": "Bestaande tag",
       "tooltipNew": "Nieuwe tag — wordt aangemaakt",
       "tooltipAssign": "Wijs een bestaande tag toe",
-      "toggleFailed": "Mislukte entiteiten weergeven/verbergen",
       "showFailed": "Weergave mislukt"
     },
     "progress": {
@@ -10610,7 +10193,6 @@
     "datasetRowResultEmpty": "—",
     "pasteCsvPlaceholder": "Plak hier de rijen uit het CSV-bestand. De eerste regel wordt als koptekst beschouwd.",
     "pasteCsvParseButton": "Ontleden",
-    "pasteCsvReplaceWarning": "Bestaande rijen in de dataset ({existingCount}) worden verwijderd.",
     "cellErrorString": "Een verplicht veld mag geen lege waarde bevatten.",
     "cellErrorInteger": "Het moet een geheel getal zijn.",
     "cellErrorSelect": "De waarde moet een van de volgende zijn: {allowed}.",
@@ -10655,14 +10237,8 @@
     "chooserEmpty": "Er zijn nog geen parameters opgegeven.",
     "chooserConfigureLink": "Configureer parameters",
     "autocompleteEmpty": "Geen overeenkomende parameters gevonden. Typ om te zoeken of gebruik de werkbalk om in te voegen.",
-    "chipTooltipType": "Type: {type}",
-    "chipTooltipDefault": "Standaard: {value}",
-    "chipTooltipNoDefault": "Standaardwaarde: (geen)",
-    "chipTooltipUndeclared": "\"@{name}\" is geen gedeclareerde parameter. Open Parameters configureren om deze toe te voegen.",
     "editorUndeclaredWarning": "Niet-gedeclareerde referenties: {names}. Voeg ze toe via de configuratieparameters om iteratievervanging mogelijk te maken.",
     "runProgressTitle": "Iteraties genereren voor \"{runName}\"",
-    "runProgressDescriptionAsync": "{count, plural, =1 {# iteratie wordt} other {# iteraties worden}} op de achtergrond aangemaakt. U kunt gewoon doorwerken; we laten u weten wanneer dit klaar is.",
-    "runProgressDescriptionSync": "Gemaakt {count, plural, =1 {# iteratie} other {# iteraties}}.",
     "runProgressFailed": "Iteratiegeneratie kon niet worden gestart.",
     "runHardRefuseTitle": "Te veel iteraties om te creëren",
     "runHardRefuseDescription": "Deze run zou {count} iteraties genereren, waarmee de limiet van {cap}wordt overschreden. Verminder het aantal rijen in de dataset, deselecteer gevallen of splits de dataset op in meerdere runs.",
@@ -10670,7 +10246,6 @@
     "runPreflightAsync": "{n, plural, =1 {Er wordt # iteratie aangemaakt} other {Er worden # iteraties aangemaakt}} (achtergrondtaak)",
     "runPreflightSoftConfirm": "{n, plural, =1 {Er wordt # iteratie aangemaakt} other {Er worden # iteraties aangemaakt}} — bevestiging vereist",
     "runPreflightHardRefuse": "Kan niet aanmaken — {n} overschrijdt de limiet van {cap}",
-    "runPreflightTooltip": "{iterations, plural, =1 {# iteratie} other {# iteraties}} = {cases, plural, =1 {# geval} other {# gevallen}} × {configs, plural, =1 {# configuratie} other {# configuraties}} × rijen in de dataset",
     "runPreflightTooltipHeader": "{iterations, plural, =1 {# iteratie} other {# iteraties}} over {cases, plural, =1 {# geparameteriseerd geval} other {# geparameteriseerde gevallen}} × {configs, plural, =1 {# configuratie} other {# configuraties}}",
     "runPreflightTooltipCaseRow": "{title} — {rows, plural, =1 {# rij} other {# rijen}}",
     "chipClickToReveal": "Klik om te onthullen",
@@ -10682,7 +10257,6 @@
     "iterationAddResult": "Voeg resultaat toe",
     "iterationPassAndNext": "Slagen & volgende iteratie",
     "iterationOtherStatuses": "Andere statussen",
-    "iterationAllComplete": "Alle iteraties voltooid",
     "hardRefuseTitle": "Kan niet aanmaken — te veel iteraties",
     "hardRefuseDescription": "Het aantal iteraties voor het aanmaken van testruns is beperkt tot {cap} om de responsiviteit van het systeem te behouden. Verminder een van de onderstaande factoren.",
     "hardRefuseColumnCase": "Geval",
@@ -10705,15 +10279,12 @@
     "iterationsHeaderCount": "{complete}/{total}",
     "iterationsHeaderCountPending": "0/{total} (genereren)",
     "iterationStatusLegendAria": "Statuslegende",
-    "iterationActionSkipped": "Overgeslagen",
     "iterationBulkPickStatusPrompt": "Kies een status die u wilt toepassen op de geselecteerde iteraties.",
-    "iterationBulkApplyStatus": "Markeer met status…",
     "iterationSelectAria": "Selecteer iteratie {n}",
     "iterationRowMenuAria": "Iteratie {n} acties",
     "iterationOverrideValues": "Waarden overschrijven…",
     "iterationSkip": "Markeer met status…",
     "iterationReset": "Resultaat van iteratie resetten",
-    "iterationSelectedCount": "{count} geselecteerd",
     "iterationBulkSkip": "Markeer {count, plural, =1 {# iteratie} other {# iteraties}} met status…",
     "iterationIssueTitleSnapshot": "Iteratie {n} van {total} probleem: {caseName}",
     "iterationIssueTitleCiExtended": "Iteratie {n} (CI-uitgebreid) probleem: {caseName}",
@@ -10754,13 +10325,7 @@
     "iterationBulkReasonHelp": "Bij elk resultaat vastgelegd.",
     "iterationBulkSuccess": "{count, plural, =1 {# iteratie} other {# iteraties}} gemarkeerd {action}",
     "iterationBulkError": "Iteraties konden niet worden gemarkeerd.",
-    "iterationBulkNa": "Markering niet van toepassing",
-    "iterationListLoadError": "Iteraties konden niet worden geladen.",
     "iterationResetUntestedMissing": "Niet-geteste status niet gevonden",
-    "overrideTitle": "Waarden overschrijven voor iteratie {n}",
-    "overrideDescription": "Wijzigingen hebben alleen invloed op deze iteratie. De momentopname van de dataset en de brondataset blijven ongewijzigd. Deze actie wordt vastgelegd in een auditlogboek.",
-    "overrideValidationItem": "@{param}: {message}",
-    "overrideSensitiveDenied": "Je hebt geen toestemming om gevoelige waarden te bewerken.",
     "datasetSourceLocal": "Lokaal",
     "datasetSourceShared": "Gedeeld",
     "datasetSharedRefBadge": "+ gedeelde referentie",
@@ -10895,7 +10460,6 @@
     },
     "history": "Geschiedenis",
     "subscribers": "Abonnees",
-    "subscriberCount": "{count, plural, =0 {Geen abonnees} one {# abonnee} other {# abonnees}}",
     "toasts": {
       "created": "Regel aangemaakt.",
       "updated": "Regel bijgewerkt.",
@@ -10905,7 +10469,6 @@
       "subscribed": "U wordt op de hoogte gesteld wanneer deze regel wordt geactiveerd.",
       "unsubscribed": "U ontvangt geen meldingen meer van deze regel.",
       "subscriberAdded": "{name} geabonneerd.",
-      "subscriberRemoved": "{name} afgezegd.",
       "saveError": "Kan de regel niet opslaan.",
       "subscriptionError": "Kan het abonnement niet bijwerken."
     },
@@ -10927,7 +10490,6 @@
       "scopeRunNamePlaceholder": "bijv. Nachtelijk",
       "scopePickFolder": "Selecteer een map",
       "scopePickTag": "Selecteer een label",
-      "scopePickCase": "Selecteer een testgeval",
       "scopePickMilestone": "Selecteer een mijlpaal",
       "scopeWebhook": "Webhook",
       "scopePickWebhook": "Selecteer een webhook",
@@ -11324,8 +10886,7 @@
     "unclassified": "Geen hoofdoorzaak",
     "source": {
       "AI": "Hoofdoorzaak voorgesteld door AI",
-      "labelAI": "AI",
-      "labelMANUAL": "Handmatig"
+      "labelAI": "AI"
     },
     "columns": {
       "classification": "Hoofdoorzaak",

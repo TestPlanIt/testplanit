@@ -29,7 +29,6 @@
     "searchGroups": "Cerca gruppi...",
     "searchCases": "{count, plural, =0 {Cerca casi} one {Cerca # caso} other {Cerca # casi}}",
     "searchProjects": "{count, plural, =0 {Cerca progetti} one {Cerca # progetto} other {Cerca # progetti}}",
-    "searchTags": "Cerca i tag...",
     "searchRuns": "{count, plural, =0 {Cerca esecuzioni di test} one {Cerca # esecuzione di test} other {Cerca # esecuzioni di test}}",
     "searchSessions": "{count, plural, =0 {Cerca sessioni} one {Cerca # sessione} other {Cerca # sessioni}}",
     "searchMilestones": "{count, plural, =0 {Cerca traguardi} one {Cerca # traguardo} other {Cerca # traguardi}}",
@@ -100,8 +99,6 @@
       "addedToTestRun": "Aggiunto al test di esecuzione",
       "addedToTestRunDescription": "Il caso di test è stato aggiunto al Test Run.",
       "noAvailableTestRuns": "Tutte le esecuzioni di test attive includono già questo caso di test.",
-      "resultUpdateError": "Impossibile aggiornare il risultato del test",
-      "resultDeleteError": "Impossibile eliminare il risultato del test",
       "selectStatus": "Seleziona Stato",
       "addToTestRun": "Aggiungi all'esecuzione di test",
       "status": "Stato",
@@ -225,7 +222,6 @@
       "notApplicable": "N / A",
       "redirecting": "Reindirizzamento in corso...",
       "pendingDelete": "Verrà eliminato",
-      "pendingChanges": "Modifiche in sospeso",
       "importing": "Importazione...",
       "addingTestCases": "Aggiunta di casi di test..."
     },
@@ -335,7 +331,6 @@
       "notificationMode": "Notifiche",
       "value": "Valore",
       "key": "Chiave",
-      "configurationDetails": "Dettagli di configurazione",
       "isActive": "Attivo",
       "members": "Membri",
       "milestoneTypes": "Tipi di milestone",
@@ -411,7 +406,6 @@
       "API": "API",
       "folder": "Cartella",
       "parentFolder": "Cartella principale per i nuovi casi",
-      "multipleValues": "Valori multipli",
       "multipleValuesCount": "Valori multipli ({count, number})",
       "provider": "Fornitore",
       "updatedAt": "Aggiornato alle",
@@ -482,8 +476,6 @@
       "invalidDuration": "Inserisci una durata valida",
       "maxDuration": "La durata non può superare {max} minuti",
       "minLength": "{field} deve essere di almeno {min} caratteri",
-      "emailFormat": "Formato email non valido",
-      "passwordMatch": "Le password devono essere identiche",
       "unique": "{field} deve essere univoco",
       "roleRequired": "Il ruolo è obbligatorio",
       "nameMinLength": "Il nome deve essere composto da almeno 2 caratteri",
@@ -547,7 +539,6 @@
       "deleteSuccess": "Elemento eliminato con successo",
       "deleteError": "Si è verificato un errore durante l'eliminazione dell'elemento",
       "moveSuccess": "Elemento spostato con successo",
-      "moveError": "Si è verificato un errore durante lo spostamento dell'elemento",
       "updateSuccess": "Articolo aggiornato con successo",
       "updateSuccessCount": "{count, number} elementi aggiornati con successo",
       "updateError": "Si è verificato un errore durante l'aggiornamento dell'elemento",
@@ -555,7 +546,6 @@
       "copyFailed": "Impossibile copiare il collegamento negli appunti",
       "created": "Creato con successo",
       "createdItem": "{item} creato con successo",
-      "createdDescription": "L'esecuzione del test è stata creata ed è ora visibile nell'elenco Esecuzioni del test.",
       "createError": "Si è verificato un errore sconosciuto. Riprova.",
       "emptyActive": "Nessuna esecuzione di test attiva",
       "emptyCompleted": "Nessuna esecuzione di test completata",
@@ -633,7 +623,6 @@
       "defaultNotFound": "Valore predefinito non trovato",
       "emailExists": "Esiste già un utente con questa email",
       "nameExists": "Esiste già un utente con questo nome",
-      "duplicateValue": "Questo valore è già in uso",
       "unauthorized": "Non sei autorizzato a eseguire questa azione.",
       "accessDenied": "Accesso negato",
       "sessionNotFound": "Sessione non trovata o non valida.",
@@ -659,8 +648,6 @@
         "unlinkError": "Errore durante lo scollegamento",
         "noActiveIntegration": "Nessuna integrazione attiva trovata per questo progetto"
       },
-      "roleRequiredForSpecificRole": "Il ruolo è obbligatorio quando il tipo di accesso è Ruolo specifico.",
-      "projectCreationFailed": "Creazione del progetto non riuscita, nessun ID restituito.",
       "invalidRoleId": "ID ruolo non valido",
       "workflowStateExists": "Lo stato del flusso di lavoro esiste già. Scegli un nuovo nome.",
       "failedToLoadCaseData": "Impossibile caricare i dati del caso. Impossibile salvare.",
@@ -704,11 +691,9 @@
       "resultSubmitPermissionDenied": "Non puoi inviare i risultati per questo caso. Chiedi a un amministratore di progetto di assegnartelo.",
       "dependenciesNotPassed": "Bloccato da dipendenze",
       "dependenciesNotPassedDescription": "Questo caso di test non può essere eseguito finché {count, plural, =0 {i casi da cui dipende non hanno} =1 {il caso da cui dipende non ha} other {tutti i # casi da cui dipende non hanno}} avuto esito positivo in questa esecuzione.",
-      "justificationRequired": "È richiesta una giustificazione.",
       "justificationRequiredDescription": "Per modificare un risultato già completato, è necessario specificare i dettagli del risultato, spiegando la modifica.",
       "requiredFieldMissing": "Un campo obbligatorio dei risultati non contiene un valore.",
       "editWindowExpired": "La finestra di modifica di questo risultato è chiusa. Registra invece un nuovo tentativo.",
-      "issueRequiredOnFailure": "È necessario collegare il problema",
       "issueRequiredOnFailureDescription": "Un risultato di errore richiede almeno un problema collegato. Collega un problema prima di salvare.",
       "noModelsFound": "Nessun modello trovato",
       "failedToFetchModels": "Impossibile recuperare i modelli",
@@ -745,7 +730,6 @@
       "reports": "Rapporti",
       "adminSamlConfig": "Amministratore - Configurazione SAML",
       "apiDocumentation": "Documentazione API",
-      "sharedContent": "Contenuti condivisi",
       "impact": "Analisi di impatto",
       "alerts": "Notifiche e avvisi",
       "triage": "Schemi di errori",
@@ -807,7 +791,6 @@
       "unknownGroup": "Gruppo sconosciuto",
       "file": "file",
       "files": "file",
-      "existingAttachments": "Allegati esistenti",
       "new": "Nuovo",
       "noElapsedTime": "Nessun tempo registrato",
       "runDurationHint": "Tempo dal primo all'ultimo risultato",
@@ -846,7 +829,6 @@
       "noOptions": "Nessuna opzione disponibile",
       "multiConfiguration": "Parte di un gruppo multiconfigurazione",
       "compositionLocked": "Composizione bloccata — l'insieme di casi è congelato",
-      "otherConfigurations": "Altre configurazioni",
       "noConfiguration": "Nessuna configurazione",
       "configurationWithName": "{configuration} — {name}",
       "selected": "Selezionato: {count}",
@@ -856,7 +838,6 @@
       "successRate": "Tasso di successo",
       "unassigned": "Non assegnato",
       "testRunName": "Nome dell'esecuzione del test",
-      "estimatesEllipsis": "Stime...",
       "access": {
         "noAccess": "Nessun accesso",
         "globalRole": "Usa ruolo globale",
@@ -876,9 +857,7 @@
       "sessions": "Nessuna sessione",
       "activeSessions": "Nessuna sessione attiva",
       "completedSessions": "Nessuna sessione completata",
-      "testCase": "Nessun caso di test trovato",
-      "noTestCasesOrSessions": "Nessun caso di test o sessione trovati",
-      "noTestCasesSessionsOrRuns": "Nessun caso di test, sessione o esecuzione trovati"
+      "testCase": "Nessun caso di test trovato"
     },
     "or": "O",
     "for": "per",
@@ -893,7 +872,6 @@
         "resetColumns": "Ripristina le colonne predefinite"
       },
       "filter": "Elenco filtri...",
-      "selectNone": "Seleziona Nessuno",
       "sort": "Ordina colonna",
       "sortAscending": "Ordinato in ordine crescente",
       "sortDescending": "Ordinato in ordine decrescente",
@@ -917,7 +895,6 @@
       "showing": "Mostrando",
       "total": "totale {count, plural, =1 {# elemento} other {# elementi}}",
       "filtered": "filtrato da",
-      "pageOfPages": "Pagina {current} di {total}",
       "loadedOfTotal": "{loaded, number} di {total, number}"
     },
     "upload": {
@@ -928,7 +905,6 @@
         "description": "Trascina e rilascia i tuoi file oppure clicca sul pulsante qui sotto per selezionarli.",
         "selectFiles": "{count, plural, =0 {Seleziona file} =1 {1 file selezionato} other {# file selezionati}}",
         "selectFile": "{count, plural, =0 {Seleziona file} other {1 file selezionato}}",
-        "filesSelected": "{count, plural, =1 {1 file selezionato} other {# file selezionati}}",
         "addMoreFiles": "Aggiungi altri file...",
         "replaceFile": "Sostituisci il file...",
         "invalidFileType": "Tipo di file non valido. Sono consentiti solo file {types} .",
@@ -953,8 +929,7 @@
       "dropToImportTestResults": "Trascina il file per importare i risultati del test",
       "supportedCsvFormats": "Formato supportato: .csv",
       "supportedResultFormats": "Formati supportati: .xml, .trx, .json",
-      "unsupportedFileType": "Tipo di file non supportato. Previsto: {expected}",
-      "noFilesDetected": "Nessun file rilevato nel drop"
+      "unsupportedFileType": "Tipo di file non supportato. Previsto: {expected}"
     },
     "editor": {
       "bold": "Grassetto",
@@ -1009,9 +984,7 @@
         "strikethrough": "Barrato",
         "code": "Codice",
         "codeBlock": "Blocco di codice",
-        "highlightText": "Evidenzia il testo",
         "textColor": "Colore del testo",
-        "moreOptions": "Altre opzioni",
         "subscript": "Abbonamento",
         "superscript": "Apice",
         "alignLeft": "Allineare a sinistra",
@@ -1019,9 +992,7 @@
         "alignRight": "Allinea a destra",
         "justify": "Giustificare",
         "setLink": "Imposta collegamento",
-        "editLink": "Modifica collegamento",
-        "removeLink": "Rimuovi il collegamento",
-        "resetColorToDefault": "Ripristina il colore predefinito"
+        "removeLink": "Rimuovi il collegamento"
       }
     },
     "ai": {
@@ -1078,9 +1049,6 @@
       "breadcrumb": {
         "more": "Di più"
       },
-      "clickToViewDetails": "Clicca per visualizzare i dettagli",
-      "clickToExpand": "Fai clic per espandere",
-      "clickToCollapse": "Fai clic per ridurre",
       "search": {
         "filters": "Filtri",
         "noResultsFound": "Nessun risultato trovato",
@@ -1098,10 +1066,8 @@
         "openInExternalSystem": "Apri in {provider}",
         "assignee": "Cessionario",
         "status": "Stato: ",
-        "clickToOpenInNewTab": "Clicca per aprire in una nuova scheda",
         "url": "URL: ",
         "externalId": "ID esterno: ",
-        "viewIn": "Visualizza in",
         "fieldType": "Tipo di campo: ",
         "richTextContent": "Contenuto di testo avanzato",
         "fieldInformation": "Informazioni sul campo"
@@ -1120,10 +1086,7 @@
       },
       "import": {
         "encoding": {
-          "utf8": "UTF-8",
-          "iso88591": "ISO-8859-1",
-          "iso885915": "ISO-8859-15",
-          "windows1252": "Windows-1252"
+          "utf8": "UTF-8"
         }
       },
       "loadingIssueTracker": "Caricamento informazioni sul tracker dei problemi in corso...",
@@ -1194,8 +1157,7 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "L'indice di iterazione {index} supera il valore massimo supportato di {cap}. Ridurre il numero di iterazioni o suddividere l'esecuzione.",
-        "iterationCapExceededMulti": "I casi di test {count} richiedono indici di iterazione superiori al valore massimo supportato di {cap}. Ridurre il numero di iterazioni o suddividere l'esecuzione."
+        "iterationCapExceeded": "L'indice di iterazione {index} supera il valore massimo supportato di {cap}. Ridurre il numero di iterazioni o suddividere l'esecuzione."
       }
     }
   },
@@ -1208,8 +1170,7 @@
         "apple": "Continua con Apple",
         "microsoft": "Continua con Microsoft",
         "samlProvider": "Accedi con {name}",
-        "magicLink": "Accedi con Magic Link a uso singolo",
-        "emailLogin": "Continua con l'email"
+        "magicLink": "Accedi con Magic Link a uso singolo"
       },
       "magicLink": {
         "description": "Inserisci il tuo indirizzo email e ti invieremo un link sicuro per accedere. Non è richiesta alcuna password. Devi già possedere un account.",
@@ -1280,7 +1241,6 @@
       "error": "Impossibile verificare l'email",
       "expired": "Il link di verifica è scaduto",
       "invalid": "Link di verifica non valido",
-      "alreadyVerified": "Email già verificata",
       "toast": {
         "verifySuccess": {
           "description": "Ora puoi accedere al tuo account."
@@ -1315,7 +1275,6 @@
       "title": "Verifica la tua identità",
       "description": "Inserisci il codice di 6 cifre visualizzato nell'app di autenticazione per continuare.",
       "backupCodeLabel": "Codice di backup",
-      "backupCodeHint": "È inoltre possibile inserire un codice di backup di 8 caratteri.",
       "useAuthenticator": "Utilizzare invece il codice di autenticazione",
       "useBackupCode": "Utilizzare invece un codice di backup",
       "signOut": "Disconnettiti e usa un altro account."
@@ -1328,24 +1287,14 @@
       "confirmPasswordLabel": "Conferma la nuova password",
       "signOut": "Disconnettiti invece",
       "passwordsMustMatch": "Le password non corrispondono.",
-      "genericError": "Si è verificato un errore. Riprova.",
-      "policyTitle": "Requisiti della password:",
-      "policyMinLength": "Almeno {count, number} caratteri",
-      "policyUppercase": "Almeno una lettera maiuscola",
-      "policyLowercase": "Almeno una lettera minuscola",
-      "policyNumbers": "Almeno un numero",
-      "policySpecialChars": "Almeno un carattere speciale ({chars})"
+      "genericError": "Si è verificato un errore. Riprova."
     }
   },
   "account": {
     "linkSso": {
       "description": "Collega il tuo account a un provider Single Sign-On",
-      "availableProviders": "Fornitori SSO disponibili",
-      "linkWithGoogle": "Collegamento con Google",
-      "linkWithSaml": "Collegamento con {name}",
       "accountLinked": "Account collegato correttamente",
       "linkingFailed": "Impossibile collegare l'account",
-      "noProvidersAvailable": "Al momento non sono disponibili provider SSO per il collegamento",
       "linkingInfo": "Collegando un provider SSO puoi accedere utilizzando quel provider anziché la tua password. I dati del tuo account esistente rimarranno invariati.",
       "signInWithGoogle": "Accedi con Google",
       "enterpriseSamlSso": "SSO SAML aziendale",
@@ -1389,7 +1338,6 @@
       "seeAllMilestones": "{count, plural, =1 {Vedi # Traguardo} =2 {Vedi entrambi i Traguardi} other {Vedi tutti i # Traguardi}}",
       "seeAllTestCases": "{count, plural, =1 {Vedi # Caso di test} =2 {Vedi entrambi i Casi di test} other {Vedi tutti i # Casi di test}}",
       "latestTestCases": "Ultimi casi di prova",
-      "createdOn": "Creato il",
       "seeAllTagsCount": "{count, plural, =1 {Vedi # Tag} =2 {Vedi entrambi i Tag} other {Vedi tutti i # Tag}}",
       "seeAllActiveSessions": "{count, plural, =1 {Vedi # Sessione attiva} =2 {Vedi entrambe le Sessioni attive} other {Vedi tutte le # Sessioni attive}}",
       "latestSessions": "Ultime sessioni",
@@ -1412,8 +1360,6 @@
     },
     "settings": {
       "description": "Gestisci le impostazioni per {projectName}",
-      "moreSettingsComingSoon": "Altre impostazioni in arrivo prossimamente",
-      "moreSettingsDescription": "Ulteriori opzioni di configurazione del progetto saranno disponibili qui nei futuri aggiornamenti",
       "junitIterationProperties": {
         "title": "Mappatura delle proprietà di iterazione",
         "description": "Durante l'importazione, l'indice di iterazione per ogni caso di test viene letto da una proprietà, un attributo o una caratteristica il cui nome corrisponde a una di queste voci (proprietà JUnit, attributo TestNG, caratteristica xUnit, proprietà NUnit). Aggiungi i nomi utilizzati dal tuo emettitore; la ricerca non fa distinzione tra maiuscole e minuscole.",
@@ -1435,23 +1381,17 @@
         "description": "Gestisci le integrazioni di problemi di terze parti per questo progetto",
         "availableIntegrations": "Integrazioni di problemi disponibili",
         "availableDescription": "Seleziona un'integrazione di problemi per connetterti a questo progetto",
-        "configuredIntegration": "Integrazione configurata",
         "noIntegrationAssigned": "Nessuna integrazione di problemi assegnata",
         "noIntegrationDescription": "Seleziona un'integrazione di problemi tra le opzioni disponibili per iniziare",
         "selectIntegration": "Seleziona un'integrazione di problemi da configurare",
         "integration": {
-          "assignError": "Impossibile assegnare l'integrazione del problema",
           "updateSuccess": "Impostazioni di integrazione aggiornate",
           "updateError": "Impossibile aggiornare le impostazioni di integrazione del problema",
           "removeError": "Impossibile rimuovere l'integrazione del problema",
           "removeIntegration": "Rimuovi integrazione",
           "confirmRemove": "Sei sicuro di voler rimuovere l'integrazione {name}?",
-          "authDescription": "Devi autenticarti con {provider} per utilizzare questa integrazione dei problemi",
           "authenticating": "Autenticazione in corso...",
-          "authSuccess": "Autenticazione riuscita",
           "selectProject": "Seleziona {provider} Progetto",
-          "selectProjectPlaceholder": "Scegli un progetto da collegare",
-          "linkedProject": "Progetto collegato",
           "loadProjectsError": "Impossibile caricare i progetti",
           "settingsSaved": "Impostazioni di integrazione salvate correttamente",
           "saveSettingsError": "Impossibile salvare le impostazioni di integrazione del problema",
@@ -1462,22 +1402,12 @@
           "authorizeIntegration": "Autorizza {name}",
           "integrationSettings": "{name} Impostazioni",
           "integrationSettingsDescription": "Configura le impostazioni di integrazione dei problemi per questo progetto",
-          "selectExternalProject": "Seleziona progetto esterno",
-          "refreshProjects": "Aggiorna progetti",
           "defaultIssueType": "Tipo di problema predefinito",
           "selectDefaultIssueType": "Seleziona il tipo di problema predefinito",
-          "defaultIssueTypeDescription": "Questo tipo di problema verrà preselezionato quando si creano nuovi problemi",
-          "issueTypePlaceholder": "ad esempio, Bug, Attività, Storia",
-          "defaultComponent": "Componente predefinito",
-          "componentPlaceholder": "ad esempio, Frontend, Backend",
           "automaticSync": "Sincronizzazione automatica",
-          "automaticSyncDescription": "Sincronizza automaticamente i problemi tra TestPlanIt e il sistema esterno",
           "simpleUrlDescription": "Questa integrazione dei problemi utilizza un semplice modello URL per collegarsi ai problemi esterni. I problemi verranno aperti in una nuova scheda utilizzando il modello URL configurato.",
-          "externalProjectHelp": "Questo imposta il progetto predefinito per la creazione di nuovi problemi da TestPlanIt. È comunque possibile collegare e sincronizzare problemi da altri progetti esterni: ogni problema tiene traccia del proprio progetto sorgente.",
           "linkedProjects": "Progetti esterni collegati",
           "linkedProjectsDescription": "Progetti esterni collegati tramite questa integrazione",
-          "noLinkedProjects": "Nessun progetto esterno collegato",
-          "noLinkedProjectsDescription": "Aggiungi un progetto esterno per abilitare la ricerca e la sincronizzazione dei problemi.",
           "addProjects": "Aggiungi progetti",
           "addSelected": "Aggiungi selezionati",
           "setAsDefault": "Imposta come predefinito",
@@ -1489,8 +1419,6 @@
           "syncStatusCompleted": "Sincronizzato",
           "syncStatusError": "Errore di sincronizzazione",
           "fanOutPartialFailure": "Impossibile raggiungere il/i progetto/i {count} . Vengono visualizzati i risultati del/i progetto/i {successCount}.",
-          "projectSelectorLabel": "Progetto",
-          "defaultIssueTypeHelp": "Quando si creano nuovi problemi da TestPlanIt, questo tipo di problema verrà selezionato automaticamente. Questo consente di risparmiare tempo se si creano solitamente problemi dello stesso tipo.",
           "automaticSyncHelp": "Se abilitata, la sincronizzazione dei problemi verrà eseguita automaticamente quando vengono rilevate modifiche nel sistema esterno (tramite webhook). La sincronizzazione manuale è sempre disponibile.",
           "removeWarningTitle": "La rimozione di questa integrazione del problema comporterà:",
           "removeWarning1": "Disconnetti tutti i problemi collegati da questa integrazione dei problemi (i problemi rimangono nel database)",
@@ -1651,12 +1579,10 @@
         "outboundCreateUrlHelp": "L'URL di destinazione. Gli URL dei webhook in entrata di Slack vengono rilevati automaticamente.",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "Rilevato: Slack",
-        "outboundDetectedHmac": "Rilevato: HMAC generico",
         "adapterLabelSlack": "Slack",
         "adapterLabelGenericHmac": "Webhook HMAC generico",
         "outboundCreateSubscriptionsTitle": "Abbonamenti",
         "outboundCreateSubscriptionsHelp": "Scegli quali eventi vengono inviati a questa destinazione. Potrai modificarli in seguito.",
-        "outboundSubsTestRunsAndSessions": "Prove e sessioni",
         "outboundSubsTestRuns": "Esecuzioni di test",
         "outboundSubsSessions": "Sessioni",
         "outboundSubsScimUsers": "Utenti SCIM",
@@ -1682,7 +1608,6 @@
           "scimGroupMemberAddedSummary": "Membri aggiunti (riepilogo sincronizzazione in blocco)",
           "triggered": "Attivato"
         },
-        "iterationResultHelp": "Si attiva ogni volta che viene registrato un risultato di iterazione: superato, fallito, saltato o qualsiasi altro stato. Utilizzare con parsimonia in cicli di automazione lunghi (un evento per iterazione).",
         "events": {
           "testRunCreated": "Esecuzione di prova creata",
           "testRunStateChanged": "Lo stato di esecuzione del test è cambiato",
@@ -1714,7 +1639,6 @@
         },
         "outboundSubsIssues": "Problemi",
         "outboundSubsCases": "Casi",
-        "outboundSubsSelectAll": "Seleziona tutto in questa sezione",
         "outboundCreateSubmit": "Crea webhook",
         "outboundCreateSuccess": "Webhook in uscita creato.",
         "outboundCreateError": "Impossibile creare il webhook in uscita.",
@@ -1795,14 +1719,11 @@
         "filterConfigPlaceholder": "Tutti i webhook",
         "filterEventPlaceholder": "Tutti gli eventi",
         "filterStatusFailed": "Fallito",
-        "filterSinceDefault": "Poiché…",
-        "filterUntilDefault": "Fino a…",
         "filterReset": "Reimposta i filtri",
         "filterBulkReplayButton": "Riproduzione in blocco {count, number} errori in uscita",
         "filterBulkReplayHidden": "Tutti gli errori visibili sono in entrata: riattivare invece l'evento a monte.",
         "deliveriesEmpty": "Nessuna consegna corrisponde a questi filtri.",
         "deliveriesResetFilters": "Reimposta i filtri",
-        "deliveriesLoadMore": "Carica altro",
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "Evento",
         "tableHeaderSubjectRef": "Riferimento",
@@ -1941,8 +1862,7 @@
           "autoExecute": "Esegui casi automatizzati",
           "autoExecuteHelp": "Dopo che l'esecuzione è composta, richiedi l'esecuzione automatizzata dei suoi casi automatizzati su questo target. I casi manuali rimangono nell'esecuzione per i tester.",
           "autoExecuteNoTargets": "Nessun target di esecuzione è configurato per questo progetto. <link>Aggiungine uno</link> per eseguire le esecuzioni automaticamente.",
-          "autoExecuteTargetMissing": "Il target di esecuzione scelto è stato eliminato o disabilitato. Le esecuzioni sono ancora composte, ma nessuna esecuzione viene richiesta finché non scegli un altro target.",
-          "autoExecuteSaveError": "Impossibile salvare le impostazioni di esecuzione automatizzata"
+          "autoExecuteTargetMissing": "Il target di esecuzione scelto è stato eliminato o disabilitato. Le esecuzioni sono ancora composte, ma nessuna esecuzione viene richiesta finché non scegli un altro target."
         },
         "inboundEmptyState": "Nessun webhook in entrata ancora. <link>Aggiungine uno</link> per ricevere aggiornamenti sui problemi dal tuo tracker di problemi, o richieste pull e push da un repository connesso.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -1961,8 +1881,6 @@
       "aiModels": {
         "description": "Configurare modelli di intelligenza artificiale per la generazione e l'analisi di casi di test intelligenti",
         "availableModelsDescription": "Scegli un modello di intelligenza artificiale predefinito per questo progetto tra quelli configurati dall'amministratore di sistema.",
-        "currentModelSettings": "Impostazioni del modello corrente",
-        "currentModelDescription": "Dettagli di configurazione per il modello AI attualmente attivo: {name}",
         "noModelsAvailable": "Al momento non sono disponibili modelli di intelligenza artificiale. Contatta l'amministratore di sistema per configurare i modelli di intelligenza artificiale per la tua organizzazione.",
         "monthlyBudget": "Budget mensile",
         "model": "Modello",
@@ -1971,7 +1889,6 @@
         "systemDefault": "Predefinito del sistema",
         "setAsDefault": "Imposta come predefinito",
         "clearDefault": "Cancella le impostazioni predefinite",
-        "useForProject": "Utilizzare per il progetto",
         "removeModel": "Cancella le impostazioni predefinite",
         "removeWarningTitle": "La cancellazione del modello AI predefinito consentirà di:",
         "removeWarning1": "Disabilita le funzionalità basate sull'IA a meno che non siano configurate delle eccezioni per ciascuna funzionalità.",
@@ -2035,10 +1952,6 @@
           "assignments": "In uso da"
         },
         "versionLabel": "v{version, number}",
-        "assignmentsCount": "{count, plural, =0 {0 casi} =1 {# caso} other {# casi}}",
-        "rowsCount": "{count, plural, =0 {0 righe} =1 {# riga} other {# righe}}",
-        "columnsCount": "{count, plural, =0 {0 colonne} =1 {# colonna} other {# colonne}}",
-        "actionsMenuLabel": "Azioni sui set di dati aperti",
         "actionOpen": "Apri l'editor",
         "openLink": "Aprire",
         "create": {
@@ -2071,9 +1984,6 @@
           "saving": "Risparmio",
           "savedHint": "Tutte le modifiche sono state salvate alla versione {version, number}",
           "unsavedHint": "Modifiche non salvate",
-          "currentVersionLabel": "v{version, number} (attuale)",
-          "currentVersionInitialLabel": "Attuale",
-          "historicalVersionLabel": "v{version, number}",
           "historicalReadOnlyBanner": "Stai visualizzando la versione {version, number}. La modifica creerà una nuova versione derivata da questa.",
           "branchingBanner": "Il salvataggio creerà una nuova versione derivata da v{version, number}.",
           "saveError": "Impossibile salvare il set di dati.",
@@ -2088,9 +1998,7 @@
           "historicalItemLabel": "v{version, number}",
           "historicalItemBy": "di {name}",
           "noVersionsYet": "Nessuna versione salvata al momento"
-        },
-        "datasetTabSharedReadOnlyHint": "Visualizzazione di sola lettura della versione {version, number}. Passa alla versione corrente per modificarla.",
-        "datasetTabSharedEditorHint": "Fai clic su Salva al termine. Ogni salvataggio crea una nuova versione."
+        }
       },
       "quickScript": {
         "description": "Abilita QuickScript e connetti un repository di codice per la generazione di test assistita dall'intelligenza artificiale.",
@@ -2169,7 +2077,6 @@
           "pathLabel": "Percorso",
           "patternLabel": "Modello",
           "previewFiles": "Anteprima dei file",
-          "scanningRepo": "Scansione dei file del repository… ({seconds}s)",
           "title": "Modelli di percorso",
           "truncatedBadge": "I risultati potrebbero essere incompleti (limite del fornitore)"
         },
@@ -2182,8 +2089,6 @@
         },
         "refreshComplete": "Cache aggiornata: {fileCount} file",
         "refreshInProgress": "L'aggiornamento della cache è ancora in esecuzione in background. Verrà aggiornato qui al termine.",
-        "refreshRateLimited": "Cache aggiornata: {fileCount} file elencati, {contentCached}/{fileCount} contenuti memorizzati nella cache (frequenza limitata: aggiorna di nuovo per completare)",
-        "refreshSuccess": "Cache aggiornata: {fileCount} file ({contentCached} contenuto memorizzato nella cache)",
         "repository": {
           "branchLabel": "Ramo",
           "branchesTruncatedHint": "Visualizzazione dei primi {count, number} rami. Digita per cercare nell'intero repository.",
@@ -2483,26 +2388,18 @@
       }
     },
     "matrix": {
-      "metaTitle": "Vista a matrice",
       "pageTitle": "Matrice di iterazione dei test parametrizzati",
       "loading": "Matrice di caricamento…",
       "loadError": "Impossibile caricare la visualizzazione a matrice. Riprova o restringi i filtri.",
-      "cellCapShort": "Questa matrice genererebbe circa {cells, number} celle, superando il limite di circa {threshold, number} celle. Restringi i filtri per continuare.",
       "caseColumnHeader": "Riga del caso/parametro",
       "cellSummary": "{pass, number} superato, {fail, number} fallito, {notRun, number} non eseguito",
       "popoverTitle": "{count, plural, =1 {# iterazione} other {# iterazioni}}",
-      "iterationUnlabeled": "Iterazione n.{index, number}",
       "popoverInflightHint": "Le iterazioni in corso di esecuzione vengono visualizzate qui una volta registrate.",
       "popoverNoTimestamp": "—",
-      "filterStatus": "{count, plural, =0 {Stato} one {Stato (#)} other {Stato (#)}}",
-      "filterConfig": "{count, plural, =0 {Configurazione} one {Configurazione (#)} other {Configurazione (#)}}",
-      "filterDataset": "{count, plural, =0 {Set di dati} one {Set di dati (#)} other {Set di dati (#)}}",
       "filterDatasetLabel": "Set di dati",
       "filterStatusPlaceholder": "Qualsiasi stato",
       "filterConfigPlaceholder": "Qualsiasi configurazione",
       "filterDatasetPlaceholder": "Qualsiasi set di dati",
-      "filterDateFrom": "Da",
-      "filterDateTo": "A",
       "configNone": "(nessuna configurazione)",
       "clearFilter": "Chiaro",
       "resetFilters": "Reimposta i filtri",
@@ -2583,7 +2480,6 @@
       "reopen": "Riaprire"
     },
     "dates": {
-      "pickStartDate": "Seleziona la data di inizio",
       "pickCompletionDate": "Scegli la data di completamento",
       "selectDate": "Seleziona la data...",
       "completionWarning": "Attenzione: questo segnerà il traguardo come completato"
@@ -2666,7 +2562,6 @@
       "providerJira": "Jira",
       "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
-      "syncNow": "Sincronizza ora",
       "unlinkMenuItem": "Scollega da {provider}",
       "unlinkConfirmTitle": "Scollegare il traguardo?",
       "unlinkConfirmDescription": "Questo interrompe la sincronizzazione con il tracker: i campi diventano nuovamente modificabili, i link ai problemi sincronizzati diventano manuali (a te la scelta di conservarli o rimuoverli), e sarà possibile ricollegare in seguito importando di nuovo questo artefatto.",
@@ -2702,10 +2597,6 @@
       "columnCoverage": "Copertura",
       "columnSource": "Origine",
       "sourceSynced": "Sincronizzato",
-      "coveragePassed": "Superato",
-      "coverageFailed": "Fallito",
-      "coverageInProgress": "In corso",
-      "coverageNotRun": "Non eseguito",
       "coverageUncovered": "Non coperto",
       "filterAllCoverage": "Tutta la copertura",
       "filterAllSources": "Tutte le origini",
@@ -2724,7 +2615,6 @@
       "overflowImportAction": "Importa e collega",
       "overflowImportSuccess": "Importazione avviata — i problemi appariranno durante la sincronizzazione.",
       "overflowImportError": "Impossibile importare i problemi associati da Jira.",
-      "emptyCta": "Collega un problema per iniziare.",
       "unlinkConfirmTitle": "Scollegare il problema?",
       "unlinkConfirmDescription": "Questo rimuove il problema da questo traguardo. Il problema stesso viene conservato e può essere collegato di nuovo in seguito.",
       "totalsUncovered": "{count, plural, one {# problema non coperto} other {# problemi non coperti}}",
@@ -2781,9 +2671,7 @@
     },
     "messages": {
       "createSuccess": "Sessione creata con successo",
-      "createSuccessMultiple": "{count, number} Sessioni create con successo",
-      "duplicateSuccess": "Sessione duplicata con successo",
-      "duplicateSuccessMultiple": "{count} Sessioni duplicate con successo"
+      "createSuccessMultiple": "{count, number} Sessioni create con successo"
     },
     "duplicateDialog": {
       "title": "Sessione duplicata",
@@ -2795,8 +2683,7 @@
       "failedToCreate": "Impossibile creare una nuova sessione",
       "failedToCreateVersion": "Impossibile creare la versione della sessione",
       "nameAlreadyExists": "Il nome della sessione esiste già. Scegli un nuovo nome",
-      "createFailed": "Impossibile creare la sessione",
-      "duplicateFailed": "Impossibile duplicare la sessione"
+      "createFailed": "Impossibile creare la sessione"
     },
     "validation": {
       "nameMinLength": "Il nome deve essere composto da almeno 2 caratteri.",
@@ -2835,7 +2722,6 @@
     "summary": {
       "workDistributionDescription": "Tempo totale stimato rimanente:",
       "recentResultsTitle": "Riepilogo dei risultati recenti",
-      "recentResultsDescription": "Riepilogo dei risultati della sessione.",
       "noRecentResults": "Nessun risultato di sessione registrato di recente.",
       "completionTrendTitle": "Tendenza al completamento",
       "completionTrendDescription": "Sessioni completate al mese.",
@@ -2965,8 +2851,6 @@
         "title": "Modifica profilo",
         "timezonePlaceholder": "Seleziona o cerca il fuso orario...",
         "timezoneRequired": "Il fuso orario è obbligatorio.",
-        "avatarUpdated": "Avatar aggiornato con successo.",
-        "avatarUpdateError": "Impossibile aggiornare l'avatar.",
         "deleteAvatar": "Elimina Avatar",
         "deleteAvatarConfirm": "Sei sicuro di voler eliminare il tuo {name}?",
         "emailDisabledForSso": "L'indirizzo email non può essere modificato per gli account SSO. Aggiornalo tramite il tuo provider di identità.",
@@ -3010,7 +2894,6 @@
       "notifications": {
         "title": "Preferenze di notifica",
         "description": "Personalizza il modo in cui ricevi le notifiche",
-        "currentGlobal": "Impostazione globale corrente: {mode}",
         "mode": {
           "label": "Modalità di notifica",
           "useGlobal": "Usa le impostazioni globali"
@@ -3154,7 +3037,6 @@
         "loadMore": "Caricamento",
         "viewDetails": "Visualizza i dettagli",
         "columnAction": "Azione",
-        "columnTimestamp": "Data e ora",
         "allActions": "Tutte le azioni",
         "allTypes": "Tutti i tipi",
         "noMatchingEntries": "Nessuna voce corrisponde ai filtri selezionati.",
@@ -3323,22 +3205,16 @@
       "removedFromCase": "Rimosso dal caso di test",
       "confirmDelete": "Conferma l'eliminazione del passaggio {number, number}?",
       "createSharedSteps": "Crea {number, plural, one {Passaggio condiviso} other {Passaggi condivisi}}",
-      "sharedStepsName": "Nome dei passaggi condivisi",
       "sharedStepsDescription": "Inserisci un nome per {number, plural, one {il tuo nuovo passo condiviso} other {i tuoi nuovi passi condivisi}}. Questo includerà {number, plural, one {# passo selezionato} other {# passi selezionati}}.",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "Seleziona i passaggi e inserisci un nome per creare passaggi condivisi.",
-        "failedToCreateSharedStepGroupError": "Impossibile creare i passaggi condivisi. Riprova.",
-        "sharedStepGroupCreatedSuccess": "Passaggi condivisi creati con successo!",
-        "genericSharedStepCreationError": "Si è verificato un errore sconosciuto durante la creazione dei passaggi condivisi. Riprova.",
         "errorCreatingSharedGroup": "Impossibile creare passaggi condivisi. Riprova.",
         "sharedGroupCreatedSuccess": "Gruppo di passaggi condivisi creato con successo!",
         "failedToCreateSharedGroupError": "Impossibile creare il gruppo condiviso. Riprova."
       },
       "selectSharedStepsTitle": "Seleziona Passaggi condivisi",
       "selectSharedStepsDescription": "Scegli i passaggi condivisi da aggiungere al tuo caso di test.",
-      "sharedStepsListPlaceholder": "Caricamento dei passaggi condivisi...",
       "sharedStepsNamePlaceholder": "Inserisci un nome per identificare i passaggi condivisi",
-      "noSharedStepsFound": "Nessun passaggio condiviso trovato per questo progetto.",
       "sharedStepGroupTitle": "Passaggi condivisi: {name}",
       "confirmDeleteSharedStepBlock": "Vuoi davvero rimuovere il blocco di passaggi condivisi \"{name}\" da questo caso di test? Questo non eliminerà il gruppo di passaggi condivisi stesso.",
       "removeBlockButton": "Rimuovi blocco",
@@ -3347,7 +3223,6 @@
       "searchSharedStepsPlaceholder": "Seleziona i passaggi condivisi...",
       "stepsCountLabel": "{count, plural, =0 {# passaggi} =1 {# passaggio} other {# passaggi}}",
       "reviewSelectedStepsTitle": "Rivedi i passaggi selezionati",
-      "noStepsInSelectedGroup": "Il gruppo selezionato non ha passaggi.",
       "sharedGroupSuffix": "(Passaggi condivisi)",
       "unnamedSharedGroup": "Passaggi condivisi senza nome",
       "noStepsInSelectedSharedGroup": "Il gruppo condiviso selezionato non ha passaggi.",
@@ -3358,8 +3233,6 @@
       }
     },
     "testCase": {
-      "toggleAutomated": "Attiva/disattiva test automatizzati",
-      "editAttachmentsIndividually": "Modificare gli allegati singolarmente.",
       "automatedStatus": "I test automatizzati sono {status}"
     },
     "templateNotAssignedWarning": "Questo caso di test utilizza il modello \"{templateName}\" che al momento non è assegnato al progetto \"{projectName}\". Potrebbe essere necessario assegnare questo modello al progetto o modificare il caso di test per utilizzare un modello diverso.",
@@ -3390,12 +3263,10 @@
     },
     "dragDrop": {
       "move": "Mossa",
-      "promptTitle": "Cosa ti piacerebbe fare?",
       "copying": "Copia…",
       "copyComplete": "{count, plural, =1 {Copiato 1 caso in {folder}} other {Copiati # casi in {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "moveComplete": "{count, plural, =1 {Spostato 1 caso in {folder}} other {Spostati # casi in {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "copyError": "{count, plural, =1 {Impossibile copiare 1 caso in {folder}} other {Impossibile copiare # casi in {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
-      "moveError": "{count, plural, =1 {Impossibile spostare 1 caso in {folder}} other {Impossibile spostare # casi in {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "copyAlreadyRunning": "Un'altra copia è già in fase di elaborazione. Si prega di attendere il completamento.",
       "currentSuffix": "(Attuale)",
       "moveDisabledSameFolder": "I casi sono già presenti in questa cartella",
@@ -3446,7 +3317,6 @@
       "currentRunTooltip": "L'esecuzione del test che stai visualizzando",
       "attempt": "Tentativo",
       "invalidProject": "Progetto non valido",
-      "noSearchResults": "Nessun caso corrisponde ai tuoi criteri di ricerca.",
       "bulkEdit": "Modifica in blocco",
       "createTestRun": "Crea esecuzione di prova",
       "addToRunDraftBlocked": "Non è possibile aggiungere casi in bozza alle esecuzioni se l'opzione \"Escludi casi in bozza dalle esecuzioni di test\" è attiva per questo progetto.",
@@ -3670,10 +3540,7 @@
       "anyIssue": "Qualsiasi problema",
       "noIssues": "Nessun problema"
     },
-    "noFoldersTitle": "Nessuna cartella ancora",
-    "noFoldersDescription": "Per iniziare, crea la tua prima cartella per organizzare i tuoi casi di test.",
     "noFoldersOrCasesNoPermission": "Non ci sono cartelle o casi di test da visualizzare.",
-    "createFirstFolder": "Crea la tua prima cartella",
     "bulkEdit": {
       "title": "Modifica in blocco {count, plural, one {# Caso} other {# Casi}}",
       "description": "Modifica {count, plural, one {# caso selezionato} other {# casi selezionati}}. Seleziona un campo per abilitare la modifica.",
@@ -3692,19 +3559,12 @@
         }
       },
       "errors": {
-        "fetchErrorTitle": "Errore durante il caricamento dei casi",
-        "fetchErrorDescription": "Impossibile caricare i dati per i casi selezionati. Chiudere la finestra modale e riprovare.",
-        "updateErrorTitle": "Aggiornamento non riuscito",
-        "updateFailed": "Si è verificato un errore durante il salvataggio delle modifiche. Controlla i dati e riprova.",
-        "fetchError": "Errore durante il recupero dei dati del caso."
+        "updateFailed": "Si è verificato un errore durante il salvataggio delle modifiche. Controlla i dati e riprova."
       },
       "success": {
         "casesUpdated": "{count, number} casi aggiornati con successo"
       },
       "validationError": "Errore di convalida",
-      "stepsCannotBeBulkEdited": "I passaggi non possono essere modificati in blocco",
-      "stepsInfoTitle": "Informazioni sui passaggi",
-      "stepsCannotBeBulkEditedInfo": "I passaggi non possono essere modificati in blocco. Modifica i passaggi modificando i casi singolarmente.",
       "confirmDeleteCases": "Sei sicuro di voler eliminare {count, plural, one {# caso selezionato} other {# casi selezionati}}? Questa azione non può essere annullata.",
       "replaceAll": "Sostituisci tutto",
       "searchReplace": "Cerca e sostituisci",
@@ -3765,7 +3625,6 @@
         "single": "Fila singola per caso di test",
         "multi": "Più righe per passaggio"
       },
-      "comingSoon": "Prossimamente",
       "exportError": "Esportazione non riuscita. Riprova."
     },
     "quickScript": {
@@ -3846,19 +3705,13 @@
       "loadingDetails": "Caricamento dei dettagli del caso in corso...",
       "caseDetailsError": "Impossibile caricare i dettagli del caso.",
       "sourceLabel": "Fonte",
-      "fieldValuesLabel": "Valori di campo",
       "lastRunLabel": "Ultima esecuzione",
-      "noFieldValues": "Nessun valore di campo",
       "noLastRun": "Mai eseguito",
-      "stepExpectedResult": "{step} → {result}",
-      "runStatusDate": "{status} — {date}",
       "noFolder": "Nessuna cartella",
       "duplicateWarning": "Possibili duplicati trovati",
       "duplicateWarningDescription": "{count, plural, one {# caso esistente potrebbe} other {# casi esistenti potrebbero}} coprire funzionalità simili",
       "duplicateWarningReview": "Revisione",
-      "importWarning": "Possibile duplicato",
       "importWarningTooltip": "Il nome di questo caso è simile a {count, plural, one {# caso esistente} other {# casi esistenti}}: {names}",
-      "importIntraWarning": "Duplicato all'interno dell'importazione",
       "importIntraWarningTooltip": "Le righe {rows} in questa importazione hanno lo stesso nome o un nome molto simile",
       "checkingDuplicates": "Verifica della presenza di duplicati in corso..."
     },
@@ -3888,12 +3741,8 @@
         "currentFolder": "cartella corrente",
         "fromIssue": "Dal problema",
         "fromDocument": "Dal documento",
-        "documentTitle": "Titolo del documento",
-        "documentTitlePlaceholder": "Inserisci il titolo del documento dei tuoi requisiti",
         "documentDescription": "Documento dei requisiti",
         "documentDescriptionPlaceholder": "Incolla qui il contenuto del documento sui requisiti...",
-        "documentPriority": "Priorità (facoltativo)",
-        "selectPriority": "Seleziona la priorità",
         "saveDocument": "Salva i requisiti del documento",
         "fromUrl": "Da URL",
         "recentGenerations": "Recenti attività di generazione di casi di test da URL",
@@ -3960,15 +3809,11 @@
         "title": "Esaminare i casi di test generati",
         "description": "Esamina i casi di test generati dall'intelligenza artificiale, apporta le modifiche necessarie e seleziona quelli da importare.",
         "selected": "{count, number} di {total, number} selezionati",
-        "moreSteps": "... e {count, plural, one {# altro passaggio} other {# altri passaggi}}",
         "templateFields": "Campi modello:",
-        "moreFields": "... e {count, plural, one {# altro campo} other {# altri campi}}",
-        "crawledUrls": "{count, plural, one {# pagina scansionata} other {# pagine scansionate}}",
         "spaWarning": "Questa pagina potrebbe richiedere il rendering tramite JavaScript. I risultati potrebbero essere incompleti.",
         "filterByPage": "Filtra per pagina",
         "allPages": "Tutte le pagine ({pages, plural, one {# pagina} other {# pagine}}, {cases, plural, one {# caso} other {# casi}})"
       },
-      "generatingLegacy": "Generazione di casi di test con l'intelligenza artificiale...",
       "expandProgress": "{done, number} di {total, number} generato",
       "import": "{count, plural, =0 {Importa casi di test} =1 {Importa 1 caso di test} other {Importa # casi di test}}",
       "stage": "{count, plural, =0 {Metti in stage i casi di test} =1 {Metti in stage 1 caso di test} other {Metti in stage # casi di test}}",
@@ -4010,11 +3855,6 @@
         "repositoryNotFound": "Repository del progetto non trovato. Contattare l'amministratore.",
         "workflowNotConfigured": "Flusso di lavoro del progetto non configurato. Verificare le impostazioni del progetto.",
         "authenticationError": "Errore di autenticazione. Aggiorna la pagina e riprova.",
-        "caseCreationFailed": "Impossibile creare il caso di test: {name}",
-        "caseAlreadyExists": "Il caso di test \"{name}\" esiste già in questa cartella.",
-        "invalidTemplateConfig": "Configurazione del modello non valida per il caso di test \"{name}\".",
-        "nameTooLong": "Il nome del caso di test \"{name}\" è troppo lungo. Si prega di utilizzare un nome più breve.",
-        "caseCreationError": "Impossibile creare \"{name}\": {error}",
         "templateNotFound": "Impossibile trovare il modello selezionato. Aggiorna la pagina e riprova.",
         "repositoryConfigError": "Errore di configurazione del repository del progetto. Contattare l'amministratore.",
         "workflowConfigError": "Errore di configurazione del flusso di lavoro del progetto. Verificare le impostazioni del progetto.",
@@ -4022,9 +3862,7 @@
         "validationFailed": "La convalida dei dati non è riuscita. Si prega di verificare il contenuto del caso di test e riprovare.",
         "databaseError": "Errore di connessione al database. Riprova tra un attimo.",
         "genericImportError": "Importazione non riuscita: {error}",
-        "networkRoutingError": "Problema di routing di rete o di configurazione del server: è stata ricevuta una pagina di errore HTML anziché una risposta API.",
         "invalidSourceConfig": "Configurazione sorgente non valida",
-        "failedToCreateCaseVersion": "Impossibile creare la versione del caso",
         "noUrlProvided": "Inserisci un URL per generare i casi di test da",
         "urlFetchFailed": "Impossibile recuperare il contenuto dall'URL fornito. Si prega di verificare l'URL e riprovare.",
         "llm": {
@@ -4230,7 +4068,6 @@
       "startLine": "Riga di inizio",
       "symbolHint": "La dichiarazione si trova per nome nel file.",
       "symbolNoneDetected": "Nessun simbolo rilevato, digita un nome.",
-      "symbolPlaceholder": "functionName",
       "symbolSelectPlaceholder": "Seleziona o digita un simbolo...",
       "updateSuccess": "Pin aggiornato",
       "updateFailed": "Impossibile aggiornare il pin",
@@ -4257,9 +4094,6 @@
     "add": {
       "button": "Aggiungi tag",
       "title": "Aggiungi nuovo tag",
-      "fields": {
-        "name_error": "Il nome del tag è obbligatorio"
-      },
       "errors": {
         "nameExists": "Esiste già un tag con questo nome"
       }
@@ -4368,7 +4202,6 @@
       "filterEntityTypeRun": "Esecuzioni di test",
       "filterAllProjects": "Tutti i progetti",
       "actionRevert": "Annulla decisione",
-      "revertedBadge": "Annullato",
       "revertedBadgeTooltip": "{count, plural, =1 {Annullato una volta in precedenza} other {Annullato # volte in precedenza}}"
     },
     "requester": {
@@ -4387,9 +4220,7 @@
       "cannotSelfAssign": "Non puoi assegnare una recensione a te stesso; scegli un altro utente o un ruolo.",
       "defaultComment": "Si prega di rivedere la transizione da {fromState} → {toState}.",
       "defaultCommentRole": "Richiesta di approvazione al gruppo {roleName} per la transizione da {fromState} → {toState}.",
-      "ineligibleAssigneeError": "Questo utente/ruolo non può approvare le recensioni per quest'area. Scegli un altro utente.",
-      "ineligibleAssigneeErrorUser": "{name} non può approvare le recensioni per quest'area. Scegli un altro utente o un ruolo.",
-      "ineligibleAssigneeErrorRole": "Il ruolo {roleName} non può approvare le recensioni per quest'area. Scegli un altro ruolo o un altro utente."
+      "ineligibleAssigneeError": "Questo utente/ruolo non può approvare le recensioni per quest'area. Scegli un altro utente."
     },
     "bulkRequester": {
       "saveAndRequestButton": "Salva e richiedi revisione",
@@ -4428,8 +4259,7 @@
       "rejectSuccess": "Richiesta respinta.",
       "ineligibleError": "Non hai più i requisiti per decidere su questa richiesta di revisione.",
       "alreadyDecidedError": "La decisione su questa revisione è già stata presa.",
-      "decideError": "Impossibile registrare la tua decisione. Riprova tra un attimo.",
-      "panelSummary": "Richiesta di revisione da {requesterName}: transizione a {targetStateName}"
+      "decideError": "Impossibile registrare la tua decisione. Riprova tra un attimo."
     },
     "revert": {
       "confirm": "Annulla decisione",
@@ -4545,17 +4375,12 @@
         "noMatchesDescription": "Il nome e la descrizione dell'esecuzione del test non corrispondono ad alcun caso di test. Torna al passaggio precedente e aggiungi dettagli più specifici, come i nomi delle funzionalità, i nomi dei componenti o le parole chiave presenti nei tuoi casi di test.",
         "maxResultsTitle": "Numero massimo di casi di test corrispondenti",
         "maxResultsDescription": "I criteri di ricerca hanno trovato una corrispondenza con un gran numero di casi di test. Per risultati più mirati, torna al passaggio precedente e aggiungi dettagli più specifici all'esecuzione del test.",
-        "batchSize": "dimensione del lotto",
-        "batchSizeAll": "Tutti i casi (richiesta singola)",
-        "batchSizePercent": "{percent}% ({count} casi)",
-        "requestsNeeded": "{count, plural, =1 {Verrà effettuata # richiesta AI} other {Verranno effettuate # richieste AI}}",
-        "batchNote": "I risultati di tutti i lotti verranno combinati"
+        "batchSize": "dimensione del lotto"
       },
       "loading": {
         "batch": "Elaborazione del lotto {current} di {total}",
         "analyzing": "Analisi dei casi di test...",
         "progress": "Sono stati analizzati {analyzed, number} dei {total, number} casi di test...",
-        "waitingForAi": "In attesa della risposta dell'IA (lotto {batch} di {total})...",
         "selectedSoFar": "{count, plural, =1 {# caso di test selezionato finora} other {# casi di test selezionati finora}}",
         "resolving_integration": "Risoluzione dell'integrazione dell'IA...",
         "fetching_cases": "Recupero dei casi di test in corso..."
@@ -4578,7 +4403,6 @@
       },
       "actions": {
         "start": "Analizzare i casi di test",
-        "startBatched": "Analizza i casi di test ({count, plural, one {# batch} other {# batch}})",
         "accept": "Aggiungi alla selezione"
       },
       "errors": {
@@ -4603,13 +4427,8 @@
     "summary": {
       "title": "Riepilogo dell'esecuzione del test",
       "description": "Visualizza il riepilogo dell'esecuzione del test",
-      "activeRunsAndEstTime": "Esecuzioni attive e tempo stimato",
-      "activeRunsLabel": "Esecuzioni",
-      "totalEstTime": "Tempo stimato totale",
-      "responsibleUsers": "Utenti responsabili",
       "allActiveRuns": "Tutte le esecuzioni attive",
       "recentResultsTitle": "Risultati manuali recenti",
-      "recentResultsDescription": "Visualizza i risultati recenti del test eseguito",
       "recentAutomatedResultsTitle": "Risultati automatizzati recenti",
       "noRecentAutomatedResults": "Nessun risultato automatico recente trovato.",
       "automationRunsInProgress": "{count, plural, =1 {# Esecuzione Automatizzata in Corso} other {# Esecuzioni Automatizzate in Corso}}",
@@ -4632,13 +4451,11 @@
       "fields": {
         "duplicateScope": {
           "label": "Casi di test da duplicare",
-          "allCases": "Tutti i casi di prova",
-          "specificStatuses": "Casi di test con stati specifici"
+          "allCases": "Tutti i casi di prova"
         },
         "statusesToInclude": {
           "label": "Casi di test da includere",
           "description": "Selezionare gli stati dei casi di test che si desidera includere nell'esecuzione del test duplicato.",
-          "noStatuses": "Non sono stati trovati stati specifici in questa esecuzione del test oppure i risultati sono ancora in fase di caricamento.",
           "noStatusesRecorded": "Nessuno stato specifico registrato in questa esecuzione. La duplicazione includerà tutti i casi di test (in genere come \"Non testato\")."
         },
         "copyAssignments": {
@@ -4717,9 +4534,7 @@
         "previousAnalysisPlaceholder": "Seleziona un'analisi...",
         "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# test interessato} other {# test interessati}}",
         "sameCommit": "Base e testa sono lo stesso commit.",
-        "swapped": "Base e testa sono stati scambiati in modo che le modifiche leggessero in avanti.",
-        "loadingCommits": "Caricamento dei commit…",
-        "noCommits": "Nessun commit trovato."
+        "swapped": "Base e testa sono stati scambiati in modo che le modifiche leggessero in avanti."
       },
       "diff": {
         "summary": "{files, plural, one {# file modificato} other {# file modificati}} · +{additions, number} −{deletions, number}",
@@ -4727,13 +4542,9 @@
         "noChanges": "Nessun cambiamento tra questi commit.",
         "statusModified": "Modificato",
         "statusRenamed": "Rinominato",
-        "showPatch": "Mostra le modifiche",
-        "hidePatch": "Nascondi modifiche",
-        "largePatch": "Patch grande ({lines, number} linee)",
         "showFullPatch": "Mostra patch completa",
         "binary": "File binario",
         "noPatch": "Patch non disponibile",
-        "pinnedFiles": "{count, plural, one {# pin} other {# pin}}",
         "loading": "Confronto dei commit…"
       },
       "loading": {
@@ -4819,7 +4630,6 @@
       },
       "actions": {
         "analyze": "Analizzare",
-        "reanalyze": "Analizza di nuovo",
         "refine": "Torna alle modifiche",
         "accept": "{count, plural, one {Aggiungi # caso} other {Aggiungi # casi}}",
         "cancelAnalysis": "Annulla analisi"
@@ -4930,11 +4740,6 @@
         "analyzing": "Analisi in corso...",
         "reset": "Risultati chiari",
         "job": {
-          "discoveringDatasets": "Alla scoperta dei set di dati...",
-          "scanningFile": "Scansione del file di esportazione testmo in corso...",
-          "rowsProcessed": "{value, number} righe elaborate",
-          "itemsProcessed": "{processed, number} di {total, number} elementi elaborati",
-          "analysisInProgress": "Analisi dell'esportazione…",
           "cancel": "Annulla importazione",
           "cancelRequested": "Annullamento richiesto",
           "processingRate": "Valutare:",
@@ -4966,12 +4771,9 @@
         "mappingDescription": "Esamina i dettagli dell'analisi e associa le entità Testmo ai record TestPlanIt esistenti oppure scegli di crearne di nuovi.",
         "mappingAnalysisError": "Non siamo riusciti a generare l'analisi della mappatura. Riprova.",
         "mappingLoading": "Analisi della mappatura degli edifici…",
-        "mappingSummaryHeading": "Entità rilevate",
-        "mappingSummaryPending": "{count, plural, =1 {# in attesa} other {# in attesa}}",
         "mappingOutstandingTitle": "Risolvi le mappature in sospeso",
         "mappingOutstandingDescription": "Completare le mappature rimanenti prima di avviare l'importazione.",
         "mappingOutstandingItem": "{count, plural, =1 {# elemento irrisolto} other {# elementi irrisolti}} in {label}",
-        "mappingSummaryTemplateFields": "Campi modello",
         "mappingDatasetLabels": {
           "field_values": "Valori di campo",
           "repository_case_values": "Valori dei casi del repository",
@@ -5048,7 +4850,6 @@
         "mappingDatasetEmptyTitle": "Nessun set di dati conservato",
         "mappingDatasetEmptyDescription": "L'analisi non ha conservato alcun set di dati per la configurazione. Carica un'esportazione diversa se prevedi dati aggiuntivi.",
         "importProgressTitle": "Avanzamento dell'importazione",
-        "importProgressDescription": "{count, plural, =0 {Tutti i record importati nelle entità tracciate.} =1 {1 record rimanente nelle entità tracciate.} other {# record rimanenti nelle entità tracciate.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {Nessun record rimanente} =1 {1 record rimanente} other {# record rimanenti}}",
         "importProgressProcessed": "{processed, number}/{total, number} record importati",
         "importProgressAria": "{percent, number}% di importazione completata",
@@ -5073,7 +4874,6 @@
         "jobLoadFailed": "Non è stato possibile caricare il processo di importazione.",
         "uploadProgressAnalyzing": "Caricamento completato. Analisi del file…",
         "uploadProgressComplete": "Caricamento completato",
-        "etaLabel": "Arrivo previsto: {time}",
         "startImportButton": "Avvia l'importazione",
         "workflowCreate": {
           "nameLabel": "Nome del flusso di lavoro",
@@ -5083,18 +4883,11 @@
           "typeLabel": "Tipo di flusso di lavoro",
           "scopeLabel": "Ambito del flusso di lavoro"
         },
-        "mappingDatasets": "Set di dati che richiedono revisione",
         "mappingImportConfiguration": "Importa configurazione",
         "mappingExportConfiguration": "Configurazione di esportazione",
         "mappingImportConfigurationFailed": "Non è stato possibile importare il file di configurazione. Verifica che sia un JSON valido e riprova.",
-        "mappingInvalidConfiguration": "La configurazione deve essere un JSON valido.",
-        "mappingSaveFailed": "Non è stato possibile salvare la configurazione. Riprova.",
         "mappingSaveConfiguration": "Salva la configurazione",
-        "mappingSavingConfiguration": "Salvataggio…",
-        "mappingStartImport": "Avvia l'importazione in background",
-        "mappingStartingImport": "Avvio importazione…",
         "mappingImportFailed": "Impossibile avviare l'importazione in background. Riprova.",
-        "mappingImportDisabled": "Salvare una configurazione prima di avviare l'importazione in background.",
         "mappingImportInProgress": "Importazione in background in corso",
         "mappingImportInProgressDescription": "Il worker di importazione sta elaborando la configurazione. Puoi monitorarne lo stato qui sopra.",
         "mapping": {
@@ -5154,11 +4947,7 @@
           "templateFieldTargetResult": "Campo risultato",
           "templateFieldSelectPlaceholder": "Seleziona campo",
           "templateFieldNoExistingTargets": "Nessun campo disponibile per la mappatura.",
-          "templateFieldTypePlaceholder": "Seleziona il tipo di campo",
           "templateFieldRestrictedLabel": "Campo riservato",
-          "templateFieldOptionsLabel": "Opzioni a discesa",
-          "templateFieldOptionsPlaceholder": "Inserisci un'opzione per riga",
-          "templateFieldOptionsHint": "Separare ogni opzione con una nuova riga.",
           "templateFieldOptionsListLabel": "Opzioni",
           "templateFieldOptionsCheckedLabel": "Selezionato per impostazione predefinita",
           "templateFieldOptionsMinValueLabel": "Valore minimo",
@@ -5211,7 +5000,6 @@
           "milestoneNamePlaceholder": "Inserisci un nome per il tipo di traguardo",
           "milestoneDefaultLabel": "Tipo di traguardo predefinito",
           "milestoneIconRequired": "Seleziona un'icona",
-          "statusColorPlaceholder": "Colore esadecimale (facoltativo)",
           "issueTargetSelectPlaceholder": "Seleziona integrazione...",
           "noIssueTargetsAvailable": "Nessuna integrazione disponibile",
           "issueTargetNamePlaceholder": "Nome dell'integrazione...",
@@ -5498,8 +5286,7 @@
         "delete": "Elimina fornitore",
         "entryPoint": "Punto di ingresso: ",
         "autoProvision": "Provisioning automatico: ",
-        "defaultAccess": "Accesso predefinito: ",
-        "configurationMessage": "Configurazione SAML non impostata. Fare clic sul pulsante Impostazioni per configurarla."
+        "defaultAccess": "Accesso predefinito: "
       },
       "samlConfiguration": {
         "title": "Configurare il provider SAML",
@@ -5571,7 +5358,6 @@
         "magicLinkDisabled": "Autenticazione Magic Link disabilitata",
         "magicLinkCreated": "Fornitore di Magic Link creato",
         "magicLinkUpdateFailed": "Impossibile aggiornare il provider Magic Link",
-        "samlConfigSaved": "Configurazione SAML salvata correttamente",
         "configureFirst": "Si prega di configurare il provider prima di abilitarlo",
         "domainRestrictionEnabled": "Restrizione del dominio e-mail abilitata",
         "domainRestrictionDisabled": "Restrizione del dominio e-mail disabilitata",
@@ -5589,7 +5375,6 @@
         "defaultAccessUpdated": "Livello di accesso predefinito aggiornato",
         "defaultAccessUpdateFailed": "Impossibile aggiornare il livello di accesso predefinito",
         "emailVerificationEnabled": "Ora è richiesta la verifica dell'indirizzo email per i nuovi utenti.",
-        "emailVerificationDisabled": "La verifica dell'indirizzo email non è più richiesta per i nuovi utenti.",
         "emailVerificationDisabledAndVerified": "Verifica dell'email disabilitata e {count, plural, one {# account utente verificato} other {# account utente verificati}}",
         "emailVerificationUpdateFailed": "Impossibile aggiornare le impostazioni di verifica dell'email.",
         "emailServerNotConfigured": "Impossibile abilitare la verifica dell'e-mail: il server di posta elettronica non è configurato.",
@@ -5643,10 +5428,6 @@
           "issuer": "Emittente (ID entità)",
           "callbackUrl": "URL ACS (richiamata)",
           "logoutUrl": "URL di disconnessione SLO (facoltativo)",
-          "entryPointPlaceholder": "https://your-idp.com/sso/saml",
-          "issuerPlaceholder": "urn:your-idp:entity-id",
-          "certPlaceholder": "-----INIZIO CERTIFICATO-----...",
-          "logoutUrlPlaceholder": "https://your-idp.com/slo/saml",
           "instructions": {
             "title": "Per configurare SAML:",
             "step1": "Contatta l'amministratore del tuo provider di identità SAML",
@@ -5720,10 +5501,7 @@
       },
       "add": {
         "button": "Aggiungi progetto",
-        "title": "Aggiungi nuovo progetto",
-        "defaultFields": "Il modello predefinito, il tipo di milestone predefinito e tutti i flussi di lavoro e gli stati verranno aggiunti al progetto al momento della sua creazione.",
-        "selectIssueTracker": "Seleziona Issue Tracker",
-        "issueTrackerRequired": "È richiesto Issue Tracker"
+        "title": "Aggiungi nuovo progetto"
       },
       "wizard": {
         "title": "Crea nuovo progetto",
@@ -5754,7 +5532,6 @@
           "noConfigurations": "Al momento non sono definite configurazioni. È possibile aggiungerle in seguito nella sezione Amministrazione."
         },
         "actions": {
-          "selectDefault": "Usa predefinito",
           "create": "Crea progetto",
           "creating": "Creazione del progetto..."
         },
@@ -5779,12 +5556,6 @@
           "userPermissions": "Autorizzazioni utente",
           "noEffect": "Nessun effetto",
           "access": {
-            "groupsGlobalRole": "Ruolo globale del gruppo",
-            "groupDefault": "Gruppo predefinito",
-            "groupSpecificRole": "Ruolo specifico del gruppo",
-            "groupProjectDefault": "Progetto di gruppo predefinito",
-            "groupProjectNoAccess": "Progetto di gruppo senza accesso",
-            "groupProjectSpecificRole": "Ruolo specifico del progetto di gruppo",
             "effectiveAccess": "Accesso efficace"
           },
           "accessHints": {
@@ -5795,11 +5566,7 @@
         },
         "placeholders": {
           "selectDefaultAccess": "Seleziona Accesso predefinito",
-          "groupPermissionsUI": "Qui va inserita l'interfaccia utente di gestione delle autorizzazioni di gruppo...",
-          "userPermissionsUI": "Qui va inserita l'interfaccia utente per la gestione delle autorizzazioni utente...",
-          "selectAccess": "Seleziona l'accesso...",
-          "selectRole": "Seleziona il ruolo...",
-          "searchUsersToAdd": "Cerca utenti da aggiungere..."
+          "selectAccess": "Seleziona l'accesso..."
         },
         "tableHeaders": {
           "globalRole": "Ruolo globale",
@@ -5982,9 +5749,7 @@
         "button": "Aggiungi utente",
         "title": "Aggiungi nuovo utente",
         "fields": {
-          "email_invalid": "Indirizzo email non valido",
           "password_error": "La password è obbligatoria",
-          "confirmPassword_error": "La conferma della password è obbligatoria",
           "passwordOptionalHelp": "Lascia vuoto per richiedere all'utente di accedere tramite link magico o SSO."
         }
       },
@@ -6025,19 +5790,12 @@
       "title": "Sicurezza",
       "description": "Configura le impostazioni di controllo dell'accesso, i criteri per le password, le impostazioni di blocco e le azioni di applicazione.",
       "passwordPolicyTitle": "Politica sulle password",
-      "passwordPolicyDescription": "Definisci i requisiti per le password degli utenti",
       "lockoutPolicyTitle": "Politica di blocco",
-      "lockoutPolicyDescription": "Configura il blocco dell'account dopo tentativi di accesso non riusciti.",
       "enforcementTitle": "Provvedimenti esecutivi",
-      "enforcementDescription": "Forza la modifica della password per gli utenti basati su credenziali",
       "signInEnforcementTitle": "Controllo dell'accesso",
-      "signInEnforcementDescription": "Richiedere l'SSO e imporre l'autenticazione a due fattori.",
       "forceSsoTitle": "Forza l'accesso SSO",
-      "forceSsoDescription": "Disabilitare l'accesso tramite email e richiedere agli utenti di utilizzare l'SSO.",
       "force2FANonSSOTitle": "Richiedi l'autenticazione a due fattori per l'accesso tramite password",
-      "force2FANonSSODescription": "Gli utenti che accedono con email/password devono configurare e utilizzare l'autenticazione a due fattori.",
       "force2FAAllLoginsTitle": "Richiedi l'autenticazione a due fattori per tutti gli accessi.",
-      "force2FAAllLoginsDescription": "Tutti gli utenti devono verificare l'identità tramite 2FA dopo aver effettuato l'accesso, inclusi gli utenti SSO.",
       "forceSsoEnabled": "Forza l'attivazione dell'SSO a livello globale",
       "forceSsoDisabled": "Disabilita forzatamente l'SSO a livello globale.",
       "forceSsoUpdateFailed": "Impossibile aggiornare l'impostazione SSO forzato.",
@@ -6087,7 +5845,6 @@
       "noExpiry": "Nessuna scadenza",
       "revokeToken": "Revoca il token",
       "revokeConfirmTitle": "Revoca il token API",
-      "revokeConfirmMessage": "Sei sicuro di voler revocare questo token API? Questa azione non può essere annullata.",
       "revokeConfirmDescription": "Il token \"{name}\" appartenente a {user} verrà immediatamente revocato e non potrà più essere utilizzato per l'accesso all'API.",
       "revokeSuccess": "Token API revocato con successo",
       "revokeError": "Impossibile revocare il token API",
@@ -6111,9 +5868,6 @@
       "noTokens": "Non sono ancora stati creati token SCIM.",
       "emptyTitle": "Ancora nessun token SCIM",
       "emptyBody": "Genera un token per consentire al tuo provider di identità di creare e aggiornare automaticamente gli utenti in TestPlanIt.",
-      "emptyCta": "Conia il tuo primo token",
-      "sectionConflicts": "Conflitti di ID esterni",
-      "conflictsPlaceholder": "Nessun conflitto. Il tracciamento dei conflitti delle navi sarà disponibile in una versione successiva.",
       "conflicts": {
         "title": "registro dei conflitti di ID esterni",
         "description": "Eventi di identità SCIM che hanno richiesto l'intervento del sistema (collegamento, ripristino, sovrascrittura del nome visualizzato, membri ignorati).",
@@ -6197,7 +5951,6 @@
         "networkError": "Impossibile raggiungere l'endpoint SCIM. Riprova."
       },
       "fallbackDefaultTitle": "Accesso mappato predefinito",
-      "fallbackDefaultDescription": "Livello di accesso assegnato agli utenti non coperti da alcuna mappatura di gruppo.",
       "fallbackDefaultLabel": "Livello di accesso predefinito",
       "fallbackDefaultSaved": "Predefinito di riserva salvato",
       "rotate": {
@@ -6263,7 +6016,6 @@
         "remindersToggleAriaLabel": "Attiva/disattiva le notifiche di promemoria per la revisione",
         "thresholdLabel": "Ricorda ai revisori dopo",
         "thresholdUnit": "{count, plural, one {giorno} other {giorni}}",
-        "thresholdHelp": "Per quanti giorni una richiesta di revisione può rimanere in sospeso prima che i revisori ricevano una notifica di promemoria? Per le nuove richieste, il conteggio inizia al momento dell'invio.",
         "thresholdUpdateSuccess": "Le impostazioni del promemoria per la revisione sono state aggiornate.",
         "thresholdUpdateError": "Impossibile aggiornare le impostazioni del promemoria. Riprova tra un attimo.",
         "revertPolicy": {
@@ -6329,9 +6081,6 @@
       "add": {
         "button": "Aggiungi ruolo",
         "title": "Aggiungi nuovo ruolo",
-        "fields": {
-          "name_error": "Il nome del ruolo è obbligatorio"
-        },
         "errors": {
           "nameExists": "Esiste già un ruolo con questo nome"
         }
@@ -6394,7 +6143,6 @@
       "edit": {
         "title": "Modifica stato",
         "systemNameHelp": "Il nome del sistema identifica questo stato per i processi automatizzati. Non può essere modificato dopo la creazione.",
-        "unmodifiableHelp": "Lo stato \"non testato\" è uno stato del sistema e non può essere modificato.",
         "untestedHelp": "Il nome \"non testato\" è riservato allo stato del sistema e non può essere utilizzato.",
         "success": "Stato aggiornato con successo"
       },
@@ -6410,9 +6158,6 @@
       "fields": {
         "final": "Finale",
         "system": "Stato del sistema",
-        "forTestCase": "Per il caso di prova",
-        "forTestRun": "Per l'esecuzione di test",
-        "forSession": "Per la sessione",
         "color": "Colore"
       }
     },
@@ -6434,9 +6179,7 @@
       "description": "Gestire le configurazioni globali delle applicazioni",
       "addConfig": "Aggiungi configurazione applicazione",
       "editConfig": "Modifica la configurazione dell'applicazione",
-      "keyPlaceholder": "Inserisci la chiave di configurazione...",
       "valuePlaceholder": "Inserisci il valore JSON...",
-      "currentTranslation": "Traduzione attuale",
       "filterPlaceholder": "Filtra per chiave...",
       "errors": {
         "keyRequired": "La chiave è richiesta",
@@ -6456,7 +6199,6 @@
         "noneAssigned": "Non assegnati ad alcun progetto (è possibile assegnarli in seguito dalla sezione di amministrazione delle configurazioni)."
       },
       "addConfiguration": "Aggiungi configurazioni",
-      "editConfiguration": "Modifica configurazione",
       "filterPlaceholder": "Configurazioni del filtro...",
       "allProjects": "Tutti i progetti",
       "selectAllTooltip": "Seleziona/Deseleziona tutte le configurazioni in questa pagina",
@@ -6476,8 +6218,6 @@
       "categories": {
         "title": "Categorie",
         "description": "Gestisci categorie globali",
-        "editCategory": "Modifica categoria",
-        "selectCategory": "Seleziona categoria",
         "filterPlaceholder": "Filtra categorie...",
         "add": {
           "title": "Aggiungi nuova categoria"
@@ -6497,8 +6237,6 @@
         "title": "Combinazioni",
         "description": "Gestisci combinazioni globali",
         "confirmDescription": "Verranno create le seguenti configurazioni: {count, number}",
-        "addCombination": "Aggiungi combinazione",
-        "editCombination": "Modifica combinazione",
         "selectCombination": "Seleziona combinazioni",
         "selectCombinationDescription": "Seleziona le combinazioni di varianti da aggiungere. Le combinazioni già esistenti vengono visualizzate disabilitate.",
         "alreadyExists": "(già esistente)",
@@ -6549,7 +6287,6 @@
         "deleteGroupDescription": "Questa azione eliminerà il gruppo e tutti gli utenti associati.",
         "confirmMessage": "Sei sicuro di voler eliminare questo gruppo?"
       },
-      "noUsersSelected": "Nessun utente selezionato ancora.",
       "noUsersAssigned": "Nessun utente assegnato a questo gruppo.",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Gestito da SCIM. Gestisci dalla pagina di amministrazione di SCIM.",
@@ -6572,7 +6309,6 @@
       "downgradeConfirmTitle": "Conferma modifica accesso",
       "downgradeConfirmDescription": "{count, plural, one {# utente avrebbe l'accesso ridotto} other {# utenti avrebbero l'accesso ridotto}}. Continuare?",
       "downgradeConfirmApplyAnyway": "Applica comunque",
-      "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
@@ -6586,7 +6322,6 @@
       "defaultLockedDescription": "Per modificare l'impostazione predefinita, modifica un Tipo di Traguardo diverso e impostalo come predefinito.",
       "wizard": {
         "selectProjects": "Seleziona progetti",
-        "projectsSelected": "{count, plural, =0 {Nessun progetto selezionato} one {# progetto selezionato} other {# progetti selezionati}}",
         "createMilestone": "Crea traguardo",
         "noCommonTypesTitle": "Nessun tipo di traguardo comune",
         "noCommonTypesDescription": "I progetti selezionati non hanno alcun tipo di milestone in comune. Assicurati che tutti i progetti selezionati abbiano almeno un tipo di milestone in comune, oppure seleziona progetti diversi."
@@ -6630,44 +6365,23 @@
       }
     },
     "issue_config": {
-      "link_title": "Tracker dei problemi dei link",
-      "link_description": "Configura l'URL di base per i problemi collegati manualmente. Quando si collega un problema utilizzando solo un ID esterno, questo URL di base verrà anteposto per creare il collegamento completo.",
-      "filter": {
-        "show_inactive": "Mostra configurazioni inattive",
-        "search_placeholder": "Filtra per nome della configurazione..."
-      },
       "base_url": "URL di base",
-      "link_update_success": "Configurazione del collegamento aggiornata correttamente",
-      "link_update_error": "Impossibile aggiornare la configurazione del collegamento",
       "description": "Configurare le integrazioni con sistemi di monitoraggio dei problemi esterni.",
       "delete": {
         "title": "Elimina la configurazione del problema",
         "confirmMessage": "Sei sicuro di voler eliminare la configurazione <bold>{name}</bold>?",
         "warning": "Questa azione non può essere annullata. Tutti i progetti attualmente assegnati a questo tracker verranno riassegnati al tracker predefinito. Si consiglia di disattivare la configurazione.",
-        "cannotDeleteDefault": "Il tracker dei problemi predefinito non può essere eliminato.",
-        "noDefaultFound": "Impossibile eliminare: non è stato trovato alcun issue tracker predefinito a cui riassegnare i progetti."
+        "cannotDeleteDefault": "Il tracker dei problemi predefinito non può essere eliminato."
       },
       "add": {
         "title": "Aggiungi Issue Tracker",
         "description": "Crea una nuova configurazione per un sistema di monitoraggio dei problemi.",
         "name": "Nome della configurazione",
-        "name_placeholder": "ad esempio, collegamenti al progetto Jira",
-        "system_type": "Tipo di sistema",
-        "select_system_type": "Seleziona il tipo di sistema",
-        "base_url": "URL di base incluso il segnaposto del problema",
-        "base_url_placeholder": "ad esempio, https://your-tracker.com/issues/'{issueId}'",
-        "create_success": "Configurazione del problema creata correttamente",
-        "create_error": "Errore durante la creazione della configurazione del problema",
-        "setDefaultWarning": "Impostando questa opzione come predefinita, lo stato predefinito verrà rimosso dalla configurazione predefinita corrente."
+        "base_url": "URL di base incluso il segnaposto del problema"
       },
       "edit": {
         "title": "Modifica Issue Tracker",
-        "description": "Aggiorna i dettagli per questa configurazione del problema.",
-        "name_placeholder": "Inserisci il nome della configurazione",
-        "select_project": "Seleziona progetti...",
-        "update_success": "Configurazione del problema aggiornata correttamente",
-        "update_error": "Impossibile aggiornare la configurazione del problema",
-        "edit_not_supported": "La modifica della configurazione per questo tipo di sistema non è attualmente supportata."
+        "description": "Aggiorna i dettagli per questa configurazione del problema."
       }
     },
     "issues": {
@@ -6870,14 +6584,11 @@
         "message": "Nessuna integrazione di problemi configurata ancora"
       },
       "addIntegration": "Aggiungi integrazione problema",
-      "allIntegrations": "Tutte le integrazioni dei problemi",
-      "manageDescription": "Configura e gestisci le integrazioni dei problemi dei servizi esterni",
       "status": {
         "active": "Attivo",
         "inactive": "Inattivo",
         "awaitingAuthorization": "In attesa di autorizzazione"
       },
-      "connectedProjects": "Progetti connessi",
       "noIntegrations": "Nessuna integrazione di problemi configurata",
       "testConnection": "Prova di connessione",
       "testSuccess": "Connessione riuscita",
@@ -6966,14 +6677,11 @@
         "successDescription": "Le impostazioni di integrazione del problema sono state salvate"
       },
       "editIntegration": "Modifica problema Integrazione",
-      "saveIntegration": "Integrazione del salvataggio del problema",
       "deleteIntegration": "Eliminazione dell'integrazione dei problemi",
       "config": {
         "name": "Nome dell'integrazione del problema",
         "namePlaceholder": "Inserisci un nome per l'integrazione di questo problema",
-        "nameHelp": "Un nome descrittivo per identificare l'integrazione di questo problema",
         "authType": "Tipo di autenticazione",
-        "authTypeHelp": "Scegli come autenticarti con il servizio esterno",
         "emailPlaceholder": "la-tua-email@esempio.com",
         "emailHelp": "L'indirizzo email del tuo account. Obbligatorio per Jira Cloud (associato a un token API riportato di seguito). Non utilizzato per Jira Server / Data Center — lascialo vuoto in tal caso e usa il campo Token API da solo (Personal Access Token) oppure i campi Nome utente / Password riportati di seguito.",
         "apiToken": "Token API",
@@ -6995,15 +6703,9 @@
         "clientSecretPlaceholder": "Inserisci il tuo segreto client OAuth",
         "clientSecretHelp": "Il segreto client della tua applicazione OAuth",
         "cloudId": "ID cloud",
-        "cloudIdPlaceholder": "Inserisci il tuo ID Atlassian Cloud",
-        "cloudIdHelp": "ID dell'istanza Atlassian Cloud (disponibile nell'URL Jira)",
-        "apiUrl": "URL dell'API",
-        "apiUrlPlaceholder": "https://api.example.com",
-        "apiUrlHelp": "L'URL di base per l'API del servizio",
         "personalAccessTokenPlaceholder": "Inserisci il tuo token di accesso personale",
         "personalAccessTokenHelp": "Un token di accesso personale con autorizzazioni appropriate",
         "apiKeyPlaceholder": "Inserisci la tua chiave API",
-        "apiKeyHelp": "La chiave API per l'autenticazione",
         "baseUrl": "Modello URL",
         "baseUrlPlaceholder": "https://example.com/issues/'{issueId}'",
         "baseUrlHelp": "Modello URL per i problemi. Usa {issueId} come segnaposto",
@@ -7027,7 +6729,6 @@
         "repoPlaceholder": "nome del repository",
         "repoHelp": "Il nome del repository Gitea",
         "encrypted": "Criptato",
-        "encryptedHelp": "Questo campo è crittografato e archiviato in modo sicuro",
         "leaveBlankToKeep": "Lascia vuoto per mantenere il valore esistente",
         "apiKeyWarningTitle": "Avviso di autenticazione della chiave API",
         "apiKeyWarningDescription": "Con l'autenticazione tramite chiave API, l'autore della segnalazione dei problemi creati potrebbe non corrispondere all'utente di TestPlanIt che li ha creati, anche se gli indirizzi email coincidono:",
@@ -7076,12 +6777,7 @@
       },
       "validation": {
         "nameRequired": "Il nome dell'integrazione del problema è obbligatorio",
-        "clientIdRequired": "È richiesto l'ID cliente",
-        "clientSecretRequired": "Il segreto del client è obbligatorio",
-        "cloudIdRequired": "È richiesto l'ID cloud",
-        "apiUrlRequired": "L'URL dell'API è obbligatorio",
-        "tokenRequired": "È richiesto il token di accesso personale",
-        "apiKeyRequired": "È richiesta la chiave API"
+        "tokenRequired": "È richiesto il token di accesso personale"
       },
       "errors": {
         "updateFailed": "Impossibile aggiornare l'integrazione del problema",
@@ -7100,12 +6796,8 @@
         "testing": "Test di connessione in corso..."
       },
       "oauth": {
-        "connectAccount": "Connetti account",
         "connected": "Collegato",
-        "notConnected": "Non connesso",
-        "authDescription": "Devi autenticarti con {provider} per utilizzare questa integrazione",
-        "authError": "Autenticazione fallita",
-        "authErrorDescription": "Impossibile autenticarsi con il servizio esterno"
+        "authError": "Autenticazione fallita"
       }
     },
     "llm": {
@@ -7150,7 +6842,6 @@
         "monthlyBudgetDescription": "Obiettivo di spesa facoltativo per le notifiche (non blocca l'utilizzo)",
         "billingPeriodStartDay": "Giorno di inizio del periodo di fatturazione",
         "billingPeriodStartDayPlaceholder": "1",
-        "billingPeriodStartDayDescription": "Giorno del mese (1-31) in cui inizia il periodo di fatturazione. I valori dal 29 al 31 utilizzano l'ultimo giorno dei mesi più brevi.",
         "defaultTemperature": "Temperatura predefinita",
         "defaultMaxTokens": "Token massimi predefiniti",
         "repoContextBudgetLabel": "Budget di contesto del repository (QuickScript)",
@@ -7182,7 +6873,6 @@
       "edit": {
         "title": "Modifica l'integrazione del modello AI",
         "description": "Aggiorna la configurazione per l'integrazione del modello AI {name}",
-        "statusDescription": "Abilita o disabilita questa integrazione",
         "apiKeyPlaceholder": "Inserisci una nuova chiave API per aggiornare...",
         "update": "Aggiornamento",
         "modelListUpdated": "Elenco modelli aggiornato con successo",
@@ -7229,10 +6919,8 @@
       },
       "budgetAlert": {
         "budgetDisclaimer": "Impostare un budget mensile non impedisce che l'utilizzo di LLM lo superi. I limiti di budget sono forniti solo a titolo informativo per le decisioni amministrative.",
-        "budgetDisclaimerShort": "I limiti di budget sono puramente informativi e non bloccano l'utilizzo.",
         "spendLabel": "Spesa del mese corrente",
         "spendOfBudget": "{currentSpend} di {budgetLimit}",
-        "overBudget": "sforamento del budget",
         "budgetPercentage": "{percentage}% del budget utilizzato",
         "spendReset": "La spesa del mese corrente è stata azzerata"
       }
@@ -7243,7 +6931,6 @@
       "addPromptConfig": "Aggiungi la configurazione del prompt",
       "filterPlaceholder": "Configurazioni dei prompt dei filtri...",
       "features": "Caratteristiche",
-      "featureCount": "{count, plural, one {# funzionalità} other {# funzionalità}}",
       "llmIntegration": "Integrazione LLM",
       "modelOverride": "Sovrascrittura del modello",
       "modelOverridePlaceholder": "Integrazione predefinita",
@@ -7255,7 +6942,6 @@
       "maxOutputTokens": "Numero massimo di token di output",
       "variables": "Variabili",
       "insertVariable": "Inserire variabile",
-      "noConfigs": "Nessuna configurazione di prompt trovata. Aggiungi la tua prima configurazione per iniziare.",
       "add": {
         "title": "Aggiungi la configurazione del prompt",
         "description": "Crea una nuova configurazione di prompt AI con prompt per ogni funzionalità. Le impostazioni predefinite sono state applicate automaticamente."
@@ -7385,7 +7071,6 @@
       "concurrency": {
         "title": "Concorrenza dei lavoratori",
         "description": "La concorrenza controlla quanti processi ogni worker elabora simultaneamente. Valori più elevati possono migliorare la produttività, ma utilizzano più risorse di sistema (CPU e memoria).",
-        "configureTitle": "Configurazione della concorrenza",
         "configureDescription": "Per regolare la concorrenza, impostare le variabili di ambiente e riavviare i worker. Consultare la documentazione per i dettagli.",
         "envVars": {
           "TESTMO_IMPORT_CONCURRENCY": "Importazioni Testmo (predefinito: 1, ad alta intensità di memoria)",
@@ -7420,12 +7105,7 @@
         "irreversible": "Questa azione non può essere annullata. Conferma di voler procedere."
       },
       "success": {
-        "actionCompleted": "Azione completata",
-        "queuePaused": "La coda è stata messa in pausa",
-        "queueResumed": "La coda è stata ripresa",
-        "queueCleaned": "La coda è stata pulita",
-        "queueDrained": "La coda è stata svuotata",
-        "queueObliterated": "La coda è stata cancellata"
+        "actionCompleted": "Azione completata"
       },
       "error": {
         "loadFailed": "Impossibile caricare le code",
@@ -7451,10 +7131,7 @@
           "finished": "Finito"
         },
         "success": {
-          "actionCompleted": "Azione di lavoro completata",
-          "jobRetried": "Il lavoro è stato riprovato",
-          "jobPromoted": "Il lavoro è stato promosso",
-          "jobRemoved": "Il lavoro è stato rimosso"
+          "actionCompleted": "Azione di lavoro completata"
         },
         "error": {
           "loadFailed": "Impossibile caricare i lavori",
@@ -7504,17 +7181,12 @@
       "exportCsv": "Esporta in formato CSV",
       "timeRange": "Intervallo di tempo",
       "timeRangeOptions": {
-        "last24h": "Ultime 24 ore",
-        "last7d": "Ultimi 7 giorni",
-        "last30d": "Ultimi 30 giorni",
-        "last90d": "Ultimi 90 giorni",
         "allTime": "Di tutti i tempi"
       },
       "systemActor": "Sistema",
       "systemActorTooltip": "Azione eseguita dal sistema, non da un utente autenticato.",
       "sourceScim": "SCIM",
-      "relatedChanges": "modifiche correlate",
-      "groupedEntry": "Modifiche raggruppate da una singola azione"
+      "relatedChanges": "modifiche correlate"
     }
   },
   "components": {
@@ -7568,7 +7240,6 @@
         "shareLinkAccessedTitle": "Link di condivisione accessibile",
         "shareLinkAccessedAnonymousViewer": "Qualcuno",
         "shareLinkAccessedMessage": "{viewer} ha visualizzato il tuo report condiviso: \"{shareTitle}\"",
-        "viewedYourSharedLink": "ho visualizzato il tuo link condiviso",
         "viewedAt": "Visualizzato a",
         "userRegisteredTitle": "Registrazione nuovo utente",
         "userRegisteredMessageSso": "{userName} ({userEmail}) si è registrato tramite SSO",
@@ -7631,7 +7302,6 @@
         "alertTriggeredRule": "Regola: {ruleName}",
         "alertTriggeredEmailMessage": "L'avviso \"{ruleName}\" è stato attivato per {subjectLabel} \"{subjectName}\" nel progetto \"{projectName}\": {detail}",
         "alertTriggeredEmailMessageSystem": "L'avviso \"{ruleName}\" è stato attivato per {subjectLabel} \"{subjectName}\": {detail}",
-        "alertTriggeredReason": "Stai ricevendo questo perché sei abbonato a questo avviso.",
         "alertSubject": {
           "CASE": "caso di test",
           "RUN": "esecuzione del test",
@@ -7686,8 +7356,7 @@
     },
     "issues": {
       "manage_issues": {
-        "placeholder": "Problemi di ricerca o collegamento...",
-        "create_label": "Problema di collegamento \"{name}\""
+        "placeholder": "Problemi di ricerca o collegamento..."
       },
       "create_issue_dialog": {
         "placeholders": {
@@ -7705,16 +7374,8 @@
             "helper": "Seleziona il progetto nel tracker dei problemi esterno"
           }
         },
-        "loading_metadata": "Caricamento delle impostazioni di integrazione in corso...",
-        "errors": {
-          "creation_failed": "Impossibile creare il problema. Riprova."
-        },
         "success": {
-          "created": "Problema creato con successo",
-          "external_created": "Problema creato e collegato al tracker esterno"
-        },
-        "warnings": {
-          "external_failed": "Problema creato localmente ma non è stato possibile sincronizzarlo con il tracker esterno"
+          "created": "Problema creato con successo"
         }
       },
       "integration_auth_prompt": {
@@ -7775,16 +7436,9 @@
   },
   "issues": {
     "linkedIssues": "Problemi collegati",
-    "linkedIssuesDescription": "Problemi associati a questo articolo",
     "refreshed": "Problemi aggiornati",
-    "refreshedDescription": "L'elenco dei problemi collegati è stato aggiornato",
     "unlinked": "Problema non collegato",
-    "unlinkedDescription": "Il problema è stato rimosso da questo elemento",
     "linked": "Problema collegato",
-    "linkedDescription": "Il problema è stato collegato a questo elemento",
-    "searchAndLink": "Cerca e collega",
-    "createAndLink": "Crea e collega",
-    "noLinkedIssues": "Nessun problema collegato",
     "viewExternal": "Visualizza in {provider}",
     "unlink": "Scollega",
     "linkError": "Problema di collegamento non riuscito",
@@ -7799,8 +7453,6 @@
     "alreadyLinked": "Già collegato",
     "authenticate": "Autenticare",
     "authenticationRequired": "Autenticazione richiesta",
-    "authenticationDescription": "Per cercare i problemi è necessario autenticarsi con {provider} .",
-    "searchIn": "Cerca in {provider}",
     "searchPlaceholder": "Problemi di ricerca...",
     "searchIssues": "Problemi di ricerca",
     "searchIssuesDescription": "Cerca problemi interni da collegare a questo elemento.",
@@ -7817,32 +7469,22 @@
     "createIssueDescriptionWithIntegration": "Crea un nuovo problema utilizzando {provider}",
     "createIssueDescriptionSimpleUrl": "Crea un nuovo problema interno (integrazione URL semplice)",
     "iterationContextHint": "Il corpo della pagina viene compilato automaticamente con i valori dei parametri di iterazione e il link diretto. Modificare secondo necessità prima della creazione.",
-    "creatingWith": "Creazione di un problema con {provider}",
-    "authenticatedAndReady": "Autenticato e pronto per creare problemi",
     "created": "Problema creato",
     "createdInExternal": "Problema creato in {provider}",
     "createdInternal": "Problema creato localmente",
     "createdInternalSimpleUrl": "Problema creato internamente e può essere collegato tramite URL semplice",
     "createError": "Impossibile creare il problema",
     "useIntegration": "Usa {provider}",
-    "useIntegrationDescription": "Crea un problema nel sistema esterno",
     "externalProject": "Progetto esterno",
     "issueType": "Tipo di problema",
     "selectIssueType": "Seleziona il tipo di problema",
-    "noIssueTypes": "Nessun tipo di problema disponibile",
     "assignees": "Assegnatari",
     "selectAssignees": "Seleziona assegnatari",
     "assigneesLimit": "Fino a {max} assegnatari",
     "priorityUrgent": "Urgente",
     "additionalFields": "Campi aggiuntivi",
     "createIssueInJira": "Crea un problema in Jira",
-    "createIssueInJiraDescription": "Utilizza l'interfaccia di Jira per creare un nuovo problema con tutti i campi e le opzioni disponibili",
-    "createIssueInJiraFallbackDescription": "Apri Jira in una nuova scheda per creare un problema con informazioni precompilate",
-    "jiraIframeError": "Impossibile caricare l'interfaccia di Jira. Prova ad aprirla in una nuova scheda.",
-    "jiraIframeFallback": "Per motivi di sicurezza, Jira richiede l'apertura in una nuova scheda. Clicca sul pulsante qui sotto per segnalare la tua segnalazione.",
-    "jiraFallbackNote": "Dopo aver creato il problema in Jira, torna qui per continuare a collegarlo al tuo caso di test.",
     "openInNewTab": "Apri in una nuova scheda",
-    "jiraIframeNote": "Dopo aver creato il problema in Jira, puoi chiudere questa finestra di dialogo e aggiornare l'elenco dei problemi.",
     "fillInRequiredFields": "Compila i campi richiesti per creare un nuovo problema",
     "failedToFetchFields": "Impossibile recuperare i campi del problema da Jira",
     "enterSummary": "Inserisci un breve riepilogo del problema",
@@ -7852,7 +7494,6 @@
     "addLabel": "Aggiungi un'etichetta e premi Invio",
     "labelHint": "Gli spazi saranno sostituiti con trattini",
     "labelFormatNote": "Le etichette non possono contenere spazi. Gli spazi verranno automaticamente sostituiti da trattini.",
-    "enterIssueKey": "Inserisci la chiave del problema (ad esempio, PROJ-123)",
     "issueLinkHelp": "Inserisci la chiave di un problema esistente da collegare",
     "searchForIssue": "Cerca un problema da collegare",
     "searchUsers": "Cerca utenti",
@@ -7958,8 +7599,7 @@
       "dialogTitle": "Modifica requisito",
       "submit": "Salva le modifiche",
       "success": "Requisito aggiornato.",
-      "failed": "Impossibile aggiornare il requisito.",
-      "lockedTooltip": "Questo requisito è sincronizzato dal tracker connesso. Scollegalo per rinominarlo."
+      "failed": "Impossibile aggiornare il requisito."
     },
     "delete": {
       "dialogTitle": "Elimina requisito",
@@ -7967,13 +7607,10 @@
       "confirmWithChildren": "Questo requisito ha {count, plural, one {{count} discendente che verrà eliminato anch'esso} other {{count} discendenti che verranno eliminati anch'essi}}. Questa azione può essere annullata.",
       "success": "Requisito eliminato.",
       "failed": "Impossibile eliminare il requisito.",
-      "undo": "Annulla",
-      "undoSuccess": "Requisito ripristinato.",
-      "undoFailed": "Impossibile ripristinare il requisito."
+      "undo": "Annulla"
     },
     "attachments": {
       "empty": "Nessun allegato",
-      "uploadSuccess": "Allegato caricato.",
       "uploadFailed": "Impossibile caricare l'allegato.",
       "removeSuccess": "Allegato rimosso.",
       "removeFailed": "Impossibile rimuovere l'allegato."
@@ -8027,13 +7664,9 @@
     "coverage": {
       "title": "Copertura",
       "uncovered": "Non coperto",
-      "uncoveredTooltip": "Nessun caso di test è collegato a questo requisito o a uno qualsiasi dei suoi discendenti.",
       "statusPassed": "Superato",
       "statusFailed": "Fallito",
       "statusNotRun": "Non eseguito",
-      "countLabel": "{passed}/{total}",
-      "breakdownTooltip": "Superati: {passed} · Falliti: {failed} · In corso: {inProgress} · Non eseguiti: {notRun}",
-      "showOnlyUncovered": "Mostra solo non coperti",
       "showOnlyUncoveredUnavailable": "I dati sulla copertura non sono disponibili al momento.",
       "loadFailed": "Impossibile caricare la copertura.",
       "retry": "Riprova",
@@ -8150,7 +7783,6 @@
       "deleted": "Target di esecuzione eliminato",
       "enabledToast": "Target abilitato",
       "disabledToast": "Target disabilitato",
-      "revealedSecretTitle": "Copia il segreto di firma ora",
       "revealedSecretWarning": "Questo segreto viene visualizzato una sola volta. Il tuo ricevitore lo usa per verificare l'intestazione X-TestPlanIt-Signature su ogni dispatch; i sistemi che si autenticano in un altro modo (ad esempio un token trigger Jenkins) possono ignorarlo. Memorizzalo nell'archivio dei segreti del tuo sistema CI; TestPlanIt non può visualizzarlo di nuovo.",
       "secretCopied": "Segreto copiato",
       "errors": {
@@ -8283,7 +7915,6 @@
     "seconds": "{seconds}s",
     "testCases": "{count, plural, one {# caso di test} other {# casi di test}}",
     "estimate": "Previsione: {value}",
-    "partOf": "(Parte di {parent})",
     "status": "Stato: {status}",
     "lane": "Corsia {number}",
     "worker": "Worker {id}"
@@ -8420,8 +8051,6 @@
       "overview": "## Progetti\nI progetti sono i contenitori di primo livello per i tuoi casi di test, le esecuzioni, le sessioni e i traguardi. Crea e gestisci ogni progetto da qui.",
       "settings": {
         "integrations": {
-          "externalProjectHelp": "## Progetto esterno\nSeleziona il progetto o il repository nel sistema esterno da collegare a questo progetto TestPlanIt.\n\n- I problemi creati da TestPlanIt verranno creati in questo progetto\n- Abilita l'integrazione del tracciamento dei problemi tra i sistemi\n- Deve disporre delle autorizzazioni appropriate nel sistema esterno",
-          "defaultIssueTypeHelp": "## Tipo di problema predefinito\nIl tipo di problema che verrà preselezionato quando si creano nuovi problemi da TestPlanIt.\n\n- Risparmia tempo impostando come predefinito il tipo di problema più comune\n- Può essere sovrascritto quando si creano singoli problemi\n- Deve essere un tipo di problema valido per il progetto esterno selezionato\n- Aggiorna questo se il flusso di lavoro cambia",
           "automaticSyncHelp": "## Sincronizzazione automatica\nAbilita la sincronizzazione automatica dello stato dei problemi tra TestPlanIt e il sistema esterno.\n\n- I problemi collegati ai casi di test aggiorneranno automaticamente il loro stato\n- Aiuta a mantenere il monitoraggio dei problemi coerente tra i sistemi\n- Può aumentare l'utilizzo dell'API con il servizio esterno\n- Può essere disabilitato se si preferisce il controllo manuale"
         }
       }
@@ -8593,7 +8222,6 @@
     "issueConfig": {
       "name": "## Nome configurazione problema\nUn nome chiaro e descrittivo che viene utilizzato in tutti i progetti.\n\n- Aiuta a descrivere la configurazione del problema (ad esempio Jira, GitHub, ecc.).",
       "baseUrl": "## URL di base\nL'URL di base per la configurazione del problema, incluso il segnaposto del problema (ad esempio https://your-jira-instance.atlassian.net/browse/'{issueId}').",
-      "systemType": "## Tipo di sistema\nIl tipo di sistema di monitoraggio dei problemi (ad esempio LINK Jira, ecc.).",
       "isActive": "## Attivo\nIndica se questa configurazione del problema è attiva.",
       "isDefault": "## Predefinito\nIndica se questa configurazione del problema è quella predefinita per il tuo progetto.\n\n- La configurazione predefinita del problema è preselezionata per i nuovi problemi\n- Può essere modificata in qualsiasi momento",
       "projects": "## Progetti\nIndica i progetti assegnati a questa configurazione del problema."
@@ -9053,13 +8681,9 @@
       },
       "reportsTabDescription": "Visualizza e analizza i report predefiniti per il tuo progetto",
       "reportType": "Tipo di rapporto",
-      "selectReportType": "Seleziona il tipo di rapporto",
       "selectReport": "Seleziona il report",
       "dimensions": "Dimensioni",
-      "dimensionsSubtitle": "Dimensioni (trascina per riordinare, aggiungi sotto)",
       "metrics": "Metrica",
-      "addDimension": "Aggiungi dimensione...",
-      "addMetric": "Aggiungi metrica...",
       "runReport": "Esegui rapporto",
       "exportCsv": "Esporta in formato CSV",
       "noResultsFound": "Nessun risultato trovato.",
@@ -9068,8 +8692,6 @@
       "noDataMatchingCriteriaWithDateFilter": "Nessun dato trovato corrispondente alle dimensioni e alle metriche selezionate. Prova a modificare il filtro dell'intervallo di date.",
       "noDataAvailable": "Nessun dato disponibile per questo rapporto.",
       "generatedAt": "Rapporto generato alle",
-      "crossProjectAnalytics": "Analisi e reporting interprogettuali",
-      "unauthorizedAdmin": "Non autorizzato: è richiesto l'accesso amministratore.",
       "title": "Generatore di report",
       "description": "Crea report personalizzati per analizzare i dati del tuo progetto",
       "crossProjectDescription": "Analizza i dati di tutti i progetti nel tuo spazio di lavoro",
@@ -9244,7 +8866,6 @@
         "newest": "Nuovo",
         "oldest": "Vecchio",
         "noFlakyTests": "Nessun test instabile trovato corrispondente ai criteri",
-        "includeFilter": "Includi",
         "caseTags": "Tag dei casi di test",
         "runTags": "Tag di esecuzione del test",
         "testRunDeleted": "La prova è stata eliminata",
@@ -9268,7 +8889,6 @@
         "minExecutionsHelp": "Numero minimo di esecuzioni necessarie per calcolare statistiche significative sul tasso di successo (3-20).",
         "lookbackDays": "Periodo di riferimento",
         "lookbackDaysHelp": "Numero di giorni per analizzare la cronologia delle esecuzioni (30-365).",
-        "includeFilter": "Includi",
         "staleFilter": "Stagionato",
         "stale": "Stagionato",
         "notStale": "Non stantio",
@@ -9278,11 +8898,9 @@
         "executions": "Esecuzioni",
         "passCount": "Pass",
         "failCount": "Fallimenti",
-        "daysSince": "Giorni trascorsi dall'esecuzione",
         "count": "Contare",
         "totalTests": "casi di test",
         "noData": "Nessun caso di test trovato",
-        "noExecutedTests": "Nessun test eseguito da visualizzare",
         "healthStatus": {
           "healthy": "Salutare",
           "stale": "Stagionato",
@@ -9291,11 +8909,7 @@
           "alwaysFailing": "Sempre fallimentare"
         },
         "chart": {
-          "distribution": "Distribuzione dello stato",
-          "healthyRecent": "Sano e recente",
-          "unhealthyStale": "Necessita di attenzione",
-          "daysAxis": "Giorni trascorsi dall'ultima esecuzione",
-          "healthScoreAxis": "Punteggio di salute"
+          "distribution": "Distribuzione dello stato"
         },
         "stats": {
           "totalTests": "Test totali",
@@ -9423,9 +9037,6 @@
         }
       },
       "issueTestCoverage": {
-        "viewMode": "Modalità di visualizzazione",
-        "summaryView": "Riepilogo (per problema)",
-        "detailView": "Dettagli (per caso di test)",
         "issue": "Problema",
         "testCase": "Caso di prova",
         "testCases": "{count, plural, =1 {Caso di test} other {Casi di test}}",
@@ -9437,18 +9048,15 @@
         "lastExecuted": "Ultima esecuzione",
         "notTested": "Non testato",
         "noData": "Nessun problema riscontrato con i casi di test collegati",
-        "noIssuesNeedingAttention": "Tutti i problemi sono stati testati con successo: ottimo lavoro!",
         "stats": {
           "totalIssues": "Numero totale di problemi",
           "issuesWithFailures": "Con guasti",
           "issuesWithFailuresTooltip": "Problemi con almeno un caso di test fallito",
           "issuesWithUntested": "Con non testato",
           "issuesWithUntestedTooltip": "Problemi con almeno un caso di test che non è stato eseguito",
-          "issuesAllPassing": "Tutti i passaggi",
-          "numberOfIssues": "Numero di problemi"
+          "issuesAllPassing": "Tutti i passaggi"
         },
         "charts": {
-          "passRateDistribution": "Distribuzione dei tassi di superamento del test",
           "linkedTestCases": "Numero di casi di test collegati",
           "untestedTestCases": "Numero di casi di test non ancora testati",
           "testCoverageVsExecution": "Copertura dei test vs. stato di esecuzione"
@@ -9482,7 +9090,6 @@
         "otherRoots": "Altro ({count, plural, one {# gerarchia} other {# gerarchie}})",
         "snapshotLabel": "Istantanea",
         "snapshotLive": "Matrice live",
-        "snapshotHelp": "Mostra un'istantanea salvata della matrice in un determinato momento invece dei dati live. Le istantanee sono record immutabili che puoi esportare, condividere e confrontare.",
         "snapshotPlaceholder": "Scegli un'istantanea",
         "snapshotRequirementsCount": "{count, plural, one {# requisito} other {# requisiti}}",
         "snapshotUncoveredCount": "{count} non coperti",
@@ -9613,7 +9220,6 @@
         "triggerPush": "Push",
         "outcomeNotExecuted": "Non eseguito",
         "outcomeNoRun": "Nessuna esecuzione",
-        "allRepositories": "Tutti i repository",
         "analysis": "Analisi",
         "changedFiles": "File modificati",
         "changedFilesDetail": "{files, number} file · +{additions, number} −{deletions, number}",
@@ -9734,23 +9340,15 @@
     },
     "errors": {
       "adminOnly": "Solo gli amministratori del progetto e gli amministratori possono accedere ai report del progetto.",
-      "projectIdRequired": "L'ID del progetto è obbligatorio",
       "missingRequiredFields": "Campi obbligatori mancanti",
-      "unsupportedDimension": "Dimensione non supportata: {dimension}",
-      "unsupportedMetric": "Metrica non supportata: {metric}",
       "atLeastOneDimensionMetricRequired": "Sono richieste almeno una dimensione e una metrica",
-      "atLeastOneMetricRequired": "È necessario specificare almeno una metrica",
-      "projectDimensionsMetricsRequired": "Sono richiesti ID progetto, dimensioni e metriche",
-      "unsupportedDimensions": "Dimensioni non supportate: {dimensions}",
-      "unsupportedMetrics": "Metriche non supportate: {metrics}",
-      "unexpectedError": "Si è verificato un errore imprevisto."
+      "atLeastOneMetricRequired": "È necessario specificare almeno una metrica"
     },
     "dimensions": {
       "executor": "Esecutore",
       "assignedTo": "Assegnato a",
       "executionDate": "Data di esecuzione",
       "creationDate": "Data di creazione",
-      "activityDate": "Data dell'attività",
       "testCase": "Caso di prova",
       "creator": "Creatore",
       "source": "Fonte",
@@ -9900,9 +9498,6 @@
           "title": "Link di condivisione scaduto",
           "description": "Questo link di condivisione è scaduto e non è più accessibile."
         }
-      },
-      "footer": {
-        "poweredBy": "Offerto da"
       },
       "manageShares": {
         "title": "Gestisci le azioni",
@@ -10255,8 +9850,6 @@
     },
     "startTyping": "Inizia a digitare per cercare",
     "typesSelected": "{count, plural, one {# tipo} other {# tipi}}",
-    "customFieldFilters": "Filtri di campo personalizzati",
-    "customFiltersApplied": "filtri personalizzati",
     "customFields": "Campi personalizzati",
     "addFilter": "Aggiungi filtro",
     "filter": "Filtro",
@@ -10321,14 +9914,12 @@
       "junit": "JUnit",
       "hybrid": "Ibrido",
       "automatedOnly": "Solo automatizzato",
-      "archivedOnly": "Solo archiviato",
       "completedOnly": "Completato solo",
       "manualOnly": "Solo manuale",
       "estimateRange": "Intervallo di stima",
       "elapsedRange": "Intervallo di tempo trascorso",
       "minValue": "Minimo",
       "maxValue": "Massimo",
-      "dueDateRange": "Intervallo di date di scadenza",
       "milestoneType": "Tipo di traguardo",
       "minutes": "minuti",
       "hours": "ore",
@@ -10433,11 +10024,7 @@
   },
   "autoTag": {
     "actions": {
-      "aiTag": "Tag AI",
-      "tagAll": "Etichetta tutto",
       "aiAutoTag": "Etichetta automatica",
-      "tagActions": "Azioni dei tag",
-      "startTagging": "Inizia a taggare",
       "selectEntityType": "Seleziona il tipo di entità",
       "selectProject": "Seleziona un progetto",
       "entityTypes": {
@@ -10449,11 +10036,8 @@
     "review": {
       "title": "Suggerimenti per i tag di recensione",
       "description": "Fai clic sui tag per attivarli o disattivarli. Fai doppio clic per modificare il nome di un tag.",
-      "selectEntity": "Seleziona un'entità per visualizzare i suggerimenti di tag.",
       "noTagsSelected": "Nessun tag selezionato",
-      "footerSummary": "{assignCount, plural, one {# tag verrà assegnato} other {# tag verranno assegnati}}, {newCount, plural, one {# nuovo tag verrà creato} other {# nuovi tag verranno creati}}",
       "footerAssignCount": "{assignCount, plural, one {# tag verrà assegnato} other {# tag verranno assegnati}}",
-      "footerNewCount": "{newCount, plural, one {# nuovo tag verrà creato} other {# nuovi tag verranno creati}}",
       "newTagsPopoverTitle": "Nuovi tag da creare",
       "applying": "Applicazione in corso...",
       "applySuccess": "{tagCount, plural, one {# tag applicato} other {# tag applicati}} a {entityCount, plural, one {# entità} other {# entità}}",
@@ -10472,7 +10056,6 @@
       "tooltipExisting": "Tag esistente",
       "tooltipNew": "Nuovo tag — verrà creato",
       "tooltipAssign": "Assegna tag esistente",
-      "toggleFailed": "Mostra/nascondi le entità non riuscite",
       "showFailed": "Spettacolo fallito"
     },
     "progress": {
@@ -10610,7 +10193,6 @@
     "datasetRowResultEmpty": "—",
     "pasteCsvPlaceholder": "Incolla qui le righe del file CSV. La prima riga viene considerata come intestazione.",
     "pasteCsvParseButton": "Analizza",
-    "pasteCsvReplaceWarning": "Le righe del dataset esistente ({existingCount}) verranno eliminate.",
     "cellErrorString": "Il valore non può essere vuoto per i campi obbligatori.",
     "cellErrorInteger": "Deve essere un numero intero.",
     "cellErrorSelect": "Il valore deve essere uno dei seguenti: {allowed}.",
@@ -10655,14 +10237,8 @@
     "chooserEmpty": "Nessun parametro dichiarato finora.",
     "chooserConfigureLink": "Configura i parametri",
     "autocompleteEmpty": "Nessun parametro corrispondente. Digita per cercare o usa la barra degli strumenti per inserire.",
-    "chipTooltipType": "Tipo: {type}",
-    "chipTooltipDefault": "Predefinito: {value}",
-    "chipTooltipNoDefault": "Predefinito: (nessuno)",
-    "chipTooltipUndeclared": "\"@{name}\" non è un parametro dichiarato. Apri Configura parametri per aggiungerlo.",
     "editorUndeclaredWarning": "Riferimenti non dichiarati: {names}. Aggiungili tramite i parametri di configurazione per abilitare la sostituzione iterativa.",
     "runProgressTitle": "Generazione di iterazioni per \"{runName}\"",
-    "runProgressDescriptionAsync": "Creazione di {count, plural, =1 {# iterazione} other {# iterazioni}} in background. Puoi continuare a lavorare: ti avviseremo quando sarà terminato.",
-    "runProgressDescriptionSync": "{count, plural, =1 {Creata # iterazione} other {Create # iterazioni}}.",
     "runProgressFailed": "Impossibile avviare la generazione dell'iterazione",
     "runHardRefuseTitle": "Troppe iterazioni da creare",
     "runHardRefuseDescription": "Questa esecuzione creerebbe {count} iterazioni, superando il limite di {cap}. Riduci il numero di righe del dataset, deseleziona i casi o dividi in più esecuzioni.",
@@ -10670,7 +10246,6 @@
     "runPreflightAsync": "{n, plural, =1 {Verrà creata # iterazione} other {Verranno create # iterazioni}} (processo in background)",
     "runPreflightSoftConfirm": "{n, plural, =1 {Verrà creata # iterazione} other {Verranno create # iterazioni}} — conferma richiesta",
     "runPreflightHardRefuse": "Impossibile creare — {n} supera il limite {cap}",
-    "runPreflightTooltip": "{iterations, plural, =1 {# iterazione} other {# iterazioni}} = {cases, plural, =1 {# caso} other {# casi}} × {configs, plural, =1 {# configurazione} other {# configurazioni}} × righe del dataset",
     "runPreflightTooltipHeader": "{iterations, plural, =1 {# iterazione} other {# iterazioni}} attraverso {cases, plural, =1 {# caso parametrizzato} other {# casi parametrizzati}} × {configs, plural, =1 {# configurazione} other {# configurazioni}}",
     "runPreflightTooltipCaseRow": "{title} — {rows, plural, =1 {# riga} other {# righe}}",
     "chipClickToReveal": "Fai clic per visualizzare",
@@ -10682,7 +10257,6 @@
     "iterationAddResult": "Aggiungi risultato",
     "iterationPassAndNext": "Passa e iterazione successiva",
     "iterationOtherStatuses": "Altri stati",
-    "iterationAllComplete": "Tutte le iterazioni completate",
     "hardRefuseTitle": "Impossibile creare: troppe iterazioni",
     "hardRefuseDescription": "La creazione di test run è limitata a {cap} iterazioni per mantenere il sistema reattivo. Riduci uno dei fattori seguenti.",
     "hardRefuseColumnCase": "Caso",
@@ -10705,15 +10279,12 @@
     "iterationsHeaderCount": "{complete}/{total}",
     "iterationsHeaderCountPending": "0/{total} (generazione)",
     "iterationStatusLegendAria": "Leggenda dello status",
-    "iterationActionSkipped": "Saltato",
     "iterationBulkPickStatusPrompt": "Seleziona uno stato da applicare alle iterazioni selezionate.",
-    "iterationBulkApplyStatus": "Contrassegna con stato…",
     "iterationSelectAria": "Seleziona l'iterazione {n}",
     "iterationRowMenuAria": "Iterazione {n} azioni",
     "iterationOverrideValues": "Sovrascrivi i valori…",
     "iterationSkip": "Contrassegna con stato…",
     "iterationReset": "Reimposta il risultato dell'iterazione",
-    "iterationSelectedCount": "{count} selezionato",
     "iterationBulkSkip": "Segna {count, plural, =1 {# iterazione} other {# iterazioni}} con stato…",
     "iterationIssueTitleSnapshot": "Iterazione {n} del problema {total} : {caseName}",
     "iterationIssueTitleCiExtended": "Iterazione {n} (CI estesa) problema: {caseName}",
@@ -10754,13 +10325,7 @@
     "iterationBulkReasonHelp": "Registrato per ogni risultato.",
     "iterationBulkSuccess": "{count, plural, =1 {# iterazione contrassegnata} other {# iterazioni contrassegnate}} come {action}",
     "iterationBulkError": "Impossibile contrassegnare le iterazioni",
-    "iterationBulkNa": "Marcatura N/D",
-    "iterationListLoadError": "Impossibile caricare le iterazioni.",
     "iterationResetUntestedMissing": "Stato non testato non trovato",
-    "overrideTitle": "Sovrascrivi i valori per l'iterazione {n}",
-    "overrideDescription": "Le modifiche influiscono solo su questa iterazione. L'istantanea del dataset e il dataset di origine rimangono invariati. Questa azione viene registrata nel log di controllo.",
-    "overrideValidationItem": "@{param}: {message}",
-    "overrideSensitiveDenied": "Non si dispone dell'autorizzazione per modificare i valori sensibili.",
     "datasetSourceLocal": "Locale",
     "datasetSourceShared": "Condiviso",
     "datasetSharedRefBadge": "+ riferimento condiviso",
@@ -10895,7 +10460,6 @@
     },
     "history": "Cronologia",
     "subscribers": "Abbonati",
-    "subscriberCount": "{count, plural, =0 {Nessun abbonato} one {# abbonato} other {# abbonati}}",
     "toasts": {
       "created": "Regola creata.",
       "updated": "Regola aggiornata.",
@@ -10905,7 +10469,6 @@
       "subscribed": "Riceverai una notifica quando questa regola si attiverà.",
       "unsubscribed": "Non riceverai più notifiche da questa regola.",
       "subscriberAdded": "{name} abbonato.",
-      "subscriberRemoved": "{name} non abbonato.",
       "saveError": "Impossibile salvare la regola.",
       "subscriptionError": "Impossibile aggiornare l'abbonamento."
     },
@@ -10927,7 +10490,6 @@
       "scopeRunNamePlaceholder": "ad es. Notturno",
       "scopePickFolder": "Seleziona una cartella",
       "scopePickTag": "Seleziona un'etichetta",
-      "scopePickCase": "Seleziona un caso di test",
       "scopePickMilestone": "Seleziona una pietra miliare",
       "scopeWebhook": "Webhook",
       "scopePickWebhook": "Seleziona un webhook",
@@ -11324,8 +10886,7 @@
     "unclassified": "Nessuna causa principale",
     "source": {
       "AI": "Causa principale suggerita dall'IA",
-      "labelAI": "IA",
-      "labelMANUAL": "Manuale"
+      "labelAI": "IA"
     },
     "columns": {
       "classification": "Causa principale",

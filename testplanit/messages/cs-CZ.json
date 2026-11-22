@@ -29,7 +29,6 @@
     "searchGroups": "Hledat skupiny...",
     "searchCases": "{count, plural, =0 {Hledat případy} one {Hledat # případ} few {Hledat # případy} many {Hledat # případu} other {Hledat # případů}}",
     "searchProjects": "{count, plural, =0 {Hledat projekty} one {Hledat # projekt} few {Hledat # projekty} many {Hledat # projektu} other {Hledat # projektů}}",
-    "searchTags": "Hledat štítky...",
     "searchRuns": "{count, plural, =0 {Hledat testovací běhy} one {Hledat # testovací běh} few {Hledat # testovací běhy} many {Hledat # testovacího běhu} other {Hledat # testovacích běhů}}",
     "searchSessions": "{count, plural, =0 {Hledat relace} one {Hledat # relaci} few {Hledat # relace} many {Hledat # relace} other {Hledat # relací}}",
     "searchMilestones": "{count, plural, =0 {Hledat milníky} one {Hledat # milník} few {Hledat # milníky} many {Hledat # milníku} other {Hledat # milníků}}",
@@ -100,8 +99,6 @@
       "addedToTestRun": "Přidáno do testovacího běhu",
       "addedToTestRunDescription": "Testovací případ byl přidán do testovacího běhu.",
       "noAvailableTestRuns": "Všechny aktivní testovací běhy již obsahují tento testovací případ.",
-      "resultUpdateError": "Nepodařilo se aktualizovat výsledek testu",
-      "resultDeleteError": "Nepodařilo se smazat výsledek testu",
       "selectStatus": "Vybrat stav",
       "addToTestRun": "Přidat do testovacího běhu",
       "status": "Stav",
@@ -225,7 +222,6 @@
       "notApplicable": "N/A",
       "redirecting": "Přesměrování...",
       "pendingDelete": "Bude smazáno",
-      "pendingChanges": "Čekající změny",
       "importing": "Import probíhá...",
       "addingTestCases": "Přidávání testovacích případů..."
     },
@@ -335,7 +331,6 @@
       "notificationMode": "Oznámení",
       "value": "Hodnota",
       "key": "Klíč",
-      "configurationDetails": "Podrobnosti konfigurace",
       "isActive": "Aktivní",
       "members": "Členové",
       "milestoneTypes": "Typy milníků",
@@ -411,7 +406,6 @@
       "API": "API",
       "folder": "Složka",
       "parentFolder": "Nadřazená složka pro nové případy",
-      "multipleValues": "Více hodnot",
       "multipleValuesCount": "Více hodnot ({count, number})",
       "provider": "Poskytovatel",
       "updatedAt": "Aktualizováno",
@@ -482,8 +476,6 @@
       "invalidDuration": "Zadejte platnou dobu trvání",
       "maxDuration": "Doba trvání nesmí přesáhnout {max} minut",
       "minLength": "{field} musí mít alespoň {min} znaků",
-      "emailFormat": "Neplatný formát emailu",
-      "passwordMatch": "Hesla se musí shodovat",
       "unique": "{field} musí být jedinečné",
       "roleRequired": "Role je povinná",
       "nameMinLength": "Název musí mít alespoň 2 znaky",
@@ -547,7 +539,6 @@
       "deleteSuccess": "Položka byla úspěšně smazána",
       "deleteError": "Při mazání položky došlo k chybě",
       "moveSuccess": "Položka byla úspěšně přesunuta",
-      "moveError": "Při přesouvání položky došlo k chybě",
       "updateSuccess": "Položka byla úspěšně aktualizována",
       "updateSuccessCount": "{count, number} položek bylo úspěšně aktualizováno",
       "updateError": "Při aktualizaci položky došlo k chybě",
@@ -555,7 +546,6 @@
       "copyFailed": "Nepodařilo se zkopírovat odkaz do schránky",
       "created": "Úspěšně vytvořeno",
       "createdItem": "{item} úspěšně vytvořeno",
-      "createdDescription": "Testovací běh byl vytvořen a nyní je viditelný v seznamu testovacích běhů.",
       "createError": "Došlo k neznámé chybě. Zkuste to prosím znovu.",
       "emptyActive": "Žádné aktivní testovací běhy",
       "emptyCompleted": "Žádné dokončené testovací běhy",
@@ -633,7 +623,6 @@
       "defaultNotFound": "Výchozí hodnota nebyla nalezena",
       "emailExists": "Uživatel s tímto emailem již existuje",
       "nameExists": "Uživatel s tímto názvem již existuje",
-      "duplicateValue": "Tato hodnota je již použita",
       "unauthorized": "Nemáte oprávnění k provedení této akce.",
       "accessDenied": "Přístup odepřen",
       "sessionNotFound": "Relace nenalezena nebo je neplatná.",
@@ -659,8 +648,6 @@
         "unlinkError": "Chyba při rušení propojení problému",
         "noActiveIntegration": "Pro tento projekt nebyla nalezena žádná aktivní integrace"
       },
-      "roleRequiredForSpecificRole": "Role je povinná, pokud je typ přístupu Konkrétní role.",
-      "projectCreationFailed": "Vytvoření projektu se nezdařilo, nebylo vráceno žádné ID.",
       "invalidRoleId": "Neplatné ID role",
       "workflowStateExists": "Stav postupu již existuje. Zvolte prosím nový název.",
       "failedToLoadCaseData": "Nepodařilo se načíst data případu. Nelze uložit.",
@@ -704,11 +691,9 @@
       "resultSubmitPermissionDenied": "Nemůžete odesílat výsledky pro tento případ. Požádejte administrátora projektu, aby vám jej přiřadil.",
       "dependenciesNotPassed": "Blokováno závislostmi",
       "dependenciesNotPassedDescription": "Tento případ testu nelze spustit, dokud {count, plural, =0 {ty případy, na kterých závisí, neprojdou} =1 {ten případ, na kterém závisí, neprojde} few {všechny # případy, na kterých závisí, neprojdou} many {všech # případů, na kterých závisí, neprojde} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
-      "justificationRequired": "Zdůvodnění je povinné",
       "justificationRequiredDescription": "Obrácení dokončeného výsledku na jiný výstup vyžaduje podrobnosti výsledku vysvětlující změnu.",
       "requiredFieldMissing": "Povinnému poli výsledku chybí hodnota.",
       "editWindowExpired": "Okno úprav tohoto výsledku bylo uzavřeno. Místo toho zaznamenejte nový pokus.",
-      "issueRequiredOnFailure": "Vyžadován propojený problém",
       "issueRequiredOnFailureDescription": "Výsledek s neúspěchem vyžaduje alespoň jeden propojený problém. Před uložením propojte problém.",
       "noModelsFound": "Nebyly nalezeny žádné modely",
       "failedToFetchModels": "Nepodařilo se načíst modely",
@@ -745,7 +730,6 @@
       "reports": "Reporty",
       "adminSamlConfig": "Administrace - konfigurace SAML",
       "apiDocumentation": "API dokumentace",
-      "sharedContent": "Sdílený obsah",
       "impact": "Analýza dopadu",
       "alerts": "Oznámení a upozornění",
       "triage": "Selhání vzorů",
@@ -807,7 +791,6 @@
       "unknownGroup": "Neznámá skupina",
       "file": "soubor",
       "files": "soubory",
-      "existingAttachments": "Stávající přílohy",
       "new": "Nový",
       "noElapsedTime": "Žádný zaznamenaný čas",
       "runDurationHint": "Doba od prvního do posledního výsledku",
@@ -846,7 +829,6 @@
       "noOptions": "Žádné dostupné možnosti",
       "multiConfiguration": "Součást skupiny s více konfiguracemi",
       "compositionLocked": "Kompozice uzamčena — sada případů je zmrazena",
-      "otherConfigurations": "Další konfigurace",
       "noConfiguration": "Žádná konfigurace",
       "configurationWithName": "{configuration} — {name}",
       "selected": "Vybráno: {count}",
@@ -856,7 +838,6 @@
       "successRate": "Míra úspěšnosti",
       "unassigned": "Nepřiřazeno",
       "testRunName": "Název testovacího běhu",
-      "estimatesEllipsis": "Odhady...",
       "access": {
         "noAccess": "Bez přístupu",
         "globalRole": "Použít globální roli",
@@ -876,9 +857,7 @@
       "sessions": "Žádné relace",
       "activeSessions": "Žádné aktivní relace",
       "completedSessions": "Žádné dokončené relace",
-      "testCase": "Testovací případ nenalezen",
-      "noTestCasesOrSessions": "Nebyly nalezeny žádné testovací případy ani relace",
-      "noTestCasesSessionsOrRuns": "Nebyly nalezeny žádné testovací případy, relace ani testovací běhy"
+      "testCase": "Testovací případ nenalezen"
     },
     "or": "nebo",
     "for": "pro",
@@ -893,7 +872,6 @@
         "resetColumns": "Obnovit výchozí sloupce"
       },
       "filter": "Filtrovat seznam...",
-      "selectNone": "Nevybrat nic",
       "sort": "Seřadit sloupec",
       "sortAscending": "Seřazeno vzestupně",
       "sortDescending": "Seřazeno sestupně",
@@ -917,7 +895,6 @@
       "showing": "Zobrazeno",
       "total": "celkem {count, plural, =1 {# položka} few {# položky} many {# položky} other {# položek}}",
       "filtered": "filtrováno z",
-      "pageOfPages": "Stránka {current} z {total}",
       "loadedOfTotal": "{loaded, number} z {total, number}"
     },
     "upload": {
@@ -928,7 +905,6 @@
         "description": "Přetáhněte své soubory nebo klikněte na tlačítko níže pro výběr souborů.",
         "selectFiles": "{count, plural, =0 {Vybrat soubory} =1 {1 vybraný soubor} few {# vybrané soubory} many {# vybraného souboru} other {# vybraných souborů}}",
         "selectFile": "{count, plural, =0 {Vybrat soubor} other {1 vybraný soubor}}",
-        "filesSelected": "{count, plural, =1 {# vybraný soubor} few {# vybrané soubory} many {# vybraného souboru} other {# vybraných souborů}}",
         "addMoreFiles": "Přidat další soubory...",
         "replaceFile": "Nahradit soubor...",
         "invalidFileType": "Neplatný typ souboru. Povoleny jsou pouze soubory typu {types}.",
@@ -953,8 +929,7 @@
       "dropToImportTestResults": "Přetáhněte soubor pro import výsledků testů",
       "supportedCsvFormats": "Podporováno: .csv",
       "supportedResultFormats": "Podporováno: .xml, .trx, .json",
-      "unsupportedFileType": "Nepodporovaný typ souboru. Očekáváno: {expected}",
-      "noFilesDetected": "V přetažení nebyly zjištěny žádné soubory"
+      "unsupportedFileType": "Nepodporovaný typ souboru. Očekáváno: {expected}"
     },
     "editor": {
       "bold": "Tučné",
@@ -1009,9 +984,7 @@
         "strikethrough": "Přeškrtnutí",
         "code": "Kód",
         "codeBlock": "Blok kódu",
-        "highlightText": "Zvýraznit text",
         "textColor": "Barva textu",
-        "moreOptions": "Další možnosti",
         "subscript": "Dolní index",
         "superscript": "Horní index",
         "alignLeft": "Zarovnat vlevo",
@@ -1019,9 +992,7 @@
         "alignRight": "Zarovnat vpravo",
         "justify": "Do bloku",
         "setLink": "Nastavit odkaz",
-        "editLink": "Upravit odkaz",
-        "removeLink": "Odebrat odkaz",
-        "resetColorToDefault": "Obnovit výchozí barvu"
+        "removeLink": "Odebrat odkaz"
       }
     },
     "ai": {
@@ -1078,9 +1049,6 @@
       "breadcrumb": {
         "more": "Více"
       },
-      "clickToViewDetails": "Klikněte pro zobrazení podrobností",
-      "clickToExpand": "Klikněte pro rozbalení",
-      "clickToCollapse": "Klikněte pro sbalení",
       "search": {
         "filters": "Filtry",
         "noResultsFound": "Nebyly nalezeny žádné výsledky",
@@ -1098,10 +1066,8 @@
         "openInExternalSystem": "Otevřít v {provider}",
         "assignee": "Řešitel",
         "status": "Stav: ",
-        "clickToOpenInNewTab": "Klikněte pro otevření na nové kartě",
         "url": "URL: ",
         "externalId": "Externí ID: ",
-        "viewIn": "Zobrazit v",
         "fieldType": "Typ pole: ",
         "richTextContent": "Obsah v rich textu",
         "fieldInformation": "Informace o poli"
@@ -1120,10 +1086,7 @@
       },
       "import": {
         "encoding": {
-          "utf8": "UTF-8",
-          "iso88591": "ISO-8859-1",
-          "iso885915": "ISO-8859-15",
-          "windows1252": "Windows-1252"
+          "utf8": "UTF-8"
         }
       },
       "loadingIssueTracker": "Načítání informací o Issue Trackeru...",
@@ -1194,8 +1157,7 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "Index iterace {index} přesahuje maximální podporovanou hodnotu {cap}. Snižte počet iterací nebo rozdělte testovací běh.",
-        "iterationCapExceededMulti": "{count} testovacích případů vyžaduje indexy iterací nad maximální podporovanou hodnotou {cap}. Snižte počet iterací nebo rozdělte testovací běh."
+        "iterationCapExceeded": "Index iterace {index} přesahuje maximální podporovanou hodnotu {cap}. Snižte počet iterací nebo rozdělte testovací běh."
       }
     }
   },
@@ -1208,8 +1170,7 @@
         "apple": "Pokračovat s Apple",
         "microsoft": "Pokračovat s Microsoft",
         "samlProvider": "Přihlásit se přes {name}",
-        "magicLink": "Přihlásit se pomocí jednorázového magického odkazu",
-        "emailLogin": "Pokračovat s e-mailem"
+        "magicLink": "Přihlásit se pomocí jednorázového magického odkazu"
       },
       "magicLink": {
         "description": "Zadejte svou e-mailovou adresu a my vám zašleme bezpečný odkaz pro přihlášení. Není vyžadováno heslo. Musíte již mít účet.",
@@ -1280,7 +1241,6 @@
       "error": "Nepodařilo se ověřit e-mail",
       "expired": "Platnost ověřovacího odkazu vypršela",
       "invalid": "Neplatný ověřovací odkaz",
-      "alreadyVerified": "E-mail je již ověřen",
       "toast": {
         "verifySuccess": {
           "description": "Nyní se můžete přihlásit do svého účtu."
@@ -1315,7 +1275,6 @@
       "title": "Ověřte svou identitu",
       "description": "Zadejte 6místný kód z vaší autentizační aplikace pro pokračování.",
       "backupCodeLabel": "Záložní kód",
-      "backupCodeHint": "Můžete také zadat 8znakový záložní kód",
       "useAuthenticator": "Použít místo toho kód z autentizační aplikace",
       "useBackupCode": "Použít místo toho záložní kód",
       "signOut": "Odhlásit se a použít jiný účet"
@@ -1328,24 +1287,14 @@
       "confirmPasswordLabel": "Potvrdit nové heslo",
       "signOut": "Místo toho se odhlásit",
       "passwordsMustMatch": "Hesla se neshodují.",
-      "genericError": "Došlo k chybě. Zkuste to prosím znovu.",
-      "policyTitle": "Požadavky na heslo:",
-      "policyMinLength": "Alespoň {count, number} znaků",
-      "policyUppercase": "Alespoň jedno velké písmeno",
-      "policyLowercase": "Alespoň jedno malé písmeno",
-      "policyNumbers": "Alespoň jedno číslo",
-      "policySpecialChars": "Alespoň jeden speciální znak ({chars})"
+      "genericError": "Došlo k chybě. Zkuste to prosím znovu."
     }
   },
   "account": {
     "linkSso": {
       "description": "Propojte svůj účet s poskytovatelem Single Sign-On",
-      "availableProviders": "Dostupní poskytovatelé SSO",
-      "linkWithGoogle": "Propojit s Google",
-      "linkWithSaml": "Propojit s {name}",
       "accountLinked": "Účet byl úspěšně propojen",
       "linkingFailed": "Nepodařilo se propojit účet",
-      "noProvidersAvailable": "Momentálně nejsou k dispozici žádní poskytovatelé SSO pro propojení",
       "linkingInfo": "Propojení poskytovatele SSO vám umožní přihlásit se pomocí tohoto poskytovatele místo hesla. Vaše stávající data účtu zůstanou beze změny.",
       "signInWithGoogle": "Přihlásit se přes Google",
       "enterpriseSamlSso": "Podnikové SAML SSO",
@@ -1389,7 +1338,6 @@
       "seeAllMilestones": "{count, plural, =1 {Zobrazit # milník} =2 {Zobrazit oba milníky} few {Zobrazit všechny # milníky} other {Zobrazit všech # milníků}}",
       "seeAllTestCases": "{count, plural, =1 {Zobrazit # testovací případ} =2 {Zobrazit oba testovací případy} few {Zobrazit všechny # testovací případy} other {Zobrazit všech # testovacích případů}}",
       "latestTestCases": "Nejnovější testovací případy",
-      "createdOn": "Vytvořeno dne",
       "seeAllTagsCount": "{count, plural, =1 {Zobrazit # štítek} =2 {Zobrazit oba štítky} few {Zobrazit všechny # štítky} other {Zobrazit všech # štítků}}",
       "seeAllActiveSessions": "{count, plural, =1 {Zobrazit # aktivní relaci} =2 {Zobrazit obě aktivní relace} few {Zobrazit všechny # aktivní relace} other {Zobrazit všech # aktivních relací}}",
       "latestSessions": "Nejnovější relace",
@@ -1412,8 +1360,6 @@
     },
     "settings": {
       "description": "Spravovat nastavení pro {projectName}",
-      "moreSettingsComingSoon": "Další nastavení již brzy",
-      "moreSettingsDescription": "Další možnosti konfigurace projektu budou k dispozici zde v budoucích aktualizacích",
       "junitIterationProperties": {
         "title": "Mapování vlastností iterace",
         "description": "Při importu je index iterace pro každý testovací případ čten z vlastnosti, atributu nebo traitu, jehož název odpovídá jedné z těchto položek (JUnit property, TestNG attribute, xUnit trait, NUnit property). Přidejte názvy, které používá váš emitter; vyhledávání nerozlišuje velká a malá písmena.",
@@ -1435,23 +1381,17 @@
         "description": "Spravovat integrace problémů třetích stran pro tento projekt",
         "availableIntegrations": "Dostupné integrace problémů",
         "availableDescription": "Vyberte integraci problémů pro připojení k tomuto projektu",
-        "configuredIntegration": "Nakonfigurovaná integrace",
         "noIntegrationAssigned": "Není přiřazena žádná integrace problémů",
         "noIntegrationDescription": "Pro začátek vyberte integraci problémů z dostupných možností",
         "selectIntegration": "Vyberte integraci problémů ke konfiguraci",
         "integration": {
-          "assignError": "Nepodařilo se přiřadit integraci problémů",
           "updateSuccess": "Nastavení integrace bylo aktualizováno",
           "updateError": "Nepodařilo se aktualizovat nastavení integrace problémů",
           "removeError": "Nepodařilo se odebrat integraci problémů",
           "removeIntegration": "Odebrat integraci",
           "confirmRemove": "Opravdu chcete odebrat integraci {name}?",
-          "authDescription": "Pro použití této integrace problémů se musíte ověřit u {provider}",
           "authenticating": "Ověřování...",
-          "authSuccess": "Ověření proběhlo úspěšně",
           "selectProject": "Vyberte projekt {provider}",
-          "selectProjectPlaceholder": "Vyberte projekt k propojení",
-          "linkedProject": "Propojený projekt",
           "loadProjectsError": "Nepodařilo se načíst projekty",
           "settingsSaved": "Nastavení integrace bylo úspěšně uloženo",
           "saveSettingsError": "Nepodařilo se uložit nastavení integrace problémů",
@@ -1462,22 +1402,12 @@
           "authorizeIntegration": "Autorizovat {name}",
           "integrationSettings": "Nastavení {name}",
           "integrationSettingsDescription": "Nakonfigurujte nastavení integrace problémů pro tento projekt",
-          "selectExternalProject": "Vyberte externí projekt",
-          "refreshProjects": "Obnovit projekty",
           "defaultIssueType": "Výchozí typ problému",
           "selectDefaultIssueType": "Vyberte výchozí typ problému",
-          "defaultIssueTypeDescription": "Tento typ problému bude předvybrán při vytváření nových problémů",
-          "issueTypePlaceholder": "např. Bug, Task, Story",
-          "defaultComponent": "Výchozí komponenta",
-          "componentPlaceholder": "např. Frontend, Backend",
           "automaticSync": "Automatická synchronizace",
-          "automaticSyncDescription": "Automaticky synchronizovat problémy mezi TestPlanIt a externím systémem",
           "simpleUrlDescription": "Tato integrace problémů používá jednoduchý vzor URL pro propojení s externími problémy. Problémy se otevřou na nové kartě pomocí nakonfigurovaného vzoru URL.",
-          "externalProjectHelp": "Toto nastaví výchozí projekt pro vytváření nových problémů z TestPlanIt. Stále můžete propojovat a synchronizovat problémy z jiných externích projektů - každý problém sleduje svůj vlastní zdrojový projekt.",
           "linkedProjects": "Propojené externí projekty",
           "linkedProjectsDescription": "Externí projekty propojené prostřednictvím této integrace",
-          "noLinkedProjects": "Nejsou propojeny žádné externí projekty",
-          "noLinkedProjectsDescription": "Přidejte externí projekt pro povolení vyhledávání a synchronizace problémů.",
           "addProjects": "Přidat projekty",
           "addSelected": "Přidat vybrané",
           "setAsDefault": "Nastavit jako výchozí",
@@ -1489,8 +1419,6 @@
           "syncStatusCompleted": "Synchronizováno",
           "syncStatusError": "Chyba synchronizace",
           "fanOutPartialFailure": "{count} projekt(y) nebylo možné kontaktovat. Zobrazují se výsledky z {successCount} projektu(ů).",
-          "projectSelectorLabel": "Projekt",
-          "defaultIssueTypeHelp": "Při vytváření nových problémů z TestPlanIt bude tento typ problému automaticky vybrán. To šetří čas, pokud obvykle vytváříte stejný typ problémů.",
           "automaticSyncHelp": "Když je povoleno, problémy se automaticky synchronizují při zjištění změn v externím systému (přes webhooky). Ruční synchronizace je vždy k dispozici.",
           "removeWarningTitle": "Odebráním této integrace problémů dojde k:",
           "removeWarning1": "Odpojit všechny propojené problémy z této integrace problémů (problémy zůstanou v databázi)",
@@ -1651,12 +1579,10 @@
         "outboundCreateUrlHelp": "Cílová URL. Slack incoming-webhook URL jsou detekovány automaticky.",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "Zjištěno: Slack",
-        "outboundDetectedHmac": "Zjištěno: Obecný HMAC",
         "adapterLabelSlack": "Slack",
         "adapterLabelGenericHmac": "Obecný HMAC webhook",
         "outboundCreateSubscriptionsTitle": "Odběry",
         "outboundCreateSubscriptionsHelp": "Vyberte, které události pro tento cíl budou spouštěny. Toto lze později změnit.",
-        "outboundSubsTestRunsAndSessions": "Testovací běhy a relace",
         "outboundSubsTestRuns": "Testovací běhy",
         "outboundSubsSessions": "Relace",
         "outboundSubsScimUsers": "Uživatelé SCIM",
@@ -1682,7 +1608,6 @@
           "scimGroupMemberAddedSummary": "Členové přidáni (souhrn hromadné synchronizace)",
           "triggered": "Spuštěno"
         },
-        "iterationResultHelp": "Spustí se při každém zaznamenání výsledku iterace — úspěch, neúspěch, přeskočení nebo jiný stav. Používejte střídmě u dlouhých automatizačních běhů (jedna událost na iteraci).",
         "events": {
           "testRunCreated": "Testovací běh vytvořen",
           "testRunStateChanged": "Stav testovacího běhu změněn",
@@ -1714,7 +1639,6 @@
         },
         "outboundSubsIssues": "Problémy",
         "outboundSubsCases": "Případy",
-        "outboundSubsSelectAll": "Vybrat vše v této sekci",
         "outboundCreateSubmit": "Vytvořit webhook",
         "outboundCreateSuccess": "Odchozí webhook vytvořen.",
         "outboundCreateError": "Nepodařilo se vytvořit odchozí webhook.",
@@ -1795,14 +1719,11 @@
         "filterConfigPlaceholder": "Všechny webhooky",
         "filterEventPlaceholder": "Všechny události",
         "filterStatusFailed": "Selhalo",
-        "filterSinceDefault": "Od…",
-        "filterUntilDefault": "Do…",
         "filterReset": "Resetovat filtry",
         "filterBulkReplayButton": "Hromadně přehrát {count, number} odchozích selhání",
         "filterBulkReplayHidden": "Všechna viditelná selhání jsou příchozí — místo toho znovu spusťte upstream událost.",
         "deliveriesEmpty": "Žádná doručení neodpovídají těmto filtrům.",
         "deliveriesResetFilters": "Resetovat filtry",
-        "deliveriesLoadMore": "Načíst další",
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "Událost",
         "tableHeaderSubjectRef": "Odkaz",
@@ -1941,8 +1862,7 @@
           "autoExecute": "Spustit automatizované případy",
           "autoExecuteHelp": "Po vytvoření runů požádejte o automatizované spuštění jeho automatizovaných případů na tomto cíli. Manuální případy zůstávají v runu pro testery.",
           "autoExecuteNoTargets": "Pro tento projekt není nakonfigurován žádný cíl spuštění. <link>Přidejte jeden</link> pro automatické spuštění runů.",
-          "autoExecuteTargetMissing": "Vybraný cíl spuštění byl odstraněn nebo zakázán. Runy se stále vytváří, ale žádné spuštění se nepožaduje, dokud si nevyberete jiný cíl.",
-          "autoExecuteSaveError": "Nepodařilo se uložit nastavení automatizovaného spuštění"
+          "autoExecuteTargetMissing": "Vybraný cíl spuštění byl odstraněn nebo zakázán. Runy se stále vytváří, ale žádné spuštění se nepožaduje, dokud si nevyberete jiný cíl."
         },
         "inboundEmptyState": "Zatím žádné příchozí webhooky. <link>Přidejte jeden</link>, chcete-li přijímat aktualizace položek z vašeho nástroje pro sledování položek nebo pull requesty a pushe z připojeného úložiště.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -1961,8 +1881,6 @@
       "aiModels": {
         "description": "Nakonfigurujte AI modely pro inteligentní generování a analýzu testovacích případů",
         "availableModelsDescription": "Vyberte výchozí AI model pro tento projekt z těch, které nakonfiguroval váš systémový administrátor.",
-        "currentModelSettings": "Aktuální nastavení modelu",
-        "currentModelDescription": "Podrobnosti konfigurace pro aktuálně aktivní AI model: {name}",
         "noModelsAvailable": "Momentálně nejsou k dispozici žádné AI modely. Kontaktujte svého systémového administrátora pro konfiguraci AI modelů pro vaši organizaci.",
         "monthlyBudget": "Měsíční rozpočet",
         "model": "Model",
@@ -1971,7 +1889,6 @@
         "systemDefault": "Systémové výchozí nastavení",
         "setAsDefault": "Nastavit jako výchozí",
         "clearDefault": "Vymazat výchozí",
-        "useForProject": "Použít pro projekt",
         "removeModel": "Vymazat výchozí",
         "removeWarningTitle": "Vymazáním výchozího AI modelu dojde k:",
         "removeWarning1": "Zakázání funkcí s AI, pokud nejsou nakonfigurována přepsání pro jednotlivé funkce",
@@ -2035,10 +1952,6 @@
           "assignments": "Používáno v"
         },
         "versionLabel": "v{version, number}",
-        "assignmentsCount": "{count, plural, =0 {0 případů} =1 {# případ} few {# případy} many {# případu} other {# případů}}",
-        "rowsCount": "{count, plural, =0 {0 řádků} =1 {# řádek} few {# řádky} many {# řádku} other {# řádků}}",
-        "columnsCount": "{count, plural, =0 {0 sloupců} =1 {# sloupec} few {# sloupce} many {# sloupce} other {# sloupců}}",
-        "actionsMenuLabel": "Otevřít akce datové sady",
         "actionOpen": "Otevřít editor",
         "openLink": "Otevřít",
         "create": {
@@ -2071,9 +1984,6 @@
           "saving": "Ukládání",
           "savedHint": "Všechny změny uloženy ve verzi {version, number}",
           "unsavedHint": "Neuložené změny",
-          "currentVersionLabel": "v{version, number} (aktuální)",
-          "currentVersionInitialLabel": "Aktuální",
-          "historicalVersionLabel": "v{version, number}",
           "historicalReadOnlyBanner": "Prohlížíte verzi {version, number}. Úpravou vytvoříte novou verzi odvětvenou z této.",
           "branchingBanner": "Uložením vytvoříte novou verzi odvětvenou z v{version, number}.",
           "saveError": "Nepodařilo se uložit datovou sadu",
@@ -2088,9 +1998,7 @@
           "historicalItemLabel": "v{version, number}",
           "historicalItemBy": "od {name}",
           "noVersionsYet": "Zatím žádné uložené verze"
-        },
-        "datasetTabSharedReadOnlyHint": "Zobrazení verze {version, number} pouze pro čtení. Přepněte na aktuální verzi pro úpravy.",
-        "datasetTabSharedEditorHint": "Klikněte na Uložit, jakmile budete hotovi. Každé uložení vytvoří novou verzi."
+        }
       },
       "quickScript": {
         "description": "Povolte QuickScript a připojte úložiště kódu pro generování testů asistované AI.",
@@ -2169,7 +2077,6 @@
           "pathLabel": "Cesta",
           "patternLabel": "Vzor",
           "previewFiles": "Náhled souborů",
-          "scanningRepo": "Skenování souborů repozitáře… ({seconds}s)",
           "title": "Vzory cest",
           "truncatedBadge": "Výsledky mohou být neúplné (omezení poskytovatele)"
         },
@@ -2182,8 +2089,6 @@
         },
         "refreshComplete": "Mezipaměť obnovena: {fileCount} souborů",
         "refreshInProgress": "Obnovení mezipaměti stále běží na pozadí. Jakmile skončí, zobrazí se zde aktualizace.",
-        "refreshRateLimited": "Mezipaměť obnovena: {fileCount} souborů vypsáno, {contentCached}/{fileCount} obsahů uloženo do mezipaměti (omezeno rychlostí — obnovte znovu pro dokončení)",
-        "refreshSuccess": "Mezipaměť obnovena: {fileCount} souborů ({contentCached} obsahů uloženo do mezipaměti)",
         "repository": {
           "branchLabel": "Větev",
           "branchesTruncatedHint": "Zobrazeny jsou první {count, number} větve. Zadejte pro vyhledání v celém úložišti.",
@@ -2483,26 +2388,18 @@
       }
     },
     "matrix": {
-      "metaTitle": "Zobrazení matice",
       "pageTitle": "Matice iterací parametrizovaných testů",
       "loading": "Načítání matice…",
       "loadError": "Nepodařilo se načíst zobrazení matice. Zkuste to znovu nebo zúžte filtry.",
-      "cellCapShort": "Tato matice by vykreslila {cells, number} buněk, což přesahuje limit {threshold, number} buněk. Pro pokračování zúžte filtry.",
       "caseColumnHeader": "Řádek případu / parametru",
       "cellSummary": "{pass, number} úspěšných, {fail, number} neúspěšných, {notRun, number} nespuštěno",
       "popoverTitle": "{count, plural, =1 {# iterace} few {# iterace} many {# iterace} other {# iterací}}",
-      "iterationUnlabeled": "Iterace č. {index, number}",
       "popoverInflightHint": "Probíhající iterace se zde zobrazí po zaznamenání.",
       "popoverNoTimestamp": "—",
-      "filterStatus": "{count, plural, =0 {Stav} one {Stav (#)} few {Stav (#)} many {Stav (#)} other {Stav (#)}}",
-      "filterConfig": "{count, plural, =0 {Konfigurace} one {Konfigurace (#)} few {Konfigurace (#)} many {Konfigurace (#)} other {Konfigurace (#)}}",
-      "filterDataset": "{count, plural, =0 {Datová sada} one {Datová sada (#)} few {Datová sada (#)} many {Datová sada (#)} other {Datová sada (#)}}",
       "filterDatasetLabel": "Datová sada",
       "filterStatusPlaceholder": "Jakýkoli stav",
       "filterConfigPlaceholder": "Jakákoli konfigurace",
       "filterDatasetPlaceholder": "Jakákoli datová sada",
-      "filterDateFrom": "Od",
-      "filterDateTo": "Do",
       "configNone": "(bez konfigurace)",
       "clearFilter": "Vymazat",
       "resetFilters": "Resetovat filtry",
@@ -2583,7 +2480,6 @@
       "reopen": "Znovu otevřít"
     },
     "dates": {
-      "pickStartDate": "Vyberte datum zahájení",
       "pickCompletionDate": "Vyberte datum dokončení",
       "selectDate": "Vyberte datum...",
       "completionWarning": "Upozornění: Tímto bude milník označen jako dokončený"
@@ -2666,7 +2562,6 @@
       "providerJira": "Jira",
       "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
-      "syncNow": "Synchronizovat nyní",
       "unlinkMenuItem": "Zrušit propojení s {provider}",
       "unlinkConfirmTitle": "Zrušit propojení milníku?",
       "unlinkConfirmDescription": "Tímto se zastaví synchronizace se sledovacím nástrojem: pole se opět stanou editovatelnými, synchronizované odkazy na problémy se stanou manuálními (můžete si je ponechat nebo odebrat) a opětovné propojení je možné později opětovným importem tohoto artefaktu.",
@@ -2702,10 +2597,6 @@
       "columnCoverage": "Pokrytí",
       "columnSource": "Zdroj",
       "sourceSynced": "Synchronizováno",
-      "coveragePassed": "Úspěšné",
-      "coverageFailed": "Neúspěšné",
-      "coverageInProgress": "Probíhá",
-      "coverageNotRun": "Nespuštěno",
       "coverageUncovered": "Nepokryto",
       "filterAllCoverage": "Veškeré pokrytí",
       "filterAllSources": "Všechny zdroje",
@@ -2724,7 +2615,6 @@
       "overflowImportAction": "Importovat a propojit",
       "overflowImportSuccess": "Import byl zahájen — problémy se zobrazí po synchronizaci.",
       "overflowImportError": "Nepodařilo se importovat problémy členů z Jiry.",
-      "emptyCta": "Propojte problém a začněte.",
       "unlinkConfirmTitle": "Zrušit propojení problému?",
       "unlinkConfirmDescription": "Tímto se problém odebere z tohoto milníku. Samotný problém zůstane zachován a lze jej později znovu propojit.",
       "totalsUncovered": "{count, plural, one {# nepokrytý problém} few {# nepokryté problémy} many {# nepokrytého problému} other {# nepokrytých problémů}}",
@@ -2781,9 +2671,7 @@
     },
     "messages": {
       "createSuccess": "Relace byla úspěšně vytvořena",
-      "createSuccessMultiple": "Úspěšně vytvořeno {count, number} relací",
-      "duplicateSuccess": "Relace byla úspěšně duplikována",
-      "duplicateSuccessMultiple": "{count} relací bylo úspěšně duplikováno"
+      "createSuccessMultiple": "Úspěšně vytvořeno {count, number} relací"
     },
     "duplicateDialog": {
       "title": "Duplikovat relaci",
@@ -2795,8 +2683,7 @@
       "failedToCreate": "Vytvoření nové relace se nezdařilo",
       "failedToCreateVersion": "Vytvoření verze relace se nezdařilo",
       "nameAlreadyExists": "Název relace již existuje. Zvolte prosím nový název",
-      "createFailed": "Vytvoření relace se nezdařilo",
-      "duplicateFailed": "Duplikace relace se nezdařila"
+      "createFailed": "Vytvoření relace se nezdařilo"
     },
     "validation": {
       "nameMinLength": "Název musí mít alespoň 2 znaky.",
@@ -2835,7 +2722,6 @@
     "summary": {
       "workDistributionDescription": "Celkový odhadovaný zbývající čas:",
       "recentResultsTitle": "Souhrn nedávných výsledků",
-      "recentResultsDescription": "Souhrn výsledků relace.",
       "noRecentResults": "V poslední době nebyly zaznamenány žádné výsledky relací.",
       "completionTrendTitle": "Trend dokončování",
       "completionTrendDescription": "Počet dokončených relací za měsíc.",
@@ -2965,8 +2851,6 @@
         "title": "Upravit profil",
         "timezonePlaceholder": "Vyberte nebo vyhledejte časové pásmo...",
         "timezoneRequired": "Časové pásmo je povinné.",
-        "avatarUpdated": "Avatar byl úspěšně aktualizován.",
-        "avatarUpdateError": "Aktualizace avataru se nezdařila.",
         "deleteAvatar": "Odstranit avatar",
         "deleteAvatarConfirm": "Opravdu chcete odstranit svůj {name}?",
         "emailDisabledForSso": "U účtů SSO nelze změnit e-mail. Aktualizujte jej prosím prostřednictvím svého poskytovatele identity.",
@@ -3010,7 +2894,6 @@
       "notifications": {
         "title": "Předvolby oznámení",
         "description": "Přizpůsobte si způsob přijímání oznámení",
-        "currentGlobal": "Aktuální globální nastavení: {mode}",
         "mode": {
           "label": "Režim oznámení",
           "useGlobal": "Použít globální nastavení"
@@ -3154,7 +3037,6 @@
         "loadMore": "Načítání",
         "viewDetails": "Zobrazit podrobnosti",
         "columnAction": "Akce",
-        "columnTimestamp": "Časové razítko",
         "allActions": "Všechny akce",
         "allTypes": "Všechny typy",
         "noMatchingEntries": "Žádné záznamy neodpovídají vybraným filtrům.",
@@ -3323,22 +3205,16 @@
       "removedFromCase": "Odebráno z testovacího případu",
       "confirmDelete": "Potvrdit odstranění kroku {number, number}?",
       "createSharedSteps": "{number, plural, one {Vytvořit sdílený krok} other {Vytvořit sdílené kroky}}",
-      "sharedStepsName": "Název sdílených kroků",
       "sharedStepsDescription": "Zadejte název pro {number, plural, one {nový sdílený krok} few {nové sdílené kroky} other {nové sdílené kroky}}. Bude zahrnovat {number, plural, one {# vybraný krok} few {# vybrané kroky} other {# vybraných kroků}}.",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "Vyberte prosím kroky a zadejte název pro vytvoření sdílených kroků.",
-        "failedToCreateSharedStepGroupError": "Vytvoření sdílených kroků se nezdařilo. Zkuste to prosím znovu.",
-        "sharedStepGroupCreatedSuccess": "Sdílené kroky byly úspěšně vytvořeny!",
-        "genericSharedStepCreationError": "Při vytváření sdílených kroků došlo k neznámé chybě. Zkuste to prosím znovu.",
         "errorCreatingSharedGroup": "Vytvoření sdílených kroků se nezdařilo. Zkuste to prosím znovu.",
         "sharedGroupCreatedSuccess": "Skupina sdílených kroků byla úspěšně vytvořena!",
         "failedToCreateSharedGroupError": "Nepodařilo se vytvořit sdílenou skupinu. Zkuste to prosím znovu."
       },
       "selectSharedStepsTitle": "Vybrat sdílené kroky",
       "selectSharedStepsDescription": "Vyberte sdílené kroky, které chcete přidat do testovacího případu.",
-      "sharedStepsListPlaceholder": "Načítání sdílených kroků...",
       "sharedStepsNamePlaceholder": "Zadejte název pro identifikaci sdílených kroků",
-      "noSharedStepsFound": "Pro tento projekt nebyly nalezeny žádné sdílené kroky.",
       "sharedStepGroupTitle": "Sdílené kroky: {name}",
       "confirmDeleteSharedStepBlock": "Opravdu chcete odebrat blok sdílených kroků \"{name}\" z tohoto testovacího případu? Samotná skupina sdílených kroků tím nebude odstraněna.",
       "removeBlockButton": "Odebrat blok",
@@ -3347,7 +3223,6 @@
       "searchSharedStepsPlaceholder": "Vyberte sdílené kroky...",
       "stepsCountLabel": "{count, plural, =0 {# kroků} =1 {# krok} few {# kroky} other {# kroků}}",
       "reviewSelectedStepsTitle": "Zkontrolovat vybrané kroky",
-      "noStepsInSelectedGroup": "Vybraná skupina neobsahuje žádné kroky.",
       "sharedGroupSuffix": "(Sdílené kroky)",
       "unnamedSharedGroup": "Nepojmenované sdílené kroky",
       "noStepsInSelectedSharedGroup": "Vybraná sdílená skupina neobsahuje žádné kroky.",
@@ -3358,8 +3233,6 @@
       }
     },
     "testCase": {
-      "toggleAutomated": "Přepnout automatizované testování",
-      "editAttachmentsIndividually": "Upravit přílohy jednotlivě.",
       "automatedStatus": "Automatizované testování je {status}"
     },
     "templateNotAssignedWarning": "Tento testovací případ používá šablonu \"{templateName}\", která aktuálně není přiřazena k projektu \"{projectName}\". Možná budete muset tuto šablonu přiřadit k projektu, nebo změnit testovací případ tak, aby používal jinou šablonu.",
@@ -3390,12 +3263,10 @@
     },
     "dragDrop": {
       "move": "Přesunout",
-      "promptTitle": "Co chcete udělat?",
       "copying": "Kopírování…",
       "copyComplete": "{count, plural, =1 {Zkopírován 1 případ do {folder}} few {Zkopírovány # případy do {folder}} other {Zkopírováno # případů do {folder}}}{dest, select, samename {} crossProject { v projektu {projectName}} other {}}",
       "moveComplete": "{count, plural, =1 {Přesunut 1 případ do {folder}} few {Přesunuty # případy do {folder}} other {Přesunuto # případů do {folder}}}{dest, select, samename {} crossProject { v projektu {projectName}} other {}}",
       "copyError": "{count, plural, =1 {Kopírování 1 případu do {folder} se nezdařilo} other {Kopírování # případů do {folder} se nezdařilo}}{dest, select, samename {} crossProject { v projektu {projectName}} other {}}",
-      "moveError": "{count, plural, =1 {Přesunutí 1 případu do {folder} se nezdařilo} other {Přesunutí # případů do {folder} se nezdařilo}}{dest, select, samename {} crossProject { v projektu {projectName}} other {}}",
       "copyAlreadyRunning": "Jiné kopírování již probíhá. Počkejte prosím, až se dokončí.",
       "currentSuffix": "(Aktuální)",
       "moveDisabledSameFolder": "Případy jsou již v této složce",
@@ -3446,7 +3317,6 @@
       "currentRunTooltip": "Testovací běh, který právě prohlížíte",
       "attempt": "Pokus",
       "invalidProject": "Neplatný projekt",
-      "noSearchResults": "Žádné případy neodpovídají vašim kritériím hledání.",
       "bulkEdit": "Hromadná úprava",
       "createTestRun": "Vytvořit testovací běh",
       "addToRunDraftBlocked": "Návrhy případů nelze přidat do běhů, dokud je pro tento projekt zapnutá možnost \"Vyloučit návrhy případů z testovacích běhů\".",
@@ -3670,10 +3540,7 @@
       "anyIssue": "Jakýkoli problém",
       "noIssues": "Žádné problémy"
     },
-    "noFoldersTitle": "Zatím žádné složky",
-    "noFoldersDescription": "Začněte vytvořením první složky pro uspořádání vašich testovacích případů.",
     "noFoldersOrCasesNoPermission": "Neexistují žádné složky ani testovací případy k zobrazení.",
-    "createFirstFolder": "Vytvořte svou první složku",
     "bulkEdit": {
       "title": "Hromadná úprava {count, plural, one {# případu} other {# případů}}",
       "description": "{count, plural, one {Upravujete # vybraný případ} few {Upravujete # vybrané případy} other {Upravujete # vybraných případů}}. Zaškrtněte pole pro povolení úprav.",
@@ -3692,19 +3559,12 @@
         }
       },
       "errors": {
-        "fetchErrorTitle": "Chyba při načítání případů",
-        "fetchErrorDescription": "Nepodařilo se načíst data pro vybrané případy. Zavřete prosím okno a zkuste to znovu.",
-        "updateErrorTitle": "Aktualizace se nezdařila",
-        "updateFailed": "Při ukládání změn došlo k chybě. Zkontrolujte prosím data a zkuste to znovu.",
-        "fetchError": "Chyba při načítání dat případu."
+        "updateFailed": "Při ukládání změn došlo k chybě. Zkontrolujte prosím data a zkuste to znovu."
       },
       "success": {
         "casesUpdated": "Úspěšně aktualizováno {count, number} případů"
       },
       "validationError": "Chyba validace",
-      "stepsCannotBeBulkEdited": "Kroky nelze hromadně upravovat",
-      "stepsInfoTitle": "Informace o krocích",
-      "stepsCannotBeBulkEditedInfo": "Kroky nelze hromadně upravovat. Kroky upravte úpravou jednotlivých případů.",
       "confirmDeleteCases": "Opravdu chcete odstranit {count, plural, one {# vybraný případ} few {# vybrané případy} other {# vybraných případů}}? Tuto akci nelze vrátit zpět.",
       "replaceAll": "Nahradit vše",
       "searchReplace": "Najít a nahradit",
@@ -3765,7 +3625,6 @@
         "single": "Jeden řádek na případ",
         "multi": "Více řádků na krok"
       },
-      "comingSoon": "Již brzy",
       "exportError": "Export se nezdařil. Zkuste to prosím znovu."
     },
     "quickScript": {
@@ -3846,19 +3705,13 @@
       "loadingDetails": "Načítání podrobností případu...",
       "caseDetailsError": "Načtení podrobností případu se nezdařilo.",
       "sourceLabel": "Zdroj",
-      "fieldValuesLabel": "Hodnoty polí",
       "lastRunLabel": "Poslední běh",
-      "noFieldValues": "Žádné hodnoty polí",
       "noLastRun": "Nikdy nespuštěno",
-      "stepExpectedResult": "{step} → {result}",
-      "runStatusDate": "{status} — {date}",
       "noFolder": "Žádná složka",
       "duplicateWarning": "Nalezeny možné duplicity",
       "duplicateWarningDescription": "{count, plural, one {# existující případ může pokrývat podobnou funkčnost} few {# existující případy mohou pokrývat podobnou funkčnost} other {# existujících případů může pokrývat podobnou funkčnost}}",
       "duplicateWarningReview": "Zkontrolovat",
-      "importWarning": "Možná duplicita",
       "importWarningTooltip": "Název tohoto případu je podobný {count, plural, one {# existujícímu případu} few {# existujícím případům} other {# existujícím případům}}: {names}",
-      "importIntraWarning": "Duplicita v rámci importu",
       "importIntraWarningTooltip": "Řádky {rows} v tomto importu mají stejný nebo velmi podobný název",
       "checkingDuplicates": "Kontrola duplicit..."
     },
@@ -3888,12 +3741,8 @@
         "currentFolder": "aktuální složka",
         "fromIssue": "Z problému",
         "fromDocument": "Z dokumentu",
-        "documentTitle": "Název dokumentu",
-        "documentTitlePlaceholder": "Zadejte název svého dokumentu s požadavky",
         "documentDescription": "Dokument s požadavky",
         "documentDescriptionPlaceholder": "Sem vložte obsah svého dokumentu s požadavky...",
-        "documentPriority": "Priorita (volitelné)",
-        "selectPriority": "Vyberte prioritu",
         "saveDocument": "Uložit požadavky dokumentu",
         "fromUrl": "Z URL adresy",
         "recentGenerations": "Nedávné úlohy generování testovacích případů z URL adresy",
@@ -3960,15 +3809,11 @@
         "title": "Zkontrolovat vygenerované testovací případy",
         "description": "Zkontrolujte testovací případy vygenerované AI, proveďte potřebné úpravy a vyberte, které z nich chcete importovat.",
         "selected": "{count, number} z {total, number} vybráno",
-        "moreSteps": "... a {count, plural, one {# další krok} few {# další kroky} other {# dalších kroků}}",
         "templateFields": "Pole šablony:",
-        "moreFields": "... a {count, plural, one {# další pole} few {# další pole} other {# dalších polí}}",
-        "crawledUrls": "{count, plural, one {# stránka prohledána} few {# stránky prohledány} other {# stránek prohledáno}}",
         "spaWarning": "Tato stránka může vyžadovat vykreslení pomocí JavaScriptu. Výsledky mohou být neúplné.",
         "filterByPage": "Filtrovat podle stránky",
         "allPages": "Všechny stránky ({pages, plural, one {# stránka} few {# stránky} other {# stránek}}, {cases, plural, one {# případ} few {# případy} other {# případů}})"
       },
-      "generatingLegacy": "Generování testovacích případů pomocí AI...",
       "expandProgress": "{done, number} z {total, number} vygenerováno",
       "import": "{count, plural, =0 {Importovat testovací případy} =1 {Importovat 1 testovací případ} few {Importovat # testovací případy} other {Importovat # testovacích případů}}",
       "stage": "{count, plural, =0 {Připravit testovací případy} =1 {Připravit 1 testovací případ} few {Připravit # testovací případy} other {Připravit # testovacích případů}}",
@@ -4010,11 +3855,6 @@
         "repositoryNotFound": "Úložiště projektu nebylo nalezeno. Kontaktujte prosím svého správce.",
         "workflowNotConfigured": "Pracovní postup projektu není nakonfigurován. Zkontrolujte prosím nastavení projektu.",
         "authenticationError": "Chyba ověřování. Obnovte prosím stránku a zkuste to znovu.",
-        "caseCreationFailed": "Vytvoření testovacího případu se nezdařilo: {name}",
-        "caseAlreadyExists": "Testovací případ \"{name}\" v této složce již existuje.",
-        "invalidTemplateConfig": "Neplatná konfigurace šablony pro testovací případ \"{name}\".",
-        "nameTooLong": "Název testovacího případu \"{name}\" je příliš dlouhý. Použijte prosím kratší název.",
-        "caseCreationError": "Vytvoření \"{name}\" se nezdařilo: {error}",
         "templateNotFound": "Vybranou šablonu se nepodařilo najít. Obnovte prosím stránku a zkuste to znovu.",
         "repositoryConfigError": "Chyba konfigurace úložiště projektu. Kontaktujte prosím svého správce.",
         "workflowConfigError": "Chyba konfigurace pracovního postupu projektu. Zkontrolujte prosím nastavení projektu.",
@@ -4022,9 +3862,7 @@
         "validationFailed": "Ověření dat se nezdařilo. Zkontrolujte prosím obsah testovacího případu a zkuste to znovu.",
         "databaseError": "Chyba připojení k databázi. Zkuste to prosím za chvíli znovu.",
         "genericImportError": "Import se nezdařil: {error}",
-        "networkRoutingError": "Problém se směrováním sítě nebo konfigurací serveru - místo odpovědi API byla přijata chybová stránka HTML",
         "invalidSourceConfig": "Neplatná konfigurace zdroje",
-        "failedToCreateCaseVersion": "Vytvoření verze případu se nezdařilo",
         "noUrlProvided": "Zadejte prosím URL adresu, ze které se mají generovat testovací případy",
         "urlFetchFailed": "Načtení obsahu ze zadané URL adresy se nezdařilo. Zkontrolujte prosím URL adresu a zkuste to znovu.",
         "llm": {
@@ -4230,7 +4068,6 @@
       "startLine": "Počáteční řádek",
       "symbolHint": "Deklarace se v souboru nachází podle názvu.",
       "symbolNoneDetected": "Nebyly zjištěny žádné symboly, zadejte název.",
-      "symbolPlaceholder": "functionName",
       "symbolSelectPlaceholder": "Vyberte nebo zadejte symbol…",
       "updateSuccess": "Pin aktualizován",
       "updateFailed": "Aktualizace pinu se nepodařila",
@@ -4257,9 +4094,6 @@
     "add": {
       "button": "Přidat štítek",
       "title": "Přidat nový štítek",
-      "fields": {
-        "name_error": "Název štítku je povinný"
-      },
       "errors": {
         "nameExists": "Štítek s tímto názvem již existuje"
       }
@@ -4368,7 +4202,6 @@
       "filterEntityTypeRun": "Testovací běhy",
       "filterAllProjects": "Všechny projekty",
       "actionRevert": "Vrátit rozhodnutí",
-      "revertedBadge": "Vráceno",
       "revertedBadgeTooltip": "{count, plural, =1 {Vráceno jednou} few {Vráceno # krát} many {Vráceno # krát} other {Vráceno # krát}}"
     },
     "requester": {
@@ -4387,9 +4220,7 @@
       "cannotSelfAssign": "Kontrolu nelze přiřadit sami sobě; vyberte jiného uživatele nebo roli.",
       "defaultComment": "Zkontrolujte prosím přechod ze stavu {fromState} → {toState}.",
       "defaultCommentRole": "Vyžaduje se schválení od skupiny {roleName} pro přechod ze stavu {fromState} → {toState}.",
-      "ineligibleAssigneeError": "Tento uživatel/role nemůže schvalovat kontroly pro tuto oblast. Vyberte někoho jiného.",
-      "ineligibleAssigneeErrorUser": "{name} nemůže schvalovat kontroly pro tuto oblast. Vyberte jiného uživatele nebo roli.",
-      "ineligibleAssigneeErrorRole": "Role {roleName} nemůže schvalovat kontroly pro tuto oblast. Vyberte jinou roli nebo uživatele."
+      "ineligibleAssigneeError": "Tento uživatel/role nemůže schvalovat kontroly pro tuto oblast. Vyberte někoho jiného."
     },
     "bulkRequester": {
       "saveAndRequestButton": "Uložit a vyžádat kontrolu",
@@ -4428,8 +4259,7 @@
       "rejectSuccess": "Kontrola byla zamítnuta.",
       "ineligibleError": "Už nemáte oprávnění rozhodnout o tomto požadavku na kontrolu.",
       "alreadyDecidedError": "O této kontrole už bylo rozhodnuto.",
-      "decideError": "Vaše rozhodnutí se nepodařilo zaznamenat. Zkuste to za chvíli znovu.",
-      "panelSummary": "Požadavek na kontrolu od {requesterName}: přechod do stavu {targetStateName}"
+      "decideError": "Vaše rozhodnutí se nepodařilo zaznamenat. Zkuste to za chvíli znovu."
     },
     "revert": {
       "confirm": "Vrátit rozhodnutí",
@@ -4545,17 +4375,12 @@
         "noMatchesDescription": "Název a popis testovacího běhu neodpovídaly žádným testovacím případům. Vraťte se na předchozí krok a přidejte konkrétnější podrobnosti, jako jsou názvy funkcí, názvy komponent nebo klíčová slova, která se objevují ve vašich testovacích případech.",
         "maxResultsTitle": "Odpovídá maximální počet testovacích případů",
         "maxResultsDescription": "Kritéria hledání odpovídala velkému množství testovacích případů. Pro cílenější výsledky se vraťte na předchozí krok a přidejte k testovacímu běhu konkrétnější podrobnosti.",
-        "batchSize": "Velikost dávky",
-        "batchSizeAll": "Všechny případy (jeden požadavek)",
-        "batchSizePercent": "{percent} % ({count} případů)",
-        "requestsNeeded": "{count, plural, =1 {Bude proveden # požadavek na AI} few {Budou provedeny # požadavky na AI} other {Bude provedeno # požadavků na AI}}",
-        "batchNote": "Výsledky ze všech dávek budou zkombinovány"
+        "batchSize": "Velikost dávky"
       },
       "loading": {
         "batch": "Zpracování dávky {current} z {total}",
         "analyzing": "Analyzování testovacích případů...",
         "progress": "Analyzováno {analyzed, number} z {total, number} testovacích případů...",
-        "waitingForAi": "Čekání na odpověď AI (dávka {batch} z {total})...",
         "selectedSoFar": "{count, plural, =1 {Zatím vybrán # testovací případ} few {Zatím vybrány # testovací případy} other {Zatím vybráno # testovacích případů}}",
         "resolving_integration": "Řešení integrace AI...",
         "fetching_cases": "Načítání testovacích případů..."
@@ -4578,7 +4403,6 @@
       },
       "actions": {
         "start": "Analyzovat testovací případy",
-        "startBatched": "Analyzovat testovací případy ({count, plural, one {# dávka} few {# dávky} other {# dávek}})",
         "accept": "Přidat do výběru"
       },
       "errors": {
@@ -4603,13 +4427,8 @@
     "summary": {
       "title": "Souhrn testovacího běhu",
       "description": "Zobrazit souhrn testovacího běhu",
-      "activeRunsAndEstTime": "Aktivní běhy a odhadovaný čas",
-      "activeRunsLabel": "Běhy",
-      "totalEstTime": "Celkový odhadovaný čas",
-      "responsibleUsers": "Zodpovědní uživatelé",
       "allActiveRuns": "Všechny aktivní běhy",
       "recentResultsTitle": "Nedávné manuální výsledky",
-      "recentResultsDescription": "Zobrazit nedávné výsledky testovacího běhu",
       "recentAutomatedResultsTitle": "Nedávné automatizované výsledky",
       "noRecentAutomatedResults": "Nebyly nalezeny žádné nedávné automatizované výsledky.",
       "automationRunsInProgress": "{count, plural, =1 {# probíhající automatizovaný běh} few {# probíhající automatizované běhy} many {# probíhajícího automatizovaného běhu} other {# probíhajících automatizovaných běhů}}",
@@ -4632,13 +4451,11 @@
       "fields": {
         "duplicateScope": {
           "label": "Testovací případy k duplikaci",
-          "allCases": "Všechny testovací případy",
-          "specificStatuses": "Testovací případy s konkrétními stavy"
+          "allCases": "Všechny testovací případy"
         },
         "statusesToInclude": {
           "label": "Testovací případy k zahrnutí",
           "description": "Vyberte stavy testovacích případů, které chcete zahrnout do duplikovaného testovacího běhu.",
-          "noStatuses": "V tomto testovacím běhu nebyly nalezeny žádné konkrétní stavy, nebo se výsledky stále načítají.",
           "noStatusesRecorded": "V tomto běhu nejsou zaznamenány žádné konkrétní stavy. Duplikace zahrne všechny testovací případy (obvykle jako 'Netestováno')."
         },
         "copyAssignments": {
@@ -4717,9 +4534,7 @@
         "previousAnalysisPlaceholder": "Vyberte analýzu…",
         "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# postižený test} few {# postižené testy} many {# postiženého testu} other {# postižených testů}}",
         "sameCommit": "Základní a headový commit jsou stejné.",
-        "swapped": "Základní a headový commit byly vyměněny, takže se změny čtou vpřed.",
-        "loadingCommits": "Načítání commitů…",
-        "noCommits": "Žádné commity nenalezeny."
+        "swapped": "Základní a headový commit byly vyměněny, takže se změny čtou vpřed."
       },
       "diff": {
         "summary": "{files, plural, one {# soubor změněn} few {# soubory změněny} many {# souboru změněno} other {# souborů změněno}} · +{additions, number} −{deletions, number}",
@@ -4727,13 +4542,9 @@
         "noChanges": "Mezi těmito commity nejsou žádné změny.",
         "statusModified": "Upraveno",
         "statusRenamed": "Přejmenováno",
-        "showPatch": "Zobrazit změny",
-        "hidePatch": "Skrýt změny",
-        "largePatch": "Velké opravy ({lines, number} řádků)",
         "showFullPatch": "Zobrazit úplnou opravu",
         "binary": "Binární soubor",
         "noPatch": "Oprava není k dispozici",
-        "pinnedFiles": "{count, plural, one {# pin} few {# piny} many {# pinu} other {# pinů}}",
         "loading": "Porovnávání commitů…"
       },
       "loading": {
@@ -4819,7 +4630,6 @@
       },
       "actions": {
         "analyze": "Analyzovat",
-        "reanalyze": "Analyzovat znovu",
         "refine": "Zpět na změny",
         "accept": "{count, plural, one {Přidat # případ} few {Přidat # případy} many {Přidat # případu} other {Přidat # případů}}",
         "cancelAnalysis": "Zrušit analýzu"
@@ -4930,11 +4740,6 @@
         "analyzing": "Analyzování...",
         "reset": "Vymazat výsledky",
         "job": {
-          "discoveringDatasets": "Zjišťování datových sad...",
-          "scanningFile": "Skenování exportního souboru Testmo...",
-          "rowsProcessed": "Zpracováno {value, number} řádků",
-          "itemsProcessed": "Zpracováno {processed, number} z {total, number} položek",
-          "analysisInProgress": "Analyzování exportu…",
           "cancel": "Zrušit import",
           "cancelRequested": "Zrušení vyžádáno",
           "processingRate": "Rychlost:",
@@ -4966,12 +4771,9 @@
         "mappingDescription": "Zkontrolujte podrobnosti analýzy a namapujte entity Testmo na existující záznamy TestPlanIt, nebo zvolte vytvoření nových.",
         "mappingAnalysisError": "Analýzu mapování se nepodařilo vygenerovat. Zkuste to znovu.",
         "mappingLoading": "Vytváření analýzy mapování…",
-        "mappingSummaryHeading": "Detekované entity",
-        "mappingSummaryPending": "{count, plural, =1 {# čekající} few {# čekající} other {# čekajících}}",
         "mappingOutstandingTitle": "Vyřešit nevyřízená mapování",
         "mappingOutstandingDescription": "Před spuštěním importu dokončete zbývající mapování.",
         "mappingOutstandingItem": "{count, plural, =1 {# nevyřešená položka} few {# nevyřešené položky} other {# nevyřešených položek}} v {label}",
-        "mappingSummaryTemplateFields": "Pole šablony",
         "mappingDatasetLabels": {
           "field_values": "Hodnoty polí",
           "repository_case_values": "Hodnoty případů úložiště",
@@ -5048,7 +4850,6 @@
         "mappingDatasetEmptyTitle": "Nebyly zachovány žádné datové sady",
         "mappingDatasetEmptyDescription": "Analýza nezachovala žádné datové sady ke konfiguraci. Pokud očekáváte další data, nahrajte jiný export.",
         "importProgressTitle": "Průběh importu",
-        "importProgressDescription": "{count, plural, =0 {Všechny záznamy byly importovány napříč sledovanými entitami.} =1 {Zbývá 1 záznam napříč sledovanými entitami.} few {Zbývají # záznamy napříč sledovanými entitami.} other {Zbývá # záznamů napříč sledovanými entitami.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {Žádné zbývající záznamy} =1 {Zbývá 1 záznam} few {Zbývají # záznamy} other {Zbývá # záznamů}}",
         "importProgressProcessed": "Importováno záznamů: {processed, number}/{total, number}",
         "importProgressAria": "{percent, number} % importu dokončeno",
@@ -5073,7 +4874,6 @@
         "jobLoadFailed": "Tuto importní úlohu se nepodařilo načíst.",
         "uploadProgressAnalyzing": "Nahrávání dokončeno. Analyzování souboru…",
         "uploadProgressComplete": "Nahrávání dokončeno",
-        "etaLabel": "Odhad dokončení: {time}",
         "startImportButton": "Spustit import",
         "workflowCreate": {
           "nameLabel": "Název pracovního postupu",
@@ -5083,18 +4883,11 @@
           "typeLabel": "Typ pracovního postupu",
           "scopeLabel": "Rozsah workflow"
         },
-        "mappingDatasets": "Datové sady vyžadující kontrolu",
         "mappingImportConfiguration": "Importovat konfiguraci",
         "mappingExportConfiguration": "Exportovat konfiguraci",
         "mappingImportConfigurationFailed": "Tento konfigurační soubor se nepodařilo importovat. Zkontrolujte prosím, zda se jedná o platný JSON, a zkuste to znovu.",
-        "mappingInvalidConfiguration": "Konfigurace musí být platný JSON.",
-        "mappingSaveFailed": "Konfiguraci se nepodařilo uložit. Zkuste to prosím znovu.",
         "mappingSaveConfiguration": "Uložit konfiguraci",
-        "mappingSavingConfiguration": "Ukládání…",
-        "mappingStartImport": "Spustit import na pozadí",
-        "mappingStartingImport": "Spouštění importu…",
         "mappingImportFailed": "Import na pozadí se nepodařilo spustit. Zkuste to prosím znovu.",
-        "mappingImportDisabled": "Před spuštěním importu na pozadí uložte konfiguraci.",
         "mappingImportInProgress": "Probíhá import na pozadí",
         "mappingImportInProgressDescription": "Proces importu zpracovává konfiguraci. Stav můžete sledovat výše.",
         "mapping": {
@@ -5154,11 +4947,7 @@
           "templateFieldTargetResult": "Pole výsledku",
           "templateFieldSelectPlaceholder": "Vyberte pole",
           "templateFieldNoExistingTargets": "Nejsou k dispozici žádná pole k mapování.",
-          "templateFieldTypePlaceholder": "Vyberte typ pole",
           "templateFieldRestrictedLabel": "Omezené pole",
-          "templateFieldOptionsLabel": "Možnosti rozevíracího seznamu",
-          "templateFieldOptionsPlaceholder": "Zadejte jednu možnost na řádek",
-          "templateFieldOptionsHint": "Jednotlivé možnosti oddělte novým řádkem.",
           "templateFieldOptionsListLabel": "Možnosti",
           "templateFieldOptionsCheckedLabel": "Ve výchozím nastavení zaškrtnuto",
           "templateFieldOptionsMinValueLabel": "Minimální hodnota",
@@ -5211,7 +5000,6 @@
           "milestoneNamePlaceholder": "Zadejte název typu milníku",
           "milestoneDefaultLabel": "Výchozí typ milníku",
           "milestoneIconRequired": "Vyberte ikonu",
-          "statusColorPlaceholder": "Hex barva (volitelné)",
           "issueTargetSelectPlaceholder": "Vyberte integraci...",
           "noIssueTargetsAvailable": "Nejsou k dispozici žádné integrace sledování problémů",
           "issueTargetNamePlaceholder": "Název integrace...",
@@ -5498,8 +5286,7 @@
         "delete": "Odstranit poskytovatele",
         "entryPoint": "Vstupní bod: ",
         "autoProvision": "Automatické zřízení: ",
-        "defaultAccess": "Výchozí přístup: ",
-        "configurationMessage": "Konfigurace SAML není nastavena. Klikněte na tlačítko nastavení pro konfiguraci."
+        "defaultAccess": "Výchozí přístup: "
       },
       "samlConfiguration": {
         "title": "Konfigurovat poskytovatele SAML",
@@ -5571,7 +5358,6 @@
         "magicLinkDisabled": "Ověřování pomocí Magic Link zakázáno",
         "magicLinkCreated": "Poskytovatel Magic Link byl vytvořen",
         "magicLinkUpdateFailed": "Aktualizace poskytovatele Magic Link se nezdařila",
-        "samlConfigSaved": "Konfigurace SAML byla úspěšně uložena",
         "configureFirst": "Před povolením poskytovatele jej prosím nakonfigurujte",
         "domainRestrictionEnabled": "Omezení e-mailové domény povoleno",
         "domainRestrictionDisabled": "Omezení e-mailové domény zakázáno",
@@ -5589,7 +5375,6 @@
         "defaultAccessUpdated": "Výchozí úroveň přístupu byla aktualizována",
         "defaultAccessUpdateFailed": "Aktualizace výchozí úrovně přístupu se nezdařila",
         "emailVerificationEnabled": "Pro nové uživatele je nyní vyžadováno ověření e-mailu",
-        "emailVerificationDisabled": "Pro nové uživatele již není vyžadováno ověření e-mailu",
         "emailVerificationDisabledAndVerified": "Ověřování e-mailu zakázáno, {count, plural, one {# uživatelský účet ověřen} few {# uživatelské účty ověřeny} other {# uživatelských účtů ověřeno}}",
         "emailVerificationUpdateFailed": "Aktualizace nastavení ověřování e-mailu se nezdařila",
         "emailServerNotConfigured": "Ověřování e-mailu nelze povolit: e-mailový server není nakonfigurován",
@@ -5643,10 +5428,6 @@
           "issuer": "Vydavatel (ID entity)",
           "callbackUrl": "URL adresa ACS (zpětné volání)",
           "logoutUrl": "URL adresa SLO pro odhlášení (volitelné)",
-          "entryPointPlaceholder": "https://your-idp.com/sso/saml",
-          "issuerPlaceholder": "urn:your-idp:entity-id",
-          "certPlaceholder": "-----BEGIN CERTIFICATE-----...",
-          "logoutUrlPlaceholder": "https://your-idp.com/slo/saml",
           "instructions": {
             "title": "Konfigurace SAML:",
             "step1": "Kontaktujte správce svého poskytovatele identity SAML",
@@ -5720,10 +5501,7 @@
       },
       "add": {
         "button": "Přidat projekt",
-        "title": "Přidat nový projekt",
-        "defaultFields": "Při vytvoření projektu budou do něj přidány výchozí šablona, výchozí typ milníku a všechny pracovní postupy a stavy.",
-        "selectIssueTracker": "Vyberte sledování problémů",
-        "issueTrackerRequired": "Sledování problémů je povinné"
+        "title": "Přidat nový projekt"
       },
       "wizard": {
         "title": "Vytvořit nový projekt",
@@ -5754,7 +5532,6 @@
           "noConfigurations": "Momentálně nejsou definovány žádné konfigurace. Můžete je přidat později v Administraci."
         },
         "actions": {
-          "selectDefault": "Použít výchozí",
           "create": "Vytvořit projekt",
           "creating": "Vytváření projektu..."
         },
@@ -5779,12 +5556,6 @@
           "userPermissions": "Oprávnění uživatele",
           "noEffect": "Žádný účinek",
           "access": {
-            "groupsGlobalRole": "Globální role skupiny",
-            "groupDefault": "Výchozí nastavení skupiny",
-            "groupSpecificRole": "Specifická role skupiny",
-            "groupProjectDefault": "Výchozí nastavení skupiny pro projekt",
-            "groupProjectNoAccess": "Skupina nemá přístup k projektu",
-            "groupProjectSpecificRole": "Specifická role skupiny pro projekt",
             "effectiveAccess": "Výsledný přístup"
           },
           "accessHints": {
@@ -5795,11 +5566,7 @@
         },
         "placeholders": {
           "selectDefaultAccess": "Vybrat výchozí přístup",
-          "groupPermissionsUI": "Zde bude rozhraní pro správu oprávnění skupin...",
-          "userPermissionsUI": "Zde bude rozhraní pro správu oprávnění uživatelů...",
-          "selectAccess": "Vyberte přístup...",
-          "selectRole": "Vyberte roli...",
-          "searchUsersToAdd": "Hledat uživatele k přidání..."
+          "selectAccess": "Vyberte přístup..."
         },
         "tableHeaders": {
           "globalRole": "Globální role",
@@ -5982,9 +5749,7 @@
         "button": "Přidat uživatele",
         "title": "Přidat nového uživatele",
         "fields": {
-          "email_invalid": "Neplatná e-mailová adresa",
           "password_error": "Heslo je povinné",
-          "confirmPassword_error": "Potvrzení hesla je povinné",
           "passwordOptionalHelp": "Ponechte prázdné, chcete-li vyžadovat přihlášení uživatele přes magic link nebo SSO."
         }
       },
@@ -6025,19 +5790,12 @@
       "title": "Zabezpečení",
       "description": "Nakonfigurujte vynucení přihlašování, zásady hesel, nastavení blokování a vynucovací akce",
       "passwordPolicyTitle": "Zásady hesel",
-      "passwordPolicyDescription": "Nastavte požadavky na uživatelská hesla",
       "lockoutPolicyTitle": "Zásady blokování",
-      "lockoutPolicyDescription": "Nakonfigurujte blokování účtu po neúspěšných pokusech o přihlášení",
       "enforcementTitle": "Vynucovací akce",
-      "enforcementDescription": "Vynutit změnu hesla u uživatelů přihlašujících se pomocí hesla",
       "signInEnforcementTitle": "Vynucení přihlašování",
-      "signInEnforcementDescription": "Vyžadovat SSO a vynutit dvoufaktorové ověřování",
       "forceSsoTitle": "Vynutit přihlášení přes SSO",
-      "forceSsoDescription": "Zakázat přihlašování e-mailem a vyžadovat od uživatelů použití SSO",
       "force2FANonSSOTitle": "Vyžadovat 2FA pro přihlášení heslem",
-      "force2FANonSSODescription": "Uživatelé přihlašující se e-mailem/heslem musí nastavit a používat dvoufaktorové ověřování",
       "force2FAAllLoginsTitle": "Vyžadovat 2FA pro všechna přihlášení",
-      "force2FAAllLoginsDescription": "Všichni uživatelé se musí po přihlášení ověřit pomocí 2FA, včetně uživatelů SSO",
       "forceSsoEnabled": "Vynucení SSO je globálně zapnuto",
       "forceSsoDisabled": "Vynucení SSO je globálně vypnuto",
       "forceSsoUpdateFailed": "Nepodařilo se aktualizovat nastavení vynucení SSO",
@@ -6087,7 +5845,6 @@
       "noExpiry": "Bez vypršení platnosti",
       "revokeToken": "Odvolat token",
       "revokeConfirmTitle": "Odvolat API token",
-      "revokeConfirmMessage": "Opravdu chcete odvolat tento API token? Tuto akci nelze vrátit zpět.",
       "revokeConfirmDescription": "Token „{name}“ patřící uživateli {user} bude okamžitě odvolán a nebude jej již možné použít pro přístup k API.",
       "revokeSuccess": "API token byl úspěšně odvolán",
       "revokeError": "Nepodařilo se odvolat API token",
@@ -6111,9 +5868,6 @@
       "noTokens": "Zatím nebyly vytvořeny žádné tokeny SCIM.",
       "emptyTitle": "Zatím žádné tokeny SCIM",
       "emptyBody": "Vytvořte token, aby váš poskytovatel identity mohl automaticky vytvářet a aktualizovat uživatele v TestPlanIt.",
-      "emptyCta": "Vytvořte svůj první token",
-      "sectionConflicts": "Konflikty externích ID",
-      "conflictsPlaceholder": "Žádné konflikty. Sledování konfliktů bude k dispozici v pozdější verzi.",
       "conflicts": {
         "title": "Protokol konfliktů externích ID",
         "description": "Události identity SCIM, které vyžadovaly zásah systému (propojení, obnovení, přepsání zobrazovaného jména, přeskočení členů).",
@@ -6197,7 +5951,6 @@
         "networkError": "Nepodařilo se dosáhnout koncového bodu SCIM. Zkuste to znovu."
       },
       "fallbackDefaultTitle": "Výchozí mapovaný přístup",
-      "fallbackDefaultDescription": "Úroveň přístupu přiřazená uživatelům, na které se nevztahuje žádné mapování skupin.",
       "fallbackDefaultLabel": "Výchozí úroveň přístupu",
       "fallbackDefaultSaved": "Záložní výchozí hodnota uložena",
       "rotate": {
@@ -6263,7 +6016,6 @@
         "remindersToggleAriaLabel": "Přepnout oznámení připomenutí revize",
         "thresholdLabel": "Připomenout revidentům po",
         "thresholdUnit": "{count, plural, one {den} few {dny} many {dne} other {dní}}",
-        "thresholdHelp": "Kolik dní může žádost o revizi čekat na vyřízení, než revidenti obdrží připomínkové oznámení. U nových žádostí začíná počítání času okamžikem odeslání.",
         "thresholdUpdateSuccess": "Nastavení připomenutí revize aktualizováno.",
         "thresholdUpdateError": "Aktualizace nastavení připomenutí se nezdařila. Zkuste to prosím za chvíli znovu.",
         "revertPolicy": {
@@ -6329,9 +6081,6 @@
       "add": {
         "button": "Přidat roli",
         "title": "Přidat novou roli",
-        "fields": {
-          "name_error": "Název role je povinný"
-        },
         "errors": {
           "nameExists": "Role s tímto názvem již existuje"
         }
@@ -6394,7 +6143,6 @@
       "edit": {
         "title": "Upravit stav",
         "systemNameHelp": "Systémový název identifikuje tento stav pro automatizované procesy. Po vytvoření jej nelze změnit.",
-        "unmodifiableHelp": "Stav 'netestováno' je systémový stav a nelze jej upravovat.",
         "untestedHelp": "Název 'netestováno' je vyhrazen pro systémový stav a nelze jej použít.",
         "success": "Stav byl úspěšně aktualizován"
       },
@@ -6410,9 +6158,6 @@
       "fields": {
         "final": "Finální",
         "system": "Systémový stav",
-        "forTestCase": "Pro testovací případ",
-        "forTestRun": "Pro testovací běh",
-        "forSession": "Pro relaci",
         "color": "Barva"
       }
     },
@@ -6434,9 +6179,7 @@
       "description": "Správa globálních konfigurací aplikace",
       "addConfig": "Přidat konfiguraci aplikace",
       "editConfig": "Upravit konfiguraci aplikace",
-      "keyPlaceholder": "Zadejte klíč konfigurace...",
       "valuePlaceholder": "Zadejte hodnotu JSON...",
-      "currentTranslation": "Aktuální překlad",
       "filterPlaceholder": "Filtrovat podle klíče...",
       "errors": {
         "keyRequired": "Klíč je povinný",
@@ -6456,7 +6199,6 @@
         "noneAssigned": "Nepřiřazeno k žádným projektům (můžete je přiřadit později v administraci konfigurací)."
       },
       "addConfiguration": "Přidat konfigurace",
-      "editConfiguration": "Upravit konfiguraci",
       "filterPlaceholder": "Filtrovat konfigurace...",
       "allProjects": "Všechny projekty",
       "selectAllTooltip": "Vybrat/zrušit výběr všech konfigurací na této stránce",
@@ -6476,8 +6218,6 @@
       "categories": {
         "title": "Kategorie",
         "description": "Správa globálních kategorií",
-        "editCategory": "Upravit kategorii",
-        "selectCategory": "Vybrat kategorii",
         "filterPlaceholder": "Filtrovat kategorie...",
         "add": {
           "title": "Přidat novou kategorii"
@@ -6497,8 +6237,6 @@
         "title": "Kombinace",
         "description": "Správa globálních kombinací",
         "confirmDescription": "Bude vytvořeno následujících {count, number} konfigurací:",
-        "addCombination": "Přidat kombinaci",
-        "editCombination": "Upravit kombinaci",
         "selectCombination": "Vybrat kombinace",
         "selectCombinationDescription": "Vyberte kombinace variant, které chcete přidat. Kombinace, které již existují, jsou zobrazeny jako zakázané.",
         "alreadyExists": "(již existuje)",
@@ -6549,7 +6287,6 @@
         "deleteGroupDescription": "Tato akce smaže skupinu a všechny přidružené uživatele.",
         "confirmMessage": "Opravdu chcete smazat tuto skupinu?"
       },
-      "noUsersSelected": "Zatím nejsou vybráni žádní uživatelé.",
       "noUsersAssigned": "Této skupině nejsou přiřazeni žádní uživatelé.",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Spravováno pomocí SCIM. Spravujte na stránce administrace SCIM.",
@@ -6572,7 +6309,6 @@
       "downgradeConfirmTitle": "Potvrdit změnu přístupu",
       "downgradeConfirmDescription": "{count, plural, one {# uživateli} few {# uživatelům} many {# uživatelům} other {# uživatelům}} bude snížen přístup. Pokračovat?",
       "downgradeConfirmApplyAnyway": "Přesto použít",
-      "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
@@ -6586,7 +6322,6 @@
       "defaultLockedDescription": "Chcete-li změnit výchozí typ, upravte jiný typ milníku a nastavte jej jako výchozí.",
       "wizard": {
         "selectProjects": "Vybrat projekty",
-        "projectsSelected": "{count, plural, =0 {Žádné projekty nejsou vybrány} one {# projekt vybrán} few {# projekty vybrány} many {# projektu vybráno} other {# projektů vybráno}}",
         "createMilestone": "Vytvořit milník",
         "noCommonTypesTitle": "Žádné společné typy milníků",
         "noCommonTypesDescription": "Vybrané projekty nemají žádné společné typy milníků. Zajistěte prosím, aby všechny vybrané projekty měly alespoň jeden společný typ milníku, nebo vyberte jiné projekty."
@@ -6630,44 +6365,23 @@
       }
     },
     "issue_config": {
-      "link_title": "Propojit nástroj pro sledování problémů",
-      "link_description": "Nakonfigurujte základní URL pro ručně propojené problémy. Při propojování problému pouze pomocí externího ID bude tato základní URL předřazena pro vytvoření úplného odkazu.",
-      "filter": {
-        "show_inactive": "Zobrazit neaktivní konfigurace",
-        "search_placeholder": "Filtrovat podle názvu konfigurace..."
-      },
       "base_url": "Základní URL",
-      "link_update_success": "Konfigurace propojení byla úspěšně aktualizována",
-      "link_update_error": "Nepodařilo se aktualizovat konfiguraci propojení",
       "description": "Konfigurace integrací s externími systémy pro sledování problémů.",
       "delete": {
         "title": "Smazat konfiguraci problémů",
         "confirmMessage": "Opravdu chcete smazat konfiguraci <bold>{name}</bold>?",
         "warning": "Tuto akci nelze vrátit zpět. Všechny projekty aktuálně přiřazené k tomuto nástroji budou přeřazeny k výchozímu nástroji. Zvažte místo toho deaktivaci konfigurace.",
-        "cannotDeleteDefault": "Výchozí nástroj pro sledování problémů nelze smazat.",
-        "noDefaultFound": "Nelze smazat: Nebyl nalezen žádný výchozí nástroj pro sledování problémů, kam přiřadit projekty."
+        "cannotDeleteDefault": "Výchozí nástroj pro sledování problémů nelze smazat."
       },
       "add": {
         "title": "Přidat nástroj pro sledování problémů",
         "description": "Vytvořit novou konfiguraci pro systém sledování problémů.",
         "name": "Název konfigurace",
-        "name_placeholder": "např. Odkazy Jira projektu",
-        "system_type": "Typ systému",
-        "select_system_type": "Vybrat typ systému",
-        "base_url": "Základní URL včetně zástupného symbolu problému",
-        "base_url_placeholder": "např., https://your-tracker.com/issues/'{issueId}'",
-        "create_success": "Konfigurace problémů byla úspěšně vytvořena",
-        "create_error": "Chyba při vytváření konfigurace problémů",
-        "setDefaultWarning": "Nastavením tohoto jako výchozí odeberete výchozí stav z aktuální výchozí konfigurace."
+        "base_url": "Základní URL včetně zástupného symbolu problému"
       },
       "edit": {
         "title": "Upravit nástroj pro sledování problémů",
-        "description": "Aktualizujte podrobnosti této konfigurace problémů.",
-        "name_placeholder": "Zadejte název konfigurace",
-        "select_project": "Vybrat projekty...",
-        "update_success": "Konfigurace problémů byla úspěšně aktualizována",
-        "update_error": "Nepodařilo se aktualizovat konfiguraci problémů",
-        "edit_not_supported": "Úprava konfigurace pro tento typ systému aktuálně není podporována."
+        "description": "Aktualizujte podrobnosti této konfigurace problémů."
       }
     },
     "issues": {
@@ -6870,14 +6584,11 @@
         "message": "Zatím nejsou nakonfigurovány žádné integrace problémů"
       },
       "addIntegration": "Přidat integraci úkolů",
-      "allIntegrations": "Všechny integrace úkolů",
-      "manageDescription": "Nakonfigurujte a spravujte integrace problémů s externími službami",
       "status": {
         "active": "Aktivní",
         "inactive": "Neaktivní",
         "awaitingAuthorization": "Čeká na autorizaci"
       },
-      "connectedProjects": "Připojené projekty",
       "noIntegrations": "Nejsou nakonfigurovány žádné integrace problémů",
       "testConnection": "Otestovat připojení",
       "testSuccess": "Připojení úspěšné",
@@ -6966,14 +6677,11 @@
         "successDescription": "Nastavení integrace úkolů bylo uloženo"
       },
       "editIntegration": "Upravit integraci úkolů",
-      "saveIntegration": "Uložit integraci úkolů",
       "deleteIntegration": "Smazat integraci úkolů",
       "config": {
         "name": "Název integrace úkolů",
         "namePlaceholder": "Zadejte název pro tuto integraci úkolů",
-        "nameHelp": "Popisný název pro identifikaci této integrace úkolů",
         "authType": "Typ ověření",
-        "authTypeHelp": "Vyberte způsob ověření u externí služby",
         "emailPlaceholder": "your-email@example.com",
         "emailHelp": "E-mailová adresa vašeho účtu. Povinná pro Jira Cloud (v páru s API tokenem níže). Nepoužívá se pro Jira Server / Data Center — tam ji ponechte prázdnou a použijte buď samotné pole API token (Personal Access Token), nebo pole Uživatelské jméno / Heslo níže.",
         "apiToken": "Token API",
@@ -6995,15 +6703,9 @@
         "clientSecretPlaceholder": "Zadejte tajný klíč klienta OAuth",
         "clientSecretHelp": "Tajný klíč klienta z vaší aplikace OAuth",
         "cloudId": "Cloud ID",
-        "cloudIdPlaceholder": "Zadejte vaše Atlassian Cloud ID",
-        "cloudIdHelp": "ID instance Atlassian Cloud (nachází se v URL vaší Jiry)",
-        "apiUrl": "URL API",
-        "apiUrlPlaceholder": "https://api.example.com",
-        "apiUrlHelp": "Základní URL pro API služby",
         "personalAccessTokenPlaceholder": "Zadejte osobní přístupový token",
         "personalAccessTokenHelp": "Osobní přístupový token s příslušnými oprávněními",
         "apiKeyPlaceholder": "Zadejte klíč API",
-        "apiKeyHelp": "Klíč API pro ověření",
         "baseUrl": "Vzor URL",
         "baseUrlPlaceholder": "https://example.com/issues/'{issueId}'",
         "baseUrlHelp": "Vzor URL pro problémy. Použijte {issueId} jako zástupný symbol",
@@ -7027,7 +6729,6 @@
         "repoPlaceholder": "název-úložiště",
         "repoHelp": "Název úložiště Gitea",
         "encrypted": "Šifrováno",
-        "encryptedHelp": "Toto pole je šifrováno a bezpečně uloženo",
         "leaveBlankToKeep": "Ponechte prázdné pro zachování stávající hodnoty",
         "apiKeyWarningTitle": "Upozornění na ověření klíčem API",
         "apiKeyWarningDescription": "Při ověřování pomocí API klíče nemusí ohlašovatel u vytvořených úkolů odpovídat uživateli TestPlanIt, který je vytvořil — a to i v případě, že se e-maily shodují:",
@@ -7076,12 +6777,7 @@
       },
       "validation": {
         "nameRequired": "Název integrace úkolů je povinný",
-        "clientIdRequired": "ID klienta je povinné",
-        "clientSecretRequired": "Tajný klíč klienta je povinný",
-        "cloudIdRequired": "Cloud ID je povinné",
-        "apiUrlRequired": "URL API je povinná",
-        "tokenRequired": "Osobní přístupový token je povinný",
-        "apiKeyRequired": "Klíč API je povinný"
+        "tokenRequired": "Osobní přístupový token je povinný"
       },
       "errors": {
         "updateFailed": "Aktualizace integrace úkolů se nezdařila",
@@ -7100,12 +6796,8 @@
         "testing": "Testování připojení..."
       },
       "oauth": {
-        "connectAccount": "Připojit účet",
         "connected": "Připojeno",
-        "notConnected": "Nepřipojeno",
-        "authDescription": "Pro použití této integrace se musíte ověřit u {provider}",
-        "authError": "Ověření se nezdařilo",
-        "authErrorDescription": "Nelze se ověřit u externí služby"
+        "authError": "Ověření se nezdařilo"
       }
     },
     "llm": {
@@ -7150,7 +6842,6 @@
         "monthlyBudgetDescription": "Volitelný cíl výdajů pro oznámení (neblokuje použití)",
         "billingPeriodStartDay": "Den začátku fakturačního období",
         "billingPeriodStartDayPlaceholder": "1",
-        "billingPeriodStartDayDescription": "Den v měsíci (1–31), kdy začíná vaše fakturační období. Hodnoty 29–31 použijí poslední den kratších měsíců.",
         "defaultTemperature": "Výchozí teplota",
         "defaultMaxTokens": "Výchozí maximální počet tokenů",
         "repoContextBudgetLabel": "Rozpočet kontextu úložiště (QuickScript)",
@@ -7182,7 +6873,6 @@
       "edit": {
         "title": "Upravit integraci AI modelu",
         "description": "Aktualizujte konfiguraci pro integraci AI modelu {name}",
-        "statusDescription": "Povolit nebo zakázat tuto integraci",
         "apiKeyPlaceholder": "Zadejte nový API klíč pro aktualizaci...",
         "update": "Aktualizovat",
         "modelListUpdated": "Seznam modelů byl úspěšně aktualizován",
@@ -7229,10 +6919,8 @@
       },
       "budgetAlert": {
         "budgetDisclaimer": "Nastavení měsíčního rozpočtu nezabrání překročení tohoto limitu při používání LLM. Limity rozpočtu slouží pouze pro informativní účely při rozhodování administrátora.",
-        "budgetDisclaimerShort": "Limity rozpočtu jsou pouze informativní a nezabraňují použití.",
         "spendLabel": "Útraty za aktuální měsíc",
         "spendOfBudget": "{currentSpend} z {budgetLimit}",
-        "overBudget": "Překročen rozpočet",
         "budgetPercentage": "Využito {percentage} % rozpočtu",
         "spendReset": "Útraty za aktuální měsíc byly vynulovány"
       }
@@ -7243,7 +6931,6 @@
       "addPromptConfig": "Přidat konfiguraci promptu",
       "filterPlaceholder": "Filtrovat konfigurace promptů...",
       "features": "Funkce",
-      "featureCount": "{count, plural, one {# funkce} few {# funkce} many {# funkce} other {# funkcí}}",
       "llmIntegration": "Integrace LLM",
       "modelOverride": "Přepsání modelu",
       "modelOverridePlaceholder": "Výchozí pro integraci",
@@ -7255,7 +6942,6 @@
       "maxOutputTokens": "Maximální počet výstupních tokenů",
       "variables": "Proměnné",
       "insertVariable": "Vložit proměnnou",
-      "noConfigs": "Nebyly nalezeny žádné konfigurace promptů. Přidejte svou první konfiguraci a začněte.",
       "add": {
         "title": "Přidat konfiguraci promptu",
         "description": "Vytvořte novou konfiguraci AI promptů s prompty pro každou funkci. Výchozí hodnoty byly použity automaticky."
@@ -7385,7 +7071,6 @@
       "concurrency": {
         "title": "Souběžnost pracovních procesů",
         "description": "Souběžnost určuje, kolik úloh zpracovává každý pracovní proces současně. Vyšší hodnoty mohou zlepšit propustnost, ale využívají více systémových prostředků (CPU a paměť).",
-        "configureTitle": "Konfigurace souběžnosti",
         "configureDescription": "Chcete-li upravit souběžnost, nastavte proměnné prostředí a restartujte pracovní procesy. Podrobnosti naleznete v dokumentaci.",
         "envVars": {
           "TESTMO_IMPORT_CONCURRENCY": "Importy z Testmo (výchozí: 1, náročné na paměť)",
@@ -7420,12 +7105,7 @@
         "irreversible": "Tuto akci nelze vrátit zpět. Potvrďte prosím, že chcete pokračovat."
       },
       "success": {
-        "actionCompleted": "Akce dokončena",
-        "queuePaused": "Fronta byla pozastavena",
-        "queueResumed": "Fronta byla obnovena",
-        "queueCleaned": "Fronta byla vyčištěna",
-        "queueDrained": "Fronta byla vyprázdněna",
-        "queueObliterated": "Fronta byla zcela vymazána"
+        "actionCompleted": "Akce dokončena"
       },
       "error": {
         "loadFailed": "Nepodařilo se načíst fronty",
@@ -7451,10 +7131,7 @@
           "finished": "Dokončeno"
         },
         "success": {
-          "actionCompleted": "Akce úlohy dokončena",
-          "jobRetried": "Úloha byla znovu spuštěna",
-          "jobPromoted": "Úloha byla povýšena",
-          "jobRemoved": "Úloha byla odstraněna"
+          "actionCompleted": "Akce úlohy dokončena"
         },
         "error": {
           "loadFailed": "Nepodařilo se načíst úlohy",
@@ -7504,17 +7181,12 @@
       "exportCsv": "Exportovat CSV",
       "timeRange": "Časové období",
       "timeRangeOptions": {
-        "last24h": "Posledních 24 hodin",
-        "last7d": "Posledních 7 dní",
-        "last30d": "Posledních 30 dní",
-        "last90d": "Posledních 90 dní",
         "allTime": "Celá doba"
       },
       "systemActor": "Systém",
       "systemActorTooltip": "Akce provedená systémem, nikoli přihlášeným uživatelem",
       "sourceScim": "SCIM",
-      "relatedChanges": "související změny",
-      "groupedEntry": "Seskupené změny z jedné akce"
+      "relatedChanges": "související změny"
     }
   },
   "components": {
@@ -7568,7 +7240,6 @@
         "shareLinkAccessedTitle": "Sdílený odkaz byl otevřen",
         "shareLinkAccessedAnonymousViewer": "Někdo",
         "shareLinkAccessedMessage": "{viewer} zobrazil váš sdílený report: \"{shareTitle}\"",
-        "viewedYourSharedLink": "zobrazil váš sdílený odkaz",
         "viewedAt": "Zobrazeno v",
         "userRegisteredTitle": "Registrace nového uživatele",
         "userRegisteredMessageSso": "{userName} ({userEmail}) se zaregistroval přes SSO",
@@ -7631,7 +7302,6 @@
         "alertTriggeredRule": "Pravidlo: {ruleName}",
         "alertTriggeredEmailMessage": "Upozornění \"{ruleName}\" spuštěno pro {subjectLabel} \"{subjectName}\" v projektu \"{projectName}\": {detail}",
         "alertTriggeredEmailMessageSystem": "Upozornění \"{ruleName}\" spuštěno pro {subjectLabel} \"{subjectName}\": {detail}",
-        "alertTriggeredReason": "Obdrželi jste toto, protože se přihlašujete k tomuto upozornění.",
         "alertSubject": {
           "CASE": "testovací případ",
           "RUN": "testovací běh",
@@ -7686,8 +7356,7 @@
     },
     "issues": {
       "manage_issues": {
-        "placeholder": "Hledat nebo propojit problémy...",
-        "create_label": "Propojit problém \"{name}\""
+        "placeholder": "Hledat nebo propojit problémy..."
       },
       "create_issue_dialog": {
         "placeholders": {
@@ -7705,16 +7374,8 @@
             "helper": "Vyberte projekt v externím nástroji pro sledování problémů"
           }
         },
-        "loading_metadata": "Načítání nastavení integrace...",
-        "errors": {
-          "creation_failed": "Nepodařilo se vytvořit problém. Zkuste to prosím znovu."
-        },
         "success": {
-          "created": "Problém byl úspěšně vytvořen",
-          "external_created": "Problém byl vytvořen a propojen s externím nástrojem"
-        },
-        "warnings": {
-          "external_failed": "Problém byl vytvořen lokálně, ale nepodařilo se jej synchronizovat s externím nástrojem"
+          "created": "Problém byl úspěšně vytvořen"
         }
       },
       "integration_auth_prompt": {
@@ -7775,16 +7436,9 @@
   },
   "issues": {
     "linkedIssues": "Propojené problémy",
-    "linkedIssuesDescription": "Problémy přidružené k této položce",
     "refreshed": "Problémy obnoveny",
-    "refreshedDescription": "Seznam propojených problémů byl aktualizován",
     "unlinked": "Propojení problému zrušeno",
-    "unlinkedDescription": "Problém byl odebrán z této položky",
     "linked": "Problém propojen",
-    "linkedDescription": "Problém byl propojen s touto položkou",
-    "searchAndLink": "Vyhledat a propojit",
-    "createAndLink": "Vytvořit a propojit",
-    "noLinkedIssues": "Žádné propojené problémy",
     "viewExternal": "Zobrazit v {provider}",
     "unlink": "Zrušit propojení",
     "linkError": "Nepodařilo se propojit problém",
@@ -7799,8 +7453,6 @@
     "alreadyLinked": "Již propojeno",
     "authenticate": "Ověřit",
     "authenticationRequired": "Vyžadováno ověření",
-    "authenticationDescription": "Pro vyhledávání problémů se musíte ověřit u {provider}.",
-    "searchIn": "Vyhledat v {provider}",
     "searchPlaceholder": "Vyhledat problémy...",
     "searchIssues": "Vyhledat problémy",
     "searchIssuesDescription": "Vyhledejte interní problémy pro propojení s touto položkou.",
@@ -7817,32 +7469,22 @@
     "createIssueDescriptionWithIntegration": "Vytvořit nový problém pomocí {provider}",
     "createIssueDescriptionSimpleUrl": "Vytvořit nový interní problém (integrace jednoduché URL)",
     "iterationContextHint": "Tělo je automaticky vyplněno hodnotami parametrů iterace a přímým odkazem. Před vytvořením jej dle potřeby upravte.",
-    "creatingWith": "Vytváření problému pomocí {provider}",
-    "authenticatedAndReady": "Ověřeno a připraveno k vytváření problémů",
     "created": "Problém vytvořen",
     "createdInExternal": "Problém vytvořen v {provider}",
     "createdInternal": "Problém vytvořen lokálně",
     "createdInternalSimpleUrl": "Problém byl vytvořen interně a lze jej propojit prostřednictvím jednoduché URL",
     "createError": "Nepodařilo se vytvořit problém",
     "useIntegration": "Použít {provider}",
-    "useIntegrationDescription": "Vytvořit problém v externím systému",
     "externalProject": "Externí projekt",
     "issueType": "Typ problému",
     "selectIssueType": "Vybrat typ problému",
-    "noIssueTypes": "Nejsou k dispozici žádné typy problémů",
     "assignees": "Přiřazené osoby",
     "selectAssignees": "Vyberte přiřazené osoby",
     "assigneesLimit": "Až {max} přiřazených osob",
     "priorityUrgent": "Naléhavé",
     "additionalFields": "Další pole",
     "createIssueInJira": "Vytvořit problém v Jiře",
-    "createIssueInJiraDescription": "Použijte rozhraní Jiry k vytvoření nového problému se všemi dostupnými poli a možnostmi",
-    "createIssueInJiraFallbackDescription": "Otevřete Jiru na nové kartě a vytvořte problém s předvyplněnými informacemi",
-    "jiraIframeError": "Nelze načíst rozhraní Jiry. Zkuste jej prosím otevřít na nové kartě.",
-    "jiraIframeFallback": "Jira z bezpečnostních důvodů vyžaduje otevření na nové kartě. Kliknutím na tlačítko níže vytvoříte svůj problém.",
-    "jiraFallbackNote": "Po vytvoření problému v Jiře se sem vraťte a pokračujte v jeho propojení s testovacím případem.",
     "openInNewTab": "Otevřít na nové kartě",
-    "jiraIframeNote": "Po vytvoření problému v Jiře můžete zavřít toto dialogové okno a obnovit seznam problémů.",
     "fillInRequiredFields": "Vyplňte povinná pole pro vytvoření nového problému",
     "failedToFetchFields": "Nepodařilo se načíst pole problému z Jiry",
     "enterSummary": "Zadejte stručný souhrn problému",
@@ -7852,7 +7494,6 @@
     "addLabel": "Přidejte štítek a stiskněte Enter",
     "labelHint": "Mezery budou nahrazeny pomlčkami",
     "labelFormatNote": "Štítky nesmí obsahovat mezery. Mezery budou automaticky nahrazeny pomlčkami.",
-    "enterIssueKey": "Zadejte klíč problému (např. PROJ-123)",
     "issueLinkHelp": "Zadejte klíč existujícího problému k propojení",
     "searchForIssue": "Vyhledejte problém k propojení",
     "searchUsers": "Vyhledat uživatele",
@@ -7958,8 +7599,7 @@
       "dialogTitle": "Upravit požadavek",
       "submit": "Uložit změny",
       "success": "Požadavek aktualizován.",
-      "failed": "Nepodařilo se aktualizovat požadavek.",
-      "lockedTooltip": "Tento požadavek je synchronizován z připojeného trackeru. Chcete-li jej přejmenovat, odpojte jej."
+      "failed": "Nepodařilo se aktualizovat požadavek."
     },
     "delete": {
       "dialogTitle": "Odstranit požadavek",
@@ -7967,13 +7607,10 @@
       "confirmWithChildren": "Tento požadavek má {count, plural, one {{count} potomka, který bude také odstraněn} few {{count} potomky, kteří budou také odstraněni} many {{count} potomka, kteří budou také odstraněni} other {{count} potomků, kteří budou také odstraněni}}. Tuto akci lze vrátit.",
       "success": "Požadavek odstraněn.",
       "failed": "Nepodařilo se odstranit požadavek.",
-      "undo": "Vrátit zpět",
-      "undoSuccess": "Požadavek obnoven.",
-      "undoFailed": "Nepodařilo se obnovit požadavek."
+      "undo": "Vrátit zpět"
     },
     "attachments": {
       "empty": "Žádné přílohy",
-      "uploadSuccess": "Příloha nahrána.",
       "uploadFailed": "Nepodařilo se nahrát přílohu.",
       "removeSuccess": "Příloha odstraněna.",
       "removeFailed": "Nepodařilo se odstranit přílohu."
@@ -8027,13 +7664,9 @@
     "coverage": {
       "title": "Pokrytí",
       "uncovered": "Nepokryto",
-      "uncoveredTooltip": "K tomuto požadavku ani k žádnému z jeho podřízených požadavků nejsou propojeny žádné testovací případy.",
       "statusPassed": "Úspěšné",
       "statusFailed": "Neúspěšné",
       "statusNotRun": "Neprovedeno",
-      "countLabel": "{passed}/{total}",
-      "breakdownTooltip": "Úspěšné: {passed} · Neúspěšné: {failed} · Probíhá: {inProgress} · Neproběhlo: {notRun}",
-      "showOnlyUncovered": "Zobrazit pouze nepokryté",
       "showOnlyUncoveredUnavailable": "Data o pokrytí nejsou nyní k dispozici.",
       "loadFailed": "Nepodařilo se načíst pokrytí.",
       "retry": "Zkusit znovu",
@@ -8150,7 +7783,6 @@
       "deleted": "Cíl spuštění odstraněn",
       "enabledToast": "Cíl povolen",
       "disabledToast": "Cíl zakázán",
-      "revealedSecretTitle": "Zkopírujte podepisovací tajemství nyní",
       "revealedSecretWarning": "Toto tajemství se zobrazuje jednou. Váš příjemce jej používá k ověření hlavičky X-TestPlanIt-Signature u každého odesílání; systémy, které se ověřují jiným způsobem (například token spuštění Jenkins), jej mohou ignorovat. Uložte jej do úložiště tajemství vašeho CI systému; TestPlanIt jej již nemůže zobrazit.",
       "secretCopied": "Tajemství zkopírováno",
       "errors": {
@@ -8283,7 +7915,6 @@
     "seconds": "{seconds}s",
     "testCases": "{count, plural, one {# testovací případ} few {# testovací případy} many {# testovacího případu} other {# testovacích případů}}",
     "estimate": "Odhad: {value}",
-    "partOf": "(Součást {parent})",
     "status": "Stav: {status}",
     "lane": "Dráha {number}",
     "worker": "Worker {id}"
@@ -8420,8 +8051,6 @@
       "overview": "## Projekty\nProjekty jsou nejvyšší kontejnery pro vaše testovací případy, běhy, relace a milníky. Odsud vytvářejte a spravujte všechny projekty.",
       "settings": {
         "integrations": {
-          "externalProjectHelp": "## Externí projekt\nVyberte projekt nebo úložiště v externím systému, který chcete propojit s tímto projektem TestPlanIt.\n\n- Problémy vytvořené z TestPlanIt budou vytvořeny v tomto projektu\n- Umožňuje integraci sledování problémů mezi systémy\n- V externím systému musíte mít odpovídající oprávnění",
-          "defaultIssueTypeHelp": "## Výchozí typ problému\nTyp problému, který bude předvybraný při vytváření nových problémů z aplikace TestPlanIt.\n\n- Šetří čas díky výchozímu nastavení nejběžnějšího typu problému\n- Lze přepsat při vytváření jednotlivých problémů\n- Musí být platným typem problému pro vybraný externí projekt\n- Aktualizujte, pokud se změní váš pracovní postup",
           "automaticSyncHelp": "## Automatická synchronizace\nUmožňuje automatickou synchronizaci stavu problémů mezi aplikací TestPlanIt a externím systémem.\n\n- Problémy propojené s testovacími případy budou automaticky aktualizovat svůj stav\n- Pomáhá udržovat konzistentní sledování problémů napříč systémy\n- Může zvýšit využití API u externí služby\n- Lze zakázat, pokud dáváte přednost ruční kontrole"
         }
       }
@@ -8593,7 +8222,6 @@
     "issueConfig": {
       "name": "## Název konfigurace problémů\nJasný, výstižný název, který se používá napříč všemi projekty.\n\n- Pomáhá popsat konfiguraci problémů (např. Jira, GitHub atd.).",
       "baseUrl": "## Základní URL\nZákladní URL pro konfiguraci problémů včetně zástupného symbolu problému (např. https://your-jira-instance.atlassian.net/browse/'{issueId}').",
-      "systemType": "## Typ systému\nTyp systému pro sledování problémů (např. LINK Jira atd.).",
       "isActive": "## Aktivní\nUdává, zda je tato konfigurace problémů aktivní.",
       "isDefault": "## Výchozí\nUdává, zda je tato konfigurace problémů výchozí pro váš projekt.\n\n- Výchozí konfigurace problémů je předvybraná pro nové problémy\n- Lze kdykoli změnit",
       "projects": "## Projekty\nUdává projekty, které jsou přiřazeny k této konfiguraci problémů."
@@ -9053,13 +8681,9 @@
       },
       "reportsTabDescription": "Zobrazujte a analyzujte předpřipravené sestavy pro váš projekt",
       "reportType": "Typ sestavy",
-      "selectReportType": "Vybrat typ sestavy",
       "selectReport": "Vybrat sestavu",
       "dimensions": "Dimenze",
-      "dimensionsSubtitle": "Dimenze (přetažením změníte pořadí, přidejte níže)",
       "metrics": "Metriky",
-      "addDimension": "Přidat dimenzi...",
-      "addMetric": "Přidat metriku...",
       "runReport": "Spustit sestavu",
       "exportCsv": "Exportovat CSV",
       "noResultsFound": "Nebyly nalezeny žádné výsledky.",
@@ -9068,8 +8692,6 @@
       "noDataMatchingCriteriaWithDateFilter": "Nebyla nalezena žádná data odpovídající vybraným dimenzím a metrikám. Zkuste upravit filtr rozsahu dat.",
       "noDataAvailable": "Pro tuto sestavu nejsou k dispozici žádná data.",
       "generatedAt": "Sestava vygenerována v",
-      "crossProjectAnalytics": "Analýzy a reporting napříč projekty",
-      "unauthorizedAdmin": "Neautorizováno: Je vyžadován přístup administrátora.",
       "title": "Tvůrce sestav",
       "description": "Vytvářejte vlastní sestavy pro analýzu dat vašeho projektu",
       "crossProjectDescription": "Analyzujte data napříč všemi projekty ve vašem pracovním prostoru",
@@ -9244,7 +8866,6 @@
         "newest": "Nové",
         "oldest": "Staré",
         "noFlakyTests": "Nebyly nalezeny žádné nestabilní testy odpovídající kritériím",
-        "includeFilter": "Zahrnout",
         "caseTags": "Značky testovacího případu",
         "runTags": "Značky testovacího běhu",
         "testRunDeleted": "Testovací běh byl odstraněn",
@@ -9268,7 +8889,6 @@
         "minExecutionsHelp": "Minimální počet provedení potřebný k výpočtu smysluplných statistik míry úspěšnosti (3–20).",
         "lookbackDays": "Období zpětného pohledu",
         "lookbackDaysHelp": "Počet dnů pro analýzu historie provádění (30–365).",
-        "includeFilter": "Zahrnout",
         "staleFilter": "Zastaralost",
         "stale": "Zastaralé",
         "notStale": "Není zastaralé",
@@ -9278,11 +8898,9 @@
         "executions": "Provedení",
         "passCount": "Úspěchy",
         "failCount": "Selhání",
-        "daysSince": "Dnů od provedení",
         "count": "Počet",
         "totalTests": "testovacích případů",
         "noData": "Nebyly nalezeny žádné testovací případy",
-        "noExecutedTests": "Nejsou k dispozici žádné provedené testy k zobrazení",
         "healthStatus": {
           "healthy": "Zdravé",
           "stale": "Zastaralé",
@@ -9291,11 +8909,7 @@
           "alwaysFailing": "Vždy neúspěšné"
         },
         "chart": {
-          "distribution": "Rozložení stavů",
-          "healthyRecent": "Zdravé a nedávné",
-          "unhealthyStale": "Vyžaduje pozornost",
-          "daysAxis": "Dnů od posledního provedení",
-          "healthScoreAxis": "Skóre kondice"
+          "distribution": "Rozložení stavů"
         },
         "stats": {
           "totalTests": "Celkem testů",
@@ -9423,9 +9037,6 @@
         }
       },
       "issueTestCoverage": {
-        "viewMode": "Režim zobrazení",
-        "summaryView": "Souhrn (dle problému)",
-        "detailView": "Detail (dle testovacího případu)",
         "issue": "Problém",
         "testCase": "Testovací případ",
         "testCases": "{count, plural, =1 {Testovací případ} few {Testovací případy} many {Testovací případy} other {Testovací případy}}",
@@ -9437,18 +9048,15 @@
         "lastExecuted": "Naposledy spuštěno",
         "notTested": "Netestováno",
         "noData": "Nebyly nalezeny žádné problémy s propojenými testovacími případy",
-        "noIssuesNeedingAttention": "Všechny problémy mají úspěšné testy – skvělá práce!",
         "stats": {
           "totalIssues": "Celkový počet problémů",
           "issuesWithFailures": "S neúspěchy",
           "issuesWithFailuresTooltip": "Problémy s alespoň jedním neúspěšným testovacím případem",
           "issuesWithUntested": "S netestovanými",
           "issuesWithUntestedTooltip": "Problémy s alespoň jedním nespuštěným testovacím případem",
-          "issuesAllPassing": "Vše úspěšné",
-          "numberOfIssues": "Počet problémů"
+          "issuesAllPassing": "Vše úspěšné"
         },
         "charts": {
-          "passRateDistribution": "Rozložení úspěšnosti testů",
           "linkedTestCases": "Počet propojených testovacích případů",
           "untestedTestCases": "Počet netestovaných testovacích případů",
           "testCoverageVsExecution": "Pokrytí testy vs. stav provedení"
@@ -9482,7 +9090,6 @@
         "otherRoots": "Ostatní ({count, plural, one {# hierarchie} few {# hierarchie} many {# hierarchie} other {# hierarchií}})",
         "snapshotLabel": "Snímek",
         "snapshotLive": "Aktuální matice",
-        "snapshotHelp": "Zobrazit uložený snímek matice k určitému okamžiku místo aktuálních dat. Snímky jsou neměnné záznamy, které lze exportovat, sdílet a porovnávat.",
         "snapshotPlaceholder": "Vyberte snímek",
         "snapshotRequirementsCount": "{count, plural, one {# požadavek} few {# požadavky} many {# požadavku} other {# požadavků}}",
         "snapshotUncoveredCount": "{count} nepokrytých",
@@ -9613,7 +9220,6 @@
         "triggerPush": "Odesílání",
         "outcomeNotExecuted": "Neprovedeno",
         "outcomeNoRun": "Bez běhu",
-        "allRepositories": "Všechna úložiště",
         "analysis": "Analýza",
         "changedFiles": "Změněné soubory",
         "changedFilesDetail": "{files, number} souborů · +{additions, number} −{deletions, number}",
@@ -9734,23 +9340,15 @@
     },
     "errors": {
       "adminOnly": "K přístupu k reportům projektu mají oprávnění pouze správci projektu a administrátoři.",
-      "projectIdRequired": "ID projektu je povinné",
       "missingRequiredFields": "Chybí povinná pole",
-      "unsupportedDimension": "Nepodporovaná dimenze: {dimension}",
-      "unsupportedMetric": "Nepodporovaná metrika: {metric}",
       "atLeastOneDimensionMetricRequired": "Je vyžadována alespoň jedna dimenze a jedna metrika",
-      "atLeastOneMetricRequired": "Musí být zadána alespoň jedna metrika",
-      "projectDimensionsMetricsRequired": "ID projektu, dimenze a metriky jsou povinné",
-      "unsupportedDimensions": "Nepodporovaná dimenze(y): {dimensions}",
-      "unsupportedMetrics": "Nepodporovaná metrika(y): {metrics}",
-      "unexpectedError": "Došlo k neočekávané chybě."
+      "atLeastOneMetricRequired": "Musí být zadána alespoň jedna metrika"
     },
     "dimensions": {
       "executor": "Vykonavatel",
       "assignedTo": "Přiřazeno",
       "executionDate": "Datum spuštění",
       "creationDate": "Datum vytvoření",
-      "activityDate": "Datum aktivity",
       "testCase": "Testovací případ",
       "creator": "Autor",
       "source": "Zdroj",
@@ -9900,9 +9498,6 @@
           "title": "Platnost sdíleného odkazu vypršela",
           "description": "Platnost tohoto sdíleného odkazu vypršela a již není přístupný."
         }
-      },
-      "footer": {
-        "poweredBy": "Poháněno"
       },
       "manageShares": {
         "title": "Spravovat sdílení",
@@ -10255,8 +9850,6 @@
     },
     "startTyping": "Začněte psát pro vyhledávání",
     "typesSelected": "{count, plural, one {# typ} few {# typy} many {# typu} other {# typů}}",
-    "customFieldFilters": "Filtry vlastních polí",
-    "customFiltersApplied": "vlastní filtry",
     "customFields": "Vlastní pole",
     "addFilter": "Přidat filtr",
     "filter": "Filtr",
@@ -10321,14 +9914,12 @@
       "junit": "JUnit",
       "hybrid": "Hybridní",
       "automatedOnly": "Pouze automatizované",
-      "archivedOnly": "Pouze archivované",
       "completedOnly": "Pouze dokončené",
       "manualOnly": "Pouze manuální",
       "estimateRange": "Rozsah odhadu",
       "elapsedRange": "Rozsah uplynulého času",
       "minValue": "Min",
       "maxValue": "Max",
-      "dueDateRange": "Rozsah termínu splnění",
       "milestoneType": "Typ milníku",
       "minutes": "minuty",
       "hours": "hodiny",
@@ -10433,11 +10024,7 @@
   },
   "autoTag": {
     "actions": {
-      "aiTag": "AI štítek",
-      "tagAll": "Označit vše",
       "aiAutoTag": "Automaticky označit",
-      "tagActions": "Akce se štítky",
-      "startTagging": "Zahájit označování",
       "selectEntityType": "Vyberte typ entity",
       "selectProject": "Vyberte projekt",
       "entityTypes": {
@@ -10449,11 +10036,8 @@
     "review": {
       "title": "Zkontrolovat návrhy štítků",
       "description": "Kliknutím na štítky přepnete jejich přijetí. Dvojitým kliknutím upravíte název štítku.",
-      "selectEntity": "Vyberte entitu pro zobrazení návrhů štítků.",
       "noTagsSelected": "Nejsou vybrány žádné štítky",
-      "footerSummary": "{assignCount, plural, one {Bude přiřazen # štítek} few {Budou přiřazeny # štítky} many {Bude přiřazeno # štítku} other {Bude přiřazeno # štítků}}, {newCount, plural, one {vytvořen # nový štítek} few {vytvořeny # nové štítky} many {vytvořeno # nového štítku} other {vytvořeno # nových štítků}}",
       "footerAssignCount": "Bude přiřazeno: {assignCount, plural, one {# štítek} few {# štítky} many {# štítku} other {# štítků}}",
-      "footerNewCount": "Bude vytvořeno: {newCount, plural, one {# nový štítek} few {# nové štítky} many {# nového štítku} other {# nových štítků}}",
       "newTagsPopoverTitle": "Nové štítky k vytvoření",
       "applying": "Používání...",
       "applySuccess": "{tagCount, plural, one {# štítek použit} few {# štítky použity} many {# štítku použito} other {# štítků použito}} na {entityCount, plural, one {# entitu} few {# entity} many {# entity} other {# entit}}",
@@ -10472,7 +10056,6 @@
       "tooltipExisting": "Existující štítek",
       "tooltipNew": "Nový štítek — bude vytvořen",
       "tooltipAssign": "Přiřadit existující štítek",
-      "toggleFailed": "Zobrazit/skrýt neúspěšné entity",
       "showFailed": "Zobrazit neúspěšné"
     },
     "progress": {
@@ -10610,7 +10193,6 @@
     "datasetRowResultEmpty": "—",
     "pasteCsvPlaceholder": "Sem vložte řádky CSV. První řádek bude považován za záhlaví.",
     "pasteCsvParseButton": "Zpracovat",
-    "pasteCsvReplaceWarning": "Existující řádky datové sady ({existingCount}) budou odstraněny.",
     "cellErrorString": "Hodnota povinného pole nesmí být prázdná.",
     "cellErrorInteger": "Musí být celé číslo.",
     "cellErrorSelect": "Hodnota musí být jedna z: {allowed}.",
@@ -10655,14 +10237,8 @@
     "chooserEmpty": "Zatím nejsou deklarovány žádné parametry.",
     "chooserConfigureLink": "Konfigurovat parametry",
     "autocompleteEmpty": "Žádné odpovídající parametry. Napište pro hledání nebo použijte panel nástrojů pro vložení.",
-    "chipTooltipType": "Typ: {type}",
-    "chipTooltipDefault": "Výchozí: {value}",
-    "chipTooltipNoDefault": "Výchozí: (žádná)",
-    "chipTooltipUndeclared": "„@{name}“ není deklarovaný parametr. Otevřete Konfigurovat parametry a přidejte jej.",
     "editorUndeclaredWarning": "Nedeklarované odkazy: {names}. Přidejte je pomocí Konfigurovat parametry a umožněte tak nahrazení v iteracích.",
     "runProgressTitle": "Generování iterací pro „{runName}“",
-    "runProgressDescriptionAsync": "Vytváření {count, plural, =1 {# iterace} few {# iterace} many {# iterace} other {# iterací}} na pozadí. Můžete pokračovat v práci — jakmile bude hotovo, upozorníme vás.",
-    "runProgressDescriptionSync": "Vytvořeno: {count, plural, =1 {# iterace} few {# iterace} many {# iterace} other {# iterací}}.",
     "runProgressFailed": "Nepodařilo se spustit generování iterací",
     "runHardRefuseTitle": "Příliš mnoho iterací k vytvoření",
     "runHardRefuseDescription": "Tento běh by vytvořil {count} iterací, což překračuje limit {cap}. Snižte počet řádků datové sady, zrušte výběr případů nebo rozdělte úlohu do více běhů.",
@@ -10670,7 +10246,6 @@
     "runPreflightAsync": "Vytvoří se {n, plural, =1 {# iterace} few {# iterace} many {# iterace} other {# iterací}} (úloha na pozadí)",
     "runPreflightSoftConfirm": "Vytvoří se {n, plural, =1 {# iterace} few {# iterace} many {# iterace} other {# iterací}} — vyžadováno potvrzení",
     "runPreflightHardRefuse": "Nelze vytvořit — {n} překračuje limit {cap}",
-    "runPreflightTooltip": "{iterations, plural, =1 {# iterace} few {# iterace} many {# iterace} other {# iterací}} = {cases, plural, =1 {# případ} few {# případy} many {# případu} other {# případů}} × {configs, plural, =1 {# konfigurace} few {# konfigurace} many {# konfigurace} other {# konfigurací}} × řádky datové sady",
     "runPreflightTooltipHeader": "{iterations, plural, =1 {# iterace} few {# iterace} many {# iterace} other {# iterací}} napříč {cases, plural, =1 {# parametrizovaným případem} few {# parametrizovanými případy} many {# parametrizovanými případy} other {# parametrizovanými případy}} × {configs, plural, =1 {# konfigurace} few {# konfigurace} many {# konfigurace} other {# konfigurací}}",
     "runPreflightTooltipCaseRow": "{title} — {rows, plural, =1 {# řádek} few {# řádky} many {# řádku} other {# řádků}}",
     "chipClickToReveal": "Kliknutím zobrazíte",
@@ -10682,7 +10257,6 @@
     "iterationAddResult": "Přidat výsledek",
     "iterationPassAndNext": "Úspěch a další iterace",
     "iterationOtherStatuses": "Ostatní stavy",
-    "iterationAllComplete": "Všechny iterace dokončeny",
     "hardRefuseTitle": "Nelze vytvořit — příliš mnoho iterací",
     "hardRefuseDescription": "Vytváření testovacích běhů je omezeno na {cap} iterací, aby byl systém responzivní. Snižte jeden z níže uvedených faktorů.",
     "hardRefuseColumnCase": "Případ",
@@ -10705,15 +10279,12 @@
     "iterationsHeaderCount": "{complete}/{total}",
     "iterationsHeaderCountPending": "0/{total} (generování)",
     "iterationStatusLegendAria": "Legenda stavů",
-    "iterationActionSkipped": "Přeskočeno",
     "iterationBulkPickStatusPrompt": "Vyberte stav, který se použije na vybrané iterace.",
-    "iterationBulkApplyStatus": "Označit stavem…",
     "iterationSelectAria": "Vybrat iteraci {n}",
     "iterationRowMenuAria": "Akce iterace {n}",
     "iterationOverrideValues": "Přepsat hodnoty…",
     "iterationSkip": "Označit stavem…",
     "iterationReset": "Resetovat výsledek iterace",
-    "iterationSelectedCount": "Vybráno: {count}",
     "iterationBulkSkip": "Označit {count, plural, =1 {# iteraci} few {# iterace} many {# iterace} other {# iterací}} stavem…",
     "iterationIssueTitleSnapshot": "Iterace {n} z {total} — problém: {caseName}",
     "iterationIssueTitleCiExtended": "Iterace {n} (rozšířeno CI) — problém: {caseName}",
@@ -10754,13 +10325,7 @@
     "iterationBulkReasonHelp": "Zaznamenáno u každého výsledku.",
     "iterationBulkSuccess": "{count, plural, =1 {# iterace označena} few {# iterace označeny} many {# iterace označeno} other {# iterací označeno}} jako {action}",
     "iterationBulkError": "Nepodařilo se označit iterace",
-    "iterationBulkNa": "Označit N/A",
-    "iterationListLoadError": "Nepodařilo se načíst iterace.",
     "iterationResetUntestedMissing": "Stav „Netestováno“ nebyl nalezen",
-    "overrideTitle": "Přepsat hodnoty pro iteraci {n}",
-    "overrideDescription": "Změny ovlivní pouze tuto iteraci. Snímek datové sady a zdrojová datová sada zůstávají beze změny. Tato akce je zaznamenána v auditním protokolu.",
-    "overrideValidationItem": "@{param}: {message}",
-    "overrideSensitiveDenied": "Nemáte oprávnění upravovat citlivé hodnoty.",
     "datasetSourceLocal": "Lokální",
     "datasetSourceShared": "Sdílená",
     "datasetSharedRefBadge": "+ sdílený odkaz",
@@ -10895,7 +10460,6 @@
     },
     "history": "Historie",
     "subscribers": "Předplatitelé",
-    "subscriberCount": "{count, plural, =0 {Žádní předplatitelé} one {# předplatitel} few {# předplatitelé} many {# předplatitele} other {# předplatitelů}}",
     "toasts": {
       "created": "Pravidlo vytvořeno.",
       "updated": "Pravidlo aktualizováno.",
@@ -10905,7 +10469,6 @@
       "subscribed": "Budete upozorněni, když se toto pravidlo spustí.",
       "unsubscribed": "Nebudete více upozorňováni tímto pravidlem.",
       "subscriberAdded": "{name} se přihlásil.",
-      "subscriberRemoved": "{name} se odhlásil.",
       "saveError": "Nepodařilo se uložit pravidlo.",
       "subscriptionError": "Nepodařilo se aktualizovat předplatné."
     },
@@ -10927,7 +10490,6 @@
       "scopeRunNamePlaceholder": "např. Noční",
       "scopePickFolder": "Vyberte složku",
       "scopePickTag": "Vyberte štítek",
-      "scopePickCase": "Vyberte testovací případ",
       "scopePickMilestone": "Vyberte milník",
       "scopeWebhook": "Webhook",
       "scopePickWebhook": "Vyberte webhook",
@@ -11324,8 +10886,7 @@
     "unclassified": "Žádná hlavní příčina",
     "source": {
       "AI": "Hlavní příčina navržena AI",
-      "labelAI": "AI",
-      "labelMANUAL": "Manuální"
+      "labelAI": "AI"
     },
     "columns": {
       "classification": "Hlavní příčina",

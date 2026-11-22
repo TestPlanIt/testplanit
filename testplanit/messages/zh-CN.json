@@ -29,7 +29,6 @@
     "searchGroups": "搜索组……",
     "searchCases": "{count, plural, =0 {搜索案例} one {搜索案例#} other {搜索案例#}}",
     "searchProjects": "{count, plural, =0 {搜索项目} one {搜索项目#} other {搜索项目#}}",
-    "searchTags": "搜索标签...",
     "searchRuns": "{count, plural, =0 {搜索测试运行次数} one {搜索测试运行次#} other {搜索测试运行次#}}",
     "searchSessions": "{count, plural, =0 {搜索会话} one {搜索会话#} other {搜索会话#}}",
     "searchMilestones": "{count, plural, =0 {搜索里程碑} other {搜索 # 个里程碑}}",
@@ -100,8 +99,6 @@
       "addedToTestRun": "已添加到测试运行",
       "addedToTestRunDescription": "测试用例已添加到测试运行中。",
       "noAvailableTestRuns": "所有正在进行的测试运行均已包含此测试用例。",
-      "resultUpdateError": "测试结果更新失败",
-      "resultDeleteError": "删除测试结果失败",
       "selectStatus": "选择状态",
       "addToTestRun": "添加到测试运行",
       "status": "地位",
@@ -225,7 +222,6 @@
       "notApplicable": "不适用",
       "redirecting": "正在重定向...",
       "pendingDelete": "将被删除",
-      "pendingChanges": "待定变更",
       "importing": "输入...",
       "addingTestCases": "添加测试用例……"
     },
@@ -335,7 +331,6 @@
       "notificationMode": "通知",
       "value": "价值",
       "key": "钥匙",
-      "configurationDetails": "配置详情",
       "isActive": "积极的",
       "members": "成员",
       "milestoneTypes": "里程碑类型",
@@ -411,7 +406,6 @@
       "API": "API",
       "folder": "文件夹",
       "parentFolder": "新案例的父文件夹",
-      "multipleValues": "多个值",
       "multipleValuesCount": "多个值（{count, number}）",
       "provider": "提供者",
       "updatedAt": "更新于",
@@ -482,8 +476,6 @@
       "invalidDuration": "请输入有效时长",
       "maxDuration": "持续时间不得超过 {max} 分钟",
       "minLength": "{field} 必须至少包含 {min} 个字符",
-      "emailFormat": "电子邮件格式无效",
-      "passwordMatch": "密码必须匹配",
       "unique": "{field} 必须唯一",
       "roleRequired": "需要此职位",
       "nameMinLength": "名称必须至少包含 2 个字符",
@@ -547,7 +539,6 @@
       "deleteSuccess": "项目已成功删除",
       "deleteError": "删除项目时发生错误",
       "moveSuccess": "物品已成功移动",
-      "moveError": "移动物品时发生错误",
       "updateSuccess": "项目已成功更新",
       "updateSuccessCount": "{count, number} 项目已成功更新",
       "updateError": "更新项目时发生错误",
@@ -555,7 +546,6 @@
       "copyFailed": "复制链接到剪贴板失败",
       "created": "创建成功",
       "createdItem": "{item} 创建成功",
-      "createdDescription": "测试运行已创建，现在可在测试运行列表中查看。",
       "createError": "发生未知错误，请重试。",
       "emptyActive": "没有正在进行的测试运行。",
       "emptyCompleted": "未完成任何测试运行",
@@ -633,7 +623,6 @@
       "defaultNotFound": "未找到默认值",
       "emailExists": "已存在使用此电子邮件地址的用户",
       "nameExists": "已存在同名用户",
-      "duplicateValue": "该值已被使用",
       "unauthorized": "您无权执行此操作。",
       "accessDenied": "拒绝访问",
       "sessionNotFound": "未找到会话或会话无效。",
@@ -659,8 +648,6 @@
         "unlinkError": "取消链接问题出错",
         "noActiveIntegration": "未找到此项目的活动集成"
       },
-      "roleRequiredForSpecificRole": "当访问类型为特定角色时，需要提供角色信息。",
-      "projectCreationFailed": "项目创建失败，未返回 ID。",
       "invalidRoleId": "无效的角色 ID",
       "workflowStateExists": "工作流状态已存在。请选择一个新名称。",
       "failedToLoadCaseData": "案例数据加载失败，无法保存。",
@@ -704,11 +691,9 @@
       "resultSubmitPermissionDenied": "您无法提交此案例的结果。请联系项目管理员将其分配给您。",
       "dependenciesNotPassed": "被依赖项阻止",
       "dependenciesNotPassedDescription": "在此运行中，此测试用例必须等到 {count, plural, =0 {它依赖的用例都} =1 {它依赖的用例} other {它依赖的所有 # 个用例都}} 通过后才能执行。",
-      "justificationRequired": "需要提供理由",
       "justificationRequiredDescription": "将已完成的结果更改为不同的结果需要结果详情来解释更改。",
       "requiredFieldMissing": "必填结果字段缺少值。",
       "editWindowExpired": "此结果的编辑窗口已关闭。请重新录制一次。",
-      "issueRequiredOnFailure": "需要关联问题",
       "issueRequiredOnFailureDescription": "失败结果至少需要关联一个问题。请在保存前关联问题。",
       "noModelsFound": "未找到模型",
       "failedToFetchModels": "获取模型失败",
@@ -745,7 +730,6 @@
       "reports": "报告",
       "adminSamlConfig": "管理员 - SAML 配置",
       "apiDocumentation": "API 文档",
-      "sharedContent": "共享内容",
       "impact": "影响分析",
       "alerts": "通知和警报",
       "triage": "失败模式",
@@ -807,7 +791,6 @@
       "unknownGroup": "未知团体",
       "file": "文件",
       "files": "文件",
-      "existingAttachments": "现有附件",
       "new": "新的",
       "noElapsedTime": "未记录时间",
       "runDurationHint": "从第一个结果到最后一个结果的时间",
@@ -846,7 +829,6 @@
       "noOptions": "暂无选项",
       "multiConfiguration": "属于多配置组",
       "compositionLocked": "组成已锁定 — 用例集已被冻结",
-      "otherConfigurations": "其他配置",
       "noConfiguration": "无配置",
       "configurationWithName": "{configuration} — {name}",
       "selected": "已选择： {count}",
@@ -856,7 +838,6 @@
       "successRate": "成功率",
       "unassigned": "未分配",
       "testRunName": "测试运行名称",
-      "estimatesEllipsis": "估算……",
       "access": {
         "noAccess": "无访问权限",
         "globalRole": "使用全局角色",
@@ -876,9 +857,7 @@
       "sessions": "无会话",
       "activeSessions": "没有正在进行的会话",
       "completedSessions": "没有已完成的会话",
-      "testCase": "未找到测试用例",
-      "noTestCasesOrSessions": "未找到测试用例或会话",
-      "noTestCasesSessionsOrRuns": "未找到测试用例、会话或运行。"
+      "testCase": "未找到测试用例"
     },
     "or": "或者",
     "for": "为了",
@@ -893,7 +872,6 @@
         "resetColumns": "将列重置为默认值"
       },
       "filter": "筛选列表...",
-      "selectNone": "选择“无”",
       "sort": "排序列",
       "sortAscending": "按升序排列",
       "sortDescending": "按降序排列",
@@ -917,7 +895,6 @@
       "showing": "显示",
       "total": "总计 {count, plural, =1 {# 件数} other {# 件数}}",
       "filtered": "已筛选",
-      "pageOfPages": "第 {current} 页，共 {total} 页",
       "loadedOfTotal": "{loaded, number} / {total, number}"
     },
     "upload": {
@@ -928,7 +905,6 @@
         "description": "拖放文件或点击下方按钮选择文件。",
         "selectFiles": "{count, plural, =0 {选择文件} =1 {已选文件数：1} other {已选文件数：#}}",
         "selectFile": "{count, plural, =0 {选择文件} other {已选择 1 个文件}}",
-        "filesSelected": "{count, plural, =1 {已选择 1 个文件} other {已选择 # 个文件}}",
         "addMoreFiles": "添加更多文件...",
         "replaceFile": "替换文件...",
         "invalidFileType": "文件类型无效。仅允许使用 {types} 文件。",
@@ -953,8 +929,7 @@
       "dropToImportTestResults": "将文件拖放到指定位置以导入测试结果",
       "supportedCsvFormats": "支持格式：.csv",
       "supportedResultFormats": "支持的文件格式：.xml、.trx、.json",
-      "unsupportedFileType": "不支持的文件类型。预期格式： {expected}",
-      "noFilesDetected": "未检测到 Drop 文件夹中的任何文件。"
+      "unsupportedFileType": "不支持的文件类型。预期格式： {expected}"
     },
     "editor": {
       "bold": "大胆的",
@@ -1009,9 +984,7 @@
         "strikethrough": "删除线",
         "code": "代码",
         "codeBlock": "代码块",
-        "highlightText": "高亮文本",
         "textColor": "文本颜色",
-        "moreOptions": "更多选项",
         "subscript": "下标",
         "superscript": "上标",
         "alignLeft": "左对齐",
@@ -1019,9 +992,7 @@
         "alignRight": "右对齐",
         "justify": "证明合法",
         "setLink": "设置链接",
-        "editLink": "编辑链接",
-        "removeLink": "移除链接",
-        "resetColorToDefault": "重置颜色为默认值"
+        "removeLink": "移除链接"
       }
     },
     "ai": {
@@ -1078,9 +1049,6 @@
       "breadcrumb": {
         "more": "更多的"
       },
-      "clickToViewDetails": "点击查看详情",
-      "clickToExpand": "点击展开",
-      "clickToCollapse": "点击收起",
       "search": {
         "filters": "过滤器",
         "noResultsFound": "未找到结果",
@@ -1098,10 +1066,8 @@
         "openInExternalSystem": "打开方式 {provider}",
         "assignee": "受让人",
         "status": "地位： ",
-        "clickToOpenInNewTab": "点击在新标签页中打开",
         "url": "网址： ",
         "externalId": "外部 ID： ",
-        "viewIn": "查看",
         "fieldType": "字段类型： ",
         "richTextContent": "富文本内容",
         "fieldInformation": "现场信息"
@@ -1120,10 +1086,7 @@
       },
       "import": {
         "encoding": {
-          "utf8": "UTF-8",
-          "iso88591": "ISO-8859-1",
-          "iso885915": "ISO-8859-15",
-          "windows1252": "Windows-1252"
+          "utf8": "UTF-8"
         }
       },
       "loadingIssueTracker": "正在加载问题跟踪信息……",
@@ -1194,8 +1157,7 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "迭代索引 {index} 超过了支持的最大值 {cap}。请减少迭代次数或拆分运行。",
-        "iterationCapExceededMulti": "{count} 测试用例请求的迭代索引大于支持的最大值 {cap}。减少迭代次数或拆分运行。"
+        "iterationCapExceeded": "迭代索引 {index} 超过了支持的最大值 {cap}。请减少迭代次数或拆分运行。"
       }
     }
   },
@@ -1208,8 +1170,7 @@
         "apple": "继续使用 Apple",
         "microsoft": "继续使用 Microsoft",
         "samlProvider": "使用 {name}登录",
-        "magicLink": "使用一次性 Magic Link 登录",
-        "emailLogin": "继续通过电子邮件"
+        "magicLink": "使用一次性 Magic Link 登录"
       },
       "magicLink": {
         "description": "请输入您的电子邮件地址，我们将向您发送一个安全链接以供登录。无需密码。您必须已拥有一个帐户。",
@@ -1280,7 +1241,6 @@
       "error": "电子邮件验证失败",
       "expired": "验证链接已过期",
       "invalid": "无效的验证链接",
-      "alreadyVerified": "邮箱已验证",
       "toast": {
         "verifySuccess": {
           "description": "您现在可以登录您的账户了。"
@@ -1315,7 +1275,6 @@
       "title": "验证您的身份",
       "description": "请输入身份验证器应用程序中显示的 6 位验证码以继续。",
       "backupCodeLabel": "备份代码",
-      "backupCodeHint": "您还可以输入一个 8 位字符的备用代码。",
       "useAuthenticator": "请改用验证码",
       "useBackupCode": "改用备用代码",
       "signOut": "退出登录并使用其他帐户"
@@ -1328,24 +1287,14 @@
       "confirmPasswordLabel": "确认新密码",
       "signOut": "退出登录",
       "passwordsMustMatch": "密码不匹配。",
-      "genericError": "发生错误，请重试。",
-      "policyTitle": "密码要求：",
-      "policyMinLength": "至少 {count, number} 个字符",
-      "policyUppercase": "至少包含一个大写字母",
-      "policyLowercase": "至少包含一个小写字母",
-      "policyNumbers": "至少一个数字",
-      "policySpecialChars": "至少包含一个特殊字符（{chars}）"
+      "genericError": "发生错误，请重试。"
     }
   },
   "account": {
     "linkSso": {
       "description": "将您的帐户与单点登录提供商关联",
-      "availableProviders": "可用的单点登录提供商",
-      "linkWithGoogle": "与谷歌链接",
-      "linkWithSaml": "链接至 {name}",
       "accountLinked": "账户已成功关联",
       "linkingFailed": "账户关联失败",
-      "noProvidersAvailable": "目前没有可用于连接的单点登录 (SSO) 提供商。",
       "linkingInfo": "关联单点登录 (SSO) 提供商后，您可以使用该提供商而非密码登录。您现有的帐户数据将保持不变。",
       "signInWithGoogle": "使用 Google 登录",
       "enterpriseSamlSso": "企业级 SAML 单点登录",
@@ -1389,7 +1338,6 @@
       "seeAllMilestones": "{count, plural, =1 {查看 # 个里程碑} =2 {查看两个里程碑} other {查看全部 # 个里程碑}}",
       "seeAllTestCases": "{count, plural, =1 {查看 # 个测试用例} =2 {查看两个测试用例} other {查看全部 # 个测试用例}}",
       "latestTestCases": "最新测试用例",
-      "createdOn": "创建于",
       "seeAllTagsCount": "{count, plural, =1 {查看 # 个标签} =2 {查看两个标签} other {查看全部 # 个标签}}",
       "seeAllActiveSessions": "{count, plural, =1 {查看 # 个活动会话} =2 {查看两个活动会话} other {查看全部 # 个活动会话}}",
       "latestSessions": "最新会话",
@@ -1412,8 +1360,6 @@
     },
     "settings": {
       "description": "管理 {projectName}的设置",
-      "moreSettingsComingSoon": "更多设置即将推出",
-      "moreSettingsDescription": "更多项目配置选项将在未来的更新中在此处提供。",
       "junitIterationProperties": {
         "title": "迭代属性映射",
         "description": "导入时，每个测试用例的迭代索引将从名称与以下条目之一匹配的属性、特性或 trait 中读取（JUnit 属性、TestNG 特性、xUnit 特性、NUnit 属性）。请添加您的测试用例生成器使用的名称；查找不区分大小写。",
@@ -1435,23 +1381,17 @@
         "description": "管理此项目的第三方问题集成",
         "availableIntegrations": "可用的问题集成",
         "availableDescription": "选择一个问题集成方案来连接到此项目",
-        "configuredIntegration": "配置集成",
         "noIntegrationAssigned": "未分配集成问题",
         "noIntegrationDescription": "从可用选项中选择一个问题集成方案即可开始。",
         "selectIntegration": "选择要配置的问题集成",
         "integration": {
-          "assignError": "分配问题集成失败",
           "updateSuccess": "集成设置已更新",
           "updateError": "问题集成设置更新失败",
           "removeError": "移除问题集成失败",
           "removeIntegration": "移除集成",
           "confirmRemove": "您确定要移除 {name} 集成吗？",
-          "authDescription": "您需要使用 {provider} 进行身份验证才能使用此问题集成",
           "authenticating": "正在验证……",
-          "authSuccess": "身份验证成功",
           "selectProject": "选择 {provider} 项目",
-          "selectProjectPlaceholder": "选择要链接的项目",
-          "linkedProject": "关联项目",
           "loadProjectsError": "项目加载失败",
           "settingsSaved": "集成设置已成功保存",
           "saveSettingsError": "问题集成设置保存失败",
@@ -1462,22 +1402,12 @@
           "authorizeIntegration": "授权 {name}",
           "integrationSettings": "{name} 设置",
           "integrationSettingsDescription": "为该项目配置问题集成设置",
-          "selectExternalProject": "选择外部项目",
-          "refreshProjects": "刷新项目",
           "defaultIssueType": "默认问题类型",
           "selectDefaultIssueType": "选择默认问题类型",
-          "defaultIssueTypeDescription": "创建新问题时，此问题类型将被预先选中。",
-          "issueTypePlaceholder": "例如：缺陷、任务、故事",
-          "defaultComponent": "默认组件",
-          "componentPlaceholder": "例如，前端、后端",
           "automaticSync": "自动同步",
-          "automaticSyncDescription": "自动同步TestPlanIt与外部系统之间的问题",
           "simpleUrlDescription": "此问题集成使用简单的 URL 模式链接到外部问题。问题将使用配置的 URL 模式在新标签页中打开。",
-          "externalProjectHelp": "这将设置从 TestPlanIt 创建新问题的默认项目。您仍然可以链接和同步来自其他外部项目的问题——每个问题都跟踪其自身的源项目。",
           "linkedProjects": "链接的外部项目",
           "linkedProjectsDescription": "通过此集成连接的外部项目",
-          "noLinkedProjects": "没有链接外部项目",
-          "noLinkedProjectsDescription": "添加外部项目以启用问题搜索和同步。",
           "addProjects": "添加项目",
           "addSelected": "添加所选内容",
           "setAsDefault": "设置为默认值",
@@ -1489,8 +1419,6 @@
           "syncStatusCompleted": "已同步",
           "syncStatusError": "同步错误",
           "fanOutPartialFailure": "无法访问 {count} 个项目。正在显示 {successCount} 个项目的结果。",
-          "projectSelectorLabel": "项目",
-          "defaultIssueTypeHelp": "使用 TestPlanIt 创建新问题时，系统会自动选择此问题类型。如果您经常创建相同类型的问题，这将节省时间。",
           "automaticSyncHelp": "启用此功能后，当外部系统（通过 Webhook）检测到更改时，问题将自动同步。您也可以随时手动同步。",
           "removeWarningTitle": "移除此集成问题将导致：",
           "removeWarning1": "断开所有与此问题集成相关的问题（问题仍保留在数据库中）",
@@ -1651,12 +1579,10 @@
         "outboundCreateUrlHelp": "目标 URL。Slack 传入 webhook URL 会自动检测。",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "检测到：Slack",
-        "outboundDetectedHmac": "检测到：通用 HMAC",
         "adapterLabelSlack": "松弛",
         "adapterLabelGenericHmac": "通用 HMAC webhook",
         "outboundCreateSubscriptionsTitle": "订阅",
         "outboundCreateSubscriptionsHelp": "选择哪些事件会触发到此目标位置。您可以稍后更改这些设置。",
-        "outboundSubsTestRunsAndSessions": "测试运行和会话",
         "outboundSubsTestRuns": "测试运行",
         "outboundSubsSessions": "会话",
         "outboundSubsScimUsers": "SCIM 用户",
@@ -1682,7 +1608,6 @@
           "scimGroupMemberAddedSummary": "新增成员（批量同步摘要）",
           "triggered": "已触发"
         },
-        "iterationResultHelp": "每次记录迭代结果时触发——无论是通过、失败、跳过还是其他任何状态。在长时间的自动化运行中应谨慎使用（每次迭代触发一次事件）。",
         "events": {
           "testRunCreated": "创建测试运行",
           "testRunStateChanged": "测试运行状态已更改",
@@ -1714,7 +1639,6 @@
         },
         "outboundSubsIssues": "问题",
         "outboundSubsCases": "案例",
-        "outboundSubsSelectAll": "请选中此部分中的所有内容",
         "outboundCreateSubmit": "创建 webhook",
         "outboundCreateSuccess": "已创建出站 webhook。",
         "outboundCreateError": "创建出站 webhook 失败。",
@@ -1795,14 +1719,11 @@
         "filterConfigPlaceholder": "所有 webhook",
         "filterEventPlaceholder": "所有事件",
         "filterStatusFailed": "失败的",
-        "filterSinceDefault": "自…",
-        "filterUntilDefault": "直到…",
         "filterReset": "重置筛选器",
         "filterBulkReplayButton": "批量重放 {count, number} 出站失败",
         "filterBulkReplayHidden": "所有可见的故障都发生在入站端——请重新触发上游事件。",
         "deliveriesEmpty": "没有符合这些筛选条件的订单。",
         "deliveriesResetFilters": "重置筛选器",
-        "deliveriesLoadMore": "加载更多",
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "事件",
         "tableHeaderSubjectRef": "引用",
@@ -1941,8 +1862,7 @@
           "autoExecute": "执行自动化用例",
           "autoExecuteHelp": "运行组成后,请求在此目标上自动执行其自动化用例。手动用例保留在运行中供测试人员使用。",
           "autoExecuteNoTargets": "未为此项目配置执行目标。<link>添加一个</link>以自动执行运行。",
-          "autoExecuteTargetMissing": "所选的执行目标已删除或禁用。运行仍会组成,但在您选择另一个目标之前不会请求执行。",
-          "autoExecuteSaveError": "无法保存自动执行设置"
+          "autoExecuteTargetMissing": "所选的执行目标已删除或禁用。运行仍会组成,但在您选择另一个目标之前不会请求执行。"
         },
         "inboundEmptyState": "还没有入站 webhook。<link>添加一个</link>以接收来自您的问题跟踪器的问题更新，或来自连接的存储库的拉取请求和推送。",
         "inboundChooserBitbucket": "Bitbucket",
@@ -1961,8 +1881,6 @@
       "aiModels": {
         "description": "配置人工智能模型以实现智能测试用例生成和分析",
         "availableModelsDescription": "从系统管理员配置的模型中选择一个默认的 AI 模型用于此项目。",
-        "currentModelSettings": "当前模型设置",
-        "currentModelDescription": "当前激活的 AI 模型配置详情： {name}",
         "noModelsAvailable": "目前没有可用的AI模型。请联系您的系统管理员，为您的组织配置AI模型。",
         "monthlyBudget": "每月预算",
         "model": "模型",
@@ -1971,7 +1889,6 @@
         "systemDefault": "系统默认设置",
         "setAsDefault": "设置为默认值",
         "clearDefault": "清除默认设置",
-        "useForProject": "用于项目",
         "removeModel": "清除默认设置",
         "removeWarningTitle": "清除默认AI模型将：",
         "removeWarning1": "除非已配置每个功能的单独设置，否则禁用 AI 驱动的功能。",
@@ -2035,10 +1952,6 @@
           "assignments": "正在使用"
         },
         "versionLabel": "v{version, number}",
-        "assignmentsCount": "{count, plural, =0 {0 个案例} =1 {# 个案例} other {# 个案例}}",
-        "rowsCount": "{count, plural, =0 {0 行} =1 {# 行} other {# 行}}",
-        "columnsCount": "{count, plural, =0 {0 列} =1 {# 列} other {# 列}}",
-        "actionsMenuLabel": "打开数据集操作",
         "actionOpen": "打开编辑器",
         "openLink": "打开",
         "create": {
@@ -2071,9 +1984,6 @@
           "saving": "保存",
           "savedHint": "所有更改已保存至版本 {version, number}",
           "unsavedHint": "未保存的更改",
-          "currentVersionLabel": "v{version, number} （当前）",
-          "currentVersionInitialLabel": "当前的",
-          "historicalVersionLabel": "v{version, number}",
           "historicalReadOnlyBanner": "您正在查看版本 {version, number}。编辑此版本将创建一个基于此版本的新分支。",
           "branchingBanner": "保存操作将创建一个从 v{version, number} 分支出来的新版本。",
           "saveError": "无法保存数据集",
@@ -2088,9 +1998,7 @@
           "historicalItemLabel": "v{version, number}",
           "historicalItemBy": "作者： {name}",
           "noVersionsYet": "暂无已保存版本"
-        },
-        "datasetTabSharedReadOnlyHint": "版本 {version, number}的只读视图。切换到当前版本进行编辑。",
-        "datasetTabSharedEditorHint": "完成后点击“保存”。每次保存都会创建一个新版本。"
+        }
       },
       "quickScript": {
         "description": "启用 QuickScript 并连接代码库，以进行 AI 辅助测试生成。",
@@ -2169,7 +2077,6 @@
           "pathLabel": "路径",
           "patternLabel": "模式",
           "previewFiles": "预览文件",
-          "scanningRepo": "正在扫描存储库文件… ({seconds}s)",
           "title": "路径模式",
           "truncatedBadge": "结果可能不完整（受提供商限制）"
         },
@@ -2182,8 +2089,6 @@
         },
         "refreshComplete": "缓存已刷新：{fileCount} 个文件",
         "refreshInProgress": "缓存刷新仍在后台运行。完成后将在此处更新。",
-        "refreshRateLimited": "缓存已刷新：列出了 {fileCount} 个文件，缓存了 {contentCached}/{fileCount} 个内容（速率受限——请再次刷新以完成）",
-        "refreshSuccess": "缓存已刷新： {fileCount} 个文件（已缓存{contentCached} 个内容）",
         "repository": {
           "branchLabel": "分支",
           "branchesTruncatedHint": "显示前 {count, number} 个分支。输入以搜索整个存储库。",
@@ -2483,26 +2388,18 @@
       }
     },
     "matrix": {
-      "metaTitle": "矩阵视图",
       "pageTitle": "参数化测试迭代矩阵",
       "loading": "载荷矩阵…",
       "loadError": "无法加载矩阵视图。请重试或缩小筛选范围。",
-      "cellCapShort": "此矩阵将生成 {cells, number} 个单元格，超出 {threshold, number} 个单元格的限制。请缩小筛选范围以继续。",
       "caseColumnHeader": "案例/参数行",
       "cellSummary": "{pass, number} 通过， {fail, number} 失败， {notRun, number} 未运行",
       "popoverTitle": "{count, plural, =1 {# 迭代次数} other {# 迭代次数}}",
-      "iterationUnlabeled": "迭代 #{index, number}",
       "popoverInflightHint": "飞行中的迭代一旦记录下来，就会显示在这里。",
       "popoverNoTimestamp": "—",
-      "filterStatus": "{count, plural, =0 {状态} one {状态 (#)} other {状态 (#)}}",
-      "filterConfig": "{count, plural, =0 {配置} one {配置 (#)} other {配置 (#)}}",
-      "filterDataset": "{count, plural, =0 {数据集} one {数据集 (#)} other {数据集 (#)}}",
       "filterDatasetLabel": "数据集",
       "filterStatusPlaceholder": "任何状态",
       "filterConfigPlaceholder": "任何配置",
       "filterDatasetPlaceholder": "任何数据集",
-      "filterDateFrom": "从",
-      "filterDateTo": "到",
       "configNone": "（无配置）",
       "clearFilter": "清除",
       "resetFilters": "重置筛选器",
@@ -2583,7 +2480,6 @@
       "reopen": "重新开放"
     },
     "dates": {
-      "pickStartDate": "选择开始日期",
       "pickCompletionDate": "拣货完成日期",
       "selectDate": "选择日期...",
       "completionWarning": "警告：这将把该里程碑标记为已完成"
@@ -2666,7 +2562,6 @@
       "providerJira": "Jira",
       "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
-      "syncNow": "立即同步",
       "unlinkMenuItem": "取消与 {provider} 的链接",
       "unlinkConfirmTitle": "取消链接里程碑？",
       "unlinkConfirmDescription": "这将停止与跟踪器的同步：字段将再次变为可编辑状态，已同步的问题链接将变为手动链接（您可以保留或移除），之后可以通过重新导入该工件来重新建立链接。",
@@ -2702,10 +2597,6 @@
       "columnCoverage": "覆盖率",
       "columnSource": "来源",
       "sourceSynced": "已同步",
-      "coveragePassed": "通过",
-      "coverageFailed": "失败",
-      "coverageInProgress": "进行中",
-      "coverageNotRun": "未运行",
       "coverageUncovered": "未覆盖",
       "filterAllCoverage": "所有覆盖率",
       "filterAllSources": "所有来源",
@@ -2724,7 +2615,6 @@
       "overflowImportAction": "导入并链接",
       "overflowImportSuccess": "导入已开始 — 问题将在同步后显示。",
       "overflowImportError": "从 Jira 导入成员问题失败。",
-      "emptyCta": "链接一个问题以开始使用。",
       "unlinkConfirmTitle": "取消链接问题？",
       "unlinkConfirmDescription": "这将从此里程碑中移除该问题。问题本身会被保留，之后可以再次链接。",
       "totalsUncovered": "{count, plural, other {# 个未覆盖问题}}",
@@ -2781,9 +2671,7 @@
     },
     "messages": {
       "createSuccess": "会话创建成功",
-      "createSuccessMultiple": "{count, number} 会话创建成功",
-      "duplicateSuccess": "会话已成功复制",
-      "duplicateSuccessMultiple": "{count} 会话已成功复制"
+      "createSuccessMultiple": "{count, number} 会话创建成功"
     },
     "duplicateDialog": {
       "title": "重复会话",
@@ -2795,8 +2683,7 @@
       "failedToCreate": "创建新会话失败",
       "failedToCreateVersion": "创建会话版本失败",
       "nameAlreadyExists": "会话名称已存在。请选择一个新名称。",
-      "createFailed": "创建会话失败",
-      "duplicateFailed": "会话复制失败"
+      "createFailed": "创建会话失败"
     },
     "validation": {
       "nameMinLength": "名称必须至少包含 2 个字符。",
@@ -2835,7 +2722,6 @@
     "summary": {
       "workDistributionDescription": "预计剩余总时间：",
       "recentResultsTitle": "近期业绩概要",
-      "recentResultsDescription": "会话结果总结。",
       "noRecentResults": "近期未记录任何会话结果。",
       "completionTrendTitle": "完成趋势",
       "completionTrendDescription": "每月完成的会话数量。",
@@ -2965,8 +2851,6 @@
         "title": "编辑个人资料",
         "timezonePlaceholder": "选择或搜索时区...",
         "timezoneRequired": "必须填写时区信息。",
-        "avatarUpdated": "头像更新成功。",
-        "avatarUpdateError": "头像更新失败。",
         "deleteAvatar": "删除头像",
         "deleteAvatarConfirm": "您确定要删除您的 {name}吗？",
         "emailDisabledForSso": "单点登录 (SSO) 帐户的电子邮件地址无法更改。请通过您的身份提供商更新电子邮件地址。",
@@ -3010,7 +2894,6 @@
       "notifications": {
         "title": "通知偏好设置",
         "description": "自定义接收通知的方式",
-        "currentGlobal": "当前全局设置： {mode}",
         "mode": {
           "label": "通知模式",
           "useGlobal": "使用全局设置"
@@ -3154,7 +3037,6 @@
         "loadMore": "加载中",
         "viewDetails": "查看详情",
         "columnAction": "操作",
-        "columnTimestamp": "时间戳",
         "allActions": "所有操作",
         "allTypes": "所有类型",
         "noMatchingEntries": "没有符合所选筛选条件的条目。",
@@ -3323,22 +3205,16 @@
       "removedFromCase": "已从测试用例中移除",
       "confirmDelete": "确认删除步骤 {number, number}？",
       "createSharedSteps": "创建共享 {number, plural, one {步骤} other {步骤}}",
-      "sharedStepsName": "共享步骤名称",
       "sharedStepsDescription": "输入您新共享的步骤 {number, plural, one {的名称} other {步骤}}。这将包括 {number, plural, one {# 已选步骤} other {# 已选步骤}}。",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "请选择步骤并输入名称以创建共享步骤。",
-        "failedToCreateSharedStepGroupError": "创建共享步骤失败，请重试。",
-        "sharedStepGroupCreatedSuccess": "共享步骤创建成功！",
-        "genericSharedStepCreationError": "创建共享步骤时发生未知错误。请重试。",
         "errorCreatingSharedGroup": "创建共享步骤失败，请重试。",
         "sharedGroupCreatedSuccess": "共享步骤组创建成功！",
         "failedToCreateSharedGroupError": "创建共享组失败，请重试。"
       },
       "selectSharedStepsTitle": "选择共享步骤",
       "selectSharedStepsDescription": "选择要添加到测试用例中的共享步骤。",
-      "sharedStepsListPlaceholder": "正在加载共享步骤...",
       "sharedStepsNamePlaceholder": "输入名称以标识共享步骤",
-      "noSharedStepsFound": "未找到此项目的共享步骤。",
       "sharedStepGroupTitle": "共享步骤： {name}",
       "confirmDeleteSharedStepBlock": "您确定要从此测试用例中移除共享步骤块“{name}”吗？这不会删除共享步骤组本身。",
       "removeBlockButton": "移除障碍",
@@ -3347,7 +3223,6 @@
       "searchSharedStepsPlaceholder": "选择共享步骤...",
       "stepsCountLabel": "{count, plural, =0 {# 步骤} =1 {# 步骤} other {# 步骤}}",
       "reviewSelectedStepsTitle": "回顾选定步骤",
-      "noStepsInSelectedGroup": "所选组没有步骤。",
       "sharedGroupSuffix": "（共同步骤）",
       "unnamedSharedGroup": "未命名的共享步骤",
       "noStepsInSelectedSharedGroup": "所选共享组没有步骤。",
@@ -3358,8 +3233,6 @@
       }
     },
     "testCase": {
-      "toggleAutomated": "切换自动测试",
-      "editAttachmentsIndividually": "单独编辑附件。",
       "automatedStatus": "自动化测试是 {status}"
     },
     "templateNotAssignedWarning": "此测试用例使用了模板“{templateName}”，但该模板当前未分配给项目“{projectName}”。您可能需要将此模板分配给该项目，或者修改测试用例以使用其他模板。",
@@ -3390,12 +3263,10 @@
     },
     "dragDrop": {
       "move": "移动",
-      "promptTitle": "你想做什么？",
       "copying": "正在复制…",
       "copyComplete": "{count, plural, =1 {已复制 1 个案例至 {folder}} other {已复制 # 个案例至 {folder}}}{dest, select, samename {} crossProject { 位于 {projectName}} other {}}",
       "moveComplete": "将 1 个案例移至 {count, plural, =1 {{folder}} other {将 # 个案例移至 {folder}}}{dest, select, samename {} crossProject { 中 {projectName}} other {}}",
       "copyError": "{count, plural, =1 {无法将 1 个案例复制到 {folder}} other {无法将 # 个案例复制到 {folder}}}{dest, select, samename {} crossProject { 中 {projectName}} other {}}",
-      "moveError": "{count, plural, =1 {无法将 1 个案例移动到 {folder}} other {无法将 # 个案例移动到 {folder}}}{dest, select, samename {} crossProject { 中 {projectName}} other {}}",
       "copyAlreadyRunning": "另一份拷贝正在制作中，请稍候。",
       "currentSuffix": "（当前的）",
       "moveDisabledSameFolder": "案例已在此文件夹中",
@@ -3446,7 +3317,6 @@
       "currentRunTooltip": "您正在查看的测试运行",
       "attempt": "试图",
       "invalidProject": "无效项目",
-      "noSearchResults": "没有符合您搜索条件的案例。",
       "bulkEdit": "批量编辑",
       "createTestRun": "创建测试运行",
       "addToRunDraftBlocked": "如果此项目的“从测试运行中排除草稿案例”选项已启用，则无法将草稿案例添加到运行中。",
@@ -3670,10 +3540,7 @@
       "anyIssue": "任何问题",
       "noIssues": "没问题"
     },
-    "noFoldersTitle": "暂无文件夹",
-    "noFoldersDescription": "首先创建你的第一个文件夹来整理你的测试用例。",
     "noFoldersOrCasesNoPermission": "没有要显示的文件夹或测试用例。",
-    "createFirstFolder": "创建你的第一个文件夹",
     "bulkEdit": {
       "title": "批量编辑 {count, plural, one {# 个案例} other {# 个案例}}",
       "description": "正在编辑 {count, plural, one {# 已选案例} other {# 已选案例}}。选中字段即可启用编辑。",
@@ -3692,19 +3559,12 @@
         }
       },
       "errors": {
-        "fetchErrorTitle": "加载案例时出错",
-        "fetchErrorDescription": "无法加载所选案例的数据。请关闭此窗口并重试。",
-        "updateErrorTitle": "更新失败",
-        "updateFailed": "保存更改时出错。请检查数据并重试。",
-        "fetchError": "获取案例数据时出错。"
+        "updateFailed": "保存更改时出错。请检查数据并重试。"
       },
       "success": {
         "casesUpdated": "{count, number} 案例已成功更新"
       },
       "validationError": "验证错误",
-      "stepsCannotBeBulkEdited": "步骤无法批量编辑",
-      "stepsInfoTitle": "步骤信息",
-      "stepsCannotBeBulkEditedInfo": "步骤无法批量编辑。请逐个编辑各个案例来修改步骤。",
       "confirmDeleteCases": "您确定要删除 {count, plural, one {# 已选案例} other {# 已选案例}}吗？此操作无法撤销。",
       "replaceAll": "全部替换",
       "searchReplace": "搜索和替换",
@@ -3765,7 +3625,6 @@
         "single": "每用例单行",
         "multi": "每步多行"
       },
-      "comingSoon": "即将推出",
       "exportError": "导出失败，请重试。"
     },
     "quickScript": {
@@ -3846,19 +3705,13 @@
       "loadingDetails": "正在加载用例详情……",
       "caseDetailsError": "用例详情加载失败。",
       "sourceLabel": "来源",
-      "fieldValuesLabel": "字段值",
       "lastRunLabel": "最后一次",
-      "noFieldValues": "无字段值",
       "noLastRun": "从未运行",
-      "stepExpectedResult": "{step} → {result}",
-      "runStatusDate": "{status} — {date}",
       "noFolder": "没有文件夹",
       "duplicateWarning": "发现可能重复项",
       "duplicateWarningDescription": "{count, plural, one {# 现有案例} other {# 现有案例}} 可能涵盖类似功能",
       "duplicateWarningReview": "审查",
-      "importWarning": "可能重复",
       "importWarningTooltip": "此案例名称类似于 {count, plural, one {# 现有案例} other {# 现有案例}}: {names}",
-      "importIntraWarning": "导入过程中出现重复项",
       "importIntraWarningTooltip": "此导入中的行 {rows} 具有相同或非常相似的名称",
       "checkingDuplicates": "正在检查重复项……"
     },
@@ -3888,12 +3741,8 @@
         "currentFolder": "当前文件夹",
         "fromIssue": "从问题",
         "fromDocument": "从文档",
-        "documentTitle": "文件标题",
-        "documentTitlePlaceholder": "请输入您的需求文档标题",
         "documentDescription": "需求文档",
         "documentDescriptionPlaceholder": "请将需求文档内容粘贴到此处……",
-        "documentPriority": "优先级（可选）",
-        "selectPriority": "选择优先级",
         "saveDocument": "保存文档要求",
         "fromUrl": "来自 URL",
         "recentGenerations": "最近的从 URL 生成测试用例的作业",
@@ -3960,15 +3809,11 @@
         "title": "审查生成的测试用例",
         "description": "查看 AI 生成的测试用例，进行必要的修改，并选择要导入的用例。",
         "selected": "{count, number} 中的 {total, number} 已选",
-        "moreSteps": "……以及 {count, plural, one {# 更多步骤} other {# 更多步骤}}",
         "templateFields": "模板字段：",
-        "moreFields": "……以及 {count, plural, one {# 更多字段} other {# 更多字段}}",
-        "crawledUrls": "{count, plural, one {# 已抓取页面数} other {# 已抓取页数}}",
         "spaWarning": "此页面可能需要 JavaScript 渲染。结果可能不完整。",
         "filterByPage": "按页面筛选",
         "allPages": "所有页面（{pages, plural, one {# 页} other {# 页数}}, {cases, plural, one {# 案例} other {# 案例数}}）"
       },
-      "generatingLegacy": "利用人工智能生成测试用例……",
       "expandProgress": "{done, number} 的 {total, number} 生成",
       "import": "{count, plural, =0 {导入测试用例} =1 {导入 1 个测试用例} other {导入 # 个测试用例}}",
       "stage": "{count, plural, =0 {阶段测试用例} =1 {阶段 1 个测试用例} other {阶段 # 个测试用例}}",
@@ -4010,11 +3855,6 @@
         "repositoryNotFound": "项目仓库未找到。请联系管理员。",
         "workflowNotConfigured": "项目工作流程未配置。请检查项目设置。",
         "authenticationError": "身份验证错误。请刷新页面后重试。",
-        "caseCreationFailed": "创建测试用例失败： {name}",
-        "caseAlreadyExists": "此文件夹中已存在测试用例“{name}”。",
-        "invalidTemplateConfig": "测试用例“{name}”的模板配置无效。",
-        "nameTooLong": "测试用例名称“{name}”过长，请使用较短的名称。",
-        "caseCreationError": "创建“{name}”失败： {error}",
         "templateNotFound": "找不到所选模板。请刷新页面重试。",
         "repositoryConfigError": "项目仓库配置错误。请联系您的管理员。",
         "workflowConfigError": "项目工作流程配置错误。请检查项目设置。",
@@ -4022,9 +3862,7 @@
         "validationFailed": "数据验证失败。请检查测试用例内容并重试。",
         "databaseError": "数据库连接错误，请稍后再试。",
         "genericImportError": "导入失败： {error}",
-        "networkRoutingError": "网络路由或服务器配置问题 - 收到的是 HTML 错误页面而不是 API 响应",
         "invalidSourceConfig": "无效的源配置",
-        "failedToCreateCaseVersion": "创建案例版本失败",
         "noUrlProvided": "请输入要从中生成测试用例的 URL",
         "urlFetchFailed": "无法从提供的URL获取内容。请检查URL并重试。",
         "llm": {
@@ -4230,7 +4068,6 @@
       "startLine": "起始行",
       "symbolHint": "声明通过文件中的名称定位。",
       "symbolNoneDetected": "未检测到符号，请输入名称。",
-      "symbolPlaceholder": "functionName",
       "symbolSelectPlaceholder": "选择或输入符号……",
       "updateSuccess": "代码固定已更新",
       "updateFailed": "无法更新代码固定",
@@ -4257,9 +4094,6 @@
     "add": {
       "button": "添加标签",
       "title": "添加新标签",
-      "fields": {
-        "name_error": "标签名称为必填项"
-      },
       "errors": {
         "nameExists": "已存在同名标签"
       }
@@ -4368,7 +4202,6 @@
       "filterEntityTypeRun": "测试运行",
       "filterAllProjects": "所有项目",
       "actionRevert": "恢复决定",
-      "revertedBadge": "已恢复",
       "revertedBadgeTooltip": "{count, plural, =1 {之前恢复过一次} other {之前恢复过 # 次}}"
     },
     "requester": {
@@ -4387,9 +4220,7 @@
       "cannotSelfAssign": "你不能给自己分配评论；请选择其他用户或角色。",
       "defaultComment": "请检查从 {fromState} 到 {toState}的过渡。",
       "defaultCommentRole": "请求 {roleName} 组批准从 {fromState} 过渡到 {toState}。",
-      "ineligibleAssigneeError": "此用户/角色无权审核此区域的评论。请选择其他人。",
-      "ineligibleAssigneeErrorUser": "{name} 无法审核此区域的评论。请选择其他用户或角色。",
-      "ineligibleAssigneeErrorRole": "{roleName} 角色无权审核此区域的评论。请选择其他角色或用户。"
+      "ineligibleAssigneeError": "此用户/角色无权审核此区域的评论。请选择其他人。"
     },
     "bulkRequester": {
       "saveAndRequestButton": "保存并请求审核",
@@ -4428,8 +4259,7 @@
       "rejectSuccess": "审核被驳回。",
       "ineligibleError": "您已不再具备对此复审请求作出决定的资格。",
       "alreadyDecidedError": "本次审查结果已确定。",
-      "decideError": "无法记录您的决定。请稍后再试。",
-      "panelSummary": "来自 {requesterName}的审核请求：过渡到 {targetStateName}"
+      "decideError": "无法记录您的决定。请稍后再试。"
     },
     "revert": {
       "confirm": "恢复决定",
@@ -4545,17 +4375,12 @@
         "noMatchesDescription": "测试运行名称和描述与任何测试用例都不匹配。请返回上一步，添加更具体的详细信息，例如功能名称、组件名称或测试用例中出现的关键字。",
         "maxResultsTitle": "最大测试用例匹配数",
         "maxResultsDescription": "搜索条件匹配了大量测试用例。为了获得更精准的结果，请返回上一步，为测试运行添加更具体的详细信息。",
-        "batchSize": "批量大小",
-        "batchSizeAll": "所有案例（单个请求）",
-        "batchSizePercent": "{percent}% ({count} 个案例)",
-        "requestsNeeded": "{count, plural, =1 {# 将发出 AI 请求} other {# 将发出 AI 请求}}",
-        "batchNote": "所有批次的结果将合并。"
+        "batchSize": "批量大小"
       },
       "loading": {
         "batch": "正在处理批次 {current} ，共 {total}",
         "analyzing": "分析测试用例……",
         "progress": "分析了 {analyzed, number} 中的 {total, number} 个测试用例...",
-        "waitingForAi": "正在等待 AI 响应（批次 {batch} ，共 {total} 批次）...",
         "selectedSoFar": "{count, plural, =1 {# 目前已选择的测试用例数} other {# 目前已选择的测试用例数}}",
         "resolving_integration": "解决人工智能集成问题……",
         "fetching_cases": "正在获取测试用例..."
@@ -4578,7 +4403,6 @@
       },
       "actions": {
         "start": "分析测试用例",
-        "startBatched": "分析测试用例（{count, plural, one {# 批次} other {# 批次数}}）",
         "accept": "添加到选择"
       },
       "errors": {
@@ -4603,13 +4427,8 @@
     "summary": {
       "title": "测试运行总结",
       "description": "查看测试运行摘要",
-      "activeRunsAndEstTime": "活跃运行次数及预计时间",
-      "activeRunsLabel": "运行",
-      "totalEstTime": "预计总时间",
-      "responsibleUsers": "负责任的用户",
       "allActiveRuns": "所有正在进行的运行",
       "recentResultsTitle": "近期手动结果",
-      "recentResultsDescription": "查看测试运行的最新结果",
       "recentAutomatedResultsTitle": "近期自动结果",
       "noRecentAutomatedResults": "未找到最近的自动搜索结果。",
       "automationRunsInProgress": "{count, plural, =1 {# 个自动化运行正在进行} other {# 个自动化运行正在进行}}",
@@ -4632,13 +4451,11 @@
       "fields": {
         "duplicateScope": {
           "label": "待复现的测试用例",
-          "allCases": "所有测试用例",
-          "specificStatuses": "具有特定状态的测试用例"
+          "allCases": "所有测试用例"
         },
         "statusesToInclude": {
           "label": "测试用例包括",
           "description": "选择要包含在重复测试运行中的测试用例的状态。",
-          "noStatuses": "本次测试运行未发现任何特定状态，或结果仍在加载中。",
           "noStatusesRecorded": "本次运行未记录任何具体状态。复制操作将包含所有测试用例（通常标记为“未测试”）。"
         },
         "copyAssignments": {
@@ -4717,9 +4534,7 @@
         "previousAnalysisPlaceholder": "选择一个分析……",
         "previousAnalysisOption": "{sha} · {date} · {count, plural, other {# 个受影响的测试}}",
         "sameCommit": "基础和头部是同一个提交。",
-        "swapped": "基础和头部已交换，以便变更向前读取。",
-        "loadingCommits": "正在加载提交……",
-        "noCommits": "未找到提交。"
+        "swapped": "基础和头部已交换，以便变更向前读取。"
       },
       "diff": {
         "summary": "{files, plural, other {# 个文件}} 已更改 · +{additions, number} −{deletions, number}",
@@ -4727,13 +4542,9 @@
         "noChanges": "这些提交之间没有变化。",
         "statusModified": "已修改",
         "statusRenamed": "已重命名",
-        "showPatch": "显示变更",
-        "hidePatch": "隐藏变更",
-        "largePatch": "大补丁（{lines, number} 行）",
         "showFullPatch": "显示完整补丁",
         "binary": "二进制文件",
         "noPatch": "补丁不可用",
-        "pinnedFiles": "{count, plural, other {# 个代码固定}}",
         "loading": "正在比较提交……"
       },
       "loading": {
@@ -4819,7 +4630,6 @@
       },
       "actions": {
         "analyze": "分析",
-        "reanalyze": "重新分析",
         "refine": "返回更改",
         "accept": "{count, plural, other {添加 # 个用例}}",
         "cancelAnalysis": "取消分析"
@@ -4930,11 +4740,6 @@
         "analyzing": "分析中……",
         "reset": "结果清晰",
         "job": {
-          "discoveringDatasets": "发现数据集……",
-          "scanningFile": "正在扫描 testmo 导出文件...",
-          "rowsProcessed": "已处理 {value, number} 行",
-          "itemsProcessed": "已处理 {processed, number} 项中的 {total, number} 项",
-          "analysisInProgress": "分析导出…",
           "cancel": "取消导入",
           "cancelRequested": "取消请求",
           "processingRate": "速度：",
@@ -4966,12 +4771,9 @@
         "mappingDescription": "查看分析详情并将 Testmo 实体映射到现有的 TestPlanIt 记录，或者选择创建新记录。",
         "mappingAnalysisError": "我们无法生成映射分析。请重试。",
         "mappingLoading": "建筑测绘分析…",
-        "mappingSummaryHeading": "检测到的实体",
-        "mappingSummaryPending": "{count, plural, =1 {# 待处理} other {# 待处理}}",
         "mappingOutstandingTitle": "解决未决映射问题",
         "mappingOutstandingDescription": "在开始导入之前，请完成剩余的映射。",
         "mappingOutstandingItem": "{count, plural, =1 {# 未解决项} other {# 未解决项}} 在 {label}",
-        "mappingSummaryTemplateFields": "模板字段",
         "mappingDatasetLabels": {
           "field_values": "字段值",
           "repository_case_values": "存储库案例值",
@@ -5048,7 +4850,6 @@
         "mappingDatasetEmptyTitle": "未保存任何数据集",
         "mappingDatasetEmptyDescription": "分析过程中未保留任何用于配置的数据集。如果您需要其他数据，请上传其他导出文件。",
         "importProgressTitle": "导入进度",
-        "importProgressDescription": "{count, plural, =0 {所有记录均已导入（涵盖所有跟踪实体）。} =1 {还剩 1 条记录（涵盖所有跟踪实体）。} other {还剩 # 条记录（涵盖所有跟踪实体）。}}",
         "importProgressTotalRemaining": "{count, plural, =0 {无剩余记录} =1 {剩余 1 条记录} other {剩余记录#}}",
         "importProgressProcessed": "{processed, number}/{total, number} 记录已导入",
         "importProgressAria": "导入完成 {percent, number}%",
@@ -5073,7 +4874,6 @@
         "jobLoadFailed": "我们无法加载该导入作业。",
         "uploadProgressAnalyzing": "上传完成。正在分析文件…",
         "uploadProgressComplete": "上传完成",
-        "etaLabel": "预计到达时间： {time}",
         "startImportButton": "开始导入",
         "workflowCreate": {
           "nameLabel": "工作流名称",
@@ -5083,18 +4883,11 @@
           "typeLabel": "工作流程类型",
           "scopeLabel": "工作流程范围"
         },
-        "mappingDatasets": "需要审核的数据集",
         "mappingImportConfiguration": "导入配置",
         "mappingExportConfiguration": "导出配置",
         "mappingImportConfigurationFailed": "我们无法导入该配置文件。请确认其为有效的 JSON 格式，然后重试。",
-        "mappingInvalidConfiguration": "配置必须为有效的JSON格式。",
-        "mappingSaveFailed": "配置保存失败，请重试。",
         "mappingSaveConfiguration": "保存配置",
-        "mappingSavingConfiguration": "正在保存…",
-        "mappingStartImport": "开始后台导入",
-        "mappingStartingImport": "开始导入…",
         "mappingImportFailed": "后台导入失败，请稍后再试。",
-        "mappingImportDisabled": "启动后台导入前请保存配置。",
         "mappingImportInProgress": "后台导入进行中",
         "mappingImportInProgressDescription": "导入进程正在处理配置。您可以在上方监控状态。",
         "mapping": {
@@ -5154,11 +4947,7 @@
           "templateFieldTargetResult": "结果字段",
           "templateFieldSelectPlaceholder": "选择字段",
           "templateFieldNoExistingTargets": "没有可映射的字段。",
-          "templateFieldTypePlaceholder": "选择字段类型",
           "templateFieldRestrictedLabel": "受限字段",
-          "templateFieldOptionsLabel": "下拉选项",
-          "templateFieldOptionsPlaceholder": "每行输入一个选项",
-          "templateFieldOptionsHint": "每个选项之间用新行隔开。",
           "templateFieldOptionsListLabel": "选项",
           "templateFieldOptionsCheckedLabel": "默认选中",
           "templateFieldOptionsMinValueLabel": "最小值",
@@ -5211,7 +5000,6 @@
           "milestoneNamePlaceholder": "输入里程碑类型名称",
           "milestoneDefaultLabel": "默认里程碑类型",
           "milestoneIconRequired": "选择一个图标",
-          "statusColorPlaceholder": "颜色十六进制代码（可选）",
           "issueTargetSelectPlaceholder": "选择集成方式...",
           "noIssueTargetsAvailable": "目前没有可用的集成方案。",
           "issueTargetNamePlaceholder": "集成名称...",
@@ -5498,8 +5286,7 @@
         "delete": "删除提供商",
         "entryPoint": "入口点： ",
         "autoProvision": "自动配置： ",
-        "defaultAccess": "默认访问权限： ",
-        "configurationMessage": "SAML配置尚未设置。请点击设置按钮进行配置。"
+        "defaultAccess": "默认访问权限： "
       },
       "samlConfiguration": {
         "title": "配置 SAML 提供程序",
@@ -5571,7 +5358,6 @@
         "magicLinkDisabled": "Magic Link 身份验证已禁用",
         "magicLinkCreated": "Magic Link 提供商创建",
         "magicLinkUpdateFailed": "更新 Magic Link 提供程序失败",
-        "samlConfigSaved": "SAML 配置已成功保存",
         "configureFirst": "请先配置提供程序，然后再启用它。",
         "domainRestrictionEnabled": "已启用电子邮件域限制",
         "domainRestrictionDisabled": "电子邮件域名限制已禁用",
@@ -5589,7 +5375,6 @@
         "defaultAccessUpdated": "默认访问级别已更新",
         "defaultAccessUpdateFailed": "更新默认访问级别失败",
         "emailVerificationEnabled": "新用户现在需要进行电子邮件验证。",
-        "emailVerificationDisabled": "新用户不再需要进行电子邮件验证。",
         "emailVerificationDisabledAndVerified": "电子邮件验证已禁用，{count, plural, other {# 个用户帐户}}已验证",
         "emailVerificationUpdateFailed": "电子邮件验证设置更新失败",
         "emailServerNotConfigured": "无法启用电子邮件验证：电子邮件服务器未配置",
@@ -5643,10 +5428,6 @@
           "issuer": "发行人（实体 ID）",
           "callbackUrl": "ACS（回调）URL",
           "logoutUrl": "SLO 注销 URL（可选）",
-          "entryPointPlaceholder": "https://your-idp.com/sso/saml",
-          "issuerPlaceholder": "urn:你的身份提供商:实体ID",
-          "certPlaceholder": "-----开始证书-----...",
-          "logoutUrlPlaceholder": "https://your-idp.com/slo/saml",
           "instructions": {
             "title": "配置 SAML：",
             "step1": "请联系您的 SAML 身份提供商管理员",
@@ -5720,10 +5501,7 @@
       },
       "add": {
         "button": "添加项目",
-        "title": "添加新项目",
-        "defaultFields": "创建项目时，将向项目中添加默认模板、默认里程碑类型以及所有工作流程和状态。",
-        "selectIssueTracker": "选择问题跟踪器",
-        "issueTrackerRequired": "需要问题跟踪系统。"
+        "title": "添加新项目"
       },
       "wizard": {
         "title": "创建新项目",
@@ -5754,7 +5532,6 @@
           "noConfigurations": "目前尚未定义任何配置。您可以稍后在管理后台添加配置。"
         },
         "actions": {
-          "selectDefault": "使用默认值",
           "create": "创建项目",
           "creating": "创建项目..."
         },
@@ -5779,12 +5556,6 @@
           "userPermissions": "用户权限",
           "noEffect": "无影响",
           "access": {
-            "groupsGlobalRole": "集团的全球角色",
-            "groupDefault": "组默认值",
-            "groupSpecificRole": "特定角色",
-            "groupProjectDefault": "小组项目默认设置",
-            "groupProjectNoAccess": "小组项目无访问权限",
-            "groupProjectSpecificRole": "小组项目特定角色",
             "effectiveAccess": "有效获取"
           },
           "accessHints": {
@@ -5795,11 +5566,7 @@
         },
         "placeholders": {
           "selectDefaultAccess": "选择默认访问权限",
-          "groupPermissionsUI": "群组权限管理界面将放在这里……",
-          "userPermissionsUI": "用户权限管理界面将放在这里……",
-          "selectAccess": "选择访问权限...",
-          "selectRole": "选择角色...",
-          "searchUsersToAdd": "搜索要添加的用户..."
+          "selectAccess": "选择访问权限..."
         },
         "tableHeaders": {
           "globalRole": "全球角色",
@@ -5982,9 +5749,7 @@
         "button": "添加用户",
         "title": "添加新用户",
         "fields": {
-          "email_invalid": "无效的电子邮件地址",
           "password_error": "需要密码",
-          "confirmPassword_error": "需要确认密码",
           "passwordOptionalHelp": "留空则要求用户通过魔法链接或单点登录登录。"
         }
       },
@@ -6025,19 +5790,12 @@
       "title": "安全",
       "description": "配置登录强制执行、密码策略、锁定设置和强制执行措施",
       "passwordPolicyTitle": "密码策略",
-      "passwordPolicyDescription": "设置用户密码要求",
       "lockoutPolicyTitle": "锁定政策",
-      "lockoutPolicyDescription": "配置登录失败后账户锁定",
       "enforcementTitle": "执法行动",
-      "enforcementDescription": "强制基于凭证的用户更改密码",
       "signInEnforcementTitle": "签到执法",
-      "signInEnforcementDescription": "要求单点登录并强制执行双因素身份验证",
       "forceSsoTitle": "强制 SSO 登录",
-      "forceSsoDescription": "禁用电子邮件登录，要求用户使用单点登录 (SSO)。",
       "force2FANonSSOTitle": "密码登录需要启用双因素身份验证",
-      "force2FANonSSODescription": "使用邮箱/密码登录的用户必须设置并使用双因素身份验证",
       "force2FAAllLoginsTitle": "所有登录均需启用双因素身份验证",
-      "force2FAAllLoginsDescription": "所有用户（包括单点登录用户）登录后都必须进行双因素身份验证。",
       "forceSsoEnabled": "全球强制启用 SSO",
       "forceSsoDisabled": "强制全局禁用 SSO",
       "forceSsoUpdateFailed": "更新强制 SSO 设置失败",
@@ -6087,7 +5845,6 @@
       "noExpiry": "无有效期",
       "revokeToken": "撤销令牌",
       "revokeConfirmTitle": "撤销 API 令牌",
-      "revokeConfirmMessage": "您确定要撤销此 API 令牌吗？此操作无法撤销。",
       "revokeConfirmDescription": "属于 {user} 的令牌“{name}”将被立即撤销，并且不能再用于 API 访问。",
       "revokeSuccess": "API令牌已成功撤销",
       "revokeError": "撤销 API 令牌失败",
@@ -6111,9 +5868,6 @@
       "noTokens": "尚未创建任何 SCIM 令牌。",
       "emptyTitle": "暂无 SCIM 令牌",
       "emptyBody": "铸造一个令牌，让你的身份提供商能够自动在 TestPlanIt 中创建和更新用户。",
-      "emptyCta": "铸造你的第一个代币",
-      "sectionConflicts": "外部ID冲突",
-      "conflictsPlaceholder": "目前没有冲突。冲突跟踪功能将在后续版本中推出。",
       "conflicts": {
         "title": "外部 ID 冲突日志",
         "description": "SCIM 身份事件需要系统干预（链接、恢复、显示名称覆盖、跳过成员）。",
@@ -6197,7 +5951,6 @@
         "networkError": "无法连接到SCIM端点。请重试。"
       },
       "fallbackDefaultTitle": "默认映射访问权限",
-      "fallbackDefaultDescription": "分配给未被任何组映射覆盖的用户的访问层级。",
       "fallbackDefaultLabel": "默认访问层级",
       "fallbackDefaultSaved": "已保存默认回退设置",
       "rotate": {
@@ -6263,7 +6016,6 @@
         "remindersToggleAriaLabel": "切换评论提醒通知",
         "thresholdLabel": "提醒审稿人",
         "thresholdUnit": "{count, plural, other {天}}",
-        "thresholdHelp": "审核请求最多可以保留多少天才会向审核员发送提醒通知？新请求从提交之日起开始计时。",
         "thresholdUpdateSuccess": "查看提醒设置是否已更新。",
         "thresholdUpdateError": "更新提醒设置失败，请稍后再试。",
         "revertPolicy": {
@@ -6329,9 +6081,6 @@
       "add": {
         "button": "添加角色",
         "title": "添加新角色",
-        "fields": {
-          "name_error": "角色名称为必填项"
-        },
         "errors": {
           "nameExists": "已存在同名角色"
         }
@@ -6394,7 +6143,6 @@
       "edit": {
         "title": "编辑状态",
         "systemNameHelp": "系统名称用于标识自动化流程的此状态。创建后无法更改。",
-        "unmodifiableHelp": "“未测试”状态是系统状态，无法修改。",
         "untestedHelp": "“未测试”这个名称保留用于系统状态，不能使用。",
         "success": "状态已成功更新"
       },
@@ -6410,9 +6158,6 @@
       "fields": {
         "final": "最终的",
         "system": "系统状态",
-        "forTestCase": "测试用例",
-        "forTestRun": "测试运行",
-        "forSession": "会话",
         "color": "颜色"
       }
     },
@@ -6434,9 +6179,7 @@
       "description": "管理全局应用程序配置",
       "addConfig": "添加应用程序配置",
       "editConfig": "编辑应用程序配置",
-      "keyPlaceholder": "请输入配置键...",
       "valuePlaceholder": "请输入JSON值...",
-      "currentTranslation": "当前翻译",
       "filterPlaceholder": "按关键词筛选...",
       "errors": {
         "keyRequired": "需要钥匙",
@@ -6456,7 +6199,6 @@
         "noneAssigned": "未分配到任何项目（您可以稍后从配置管理中分配）。"
       },
       "addConfiguration": "添加配置",
-      "editConfiguration": "编辑配置",
       "filterPlaceholder": "过滤器配置...",
       "allProjects": "所有项目",
       "selectAllTooltip": "选中/取消选中此页面上的所有配置",
@@ -6476,8 +6218,6 @@
       "categories": {
         "title": "类别",
         "description": "管理全球类别",
-        "editCategory": "编辑类别",
-        "selectCategory": "选择类别",
         "filterPlaceholder": "筛选类别...",
         "add": {
           "title": "添加新类别"
@@ -6497,8 +6237,6 @@
         "title": "组合",
         "description": "管理全局组合",
         "confirmDescription": "将创建以下 {count, number} 个配置：",
-        "addCombination": "添加组合",
-        "editCombination": "编辑组合",
         "selectCombination": "选择组合",
         "selectCombinationDescription": "请选择要添加的变体组合。已存在的组合将显示为禁用状态。",
         "alreadyExists": "（已存在）",
@@ -6549,7 +6287,6 @@
         "deleteGroupDescription": "此操作将删除该群组及其所有关联用户。",
         "confirmMessage": "您确定要删除此群组吗？"
       },
-      "noUsersSelected": "暂无用户选择。",
       "noUsersAssigned": "此组暂无用户。",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "由SCIM管理。请从SCIM管理页面进行管理。",
@@ -6572,7 +6309,6 @@
       "downgradeConfirmTitle": "确认访问权限更改",
       "downgradeConfirmDescription": "{count, plural, other {# 位用户}} 的访问权限将被降低。是否继续？",
       "downgradeConfirmApplyAnyway": "仍然应用",
-      "downgradeConfirmUserRow": "{name}：{from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
@@ -6586,7 +6322,6 @@
       "defaultLockedDescription": "要更改默认设置，请编辑其他里程碑类型并将其设置为默认。",
       "wizard": {
         "selectProjects": "选择项目",
-        "projectsSelected": "{count, plural, =0 {未选择任何项目} one {已选择项目#} other {已选择项目#}}",
         "createMilestone": "创建里程碑",
         "noCommonTypesTitle": "没有常见的里程碑类型",
         "noCommonTypesDescription": "所选项目之间没有任何共同的里程碑类型。请确保所有选定项目至少有一个共同的里程碑类型，或者选择其他项目。"
@@ -6630,44 +6365,23 @@
       }
     },
     "issue_config": {
-      "link_title": "链接问题跟踪器",
-      "link_description": "配置手动链接问题的基本 URL。当仅使用外部 ID 链接问题时，此基本 URL 将添加到完整链接的前面。",
-      "filter": {
-        "show_inactive": "显示非活动配置",
-        "search_placeholder": "按配置名称筛选..."
-      },
       "base_url": "基本 URL",
-      "link_update_success": "链路配置已成功更新",
-      "link_update_error": "链路配置更新失败",
       "description": "配置与外部问题跟踪系统的集成。",
       "delete": {
         "title": "删除问题配置",
         "confirmMessage": "您确定要删除配置 <bold>{name}</bold>吗？",
         "warning": "此操作无法撤销。当前分配给此跟踪器的所有项目都将被重新分配给默认跟踪器。建议您考虑停用此配置。",
-        "cannotDeleteDefault": "默认问题跟踪器无法删除。",
-        "noDefaultFound": "无法删除：未找到可重新分配项目的默认问题跟踪器。"
+        "cannotDeleteDefault": "默认问题跟踪器无法删除。"
       },
       "add": {
         "title": "添加问题跟踪器",
         "description": "为问题跟踪系统创建新配置。",
         "name": "配置名称",
-        "name_placeholder": "例如，Jira 项目链接",
-        "system_type": "系统类型",
-        "select_system_type": "选择系统类型",
-        "base_url": "包含问题占位符的基本 URL",
-        "base_url_placeholder": "例如，https://your-tracker.com/issues/'{issueId}'",
-        "create_success": "问题配置已成功创建",
-        "create_error": "创建问题配置时出错",
-        "setDefaultWarning": "将此项设置为默认值将从当前默认配置中移除默认状态。"
+        "base_url": "包含问题占位符的基本 URL"
       },
       "edit": {
         "title": "编辑问题跟踪器",
-        "description": "更新此问题配置的详细信息。",
-        "name_placeholder": "输入配置名称",
-        "select_project": "选择项目……",
-        "update_success": "问题配置已成功更新",
-        "update_error": "更新问题配置失败",
-        "edit_not_supported": "目前不支持编辑此系统类型的配置。"
+        "description": "更新此问题配置的详细信息。"
       }
     },
     "issues": {
@@ -6870,14 +6584,11 @@
         "message": "尚未配置任何问题集成"
       },
       "addIntegration": "添加问题集成",
-      "allIntegrations": "所有问题集成",
-      "manageDescription": "配置和管理您的外部服务集成问题",
       "status": {
         "active": "积极的",
         "inactive": "非活跃状态",
         "awaitingAuthorization": "等待授权"
       },
-      "connectedProjects": "关联项目",
       "noIntegrations": "未配置任何问题集成",
       "testConnection": "测试连接",
       "testSuccess": "连接成功",
@@ -6966,14 +6677,11 @@
         "successDescription": "问题集成设置已保存"
       },
       "editIntegration": "编辑问题集成",
-      "saveIntegration": "保存问题集成",
       "deleteIntegration": "删除问题集成",
       "config": {
         "name": "问题集成名称",
         "namePlaceholder": "请为此问题集成输入名称",
-        "nameHelp": "用于识别此问题集成的描述性名称",
         "authType": "身份验证类型",
-        "authTypeHelp": "选择如何通过外部服务进行身份验证",
         "emailPlaceholder": "您的邮箱地址@example.com",
         "emailHelp": "您的账户电子邮件地址。Jira Cloud 需要此项（与下方的 API 令牌配对使用）。Jira Server / Data Center 不使用此项 — 请留空，并单独使用下方的 API 令牌字段（个人访问令牌）或用户名/密码字段。",
         "apiToken": "API令牌",
@@ -6995,15 +6703,9 @@
         "clientSecretPlaceholder": "请输入您的 OAuth 客户端密钥",
         "clientSecretHelp": "来自您的 OAuth 应用程序的客户端密钥",
         "cloudId": "云 ID",
-        "cloudIdPlaceholder": "请输入您的 Atlassian 云 ID",
-        "cloudIdHelp": "您的 Atlassian Cloud 实例 ID（可在您的 Jira URL 中找到）",
-        "apiUrl": "API 地址",
-        "apiUrlPlaceholder": "https://api.example.com",
-        "apiUrlHelp": "服务 API 的基本 URL",
         "personalAccessTokenPlaceholder": "请输入您的个人访问令牌",
         "personalAccessTokenHelp": "具有相应权限的个人访问令牌",
         "apiKeyPlaceholder": "请输入您的 API 密钥",
-        "apiKeyHelp": "用于身份验证的 API 密钥",
         "baseUrl": "URL模式",
         "baseUrlPlaceholder": "https://example.com/issues/'{issueId}'",
         "baseUrlHelp": "问题 URL 格式。使用 {issueId} 作为占位符",
@@ -7027,7 +6729,6 @@
         "repoPlaceholder": "仓库名称",
         "repoHelp": "Gitea 仓库的名称",
         "encrypted": "加密",
-        "encryptedHelp": "该字段已加密并安全存储。",
         "leaveBlankToKeep": "留空以保留现有值",
         "apiKeyWarningTitle": "API密钥认证通知",
         "apiKeyWarningDescription": "使用 API 密钥身份验证时，即使电子邮件地址匹配，创建问题的报告者也可能与创建该问题的 TestPlanIt 用户不符：",
@@ -7076,12 +6777,7 @@
       },
       "validation": {
         "nameRequired": "问题集成名称为必填项",
-        "clientIdRequired": "需要客户端 ID",
-        "clientSecretRequired": "需要客户端密钥",
-        "cloudIdRequired": "需要 Cloud ID",
-        "apiUrlRequired": "需要提供 API URL",
-        "tokenRequired": "需要个人访问令牌",
-        "apiKeyRequired": "需要 API 密钥"
+        "tokenRequired": "需要个人访问令牌"
       },
       "errors": {
         "updateFailed": "问题集成更新失败",
@@ -7100,12 +6796,8 @@
         "testing": "正在测试连接..."
       },
       "oauth": {
-        "connectAccount": "连接帐户",
         "connected": "已连接",
-        "notConnected": "未连接",
-        "authDescription": "您需要使用 {provider} 进行身份验证才能使用此集成",
-        "authError": "身份验证失败",
-        "authErrorDescription": "无法通过外部服务进行身份验证"
+        "authError": "身份验证失败"
       }
     },
     "llm": {
@@ -7150,7 +6842,6 @@
         "monthlyBudgetDescription": "可选的通知消费目标（不会限制使用）",
         "billingPeriodStartDay": "计费周期起始日",
         "billingPeriodStartDayPlaceholder": "1",
-        "billingPeriodStartDayDescription": "账单周期开始的日期（1-31）。29-31 使用的是较短月份的最后一天。",
         "defaultTemperature": "默认温度",
         "defaultMaxTokens": "默认最大令牌数",
         "repoContextBudgetLabel": "仓库上下文预算（QuickScript）",
@@ -7182,7 +6873,6 @@
       "edit": {
         "title": "编辑 AI 模型集成",
         "description": "更新 {name} AI 模型集成的配置",
-        "statusDescription": "启用或禁用此集成",
         "apiKeyPlaceholder": "请输入新的 API 密钥进行更新...",
         "update": "更新",
         "modelListUpdated": "模型列表已成功更新",
@@ -7229,10 +6919,8 @@
       },
       "budgetAlert": {
         "budgetDisclaimer": "设定月度预算并不能阻止LLM的使用超出预算。预算限制仅供管理员决策参考。",
-        "budgetDisclaimerShort": "预算限制仅供参考，不会限制使用。",
         "spendLabel": "本月支出",
         "spendOfBudget": "{currentSpend} 的 {budgetLimit}",
-        "overBudget": "超出预算",
         "budgetPercentage": "{percentage}已用预算百分比",
         "spendReset": "本月支出已重置"
       }
@@ -7243,7 +6931,6 @@
       "addPromptConfig": "添加提示配置",
       "filterPlaceholder": "筛选提示配置...",
       "features": "特征",
-      "featureCount": "{count, plural, one {# 功能} other {# 功能}}",
       "llmIntegration": "LLM整合",
       "modelOverride": "模型覆盖",
       "modelOverridePlaceholder": "集成默认值",
@@ -7255,7 +6942,6 @@
       "maxOutputTokens": "最大输出令牌",
       "variables": "变量",
       "insertVariable": "插入变量",
-      "noConfigs": "未找到任何配置。请添加您的第一个配置以开始使用。",
       "add": {
         "title": "添加提示配置",
         "description": "创建一个新的AI提示配置，为每个功能添加提示。默认值已自动应用。"
@@ -7385,7 +7071,6 @@
       "concurrency": {
         "title": "工作并发",
         "description": "并发性控制每个工作进程同时处理的作业数量。更高的并发性可以提高吞吐量，但会占用更多系统资源（CPU 和内存）。",
-        "configureTitle": "配置并发性",
         "configureDescription": "要调整并发数，请设置环境变量并重启工作进程。详情请参阅文档。",
         "envVars": {
           "TESTMO_IMPORT_CONCURRENCY": "Testmo 导入（默认值：1，占用大量内存）",
@@ -7420,12 +7105,7 @@
         "irreversible": "此操作无法撤销。请确认是否继续。"
       },
       "success": {
-        "actionCompleted": "操作完成",
-        "queuePaused": "队列已暂停",
-        "queueResumed": "队列已恢复。",
-        "queueCleaned": "队列已清理完毕",
-        "queueDrained": "队列已清空",
-        "queueObliterated": "队列已被删除"
+        "actionCompleted": "操作完成"
       },
       "error": {
         "loadFailed": "队列加载失败",
@@ -7451,10 +7131,7 @@
           "finished": "完成的"
         },
         "success": {
-          "actionCompleted": "工作操作已完成",
-          "jobRetried": "任务已重试",
-          "jobPromoted": "职位已晋升",
-          "jobRemoved": "职位已移除"
+          "actionCompleted": "工作操作已完成"
         },
         "error": {
           "loadFailed": "加载作业失败",
@@ -7504,17 +7181,12 @@
       "exportCsv": "导出 CSV 文件",
       "timeRange": "时间范围",
       "timeRangeOptions": {
-        "last24h": "过去24小时",
-        "last7d": "过去7天",
-        "last30d": "过去30天",
-        "last90d": "过去90天",
         "allTime": "所有时间"
       },
       "systemActor": "系统",
       "systemActorTooltip": "系统执行的操作，而非登录用户执行的操作。",
       "sourceScim": "SCIM",
-      "relatedChanges": "相关更改",
-      "groupedEntry": "来自单个操作的分组更改"
+      "relatedChanges": "相关更改"
     }
   },
   "components": {
@@ -7568,7 +7240,6 @@
         "shareLinkAccessedTitle": "分享链接已访问",
         "shareLinkAccessedAnonymousViewer": "某人",
         "shareLinkAccessedMessage": "{viewer} 查看了您共享的报告：\"{shareTitle}\"",
-        "viewedYourSharedLink": "我已查看您分享的链接",
         "viewedAt": "查看于",
         "userRegisteredTitle": "新用户注册",
         "userRegisteredMessageSso": "{userName} ({userEmail}) 已通过 SSO 注册",
@@ -7631,7 +7302,6 @@
         "alertTriggeredRule": "规则：{ruleName}",
         "alertTriggeredEmailMessage": "警报 \"{ruleName}\" 在项目 \"{projectName}\" 中的 {subjectLabel} \"{subjectName}\" 上触发：{detail}",
         "alertTriggeredEmailMessageSystem": "警报 \"{ruleName}\" 为 {subjectLabel} \"{subjectName}\" 触发：{detail}",
-        "alertTriggeredReason": "您收到此通知是因为您订阅了此警报。",
         "alertSubject": {
           "CASE": "测试用例",
           "RUN": "测试运行",
@@ -7686,8 +7356,7 @@
     },
     "issues": {
       "manage_issues": {
-        "placeholder": "搜索或链接问题……",
-        "create_label": "链接问题“{name}”"
+        "placeholder": "搜索或链接问题……"
       },
       "create_issue_dialog": {
         "placeholders": {
@@ -7705,16 +7374,8 @@
             "helper": "在外部问题跟踪器中选择项目"
           }
         },
-        "loading_metadata": "正在加载集成设置...",
-        "errors": {
-          "creation_failed": "创建问题失败，请重试。"
-        },
         "success": {
-          "created": "问题已成功创建",
-          "external_created": "问题已创建并链接到外部跟踪器"
-        },
-        "warnings": {
-          "external_failed": "问题已在本地创建，但无法与外部跟踪器同步。"
+          "created": "问题已成功创建"
         }
       },
       "integration_auth_prompt": {
@@ -7775,16 +7436,9 @@
   },
   "issues": {
     "linkedIssues": "相关问题",
-    "linkedIssuesDescription": "与此项目相关的问题",
     "refreshed": "问题已更新",
-    "refreshedDescription": "相关问题列表已更新",
     "unlinked": "问题未关联",
-    "unlinkedDescription": "该问题已从此项目中移除。",
     "linked": "相关问题",
-    "linkedDescription": "该问题与此项目有关",
-    "searchAndLink": "搜索和链接",
-    "createAndLink": "创建和链接",
-    "noLinkedIssues": "没有相关问题",
     "viewExternal": "在 {provider}中查看",
     "unlink": "取消链接",
     "linkError": "链接问题失败",
@@ -7799,8 +7453,6 @@
     "alreadyLinked": "已链接",
     "authenticate": "认证",
     "authenticationRequired": "需要身份验证",
-    "authenticationDescription": "您需要使用 {provider} 进行身份验证才能搜索问题。",
-    "searchIn": "在 {provider}中搜索",
     "searchPlaceholder": "搜索问题……",
     "searchIssues": "搜索问题",
     "searchIssuesDescription": "查找与此项目相关的内部问题。",
@@ -7817,32 +7469,22 @@
     "createIssueDescriptionWithIntegration": "使用 {provider}创建新问题",
     "createIssueDescriptionSimpleUrl": "创建新的内部问题（简单 URL 集成）",
     "iterationContextHint": "正文会自动填充迭代参数值和深度链接。创建前可根据需要进行编辑。",
-    "creatingWith": "创建问题 {provider}",
-    "authenticatedAndReady": "已通过身份验证，可以创建问题。",
     "created": "问题已创建",
     "createdInExternal": "问题创建于 {provider}",
     "createdInternal": "本地创建的问题",
     "createdInternalSimpleUrl": "此问题已在内部创建，可通过简单 URL 链接。",
     "createError": "创建问题失败",
     "useIntegration": "使用 {provider}",
-    "useIntegrationDescription": "在外部系统中创建问题",
     "externalProject": "外部项目",
     "issueType": "问题类型",
     "selectIssueType": "选择问题类型",
-    "noIssueTypes": "暂无问题类型",
     "assignees": "受派人员",
     "selectAssignees": "选择受派人员",
     "assigneesLimit": "最多 {max} 名受派人员",
     "priorityUrgent": "紧迫的",
     "additionalFields": "附加字段",
     "createIssueInJira": "在 Jira 中创建问题",
-    "createIssueInJiraDescription": "使用 Jira 的界面创建一个包含所有可用字段和选项的新问题",
-    "createIssueInJiraFallbackDescription": "在新标签页中打开 Jira，即可创建带有预填信息的问题。",
-    "jiraIframeError": "无法加载 Jira 界面。请尝试在新标签页中打开。",
-    "jiraIframeFallback": "出于安全考虑，Jira 需要新标签页中打开。请点击下方按钮创建您的问题。",
-    "jiraFallbackNote": "在 Jira 中创建问题后，返回此处继续将其链接到您的测试用例。",
     "openInNewTab": "在新标签页中打开",
-    "jiraIframeNote": "在 Jira 中创建问题后，您可以关闭此对话框并刷新问题列表。",
     "fillInRequiredFields": "填写必填字段以创建新问题",
     "failedToFetchFields": "无法从 Jira 获取问题字段",
     "enterSummary": "请简要概述该问题。",
@@ -7852,7 +7494,6 @@
     "addLabel": "添加标签并按 Enter 键",
     "labelHint": "空格将被替换为连字符。",
     "labelFormatNote": "标签中不能包含空格。空格将被自动替换为连字符。",
-    "enterIssueKey": "输入问题编号（例如，PROJ-123）",
     "issueLinkHelp": "输入现有问题的键值以进行链接",
     "searchForIssue": "查找要链接的问题",
     "searchUsers": "搜索用户",
@@ -7958,8 +7599,7 @@
       "dialogTitle": "编辑需求",
       "submit": "保存更改",
       "success": "需求已更新。",
-      "failed": "更新需求失败。",
-      "lockedTooltip": "此需求已从连接的跟踪器同步。请分离后再重命名。"
+      "failed": "更新需求失败。"
     },
     "delete": {
       "dialogTitle": "删除需求",
@@ -7967,13 +7607,10 @@
       "confirmWithChildren": "{count, plural, other {此需求有 {count} 个子项也将被删除。此操作可以撤销。}}",
       "success": "需求已删除。",
       "failed": "删除需求失败。",
-      "undo": "撤销",
-      "undoSuccess": "需求已恢复。",
-      "undoFailed": "恢复需求失败。"
+      "undo": "撤销"
     },
     "attachments": {
       "empty": "无附件",
-      "uploadSuccess": "附件已上传。",
       "uploadFailed": "上传附件失败。",
       "removeSuccess": "附件已移除。",
       "removeFailed": "移除附件失败。"
@@ -8027,13 +7664,9 @@
     "coverage": {
       "title": "覆盖率",
       "uncovered": "未覆盖",
-      "uncoveredTooltip": "没有测试用例关联到此需求或其任何后代。",
       "statusPassed": "通过",
       "statusFailed": "失败",
       "statusNotRun": "未运行",
-      "countLabel": "{passed}/{total}",
-      "breakdownTooltip": "通过：{passed} · 失败：{failed} · 进行中：{inProgress} · 未运行：{notRun}",
-      "showOnlyUncovered": "仅显示未覆盖项",
       "showOnlyUncoveredUnavailable": "覆盖率数据目前不可用。",
       "loadFailed": "加载覆盖率失败。",
       "retry": "重试",
@@ -8150,7 +7783,6 @@
       "deleted": "执行目标已删除",
       "enabledToast": "目标已启用",
       "disabledToast": "目标已禁用",
-      "revealedSecretTitle": "立即复制签名秘密",
       "revealedSecretWarning": "此秘密仅显示一次。您的接收方使用它来验证每次分派的 X-TestPlanIt-Signature 标头；使用其他身份验证方式的系统（例如 Jenkins 触发令牌）可以忽略它。将其存储在 CI 系统的秘密存储中；TestPlanIt 无法再次显示它。",
       "secretCopied": "秘密已复制",
       "errors": {
@@ -8283,7 +7915,6 @@
     "seconds": "{seconds}s",
     "testCases": "{count, plural, one {# 测试用例} other {# 测试用例}}",
     "estimate": "估计： {value}",
-    "partOf": "（ {parent}的一部分）",
     "status": "状态： {status}",
     "lane": "通道 {number}",
     "worker": "工作进程 {id}"
@@ -8420,8 +8051,6 @@
       "overview": "## 项目\n项目是测试用例、运行、会话和里程碑的顶级容器。您可以在此处创建和管理所有项目。",
       "settings": {
         "integrations": {
-          "externalProjectHelp": "## 外部项目\n选择要与此 TestPlanIt 项目关联的外部系统中的项目或存储库。\n\n- 从 TestPlanIt 创建的问题将在此项目中创建。\n- 启用系统间的问题跟踪集成。\n- 必须在外部系统中拥有相应的权限。",
-          "defaultIssueTypeHelp": "## 默认问题类型\n从 TestPlanIt 创建新问题时将预先选择的问题类型。\n\n- 默认为最常用的问题类型，节省时间。\n- 创建单个问题时可以覆盖此设置。\n- 必须是所选外部项目的有效问题类型。\n- 如果您的工作流程发生更改，请更新此设置。",
           "automaticSyncHelp": "## 自动同步\n启用 TestPlanIt 与外部系统之间的问题状态自动同步。\n\n- 与测试用例关联的问题将自动更新其状态。\n- 有助于保持跨系统问题跟踪的一致性。\n- 可能会增加外部服务的 API 使用量。\n- 如果更喜欢手动控制，可以禁用此功能。"
         }
       }
@@ -8593,7 +8222,6 @@
     "issueConfig": {
       "name": "## 问题配置名称\n一个清晰、描述性的名称，在所有项目中使用。\n\n- 有助于描述问题配置（例如 Jira、GitHub 等）。",
       "baseUrl": "## 基本 URL\n问题配置的基本 URL，包括问题占位符（例如 https://your-jira-instance.atlassian.net/browse/'{issueId}'）。",
-      "systemType": "## 系统类型\n问题跟踪系统的类型（例如 LINK Jira 等）。",
       "isActive": "## 活动\n指示此问题配置是否处于活动状态。",
       "isDefault": "## 默认值\n指示此问题配置是否为项目的默认配置。\n\n- 默认问题配置已预先选中，适用于新问题。\n- 可随时更改。",
       "projects": "## 项目\n指示分配给此问题配置的项目。"
@@ -9053,13 +8681,9 @@
       },
       "reportsTabDescription": "查看和分析您项目的预置报告。",
       "reportType": "报告类型",
-      "selectReportType": "选择报告类型",
       "selectReport": "选择报告",
       "dimensions": "方面",
-      "dimensionsSubtitle": "尺寸（拖动重新排序，在下方添加）",
       "metrics": "指标",
-      "addDimension": "添加维度……",
-      "addMetric": "添加指标……",
       "runReport": "运行报告",
       "exportCsv": "导出 CSV 文件",
       "noResultsFound": "未找到结果。",
@@ -9068,8 +8692,6 @@
       "noDataMatchingCriteriaWithDateFilter": "未找到符合所选维度和指标的数据。请尝试调整日期范围筛选器。",
       "noDataAvailable": "本报告暂无可用数据。",
       "generatedAt": "报告生成于",
-      "crossProjectAnalytics": "跨项目分析与报告",
-      "unauthorizedAdmin": "未经授权：需要管理员权限。",
       "title": "报表生成器",
       "description": "构建自定义报告以分析项目数据",
       "crossProjectDescription": "分析工作区中所有项目的数据",
@@ -9244,7 +8866,6 @@
         "newest": "新的",
         "oldest": "老的",
         "noFlakyTests": "未发现符合标准的不稳定测试",
-        "includeFilter": "包括",
         "caseTags": "测试用例标签",
         "runTags": "测试运行标签",
         "testRunDeleted": "测试运行已被删除",
@@ -9268,7 +8889,6 @@
         "minExecutionsHelp": "计算有意义的通过率统计数据所需的最少执行次数（3-20）。",
         "lookbackDays": "回顾期",
         "lookbackDaysHelp": "分析执行历史的天数（30-365）。",
-        "includeFilter": "包括",
         "staleFilter": "陈旧",
         "stale": "陈旧",
         "notStale": "未过期",
@@ -9278,11 +8898,9 @@
         "executions": "执行",
         "passCount": "通行证",
         "failCount": "失败",
-        "daysSince": "执行完毕至今已过去数天",
         "count": "数数",
         "totalTests": "测试用例",
         "noData": "未找到测试用例",
-        "noExecutedTests": "没有已执行的测试要显示",
         "healthStatus": {
           "healthy": "健康",
           "stale": "陈旧",
@@ -9291,11 +8909,7 @@
           "alwaysFailing": "总是失败"
         },
         "chart": {
-          "distribution": "状态分布",
-          "healthyRecent": "健康与近期",
-          "unhealthyStale": "需要关注",
-          "daysAxis": "自上次执行以来的天数",
-          "healthScoreAxis": "健康评分"
+          "distribution": "状态分布"
         },
         "stats": {
           "totalTests": "总测试次数",
@@ -9423,9 +9037,6 @@
         }
       },
       "issueTestCoverage": {
-        "viewMode": "查看模式",
-        "summaryView": "摘要（按问题）",
-        "detailView": "详细信息（按测试用例）",
         "issue": "问题",
         "testCase": "测试用例",
         "testCases": "{count, plural, =1 {测试用例} other {测试用例}}",
@@ -9437,18 +9048,15 @@
         "lastExecuted": "最后执行",
         "notTested": "未经测试",
         "noData": "未发现关联测试用例存在问题。",
-        "noIssuesNeedingAttention": "所有问题都通过了测试——干得好！",
         "stats": {
           "totalIssues": "问题总数",
           "issuesWithFailures": "失败",
           "issuesWithFailuresTooltip": "至少有一个测试用例失败，存在问题",
           "issuesWithUntested": "未经测试",
           "issuesWithUntestedTooltip": "至少有一个尚未执行的测试用例存在问题。",
-          "issuesAllPassing": "全部通过",
-          "numberOfIssues": "问题数量"
+          "issuesAllPassing": "全部通过"
         },
         "charts": {
-          "passRateDistribution": "考试通过率分布",
           "linkedTestCases": "关联测试用例数量",
           "untestedTestCases": "未测试用例数量",
           "testCoverageVsExecution": "测试覆盖率与执行状态"
@@ -9482,7 +9090,6 @@
         "otherRoots": "其他（{count, plural, other {# 个层级}}）",
         "snapshotLabel": "快照",
         "snapshotLive": "实时矩阵",
-        "snapshotHelp": "显示矩阵的已保存时点快照，而非实时数据。快照是不可变的记录，您可以导出、共享和比较它们。",
         "snapshotPlaceholder": "选择快照",
         "snapshotRequirementsCount": "{count, plural, other {# 项需求}}",
         "snapshotUncoveredCount": "{count} 个未覆盖",
@@ -9613,7 +9220,6 @@
         "triggerPush": "推送",
         "outcomeNotExecuted": "未执行",
         "outcomeNoRun": "未运行",
-        "allRepositories": "所有存储库",
         "analysis": "分析",
         "changedFiles": "已更改文件",
         "changedFilesDetail": "{files, number} 个文件 · +{additions, number} −{deletions, number}",
@@ -9734,23 +9340,15 @@
     },
     "errors": {
       "adminOnly": "只有项目管理员和管理员才能访问项目报告。",
-      "projectIdRequired": "项目 ID 为必填项",
       "missingRequiredFields": "缺少必填字段",
-      "unsupportedDimension": "不支持的维度： {dimension}",
-      "unsupportedMetric": "不支持的度量： {metric}",
       "atLeastOneDimensionMetricRequired": "至少需要一个维度和一个度量",
-      "atLeastOneMetricRequired": "必须指定至少一项指标。",
-      "projectDimensionsMetricsRequired": "需要项目 ID、维度和指标。",
-      "unsupportedDimensions": "不支持的维度： {dimensions}",
-      "unsupportedMetrics": "不支持的度量值： {metrics}",
-      "unexpectedError": "发生意外错误。"
+      "atLeastOneMetricRequired": "必须指定至少一项指标。"
     },
     "dimensions": {
       "executor": "执行人",
       "assignedTo": "分配给",
       "executionDate": "执行日期",
       "creationDate": "创建日期",
-      "activityDate": "活动日期",
       "testCase": "测试用例",
       "creator": "创作者",
       "source": "来源",
@@ -9900,9 +9498,6 @@
           "title": "分享链接已过期",
           "description": "此分享链接已过期，无法再访问。"
         }
-      },
-      "footer": {
-        "poweredBy": "供电"
       },
       "manageShares": {
         "title": "管理股份",
@@ -10255,8 +9850,6 @@
     },
     "startTyping": "开始输入以进行搜索",
     "typesSelected": "{count, plural, one {# 类型} other {# 类型们}}",
-    "customFieldFilters": "自定义字段筛选器",
-    "customFiltersApplied": "自定义过滤器",
     "customFields": "自定义字段",
     "addFilter": "添加筛选器",
     "filter": "筛选",
@@ -10321,14 +9914,12 @@
       "junit": "JUnit",
       "hybrid": "混合",
       "automatedOnly": "仅限自动",
-      "archivedOnly": "仅存档",
       "completedOnly": "仅完成",
       "manualOnly": "仅限手动",
       "estimateRange": "估算范围",
       "elapsedRange": "经过时间范围",
       "minValue": "敏",
       "maxValue": "最大限度",
-      "dueDateRange": "到期日范围",
       "milestoneType": "里程碑类型",
       "minutes": "分钟",
       "hours": "小时",
@@ -10433,11 +10024,7 @@
   },
   "autoTag": {
     "actions": {
-      "aiTag": "AI标签",
-      "tagAll": "全部标记",
       "aiAutoTag": "自动标签",
-      "tagActions": "标签操作",
-      "startTagging": "开始标记",
       "selectEntityType": "选择实体类型",
       "selectProject": "选择一个项目",
       "entityTypes": {
@@ -10449,11 +10036,8 @@
     "review": {
       "title": "评论标签建议",
       "description": "点击标签可切换是否接受标签。双击可编辑标签名称。",
-      "selectEntity": "选择一个实体以查看标签建议。",
       "noTagsSelected": "未选择任何标签",
-      "footerSummary": "{assignCount, plural, one {# 标签} other {# 标签}} 将被分配， {newCount, plural, one {# 新标签} other {# 新标签}} 将被创建",
       "footerAssignCount": "{assignCount, plural, one {# 标签} other {# 标签}} 将被分配",
-      "footerNewCount": "{newCount, plural, one {# 新标签} other {# 新标签}} 将创建",
       "newTagsPopoverTitle": "要创建的新标签",
       "applying": "正在申请……",
       "applySuccess": "{tagCount, plural, one {# 标签} other {# 标签}} 应用于 {entityCount, plural, one {# 实体} other {# 实体集}}",
@@ -10472,7 +10056,6 @@
       "tooltipExisting": "现有标签",
       "tooltipNew": "将创建新标签",
       "tooltipAssign": "分配现有标签",
-      "toggleFailed": "显示/隐藏失败的实体",
       "showFailed": "显示失败"
     },
     "progress": {
@@ -10610,7 +10193,6 @@
     "datasetRowResultEmpty": "—",
     "pasteCsvPlaceholder": "请在此处粘贴 CSV 数据行。第一行将作为标题行。",
     "pasteCsvParseButton": "解析",
-    "pasteCsvReplaceWarning": "现有数据集行（{existingCount}）将被删除。",
     "cellErrorString": "必填字段不能为空。",
     "cellErrorInteger": "必须是整数。",
     "cellErrorSelect": "值必须是以下之一： {allowed}。",
@@ -10655,14 +10237,8 @@
     "chooserEmpty": "尚未声明任何参数。",
     "chooserConfigureLink": "配置参数",
     "autocompleteEmpty": "没有匹配的参数。请键入内容进行搜索，或使用工具栏插入参数。",
-    "chipTooltipType": "类型： {type}",
-    "chipTooltipDefault": "默认值： {value}",
-    "chipTooltipNoDefault": "默认值：（无）",
-    "chipTooltipUndeclared": "\"@{name}\" 不是已声明的参数。请打开“配置参数”添加它。",
     "editorUndeclaredWarning": "未声明的引用： {names}。通过配置参数添加它们以启用迭代替换。",
     "runProgressTitle": "正在为“{runName}”生成迭代",
-    "runProgressDescriptionAsync": "正在后台创建 {count, plural, =1 {# 次迭代} other {# 次迭代}} 。您可以继续工作——完成后我们会通知您。",
-    "runProgressDescriptionSync": "创建 {count, plural, =1 {# 迭代} other {# 迭代次数}}。",
     "runProgressFailed": "无法启动迭代生成",
     "runHardRefuseTitle": "创建次数过多",
     "runHardRefuseDescription": "本次运行将产生 {count} 次迭代，超过 {cap}次迭代的限制。请减少数据集的行数、取消选择某些案例，或将其拆分为多次运行。",
@@ -10670,7 +10246,6 @@
     "runPreflightAsync": "将创建 {n, plural, =1 {# 次迭代} other {# 次迭代}} （后台作业）",
     "runPreflightSoftConfirm": "将创建 {n, plural, =1 {# 次迭代} other {# 次迭代}} — 需要确认",
     "runPreflightHardRefuse": "无法创建 — {n} 超出 {cap} 上限",
-    "runPreflightTooltip": "{iterations, plural, =1 {# 迭代次数} other {# 迭代次数}} = {cases, plural, =1 {# 案例数} other {# 案例数}} × {configs, plural, =1 {# 配置数} other {# 配置数}} × 数据集行数",
     "runPreflightTooltipHeader": "{iterations, plural, =1 {# 迭代次数} other {# 迭代次数}} 跨度 {cases, plural, =1 {# 参数化案例} other {# 参数化案例}} × {configs, plural, =1 {# 配置} other {# 配置项}}",
     "runPreflightTooltipCaseRow": "{title} — {rows, plural, =1 {# 行} other {# 行数}}",
     "chipClickToReveal": "点击显示",
@@ -10682,7 +10257,6 @@
     "iterationAddResult": "添加结果",
     "iterationPassAndNext": "通过和下一次迭代",
     "iterationOtherStatuses": "其他状态",
-    "iterationAllComplete": "所有迭代完成",
     "hardRefuseTitle": "无法创建——迭代次数过多",
     "hardRefuseDescription": "为保持系统响应速度，测试运行创建次数上限为 {cap} 次。请减少以下贡献者之一。",
     "hardRefuseColumnCase": "用例",
@@ -10705,15 +10279,12 @@
     "iterationsHeaderCount": "{complete}/{total}",
     "iterationsHeaderCountPending": "0/{total} （生成中）",
     "iterationStatusLegendAria": "状态图例",
-    "iterationActionSkipped": "跳过",
     "iterationBulkPickStatusPrompt": "选择要应用于所选迭代的状态。",
-    "iterationBulkApplyStatus": "标记为状态…",
     "iterationSelectAria": "选择迭代 {n}",
     "iterationRowMenuAria": "迭代 {n} 操作",
     "iterationOverrideValues": "覆盖值…",
     "iterationSkip": "标记为状态…",
     "iterationReset": "重置迭代结果",
-    "iterationSelectedCount": "{count} 已选择",
     "iterationBulkSkip": "标记 {count, plural, =1 {# 迭代次数} other {# 迭代次数}} 状态…",
     "iterationIssueTitleSnapshot": "迭代 {n} 的 {total} 问题： {caseName}",
     "iterationIssueTitleCiExtended": "迭代 {n} （CI 扩展）问题： {caseName}",
@@ -10754,13 +10325,7 @@
     "iterationBulkReasonHelp": "记录在每项结果中。",
     "iterationBulkSuccess": "{count, plural, =1 {# 迭代次数} other {# 迭代次数}} 已标记 {action}",
     "iterationBulkError": "无法标记迭代。",
-    "iterationBulkNa": "标记 N/A",
-    "iterationListLoadError": "无法加载迭代结果。",
     "iterationResetUntestedMissing": "未测试状态未找到",
-    "overrideTitle": "覆盖迭代 {n} 的值",
-    "overrideDescription": "更改仅影响本次迭代。数据集快照和源数据集保持不变。此操作已记录在审计日志中。",
-    "overrideValidationItem": "@{param}：{message}",
-    "overrideSensitiveDenied": "您没有权限编辑敏感值。",
     "datasetSourceLocal": "当地的",
     "datasetSourceShared": "共享",
     "datasetSharedRefBadge": "+ 共享引用",
@@ -10895,7 +10460,6 @@
     },
     "history": "历史",
     "subscribers": "订阅者",
-    "subscriberCount": "{count, plural, =0 {无订阅者} one {# 个订阅者} other {# 个订阅者}}",
     "toasts": {
       "created": "规则已创建。",
       "updated": "规则已更新。",
@@ -10905,7 +10469,6 @@
       "subscribed": "此规则触发时，您将收到通知。",
       "unsubscribed": "您将不再收到此规则的通知。",
       "subscriberAdded": "{name} 已订阅。",
-      "subscriberRemoved": "{name} 已取消订阅。",
       "saveError": "无法保存规则。",
       "subscriptionError": "无法更新订阅。"
     },
@@ -10927,7 +10490,6 @@
       "scopeRunNamePlaceholder": "例如 每晚",
       "scopePickFolder": "选择一个文件夹",
       "scopePickTag": "选择一个标签",
-      "scopePickCase": "选择一个测试用例",
       "scopePickMilestone": "选择一个里程碑",
       "scopeWebhook": "网络钩子",
       "scopePickWebhook": "选择一个 webhook",
@@ -11324,8 +10886,7 @@
     "unclassified": "无根本原因",
     "source": {
       "AI": "AI 建议的根本原因",
-      "labelAI": "AI",
-      "labelMANUAL": "手动"
+      "labelAI": "AI"
     },
     "columns": {
       "classification": "根本原因",

@@ -29,7 +29,6 @@
     "searchGroups": "Grupları arayın...",
     "searchCases": "{count, plural, =0 {Vaka arama} one {# vaka ara} other {# vaka ara}}",
     "searchProjects": "{count, plural, =0 {Projeleri ara} one {# proje ara} other {# proje ara}}",
-    "searchTags": "Etiketleri ara...",
     "searchRuns": "{count, plural, =0 {Test çalıştırmalarını ara} one {# test çalıştırmasını ara} other {# test çalıştırmasını ara}}",
     "searchSessions": "{count, plural, =0 {Oturumları ara} one {# oturum ara} other {# oturum ara}}",
     "searchMilestones": "{count, plural, =0 {Dönüm noktalarını ara} one {# dönüm noktasını ara} other {# dönüm noktasını ara}}",
@@ -100,8 +99,6 @@
       "addedToTestRun": "Test Çalıştırmasına Eklendi",
       "addedToTestRunDescription": "Test senaryosu Test Çalıştırmasına eklendi.",
       "noAvailableTestRuns": "Aktif test çalıştırmalarının tümü bu test senaryosunu zaten içermektedir.",
-      "resultUpdateError": "Test sonucu güncellenemedi.",
-      "resultDeleteError": "Test sonucunu silme işlemi başarısız oldu.",
       "selectStatus": "Durum Seçin",
       "addToTestRun": "Test Çalıştırmasına Ekle",
       "status": "Durum",
@@ -225,7 +222,6 @@
       "notApplicable": "Yok",
       "redirecting": "Yönlendiriliyor...",
       "pendingDelete": "Silinecek",
-      "pendingChanges": "Bekleyen değişiklikler",
       "importing": "İçe aktarılıyor...",
       "addingTestCases": "Test senaryoları ekleniyor..."
     },
@@ -335,7 +331,6 @@
       "notificationMode": "Bildirimler",
       "value": "Değer",
       "key": "Anahtar",
-      "configurationDetails": "Yapılandırma Ayrıntıları",
       "isActive": "Aktif",
       "members": "Üyeler",
       "milestoneTypes": "Dönüm Noktası Türleri",
@@ -411,7 +406,6 @@
       "API": "API",
       "folder": "Dosya",
       "parentFolder": "Yeni vakalar için üst klasör",
-      "multipleValues": "Çoklu Değerler",
       "multipleValuesCount": "Birden Çok Değer ({count, number})",
       "provider": "Sağlayıcı",
       "updatedAt": "Güncellenme Tarihi:",
@@ -482,8 +476,6 @@
       "invalidDuration": "Lütfen geçerli bir süre girin.",
       "maxDuration": "Süre {max} dakikayı geçemez",
       "minLength": "{field} en az {min} karakter olmalıdır",
-      "emailFormat": "Geçersiz e-posta formatı",
-      "passwordMatch": "Şifreler aynı olmalıdır",
       "unique": "{field} benzersiz olmalıdır",
       "roleRequired": "Rol gereklidir.",
       "nameMinLength": "İsim en az 2 karakterden oluşmalıdır.",
@@ -547,7 +539,6 @@
       "deleteSuccess": "Öğe başarıyla silindi.",
       "deleteError": "Öğeyi silerken bir hata oluştu.",
       "moveSuccess": "Eşya başarıyla taşındı.",
-      "moveError": "Öğeyi taşırken bir hata oluştu.",
       "updateSuccess": "Öğe başarıyla güncellendi.",
       "updateSuccessCount": "{count, number} öğeler başarıyla güncellendi",
       "updateError": "Öğeyi güncellerken bir hata oluştu.",
@@ -555,7 +546,6 @@
       "copyFailed": "Bağlantı panoya kopyalanamadı.",
       "created": "Başarıyla oluşturuldu",
       "createdItem": "{item} başarıyla oluşturuldu",
-      "createdDescription": "Test çalıştırması oluşturuldu ve artık Test Çalıştırmaları listesinde görünür durumda.",
       "createError": "Bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.",
       "emptyActive": "Aktif test çalıştırması yok.",
       "emptyCompleted": "Tamamlanmış test çalışması yok.",
@@ -633,7 +623,6 @@
       "defaultNotFound": "Varsayılan değer bulunamadı.",
       "emailExists": "Bu e-posta adresine sahip bir kullanıcı zaten mevcut.",
       "nameExists": "Bu isimde zaten bir kullanıcı var.",
-      "duplicateValue": "Bu değer zaten kullanımda.",
       "unauthorized": "Bu işlemi gerçekleştirme yetkiniz yok.",
       "accessDenied": "Erişim engellendi",
       "sessionNotFound": "Oturum bulunamadı veya geçersiz.",
@@ -659,8 +648,6 @@
         "unlinkError": "Bağlantıyı kaldırmada hata oluştu",
         "noActiveIntegration": "Bu proje için aktif bir entegrasyon bulunamadı."
       },
-      "roleRequiredForSpecificRole": "Erişim türü \"Belirli Rol\" olduğunda rol bilgisi gereklidir.",
-      "projectCreationFailed": "Proje oluşturma başarısız oldu, kimlik numarası döndürülmedi.",
       "invalidRoleId": "Geçersiz Rol Kimliği",
       "workflowStateExists": "İş akışı durumu zaten mevcut. Lütfen yeni bir ad seçin.",
       "failedToLoadCaseData": "Vaka verileri yüklenemedi. Kaydedilemiyor.",
@@ -704,11 +691,9 @@
       "resultSubmitPermissionDenied": "Bu vaka için sonuçları gönderemezsiniz. Lütfen bir proje yöneticisinden size atamasını isteyin.",
       "dependenciesNotPassed": "Bağımlılıklar tarafından engellendi",
       "dependenciesNotPassedDescription": "Bu test durumu {count, plural, =0 {bağlı olduğu durumlar bu çalıştırmada} =1 {bağlı olduğu durum bu çalıştırmada} other {bağlı olduğu tüm # durum bu çalıştırmada}} geçilinceye kadar yürütülemez.",
-      "justificationRequired": "Gerekçe gerekli",
       "justificationRequiredDescription": "Tamamlanmış bir sonucu farklı bir sonuca dönüştürmek için, değişikliği açıklayan Sonuç Ayrıntıları gereklidir.",
       "requiredFieldMissing": "Gerekli sonuç alanlarından birinde değer eksik.",
       "editWindowExpired": "Bu sonucun düzenleme penceresi kapandı. Bunun yerine yeni bir deneme kaydedin.",
-      "issueRequiredOnFailure": "Bağlantılı sorun gerekli",
       "issueRequiredOnFailureDescription": "Başarısız bir sonuç için en az bir bağlantılı sorun gereklidir. Kaydetmeden önce bir sorunla bağlantı kurun.",
       "noModelsFound": "Hiçbir model bulunamadı.",
       "failedToFetchModels": "Modeller alınamadı.",
@@ -745,7 +730,6 @@
       "reports": "Raporlar",
       "adminSamlConfig": "Yönetici - SAML Yapılandırması",
       "apiDocumentation": "API Dokümantasyonu",
-      "sharedContent": "Paylaşılan İçerik",
       "impact": "Etki Analizi",
       "alerts": "Bildirimler & Uyarılar",
       "triage": "Başarısızlık Desenleri",
@@ -807,7 +791,6 @@
       "unknownGroup": "Bilinmeyen Grup",
       "file": "dosya",
       "files": "dosyalar",
-      "existingAttachments": "Mevcut Ekler",
       "new": "Yeni",
       "noElapsedTime": "Zaman kaydı yok.",
       "runDurationHint": "İlk sonuçtan son sonuca kadar geçen süre",
@@ -846,7 +829,6 @@
       "noOptions": "Hiçbir seçenek mevcut değil.",
       "multiConfiguration": "Çoklu konfigürasyon grubunun bir parçası",
       "compositionLocked": "Kompozisyon kilitli — durum kümesi donduruldu",
-      "otherConfigurations": "Diğer yapılandırmalar",
       "noConfiguration": "Yapılandırma yok",
       "configurationWithName": "{configuration} — {name}",
       "selected": "Seçilen: {count}",
@@ -856,7 +838,6 @@
       "successRate": "Başarı Oranı",
       "unassigned": "Atanmamış",
       "testRunName": "Test Çalıştırma Adı",
-      "estimatesEllipsis": "Tahminler...",
       "access": {
         "noAccess": "Erişim Yok",
         "globalRole": "Küresel Rolü Kullanın",
@@ -876,9 +857,7 @@
       "sessions": "Oturum Yok",
       "activeSessions": "Aktif oturum yok",
       "completedSessions": "Tamamlanmış oturum yok",
-      "testCase": "Test senaryosu bulunamadı.",
-      "noTestCasesOrSessions": "Test senaryosu veya oturum bulunamadı.",
-      "noTestCasesSessionsOrRuns": "Hiçbir test senaryosu, oturum veya çalıştırma bulunamadı."
+      "testCase": "Test senaryosu bulunamadı."
     },
     "or": "veya",
     "for": "için",
@@ -893,7 +872,6 @@
         "resetColumns": "Sütunları varsayılana sıfırla"
       },
       "filter": "Filtre listesi...",
-      "selectNone": "Hiçbirini Seçin",
       "sort": "Sütunu sırala",
       "sortAscending": "Artan sırada sıralanmıştır",
       "sortDescending": "Azalan sırada sıralanmıştır",
@@ -917,7 +895,6 @@
       "showing": "Gösteriliyor",
       "total": "Toplam {count, plural, =1 {# öğe} other {# öğe}}",
       "filtered": "filtrelenmiş",
-      "pageOfPages": "Sayfa {current} / {total}",
       "loadedOfTotal": "{loaded, number} / {total, number}"
     },
     "upload": {
@@ -928,7 +905,6 @@
         "description": "Dosyalarınızı sürükleyip bırakın veya dosya seçmek için aşağıdaki düğmeye tıklayın.",
         "selectFiles": "{count, plural, =0 {Dosya Seç} =1 {1 Seçili Dosya} other {# Seçili Dosya}}",
         "selectFile": "{count, plural, =0 {Dosya Seçin} other {1 Dosya Seçildi}}",
-        "filesSelected": "{count, plural, =1 {1 dosya seçildi} other {# dosya seçildi}}",
         "addMoreFiles": "Daha fazla dosya ekle...",
         "replaceFile": "Dosyayı değiştir...",
         "invalidFileType": "Geçersiz dosya türü. Yalnızca {types} dosyalarına izin verilir.",
@@ -953,8 +929,7 @@
       "dropToImportTestResults": "Test sonuçlarını içe aktarmak için dosyayı sürükleyip bırakın.",
       "supportedCsvFormats": "Desteklenen format: .csv",
       "supportedResultFormats": "Desteklenen dosya formatları: .xml, .trx, .json",
-      "unsupportedFileType": "Desteklenmeyen dosya türü. Beklenen: {expected}",
-      "noFilesDetected": "Sürükleme işleminde dosya tespit edilmedi."
+      "unsupportedFileType": "Desteklenmeyen dosya türü. Beklenen: {expected}"
     },
     "editor": {
       "bold": "Gözü pek",
@@ -1009,9 +984,7 @@
         "strikethrough": "Üstü çizili",
         "code": "Kod",
         "codeBlock": "Kod bloğu",
-        "highlightText": "Metni vurgula",
         "textColor": "Metin rengi",
-        "moreOptions": "Daha fazla seçenek",
         "subscript": "Alt simge",
         "superscript": "Üst simge",
         "alignLeft": "Sola hizala",
@@ -1019,9 +992,7 @@
         "alignRight": "Sağa hizala",
         "justify": "Savunmak",
         "setLink": "Bağlantıyı Ayarla",
-        "editLink": "Bağlantıyı düzenle",
-        "removeLink": "Bağlantıyı kaldır",
-        "resetColorToDefault": "Rengi varsayılan değere sıfırla"
+        "removeLink": "Bağlantıyı kaldır"
       }
     },
     "ai": {
@@ -1078,9 +1049,6 @@
       "breadcrumb": {
         "more": "Daha"
       },
-      "clickToViewDetails": "Ayrıntıları görüntülemek için tıklayın",
-      "clickToExpand": "Genişletmek için tıklayın",
-      "clickToCollapse": "Daraltmak için tıklayın",
       "search": {
         "filters": "Filtreler",
         "noResultsFound": "Hiçbir sonuç bulunamadı.",
@@ -1098,10 +1066,8 @@
         "openInExternalSystem": "{provider} içinde aç",
         "assignee": "Atanan kişi",
         "status": "Durum: ",
-        "clickToOpenInNewTab": "Yeni sekmede açmak için tıklayın",
         "url": "URL: ",
         "externalId": "Harici Kimlik: ",
-        "viewIn": "Şurada görüntüle",
         "fieldType": "Alan türü: ",
         "richTextContent": "Zengin metin içeriği",
         "fieldInformation": "Saha Bilgileri"
@@ -1120,10 +1086,7 @@
       },
       "import": {
         "encoding": {
-          "utf8": "UTF-8",
-          "iso88591": "ISO-8859-1",
-          "iso885915": "ISO-8859-15",
-          "windows1252": "Windows-1252"
+          "utf8": "UTF-8"
         }
       },
       "loadingIssueTracker": "Sorun takip bilgileri yükleniyor...",
@@ -1194,8 +1157,7 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "Yineleme indeksi {index} , desteklenen maksimum değer olan {cap}değerini aşıyor. Yineleme sayısını azaltın veya çalıştırmayı bölün.",
-        "iterationCapExceededMulti": "{count} test senaryosu, desteklenen maksimum değer olan {cap}'in üzerinde yineleme indeksi talep ediyor. Yineleme sayısını azaltın veya çalıştırmayı bölün."
+        "iterationCapExceeded": "Yineleme indeksi {index} , desteklenen maksimum değer olan {cap}değerini aşıyor. Yineleme sayısını azaltın veya çalıştırmayı bölün."
       }
     }
   },
@@ -1208,8 +1170,7 @@
         "apple": "Apple ile devam edin",
         "microsoft": "Microsoft ile devam edin",
         "samlProvider": "{name} ile giriş yapın",
-        "magicLink": "Tek kullanımlık Magic Link ile giriş yapın",
-        "emailLogin": "E-posta ile devam edin"
+        "magicLink": "Tek kullanımlık Magic Link ile giriş yapın"
       },
       "magicLink": {
         "description": "E-posta adresinizi girin, size giriş yapmanız için güvenli bir bağlantı göndereceğiz. Şifre gerekmiyor. Zaten bir hesabınızın olması gerekiyor.",
@@ -1280,7 +1241,6 @@
       "error": "E-posta doğrulama başarısız oldu.",
       "expired": "Doğrulama bağlantısının süresi doldu.",
       "invalid": "Geçersiz doğrulama bağlantısı",
-      "alreadyVerified": "E-posta adresi zaten doğrulandı.",
       "toast": {
         "verifySuccess": {
           "description": "Artık hesabınıza giriş yapabilirsiniz."
@@ -1315,7 +1275,6 @@
       "title": "Kimliğinizi Doğrulayın",
       "description": "Devam etmek için kimlik doğrulama uygulamanızdan aldığınız 6 haneli kodu girin.",
       "backupCodeLabel": "Yedekleme Kodu",
-      "backupCodeHint": "Ayrıca 8 karakterli bir yedek kod da girebilirsiniz.",
       "useAuthenticator": "Kimlik doğrulama kodunu kullanın.",
       "useBackupCode": "Bunun yerine yedek kod kullanın.",
       "signOut": "Oturumu kapatın ve farklı bir hesap kullanın."
@@ -1328,24 +1287,14 @@
       "confirmPasswordLabel": "Yeni Şifreyi Onayla",
       "signOut": "Bunun yerine oturumu kapat",
       "passwordsMustMatch": "Şifreler eşleşmiyor.",
-      "genericError": "Bir hata oluştu. Lütfen tekrar deneyin.",
-      "policyTitle": "Şifre Gereksinimleri:",
-      "policyMinLength": "En az {count, number} karakter",
-      "policyUppercase": "En az bir büyük harf",
-      "policyLowercase": "En az bir küçük harf",
-      "policyNumbers": "En az bir sayı",
-      "policySpecialChars": "En az bir özel karakter ({chars})"
+      "genericError": "Bir hata oluştu. Lütfen tekrar deneyin."
     }
   },
   "account": {
     "linkSso": {
       "description": "Hesabınızı Tekli Oturum Açma (Single Sign-On) sağlayıcısıyla bağlayın.",
-      "availableProviders": "Mevcut SSO Sağlayıcıları",
-      "linkWithGoogle": "Google ile bağlantı kurun",
-      "linkWithSaml": "{name} ile bağlantı kurun",
       "accountLinked": "Hesap başarıyla bağlandı.",
       "linkingFailed": "Hesap bağlantısı kurulamadı.",
-      "noProvidersAvailable": "Şu anda bağlantı kurmak için kullanılabilecek hiçbir SSO sağlayıcısı bulunmamaktadır.",
       "linkingInfo": "Bir SSO sağlayıcısını bağlamak, parolanız yerine o sağlayıcıyı kullanarak oturum açmanıza olanak tanır. Mevcut hesap bilgilerinizde herhangi bir değişiklik olmaz.",
       "signInWithGoogle": "Google ile giriş yapın",
       "enterpriseSamlSso": "Kurumsal SAML SSO",
@@ -1389,7 +1338,6 @@
       "seeAllMilestones": "{count, plural, =1 {# Dönüm Noktasına Bak} =2 {Her İki Dönüm Noktasına Bak} other {Tüm # Dönüm Noktasına Bak}}",
       "seeAllTestCases": "{count, plural, =1 {# Test Durumuna Bak} =2 {Her İki Test Durumuna Bak} other {Tüm # Test Durumuna Bak}}",
       "latestTestCases": "En Son Test Senaryoları",
-      "createdOn": "Oluşturulma tarihi",
       "seeAllTagsCount": "{count, plural, =1 {# Etikete Bak} =2 {Her İki Etikete Bak} other {Tüm # Etikete Bak}}",
       "seeAllActiveSessions": "{count, plural, =1 {# Aktif Oturuma Bak} =2 {Her İki Aktif Oturuma Bak} other {Tüm # Aktif Oturuma Bak}}",
       "latestSessions": "Son Oturumlar",
@@ -1412,8 +1360,6 @@
     },
     "settings": {
       "description": "{projectName} için ayarları yönetin",
-      "moreSettingsComingSoon": "Yakında daha fazla ayar eklenecektir.",
-      "moreSettingsDescription": "Gelecek güncellemelerde burada ek proje yapılandırma seçenekleri sunulacaktır.",
       "junitIterationProperties": {
         "title": "Yineleme Özellik Eşlemesi",
         "description": "İçe aktarma sırasında, her test durumu için yineleme indeksi, adı bu girdilerden biriyle eşleşen bir özellik, öznitelik veya özellikten okunur (JUnit özelliği, TestNG özniteliği, xUnit özelliği, NUnit özelliği). Yayıcınızın kullandığı adları ekleyin; arama büyük/küçük harf duyarlı değildir.",
@@ -1435,23 +1381,17 @@
         "description": "Bu proje için üçüncü taraf sorun entegrasyonlarını yönetin.",
         "availableIntegrations": "Mevcut Sorun Entegrasyonları",
         "availableDescription": "Bu projeye bağlanmak için bir sorun entegrasyonu seçin.",
-        "configuredIntegration": "Yapılandırılmış Entegrasyon",
         "noIntegrationAssigned": "Herhangi bir entegrasyon sorunu atanmadı.",
         "noIntegrationDescription": "Başlamak için mevcut seçeneklerden bir sorun entegrasyonu seçin.",
         "selectIntegration": "Yapılandırmak için bir sorun entegrasyonu seçin.",
         "integration": {
-          "assignError": "Sorun entegrasyonu atanamadı.",
           "updateSuccess": "Entegrasyon ayarları güncellendi",
           "updateError": "Sorun entegrasyon ayarlarını güncelleme başarısız oldu.",
           "removeError": "Sorun entegrasyonunu kaldırma başarısız oldu.",
           "removeIntegration": "Entegrasyonu Kaldır",
           "confirmRemove": "{name} entegrasyonunu kaldırmak istediğinizden emin misiniz?",
-          "authDescription": "Bu sorun entegrasyonunu kullanmak için {provider} ile kimlik doğrulamanız gerekiyor.",
           "authenticating": "Kimlik doğrulama işlemi devam ediyor...",
-          "authSuccess": "Kimlik doğrulama başarılı",
           "selectProject": "{provider} Projesini Seçin",
-          "selectProjectPlaceholder": "Bağlantı vermek istediğiniz projeyi seçin.",
-          "linkedProject": "Bağlantılı Proje",
           "loadProjectsError": "Projeler yüklenemedi.",
           "settingsSaved": "Entegrasyon ayarları başarıyla kaydedildi.",
           "saveSettingsError": "Sorun entegrasyon ayarlarını kaydetme başarısız oldu.",
@@ -1462,22 +1402,12 @@
           "authorizeIntegration": "Yetkilendir {name}",
           "integrationSettings": "{name} Ayarlar",
           "integrationSettingsDescription": "Bu proje için sorun entegrasyon ayarlarını yapılandırın.",
-          "selectExternalProject": "Harici proje seçin",
-          "refreshProjects": "Projeleri Yenile",
           "defaultIssueType": "Varsayılan Sorun Türü",
           "selectDefaultIssueType": "Varsayılan sorun türünü seçin",
-          "defaultIssueTypeDescription": "Yeni sorunlar oluşturulurken bu sorun türü önceden seçilecektir.",
-          "issueTypePlaceholder": "Örneğin, Hata, Görev, Hikaye",
-          "defaultComponent": "Varsayılan Bileşen",
-          "componentPlaceholder": "Örneğin, Ön Uç (Frontend), Arka Uç (Backend)",
           "automaticSync": "Otomatik Senkronizasyon",
-          "automaticSyncDescription": "TestPlanIt ile harici sistem arasındaki sorunları otomatik olarak senkronize edin.",
           "simpleUrlDescription": "Bu sorun entegrasyonu, harici sorunlara bağlantı vermek için basit bir URL kalıbı kullanır. Sorunlar, yapılandırılmış URL kalıbı kullanılarak yeni bir sekmede açılacaktır.",
-          "externalProjectHelp": "Bu, TestPlanIt'ten yeni sorunlar oluşturmak için varsayılan projeyi belirler. Yine de diğer harici projelerden sorunları bağlayabilir ve senkronize edebilirsiniz; her sorun kendi kaynak projesini takip eder.",
           "linkedProjects": "Bağlantılı Harici Projeler",
           "linkedProjectsDescription": "Bu entegrasyon aracılığıyla bağlantılı harici projeler",
-          "noLinkedProjects": "Bağlantılı harici proje bulunmamaktadır.",
-          "noLinkedProjectsDescription": "Sorun arama ve senkronizasyonunu etkinleştirmek için harici bir proje ekleyin.",
           "addProjects": "Proje Ekle",
           "addSelected": "Seçilenleri Ekle",
           "setAsDefault": "Varsayılan olarak ayarla",
@@ -1489,8 +1419,6 @@
           "syncStatusCompleted": "Senkronize edildi",
           "syncStatusError": "Senkronizasyon Hatası",
           "fanOutPartialFailure": "{count} projeye ulaşılamadı. {successCount} projeden sonuçlar gösteriliyor.",
-          "projectSelectorLabel": "Proje",
-          "defaultIssueTypeHelp": "TestPlanIt'ten yeni sorunlar oluştururken, bu sorun türü otomatik olarak seçilecektir. Bu, genellikle aynı türde sorunlar oluşturuyorsanız zamandan tasarruf etmenizi sağlar.",
           "automaticSyncHelp": "Etkinleştirildiğinde, harici sistemde değişiklikler algılandığında (web kancaları aracılığıyla) sorunlar otomatik olarak senkronize edilir. Manuel senkronizasyon her zaman mevcuttur.",
           "removeWarningTitle": "Bu entegrasyon sorununu kaldırmak şu sonuçlara yol açacaktır:",
           "removeWarning1": "Bu sorun entegrasyonuna bağlı tüm sorunları ayırın (sorunlar veritabanında kalır).",
@@ -1651,12 +1579,10 @@
         "outboundCreateUrlHelp": "Hedef URL. Slack gelen webhook URL'leri otomatik olarak algılanır.",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "Algılandı: Slack",
-        "outboundDetectedHmac": "Tespit edildi: Genel HMAC",
         "adapterLabelSlack": "Slack",
         "adapterLabelGenericHmac": "Genel HMAC web kancası",
         "outboundCreateSubscriptionsTitle": "Abonelikler",
         "outboundCreateSubscriptionsHelp": "Bu hedefe hangi olayların tetikleneceğini seçin. Bunları daha sonra değiştirebilirsiniz.",
-        "outboundSubsTestRunsAndSessions": "Test Çalıştırmaları ve Oturumları",
         "outboundSubsTestRuns": "Test Çalışmaları",
         "outboundSubsSessions": "Oturumlar",
         "outboundSubsScimUsers": "SCIM Kullanıcıları",
@@ -1682,7 +1608,6 @@
           "scimGroupMemberAddedSummary": "Üyeler eklendi (toplu senkronizasyon özeti)",
           "triggered": "Tetiklendi"
         },
-        "iterationResultHelp": "Her yineleme sonucu kaydedildiğinde (başarılı, başarısız, atlanmış veya başka herhangi bir durum) tetiklenir. Uzun otomasyon çalıştırmalarında dikkatli kullanın (her yineleme için bir olay).",
         "events": {
           "testRunCreated": "Test çalıştırması oluşturuldu.",
           "testRunStateChanged": "Test çalıştırma durumu değişti",
@@ -1714,7 +1639,6 @@
         },
         "outboundSubsIssues": "Sorunlar",
         "outboundSubsCases": "Vakalar",
-        "outboundSubsSelectAll": "Bu bölümde tümünü seç",
         "outboundCreateSubmit": "Web kancası oluştur",
         "outboundCreateSuccess": "Giden web kancası oluşturuldu.",
         "outboundCreateError": "Giden web kancası oluşturulamadı.",
@@ -1795,14 +1719,11 @@
         "filterConfigPlaceholder": "Tüm web kancaları",
         "filterEventPlaceholder": "Tüm etkinlikler",
         "filterStatusFailed": "Arızalı",
-        "filterSinceDefault": "…'dan beri",
-        "filterUntilDefault": "…'ya kadar",
         "filterReset": "Filtreleri sıfırla",
         "filterBulkReplayButton": "Toplu tekrar oynatma {count, number} giden hatalar",
         "filterBulkReplayHidden": "Görünen tüm hatalar gelen bağlantıdan kaynaklanıyor; bunun yerine yukarı akış olayını yeniden tetikleyin.",
         "deliveriesEmpty": "Bu filtrelerle eşleşen teslimat bulunamadı.",
         "deliveriesResetFilters": "Filtreleri sıfırla",
-        "deliveriesLoadMore": "Daha fazla yükle",
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "Etkinlik",
         "tableHeaderSubjectRef": "Referans",
@@ -1941,8 +1862,7 @@
           "autoExecute": "Otomatikleştirilmiş durumları yürüt",
           "autoExecuteHelp": "Çalıştırma oluşturulduktan sonra, bu hedefte otomatikleştirilmiş durumlarının otomatik yürütülmesini isteyin. El ile yapılan durumlar çalıştırmada test ediciler için kalır.",
           "autoExecuteNoTargets": "Bu proje için yapılandırılan yürütme hedefi yok. Çalıştırmaları otomatik olarak yürütmek için <link>bir tane ekleyin</link>.",
-          "autoExecuteTargetMissing": "Seçilen yürütme hedefi silinmiş veya devre dışı bırakılmıştır. Çalıştırmalar hâlâ oluşturulur, ancak başka bir hedef seçene kadar yürütme istenmez.",
-          "autoExecuteSaveError": "Otomatik yürütme ayarları kaydedilemedi"
+          "autoExecuteTargetMissing": "Seçilen yürütme hedefi silinmiş veya devre dışı bırakılmıştır. Çalıştırmalar hâlâ oluşturulur, ancak başka bir hedef seçene kadar yürütme istenmez."
         },
         "inboundEmptyState": "Henüz gelen web kancası yok. Sorun izleyicinizden sorun güncellemeleri almak veya bağlı bir depodan çekme istekleri ve taşımalar almak için <link>birini ekleyin</link>.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -1961,8 +1881,6 @@
       "aiModels": {
         "description": "Akıllı test senaryosu oluşturma ve analizi için yapay zeka modellerini yapılandırın.",
         "availableModelsDescription": "Bu proje için sistem yöneticiniz tarafından yapılandırılmış varsayılan bir yapay zeka modeli seçin.",
-        "currentModelSettings": "Mevcut Model Ayarları",
-        "currentModelDescription": "Şu anda aktif olan yapay zeka modelinin yapılandırma ayrıntıları: {name}",
         "noModelsAvailable": "Şu anda kullanılabilir yapay zeka modeli bulunmamaktadır. Kuruluşunuz için yapay zeka modellerini yapılandırmak üzere sistem yöneticinizle iletişime geçin.",
         "monthlyBudget": "Aylık Bütçe",
         "model": "Model",
@@ -1971,7 +1889,6 @@
         "systemDefault": "Sistem Varsayılanı",
         "setAsDefault": "Varsayılan olarak ayarla",
         "clearDefault": "Varsayılanı Temizle",
-        "useForProject": "Proje için kullanın",
         "removeModel": "Varsayılanı Temizle",
         "removeWarningTitle": "Varsayılan yapay zeka modelini sıfırlamak şu sonuçlara yol açacaktır:",
         "removeWarning1": "Özellik bazında geçersiz kılma ayarları yapılandırılmadığı sürece yapay zeka destekli özellikleri devre dışı bırakın.",
@@ -2035,10 +1952,6 @@
           "assignments": "Kullanımda olan"
         },
         "versionLabel": "v{version, number}",
-        "assignmentsCount": "{count, plural, =0 {0 vaka} =1 {# vaka} other {# vaka}}",
-        "rowsCount": "{count, plural, =0 {0 satır} =1 {# satır} other {# satır}}",
-        "columnsCount": "{count, plural, =0 {0 sütun} =1 {# sütun} other {# sütun}}",
-        "actionsMenuLabel": "Açık veri kümesi işlemleri",
         "actionOpen": "Editörü aç",
         "openLink": "Açık",
         "create": {
@@ -2071,9 +1984,6 @@
           "saving": "Tasarruf",
           "savedHint": "Tüm değişiklikler {version, number} sürümünde kaydedildi.",
           "unsavedHint": "Kaydedilmemiş değişiklikler",
-          "currentVersionLabel": "v{version, number} (mevcut)",
-          "currentVersionInitialLabel": "Akım",
-          "historicalVersionLabel": "v{version, number}",
           "historicalReadOnlyBanner": "Şu anda {version, number}sürümünü görüntülüyorsunuz. Düzenleme, bu sürümden dallanmış yeni bir sürüm oluşturacaktır.",
           "branchingBanner": "Kaydetme işlemi, v{version, number}'den dallanmış yeni bir sürüm oluşturacaktır.",
           "saveError": "Veri seti kaydedilemedi.",
@@ -2088,9 +1998,7 @@
           "historicalItemLabel": "v{version, number}",
           "historicalItemBy": "{name} tarafından",
           "noVersionsYet": "Henüz kaydedilmiş sürüm yok."
-        },
-        "datasetTabSharedReadOnlyHint": "{version, number}sürümünün salt okunur görünümü. Düzenlemek için geçerli sürüme geçin.",
-        "datasetTabSharedEditorHint": "İşiniz bittiğinde Kaydet'e tıklayın. Her Kaydetme işlemi yeni bir sürüm oluşturur."
+        }
       },
       "quickScript": {
         "description": "QuickScript'i etkinleştirin ve yapay zeka destekli test oluşturma için bir kod deposu bağlayın.",
@@ -2169,7 +2077,6 @@
           "pathLabel": "Yol",
           "patternLabel": "Model",
           "previewFiles": "Dosyaları Önizle",
-          "scanningRepo": "Depo dosyaları taranıyor… ({seconds}s)",
           "title": "Yol Desenleri",
           "truncatedBadge": "Sonuçlar eksik olabilir (sağlayıcı sınırlaması)"
         },
@@ -2182,8 +2089,6 @@
         },
         "refreshComplete": "Ön bellek yenilendi: {fileCount} dosya",
         "refreshInProgress": "Ön bellek yenileme arka planda hâlâ çalışıyor. Tamamlandığında burada güncellenecek.",
-        "refreshRateLimited": "Ön bellek yenilendi: {fileCount} dosya listelendi, {contentCached}/{fileCount} içerik ön belleğe alındı (oran sınırlı — tamamlamak için tekrar yenileyin)",
-        "refreshSuccess": "Ön bellek yenilendi: {fileCount} dosya ({contentCached} içerik ön belleğe alındı)",
         "repository": {
           "branchLabel": "Dal",
           "branchesTruncatedHint": "İlk {count, number} dallar gösteriliyor. Tüm depoyu aramak için yazın.",
@@ -2483,26 +2388,18 @@
       }
     },
     "matrix": {
-      "metaTitle": "Matris Görünümü",
       "pageTitle": "Parametreli Test Yineleme Matrisi",
       "loading": "Matris yükleniyor…",
       "loadError": "Matris görünümü yüklenemedi. Tekrar deneyin veya filtrelerinizi daraltın.",
-      "cellCapShort": "Bu matris {cells, number} hücre oluşturacak ve bu da {threshold, number} hücre sınırını aşacaktır. Devam etmek için filtreleri daraltın.",
       "caseColumnHeader": "Vaka / parametre satırı",
       "cellSummary": "{pass, number} başarılı, {fail, number} başarısız, {notRun, number} çalıştırılmadı",
       "popoverTitle": "{count, plural, =1 {# yineleme} other {# yineleme}}",
-      "iterationUnlabeled": "Yineleme #{index, number}",
       "popoverInflightHint": "Kaydedildikten sonra uçuş sırasındaki yinelemeler burada görünecektir.",
       "popoverNoTimestamp": "—",
-      "filterStatus": "{count, plural, =0 {Durum} one {Durum (#)} other {Durum (#)}}",
-      "filterConfig": "{count, plural, =0 {Yapılandırma} one {Yapılandırma (#)} other {Yapılandırma (#)}}",
-      "filterDataset": "{count, plural, =0 {Veri Kümesi} one {Veri Kümesi (#)} other {Veri Kümesi (#)}}",
       "filterDatasetLabel": "Veri kümesi",
       "filterStatusPlaceholder": "Herhangi bir durum",
       "filterConfigPlaceholder": "Herhangi bir yapılandırma",
       "filterDatasetPlaceholder": "Herhangi bir veri kümesi",
-      "filterDateFrom": "İtibaren",
-      "filterDateTo": "İle",
       "configNone": "(yapılandırma yok)",
       "clearFilter": "Temizlemek",
       "resetFilters": "Filtreleri sıfırla",
@@ -2583,7 +2480,6 @@
       "reopen": "Yeniden açın"
     },
     "dates": {
-      "pickStartDate": "Başlangıç tarihini seçin",
       "pickCompletionDate": "Seçim tamamlanma tarihi",
       "selectDate": "Tarih seçin...",
       "completionWarning": "Uyarı: Bu işlem, ilgili aşamanın tamamlandığını gösterecektir."
@@ -2666,7 +2562,6 @@
       "providerJira": "Jira",
       "providerGitHub": "GitHub",
       "sourceBadge": "{provider} · {kind} · {state}",
-      "syncNow": "Şimdi senkronize et",
       "unlinkMenuItem": "{provider} bağlantısını kaldır",
       "unlinkConfirmTitle": "Dönüm noktası bağlantısı kaldırılsın mı?",
       "unlinkConfirmDescription": "Bu, takip sistemiyle senkronizasyonu durdurur: alanlar yeniden düzenlenebilir hale gelir, senkronize edilen sorun bağlantıları manuel hale gelir (tutmak veya kaldırmak size kalır) ve bu yapı yeniden içe aktarılarak daha sonra tekrar bağlanabilir.",
@@ -2702,10 +2597,6 @@
       "columnCoverage": "Kapsam",
       "columnSource": "Kaynak",
       "sourceSynced": "Senkronize edildi",
-      "coveragePassed": "Geçti",
-      "coverageFailed": "Arızalı",
-      "coverageInProgress": "Devam etmekte",
-      "coverageNotRun": "Çalıştırılmadı",
       "coverageUncovered": "Kapsanmamış",
       "filterAllCoverage": "Tüm kapsam",
       "filterAllSources": "Tüm kaynaklar",
@@ -2724,7 +2615,6 @@
       "overflowImportAction": "İçe aktar ve bağla",
       "overflowImportSuccess": "İçe aktarma başladı — sorunlar senkronize edildikçe görünecektir.",
       "overflowImportError": "Jira'dan üye sorunları içe aktarılamadı.",
-      "emptyCta": "Başlamak için bir sorun bağlayın.",
       "unlinkConfirmTitle": "Sorun bağlantısı kaldırılsın mı?",
       "unlinkConfirmDescription": "Bu, sorunu bu dönüm noktasından kaldırır. Sorunun kendisi saklanır ve daha sonra yeniden bağlanabilir.",
       "totalsUncovered": "{count, plural, one {# kapsanmamış sorun} other {# kapsanmamış sorun}}",
@@ -2781,9 +2671,7 @@
     },
     "messages": {
       "createSuccess": "Oturum başarıyla oluşturuldu.",
-      "createSuccessMultiple": "{count, number} Oturumlar başarıyla oluşturuldu",
-      "duplicateSuccess": "Oturum başarıyla kopyalandı.",
-      "duplicateSuccessMultiple": "{count} Oturum başarıyla kopyalandı"
+      "createSuccessMultiple": "{count, number} Oturumlar başarıyla oluşturuldu"
     },
     "duplicateDialog": {
       "title": "Yinelenen Oturum",
@@ -2795,8 +2683,7 @@
       "failedToCreate": "Yeni oturum oluşturulamadı.",
       "failedToCreateVersion": "Oturum sürümü oluşturulamadı.",
       "nameAlreadyExists": "Oturum adı zaten mevcut. Lütfen yeni bir ad seçin.",
-      "createFailed": "Oturum oluşturulamadı.",
-      "duplicateFailed": "Oturum çoğaltma başarısız oldu."
+      "createFailed": "Oturum oluşturulamadı."
     },
     "validation": {
       "nameMinLength": "İsim en az 2 karakterden oluşmalıdır.",
@@ -2835,7 +2722,6 @@
     "summary": {
       "workDistributionDescription": "Tahmini toplam kalan süre:",
       "recentResultsTitle": "Sonuçlar Özeti",
-      "recentResultsDescription": "Oturum sonuçlarının özeti.",
       "noRecentResults": "Son zamanlarda herhangi bir oturum sonucu kaydedilmedi.",
       "completionTrendTitle": "Tamamlama Trendi",
       "completionTrendDescription": "Ayda tamamlanan seans sayısı.",
@@ -2965,8 +2851,6 @@
         "title": "Profil Düzenle",
         "timezonePlaceholder": "Saat dilimi seçin veya arayın...",
         "timezoneRequired": "Saat dilimi bilgisi gereklidir.",
-        "avatarUpdated": "Avatar başarıyla güncellendi.",
-        "avatarUpdateError": "Avatar güncellemesi başarısız oldu.",
         "deleteAvatar": "Avatarı Sil",
         "deleteAvatarConfirm": "{name} dosyasını silmek istediğinizden emin misiniz?",
         "emailDisabledForSso": "SSO hesapları için e-posta adresi değiştirilemez. Lütfen kimlik sağlayıcınız aracılığıyla güncelleyin.",
@@ -3010,7 +2894,6 @@
       "notifications": {
         "title": "Bildirim Tercihleri",
         "description": "Bildirimleri nasıl alacağınızı özelleştirin.",
-        "currentGlobal": "Geçerli küresel ayar: {mode}",
         "mode": {
           "label": "Bildirim Modu",
           "useGlobal": "Genel Ayarları Kullanın"
@@ -3154,7 +3037,6 @@
         "loadMore": "Yükleniyor",
         "viewDetails": "Ayrıntıları görüntüle",
         "columnAction": "Aksiyon",
-        "columnTimestamp": "Zaman damgası",
         "allActions": "Tüm Eylemler",
         "allTypes": "Tüm Türler",
         "noMatchingEntries": "Seçilen filtrelerle eşleşen kayıt bulunamadı.",
@@ -3323,22 +3205,16 @@
       "removedFromCase": "Test senaryosundan kaldırıldı",
       "confirmDelete": "Silme işlemini onayla Adım {number, number}?",
       "createSharedSteps": "Paylaşılan {number, plural, one {Adım} other {Adımlar}} Oluştur",
-      "sharedStepsName": "Paylaşılan Adımların Adı",
       "sharedStepsDescription": "Yeni paylaşılan {number, plural, one {adımınız} other {adımlarınız}} için bir ad girin. Bu, {number, plural, one {# seçilen adım} other {# seçilen adım}} içerecektir.",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "Lütfen adımları seçin ve paylaşılan adımlar oluşturmak için bir ad girin.",
-        "failedToCreateSharedStepGroupError": "Paylaşılan adımlar oluşturulamadı. Lütfen tekrar deneyin.",
-        "sharedStepGroupCreatedSuccess": "Paylaşılan adımlar başarıyla oluşturuldu!",
-        "genericSharedStepCreationError": "Paylaşılan adımları oluştururken bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.",
         "errorCreatingSharedGroup": "Paylaşılan adımlar oluşturulamadı. Lütfen tekrar deneyin.",
         "sharedGroupCreatedSuccess": "Ortak adım grubu başarıyla oluşturuldu!",
         "failedToCreateSharedGroupError": "Paylaşılan grup oluşturulamadı. Lütfen tekrar deneyin."
       },
       "selectSharedStepsTitle": "Paylaşılan Adımları Seçin",
       "selectSharedStepsDescription": "Test senaryonuza eklemek için paylaşılan adımları seçin.",
-      "sharedStepsListPlaceholder": "Paylaşılan adımlar yükleniyor...",
       "sharedStepsNamePlaceholder": "Paylaşılan adımları tanımlamak için bir ad girin.",
-      "noSharedStepsFound": "Bu proje için paylaşılan adım bulunamadı.",
       "sharedStepGroupTitle": "Paylaşılan Adımlar: {name}",
       "confirmDeleteSharedStepBlock": "Bu test durumundan \"{name}\" paylaşımlı adım bloğunu kaldırmak istediğinizden emin misiniz? Bu işlem, paylaşımlı adım grubunun kendisini silmeyecektir.",
       "removeBlockButton": "Engeli Kaldır",
@@ -3347,7 +3223,6 @@
       "searchSharedStepsPlaceholder": "Paylaşılan adımları seçin...",
       "stepsCountLabel": "{count, plural, =0 {# adım} =1 {# adım} other {# adım}}",
       "reviewSelectedStepsTitle": "Seçilen Adımları Gözden Geçirin",
-      "noStepsInSelectedGroup": "Seçilen grupta herhangi bir adım bulunmamaktadır.",
       "sharedGroupSuffix": "(Ortak Adımlar)",
       "unnamedSharedGroup": "İsimsiz Paylaşılan Adımlar",
       "noStepsInSelectedSharedGroup": "Seçilen paylaşılan grupta herhangi bir adım bulunmamaktadır.",
@@ -3358,8 +3233,6 @@
       }
     },
     "testCase": {
-      "toggleAutomated": "Otomatik test özelliğini etkinleştir",
-      "editAttachmentsIndividually": "Ekleri tek tek düzenleyin.",
       "automatedStatus": "Otomatik test {status}"
     },
     "templateNotAssignedWarning": "Bu test senaryosu, şu anda \"{projectName}\" projesine atanmamış olan \"{templateName}\" şablonunu kullanmaktadır. Bu şablonu projeye atamanız veya test senaryosunu farklı bir şablon kullanacak şekilde değiştirmeniz gerekebilir.",
@@ -3390,12 +3263,10 @@
     },
     "dragDrop": {
       "move": "Taşınmak",
-      "promptTitle": "Ne yapmak istersiniz?",
       "copying": "Kopyalanıyor…",
       "copyComplete": "{count, plural, =1 {1 vaka {folder} konumuna kopyalandı} other {# vaka {folder} konumuna kopyalandı}}{dest, select, samename {} crossProject { ({projectName} projesinde)} other {}}",
       "moveComplete": "{count, plural, =1 {1 vaka {folder} konumuna taşındı} other {# vaka {folder} konumuna taşındı}}{dest, select, samename {} crossProject { ({projectName} projesinde)} other {}}",
       "copyError": "{count, plural, =1 {1 vakayı {folder} konumuna kopyalama başarısız oldu} other {# vakayı {folder} konumuna kopyalama başarısız oldu}}{dest, select, samename {} crossProject { ({projectName} projesinde)} other {}}",
-      "moveError": "{count, plural, =1 {1 vakayı {folder} konumuna taşıma başarısız oldu} other {# vakayı {folder} konumuna taşıma başarısız oldu}}{dest, select, samename {} crossProject { ({projectName} projesinde)} other {}}",
       "copyAlreadyRunning": "Diğer bir kopyanın yapımına başlandı bile. Lütfen tamamlanmasını bekleyin.",
       "currentSuffix": "(Akım)",
       "moveDisabledSameFolder": "Senaryolar zaten bu klasörde bulunuyor.",
@@ -3446,7 +3317,6 @@
       "currentRunTooltip": "Görüntülemekte olduğunuz test çalıştırması",
       "attempt": "Girişim",
       "invalidProject": "Geçersiz proje",
-      "noSearchResults": "Arama kriterlerinize uyan hiçbir vaka bulunamadı.",
       "bulkEdit": "Toplu Düzenleme",
       "createTestRun": "Test Çalıştırması Oluştur",
       "addToRunDraftBlocked": "Bu proje için \"Taslak vakaları test çalıştırmalarından hariç tut\" seçeneği açıkken, taslak vakalar çalıştırmalara eklenemez.",
@@ -3670,10 +3540,7 @@
       "anyIssue": "Herhangi bir sorun",
       "noIssues": "Sorun yok"
     },
-    "noFoldersTitle": "Henüz Klasör Yok",
-    "noFoldersDescription": "Test senaryolarınızı düzenlemek için ilk klasörünüzü oluşturarak işe başlayın.",
     "noFoldersOrCasesNoPermission": "Görüntülenecek klasör veya test senaryosu yok.",
-    "createFirstFolder": "İlk klasörünüzü oluşturun",
     "bulkEdit": {
       "title": "Toplu Düzenleme {count, plural, one {# Durum} other {# Durum}}",
       "description": "Düzenleme {count, plural, one {# seçili durum} other {# seçili durum}}. Düzenlemeyi etkinleştirmek için bir alanı işaretleyin.",
@@ -3692,19 +3559,12 @@
         }
       },
       "errors": {
-        "fetchErrorTitle": "Vaka Yükleme Hatası",
-        "fetchErrorDescription": "Seçilen vakalar için veri yüklenemedi. Lütfen açılan pencereyi kapatıp tekrar deneyin.",
-        "updateErrorTitle": "Güncelleme Başarısız",
-        "updateFailed": "Değişiklikler kaydedilirken bir hata oluştu. Lütfen verileri kontrol edin ve tekrar deneyin.",
-        "fetchError": "Vaka verileri alınırken hata oluştu."
+        "updateFailed": "Değişiklikler kaydedilirken bir hata oluştu. Lütfen verileri kontrol edin ve tekrar deneyin."
       },
       "success": {
         "casesUpdated": "{count, number} vakalar başarıyla güncellendi."
       },
       "validationError": "Doğrulama Hatası",
-      "stepsCannotBeBulkEdited": "Adımlar toplu olarak düzenlenemez.",
-      "stepsInfoTitle": "Adımlar Bilgisi",
-      "stepsCannotBeBulkEditedInfo": "Adımlar toplu olarak düzenlenemez. Adımları düzenlemek için vakaları tek tek düzenleyin.",
       "confirmDeleteCases": "{count, plural, one {# seçili durumu} other {# seçili durumu}} silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
       "replaceAll": "Tümünü Değiştir",
       "searchReplace": "Arama ve Değiştirme",
@@ -3765,7 +3625,6 @@
         "single": "Kasa başına tek sıra",
         "multi": "Adım başına birden fazla satır"
       },
-      "comingSoon": "Yakında gelecek",
       "exportError": "Dışa aktarma başarısız oldu. Lütfen tekrar deneyin."
     },
     "quickScript": {
@@ -3846,19 +3705,13 @@
       "loadingDetails": "Senaryo detayları yükleniyor...",
       "caseDetailsError": "Vaka detayları yüklenemedi.",
       "sourceLabel": "Kaynak",
-      "fieldValuesLabel": "Alan Değerleri",
       "lastRunLabel": "Son Koşu",
-      "noFieldValues": "Alan değerleri yok",
       "noLastRun": "Asla koşma",
-      "stepExpectedResult": "{step} → {result}",
-      "runStatusDate": "{status} — {date}",
       "noFolder": "Klasör yok",
       "duplicateWarning": "Olası mükerrer kayıtlar bulundu.",
       "duplicateWarningDescription": "{count, plural, one {# mevcut durum} other {# mevcut durum}} benzer işlevselliği kapsayabilir",
       "duplicateWarningReview": "Gözden geçirmek",
-      "importWarning": "Muhtemel mükerrer",
       "importWarningTooltip": "Bu vaka adı, {count, plural, one {# mevcut vaka} other {# mevcut vaka}}: {names} ile benzerdir.",
-      "importIntraWarning": "İçe aktarma işleminde yinelenen kayıt",
       "importIntraWarningTooltip": "Bu içe aktarmadaki {rows} satırlarının adı aynı veya çok benzer.",
       "checkingDuplicates": "Yinelenen kayıtları kontrol ediliyor..."
     },
@@ -3888,12 +3741,8 @@
         "currentFolder": "mevcut klasör",
         "fromIssue": "Sorundan",
         "fromDocument": "Belgeden",
-        "documentTitle": "Belge Başlığı",
-        "documentTitlePlaceholder": "Gereksinimler belgenizin başlığını girin.",
         "documentDescription": "Gereksinimler Belgesi",
         "documentDescriptionPlaceholder": "Gereksinimler belgenizin içeriğini buraya yapıştırın...",
-        "documentPriority": "Öncelik (İsteğe bağlı)",
-        "selectPriority": "Öncelik seçin",
         "saveDocument": "Belge Gereksinimlerini Kaydet",
         "fromUrl": "URL'den",
         "recentGenerations": "Son URL'den Test Senaryoları Oluşturma işleri",
@@ -3960,15 +3809,11 @@
         "title": "Oluşturulan Test Senaryolarını İnceleyin",
         "description": "Yapay zeka tarafından oluşturulan test senaryolarını inceleyin, gerekli düzenlemeleri yapın ve hangilerinin içe aktarılacağını seçin.",
         "selected": "{count, number} / {total, number} seçildi",
-        "moreSteps": "... ve {count, plural, one {# adım daha} other {# adım daha}}",
         "templateFields": "Şablon Alanları:",
-        "moreFields": "... ve {count, plural, one {# alan daha} other {# alan daha}}",
-        "crawledUrls": "{count, plural, one {# sayfa tarandı} other {# sayfa tarandı}}",
         "spaWarning": "Bu sayfa JavaScript ile işlenmeyi gerektirebilir. Sonuçlar eksik olabilir.",
         "filterByPage": "Sayfaya göre filtrele",
         "allPages": "Tüm sayfalar ({pages, plural, one {# sayfa} other {# sayfa}}, {cases, plural, one {# vaka} other {# vaka}})"
       },
-      "generatingLegacy": "Yapay zekâ ile test senaryoları oluşturma...",
       "expandProgress": "{done, number} 'dan {total, number} üretildi",
       "import": "{count, plural, =0 {Test Senaryolarını İçe Aktar} =1 {1 Test Senaryosunu İçe Aktar} other {# Test Senaryosunu İçe Aktar}}",
       "stage": "{count, plural, =0 {Test Senaryolarını Hazırla} =1 {1 Test Senaryosunu Hazırla} other {# Test Senaryosunu Hazırla}}",
@@ -4010,11 +3855,6 @@
         "repositoryNotFound": "Proje deposu bulunamadı. Lütfen yöneticinizle iletişime geçin.",
         "workflowNotConfigured": "Proje iş akışı yapılandırılmamış. Lütfen proje ayarlarını doğrulayın.",
         "authenticationError": "Kimlik doğrulama hatası. Lütfen sayfayı yenileyip tekrar deneyin.",
-        "caseCreationFailed": "Test durumu oluşturulamadı: {name}",
-        "caseAlreadyExists": "\"{name}\" test durumu bu klasörde zaten mevcut.",
-        "invalidTemplateConfig": "\"{name} \" test durumu için geçersiz şablon yapılandırması.",
-        "nameTooLong": "Test durumu adı \"{name}\" çok uzun. Lütfen daha kısa bir ad kullanın.",
-        "caseCreationError": "\"{name}\" oluşturulamadı: {error}",
         "templateNotFound": "Seçilen şablon bulunamadı. Lütfen sayfayı yenileyip tekrar deneyin.",
         "repositoryConfigError": "Proje deposu yapılandırma hatası. Lütfen yöneticinizle iletişime geçin.",
         "workflowConfigError": "Proje iş akışı yapılandırma hatası. Lütfen proje ayarlarını doğrulayın.",
@@ -4022,9 +3862,7 @@
         "validationFailed": "Veri doğrulama başarısız oldu. Lütfen test senaryosunun içeriğini kontrol edin ve tekrar deneyin.",
         "databaseError": "Veritabanı bağlantı hatası. Lütfen biraz sonra tekrar deneyin.",
         "genericImportError": "İçe aktarma başarısız oldu: {error}",
-        "networkRoutingError": "Ağ yönlendirme veya sunucu yapılandırma sorunu - API yanıtı yerine HTML hata sayfası alındı.",
         "invalidSourceConfig": "Geçersiz kaynak yapılandırması",
-        "failedToCreateCaseVersion": "Vaka sürümü oluşturulamadı.",
         "noUrlProvided": "Lütfen test senaryoları oluşturmak için bir URL girin.",
         "urlFetchFailed": "Verilen URL'den içerik alınamadı. Lütfen URL'yi kontrol edin ve tekrar deneyin.",
         "llm": {
@@ -4230,7 +4068,6 @@
       "startLine": "Başlangıç Satırı",
       "symbolHint": "Bildirim dosyada adına göre bulunur.",
       "symbolNoneDetected": "Hiçbir sembol algılanmadı, bir ad yazın.",
-      "symbolPlaceholder": "fonksiyonAdı",
       "symbolSelectPlaceholder": "Sembol seçin veya yazın...",
       "updateSuccess": "Pin güncellendi",
       "updateFailed": "Pin güncellenemedi",
@@ -4257,9 +4094,6 @@
     "add": {
       "button": "Etiket Ekle",
       "title": "Yeni Etiket Ekle",
-      "fields": {
-        "name_error": "Etiket adı zorunludur."
-      },
       "errors": {
         "nameExists": "Bu isimde bir etiket zaten mevcut."
       }
@@ -4368,7 +4202,6 @@
       "filterEntityTypeRun": "Test çalışmaları",
       "filterAllProjects": "Tüm projeler",
       "actionRevert": "Kararı geri al",
-      "revertedBadge": "Geri alındı",
       "revertedBadgeTooltip": "{count, plural, =1 {Daha önce bir kez geri alındı} other {Daha önce # kez geri alındı}}"
     },
     "requester": {
@@ -4387,9 +4220,7 @@
       "cannotSelfAssign": "Kendinize değerlendirme atayamazsınız; başka bir kullanıcı veya rol seçin.",
       "defaultComment": "Lütfen {fromState} → {toState} geçişini inceleyin.",
       "defaultCommentRole": "{fromState} → {toState} geçişi için {roleName} grubundan onay isteniyor.",
-      "ineligibleAssigneeError": "Bu kullanıcı/rol bu alan için yorumları onaylayamaz. Lütfen başka birini seçin.",
-      "ineligibleAssigneeErrorUser": "{name} Bu alan için yorumları onaylayamıyor. Lütfen başka bir kullanıcı veya rol seçin.",
-      "ineligibleAssigneeErrorRole": "{roleName} rolü bu alan için yorumları onaylayamaz. Başka bir rol veya kullanıcı seçin."
+      "ineligibleAssigneeError": "Bu kullanıcı/rol bu alan için yorumları onaylayamaz. Lütfen başka birini seçin."
     },
     "bulkRequester": {
       "saveAndRequestButton": "Kaydet ve inceleme talep et",
@@ -4428,8 +4259,7 @@
       "rejectSuccess": "İnceleme reddedildi.",
       "ineligibleError": "Bu inceleme talebine artık karar verme yetkiniz bulunmamaktadır.",
       "alreadyDecidedError": "Bu değerlendirmeye ilişkin karar zaten verildi.",
-      "decideError": "Kararınız kaydedilemedi. Lütfen birazdan tekrar deneyin.",
-      "panelSummary": "{requesterName}'dan gelen inceleme isteği: {targetStateName}'e geçiş"
+      "decideError": "Kararınız kaydedilemedi. Lütfen birazdan tekrar deneyin."
     },
     "revert": {
       "confirm": "Kararı geri al",
@@ -4545,17 +4375,12 @@
         "noMatchesDescription": "Test çalıştırma adı ve açıklaması hiçbir test senaryosuyla eşleşmedi. Önceki adıma geri dönün ve test senaryolarınızda geçen özellik adları, bileşen adları veya anahtar kelimeler gibi daha spesifik ayrıntılar ekleyin.",
         "maxResultsTitle": "Maksimum Test Senaryosu Eşleşme Sayısı",
         "maxResultsDescription": "Arama kriterleri çok sayıda test senaryosuyla eşleşti. Daha hedefli sonuçlar için önceki adıma geri dönün ve test çalıştırmasına daha spesifik ayrıntılar ekleyin.",
-        "batchSize": "Parti boyutu",
-        "batchSizeAll": "Tüm vakalar (tek talep)",
-        "batchSizePercent": "{percent}% ({count} durum)",
-        "requestsNeeded": "{count, plural, =1 {# Yapay zeka isteği yapılacak} other {# Yapay zeka isteği yapılacak}}",
-        "batchNote": "Tüm partilerden elde edilen sonuçlar birleştirilecektir."
+        "batchSize": "Parti boyutu"
       },
       "loading": {
         "batch": "{total} numaralı partinin {current} numaralı partisi işleniyor.",
         "analyzing": "Test senaryolarının analizi...",
         "progress": "{total, number} test durumundan {analyzed, number} 'i analiz edildi...",
-        "waitingForAi": "Yapay zeka yanıtı bekleniyor (parti {batch} / {total})...",
         "selectedSoFar": "{count, plural, =1 {Şu ana kadar # test senaryosu seçildi} other {Şu ana kadar # test senaryosu seçildi}}",
         "resolving_integration": "Yapay zeka entegrasyonu sorununu çözmek...",
         "fetching_cases": "Test senaryoları getiriliyor..."
@@ -4578,7 +4403,6 @@
       },
       "actions": {
         "start": "Test Senaryolarını Analiz Et",
-        "startBatched": "Test Durumlarını Analiz Et ({count, plural, one {# toplu işlem} other {# toplu işlem}})",
         "accept": "Seçime Ekle"
       },
       "errors": {
@@ -4603,13 +4427,8 @@
     "summary": {
       "title": "Test Çalıştırma Özeti",
       "description": "Test çalışmasının özetini görüntüleyin",
-      "activeRunsAndEstTime": "Aktif Seferler ve Tahmini Süre",
-      "activeRunsLabel": "Koşular",
-      "totalEstTime": "Tahmini Toplam Süre",
-      "responsibleUsers": "Sorumlu Kullanıcılar",
       "allActiveRuns": "Tüm Aktif Koşular",
       "recentResultsTitle": "Son Manuel Sonuçlar",
-      "recentResultsDescription": "Test çalışmasının son sonuçlarını görüntüleyin.",
       "recentAutomatedResultsTitle": "Son Otomatik Sonuçlar",
       "noRecentAutomatedResults": "Son otomatik arama sonuçlarına rastlanmadı.",
       "automationRunsInProgress": "{count, plural, =1 {# Otomasyon Çalıştırması Devam Ediyor} other {# Otomasyon Çalıştırması Devam Ediyor}}",
@@ -4632,13 +4451,11 @@
       "fields": {
         "duplicateScope": {
           "label": "Tekrarlanacak Test Senaryoları",
-          "allCases": "Tüm test durumları",
-          "specificStatuses": "Belirli durumlara sahip test senaryoları"
+          "allCases": "Tüm test durumları"
         },
         "statusesToInclude": {
           "label": "Dahil Edilecek Test Senaryoları",
           "description": "Tekrarlanan test çalıştırmasına dahil etmek istediğiniz test senaryolarının durumlarını seçin.",
-          "noStatuses": "Bu test çalışmasında herhangi bir özel durum bulunamadı veya sonuçlar hala yükleniyor.",
           "noStatusesRecorded": "Bu çalıştırmada herhangi bir özel durum kaydedilmedi. Kopyalama işlemi tüm test durumlarını içerecektir (genellikle 'Test Edilmemiş' olarak)."
         },
         "copyAssignments": {
@@ -4717,9 +4534,7 @@
         "previousAnalysisPlaceholder": "Bir analiz seçin...",
         "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# etkilenen test} other {# etkilenen test}}",
         "sameCommit": "Temel ve baş aynı commit.",
-        "swapped": "Temel ve baş değişiklikleri ileri okuması için değiştirildi.",
-        "loadingCommits": "Commit'ler yükleniyor…",
-        "noCommits": "Hiçbir commit bulunamadı."
+        "swapped": "Temel ve baş değişiklikleri ileri okuması için değiştirildi."
       },
       "diff": {
         "summary": "{files, plural, one {# dosya} other {# dosya}} değişti · +{additions, number} −{deletions, number}",
@@ -4727,13 +4542,9 @@
         "noChanges": "Bu commit'ler arasında değişiklik yok.",
         "statusModified": "Değiştirildi",
         "statusRenamed": "Yeniden Adlandırıldı",
-        "showPatch": "Değişiklikleri göster",
-        "hidePatch": "Değişiklikleri gizle",
-        "largePatch": "Büyük yama ({lines, number} satır)",
         "showFullPatch": "Tam yamayı göster",
         "binary": "İkili dosya",
         "noPatch": "Yama kullanılamıyor",
-        "pinnedFiles": "{count, plural, one {# pin} other {# pin}}",
         "loading": "Commit'ler karşılaştırılıyor…"
       },
       "loading": {
@@ -4819,7 +4630,6 @@
       },
       "actions": {
         "analyze": "Analiz et",
-        "reanalyze": "Yeniden analiz et",
         "refine": "Değişikliklere geri dön",
         "accept": "{count, plural, one {# senaryoyu ekle} other {# senaryoyu ekle}}",
         "cancelAnalysis": "Analizi iptal et"
@@ -4930,11 +4740,6 @@
         "analyzing": "Analiz ediliyor...",
         "reset": "Net sonuçlar",
         "job": {
-          "discoveringDatasets": "Veri kümelerini keşfetmek...",
-          "scanningFile": "Testmo dışa aktarma dosyasını tarama...",
-          "rowsProcessed": "{value, number} işlenen satır sayısı",
-          "itemsProcessed": "{processed, number} / {total, number} öğe işlendi",
-          "analysisInProgress": "Dışa aktarma analiz ediliyor…",
           "cancel": "İçe aktarmayı iptal et",
           "cancelRequested": "İptal talebi",
           "processingRate": "Oran:",
@@ -4966,12 +4771,9 @@
         "mappingDescription": "Analiz ayrıntılarını inceleyin ve Testmo varlıklarını mevcut TestPlanIt kayıtlarıyla eşleştirin veya yenilerini oluşturmayı seçin.",
         "mappingAnalysisError": "Haritalama analizi oluşturulamadı. Lütfen tekrar deneyin.",
         "mappingLoading": "Haritalama analizi oluşturma…",
-        "mappingSummaryHeading": "Tespit edilen varlıklar",
-        "mappingSummaryPending": "{count, plural, =1 {# beklemede} other {# beklemede}}",
         "mappingOutstandingTitle": "Bekleyen eşlemeleri çözün",
         "mappingOutstandingDescription": "İçe aktarma işlemine başlamadan önce kalan eşleştirmeleri tamamlayın.",
         "mappingOutstandingItem": "{count, plural, =1 {# çözümlenmemiş öğe} other {# çözümlenmemiş öğe}} {label} içinde",
-        "mappingSummaryTemplateFields": "Şablon alanları",
         "mappingDatasetLabels": {
           "field_values": "Alan değerleri",
           "repository_case_values": "Depo vaka değerleri",
@@ -5048,7 +4850,6 @@
         "mappingDatasetEmptyTitle": "Hiçbir veri seti saklanmadı.",
         "mappingDatasetEmptyDescription": "Analiz, yapılandırma için herhangi bir veri seti saklamadı. Ek veri bekliyorsanız farklı bir dışa aktarma dosyası yükleyin.",
         "importProgressTitle": "İçe aktarma işlemi devam ediyor",
-        "importProgressDescription": "{count, plural, =0 {İzlenen varlıklar genelinde tüm kayıtlar içe aktarıldı.} =1 {İzlenen varlıklar genelinde 1 kayıt kaldı.} other {İzlenen varlıklar genelinde # kayıt kaldı.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {Kalan kayıt yok} =1 {1 kayıt kaldı} other {# kayıt kaldı}}",
         "importProgressProcessed": "{processed, number}/{total, number} kayıt içe aktarıldı",
         "importProgressAria": "{percent, number}İçe aktarma işleminin tamamlanma yüzdesi",
@@ -5073,7 +4874,6 @@
         "jobLoadFailed": "İçe aktarma işlemini yükleyemedik.",
         "uploadProgressAnalyzing": "Yükleme tamamlandı.… dosyası analiz ediliyor.",
         "uploadProgressComplete": "Yükleme tamamlandı",
-        "etaLabel": "Tahmini varış zamanı: {time}",
         "startImportButton": "İçe aktarmaya başla",
         "workflowCreate": {
           "nameLabel": "İş akışı adı",
@@ -5083,18 +4883,11 @@
           "typeLabel": "İş akışı türü",
           "scopeLabel": "İş akışı kapsamı"
         },
-        "mappingDatasets": "İnceleme gerektiren veri kümeleri",
         "mappingImportConfiguration": "İçe aktarma yapılandırması",
         "mappingExportConfiguration": "Dışa aktarma yapılandırması",
         "mappingImportConfigurationFailed": "Bu yapılandırma dosyasını içe aktaramadık. Lütfen geçerli bir JSON dosyası olduğundan emin olun ve tekrar deneyin.",
-        "mappingInvalidConfiguration": "Yapılandırma geçerli bir JSON formatında olmalıdır.",
-        "mappingSaveFailed": "Ayarları kaydedemedik. Lütfen tekrar deneyin.",
         "mappingSaveConfiguration": "Yapılandırmayı kaydet",
-        "mappingSavingConfiguration": "Kaydediliyor…",
-        "mappingStartImport": "Arka plan içe aktarma işlemini başlat",
-        "mappingStartingImport": "İçe aktarma işlemi başlatılıyor…",
         "mappingImportFailed": "Arka plan içe aktarma işlemi başlatılamadı. Lütfen tekrar deneyin.",
-        "mappingImportDisabled": "Arka plan içe aktarma işlemine başlamadan önce bir yapılandırma kaydedin.",
         "mappingImportInProgress": "Arka plan içe aktarma işlemi devam ediyor.",
         "mappingImportInProgressDescription": "İçe aktarma işlemi yapılandırmayı işliyor. Durumu yukarıdan takip edebilirsiniz.",
         "mapping": {
@@ -5154,11 +4947,7 @@
           "templateFieldTargetResult": "Sonuç alanı",
           "templateFieldSelectPlaceholder": "Alan seçin",
           "templateFieldNoExistingTargets": "Haritalama için uygun alan yok.",
-          "templateFieldTypePlaceholder": "Alan türünü seçin",
           "templateFieldRestrictedLabel": "Kısıtlı alan",
-          "templateFieldOptionsLabel": "Açılır menü seçenekleri",
-          "templateFieldOptionsPlaceholder": "Her satıra bir seçenek girin.",
-          "templateFieldOptionsHint": "Her seçeneği yeni bir satırla ayırın.",
           "templateFieldOptionsListLabel": "Seçenekler",
           "templateFieldOptionsCheckedLabel": "Varsayılan olarak işaretli",
           "templateFieldOptionsMinValueLabel": "Minimum değer",
@@ -5211,7 +5000,6 @@
           "milestoneNamePlaceholder": "Bir dönüm noktası türü adı girin.",
           "milestoneDefaultLabel": "Varsayılan kilometre taşı türü",
           "milestoneIconRequired": "Bir simge seçin",
-          "statusColorPlaceholder": "Renk hex kodu (isteğe bağlı)",
           "issueTargetSelectPlaceholder": "Entegrasyonu seçin...",
           "noIssueTargetsAvailable": "Herhangi bir entegrasyon sorunu mevcut değil.",
           "issueTargetNamePlaceholder": "Entegrasyon adı...",
@@ -5498,8 +5286,7 @@
         "delete": "Sağlayıcıyı sil",
         "entryPoint": "Giriş Noktası: ",
         "autoProvision": "Otomatik tahsis: ",
-        "defaultAccess": "Varsayılan Erişim: ",
-        "configurationMessage": "SAML yapılandırması ayarlanmadı. Yapılandırmak için ayarlar düğmesine tıklayın."
+        "defaultAccess": "Varsayılan Erişim: "
       },
       "samlConfiguration": {
         "title": "SAML Sağlayıcısını Yapılandır",
@@ -5571,7 +5358,6 @@
         "magicLinkDisabled": "Magic Link kimlik doğrulaması devre dışı bırakıldı",
         "magicLinkCreated": "Magic Link sağlayıcısı oluşturuldu",
         "magicLinkUpdateFailed": "Magic Link sağlayıcısını güncelleme başarısız oldu.",
-        "samlConfigSaved": "SAML yapılandırması başarıyla kaydedildi.",
         "configureFirst": "Lütfen sağlayıcıyı etkinleştirmeden önce yapılandırın.",
         "domainRestrictionEnabled": "E-posta alan adı kısıtlaması etkinleştirildi.",
         "domainRestrictionDisabled": "E-posta alan adı kısıtlaması devre dışı bırakıldı.",
@@ -5589,7 +5375,6 @@
         "defaultAccessUpdated": "Varsayılan erişim düzeyi güncellendi.",
         "defaultAccessUpdateFailed": "Varsayılan erişim düzeyini güncelleme başarısız oldu.",
         "emailVerificationEnabled": "Yeni kullanıcılar için artık e-posta doğrulaması zorunludur.",
-        "emailVerificationDisabled": "Yeni kullanıcılar için e-posta doğrulaması artık gerekli değil.",
         "emailVerificationDisabledAndVerified": "E-posta doğrulaması devre dışı bırakıldı ve {count, plural, one {# kullanıcı hesabı} other {# kullanıcı hesabı}} doğrulandı.",
         "emailVerificationUpdateFailed": "E-posta doğrulama ayarı güncellenemedi.",
         "emailServerNotConfigured": "E-posta doğrulaması etkinleştirilemiyor: E-posta sunucusu yapılandırılmamış.",
@@ -5643,10 +5428,6 @@
           "issuer": "Düzenleyen (Kuruluş Kimliği)",
           "callbackUrl": "ACS (Geri Çağrı) URL'si",
           "logoutUrl": "SLO Çıkış URL'si (İsteğe bağlı)",
-          "entryPointPlaceholder": "https://your-idp.com/sso/saml",
-          "issuerPlaceholder": "urn:kimlik-sağlayıcınız:varlık-kimliği",
-          "certPlaceholder": "-----SERTİFİKA BAŞLANGICI-----...",
-          "logoutUrlPlaceholder": "https://your-idp.com/slo/saml",
           "instructions": {
             "title": "SAML'yi yapılandırmak için:",
             "step1": "SAML Kimlik Sağlayıcınızın yöneticisiyle iletişime geçin.",
@@ -5720,10 +5501,7 @@
       },
       "add": {
         "button": "Proje Ekle",
-        "title": "Yeni Proje Ekle",
-        "defaultFields": "Varsayılan Şablon, Varsayılan Kilometre Taşı Türü ve tüm İş Akışları ve Durumlar, proje oluşturulduğunda projeye eklenecektir.",
-        "selectIssueTracker": "Sorun Takip Sistemini Seçin",
-        "issueTrackerRequired": "Sorun Takip Sistemi gereklidir."
+        "title": "Yeni Proje Ekle"
       },
       "wizard": {
         "title": "Yeni Proje Oluştur",
@@ -5754,7 +5532,6 @@
           "noConfigurations": "Şu anda hiçbir yapılandırma tanımlanmamıştır. Bunları daha sonra Yönetim bölümünden ekleyebilirsiniz."
         },
         "actions": {
-          "selectDefault": "Varsayılanı Kullan",
           "create": "Proje Oluştur",
           "creating": "Proje Oluşturuluyor..."
         },
@@ -5779,12 +5556,6 @@
           "userPermissions": "Kullanıcı İzinleri",
           "noEffect": "Etkisi Yok",
           "access": {
-            "groupsGlobalRole": "Grubun Küresel Rolü",
-            "groupDefault": "Grup Varsayılanı",
-            "groupSpecificRole": "Gruba Özgü Rol",
-            "groupProjectDefault": "Grup Projesi Varsayılanı",
-            "groupProjectNoAccess": "Grup Projesi Erişim Yok",
-            "groupProjectSpecificRole": "Grup Projesine Özgü Rol",
             "effectiveAccess": "Etkin Erişim"
           },
           "accessHints": {
@@ -5795,11 +5566,7 @@
         },
         "placeholders": {
           "selectDefaultAccess": "Varsayılan Erişimi Seçin",
-          "groupPermissionsUI": "Grup İzinleri Yönetimi Arayüzü Buraya Geliyor...",
-          "userPermissionsUI": "Kullanıcı İzinleri Yönetimi Arayüzü Buraya Geliyor...",
-          "selectAccess": "Erişim seçeneğini belirleyin...",
-          "selectRole": "Rol seçin...",
-          "searchUsersToAdd": "Eklemek istediğiniz kullanıcıları arayın..."
+          "selectAccess": "Erişim seçeneğini belirleyin..."
         },
         "tableHeaders": {
           "globalRole": "Küresel Rol",
@@ -5982,9 +5749,7 @@
         "button": "Kullanıcı Ekle",
         "title": "Yeni Kullanıcı Ekle",
         "fields": {
-          "email_invalid": "Geçersiz e-posta adresi",
           "password_error": "Şifre gereklidir.",
-          "confirmPassword_error": "Şifreyi onaylamanız gerekiyor.",
           "passwordOptionalHelp": "Kullanıcının sihirli bağlantı veya SSO aracılığıyla oturum açmasını zorunlu kılmak için bu alanı boş bırakın."
         }
       },
@@ -6025,19 +5790,12 @@
       "title": "Güvenlik",
       "description": "Oturum açma zorunluluğunu, parola politikasını, kilitlenme ayarlarını ve uygulama eylemlerini yapılandırın.",
       "passwordPolicyTitle": "Parola Politikası",
-      "passwordPolicyDescription": "Kullanıcı şifreleri için gereksinimleri belirleyin.",
       "lockoutPolicyTitle": "Kilitleme Politikası",
-      "lockoutPolicyDescription": "Başarısız giriş denemelerinden sonra hesap kilitleme özelliğini yapılandırın.",
       "enforcementTitle": "Yaptırım İşlemleri",
-      "enforcementDescription": "Kimlik doğrulama tabanlı kullanıcılar için parola değişikliklerini zorunlu kılma",
       "signInEnforcementTitle": "Giriş Yapma Zorunluluğu",
-      "signInEnforcementDescription": "Tekli oturum açmayı zorunlu kılın ve iki faktörlü kimlik doğrulamayı uygulayın.",
       "forceSsoTitle": "Zorunlu SSO Girişi",
-      "forceSsoDescription": "E-posta ile giriş yapmayı devre dışı bırakın ve kullanıcıların SSO kullanmasını zorunlu kılın.",
       "force2FANonSSOTitle": "Parola ile giriş yaparken 2FA (iki faktörlü kimlik doğrulama) zorunlu hale getirilmelidir.",
-      "force2FANonSSODescription": "E-posta/şifre ile giriş yapan kullanıcıların iki faktörlü kimlik doğrulamasını kurmaları ve kullanmaları gerekmektedir.",
       "force2FAAllLoginsTitle": "Tüm girişler için 2FA zorunlu.",
-      "force2FAAllLoginsDescription": "SSO kullanıcıları da dahil olmak üzere tüm kullanıcıların oturum açtıktan sonra 2FA ile doğrulama yapması gerekmektedir.",
       "forceSsoEnabled": "SSO'yu küresel olarak zorunlu kıl",
       "forceSsoDisabled": "SSO'yu global olarak devre dışı bırakma zorunluluğu",
       "forceSsoUpdateFailed": "Zorunlu SSO ayarını güncelleme başarısız oldu.",
@@ -6087,7 +5845,6 @@
       "noExpiry": "Son kullanma tarihi yok",
       "revokeToken": "Tokeni İptal Et",
       "revokeConfirmTitle": "API Token'ını İptal Et",
-      "revokeConfirmMessage": "Bu API token'ını iptal etmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
       "revokeConfirmDescription": "{user} 'e ait olan \"{name}\" belirteci derhal iptal edilecek ve artık API erişimi için kullanılamayacaktır.",
       "revokeSuccess": "API belirteci başarıyla iptal edildi.",
       "revokeError": "API belirtecinin iptali başarısız oldu.",
@@ -6111,9 +5868,6 @@
       "noTokens": "Henüz hiçbir SCIM token'ı oluşturulmadı.",
       "emptyTitle": "Henüz SCIM token'ları yok.",
       "emptyBody": "Kimlik sağlayıcınızın TestPlanIt'te kullanıcıları otomatik olarak oluşturmasına ve güncellemesine olanak sağlamak için bir token oluşturun.",
-      "emptyCta": "İlk jetonunuzu bastırın",
-      "sectionConflicts": "Harici Kimlik Çakışmaları",
-      "conflictsPlaceholder": "Herhangi bir çakışma yok. Çakışma takibi daha sonraki bir sürümde eklenecektir.",
       "conflicts": {
         "title": "Harici Kimlik çakışma günlüğü",
         "description": "Sistem müdahalesi gerektiren SCIM kimlik olayları (bağlantı kurma, yeniden canlandırma, displayName üzerine yazma, atlanan üyeler).",
@@ -6197,7 +5951,6 @@
         "networkError": "SCIM uç noktasına ulaşılamadı. Tekrar denenecek."
       },
       "fallbackDefaultTitle": "Varsayılan Eşlenmiş Erişim",
-      "fallbackDefaultDescription": "Herhangi bir grup eşlemesi tarafından kapsanmayan kullanıcılara atanan erişim katmanı.",
       "fallbackDefaultLabel": "Varsayılan erişim katmanı",
       "fallbackDefaultSaved": "Yedek varsayılan kaydedildi",
       "rotate": {
@@ -6263,7 +6016,6 @@
         "remindersToggleAriaLabel": "İnceleme hatırlatıcı bildirimlerini açıp kapat",
         "thresholdLabel": "Değerlendiricilere sonrasında hatırlatın.",
         "thresholdUnit": "{count, plural, one {gün} other {gün}}",
-        "thresholdHelp": "İnceleme taleplerinin inceleyicilere hatırlatma bildirimi gönderilmeden önce kaç gün beklemede kalabileceği. Yeni talepler, gönderim anından itibaren süreyi başlatır.",
         "thresholdUpdateSuccess": "Hatırlatma ayarlarının güncellendiğini gözden geçirin.",
         "thresholdUpdateError": "Hatırlatma ayarları güncellenemedi. Lütfen birazdan tekrar deneyin.",
         "revertPolicy": {
@@ -6329,9 +6081,6 @@
       "add": {
         "button": "Rol Ekle",
         "title": "Yeni Rol Ekle",
-        "fields": {
-          "name_error": "Görev adı zorunludur."
-        },
         "errors": {
           "nameExists": "Bu isimde bir pozisyon zaten mevcut."
         }
@@ -6394,7 +6143,6 @@
       "edit": {
         "title": "Düzenleme Durumu",
         "systemNameHelp": "Sistem adı, otomatikleştirilmiş süreçler için bu durumu tanımlar. Oluşturulduktan sonra değiştirilemez.",
-        "unmodifiableHelp": "'Test edilmemiş' durumu bir sistem durumudur ve değiştirilemez.",
         "untestedHelp": "'Test edilmemiş' adı sistem durumu için ayrılmıştır ve kullanılamaz.",
         "success": "Durum başarıyla güncellendi."
       },
@@ -6410,9 +6158,6 @@
       "fields": {
         "final": "Son",
         "system": "Sistem Durumu",
-        "forTestCase": "Test Durumu İçin",
-        "forTestRun": "Test Çalıştırması İçin",
-        "forSession": "Oturum için",
         "color": "Renk"
       }
     },
@@ -6434,9 +6179,7 @@
       "description": "Küresel uygulama yapılandırmalarını yönetin",
       "addConfig": "Uygulama Yapılandırması Ekle",
       "editConfig": "Uygulama Yapılandırmasını Düzenle",
-      "keyPlaceholder": "Yapılandırma anahtarını girin...",
       "valuePlaceholder": "JSON değeri girin...",
-      "currentTranslation": "Mevcut Çeviri",
       "filterPlaceholder": "Anahtar kelimeye göre filtrele...",
       "errors": {
         "keyRequired": "Anahtar gereklidir.",
@@ -6456,7 +6199,6 @@
         "noneAssigned": "Herhangi bir projeye atanmamıştır (daha sonra yapılandırma yöneticisinden atama yapabilirsiniz)."
       },
       "addConfiguration": "Yapılandırmaları Ekle",
-      "editConfiguration": "Yapılandırmayı Düzenle",
       "filterPlaceholder": "Filtre yapılandırmaları...",
       "allProjects": "Tüm projeler",
       "selectAllTooltip": "Bu sayfadaki tüm yapılandırmaları seçin/seçimi kaldırın.",
@@ -6476,8 +6218,6 @@
       "categories": {
         "title": "Kategoriler",
         "description": "Küresel kategorileri yönetin",
-        "editCategory": "Kategoriyi Düzenle",
-        "selectCategory": "Kategori Seçin",
         "filterPlaceholder": "Filtreleme kategorileri...",
         "add": {
           "title": "Yeni Kategori Ekle"
@@ -6497,8 +6237,6 @@
         "title": "Kombinasyonlar",
         "description": "Küresel kombinasyonları yönetin",
         "confirmDescription": "Aşağıdaki {count, number} Konfigürasyonları oluşturulacaktır:",
-        "addCombination": "Kombinasyon Ekle",
-        "editCombination": "Kombinasyonu Düzenle",
         "selectCombination": "Kombinasyonları Seçin",
         "selectCombinationDescription": "Eklenecek varyant kombinasyonlarını seçin. Zaten mevcut olan tüm kombinasyonlar devre dışı bırakılmış olarak gösterilir.",
         "alreadyExists": "(zaten mevcut)",
@@ -6549,7 +6287,6 @@
         "deleteGroupDescription": "Bu işlem, grubu ve ona bağlı tüm kullanıcıları silecektir.",
         "confirmMessage": "Bu grubu silmek istediğinizden emin misiniz?"
       },
-      "noUsersSelected": "Henüz hiçbir kullanıcı seçilmedi.",
       "noUsersAssigned": "Bu gruba atanmış kullanıcı yok.",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "SCIM tarafından yönetilir. SCIM yönetim sayfasından yönetin.",
@@ -6572,7 +6309,6 @@
       "downgradeConfirmTitle": "Erişim Değişikliğini Onayla",
       "downgradeConfirmDescription": "{count, plural, one {# kullanıcının} other {# kullanıcının}} erişimi düşürülecek. Devam edilsin mi?",
       "downgradeConfirmApplyAnyway": "Yine de uygula",
-      "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
@@ -6586,7 +6322,6 @@
       "defaultLockedDescription": "Varsayılanı değiştirmek için farklı bir Kilometre Taşı Türünü düzenleyin ve onu varsayılan olarak ayarlayın.",
       "wizard": {
         "selectProjects": "Projeleri Seç",
-        "projectsSelected": "{count, plural, =0 {Hiçbir proje seçilmedi} one {# proje seçildi} other {# proje seçildi}}",
         "createMilestone": "Dönüm Noktası Oluştur",
         "noCommonTypesTitle": "Ortak Dönüm Noktası Türleri Yok",
         "noCommonTypesDescription": "Seçilen projelerin ortak bir kilometre taşı türü bulunmamaktadır. Lütfen seçilen tüm projelerin en az bir ortak kilometre taşı türüne sahip olduğundan emin olun veya farklı projeler seçin."
@@ -6630,44 +6365,23 @@
       }
     },
     "issue_config": {
-      "link_title": "Sorun Takipçisi Bağla",
-      "link_description": "Manuel olarak bağlantı verilen sorunlar için temel URL'yi yapılandırın. Yalnızca Harici Kimlik kullanarak bir soruna bağlantı verirken, tam bağlantıyı oluşturmak için bu Temel URL öne eklenecektir.",
-      "filter": {
-        "show_inactive": "Devre dışı bırakılmış yapılandırmaları göster",
-        "search_placeholder": "Yapılandırma adına göre filtrele..."
-      },
       "base_url": "Temel URL",
-      "link_update_success": "Bağlantı yapılandırması başarıyla güncellendi.",
-      "link_update_error": "Bağlantı yapılandırması güncellenemedi.",
       "description": "Harici sorun takip sistemleriyle entegrasyonları yapılandırın.",
       "delete": {
         "title": "Sorun Yapılandırmasını Sil",
         "confirmMessage": "<bold>{name}</bold> yapılandırmasını silmek istediğinizden emin misiniz?",
         "warning": "Bu işlem geri alınamaz. Bu takip sistemine atanmış tüm projeler varsayılan takip sistemine yeniden atanacaktır. Bunun yerine yapılandırmayı devre dışı bırakmayı düşünün.",
-        "cannotDeleteDefault": "Varsayılan sorun takip sistemi silinemez.",
-        "noDefaultFound": "Silinemiyor: Projeleri yeniden atamak için varsayılan bir sorun takip sistemi bulunamadı."
+        "cannotDeleteDefault": "Varsayılan sorun takip sistemi silinemez."
       },
       "add": {
         "title": "Sorun Takip Sistemi Ekle",
         "description": "Bir sorun takip sistemi için yeni bir yapılandırma oluşturun.",
         "name": "Yapılandırma Adı",
-        "name_placeholder": "Örneğin, Proje Jira Bağlantıları",
-        "system_type": "Sistem Tipi",
-        "select_system_type": "Sistem Türünü Seçin",
-        "base_url": "Sorun yer tutucusunu içeren temel URL",
-        "base_url_placeholder": "örneğin, https://your-tracker.com/issues/'{issueId}'",
-        "create_success": "Sorun yapılandırması başarıyla oluşturuldu.",
-        "create_error": "Sorun yapılandırması oluşturulurken hata oluştu.",
-        "setDefaultWarning": "Bunu varsayılan olarak ayarlamak, mevcut varsayılan yapılandırmadaki varsayılan durumu kaldıracaktır."
+        "base_url": "Sorun yer tutucusunu içeren temel URL"
       },
       "edit": {
         "title": "Sorun Takip Sistemini Düzenle",
-        "description": "Bu sorunla ilgili yapılandırma ayrıntılarını güncelleyin.",
-        "name_placeholder": "Yapılandırma adını girin",
-        "select_project": "Projeleri seçin...",
-        "update_success": "Sorun yapılandırması başarıyla güncellendi.",
-        "update_error": "Sorun yapılandırması güncellenemedi.",
-        "edit_not_supported": "Bu sistem türü için yapılandırma düzenleme şu anda desteklenmemektedir."
+        "description": "Bu sorunla ilgili yapılandırma ayrıntılarını güncelleyin."
       }
     },
     "issues": {
@@ -6870,14 +6584,11 @@
         "message": "Henüz yapılandırılmış entegrasyon sorunu yok."
       },
       "addIntegration": "Sorun Entegrasyonu Ekle",
-      "allIntegrations": "Tüm Sorun Entegrasyonları",
-      "manageDescription": "Harici hizmet sorun entegrasyonlarınızı yapılandırın ve yönetin.",
       "status": {
         "active": "Aktif",
         "inactive": "Etkin değil",
         "awaitingAuthorization": "Yetkilendirme bekleniyor"
       },
-      "connectedProjects": "Bağlantılı Projeler",
       "noIntegrations": "Herhangi bir entegrasyon yapılandırılmadı.",
       "testConnection": "Test Bağlantısı",
       "testSuccess": "Bağlantı başarılı",
@@ -6966,14 +6677,11 @@
         "successDescription": "Sorun entegrasyon ayarları kaydedildi."
       },
       "editIntegration": "Sorun Entegrasyonunu Düzenle",
-      "saveIntegration": "Kaydetme Sorunu Entegrasyonu",
       "deleteIntegration": "Sorun Entegrasyonunu Sil",
       "config": {
         "name": "Sorun Entegrasyon Adı",
         "namePlaceholder": "Bu entegrasyon sorunu için bir ad girin.",
-        "nameHelp": "Bu sorun entegrasyonunu tanımlamak için açıklayıcı bir isim",
         "authType": "Kimlik Doğrulama Türü",
-        "authTypeHelp": "Harici hizmetle nasıl kimlik doğrulaması yapacağınızı seçin.",
         "emailPlaceholder": "your-email@example.com",
         "emailHelp": "Hesap e-posta adresiniz. Jira Cloud için gereklidir (aşağıdaki API token'ı ile eşleştirilir). Jira Server / Data Center için kullanılmaz — bu durumda boş bırakın ve yalnızca API Token alanını (Kişisel Erişim Belirteci) veya aşağıdaki Kullanıcı Adı / Şifre alanlarını kullanın.",
         "apiToken": "API Token",
@@ -6995,15 +6703,9 @@
         "clientSecretPlaceholder": "OAuth İstemci Gizli Anahtarınızı girin",
         "clientSecretHelp": "OAuth uygulamanızdan alınan İstemci Gizli Anahtarı",
         "cloudId": "Bulut Kimliği",
-        "cloudIdPlaceholder": "Atlassian Cloud kimliğinizi girin.",
-        "cloudIdHelp": "Atlassian Cloud örneğinizin kimliği (Jira URL'nizde bulunur)",
-        "apiUrl": "API URL",
-        "apiUrlPlaceholder": "https://api.example.com",
-        "apiUrlHelp": "Servis API'sinin temel URL'si",
         "personalAccessTokenPlaceholder": "Kişisel erişim belirtecinizi girin.",
         "personalAccessTokenHelp": "Uygun izinlere sahip kişisel erişim belirteci",
         "apiKeyPlaceholder": "API anahtarınızı girin",
-        "apiKeyHelp": "Kimlik doğrulama için API anahtarı",
         "baseUrl": "URL Kalıbı",
         "baseUrlPlaceholder": "https://example.com/issues/'{issueId}'",
         "baseUrlHelp": "Sorunlar için URL kalıbı. Yer tutucu olarak {issueId} kullanın.",
@@ -7027,7 +6729,6 @@
         "repoPlaceholder": "depo adı",
         "repoHelp": "Gitea deposunun adı",
         "encrypted": "Şifrelenmiş",
-        "encryptedHelp": "Bu alan şifrelenmiş ve güvenli bir şekilde saklanmaktadır.",
         "leaveBlankToKeep": "Mevcut değeri korumak için boş bırakın",
         "apiKeyWarningTitle": "API Anahtarı Kimlik Doğrulama Bildirimi",
         "apiKeyWarningDescription": "API anahtarı kimlik doğrulamasıyla, oluşturulan sorunlardaki raporu hazırlayan kişi, e-posta adresleri eşleşse bile, sorunları oluşturan TestPlanIt kullanıcısıyla aynı olmayabilir:",
@@ -7076,12 +6777,7 @@
       },
       "validation": {
         "nameRequired": "Sorun Entegrasyon adı gereklidir.",
-        "clientIdRequired": "Müşteri kimliği gereklidir.",
-        "clientSecretRequired": "Müşteri Gizli Bilgileri gereklidir.",
-        "cloudIdRequired": "Cloud ID gereklidir.",
-        "apiUrlRequired": "API URL'si gereklidir.",
-        "tokenRequired": "Kişisel Erişim Belirteci gereklidir.",
-        "apiKeyRequired": "API anahtarı gereklidir."
+        "tokenRequired": "Kişisel Erişim Belirteci gereklidir."
       },
       "errors": {
         "updateFailed": "Sorun entegrasyonu güncellenemedi.",
@@ -7100,12 +6796,8 @@
         "testing": "Bağlantı test ediliyor..."
       },
       "oauth": {
-        "connectAccount": "Hesabı Bağla",
         "connected": "Bağlı",
-        "notConnected": "Bağlı Değil",
-        "authDescription": "Bu entegrasyonu kullanmak için {provider} ile kimlik doğrulamanız gerekiyor.",
-        "authError": "Kimlik doğrulama başarısız oldu",
-        "authErrorDescription": "Harici hizmetle kimlik doğrulama başarısız oldu."
+        "authError": "Kimlik doğrulama başarısız oldu"
       }
     },
     "llm": {
@@ -7150,7 +6842,6 @@
         "monthlyBudgetDescription": "Bildirimler için isteğe bağlı harcama hedefi (kullanımı engellemez)",
         "billingPeriodStartDay": "Faturalama dönemi başlangıç günü",
         "billingPeriodStartDayPlaceholder": "1",
-        "billingPeriodStartDayDescription": "Faturalama döneminizin başladığı ayın günü (1-31). 29-31 arasındaki değerler, daha kısa ayların son gününü kullanır.",
         "defaultTemperature": "Varsayılan Sıcaklık",
         "defaultMaxTokens": "Varsayılan Maksimum Jeton Sayısı",
         "repoContextBudgetLabel": "Depo Bağlam Bütçesi (QuickScript)",
@@ -7182,7 +6873,6 @@
       "edit": {
         "title": "Yapay Zeka Modeli Entegrasyonunu Düzenle",
         "description": "{name} Yapay zeka modeli entegrasyonu için yapılandırmayı güncelleyin.",
-        "statusDescription": "Bu entegrasyonu etkinleştirin veya devre dışı bırakın.",
         "apiKeyPlaceholder": "Güncellemek için yeni API anahtarını girin...",
         "update": "Güncelleme",
         "modelListUpdated": "Model listesi başarıyla güncellendi",
@@ -7229,10 +6919,8 @@
       },
       "budgetAlert": {
         "budgetDisclaimer": "Aylık bütçe belirlemek, LLM kullanımının bu bütçeyi aşmasını engellemez. Bütçe limitleri yalnızca yönetimsel karar alma süreçleri için bilgilendirme amaçlıdır.",
-        "budgetDisclaimerShort": "Bütçe limitleri yalnızca bilgilendirme amaçlıdır ve kullanımı engellemez.",
         "spendLabel": "Cari Ay Harcamaları",
         "spendOfBudget": "{currentSpend} / {budgetLimit}",
-        "overBudget": "Bütçeyi aştı",
         "budgetPercentage": "Bütçenin %'si kullanıldı {percentage}",
         "spendReset": "Mevcut ayın harcamaları sıfırlandı."
       }
@@ -7243,7 +6931,6 @@
       "addPromptConfig": "İstemi Yapılandırmasını Ekle",
       "filterPlaceholder": "Filtre istemi yapılandırmaları...",
       "features": "Özellikler",
-      "featureCount": "{count, plural, one {# özellik} other {# özellik}}",
       "llmIntegration": "LLM Entegrasyonu",
       "modelOverride": "Model Geçersiz Kılma",
       "modelOverridePlaceholder": "Entegrasyon Varsayılanı",
@@ -7255,7 +6942,6 @@
       "maxOutputTokens": "Maksimum Çıktı Jetonları",
       "variables": "Değişkenler",
       "insertVariable": "Değişken ekle",
-      "noConfigs": "Hiçbir komut istemi yapılandırması bulunamadı. Başlamak için ilk yapılandırmanızı ekleyin.",
       "add": {
         "title": "İstemi Yapılandırmasını Ekle",
         "description": "Her özellik için ayrı ayrı komut istemleri içeren yeni bir yapay zeka komut istemi yapılandırması oluşturun. Varsayılan ayarlar otomatik olarak uygulanmıştır."
@@ -7385,7 +7071,6 @@
       "concurrency": {
         "title": "Çalışan Eşzamanlılığı",
         "description": "Eşzamanlılık, her bir çalışanın aynı anda kaç işi işleyeceğini kontrol eder. Daha yüksek değerler verimliliği artırabilir ancak daha fazla sistem kaynağı (CPU ve bellek) kullanır.",
-        "configureTitle": "Eşzamanlılığı Yapılandırma",
         "configureDescription": "Eşzamanlılığı ayarlamak için ortam değişkenlerini belirleyin ve çalışanları yeniden başlatın. Ayrıntılar için belgelere bakın.",
         "envVars": {
           "TESTMO_IMPORT_CONCURRENCY": "Testmo içe aktarmaları (varsayılan: 1, bellek yoğun)",
@@ -7420,12 +7105,7 @@
         "irreversible": "Bu işlem geri alınamaz. Lütfen devam etmek istediğinizi onaylayın."
       },
       "success": {
-        "actionCompleted": "İşlem Tamamlandı",
-        "queuePaused": "Sıra duraklatıldı.",
-        "queueResumed": "Sıra yeniden başladı.",
-        "queueCleaned": "Kuyruk temizlendi.",
-        "queueDrained": "Sıradaki kişiler tükendi.",
-        "queueObliterated": "Kuyruk tamamen ortadan kalktı."
+        "actionCompleted": "İşlem Tamamlandı"
       },
       "error": {
         "loadFailed": "Kuyruklar yüklenemedi.",
@@ -7451,10 +7131,7 @@
           "finished": "Tamamlandı"
         },
         "success": {
-          "actionCompleted": "İş operasyonu tamamlandı",
-          "jobRetried": "İş yeniden denendi.",
-          "jobPromoted": "İşin terfisi alındı.",
-          "jobRemoved": "İş ilanı kaldırıldı."
+          "actionCompleted": "İş operasyonu tamamlandı"
         },
         "error": {
           "loadFailed": "İşler yüklenemedi.",
@@ -7504,17 +7181,12 @@
       "exportCsv": "CSV olarak dışa aktar",
       "timeRange": "Zaman aralığı",
       "timeRangeOptions": {
-        "last24h": "Son 24 saat",
-        "last7d": "Son 7 gün",
-        "last30d": "Son 30 gün",
-        "last90d": "Son 90 gün",
         "allTime": "Tüm zamanlar"
       },
       "systemActor": "Sistem",
       "systemActorTooltip": "Sistem tarafından gerçekleştirilen işlem, oturum açmış bir kullanıcı tarafından değil.",
       "sourceScim": "SCIM",
-      "relatedChanges": "ilgili değişiklikler",
-      "groupedEntry": "Tek bir eylemden gruplanmış değişiklikler"
+      "relatedChanges": "ilgili değişiklikler"
     }
   },
   "components": {
@@ -7568,7 +7240,6 @@
         "shareLinkAccessedTitle": "Paylaşım bağlantısına erişildi.",
         "shareLinkAccessedAnonymousViewer": "Birisi",
         "shareLinkAccessedMessage": "{viewer} paylaştığınız raporu görüntüledi: \"{shareTitle}\"",
-        "viewedYourSharedLink": "Paylaştığınız bağlantıyı görüntüledi",
         "viewedAt": "Görüntülenme yeri:",
         "userRegisteredTitle": "Yeni Kullanıcı Kaydı",
         "userRegisteredMessageSso": "{userName} ({userEmail}) SSO aracılığıyla kaydoldu",
@@ -7631,7 +7302,6 @@
         "alertTriggeredRule": "Kural: {ruleName}",
         "alertTriggeredEmailMessage": "\"{ruleName}\" uyarısı \"{projectName}\" projesinde \"{subjectName}\" {subjectLabel} için tetiklendi: {detail}",
         "alertTriggeredEmailMessageSystem": "\"{ruleName}\" uyarısı \"{subjectName}\" {subjectLabel} için tetiklendi: {detail}",
-        "alertTriggeredReason": "Bu uyarıya abone olduğunuz için bu iletiyi alıyorsunuz.",
         "alertSubject": {
           "CASE": "test senaryosu",
           "RUN": "test çalıştırması",
@@ -7686,8 +7356,7 @@
     },
     "issues": {
       "manage_issues": {
-        "placeholder": "Sorunları arayın veya bağlayın...",
-        "create_label": "Sorunu Bağla \"{name}\""
+        "placeholder": "Sorunları arayın veya bağlayın..."
       },
       "create_issue_dialog": {
         "placeholders": {
@@ -7705,16 +7374,8 @@
             "helper": "Harici sorun takip sisteminde projeyi seçin."
           }
         },
-        "loading_metadata": "Entegrasyon ayarları yükleniyor...",
-        "errors": {
-          "creation_failed": "Sorun oluşturulamadı. Lütfen tekrar deneyin."
-        },
         "success": {
-          "created": "Sorun başarıyla oluşturuldu.",
-          "external_created": "Oluşturulan sorun harici takip sistemine bağlandı."
-        },
-        "warnings": {
-          "external_failed": "Sorun yerel olarak oluşturuldu ancak harici izleyiciyle senkronize edilemedi."
+          "created": "Sorun başarıyla oluşturuldu."
         }
       },
       "integration_auth_prompt": {
@@ -7775,16 +7436,9 @@
   },
   "issues": {
     "linkedIssues": "İlgili Sorunlar",
-    "linkedIssuesDescription": "Bu ürünle ilgili sorunlar",
     "refreshed": "Sorunlar Güncellendi",
-    "refreshedDescription": "İlgili sorunlar listesi güncellendi.",
     "unlinked": "Sorun Bağlantısız",
-    "unlinkedDescription": "Bu sorun bu öğeden kaldırıldı.",
     "linked": "Bağlantılı Sorun",
-    "linkedDescription": "Sorun bu öğeyle ilişkilendirildi.",
-    "searchAndLink": "Arama ve Bağlantı",
-    "createAndLink": "Oluştur ve Bağla",
-    "noLinkedIssues": "Bağlantılı sorun yok.",
     "viewExternal": "{provider} içinde görüntüle",
     "unlink": "Bağlantıyı kaldır",
     "linkError": "Sorun bağlanamadı.",
@@ -7799,8 +7453,6 @@
     "alreadyLinked": "Zaten bağlantılı",
     "authenticate": "Kimlik doğrulama",
     "authenticationRequired": "Kimlik Doğrulama Gerekli",
-    "authenticationDescription": "Sorunları aramak için {provider} ile kimlik doğrulamanız gerekiyor.",
-    "searchIn": "{provider} içinde ara",
     "searchPlaceholder": "Arama sorunları...",
     "searchIssues": "Arama Sorunları",
     "searchIssuesDescription": "Bu öğeyle bağlantılı dahili sorunları arayın.",
@@ -7817,32 +7469,22 @@
     "createIssueDescriptionWithIntegration": "{provider} kullanarak yeni bir sorun oluşturun",
     "createIssueDescriptionSimpleUrl": "Yeni bir dahili sorun oluşturun (Basit URL entegrasyonu)",
     "iterationContextHint": "Gövde, yineleme parametre değerleri ve derin bağlantı ile otomatik olarak doldurulur. Oluşturmadan önce gerektiği gibi düzenleyin.",
-    "creatingWith": "{provider} ile ilgili sorun oluşturuluyor.",
-    "authenticatedAndReady": "Kimlik doğrulaması yapıldı ve sorun oluşturmaya hazır.",
     "created": "Sorun Oluşturuldu",
     "createdInExternal": "{provider} tarihinde sorun oluşturuldu.",
     "createdInternal": "Yerel olarak oluşturulan sorun",
     "createdInternalSimpleUrl": "Bu sorun şirket içinde oluşturulmuştur ve basit bir URL aracılığıyla bağlantı verilebilir.",
     "createError": "Sorun oluşturulamadı.",
     "useIntegration": "{provider} kullanın",
-    "useIntegrationDescription": "Harici sistemde sorun oluşturun",
     "externalProject": "Dış Proje",
     "issueType": "Sorun Türü",
     "selectIssueType": "Sorun türünü seçin",
-    "noIssueTypes": "Hiçbir sorun türü mevcut değil.",
     "assignees": "Atananlar",
     "selectAssignees": "Atanacak kişileri seçin",
     "assigneesLimit": "En fazla {max} atanan",
     "priorityUrgent": "Acil",
     "additionalFields": "Ek Alanlar",
     "createIssueInJira": "Jira'da Sorun Oluştur",
-    "createIssueInJiraDescription": "Jira arayüzünü kullanarak, mevcut tüm alanlar ve seçeneklerle yeni bir sorun kaydı oluşturun.",
-    "createIssueInJiraFallbackDescription": "Önceden doldurulmuş bilgilerle bir sorun oluşturmak için Jira'yı yeni bir sekmede açın.",
-    "jiraIframeError": "Jira arayüzü yüklenemedi. Lütfen yeni bir sekmede açmayı deneyin.",
-    "jiraIframeFallback": "Güvenlik nedenleriyle Jira'yı yeni bir sekmede açmanız gerekiyor. Sorununuzu oluşturmak için aşağıdaki düğmeye tıklayın.",
-    "jiraFallbackNote": "Jira'da sorunu oluşturduktan sonra, test senaryonuza bağlamaya devam etmek için buraya geri dönün.",
     "openInNewTab": "Yeni sekmede aç",
-    "jiraIframeNote": "Jira'da bir sorun oluşturduktan sonra, bu iletişim kutusunu kapatabilir ve sorun listesini yenileyebilirsiniz.",
     "fillInRequiredFields": "Yeni bir sorun oluşturmak için gerekli alanları doldurun.",
     "failedToFetchFields": "Jira'dan sorun alanları alınamadı.",
     "enterSummary": "Sorunun kısa bir özetini girin.",
@@ -7852,7 +7494,6 @@
     "addLabel": "Bir etiket ekleyin ve Enter tuşuna basın.",
     "labelHint": "Boşluklar tirelerle değiştirilecektir.",
     "labelFormatNote": "Etiketler boşluk içeremez. Boşluklar otomatik olarak tire ile değiştirilecektir.",
-    "enterIssueKey": "Sorun anahtarını girin (örneğin, PROJ-123).",
     "issueLinkHelp": "Bağlantı kurmak için mevcut bir sorunun anahtarını girin.",
     "searchForIssue": "Bağlantı vermek istediğiniz sorunu arayın.",
     "searchUsers": "Kullanıcıları ara",
@@ -7958,8 +7599,7 @@
       "dialogTitle": "Gereksinimi Düzenle",
       "submit": "Değişiklikleri Kaydet",
       "success": "Gereksinim güncellendi.",
-      "failed": "Gereksinim güncellenemedi.",
-      "lockedTooltip": "Bu gereksinim bağlı izleyiciden senkronize edildi. Yeniden adlandırmak için bağlantısını kesin."
+      "failed": "Gereksinim güncellenemedi."
     },
     "delete": {
       "dialogTitle": "Gereksinimi Sil",
@@ -7967,13 +7607,10 @@
       "confirmWithChildren": "Bu gereksinimin, silinecek olan {count, plural, one {{count} alt öğesi} other {{count} alt öğesi}} bulunuyor. Bu işlem geri alınabilir.",
       "success": "Gereksinim silindi.",
       "failed": "Gereksinim silinemedi.",
-      "undo": "Geri Al",
-      "undoSuccess": "Gereksinim geri yüklendi.",
-      "undoFailed": "Gereksinim geri yüklenemedi."
+      "undo": "Geri Al"
     },
     "attachments": {
       "empty": "Ek yok",
-      "uploadSuccess": "Ek yüklendi.",
       "uploadFailed": "Ek yüklenemedi.",
       "removeSuccess": "Ek kaldırıldı.",
       "removeFailed": "Ek kaldırılamadı."
@@ -8027,13 +7664,9 @@
     "coverage": {
       "title": "Kapsam",
       "uncovered": "Kapsanmamış",
-      "uncoveredTooltip": "Bu gereksinime veya alt öğelerinden herhangi birine bağlı test senaryosu yok.",
       "statusPassed": "Geçti",
       "statusFailed": "Başarısız",
       "statusNotRun": "Çalıştırılmadı",
-      "countLabel": "{passed}/{total}",
-      "breakdownTooltip": "Geçti: {passed} · Başarısız: {failed} · Devam ediyor: {inProgress} · Çalıştırılmadı: {notRun}",
-      "showOnlyUncovered": "Yalnızca kapsanmamışları göster",
       "showOnlyUncoveredUnavailable": "Kapsam verileri şu anda kullanılamıyor.",
       "loadFailed": "Kapsam yüklenemedi.",
       "retry": "Tekrar dene",
@@ -8150,7 +7783,6 @@
       "deleted": "Yürütme hedefi silindi",
       "enabledToast": "Hedef etkinleştirildi",
       "disabledToast": "Hedef devre dışı bırakıldı",
-      "revealedSecretTitle": "İmzalama sırrını şimdi kopyala",
       "revealedSecretWarning": "Bu gizli bir kez gösterilir. Alıcınız bunu her gönderimde X-TestPlanIt-Signature başlığını doğrulamak için kullanır; başka bir şekilde kimlik doğrulayan sistemler (örneğin Jenkins tetik belirteci) bunu yoksayabilir. Bunu CI sisteminizin gizli deposunda saklayın; TestPlanIt bunu yeniden görüntüleyemiyor.",
       "secretCopied": "Gizli kopyalandı",
       "errors": {
@@ -8283,7 +7915,6 @@
     "seconds": "{seconds}s",
     "testCases": "{count, plural, one {# test durumu} other {# test durumu}}",
     "estimate": "Kuruluş: {value}",
-    "partOf": "( {parent}'nın bir parçası )",
     "status": "Durum: {status}",
     "lane": "Şerit {number}",
     "worker": "Çalışan {id}"
@@ -8420,8 +8051,6 @@
       "overview": "## Projeler\nProjeler; test senaryolarınız, çalıştırmalarınız, oturumlarınız ve kilometre taşlarınız için en üst düzey kapsayıcılardır. Her projeyi buradan oluşturun ve yönetin.",
       "settings": {
         "integrations": {
-          "externalProjectHelp": "## Harici Proje\nBu TestPlanIt projesiyle bağlantı kurmak için harici sistemdeki projeyi veya depoyu seçin.\n\n- TestPlanIt'ten oluşturulan sorunlar bu projede oluşturulacaktır\n- Sistemler arasında sorun izleme entegrasyonunu sağlar\n- Harici sistemde uygun izinlere sahip olmanız gerekir",
-          "defaultIssueTypeHelp": "## Varsayılan Sorun Türü\nTestPlanIt'ten yeni sorunlar oluştururken önceden seçilecek sorun türü.\n\n- En sık karşılaşılan sorun türünü varsayılan olarak seçerek zamandan tasarruf sağlar\n- Bireysel sorunlar oluştururken geçersiz kılınabilir\n- Seçilen harici proje için geçerli bir sorun türü olmalıdır\n- İş akışınız değişirse bunu güncelleyin",
           "automaticSyncHelp": "## Otomatik Senkronizasyon\nTestPlanIt ile harici sistem arasında sorun durumunun otomatik olarak senkronize edilmesini sağlar.\n\n- Test senaryolarına bağlı sorunlar durumlarını otomatik olarak günceller\n- Sistemler arasında sorun takibinin tutarlı kalmasına yardımcı olur\n- Harici servis ile API kullanımını artırabilir\n- Manuel kontrol tercih edilirse devre dışı bırakılabilir"
         }
       }
@@ -8593,7 +8222,6 @@
     "issueConfig": {
       "name": "## Sorun Yapılandırma Adı\nTüm projelerde kullanılan açık ve açıklayıcı bir ad.\n\n- Sorun yapılandırmasını açıklamaya yardımcı olur (örneğin Jira, GitHub, vb.).",
       "baseUrl": "## Temel URL\nSorun yer tutucusu da dahil olmak üzere sorun yapılandırması için temel URL (örneğin https://your-jira-instance.atlassian.net/browse/'{issueId}').",
-      "systemType": "## Sistem Türü\nSorun takip sisteminin türü (örneğin LINK Jira, vb.).",
       "isActive": "## Aktif\nBu sorun yapılandırmasının aktif olup olmadığını gösterir.",
       "isDefault": "## Varsayılan\nBu sorun yapılandırmasının projeniz için varsayılan olup olmadığını gösterir.\n\n- Varsayılan sorun yapılandırması yeni sorunlar için önceden seçilmiştir.\n- İstediğiniz zaman değiştirilebilir.",
       "projects": "## Projeler\nBu sorun yapılandırmasına atanmış projeleri gösterir."
@@ -9053,13 +8681,9 @@
       },
       "reportsTabDescription": "Projeniz için önceden oluşturulmuş raporları görüntüleyin ve analiz edin.",
       "reportType": "Rapor Türü",
-      "selectReportType": "Rapor türünü seçin",
       "selectReport": "Raporu Seç",
       "dimensions": "Boyutlar",
-      "dimensionsSubtitle": "Boyutlar (sıralamayı değiştirmek için sürükleyin, aşağıya ekleyin)",
       "metrics": "Metrikler",
-      "addDimension": "Boyut ekle...",
-      "addMetric": "Ölçüt ekle...",
       "runReport": "Çalıştırma Raporu",
       "exportCsv": "CSV olarak dışa aktar",
       "noResultsFound": "Hiçbir sonuç bulunamadı.",
@@ -9068,8 +8692,6 @@
       "noDataMatchingCriteriaWithDateFilter": "Seçilen boyutlar ve ölçütlerle eşleşen veri bulunamadı. Tarih aralığı filtrenizi ayarlamayı deneyin.",
       "noDataAvailable": "Bu rapor için veri bulunmamaktadır.",
       "generatedAt": "Rapor şu tarihte oluşturuldu:",
-      "crossProjectAnalytics": "Projeler Arası Analiz ve Raporlama",
-      "unauthorizedAdmin": "Yetkisiz erişim: Yönetici erişimi gereklidir.",
       "title": "Rapor Oluşturucu",
       "description": "Proje verilerinizi analiz etmek için özel raporlar oluşturun.",
       "crossProjectDescription": "Çalışma alanınızdaki tüm projelerdeki verileri analiz edin.",
@@ -9244,7 +8866,6 @@
         "newest": "Yeni",
         "oldest": "Eskimiş",
         "noFlakyTests": "Kriterlere uyan, güvenilir olmayan hiçbir test bulunamadı.",
-        "includeFilter": "Katmak",
         "caseTags": "Test Senaryosu Etiketleri",
         "runTags": "Test Çalıştırması Etiketleri",
         "testRunDeleted": "Test çalışması silindi.",
@@ -9268,7 +8889,6 @@
         "minExecutionsHelp": "Anlamlı geçme oranı istatistiklerini hesaplamak için gereken minimum yürütme sayısı (3-20).",
         "lookbackDays": "Geriye Bakış Dönemi",
         "lookbackDaysHelp": "İşlem geçmişini analiz etmek için kullanılacak gün sayısı (30-365).",
-        "includeFilter": "Katmak",
         "staleFilter": "Yıpranmışlık",
         "stale": "Bayat",
         "notStale": "Bayat Değil",
@@ -9278,11 +8898,9 @@
         "executions": "İnfazlar",
         "passCount": "Geçişler",
         "failCount": "Başarısızlıklar",
-        "daysSince": "İdamdan bu yana geçen günler",
         "count": "Saymak",
         "totalTests": "test senaryoları",
         "noData": "Test senaryosu bulunamadı.",
-        "noExecutedTests": "Gösterilecek yürütülmüş test yok.",
         "healthStatus": {
           "healthy": "Sağlıklı",
           "stale": "Bayat",
@@ -9291,11 +8909,7 @@
           "alwaysFailing": "Her Zaman Başarısız"
         },
         "chart": {
-          "distribution": "Durum Dağılımı",
-          "healthyRecent": "Sağlıklı ve Son Zamanlar",
-          "unhealthyStale": "İlgiye ihtiyaç var",
-          "daysAxis": "Son İşlemden Bu Yana Geçen Gün Sayısı",
-          "healthScoreAxis": "Sağlık Puanı"
+          "distribution": "Durum Dağılımı"
         },
         "stats": {
           "totalTests": "Toplam Testler",
@@ -9423,9 +9037,6 @@
         }
       },
       "issueTestCoverage": {
-        "viewMode": "Görünüm Modu",
-        "summaryView": "Özet (Soruna Göre)",
-        "detailView": "Detay (Test Durumuna Göre)",
         "issue": "Sorun",
         "testCase": "Test Durumu",
         "testCases": "{count, plural, =1 {Test Durumu} other {Test Durumları}}",
@@ -9437,18 +9048,15 @@
         "lastExecuted": "Son Yürütülme",
         "notTested": "Test Edilmedi",
         "noData": "Bağlantılı test senaryolarında herhangi bir sorun bulunmadı.",
-        "noIssuesNeedingAttention": "Tüm sorunlar testlerden başarıyla geçti - harika iş!",
         "stats": {
           "totalIssues": "Toplam Sorunlar",
           "issuesWithFailures": "Başarısızlıklarla",
           "issuesWithFailuresTooltip": "En az bir başarısız test senaryosuyla ilgili sorunlar.",
           "issuesWithUntested": "Test edilmemiş",
           "issuesWithUntestedTooltip": "Henüz çalıştırılmamış en az bir test senaryosunda sorunlar mevcut.",
-          "issuesAllPassing": "Tüm Geçişler",
-          "numberOfIssues": "Sorun Sayısı"
+          "issuesAllPassing": "Tüm Geçişler"
         },
         "charts": {
-          "passRateDistribution": "Test Geçme Oranı Dağılımı",
           "linkedTestCases": "Bağlantılı Test Senaryolarının Sayısı",
           "untestedTestCases": "Test Edilmemiş Test Senaryolarının Sayısı",
           "testCoverageVsExecution": "Test Kapsamı ve Yürütme Durumu"
@@ -9482,7 +9090,6 @@
         "otherRoots": "Diğer ({count, plural, one {# hiyerarşi} other {# hiyerarşi}})",
         "snapshotLabel": "Anlık Görüntü",
         "snapshotLive": "Canlı matris",
-        "snapshotHelp": "Canlı veriler yerine matrisin kaydedilmiş bir zaman noktası anlık görüntüsünü gösterin. Anlık görüntüler; dışa aktarabileceğiniz, paylaşabileceğiniz ve karşılaştırabileceğiniz değiştirilemez kayıtlardır.",
         "snapshotPlaceholder": "Bir anlık görüntü seçin",
         "snapshotRequirementsCount": "{count, plural, one {# gereksinim} other {# gereksinim}}",
         "snapshotUncoveredCount": "{count} kapsanmayan",
@@ -9613,7 +9220,6 @@
         "triggerPush": "İtme",
         "outcomeNotExecuted": "Yürütülmedi",
         "outcomeNoRun": "Çalıştırılmadı",
-        "allRepositories": "Tüm depolar",
         "analysis": "Analiz",
         "changedFiles": "Değiştirilen dosyalar",
         "changedFilesDetail": "{files, number} dosya · +{additions, number} −{deletions, number}",
@@ -9734,23 +9340,15 @@
     },
     "errors": {
       "adminOnly": "Proje raporlarına yalnızca Proje Yöneticileri ve Yöneticiler erişebilir.",
-      "projectIdRequired": "Proje kimliği gereklidir.",
       "missingRequiredFields": "Gerekli alanlar eksik.",
-      "unsupportedDimension": "Desteklenmeyen boyut: {dimension}",
-      "unsupportedMetric": "Desteklenmeyen ölçüt: {metric}",
       "atLeastOneDimensionMetricRequired": "En az bir boyut ve bir ölçüt gereklidir.",
-      "atLeastOneMetricRequired": "En az bir ölçüt belirtilmelidir.",
-      "projectDimensionsMetricsRequired": "Proje kimliği, boyutları ve ölçütleri gereklidir.",
-      "unsupportedDimensions": "Desteklenmeyen boyut(lar): {dimensions}",
-      "unsupportedMetrics": "Desteklenmeyen ölçüt(ler): {metrics}",
-      "unexpectedError": "Beklenmeyen bir hata oluştu."
+      "atLeastOneMetricRequired": "En az bir ölçüt belirtilmelidir."
     },
     "dimensions": {
       "executor": "Vasi",
       "assignedTo": "Atanan Kişi",
       "executionDate": "Yürütme Tarihi",
       "creationDate": "Oluşturulma Tarihi",
-      "activityDate": "Aktivite Tarihi",
       "testCase": "Test Durumu",
       "creator": "Yaratıcı",
       "source": "Kaynak",
@@ -9900,9 +9498,6 @@
           "title": "Paylaşım Bağlantısının Süresi Doldu",
           "description": "Bu paylaşım bağlantısının süresi dolmuştur ve artık erişilemez."
         }
-      },
-      "footer": {
-        "poweredBy": "Tarafından desteklenmektedir"
       },
       "manageShares": {
         "title": "Hisseleri Yönet",
@@ -10255,8 +9850,6 @@
     },
     "startTyping": "Arama yapmak için yazmaya başlayın.",
     "typesSelected": "{count, plural, one {# tür} other {# tür}}",
-    "customFieldFilters": "Özel Alan Filtreleri",
-    "customFiltersApplied": "özel filtreler",
     "customFields": "Özel Alanlar",
     "addFilter": "Filtre Ekle",
     "filter": "Filtrele",
@@ -10321,14 +9914,12 @@
       "junit": "JUnit",
       "hybrid": "Hibrit",
       "automatedOnly": "Yalnızca Otomatikleştirilmiş",
-      "archivedOnly": "Sadece Arşivlenmiş",
       "completedOnly": "Sadece Tamamlandı",
       "manualOnly": "Sadece Manuel",
       "estimateRange": "Tahmini Aralık",
       "elapsedRange": "Geçen Süre Aralığı",
       "minValue": "Min",
       "maxValue": "Maksimum",
-      "dueDateRange": "Son Teslim Tarihi Aralığı",
       "milestoneType": "Dönüm Noktası Türü",
       "minutes": "dakika",
       "hours": "saat",
@@ -10433,11 +10024,7 @@
   },
   "autoTag": {
     "actions": {
-      "aiTag": "Yapay Zeka Etiketi",
-      "tagAll": "Tümünü etiketle",
       "aiAutoTag": "Otomatik Etiket",
-      "tagActions": "Etiket Eylemleri",
-      "startTagging": "Etiketlemeye Başla",
       "selectEntityType": "Varlık türünü seçin",
       "selectProject": "Bir proje seçin",
       "entityTypes": {
@@ -10449,11 +10036,8 @@
     "review": {
       "title": "Etiket Önerilerini İnceleyin",
       "description": "Etiketlere tıklayarak kabul edip etmeme durumunu değiştirebilirsiniz. Etiket adını düzenlemek için çift tıklayın.",
-      "selectEntity": "Etiket önerilerini görüntülemek için bir varlık seçin.",
       "noTagsSelected": "Hiçbir etiket seçilmedi.",
-      "footerSummary": "{assignCount, plural, one {# etiket} other {# etiket}} atanacak, {newCount, plural, one {# yeni etiket} other {# yeni etiket}} oluşturulacak",
       "footerAssignCount": "{assignCount, plural, one {# etiket} other {# etiket}} atanacak",
-      "footerNewCount": "{newCount, plural, one {# yeni etiket} other {# yeni etiket}} oluşturulacak",
       "newTagsPopoverTitle": "Oluşturulacak yeni etiketler",
       "applying": "Başvuruluyor...",
       "applySuccess": "{tagCount, plural, one {# etiket} other {# etiket}} şu varlığa uygulandı: {entityCount, plural, one {# varlık} other {# varlık}}",
@@ -10472,7 +10056,6 @@
       "tooltipExisting": "Mevcut etiket",
       "tooltipNew": "Yeni etiket oluşturulacak",
       "tooltipAssign": "Mevcut etiketi atayın",
-      "toggleFailed": "Başarısız varlıkları göster/gizle",
       "showFailed": "Gösteri başarısız oldu"
     },
     "progress": {
@@ -10610,7 +10193,6 @@
     "datasetRowResultEmpty": "—",
     "pasteCsvPlaceholder": "CSV satırlarını buraya yapıştırın. İlk satır başlık olarak kabul edilecektir.",
     "pasteCsvParseButton": "Ayrıştırma",
-    "pasteCsvReplaceWarning": "Mevcut veri kümesi satırları ({existingCount}) silinecektir.",
     "cellErrorString": "Zorunlu alan için değer boş bırakılamaz.",
     "cellErrorInteger": "Tam sayı olmalıdır.",
     "cellErrorSelect": "Değer şu seçeneklerden biri olmalıdır: {allowed}.",
@@ -10655,14 +10237,8 @@
     "chooserEmpty": "Henüz hiçbir parametre tanımlanmadı.",
     "chooserConfigureLink": "Parametreleri yapılandırın",
     "autocompleteEmpty": "Eşleşen parametre bulunamadı. Arama yapmak için yazın veya eklemek için araç çubuğunu kullanın.",
-    "chipTooltipType": "Tür: {type}",
-    "chipTooltipDefault": "Varsayılan: {value}",
-    "chipTooltipNoDefault": "Varsayılan: (yok)",
-    "chipTooltipUndeclared": "\"@{name}\" tanımlanmış bir parametre değil. Eklemek için Parametreleri Yapılandır'ı açın.",
     "editorUndeclaredWarning": "Bildirilmemiş referanslar: {names}. Yineleme ikamesini etkinleştirmek için bunları Yapılandırma parametreleri aracılığıyla ekleyin.",
     "runProgressTitle": "\"{runName} \" için yinelemeler oluşturuluyor",
-    "runProgressDescriptionAsync": "Arka planda {count, plural, =1 {# yineleme} other {# yineleme}} oluşturuluyor. Çalışmaya devam edebilirsiniz; bu işlem bittiğinde sizi bilgilendireceğiz.",
-    "runProgressDescriptionSync": "{count, plural, =1 {# yineleme} other {# yineleme}} oluşturuldu.",
     "runProgressFailed": "Yineleme oluşturma işlemi başlatılamadı.",
     "runHardRefuseTitle": "Oluşturmak için çok fazla yineleme var.",
     "runHardRefuseDescription": "Bu çalıştırma, {count} yineleme oluşturacak ve {cap}sınırını aşacaktır. Veri kümesi satır sayısını azaltın, bazı durumları seçimden çıkarın veya birden fazla çalıştırmaya bölün.",
@@ -10670,7 +10246,6 @@
     "runPreflightAsync": "{n, plural, =1 {# yineleme} other {# yineleme}} oluşturulacak (arka plan görevi)",
     "runPreflightSoftConfirm": "{n, plural, =1 {# yineleme} other {# yineleme}} oluşturulacak — onay gerekli",
     "runPreflightHardRefuse": "Oluşturulamaz — {n} {cap} sınırını aşıyor",
-    "runPreflightTooltip": "{iterations, plural, =1 {# yineleme} other {# yineleme}} = {cases, plural, =1 {# durum} other {# durum}} × {configs, plural, =1 {# yapılandırma} other {# yapılandırma}} × veri kümesi satırları",
     "runPreflightTooltipHeader": "{iterations, plural, =1 {# yineleme} other {# yineleme}} ({cases, plural, =1 {# parametreli durum} other {# parametreli durum}} × {configs, plural, =1 {# yapılandırma} other {# yapılandırma}} genelinde)",
     "runPreflightTooltipCaseRow": "{title} — {rows, plural, =1 {# satır} other {# satır}}",
     "chipClickToReveal": "Göstermek için tıklayın",
@@ -10682,7 +10257,6 @@
     "iterationAddResult": "Sonucu ekle",
     "iterationPassAndNext": "Geç ve Sonraki yineleme",
     "iterationOtherStatuses": "Diğer durumlar",
-    "iterationAllComplete": "Tüm yinelemeler tamamlandı",
     "hardRefuseTitle": "Oluşturulamıyor — çok fazla yineleme",
     "hardRefuseDescription": "Sistemin hızlı yanıt vermesini sağlamak için test çalıştırması oluşturma işlemi {cap} yineleme ile sınırlandırılmıştır. Aşağıdaki katkıda bulunanlardan birini azaltın.",
     "hardRefuseColumnCase": "Senaryo",
@@ -10705,15 +10279,12 @@
     "iterationsHeaderCount": "{complete}/{total}",
     "iterationsHeaderCountPending": "0/{total} (oluşturuluyor)",
     "iterationStatusLegendAria": "Durum açıklaması",
-    "iterationActionSkipped": "Atlandı",
     "iterationBulkPickStatusPrompt": "Seçilen yinelemelere uygulanacak bir durum seçin.",
-    "iterationBulkApplyStatus": "Durumu… ile işaretle",
     "iterationSelectAria": "Yinelemeyi seçin {n}",
     "iterationRowMenuAria": "Tekrarlama {n} eylemleri",
     "iterationOverrideValues": "Değerleri geçersiz kıl…",
     "iterationSkip": "Durumu… ile işaretle",
     "iterationReset": "Yineleme sonucunu sıfırla",
-    "iterationSelectedCount": "{count} seçildi",
     "iterationBulkSkip": "{count, plural, =1 {# yinelemeyi} other {# yinelemeyi}} şu durumla işaretle…",
     "iterationIssueTitleSnapshot": "{total} sorununun {n} yinelemesi: {caseName}",
     "iterationIssueTitleCiExtended": "İterasyon {n} (CI-genişletilmiş) sorunu: {caseName}",
@@ -10754,13 +10325,7 @@
     "iterationBulkReasonHelp": "Her sonuç kaydedildi.",
     "iterationBulkSuccess": "{count, plural, =1 {# yineleme} other {# yineleme}} {action} olarak işaretlendi",
     "iterationBulkError": "Yinelemeler işaretlenemedi.",
-    "iterationBulkNa": "İşaret Yok",
-    "iterationListLoadError": "Yinelemeler yüklenemedi.",
     "iterationResetUntestedMissing": "Test edilmemiş durum bulunamadı.",
-    "overrideTitle": "{n} yinelemesi için değerleri geçersiz kılın",
-    "overrideDescription": "Değişiklikler yalnızca bu yinelemeyi etkiler. Veri kümesi anlık görüntüsü ve kaynak veri kümesi değişmeden kalır. Bu işlem denetim günlüğüne kaydedilir.",
-    "overrideValidationItem": "@{param}: {message}",
-    "overrideSensitiveDenied": "Hassas değerleri düzenleme izniniz yok.",
     "datasetSourceLocal": "Yerel",
     "datasetSourceShared": "Paylaşıldı",
     "datasetSharedRefBadge": "+ paylaşılan referans",
@@ -10895,7 +10460,6 @@
     },
     "history": "Geçmiş",
     "subscribers": "Abone",
-    "subscriberCount": "{count, plural, =0 {Abone yok} one {# abone} other {# abone}}",
     "toasts": {
       "created": "Kural oluşturuldu.",
       "updated": "Kural güncellendi.",
@@ -10905,7 +10469,6 @@
       "subscribed": "Bu kural tetiklendiğinde bilgilendirileceksiniz.",
       "unsubscribed": "Artık bu kural tarafından bilgilendirilmeyeceksiniz.",
       "subscriberAdded": "{name} abone oldu.",
-      "subscriberRemoved": "{name} abonelikten çıktı.",
       "saveError": "Kuralı kaydedemedi.",
       "subscriptionError": "Abonelik güncellenemedi."
     },
@@ -10927,7 +10490,6 @@
       "scopeRunNamePlaceholder": "örn. Gece",
       "scopePickFolder": "Bir klasör seçin",
       "scopePickTag": "Bir etiket seçin",
-      "scopePickCase": "Bir test senaryosu seçin",
       "scopePickMilestone": "Bir dönüm noktası seçin",
       "scopeWebhook": "Web kancası",
       "scopePickWebhook": "Bir web kancası seçin",
@@ -11324,8 +10886,7 @@
     "unclassified": "Temel neden yok",
     "source": {
       "AI": "AI tarafından önerilen temel neden",
-      "labelAI": "Yapay Zeka",
-      "labelMANUAL": "Manuel"
+      "labelAI": "Yapay Zeka"
     },
     "columns": {
       "classification": "Temel neden",
