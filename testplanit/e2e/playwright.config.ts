@@ -25,6 +25,14 @@ if (process.env.DATABASE_URL) {
 // while E2E runs beside it, and keeps the two sets of data apart.
 process.env.BULLMQ_PREFIX = process.env.BULLMQ_PREFIX || "bull-e2e";
 
+// Browsers to run, comma-separated: chromium (the default), firefox, webkit.
+// Firefox and WebKit are opt-in, e.g. E2E_BROWSERS=chromium,firefox,webkit,
+// and need `pnpm exec playwright install firefox webkit` once.
+const browsers = (process.env.E2E_BROWSERS || "chromium")
+  .split(",")
+  .map((name) => name.trim().toLowerCase())
+  .filter(Boolean);
+
 /** Specs that toggle Force SSO, domain restriction or the password policy. */
 const INSTANCE_SETTINGS_SPECS =
   /admin\/(sso\/sso-provider-management|security\/security-settings)\.spec\.ts$/;
@@ -143,25 +151,56 @@ export default defineConfig({
 
   // Project configurations
   projects: [
-    {
-      name: "chromium",
-      testIgnore: INSTANCE_SETTINGS_SPECS,
-      teardown: "chromium-instance-settings",
-      use: {
-        ...devices["Desktop Chrome"],
-        storageState: path.join(__dirname, ".auth/admin.json"),
-      },
-    },
-    {
-      // Runs after the parallel suite: these specs briefly change instance-wide
-      // sign-in settings that would reject another spec's sign-up or sign-in.
-      name: "chromium-instance-settings",
-      testMatch: INSTANCE_SETTINGS_SPECS,
-      use: {
-        ...devices["Desktop Chrome"],
-        storageState: path.join(__dirname, ".auth/admin.json"),
-      },
-    },
+    ...(browsers.includes("chromium")
+      ? [
+          {
+            name: "chromium",
+            testIgnore: INSTANCE_SETTINGS_SPECS,
+            teardown: "chromium-instance-settings",
+            use: {
+              ...devices["Desktop Chrome"],
+              storageState: path.join(__dirname, ".auth/admin.json"),
+            },
+          },
+          {
+            // Runs after the parallel suite: these specs briefly change
+            // instance-wide sign-in settings that would reject another spec's
+            // sign-up or sign-in.
+            name: "chromium-instance-settings",
+            testMatch: INSTANCE_SETTINGS_SPECS,
+            use: {
+              ...devices["Desktop Chrome"],
+              storageState: path.join(__dirname, ".auth/admin.json"),
+            },
+          },
+        ]
+      : []),
+    // The instance-settings specs change settings for the whole install, so
+    // they run once, in Chromium.
+    ...(browsers.includes("firefox")
+      ? [
+          {
+            name: "firefox",
+            testIgnore: INSTANCE_SETTINGS_SPECS,
+            use: {
+              ...devices["Desktop Firefox"],
+              storageState: path.join(__dirname, ".auth/admin.json"),
+            },
+          },
+        ]
+      : []),
+    ...(browsers.includes("webkit")
+      ? [
+          {
+            name: "webkit",
+            testIgnore: INSTANCE_SETTINGS_SPECS,
+            use: {
+              ...devices["Desktop Safari"],
+              storageState: path.join(__dirname, ".auth/admin.json"),
+            },
+          },
+        ]
+      : []),
   ],
 
   // Local dev server configuration

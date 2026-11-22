@@ -57,6 +57,16 @@ pnpm exec playwright install
 pnpm test:e2e
 ```
 
+### Run in Firefox and WebKit
+
+The suite runs in Chromium unless `E2E_BROWSERS` names other browsers
+(`chromium`, `firefox`, `webkit`, comma-separated):
+
+```bash
+E2E_BROWSERS=chromium,firefox,webkit pnpm test:e2e
+E2E_BROWSERS=webkit pnpm test:e2e path/to/test.spec.ts
+```
+
 ### Run tests with UI mode (interactive)
 
 ```bash
