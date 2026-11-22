@@ -73,6 +73,7 @@ export const COMMON_COLUMN_ALIASES: Record<string, string> = {
   runs: "testRuns",
   executions: "testRuns",
   description: "description",
+  summary: "description",
   preconditions: "preconditions",
   prerequisites: "preconditions",
   "pre-conditions": "preconditions",

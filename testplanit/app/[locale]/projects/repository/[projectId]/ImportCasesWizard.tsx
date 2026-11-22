@@ -1952,6 +1952,17 @@ export function ImportCasesWizard({
    * parses the cell with `parseStepsCell`, the same parser the import route
    * runs, so the preview count matches what gets created.
    */
+  // Rich text as the import will store it: plain text, Markdown and HTML all
+  // go through the same conversion the import route runs.
+  const renderRichTextPreview = (value: string) => (
+    <div
+      className="prose prose-sm max-w-none text-sm dark:prose-invert"
+      dangerouslySetInnerHTML={{
+        __html: generateHTMLFallback(ensureTipTapJSON(value)),
+      }}
+    />
+  );
+
   const renderStepsPreview = (
     stepsValue: string,
     aggregatedSteps?: AggregatedStep[],
@@ -1977,13 +1988,13 @@ export function ImportCasesWizard({
                 {idx + 1}
               </Badge>
               <div className="flex-1 space-y-1">
-                <div className="text-sm">{step.step}</div>
+                {renderRichTextPreview(step.step)}
                 {step.expectedResult && (
                   <div className="text-sm text-muted-foreground">
                     <span className="font-medium">
-                      {tCommon("fields.expectedResult")}:{" "}
+                      {tCommon("fields.expectedResult")}:
                     </span>
-                    {step.expectedResult}
+                    {renderRichTextPreview(step.expectedResult)}
                   </div>
                 )}
               </div>
@@ -2064,14 +2075,7 @@ export function ImportCasesWizard({
     }
 
     if (field?.type === "Text Long") {
-      const json = ensureTipTapJSON(value);
-      const htmlOutput = generateHTMLFallback(json);
-      return (
-        <div
-          className="prose prose-sm max-w-none text-sm dark:prose-invert"
-          dangerouslySetInnerHTML={{ __html: htmlOutput }}
-        />
-      );
+      return renderRichTextPreview(value);
     }
 
     if (isStepsField) {
