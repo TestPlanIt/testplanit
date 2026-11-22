@@ -1,3 +1,9 @@
+## [1.3.0-beta.8](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.7...v1.3.0-beta.8) (2026-11-22)
+
+### Bug Fixes
+
+* **i18n:** show the label for two strings whose keys no longer exist ([1433a56](https://github.com/TestPlanIt/testplanit/commit/1433a561d7ce2775be697d2ff016115b1dbaac31))
+
 ## [1.3.0-beta.7](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.6...v1.3.0-beta.7) (2026-11-21)
 
 ### Features
