@@ -1,3 +1,14 @@
+## [1.3.0-beta.9](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.8...v1.3.0-beta.9) (2026-11-22)
+
+### Features
+
+* **import:** import test cases from a TestLink XML export ([b58f533](https://github.com/TestPlanIt/testplanit/commit/b58f5331aaa6c6756ecc85ca8988f42969c13a08))
+
+### Bug Fixes
+
+* **admin:** keep project assignments and typed text when saving edit forms ([6f0afbf](https://github.com/TestPlanIt/testplanit/commit/6f0afbf4ee9c6b4d14ceb53b45507dcfdbf7cafa))
+* **import:** show formatted steps in the import preview and match Summary to Description ([cf655b4](https://github.com/TestPlanIt/testplanit/commit/cf655b4e6df1e9441c04ec31402defe0fc9ecff0))
+
 ## [1.3.0-beta.8](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.7...v1.3.0-beta.8) (2026-11-22)
 
 ### Bug Fixes
