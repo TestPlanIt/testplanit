@@ -133,29 +133,35 @@ export function EditMilestoneType({
         },
       });
 
-      await deleteManyMilestoneTypesAssignment({
-        where: {
-          milestoneTypeId: milestoneType.id,
-          project: { isDeleted: false },
-        },
-      });
-
-      if (Array.isArray(data.projects) && data.isDefault === false) {
-        await createManyMilestoneTypesAssignment({
-          data: data.projects.map((projectId) => ({
+      // Only the difference is written, so a project never loses the
+      // milestone type while the save is in flight.
+      if (data.isDefault) {
+        if (Array.isArray(data.projects) && projects && projects.length > 0) {
+          await createManyMilestoneTypesAssignment({
+            data: projects.map((project) => ({
+              milestoneTypeId: milestoneType.id,
+              projectId: project.id,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      } else if (Array.isArray(data.projects)) {
+        await deleteManyMilestoneTypesAssignment({
+          where: {
             milestoneTypeId: milestoneType.id,
-            projectId: projectId,
-          })),
+            project: { isDeleted: false },
+            projectId: { notIn: data.projects },
+          },
         });
-      }
-
-      if (Array.isArray(data.projects) && data.isDefault) {
-        await createManyMilestoneTypesAssignment({
-          data: (projects || []).map((project) => ({
-            milestoneTypeId: milestoneType.id,
-            projectId: project.id,
-          })),
-        });
+        if (data.projects.length > 0) {
+          await createManyMilestoneTypesAssignment({
+            data: data.projects.map((projectId) => ({
+              milestoneTypeId: milestoneType.id,
+              projectId: projectId,
+            })),
+            skipDuplicates: true,
+          });
+        }
       }
 
       onClose();

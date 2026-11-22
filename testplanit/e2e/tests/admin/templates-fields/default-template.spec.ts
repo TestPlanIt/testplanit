@@ -338,43 +338,28 @@ test.describe("Default Template - Cascade Behaviors", () => {
 
       await templatesPage.clickEditTemplate(template2Name);
       await templatesPage.toggleTemplateDefault(true);
+      // Only one template is the default at a time, and other tests running
+      // in parallel set their own. Read what this save stored from its own
+      // response: a later read can already show another test's default.
+      const saved = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/model/templates/update") &&
+          response.request().method() !== "GET"
+      );
       await templatesPage.submitTemplate();
-
-      // Wait for the dialog to close and mutations to complete
-      await page.waitForLoadState("networkidle");
+      const savedTemplate = (await (await saved).json())?.data;
+      expect(savedTemplate?.id).toBe(template2Id);
+      expect(savedTemplate?.isDefault).toBe(true);
     });
 
-    await test.step("Wait for the cascade to flip the default flags", async () => {
-      // Poll the API to wait for the cascade update to complete
-      // The cascade should unset template1's default and set template2 as default
+    await test.step("The previous default lost the flag", async () => {
       await expect
-        .poll(
-          async () => {
-            const template1Verification = await api.verifyTemplate(
-              template1Id!
-            );
-            const template2Verification = await api.verifyTemplate(
-              template2Id!
-            );
-            return (
-              !template1Verification.isDefault &&
-              template2Verification.isDefault
-            );
-          },
-          {
-            message: `Expected template2 ${template2Name} to be default and template1 ${template1Name} to not be default`,
-            timeout: 40000, // Increased timeout from 30s to 40s
-            intervals: [100, 250, 500, 1000, 2000, 3000],
-          }
-        )
-        .toBe(true);
-    });
-
-    await test.step("Verify the final default state of both templates", async () => {
-      const template1Verification = await api.verifyTemplate(template1Id!);
-      const template2Verification = await api.verifyTemplate(template2Id!);
-      expect(template1Verification.isDefault).toBe(false);
-      expect(template2Verification.isDefault).toBe(true);
+        .poll(async () => (await api.verifyTemplate(template1Id!)).isDefault, {
+          message: `Expected template1 ${template1Name} to no longer be default`,
+          timeout: 15000,
+          intervals: [100, 250, 500, 1000],
+        })
+        .toBe(false);
     });
   });
 

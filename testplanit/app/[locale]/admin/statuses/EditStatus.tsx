@@ -199,36 +199,50 @@ export function EditStatus({ status, open, onClose }: EditStatusProps) {
         data: statusUpdateData,
       });
 
-      await deleteManyStatusScopeAssignment({ where: { statusId: status.id } });
-      await deleteManyProjectStatusAssignment({
-        where: { statusId: status.id, project: { isDeleted: false } },
+      // Only the difference is written, so a scope or a project never loses
+      // the status while the save is in flight.
+      const scopeIds = Array.isArray(data.scope) ? data.scope : [];
+      await deleteManyStatusScopeAssignment({
+        where: { statusId: status.id, scopeId: { notIn: scopeIds } },
       });
-
-      if (Array.isArray(data.scope) && data.scope.length > 0) {
+      if (scopeIds.length > 0) {
         await createManyStatusScopeAssignment({
-          data: data.scope.map((scopeId: number) => ({
+          data: scopeIds.map((scopeId: number) => ({
             statusId: status.id,
             scopeId: scopeId,
           })),
+          skipDuplicates: true,
         });
       }
 
       if (status.systemName === "untested") {
-        if (projects && Array.isArray(data.projects)) {
+        if (projects && projects.length > 0 && Array.isArray(data.projects)) {
           await createManyProjectStatusAssignment({
             data: projects.map((project) => ({
               projectId: project.id,
               statusId: status.id,
             })),
+            skipDuplicates: true,
           });
         }
-      } else if (Array.isArray(data.projects) && data.projects.length > 0) {
-        await createManyProjectStatusAssignment({
-          data: data.projects.map((projectId: number) => ({
-            projectId: projectId,
+      } else {
+        const projectIds = Array.isArray(data.projects) ? data.projects : [];
+        await deleteManyProjectStatusAssignment({
+          where: {
             statusId: status.id,
-          })),
+            project: { isDeleted: false },
+            projectId: { notIn: projectIds },
+          },
         });
+        if (projectIds.length > 0) {
+          await createManyProjectStatusAssignment({
+            data: projectIds.map((projectId: number) => ({
+              projectId: projectId,
+              statusId: status.id,
+            })),
+            skipDuplicates: true,
+          });
+        }
       }
 
       onClose();

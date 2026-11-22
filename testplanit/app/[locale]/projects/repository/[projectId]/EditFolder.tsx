@@ -24,7 +24,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Asterisk } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
@@ -96,23 +96,24 @@ export function EditFolderModal({
     defaultValues: defaultFormValues,
   });
 
+  // The form is filled once per opening, when the folder first loads. A later
+  // refetch of the folder must not replace what the user has typed since.
+  const filledForFolderId = useRef<number | null>(null);
   useEffect(() => {
-    if (open && folder) {
-      form.reset({
-        name: folder.name ?? "",
-        docs: folder.docs
-          ? parseTipTapContent(folder.docs)
-          : emptyEditorContent,
-      });
-      setEditorKey((prev) => prev + 1);
-    } else if (open) {
-      form.reset({
-        name: "",
-        docs: emptyEditorContent,
-      });
-      setEditorKey((prev) => prev + 1);
+    if (!open) {
+      filledForFolderId.current = null;
+      return;
     }
-  }, [open, folder, form.reset, form]);
+    if (!folder || filledForFolderId.current === folder.id) {
+      return;
+    }
+    filledForFolderId.current = folder.id;
+    form.reset({
+      name: folder.name ?? "",
+      docs: folder.docs ? parseTipTapContent(folder.docs) : emptyEditorContent,
+    });
+    setEditorKey((prev) => prev + 1);
+  }, [open, folder, form]);
 
   const {
     formState: { errors },
@@ -181,6 +182,7 @@ export function EditFolderModal({
                   <FormControl>
                     <input
                       {...field}
+                      disabled={!folder}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </FormControl>

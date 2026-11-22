@@ -12,6 +12,8 @@ import { expect, test } from "../../fixtures";
  * Asserts:
  *  - Pre-edit projectWorkflowAssignment count equals post-edit count.
  *  - No error toast surfaces during the save.
+ *  - The save removes no assignment: every project keeps the default
+ *    workflow while the save is in flight.
  */
 
 test.describe("Admin Workflows — default workflow edit-save idempotency", () => {
@@ -25,6 +27,12 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
     let workflowId: number | undefined;
     let workflowName: string | undefined;
     let beforeProjectIds: number[] | undefined;
+    const assignmentDeletes: string[] = [];
+    page.on("request", (sent) => {
+      if (sent.url().includes("/api/model/projectWorkflowAssignment/delete")) {
+        assignmentDeletes.push(sent.url());
+      }
+    });
 
     await test.step("Look up the seeded Draft CASES workflow by name", async () => {
       // Find the seeded "Draft" CASES workflow — the seed file ships it as the
@@ -123,6 +131,10 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
       await expect(errorToast)
         .not.toBeVisible({ timeout: 1000 })
         .catch(() => {});
+    });
+
+    await test.step("The save removed no assignment", async () => {
+      expect(assignmentDeletes).toHaveLength(0);
     });
 
     await test.step("Assert no duplicate projectWorkflowAssignment rows after save", async () => {

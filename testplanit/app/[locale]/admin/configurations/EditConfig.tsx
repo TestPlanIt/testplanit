@@ -112,19 +112,23 @@ export function EditConfiguration({
         },
       });
 
+      // Only the difference is written, so a project never loses the
+      // configuration while the save is in flight.
+      const projectIds = Array.isArray(data.projects) ? data.projects : [];
       await deleteManyProjectConfigurationAssignment({
         where: {
           configurationId: configuration.id,
           project: { isDeleted: false },
+          projectId: { notIn: projectIds },
         },
       });
-
-      if (Array.isArray(data.projects) && data.projects.length > 0) {
+      if (projectIds.length > 0) {
         await createManyProjectConfigurationAssignment({
-          data: data.projects.map((projectId: number) => ({
+          data: projectIds.map((projectId: number) => ({
             configurationId: configuration.id,
             projectId,
           })),
+          skipDuplicates: true,
         });
       }
 

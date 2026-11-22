@@ -233,26 +233,35 @@ export function EditWorkflows({
         },
       });
 
-      await deleteManyProjectWorkflowAssignment({
-        where: { workflowId: workflows.id, project: { isDeleted: false } },
-      });
-
+      // Only the difference is written, so a project never loses the
+      // workflow while the save is in flight.
       if (data.isDefault) {
-        if (Array.isArray(projects)) {
+        if (Array.isArray(projects) && projects.length > 0) {
           await createManyProjectWorkflowAssignment({
             data: projects.map((project: Projects) => ({
               projectId: project.id,
               workflowId: newWorkflow!.id,
             })),
+            skipDuplicates: true,
           });
         }
       } else if (Array.isArray(data.projects)) {
-        await createManyProjectWorkflowAssignment({
-          data: data.projects.map((projectId: number) => ({
-            projectId: projectId,
+        await deleteManyProjectWorkflowAssignment({
+          where: {
             workflowId: workflows.id,
-          })),
+            project: { isDeleted: false },
+            projectId: { notIn: data.projects },
+          },
         });
+        if (data.projects.length > 0) {
+          await createManyProjectWorkflowAssignment({
+            data: data.projects.map((projectId: number) => ({
+              projectId: projectId,
+              workflowId: workflows.id,
+            })),
+            skipDuplicates: true,
+          });
+        }
       }
 
       onClose();

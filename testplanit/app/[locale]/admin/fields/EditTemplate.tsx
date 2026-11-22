@@ -337,29 +337,36 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
         },
       });
 
-      // Handle project assignments
-      await deleteManyTemplateProjectAssignment({
-        where: { templateId: template.id, project: { isDeleted: false } },
-      });
-
+      // Project assignments: only the difference is written, so a project
+      // never loses the template while the save is in flight.
       if (data.isDefault) {
-        if (Array.isArray(projects)) {
+        if (Array.isArray(projects) && projects.length > 0) {
           await createManyTemplateProjectAssignment({
             data: projects.map((project: Projects) => ({
               projectId: project.id,
               templateId: template.id,
             })),
+            skipDuplicates: true,
           });
         }
-      }
-
-      if (!data.isDefault && data.projects && data.projects.length) {
-        await createManyTemplateProjectAssignment({
-          data: data.projects.map((projectId) => ({
-            projectId,
+      } else {
+        const projectIds = data.projects ?? [];
+        await deleteManyTemplateProjectAssignment({
+          where: {
             templateId: template.id,
-          })),
+            project: { isDeleted: false },
+            projectId: { notIn: projectIds },
+          },
         });
+        if (projectIds.length > 0) {
+          await createManyTemplateProjectAssignment({
+            data: projectIds.map((projectId) => ({
+              projectId,
+              templateId: template.id,
+            })),
+            skipDuplicates: true,
+          });
+        }
       }
 
       // Handle case field assignments
