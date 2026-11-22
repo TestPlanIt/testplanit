@@ -3396,9 +3396,11 @@
           "title": "將 CSV 欄位對應到字段",
           "titleMarkdown": "將 Markdown 欄位對應至範本欄位",
           "titleTestRail": "將 TestRail 欄位對應至範本欄位",
+          "titleTestLink": "將 TestLink 欄位對應到範本欄位",
           "description": "將 CSV 檔案中的每一列對應到範本中的一個字段，或選擇忽略它。",
           "descriptionMarkdown": "將 Markdown 檔案中找到的每個欄位對應至範本中的欄位，或選擇忽略它。",
           "descriptionTestRail": "將每個 TestRail 欄位對應至範本中的欄位，或選擇忽略它。",
+          "descriptionTestLink": "將每個 TestLink 欄位對應到範本中的欄位，或選擇忽略它。",
           "ignoreColumn": "忽略列",
           "requiredFieldsWarning": "{count, plural, one {# 必填欄位為} other {# 必填欄位為}} 未對映",
           "caseIdHint": "這必須是數字案例 ID — 相符的案例將被覆寫。"
@@ -3448,8 +3450,19 @@
           "unreadEstimates": "{count, plural, one {# 個測試案例的預估值無法讀取，保留為空白。} other {# 個測試案例的預估值無法讀取，保留為空白。}}",
           "errors": {
             "invalidXml": "此檔案無法讀取為XML。",
-            "notASuite": "此XML檔案不是TestRail測試套件匯出。在TestRail中，開啟套件的「測試案例」頁面並將其匯出為XML。",
+            "notASuite": "此 XML 檔案不是 TestRail 或 TestLink 匯出檔。在 TestRail 中，開啟套件的測試用例頁面並將其匯出為 XML。在 TestLink 中，將測試專案或測試套件匯出為 XML。",
             "noCases": "此TestRail匯出不包含任何測試案例。"
+          }
+        },
+        "testLink": {
+          "summary": "{cases, plural, one {此 TestLink 匯出檔包含 # 個測試用例，位於 {suites, plural, =0 {無測試套件} one {# 個測試套件} other {# 個測試套件}}。} other {此 TestLink 匯出檔包含 # 個測試用例，位於 {suites, plural, =0 {無測試套件} one {# 個測試套件} other {# 個測試套件}}。}}",
+          "notIncluded": "匯出檔包含每個測試用例的最新版本。測試計畫、建置、執行、使用者和舊版本不在檔案中。範本和欄位不由匯入建立，因此請在匯入前設定範本。",
+          "attachments": "{count, plural, one {匯出檔包含 # 個附加到測試用例的檔案。當 Attachments 欄位對應到 Attachments 時，將匯入它。} other {匯出檔包含 # 個附加到測試用例的檔案。當 Attachments 欄位對應到 Attachments 時，將匯入它們。}}",
+          "suiteAttachments": "{count, plural, one {附加到測試套件的 # 個檔案未匯入。} other {附加到測試套件的 # 個檔案未匯入。}}",
+          "relations": "{count, plural, one {匯出檔包含 # 個測試用例之間的關係。未匯入。} other {匯出檔包含 # 個測試用例之間的關係。未匯入。}}",
+          "errors": {
+            "noCases": "此 TestLink 匯出檔不包含任何測試用例。",
+            "attachmentUpload": "無法上傳附加檔案 \"{name}\"。未匯入任何內容。"
           }
         }
       }

@@ -3396,9 +3396,11 @@
           "title": "CSV-Spalten Feldern zuordnen",
           "titleMarkdown": "Markdown-Felder den Template-Feldern zuordnen",
           "titleTestRail": "TestRail-Felder den Template-Feldern zuordnen",
+          "titleTestLink": "TestLink-Felder zu Template-Feldern zuordnen",
           "description": "Ordnen Sie jede CSV-Spalte einem Feld in der Vorlage zu oder wählen Sie, ob sie ignoriert werden soll.",
           "descriptionMarkdown": "Ordnen Sie jedes im Markdown-Datei gefundene Feld einem Feld in der Vorlage zu oder wählen Sie, es zu ignorieren.",
           "descriptionTestRail": "Ordnen Sie jedes TestRail-Feld einem Feld in der Vorlage zu oder wählen Sie, es zu ignorieren.",
+          "descriptionTestLink": "Ordnen Sie jedes TestLink-Feld einem Feld in der Vorlage zu oder wählen Sie aus, es zu ignorieren.",
           "ignoreColumn": "Spalte ignorieren",
           "requiredFieldsWarning": "{count, plural, one {# Pflichtfeld ist} other {# Pflichtfelder sind}} nicht zugeordnet",
           "caseIdHint": "Dies muss die numerische Fall-ID sein — übereinstimmende Fälle werden überschrieben."
@@ -3448,8 +3450,19 @@
           "unreadEstimates": "{count, plural, one {Die Schätzung von # Testfall konnte nicht gelesen werden und bleibt leer.} other {Die Schätzungen von # Testfällen konnten nicht gelesen werden und bleiben leer.}}",
           "errors": {
             "invalidXml": "Diese Datei konnte nicht als XML gelesen werden.",
-            "notASuite": "Diese XML-Datei ist kein TestRail-Testsuite-Export. Öffnen Sie in TestRail die Seite \"Testfälle\" der Suite und exportieren Sie sie als XML.",
+            "notASuite": "Diese XML-Datei ist kein TestRail- oder TestLink-Export. Öffnen Sie in TestRail die Seite \"Test Cases\" der Suite und exportieren Sie sie als XML. Exportieren Sie in TestLink das Testprojekt oder eine Testsuite als XML.",
             "noCases": "Dieser TestRail-Export enthält keine Testfälle."
+          }
+        },
+        "testLink": {
+          "summary": "{cases, plural, one {Dieser TestLink-Export enthält # Testfall in {suites, plural, =0 {keiner Testsuite} one {# Testsuite} other {# Testsuiten}}.} other {Dieser TestLink-Export enthält # Testfälle in {suites, plural, =0 {keiner Testsuite} one {# Testsuite} other {# Testsuiten}}.}}",
+          "notIncluded": "Der Export enthält die neueste Version jedes Testfalls. Testpläne, Builds, Ausführungen, Benutzer und frühere Versionen befinden sich nicht in der Datei. Vorlagen und Felder werden durch den Import nicht erstellt. Richten Sie daher die Vorlage vor dem Import ein.",
+          "attachments": "{count, plural, one {Der Export enthält # Datei, die an einen Testfall angehängt ist. Sie wird importiert, wenn die Spalte \"Attachments\" dem Feld \"Attachments\" zugeordnet ist.} other {Der Export enthält # Dateien, die an Testfälle angehängt sind. Sie werden importiert, wenn die Spalte \"Attachments\" dem Feld \"Attachments\" zugeordnet ist.}}",
+          "suiteAttachments": "{count, plural, one {# Datei, die an eine Testsuite angehängt ist, wird nicht importiert.} other {# Dateien, die an Testsuiten angehängt sind, werden nicht importiert.}}",
+          "relations": "{count, plural, one {Der Export enthält # Beziehung zwischen Testfällen. Sie wird nicht importiert.} other {Der Export enthält # Beziehungen zwischen Testfällen. Sie werden nicht importiert.}}",
+          "errors": {
+            "noCases": "Dieser TestLink-Export enthält keine Testfälle.",
+            "attachmentUpload": "Die angehängte Datei \"{name}\" konnte nicht hochgeladen werden. Nichts wurde importiert."
           }
         }
       }

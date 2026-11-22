@@ -3396,9 +3396,11 @@
           "title": "Namapovat sloupce CSV na pole",
           "titleMarkdown": "Mapování polí Markdown na pole šablony",
           "titleTestRail": "Mapování polí TestRail na pole šablony",
+          "titleTestLink": "Mapování polí TestLink na pole šablony",
           "description": "Namapujte jednotlivé sloupce CSV na pole v šabloně, nebo je vynechte.",
           "descriptionMarkdown": "Mapujte každé pole nalezené v souboru Markdown na pole v šabloně nebo si vyberte, že jej ignorujete.",
           "descriptionTestRail": "Mapujte každé pole TestRail na pole v šabloně nebo si vyberte, že jej ignorujete.",
+          "descriptionTestLink": "Mapujte každé pole TestLink na pole v šabloně nebo si vyberte, že ho ignorujete.",
           "ignoreColumn": "Ignorovat sloupec",
           "requiredFieldsWarning": "{count, plural, one {# povinné pole není namapováno} few {# povinná pole nejsou namapována} other {# povinných polí není namapováno}}",
           "caseIdHint": "Musí se jednat o číselné ID případu — shodující se případy budou přepsány."
@@ -3448,8 +3450,19 @@
           "unreadEstimates": "{count, plural, one {Odhad # testovacího případu nemohl být přečten a zůstává prázdný.} few {Odhady # testovacích případů nemohly být přečteny a zůstávají prázdné.} many {Odhady # testovacích případů nemohly být přečteny a zůstávají prázdné.} other {Odhady # testovacích případů nemohly být přečteny a zůstávají prázdné.}}",
           "errors": {
             "invalidXml": "Tento soubor nelze přečíst jako XML.",
-            "notASuite": "Tento soubor XML není exportem testovací sady TestRail. V TestRail otevřete stránku Test Cases vaší sady a exportujte ji jako XML.",
+            "notASuite": "Tento soubor XML není export TestRail nebo TestLink. V TestRail otevřete stránku Test Cases vaší sady a exportujte ji jako XML. V TestLink exportujte testovací projekt nebo testovací sadu jako XML.",
             "noCases": "Tento export TestRail neobsahuje žádné testovací případy."
+          }
+        },
+        "testLink": {
+          "summary": "{cases, plural, one {Tento export TestLink obsahuje # testovací případ v {suites, plural, =0 {žádné testovací sadě} one {# testovací sadě} few {# testovacích sadách} many {# testovacích sadách} other {# testovacích sadách}}.} few {Tento export TestLink obsahuje # testovací případy v {suites, plural, =0 {žádné testovací sadě} one {# testovací sadě} few {# testovacích sadách} many {# testovacích sadách} other {# testovacích sadách}}.} many {Tento export TestLink obsahuje # testovacích případů v {suites, plural, =0 {žádné testovací sadě} one {# testovací sadě} few {# testovacích sadách} many {# testovacích sadách} other {# testovacích sadách}}.} other {Tento export TestLink obsahuje # testovacích případů v {suites, plural, =0 {žádné testovací sadě} one {# testovací sadě} few {# testovacích sadách} many {# testovacích sadách} other {# testovacích sadách}}.}}",
+          "notIncluded": "Export obsahuje nejnovější verzi každého testovacího případu. Testovací plány, buildy, spuštění, uživatelé a starší verze nejsou v souboru. Šablony a pole nejsou vytvářeny importem, takže nastavte šablonu před importem.",
+          "attachments": "{count, plural, one {Export obsahuje # soubor připojený k testovacímu případu. Je importován, když je sloupec Přílohy namapován na Přílohy.} few {Export obsahuje # soubory připojené k testovacím případům. Jsou importovány, když je sloupec Přílohy namapován na Přílohy.} many {Export obsahuje # souborů připojených k testovacím případům. Jsou importovány, když je sloupec Přílohy namapován na Přílohy.} other {Export obsahuje # souborů připojených k testovacím případům. Jsou importovány, když je sloupec Přílohy namapován na Přílohy.}}",
+          "suiteAttachments": "{count, plural, one {# soubor připojený k testovací sadě není importován.} few {# soubory připojené k testovacím sadám nejsou importovány.} many {# souborů připojených k testovacím sadám není importováno.} other {# souborů připojených k testovacím sadám není importováno.}}",
+          "relations": "{count, plural, one {Export obsahuje # relaci mezi testovacími případy. Není importována.} few {Export obsahuje # relace mezi testovacími případy. Nejsou importovány.} many {Export obsahuje # relací mezi testovacími případy. Nejsou importovány.} other {Export obsahuje # relací mezi testovacími případy. Nejsou importovány.}}",
+          "errors": {
+            "noCases": "Tento export TestLink neobsahuje žádné testovací případy.",
+            "attachmentUpload": "Připojený soubor \"{name}\" se nepodařilo nahrát. Nic nebylo importováno."
           }
         }
       }

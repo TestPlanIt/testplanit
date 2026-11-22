@@ -3396,9 +3396,11 @@
           "title": "Ánh xạ các cột CSV sang các trường",
           "titleMarkdown": "Ánh xạ Các Trường Markdown tới Các Trường Mẫu",
           "titleTestRail": "Ánh xạ Các Trường TestRail tới Các Trường Mẫu",
+          "titleTestLink": "Ánh xạ Các Trường TestLink tới Các Trường Mẫu",
           "description": "Bạn có thể ánh xạ từng cột trong tệp CSV đến một trường trong mẫu hoặc chọn bỏ qua bước này.",
           "descriptionMarkdown": "Ánh xạ từng trường được tìm thấy trong tệp Markdown tới một trường trong mẫu hoặc chọn bỏ qua nó.",
           "descriptionTestRail": "Ánh xạ từng trường TestRail tới một trường trong mẫu hoặc chọn bỏ qua nó.",
+          "descriptionTestLink": "Ánh xạ từng trường TestLink tới một trường trong mẫu hoặc chọn bỏ qua nó.",
           "ignoreColumn": "Bỏ qua cột",
           "requiredFieldsWarning": "{count, plural, one {# Trường bắt buộc là} other {# Các trường bắt buộc là}} không được ánh xạ",
           "caseIdHint": "Đây phải là ID trường hợp dạng số — các trường hợp trùng khớp sẽ bị ghi đè."
@@ -3448,8 +3450,19 @@
           "unreadEstimates": "{count, plural, one {Không thể đọc được ước tính của # trường hợp kiểm thử và để trống.} other {Không thể đọc được ước tính của # trường hợp kiểm thử và để trống.}}",
           "errors": {
             "invalidXml": "Không thể đọc tệp này dưới dạng XML.",
-            "notASuite": "Tệp XML này không phải là lần xuất bộ kiểm thử TestRail. Trong TestRail, hãy mở trang Trường hợp kiểm thử của bộ và xuất nó dưới dạng XML.",
+            "notASuite": "Tệp XML này không phải là bản xuất khẩu TestRail hoặc TestLink. Trong TestRail, hãy mở trang Test Cases của bộ và xuất nó dưới dạng XML. Trong TestLink, hãy xuất dự án kiểm tra hoặc bộ kiểm tra dưới dạng XML.",
             "noCases": "Lần xuất TestRail này không chứa bất kỳ trường hợp kiểm thử nào."
+          }
+        },
+        "testLink": {
+          "summary": "{cases, plural, one {Bản xuất khẩu TestLink này chứa # trường hợp kiểm tra trong {suites, plural, =0 {không có bộ kiểm tra} one {# bộ kiểm tra} other {# bộ kiểm tra}}.} other {Bản xuất khẩu TestLink này chứa # trường hợp kiểm tra trong {suites, plural, =0 {không có bộ kiểm tra} one {# bộ kiểm tra} other {# bộ kiểm tra}}.}}",
+          "notIncluded": "Bản xuất khẩu chứa phiên bản mới nhất của từng trường hợp kiểm tra. Các kế hoạch kiểm tra, bản dựng, quá trình thực hiện, người dùng và các phiên bản trước đó không có trong tệp. Các mẫu và trường không được tạo bởi quá trình nhập, vì vậy hãy thiết lập mẫu trước khi bạn nhập.",
+          "attachments": "{count, plural, one {Bản xuất khẩu chứa # tệp được đính kèm vào một trường hợp kiểm tra. Nó được nhập khi cột Attachments được ánh xạ tới Attachments.} other {Bản xuất khẩu chứa # tệp được đính kèm vào các trường hợp kiểm tra. Chúng được nhập khi cột Attachments được ánh xạ tới Attachments.}}",
+          "suiteAttachments": "{count, plural, one {# tệp được đính kèm vào một bộ kiểm tra không được nhập.} other {# tệp được đính kèm vào các bộ kiểm tra không được nhập.}}",
+          "relations": "{count, plural, one {Bản xuất khẩu chứa # mối quan hệ giữa các trường hợp kiểm tra. Nó không được nhập.} other {Bản xuất khẩu chứa # mối quan hệ giữa các trường hợp kiểm tra. Chúng không được nhập.}}",
+          "errors": {
+            "noCases": "Bản xuất khẩu TestLink này không chứa trường hợp kiểm tra nào.",
+            "attachmentUpload": "Tệp được đính kèm \"{name}\" không thể được tải lên. Không có gì được nhập."
           }
         }
       }

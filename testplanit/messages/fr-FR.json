@@ -3396,9 +3396,11 @@
           "title": "Associer les colonnes CSV aux champs",
           "titleMarkdown": "Mapper les champs Markdown aux champs du modèle",
           "titleTestRail": "Mapper les champs TestRail aux champs du modèle",
+          "titleTestLink": "Mapper les champs TestLink aux champs du modèle",
           "description": "Associez chaque colonne CSV à un champ du modèle ou choisissez de l'ignorer.",
           "descriptionMarkdown": "Mappez chaque champ trouvé dans le fichier Markdown à un champ du modèle ou choisissez de l'ignorer.",
           "descriptionTestRail": "Mappez chaque champ TestRail à un champ du modèle ou choisissez de l'ignorer.",
+          "descriptionTestLink": "Mappez chaque champ TestLink à un champ du modèle ou choisissez de l'ignorer.",
           "ignoreColumn": "Ignorer la colonne",
           "requiredFieldsWarning": "{count, plural, one {# champ obligatoire est non mappé} other {# champs obligatoires sont non mappés}}",
           "caseIdHint": "Il doit s'agir de l'ID de cas numérique — les cas correspondants seront écrasés."
@@ -3448,8 +3450,19 @@
           "unreadEstimates": "{count, plural, one {L'estimation de # cas de test n'a pas pu être lue et est laissée vide.} other {Les estimations de # cas de test n'ont pas pu être lues et sont laissées vides.}}",
           "errors": {
             "invalidXml": "Ce fichier n'a pas pu être lu en tant que XML.",
-            "notASuite": "Ce fichier XML n'est pas un export de suite de test TestRail. Dans TestRail, ouvrez la page Cas de test de la suite et exportez-la en XML.",
+            "notASuite": "Ce fichier XML n'est pas une exportation TestRail ou TestLink. Dans TestRail, ouvrez la page Cas de test de la suite et exportez-la en XML. Dans TestLink, exportez le projet de test ou une suite de test en XML.",
             "noCases": "Cet export TestRail ne contient aucun cas de test."
+          }
+        },
+        "testLink": {
+          "summary": "{cases, plural, one {Cette exportation TestLink contient # cas de test dans {suites, plural, =0 {aucune suite de test} one {# suite de test} other {# suites de test}}.} other {Cette exportation TestLink contient # cas de test dans {suites, plural, =0 {aucune suite de test} one {# suite de test} other {# suites de test}}.}}",
+          "notIncluded": "L'exportation contient la dernière version de chaque cas de test. Les plans de test, les versions, les exécutions, les utilisateurs et les versions antérieures ne sont pas dans le fichier. Les modèles et les champs ne sont pas créés par l'importation, alors configurez le modèle avant d'importer.",
+          "attachments": "{count, plural, one {L'exportation contient # fichier joint à un cas de test. Il est importé lorsque la colonne Pièces jointes est mappée à Pièces jointes.} other {L'exportation contient # fichiers joints à des cas de test. Ils sont importés lorsque la colonne Pièces jointes est mappée à Pièces jointes.}}",
+          "suiteAttachments": "{count, plural, one {# fichier joint à une suite de test n'est pas importé.} other {# fichiers joints à des suites de test ne sont pas importés.}}",
+          "relations": "{count, plural, one {L'exportation contient # relation entre les cas de test. Elle n'est pas importée.} other {L'exportation contient # relations entre les cas de test. Elles ne sont pas importées.}}",
+          "errors": {
+            "noCases": "Cette exportation TestLink ne contient aucun cas de test.",
+            "attachmentUpload": "Le fichier joint \"{name}\" n'a pas pu être téléchargé. Rien n'a été importé."
           }
         }
       }

@@ -3396,9 +3396,11 @@
           "title": "Mappa le colonne CSV sui campi",
           "titleMarkdown": "Mappa campi Markdown a campi modello",
           "titleTestRail": "Mappa campi TestRail a campi modello",
+          "titleTestLink": "Mappa i campi di TestLink ai campi del modello",
           "description": "Associa ogni colonna CSV a un campo nel modello oppure scegli di ignorarla.",
           "descriptionMarkdown": "Mappa ogni campo trovato nel file Markdown a un campo nel modello o scegli di ignorarlo.",
           "descriptionTestRail": "Mappa ogni campo TestRail a un campo nel modello o scegli di ignorarlo.",
+          "descriptionTestLink": "Mappa ogni campo di TestLink a un campo nel modello oppure scegli di ignorarlo.",
           "ignoreColumn": "Ignora colonna",
           "requiredFieldsWarning": "{count, plural, one {# campo obbligatorio non è mappato} other {# campi obbligatori non sono mappati}}",
           "caseIdHint": "Deve essere l'ID caso numerico — i casi corrispondenti vengono sovrascritti."
@@ -3448,8 +3450,19 @@
           "unreadEstimates": "{count, plural, one {La stima di # caso di test non ha potuto essere letta e viene lasciata vuota.} other {Le stime di # casi di test non hanno potuto essere lette e vengono lasciate vuote.}}",
           "errors": {
             "invalidXml": "Questo file non ha potuto essere letto come XML.",
-            "notASuite": "Questo file XML non è un'esportazione di suite di test TestRail. In TestRail, apri la pagina Test Cases della suite ed esportala come XML.",
+            "notASuite": "Questo file XML non è un'esportazione di TestRail o TestLink. In TestRail, apri la pagina Test Cases della suite ed esportala come XML. In TestLink, esporta il progetto di test o una suite di test come XML.",
             "noCases": "Questa esportazione TestRail non contiene casi di test."
+          }
+        },
+        "testLink": {
+          "summary": "{cases, plural, one {Questa esportazione di TestLink contiene # test case in {suites, plural, =0 {nessuna suite di test} one {# suite di test} other {# suite di test}}.} other {Questa esportazione di TestLink contiene # test case in {suites, plural, =0 {nessuna suite di test} one {# suite di test} other {# suite di test}}.}}",
+          "notIncluded": "L'esportazione contiene la versione più recente di ogni test case. I piani di test, le build, le esecuzioni, gli utenti e le versioni precedenti non sono nel file. I modelli e i campi non vengono creati dall'importazione, quindi configura il modello prima di importare.",
+          "attachments": "{count, plural, one {L'esportazione contiene # file allegato a un test case. Viene importato quando la colonna Allegati è mappata su Allegati.} other {L'esportazione contiene # file allegati a test case. Vengono importati quando la colonna Allegati è mappata su Allegati.}}",
+          "suiteAttachments": "{count, plural, one {# file allegato a una suite di test non viene importato.} other {# file allegati a suite di test non vengono importati.}}",
+          "relations": "{count, plural, one {L'esportazione contiene # relazione tra test case. Non viene importata.} other {L'esportazione contiene # relazioni tra test case. Non vengono importate.}}",
+          "errors": {
+            "noCases": "Questa esportazione di TestLink non contiene test case.",
+            "attachmentUpload": "Il file allegato \"{name}\" non è stato caricato. Non è stato importato nulla."
           }
         }
       }

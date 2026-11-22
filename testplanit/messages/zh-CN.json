@@ -3396,9 +3396,11 @@
           "title": "将 CSV 列映射到字段",
           "titleMarkdown": "将Markdown字段映射到模板字段",
           "titleTestRail": "将TestRail字段映射到模板字段",
+          "titleTestLink": "将 TestLink 字段映射到模板字段",
           "description": "将 CSV 文件中的每一列映射到模板中的一个字段，或者选择忽略它。",
           "descriptionMarkdown": "将Markdown文件中找到的每个字段映射到模板中的字段，或选择忽略它。",
           "descriptionTestRail": "将每个TestRail字段映射到模板中的字段，或选择忽略它。",
+          "descriptionTestLink": "将每个 TestLink 字段映射到模板中的字段，或选择忽略它。",
           "ignoreColumn": "忽略列",
           "requiredFieldsWarning": "{count, plural, one {# 必填字段为} other {# 必填字段为}} 未映射",
           "caseIdHint": "此项必须为数字用例 ID — 匹配的用例将被覆盖。"
@@ -3448,8 +3450,19 @@
           "unreadEstimates": "{count, plural, one {# 个测试用例的预计值无法读取且保留为空。} other {# 个测试用例的预计值无法读取且保留为空。}}",
           "errors": {
             "invalidXml": "此文件无法作为XML读取。",
-            "notASuite": "此XML文件不是TestRail测试套件导出。在TestRail中，打开套件的测试用例页面并将其导出为XML。",
+            "notASuite": "此 XML 文件不是 TestRail 或 TestLink 导出文件。在 TestRail 中，打开套件的测试用例页面并将其导出为 XML。在 TestLink 中，将测试项目或测试套件导出为 XML。",
             "noCases": "此TestRail导出不包含任何测试用例。"
+          }
+        },
+        "testLink": {
+          "summary": "{cases, plural, one {此 TestLink 导出在 {suites, plural, =0 {无测试套件} one {# 个测试套件} other {# 个测试套件}} 中包含 # 个测试用例。} other {此 TestLink 导出在 {suites, plural, =0 {无测试套件} one {# 个测试套件} other {# 个测试套件}} 中包含 # 个测试用例。}}",
+          "notIncluded": "导出文件包含每个测试用例的最新版本。测试计划、构建、执行、用户和早期版本不在文件中。导入不会创建模板和字段，因此请在导入前设置模板。",
+          "attachments": "{count, plural, one {导出文件包含 # 个附加到测试用例的文件。当附件列映射到附件时，将导入该文件。} other {导出文件包含 # 个附加到测试用例的文件。当附件列映射到附件时，将导入这些文件。}}",
+          "suiteAttachments": "{count, plural, one {# 个附加到测试套件的文件将不被导入。} other {# 个附加到测试套件的文件将不被导入。}}",
+          "relations": "{count, plural, one {导出文件包含 # 个测试用例之间的关系。将不导入该关系。} other {导出文件包含 # 个测试用例之间的关系。将不导入这些关系。}}",
+          "errors": {
+            "noCases": "此 TestLink 导出不包含任何测试用例。",
+            "attachmentUpload": "附件 \"{name}\" 无法上传。未导入任何内容。"
           }
         }
       }

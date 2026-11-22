@@ -3396,9 +3396,11 @@
           "title": "CSV 열을 필드에 매핑",
           "titleMarkdown": "마크다운 필드를 템플릿 필드에 매핑",
           "titleTestRail": "TestRail 필드를 템플릿 필드에 매핑",
+          "titleTestLink": "TestLink 필드를 템플릿 필드에 매핑",
           "description": "CSV 파일의 각 열을 템플릿의 필드에 매핑하거나 무시하도록 선택할 수 있습니다.",
           "descriptionMarkdown": "마크다운 파일에서 발견된 각 필드를 템플릿의 필드에 매핑하거나 무시하도록 선택합니다.",
           "descriptionTestRail": "각 TestRail 필드를 템플릿의 필드에 매핑하거나 무시하도록 선택합니다.",
+          "descriptionTestLink": "각 TestLink 필드를 템플릿의 필드에 매핑하거나 무시하도록 선택합니다.",
           "ignoreColumn": "무시할 열",
           "requiredFieldsWarning": "{count, plural, one {# 필수 입력 필드는} other {# 필수 입력 필드는}} 매핑되지 않았습니다",
           "caseIdHint": "이는 숫자로 된 케이스 ID여야 하며, 일치하는 케이스는 덮어씌워집니다."
@@ -3448,8 +3450,19 @@
           "unreadEstimates": "{count, plural, one {# 테스트 케이스의 추정값을 읽을 수 없어 비워 둡니다.} other {# 테스트 케이스의 추정값을 읽을 수 없어 비워 둡니다.}}",
           "errors": {
             "invalidXml": "이 파일을 XML로 읽을 수 없습니다.",
-            "notASuite": "이 XML 파일은 TestRail 테스트 스위트 내보내기가 아닙니다. TestRail에서 스위트의 테스트 케이스 페이지를 열고 XML로 내보내세요.",
+            "notASuite": "이 XML 파일은 TestRail 또는 TestLink 내보내기가 아닙니다. TestRail에서 스위트의 테스트 케이스 페이지를 열고 XML로 내보냅니다. TestLink에서 테스트 프로젝트 또는 테스트 스위트를 XML로 내보냅니다.",
             "noCases": "이 TestRail 내보내기에는 테스트 케이스가 없습니다."
+          }
+        },
+        "testLink": {
+          "summary": "{cases, plural, one {이 TestLink 내보내기에는 {suites, plural, =0 {테스트 스위트가 없는} one {# 테스트 스위트에} other {# 테스트 스위트에}} # 테스트 케이스가 포함되어 있습니다.} other {이 TestLink 내보내기에는 {suites, plural, =0 {테스트 스위트가 없는} one {# 테스트 스위트에} other {# 테스트 스위트에}} # 테스트 케이스가 포함되어 있습니다.}}",
+          "notIncluded": "내보내기에는 각 테스트 케이스의 최신 버전이 포함됩니다. 테스트 계획, 빌드, 실행, 사용자 및 이전 버전은 파일에 포함되지 않습니다. 템플릿과 필드는 가져오기로 생성되지 않으므로 가져오기 전에 템플릿을 설정합니다.",
+          "attachments": "{count, plural, one {내보내기에는 테스트 케이스에 첨부된 # 파일이 포함되어 있습니다. 첨부 파일 열이 첨부 파일에 매핑될 때 가져옵니다.} other {내보내기에는 테스트 케이스에 첨부된 # 파일이 포함되어 있습니다. 첨부 파일 열이 첨부 파일에 매핑될 때 가져옵니다.}}",
+          "suiteAttachments": "{count, plural, one {테스트 스위트에 첨부된 # 파일을 가져오지 않습니다.} other {테스트 스위트에 첨부된 # 파일을 가져오지 않습니다.}}",
+          "relations": "{count, plural, one {내보내기에는 테스트 케이스 간의 # 관계가 포함되어 있습니다. 가져오지 않습니다.} other {내보내기에는 테스트 케이스 간의 # 관계가 포함되어 있습니다. 가져오지 않습니다.}}",
+          "errors": {
+            "noCases": "이 TestLink 내보내기에는 테스트 케이스가 없습니다.",
+            "attachmentUpload": "첨부된 파일 \"{name}\"을(를) 업로드할 수 없습니다. 아무것도 가져오지 않았습니다."
           }
         }
       }

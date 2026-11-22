@@ -3396,9 +3396,11 @@
           "title": "Mapowanie kolumn CSV na pola",
           "titleMarkdown": "Mapuj pola Markdown na pola szablonu",
           "titleTestRail": "Mapuj pola TestRail na pola szablonu",
+          "titleTestLink": "Mapuj pola TestLink na pola szablonu",
           "description": "Przypisz każdą kolumnę CSV do pola w szablonie lub zignoruj ją.",
           "descriptionMarkdown": "Mapuj każde pole znalezione w pliku Markdown na pole w szablonie lub wybierz, aby je zignorować.",
           "descriptionTestRail": "Mapuj każde pole TestRail na pole w szablonie lub wybierz, aby je zignorować.",
+          "descriptionTestLink": "Mapuj każde pole TestLink na pole w szablonie lub wybierz, aby je zignorować.",
           "ignoreColumn": "Ignoruj kolumnę",
           "requiredFieldsWarning": "{count, plural, one {# wymagane pole nie jest mapowane} few {# wymagane pola nie są mapowane} many {# wymaganych pól nie jest mapowanych} other {# wymaganych pól nie jest mapowanych}}",
           "caseIdHint": "To musi być numeryczne ID przypadku — pasujące przypadki zostaną nadpisane."
@@ -3448,8 +3450,19 @@
           "unreadEstimates": "{count, plural, one {Oszacowanie czasu # przypadku testowego nie mogło być odczytane i pozostaje puste.} few {Oszacowania czasu # przypadków testowych nie mogły być odczytane i pozostają puste.} many {Oszacowania czasu # przypadków testowych nie mogły być odczytane i pozostają puste.} other {Oszacowania czasu # przypadków testowych nie mogły być odczytane i pozostają puste.}}",
           "errors": {
             "invalidXml": "Tego pliku nie można było odczytać jako XML.",
-            "notASuite": "Ten plik XML nie jest eksportem pakietu testów z TestRail. W TestRail otwórz stronę Test Cases pakietu i wyeksportuj go jako XML.",
+            "notASuite": "Ten plik XML nie jest eksportem TestRail ani TestLink. W TestRail otwórz stronę Test Cases zestawu i wyeksportuj ją jako XML. W TestLink wyeksportuj projekt testowy lub zestaw testów jako XML.",
             "noCases": "Ten eksport z TestRail nie zawiera przypadków testowych."
+          }
+        },
+        "testLink": {
+          "summary": "{cases, plural, one {Ten export TestLink zawiera # przypadek testowy w {suites, plural, =0 {żadnym zestawie testów} one {# zestawie testów} few {# zestawach testów} many {# zestawach testów} other {# zestawach testów}}.} few {Ten export TestLink zawiera # przypadki testowe w {suites, plural, =0 {żadnym zestawie testów} one {# zestawie testów} few {# zestawach testów} many {# zestawach testów} other {# zestawach testów}}.} many {Ten export TestLink zawiera # przypadków testowych w {suites, plural, =0 {żadnym zestawie testów} one {# zestawie testów} few {# zestawach testów} many {# zestawach testów} other {# zestawach testów}}.} other {Ten export TestLink zawiera # przypadków testowych w {suites, plural, =0 {żadnym zestawie testów} one {# zestawie testów} few {# zestawach testów} many {# zestawach testów} other {# zestawach testów}}.}}",
+          "notIncluded": "Export zawiera najnowszą wersję każdego przypadku testowego. Plany testów, kompilacje, wykonania, użytkownicy i wcześniejsze wersje nie znajdują się w pliku. Szablony i pola nie są tworzone przez import, dlatego skonfiguruj szablon przed importem.",
+          "attachments": "{count, plural, one {Export zawiera # plik dołączony do przypadku testowego. Jest importowany, gdy kolumna Załączniki jest mapowana na Załączniki.} few {Export zawiera # pliki dołączone do przypadków testowych. Są importowane, gdy kolumna Załączniki jest mapowana na Załączniki.} many {Export zawiera # plików dołączonych do przypadków testowych. Są importowane, gdy kolumna Załączniki jest mapowana na Załączniki.} other {Export zawiera # plików dołączonych do przypadków testowych. Są importowane, gdy kolumna Załączniki jest mapowana na Załączniki.}}",
+          "suiteAttachments": "{count, plural, one {# plik dołączony do zestawu testów nie jest importowany.} few {# pliki dołączone do zestawów testów nie są importowane.} many {# plików dołączonych do zestawów testów nie jest importowanych.} other {# plików dołączonych do zestawów testów nie jest importowanych.}}",
+          "relations": "{count, plural, one {Export zawiera # relację między przypadkami testowymi. Nie jest importowana.} few {Export zawiera # relacje między przypadkami testowymi. Nie są importowane.} many {Export zawiera # relacji między przypadkami testowymi. Nie są importowane.} other {Export zawiera # relacji między przypadkami testowymi. Nie są importowane.}}",
+          "errors": {
+            "noCases": "Ten export TestLink nie zawiera żadnych przypadków testowych.",
+            "attachmentUpload": "Dołączony plik \"{name}\" nie mógł być przesłany. Nic nie zostało zaimportowane."
           }
         }
       }

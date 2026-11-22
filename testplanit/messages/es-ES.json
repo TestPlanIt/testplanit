@@ -3396,9 +3396,11 @@
           "title": "Mapear columnas CSV a campos",
           "titleMarkdown": "Asignar campos de Markdown a campos de plantilla",
           "titleTestRail": "Asignar campos de TestRail a campos de plantilla",
+          "titleTestLink": "Asignar campos de TestLink a campos de plantilla",
           "description": "Mapear cada columna CSV a un campo en la plantilla o elegir ignorarlo.",
           "descriptionMarkdown": "Asigna cada campo encontrado en el archivo de Markdown a un campo de la plantilla o elige ignorarlo.",
           "descriptionTestRail": "Asigna cada campo de TestRail a un campo de la plantilla o elige ignorarlo.",
+          "descriptionTestLink": "Asigne cada campo de TestLink a un campo de la plantilla o elija ignorarlo.",
           "ignoreColumn": "Ignorar Columna",
           "requiredFieldsWarning": "{count, plural, one {# campo requerido no está mapeado} other {# campos requeridos no están mapeados}}",
           "caseIdHint": "Debe ser el ID numérico del caso; los casos coincidentes se sobrescriben."
@@ -3448,8 +3450,19 @@
           "unreadEstimates": "{count, plural, one {La estimación de # caso de prueba no se pudo leer y se deja vacía.} other {Las estimaciones de # casos de prueba no se pudieron leer y se dejan vacías.}}",
           "errors": {
             "invalidXml": "Este archivo no se pudo leer como XML.",
-            "notASuite": "Este archivo XML no es una exportación de suite de prueba de TestRail. En TestRail, abra la página Test Cases de la suite y expórtela como XML.",
+            "notASuite": "Este archivo XML no es una exportación de TestRail o TestLink. En TestRail, abra la página de casos de prueba del conjunto y expórtela como XML. En TestLink, exporte el proyecto de prueba o un conjunto de pruebas como XML.",
             "noCases": "Esta exportación de TestRail no contiene casos de prueba."
+          }
+        },
+        "testLink": {
+          "summary": "{cases, plural, one {Esta exportación de TestLink contiene # caso de prueba en {suites, plural, =0 {ningún conjunto de pruebas} one {# conjunto de pruebas} other {# conjuntos de pruebas}}.} other {Esta exportación de TestLink contiene # casos de prueba en {suites, plural, =0 {ningún conjunto de pruebas} one {# conjunto de pruebas} other {# conjuntos de pruebas}}.}}",
+          "notIncluded": "La exportación contiene la última versión de cada caso de prueba. Los planes de prueba, compilaciones, ejecuciones, usuarios y versiones anteriores no se incluyen en el archivo. Las plantillas y los campos no se crean mediante la importación, por lo que configure la plantilla antes de importar.",
+          "attachments": "{count, plural, one {La exportación contiene # archivo adjunto a un caso de prueba. Se importa cuando la columna de Archivos adjuntos se asigna a Archivos adjuntos.} other {La exportación contiene # archivos adjuntos a casos de prueba. Se importan cuando la columna de Archivos adjuntos se asigna a Archivos adjuntos.}}",
+          "suiteAttachments": "{count, plural, one {# archivo adjunto a un conjunto de pruebas no se importa.} other {# archivos adjuntos a conjuntos de pruebas no se importan.}}",
+          "relations": "{count, plural, one {La exportación contiene # relación entre casos de prueba. No se importa.} other {La exportación contiene # relaciones entre casos de prueba. No se importan.}}",
+          "errors": {
+            "noCases": "Esta exportación de TestLink no contiene casos de prueba.",
+            "attachmentUpload": "El archivo adjunto \"{name}\" no se pudo cargar. No se importó nada."
           }
         }
       }

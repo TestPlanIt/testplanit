@@ -3396,9 +3396,11 @@
           "title": "CSV-kolommen toewijzen aan velden",
           "titleMarkdown": "Markdown-velden aan sjabloonvelden koppelen",
           "titleTestRail": "TestRail-velden aan sjabloonvelden koppelen",
+          "titleTestLink": "TestLink-velden toewijzen aan sjabloonvelden",
           "description": "U kunt elke CSV-kolom toewijzen aan een veld in de sjabloon, of ervoor kiezen deze te negeren.",
           "descriptionMarkdown": "Koppel elk veld dat in het Markdown-bestand is gevonden aan een veld in het sjabloon of kies ervoor dit te negeren.",
           "descriptionTestRail": "Koppel elk TestRail-veld aan een veld in het sjabloon of kies ervoor dit te negeren.",
+          "descriptionTestLink": "Wijs elk TestLink-veld toe aan een veld in het sjabloon of kies ervoor dit te negeren.",
           "ignoreColumn": "Kolom negeren",
           "requiredFieldsWarning": "{count, plural, one {# verplicht veld is} other {# verplichte velden zijn}} niet toegewezen",
           "caseIdHint": "Dit moet het numerieke Testgeval-ID zijn — overeenkomende testgevallen worden overschreven."
@@ -3448,8 +3450,19 @@
           "unreadEstimates": "{count, plural, one {De schatting van # testcase kon niet worden gelezen en is leeg gelaten.} other {De schattingen van # testcases konden niet worden gelezen en zijn leeg gelaten.}}",
           "errors": {
             "invalidXml": "Dit bestand kon niet als XML worden gelezen.",
-            "notASuite": "Dit XML-bestand is geen TestRail-testsuiteexport. Open in TestRail de pagina Testcases van de suite en exporteer deze als XML.",
+            "notASuite": "Dit XML-bestand is geen TestRail- of TestLink-export. Open in TestRail de pagina Testgevallen van de suite en exporteer deze als XML. Exporteer in TestLink het testproject of een testsuite als XML.",
             "noCases": "Deze TestRail-export bevat geen testcases."
+          }
+        },
+        "testLink": {
+          "summary": "{cases, plural, one {Deze TestLink-export bevat # testgeval in {suites, plural, =0 {geen testsuite} one {# testsuite} other {# testsuites}}.} other {Deze TestLink-export bevat # testgevallen in {suites, plural, =0 {geen testsuite} one {# testsuite} other {# testsuites}}.}}",
+          "notIncluded": "De export bevat de meest recente versie van elk testgeval. Testplannen, builds, uitvoeringen, gebruikers en eerdere versies staan niet in het bestand. Sjablonen en velden worden niet door de import gemaakt, dus stel het sjabloon in voordat u importeert.",
+          "attachments": "{count, plural, one {De export bevat # bestand dat aan een testgeval is gekoppeld. Dit wordt geïmporteerd wanneer de kolom Bijlagen is toegewezen aan Bijlagen.} other {De export bevat # bestanden die aan testgevallen zijn gekoppeld. Deze worden geïmporteerd wanneer de kolom Bijlagen is toegewezen aan Bijlagen.}}",
+          "suiteAttachments": "{count, plural, one {# bestand dat aan een testsuite is gekoppeld, wordt niet geïmporteerd.} other {# bestanden die aan testsuites zijn gekoppeld, worden niet geïmporteerd.}}",
+          "relations": "{count, plural, one {De export bevat # relatie tussen testgevallen. Deze wordt niet geïmporteerd.} other {De export bevat # relaties tussen testgevallen. Deze worden niet geïmporteerd.}}",
+          "errors": {
+            "noCases": "Deze TestLink-export bevat geen testgevallen.",
+            "attachmentUpload": "Het gekoppelde bestand \"{name}\" kon niet worden geüpload. Er is niets geïmporteerd."
           }
         }
       }
