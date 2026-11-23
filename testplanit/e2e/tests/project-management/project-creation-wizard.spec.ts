@@ -269,7 +269,9 @@ test.describe("Project Creation Wizard", () => {
   test("can navigate back through wizard steps using Previous button", async ({
     page,
   }) => {
-    const ts = Date.now();
+    // Unique per run: copies in other browsers start in the same millisecond,
+    // and a name that is already taken keeps Next disabled.
+    const ts = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const projectName = `E2E Wizard Back ${ts}`;
 
     const dialog = page.getByRole("dialog");
@@ -295,17 +297,16 @@ test.describe("Project Creation Wizard", () => {
       const nextButton = dialog.getByRole("button", { name: /next/i });
       await expect(nextButton).toBeVisible({ timeout: 10000 });
 
-      for (let attempt = 0; attempt < 10; attempt++) {
-        await nameInput.fill(projectName);
-        try {
-          await expect(nextButton).toBeEnabled({ timeout: 3000 });
-          break;
-        } catch {
-          // Data load reset the form — retry
+      const previousButton = dialog.getByRole("button", { name: /previous/i });
+      await expect(async () => {
+        if (!(await previousButton.isVisible())) {
+          if ((await nameInput.inputValue()) !== projectName) {
+            await nameInput.fill(projectName);
+          }
+          await nextButton.click({ timeout: 3000 });
         }
-      }
-      await expect(nextButton).toBeEnabled({ timeout: 5000 });
-      await nextButton.click();
+        await expect(previousButton).toBeVisible({ timeout: 3000 });
+      }).toPass({ timeout: 45000 });
     });
 
     await test.step("Click Previous to return to step 1", async () => {

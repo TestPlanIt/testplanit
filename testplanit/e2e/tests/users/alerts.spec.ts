@@ -218,8 +218,15 @@ test.describe("alerts", () => {
 
     const follow = page.getByTestId(`alert-rule-follow-${ruleId}`);
     await expect(follow).toHaveAttribute("aria-checked", "true");
-    await follow.click();
-    await expect(follow).toHaveAttribute("aria-checked", "false");
+    // A click that lands before the row is interactive is lost in WebKit.
+    await expect(async () => {
+      if ((await follow.getAttribute("aria-checked")) === "true") {
+        await follow.click();
+      }
+      await expect(follow).toHaveAttribute("aria-checked", "false", {
+        timeout: 3000,
+      });
+    }).toPass({ timeout: 20000 });
     await expect(
       page.getByTestId(`alert-rule-subscribers-${ruleId}`)
     ).toHaveText("0");
@@ -230,6 +237,12 @@ test.describe("alerts", () => {
       page.getByTestId(`alert-rule-subscribers-${ruleId}`)
     ).toHaveText("1");
 
+    // A toast stays up for as long as the pointer rests on it, and it
+    // covers the row's buttons.
+    await page.mouse.move(0, 0);
+    await expect(page.locator("[data-sonner-toast]")).toHaveCount(0, {
+      timeout: 15000,
+    });
     await page.getByTestId(`alert-rule-history-${ruleId}`).click();
     const history = page.getByTestId("alert-history-dialog");
     await expect(history).toBeVisible();
@@ -245,8 +258,16 @@ test.describe("alerts", () => {
     await page.getByTestId("alert-add-rule").click();
     const dialog = page.getByTestId("alert-rule-dialog");
     await expect(dialog).toBeVisible();
-    await dialog.getByTestId("alert-rule-project").click();
-    await page.getByTestId(`alert-project-${projectId}`).click();
+    // Firefox sometimes ignores a scripted click on an option made right
+    // after the list opens, leaving it open over the rest of the form.
+    const projectOption = page.getByTestId(`alert-project-${projectId}`);
+    await expect(async () => {
+      if (!(await projectOption.isVisible())) {
+        await dialog.getByTestId("alert-rule-project").click({ timeout: 3000 });
+      }
+      await projectOption.click({ timeout: 3000 });
+      await expect(projectOption).toBeHidden({ timeout: 2000 });
+    }).toPass({ timeout: 30000 });
 
     await dialog.getByTestId("alert-rule-name").fill(`Nightly pass rate ${ts}`);
     await dialog.getByTestId("alert-rule-metric").click();

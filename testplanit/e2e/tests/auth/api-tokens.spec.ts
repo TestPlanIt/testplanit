@@ -3,6 +3,10 @@ import {
   sameOriginRequestHeaders,
   signInSecondaryContext,
 } from "../../utils/secondary-context-login";
+import {
+  coveredByAnotherBrowser,
+  SHARED_STATE_SKIP_REASON,
+} from "../../utils/shared-install-state";
 
 /**
  * API Token Authentication E2E Tests
@@ -307,9 +311,11 @@ test.describe("API Token Authentication", () => {
     request,
     baseURL,
     browser,
+    browserName,
     api,
     adminUserId,
   }) => {
+    test.skip(coveredByAnotherBrowser(browserName), SHARED_STATE_SKIP_REASON);
     let token: string;
 
     await test.step("Enable API access and create a token", async () => {
