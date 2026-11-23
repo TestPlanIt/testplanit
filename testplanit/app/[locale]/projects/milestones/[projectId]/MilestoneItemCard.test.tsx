@@ -12,6 +12,11 @@ vi.mock("next-intl", () => ({
   useTranslations: mockUseTranslations,
 }));
 
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-query")>()),
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+}));
+
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
   Link: ({ children, href }: any) => <a href={href}>{children}</a>,

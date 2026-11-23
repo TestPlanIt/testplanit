@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, type ReactElement } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import {
@@ -302,6 +303,7 @@ function SourceBadgeWithUnlinkMenu({
   const t = useTranslations("milestones");
   const tCommon = useTranslations("common");
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
   const { isProjectAdmin } = useProjectPermissions(projectId ?? 0);
@@ -319,6 +321,14 @@ function SourceBadgeWithUnlinkMenu({
       }
       toast.success(t("sync.unlinkSuccess"));
       setConfirmOpen(false);
+      // The page's live stream also reports the unlink, but only to a page
+      // that was already connected when it happened.
+      void queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = JSON.stringify(query.queryKey);
+          return key.includes("Milestones") || key.includes("MilestoneIssue");
+        },
+      });
       router.refresh();
     } catch (err) {
       console.error("Failed to unlink milestone:", err);

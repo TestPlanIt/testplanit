@@ -30,6 +30,11 @@ vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ refresh: mockRouterRefresh, push: mockRouterPush }),
 }));
 
+const mockInvalidateQueries = vi.fn();
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
+}));
+
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -241,6 +246,13 @@ describe("MilestoneSourceBadge", () => {
     await waitFor(() => {
       expect(mockRouterRefresh).toHaveBeenCalled();
     });
+    const { predicate } = mockInvalidateQueries.mock.calls[0][0];
+    expect(
+      predicate({ queryKey: ["zenstack", "Milestones", "findFirst"] })
+    ).toBe(true);
+    expect(predicate({ queryKey: ["zenstack", "Projects", "findMany"] })).toBe(
+      false
+    );
   });
 
   it("cancelling the unlink confirmation does not call the unlink route", () => {
