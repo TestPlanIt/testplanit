@@ -174,7 +174,18 @@ test.describe("Auto-Tag Flow", () => {
       // Select cases via header checkbox
       const headerCheckbox = page.locator('thead [role="checkbox"]').first();
       await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
-      await headerCheckbox.click();
+      await expect(async () => {
+        if ((await headerCheckbox.getAttribute("aria-checked")) !== "true") {
+          await headerCheckbox.click({ timeout: 3000 });
+        }
+        await expect(headerCheckbox).toBeChecked({ timeout: 2000 });
+        await expectOverflowActionAvailable(
+          page,
+          "auto-tag-cases-button",
+          "cases-actions-menu",
+          { timeout: 5000 }
+        );
+      }).toPass({ timeout: 30_000 });
 
       // Click the auto-tag action (kebab-aware)
       await clickOverflowAction(

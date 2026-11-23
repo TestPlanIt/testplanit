@@ -126,15 +126,17 @@ test.describe("SAML provider configuration", () => {
       });
 
       await test.step("Configure opens that provider's own page", async () => {
-        await page
+        const configure = page
           .locator("tr")
           .filter({ hasText: names[1] })
-          .getByRole("button", { name: "Configure" })
-          .click();
-
-        await page.waitForURL(`**/admin/sso/saml/${ids[1]}`, {
-          timeout: 15000,
-        });
+          .getByRole("button", { name: "Configure" });
+        const target = new RegExp(`/admin/sso/saml/${ids[1]}`);
+        await expect(async () => {
+          if (!target.test(page.url())) {
+            await configure.click({ timeout: 3000 });
+          }
+          await expect(page).toHaveURL(target, { timeout: 5000 });
+        }).toPass({ timeout: 30_000 });
         await expect(page.locator("#providerName")).toHaveValue(names[1]);
         // Fields the old dialog never exposed, which is why it clobbered them.
         await expect(page.locator("#autoProvision")).toBeVisible();

@@ -158,8 +158,9 @@ test.describe("Webhook deliveries tab — large dataset performance (N-03)", () 
             r.status() === 200,
           { timeout: remaining }
         );
-        const body = (await resp.json()) as
-          { data?: Array<{ id?: unknown }> } | Array<{ id?: unknown }>;
+        // A response the page has since discarded has no body left to read.
+        const body = (await resp.json().catch(() => null)) as
+          { data?: Array<{ id?: unknown }> } | Array<{ id?: unknown }> | null;
         const rows = Array.isArray(body) ? body : (body?.data ?? []);
         if (rows.length > 0 && rows.every((r) => r?.id !== undefined)) {
           return rows.map((r) => String(r.id));
