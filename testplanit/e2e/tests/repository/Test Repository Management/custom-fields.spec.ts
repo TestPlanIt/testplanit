@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import { selectRepositoryView } from "../../../utils/view-selector";
 
 /**
  * Custom Fields View and Filter Tests
@@ -143,12 +144,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     });
 
     await test.step("Select the Template view", async () => {
-      // Select Template view
-      const templatesOption = page
-        .locator('[role="option"]')
-        .filter({ hasText: /^Template$/i });
-      await expect(templatesOption).toBeVisible({ timeout: 5000 });
-      await templatesOption.click();
+      await selectRepositoryView(page, /^Template$/i);
 
       // Wait for view to update
       await page.waitForLoadState("networkidle");
@@ -179,12 +175,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     });
 
     await test.step("Select the State view", async () => {
-      // Select State view
-      const statesOption = page
-        .locator('[role="option"]')
-        .filter({ hasText: /^State$/i });
-      await expect(statesOption).toBeVisible({ timeout: 5000 });
-      await statesOption.click();
+      await selectRepositoryView(page, /^State$/i);
 
       // Wait for view to update
       await page.waitForLoadState("networkidle");
@@ -213,12 +204,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     });
 
     await test.step("Select the Automation view", async () => {
-      // Select Automation view
-      const automationOption = page
-        .locator('[role="option"]')
-        .filter({ hasText: /^Automation$/i });
-      await expect(automationOption).toBeVisible({ timeout: 5000 });
-      await automationOption.click();
+      await selectRepositoryView(page, /^Automation$/i);
 
       // Wait for view to update
       await page.waitForLoadState("networkidle");
@@ -252,12 +238,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     });
 
     await test.step("Select the Creator view", async () => {
-      // Select Creator view
-      const creatorsOption = page
-        .locator('[role="option"]')
-        .filter({ hasText: /^Creator$/i });
-      await expect(creatorsOption).toBeVisible({ timeout: 5000 });
-      await creatorsOption.click();
+      await selectRepositoryView(page, /^Creator$/i);
 
       // Wait for view to update
       await page.waitForLoadState("networkidle");
@@ -275,11 +256,6 @@ test.describe("Custom Fields - Repository View and Filter", () => {
   test("Tag view shows tag filtering options", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const caseName = `E2E Tag Axis Case ${Date.now()}`;
-
-    // Select Tag view
-    const tagsOption = page
-      .locator('[role="option"]')
-      .filter({ hasText: /^Tag$/i });
 
     await test.step("Seed an untagged test case", async () => {
       const rootFolderId = await api.getRootFolderId(projectId);
@@ -299,8 +275,7 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
     await test.step("Select the Tag view and verify filter options appear", async () => {
       // The Tag axis is always offered — grouping is independent of data.
-      await expect(tagsOption).toBeVisible({ timeout: 5000 });
-      await tagsOption.click();
+      await selectRepositoryView(page, /^Tag$/i);
       await page.waitForLoadState("networkidle");
 
       // Tag view pins the Any Tag / No Tags rows above the tag list
@@ -359,15 +334,10 @@ test.describe("Custom Fields - Repository View and Filter", () => {
       await repositoryPage.goto(projectId);
 
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
-      await viewSelector.click();
     });
 
     await test.step("Select the Template view", async () => {
-      const templatesOption = page
-        .locator('[role="option"]')
-        .filter({ hasText: /^Template$/i });
-      await expect(templatesOption).toBeVisible({ timeout: 5000 });
-      await templatesOption.click();
+      await selectRepositoryView(page, /^Template$/i);
     });
 
     await test.step("Verify the URL reflects the templates view", async () => {
@@ -651,17 +621,7 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
     });
 
     await test.step("Select the Priority view and verify filter options appear", async () => {
-      // Look for Priority as a dynamic field option in the view selector
-      // Priority is a seeded case field of type Dropdown assigned to the default template
-      const priorityOption = page
-        .locator('[role="option"]')
-        .filter({ hasText: /^Priority$/i });
-
-      // Priority should now be visible in the opened dropdown
-      await expect(priorityOption).toBeVisible({ timeout: 5000 });
-
-      // Click Priority view option
-      await priorityOption.click();
+      await selectRepositoryView(page, /^Priority$/i);
       await page.waitForLoadState("networkidle");
 
       // Verify the view selector now shows Priority
@@ -771,11 +731,7 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
 
-      const templatesOption = page
-        .locator('[role="option"]')
-        .filter({ hasText: /^Template$/i });
-      await expect(templatesOption).toBeVisible({ timeout: 5000 });
-      await templatesOption.click();
+      await selectRepositoryView(page, /^Template$/i);
 
       await page.waitForLoadState("networkidle");
     });
@@ -862,11 +818,7 @@ test.describe("Custom Fields - Filter Count Display", () => {
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
 
-      const templatesOption = page
-        .locator('[role="option"]')
-        .filter({ hasText: /^Template$/i });
-      await expect(templatesOption).toBeVisible({ timeout: 5000 });
-      await templatesOption.click();
+      await selectRepositoryView(page, /^Template$/i);
 
       await page.waitForLoadState("networkidle");
     });
@@ -908,11 +860,7 @@ test.describe("Custom Fields - Filter Count Display", () => {
       await expect(viewSelector).toBeVisible({ timeout: 10000 });
       await viewSelector.click();
 
-      const statesOption = page
-        .locator('[role="option"]')
-        .filter({ hasText: /^State$/i });
-      await expect(statesOption).toBeVisible({ timeout: 5000 });
-      await statesOption.click();
+      await selectRepositoryView(page, /^State$/i);
 
       await page.waitForLoadState("networkidle");
     });

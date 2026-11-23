@@ -33,7 +33,9 @@ test.describe("Repository action bars — compact mode", () => {
     await test.step("Open the repository at a narrow viewport", async () => {
       await page.setViewportSize({ width: 900, height: 720 });
       await page.goto(`/en-US/projects/repository/${projectId}`);
-      await page.waitForLoadState("networkidle");
+      // Firefox sometimes never goes quiet here; the checks below wait for
+      // what they need.
+      await page.waitForLoadState("networkidle").catch(() => {});
 
       const folderNode = page.getByTestId(`folder-node-${folderId}`).first();
       await expect(folderNode).toBeVisible({ timeout: 15000 });

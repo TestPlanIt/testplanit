@@ -228,6 +228,9 @@ test.describe("User Table Password Actions", () => {
       await page.waitForLoadState("networkidle");
 
       // The seeded admin email is admin@example.com
+      await page
+        .getByPlaceholder("Filter users...")
+        .fill("Administrator Account");
       const adminRow = page
         .getByRole("row")
         .filter({ hasText: "admin@example.com" });

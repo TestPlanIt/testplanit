@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import Papa from "papaparse";
 import type { Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
+import type { ApiHelper } from "../../../fixtures/api.fixture";
 
 /**
  * Audit Log Management E2E Tests
@@ -72,22 +73,11 @@ test.describe("Audit Log Management - Page Display", () => {
 });
 
 test.describe("Audit Log Management - Filtering", () => {
-  test("Admin can filter audit logs by action type", async ({ page }) => {
-    await page.goto("/en-US/admin/audit-logs");
-    await page.waitForLoadState("networkidle");
-
-    // The action filter is the first MultiAsyncCombobox trigger; the
-    // DateRangePicker before it is a plain button. Scoped to `button` so the
-    // cmdk search input (also role="combobox") can't match once open.
-    const actionFilter = page.locator('button[role="combobox"]').first();
-    await expect(actionFilter).toBeVisible({ timeout: 10000 });
-    await actionFilter.click();
-
+  test("Admin can filter audit logs by action type", async ({ page, api }) => {
     // getAuditLogActions only offers actions that have rows behind them, and
     // which actions exist shifts as other specs write audit entries, so drive
     // the selection from whatever the picker actually lists.
-    const options = page.locator('[role="option"]');
-    await expect(options.first()).toBeVisible({ timeout: 5000 });
+    const { actionFilter, options } = await openActionFilter(page, api, 1);
     const action = (await options.first().innerText()).trim();
 
     await options.first().click();
@@ -101,25 +91,24 @@ test.describe("Audit Log Management - Filtering", () => {
     });
 
     // Removing the badge clears the filter back to "All Actions".
-    await actionFilter
-      .locator('[role="button"]')
-      .first()
-      .click({ force: true });
-    await expect(actionFilter).toContainText(/all actions/i, { timeout: 5000 });
+    await expect(async () => {
+      const remove = actionFilter.locator('[role="button"]').first();
+      if (await remove.isVisible()) {
+        await remove.click({ force: true, timeout: 3000 });
+      }
+      await expect(actionFilter).toContainText(/all actions/i, {
+        timeout: 2000,
+      });
+    }).toPass({ timeout: 20_000 });
   });
 
-  test("Admin can select multiple action types at once", async ({ page }) => {
-    await page.goto("/en-US/admin/audit-logs");
-    await page.waitForLoadState("networkidle");
-
-    const actionFilter = page.locator('button[role="combobox"]').first();
-    await expect(actionFilter).toBeVisible({ timeout: 10000 });
-    await actionFilter.click();
-
+  test("Admin can select multiple action types at once", async ({
+    page,
+    api,
+  }) => {
     // Same data-driven selection as the single-select test: take the first two
     // actions the picker offers rather than naming ones that may have no rows.
-    const options = page.locator('[role="option"]');
-    await expect(options.first()).toBeVisible({ timeout: 5000 });
+    const { actionFilter, options } = await openActionFilter(page, api, 2);
     const available = (await options.allInnerTexts())
       .map((text) => text.trim())
       .filter(Boolean);
@@ -338,6 +327,31 @@ test.describe("Audit Log Management - CSV Export", () => {
     expect(cells).not.toContain(tagName);
   });
 });
+
+/**
+ * Opens the action filter once it has options to offer. Audit rows are
+ * written by a worker, so early in a run the log can still be empty; the page
+ * loads its option list once, hence the reload on each attempt. The action
+ * filter is the first MultiAsyncCombobox trigger (the DateRangePicker before
+ * it is a plain button), scoped to `button` so the cmdk search input, also
+ * role="combobox", can't match once open.
+ */
+async function openActionFilter(
+  page: Page,
+  api: ApiHelper,
+  minOptions: number
+) {
+  await api.createTag(`E2E Audit Action ${Date.now()}-${Math.random()}`);
+  const actionFilter = page.locator('button[role="combobox"]').first();
+  const options = page.locator('[role="option"]');
+  await expect(async () => {
+    await page.goto("/en-US/admin/audit-logs");
+    await page.waitForLoadState("networkidle");
+    await actionFilter.click({ timeout: 5000 });
+    await expect(options.nth(minOptions - 1)).toBeVisible({ timeout: 4000 });
+  }).toPass({ timeout: 60_000 });
+  return { actionFilter, options };
+}
 
 async function exportAuditLogCsv(page: Page) {
   const exportButton = page.getByRole("button", { name: /export csv/i });

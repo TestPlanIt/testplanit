@@ -1,6 +1,7 @@
 import type { APIRequestContext } from "@playwright/test";
 
 import { expect, test } from "../../fixtures";
+import { openProfileTrash } from "../../utils/profile-trash";
 
 /**
  * The self-service restore window (`user_trash_restore_window_days`, 0 = off)
@@ -57,7 +58,7 @@ test.describe("User trash restore window", () => {
     try {
       await test.step("The profile Trash reports it is off", async () => {
         await page.goto(`/en-US/users/profile/${me}`);
-        await page.getByTestId("profile-trash-trigger").click();
+        await openProfileTrash(page);
         await expect(page.getByTestId("user-trash-disabled")).toBeVisible({
           timeout: 15000,
         });

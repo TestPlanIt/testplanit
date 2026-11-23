@@ -36,9 +36,13 @@ test.describe("Saved and frozen reports", () => {
     mode: "live" | "frozen",
     description = ""
   ) {
-    await page.getByTestId("save-report-button").click();
     const dialog = page.getByTestId("save-report-dialog");
-    await expect(dialog).toBeVisible();
+    await expect(async () => {
+      if (!(await dialog.isVisible())) {
+        await page.getByTestId("save-report-button").click({ timeout: 3000 });
+      }
+      await expect(dialog).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 30_000 });
     await page.getByTestId("save-report-name-input").fill(name);
     if (description) {
       await page.getByTestId("save-report-description-input").fill(description);
@@ -290,11 +294,15 @@ test.describe("Saved and frozen reports", () => {
       const viewer = await anonymous.newPage();
       try {
         await viewer.goto(shareUrl);
-        await viewer.getByPlaceholder(/password/i).fill(password);
-        await viewer.getByRole("button", { name: /submit/i }).click();
-        await expect(viewer.getByTestId("frozen-report-banner")).toBeVisible({
-          timeout: 15000,
-        });
+        // Text typed before the form is interactive is thrown away.
+        const banner = viewer.getByTestId("frozen-report-banner");
+        await expect(async () => {
+          if (!(await banner.isVisible())) {
+            await viewer.getByPlaceholder(/password/i).fill(password);
+            await viewer.getByRole("button", { name: /submit/i }).click();
+          }
+          await expect(banner).toBeVisible({ timeout: 5000 });
+        }).toPass({ timeout: 30_000 });
         await expect(viewer.getByTestId("shared-report-viewer")).toContainText(
           `Case A ${ts}`
         );

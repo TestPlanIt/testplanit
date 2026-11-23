@@ -23,10 +23,12 @@ async function findMany(
   query: Record<string, unknown>
 ): Promise<any[]> {
   const q = encodeURIComponent(JSON.stringify(query));
-  const response = await request.get(
-    `${baseURL}/api/model/${model}/findMany?q=${q}`,
-    { headers: sameOrigin }
-  );
+  const url = `${baseURL}/api/model/${model}/findMany?q=${q}`;
+  // The server closes idle connections after a few seconds, and a request
+  // sent on one as it closes is reset.
+  const response = await request
+    .get(url, { headers: sameOrigin })
+    .catch(() => request.get(url, { headers: sameOrigin }));
   if (!response.ok()) return [];
   const json = await response.json();
   return Array.isArray(json.data) ? json.data : [];

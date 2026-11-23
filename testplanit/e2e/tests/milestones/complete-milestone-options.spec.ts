@@ -19,7 +19,9 @@ test.describe("Complete Milestone - Feature Validation", () => {
 
     await test.step("Create a started milestone via the API", async () => {
       // Create a test project and milestone
-      projectId = await api.createProject(`E2E Milestone Test ${Date.now()}`);
+      projectId = await api.createProject(
+        `E2E Milestone Test ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      );
       await api.createMilestone(projectId, `Test Milestone ${Date.now()}`, {
         isStarted: true,
         isCompleted: false,

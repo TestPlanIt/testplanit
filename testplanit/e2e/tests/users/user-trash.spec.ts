@@ -1,6 +1,7 @@
 import type { APIRequestContext } from "@playwright/test";
 
 import { expect, test } from "../../fixtures";
+import { openProfileTrash } from "../../utils/profile-trash";
 import {
   sameOriginRequestHeaders,
   signInSecondaryContext,
@@ -65,7 +66,7 @@ test.describe("User trash", () => {
 
     await test.step("It appears in my profile's Trash under its name, not its id", async () => {
       await page.goto(`/en-US/users/profile/${me}`);
-      await page.getByTestId("profile-trash-trigger").click();
+      await openProfileTrash(page);
       const row = page.getByTestId(`user-trash-row-${caseId}`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await expect(row).toContainText(caseName);
@@ -138,7 +139,7 @@ test.describe("User trash", () => {
 
     await test.step("The Trash shows the original name and hides the case inside", async () => {
       await page.goto(`/en-US/users/profile/${me}`);
-      await page.getByTestId("profile-trash-trigger").click();
+      await openProfileTrash(page);
       // Row ids are per item type, so a case can share this folder's id.
       const row = page
         .getByTestId(`user-trash-row-${folderId}`)
@@ -211,7 +212,7 @@ test.describe("User trash", () => {
 
     await test.step("Select both and restore them together", async () => {
       await page.goto(`/en-US/users/profile/${me}`);
-      await page.getByTestId("profile-trash-trigger").click();
+      await openProfileTrash(page);
       // Narrow to this test's rows before select-all; the trash holds other
       // tests' leftovers and only loads its first rows.
       await page.getByTestId("user-trash-search").fill(tag);
@@ -342,7 +343,7 @@ test.describe("User trash", () => {
 
     await test.step("Restore the run from my Trash", async () => {
       await page.goto(`/en-US/users/profile/${me}`);
-      await page.getByTestId("profile-trash-trigger").click();
+      await openProfileTrash(page);
       const row = page.getByTestId(`user-trash-row-${runId}`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await expect(row).toContainText(runName);
@@ -395,7 +396,7 @@ test.describe("User trash", () => {
     try {
       const viewerPage = await context.newPage();
       await viewerPage.goto(`${baseURL}/en-US/users/profile/${viewer.data.id}`);
-      await viewerPage.getByTestId("profile-trash-trigger").click();
+      await openProfileTrash(viewerPage);
       await expect(viewerPage.getByTestId("user-trash-empty")).toBeVisible({
         timeout: 15000,
       });

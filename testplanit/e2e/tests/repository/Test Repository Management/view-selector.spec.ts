@@ -1,6 +1,7 @@
 import type { APIRequestContext, Locator, Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import { selectRepositoryView } from "../../../utils/view-selector";
 
 /**
  * View Selector Tests
@@ -133,13 +134,7 @@ test.describe("View Selector - Repository Views", () => {
    * Helper to select a view option
    */
   async function selectView(page: Page, viewName: string) {
-    await openViewSelector(page);
-    const option = page
-      .locator('[role="option"]')
-      .filter({ hasText: new RegExp(`^${viewName}$`, "i") });
-    await expect(option).toBeVisible({ timeout: 5000 });
-    await option.click();
-    await page.waitForLoadState("networkidle");
+    await selectRepositoryView(page, new RegExp(`^${viewName}$`, "i"));
   }
 
   // ============================================================
