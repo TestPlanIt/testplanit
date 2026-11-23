@@ -317,7 +317,8 @@ test.describe("Audit Log Management - CSV Export", () => {
         .getByPlaceholder(/filter|search/i)
         .first()
         .fill(tagName);
-      await expect(dataRows.first()).toBeVisible({ timeout: 4000 });
+      // Exactly this tag's row: the unfiltered table also has a first row.
+      await expect(dataRows).toHaveCount(1, { timeout: 4000 });
     }).toPass({ timeout: 45000 });
 
     const { rows } = await exportAuditLogCsv(page);

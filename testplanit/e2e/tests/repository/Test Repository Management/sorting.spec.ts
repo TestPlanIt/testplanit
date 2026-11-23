@@ -117,7 +117,9 @@ test.describe("Sorting", () => {
       .first()
       .getByRole("button", { name: "Column options" })
       .first();
-    await button.scrollIntoViewIfNeeded();
+    await expect(async () => {
+      await button.scrollIntoViewIfNeeded({ timeout: 3000 });
+    }).toPass({ timeout: 20_000 });
     await expect(button).toBeVisible({ timeout: 5000 });
     // A menu closed by the previous step stays mounted while it animates
     // out. In WebKit it takes focus back as it goes, which closes a menu
@@ -127,16 +129,20 @@ test.describe("Sorting", () => {
     // be intercepted by a sticky column (e.g. Name, z-index 21) overlapping it.
     // Keyboard activation has no such interception and also dismisses any menu
     // left open from a previous step.
-    await button.focus();
-    await button.press("Enter");
     // Scope to the OPEN menu: a menu closed moments earlier is still in the
     // DOM while its exit animation runs, so both it and its items match an
     // unscoped role lookup (strict mode violation).
     const openMenu = page.locator('[role="menu"][data-state="open"]').first();
-    await openMenu.waitFor({ state: "visible" });
     const item = openMenu.getByRole("menuitem", { name: nextItem });
-    await expect(item).toBeVisible();
-    await item.click();
+    // A table re-render can close the menu before its item is clicked.
+    await expect(async () => {
+      if (!(await openMenu.isVisible())) {
+        await button.focus({ timeout: 3000 });
+        await button.press("Enter", { timeout: 3000 });
+      }
+      await openMenu.waitFor({ state: "visible", timeout: 3000 });
+      await item.click({ timeout: 3000 });
+    }).toPass({ timeout: 30_000 });
 
     await waitForTableStable(page);
   }
@@ -1276,7 +1282,9 @@ test.describe("Sorting with ViewSelector Filters", () => {
       .first()
       .getByRole("button", { name: "Column options" })
       .first();
-    await button.scrollIntoViewIfNeeded();
+    await expect(async () => {
+      await button.scrollIntoViewIfNeeded({ timeout: 3000 });
+    }).toPass({ timeout: 20_000 });
     await expect(button).toBeVisible({ timeout: 5000 });
     // A menu closed by the previous step stays mounted while it animates
     // out. In WebKit it takes focus back as it goes, which closes a menu
@@ -1286,16 +1294,20 @@ test.describe("Sorting with ViewSelector Filters", () => {
     // be intercepted by a sticky column (e.g. Name, z-index 21) overlapping it.
     // Keyboard activation has no such interception and also dismisses any menu
     // left open from a previous step.
-    await button.focus();
-    await button.press("Enter");
     // Scope to the OPEN menu: a menu closed moments earlier is still in the
     // DOM while its exit animation runs, so both it and its items match an
     // unscoped role lookup (strict mode violation).
     const openMenu = page.locator('[role="menu"][data-state="open"]').first();
-    await openMenu.waitFor({ state: "visible" });
     const item = openMenu.getByRole("menuitem", { name: nextItem });
-    await expect(item).toBeVisible();
-    await item.click();
+    // A table re-render can close the menu before its item is clicked.
+    await expect(async () => {
+      if (!(await openMenu.isVisible())) {
+        await button.focus({ timeout: 3000 });
+        await button.press("Enter", { timeout: 3000 });
+      }
+      await openMenu.waitFor({ state: "visible", timeout: 3000 });
+      await item.click({ timeout: 3000 });
+    }).toPass({ timeout: 30_000 });
 
     await waitForTableStable(page);
   }
@@ -1849,19 +1861,25 @@ test.describe("Run Mode Sorting", () => {
       .first()
       .getByRole("button", { name: "Column options" })
       .first();
-    await button.scrollIntoViewIfNeeded();
+    await expect(async () => {
+      await button.scrollIntoViewIfNeeded({ timeout: 3000 });
+    }).toPass({ timeout: 20_000 });
     await expect(button).toBeVisible({ timeout: 5000 });
     await expect(page.locator('[role="menu"]')).toHaveCount(0);
-    await button.focus();
-    await button.press("Enter");
     // Scope to the OPEN menu: a menu closed moments earlier is still in the
     // DOM while its exit animation runs, so both it and its items match an
     // unscoped role lookup (strict mode violation).
     const openMenu = page.locator('[role="menu"][data-state="open"]').first();
-    await openMenu.waitFor({ state: "visible" });
     const item = openMenu.getByRole("menuitem", { name: nextItem });
-    await expect(item).toBeVisible();
-    await item.click();
+    // A table re-render can close the menu before its item is clicked.
+    await expect(async () => {
+      if (!(await openMenu.isVisible())) {
+        await button.focus({ timeout: 3000 });
+        await button.press("Enter", { timeout: 3000 });
+      }
+      await openMenu.waitFor({ state: "visible", timeout: 3000 });
+      await item.click({ timeout: 3000 });
+    }).toPass({ timeout: 30_000 });
 
     await waitForTableStable(page);
   }

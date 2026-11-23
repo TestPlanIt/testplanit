@@ -30,9 +30,18 @@ async function openFolderWithCase(
  * ("element was detached from the DOM"). Retry until the box actually reads as
  * checked instead of trusting one click to land.
  */
-async function selectCase(page: Page, caseId: number): Promise<void> {
+async function selectCase(
+  page: Page,
+  caseId: number,
+  folderId?: number
+): Promise<void> {
   const checkbox = page.locator(`[data-testid="case-checkbox-${caseId}"]`);
   await expect(async () => {
+    // The page's own folder pick can land after the folder was opened and
+    // switch the table to another folder.
+    if (folderId !== undefined && !(await checkbox.isVisible())) {
+      await page.getByTestId(`folder-node-${folderId}`).first().click();
+    }
     await checkbox.click({ timeout: 5000 });
     await expect(checkbox).toBeChecked({ timeout: 3000 });
   }).toPass({ timeout: 30_000 });
@@ -223,7 +232,7 @@ test.describe("Copy/Move dialog same-project", () => {
       await page.goto(`/en-US/projects/repository/${projectId}`);
       await openFolderWithCase(page, rootFolderId, sourceCaseAId);
 
-      await selectCase(page, sourceCaseAId);
+      await selectCase(page, sourceCaseAId, rootFolderId);
       await clickOverflowAction(page, "copy-move-button", "cases-actions-menu");
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();
@@ -317,7 +326,7 @@ test.describe("Copy/Move dialog same-project", () => {
       await page.goto(`/en-US/projects/repository/${projectId}`);
       await openFolderWithCase(page, rootFolderId, sourceCaseBId);
 
-      await selectCase(page, sourceCaseBId);
+      await selectCase(page, sourceCaseBId, rootFolderId);
       await clickOverflowAction(page, "copy-move-button", "cases-actions-menu");
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();

@@ -1,3 +1,4 @@
+import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "../fixtures";
 
 /**
@@ -7,6 +8,17 @@ import { expect, test } from "../fixtures";
  * "Group by status" and "Sort by date" modes on the key pages where
  * regressions were previously found.
  */
+
+// A click closes the tooltip, and it only reopens once the pointer has left
+// the toggle and come back.
+async function expectTooltip(page: Page, toggle: Locator, text: string) {
+  await expect(toggle).toHaveAttribute("aria-label", text);
+  await expect(async () => {
+    await page.mouse.move(0, 0);
+    await toggle.hover();
+    await expect(page.getByText(text).first()).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 20_000 });
+}
 
 test.describe("Sort toggle on test runs list page", () => {
   test("toggle switches state and does not break the bar", async ({
@@ -62,15 +74,13 @@ test.describe("Sort toggle on test runs list page", () => {
     await test.step("Click to switch to Sort by date mode", async () => {
       // Click — switches to "sort by date" mode
       await toggle.click();
-      await toggle.hover();
-      await expect(page.getByText("Sort by date").first()).toBeVisible();
+      await expectTooltip(page, toggle, "Sort by date");
     });
 
     await test.step("Click again to return to Group by status mode", async () => {
       // Click again — back to "group by status"
       await toggle.click();
-      await toggle.hover();
-      await expect(page.getByText("Group by status").first()).toBeVisible();
+      await expectTooltip(page, toggle, "Group by status");
     });
 
     await test.step("Verify the status bar still renders segments", async () => {
@@ -129,8 +139,7 @@ test.describe("Sort toggle on sessions list page", () => {
 
     await test.step("Click to switch to Sort by date mode", async () => {
       await toggle.click();
-      await toggle.hover();
-      await expect(page.getByText("Sort by date").first()).toBeVisible();
+      await expectTooltip(page, toggle, "Sort by date");
     });
   });
 });

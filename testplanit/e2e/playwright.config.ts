@@ -35,10 +35,11 @@ const browsers = (process.env.E2E_BROWSERS || "chromium")
 
 /**
  * Specs that toggle Force SSO, domain restriction, the password policy or
- * the self-service Trash window.
+ * the self-service Trash window, or that edit the admin account every spec
+ * signs in as, or its preferences.
  */
 const INSTANCE_SETTINGS_SPECS =
-  /(admin\/(sso\/sso-provider-management|security\/security-settings)|users\/user-trash-window)\.spec\.ts$/;
+  /(admin\/(sso\/sso-provider-management|security\/security-settings|users\/user-profile-own-account)|users\/user-trash-window|steps-display-layout)\.spec\.ts$/;
 
 // Optionally report results to a TestPlanIt instance via the local reporter.
 // Inert unless TPI_DOMAIN + TPI_TOKEN + TPI_PROJECT_ID are set, so normal E2E

@@ -115,6 +115,7 @@ test.describe("Prompt Configurations - Create Operations", () => {
     await test.step("Verify the new config appears in the table", async () => {
       // Wait for dialog to close and verify the config appears
       await expect(promptsPage.dialog).not.toBeVisible({ timeout: 10000 });
+      await promptsPage.filterByText(configName);
       await promptsPage.expectConfigInTable(configName);
     });
   });
@@ -313,18 +314,24 @@ test.describe("Prompt Configurations - Delete Operations", () => {
 
     await test.step("Open the page and verify the config is present", async () => {
       await promptsPage.goto();
+      await promptsPage.filterByText(configName);
       await promptsPage.expectConfigInTable(configName);
     });
 
     await test.step("Delete the config and confirm", async () => {
       await promptsPage.clickDeleteOnRow(configName);
       await promptsPage.confirmDelete();
+      // The dialog closes at once; the delete lands after it.
+      await expect(
+        page
+          .getByRole("table")
+          .locator("[data-row-id]", { hasText: configName })
+      ).toHaveCount(0, { timeout: 20_000 });
     });
 
     await test.step("Reload and verify the config is removed", async () => {
-      // Wait for toast and verify config is removed
-      await page.waitForTimeout(1000);
       await promptsPage.goto();
+      await promptsPage.filterByText(configName);
       await promptsPage.expectConfigNotInTable(configName);
     });
   });

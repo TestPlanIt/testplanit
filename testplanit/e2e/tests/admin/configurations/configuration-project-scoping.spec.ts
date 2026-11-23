@@ -91,11 +91,15 @@ test.describe("Configuration Project Scoping - Admin", () => {
         .locator('button[role="combobox"]')
         .filter({ hasText: "All projects" });
       await expect(filterTrigger).toBeVisible({ timeout: 15000 });
-      await filterTrigger.click();
+      const comboInput = page.locator("[cmdk-input]");
+      await expect(async () => {
+        if (!(await comboInput.isVisible())) {
+          await filterTrigger.click({ timeout: 3000 });
+        }
+        await expect(comboInput).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 20_000 });
 
       // Search for and select the project.
-      const comboInput = page.locator("[cmdk-input]");
-      await expect(comboInput).toBeVisible({ timeout: 5000 });
       await comboInput.fill(projectName);
       await page.waitForTimeout(500);
       await page

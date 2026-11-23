@@ -95,7 +95,9 @@ async function signInAsAdmin(
   // sends a signed-in visitor away from /signin — start from a clean slate.
   await page.context().clearCookies();
   const signinPage = new SigninPage(page);
-  await signinPage.goto();
+  await expect(async () => {
+    await signinPage.goto();
+  }).toPass({ timeout: 30_000 });
   await signinPage.fillCredentials(ADMIN_EMAIL, ADMIN_PASSWORD);
   await signinPage.submit();
   await page.waitForURL((url) => !url.pathname.includes("/signin"), {

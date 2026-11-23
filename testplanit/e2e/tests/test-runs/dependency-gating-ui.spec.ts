@@ -97,9 +97,12 @@ test("blocked badge, panel notice and link direction labels", async ({
   });
 
   await test.step("The execution panel for B shows the notice and disables Add Result", async () => {
-    await page.goto(
-      `/en-US/projects/runs/${projectId}/${runId}?selectedCase=${caseB}`
-    );
+    await page.waitForLoadState("networkidle");
+    await expect(async () => {
+      await page.goto(
+        `/en-US/projects/runs/${projectId}/${runId}?selectedCase=${caseB}`
+      );
+    }).toPass({ timeout: 30_000 });
     await page.waitForLoadState("load");
     const sheet = page.locator(".test-run-details-sheet");
     await expect(sheet).toBeVisible({ timeout: 15000 });
@@ -124,9 +127,12 @@ test("blocked badge, panel notice and link direction labels", async ({
     });
     expect(ok.status(), await ok.text()).toBe(200);
 
-    await page.goto(
-      `/en-US/projects/runs/${projectId}/${runId}?selectedCase=${caseB}`
-    );
+    await page.waitForLoadState("networkidle");
+    await expect(async () => {
+      await page.goto(
+        `/en-US/projects/runs/${projectId}/${runId}?selectedCase=${caseB}`
+      );
+    }).toPass({ timeout: 30_000 });
     await page.waitForLoadState("load");
     const sheet = page.locator(".test-run-details-sheet");
     await expect(sheet).toBeVisible({ timeout: 15000 });

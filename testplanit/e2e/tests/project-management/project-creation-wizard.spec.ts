@@ -209,8 +209,8 @@ test.describe("Project Creation Wizard", () => {
         }
         await expect(nameInput).toHaveValue(projectName);
         await expect(nextButton).toBeEnabled();
+        await nextButton.click({ timeout: 3000 });
       }).toPass({ timeout: 30000 });
-      await nextButton.click();
     });
 
     await test.step("Pick the template as the default without ticking it first", async () => {

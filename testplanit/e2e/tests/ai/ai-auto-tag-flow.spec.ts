@@ -57,7 +57,12 @@ test.describe("Auto-Tag Flow", () => {
       // Now select all cases via header checkbox
       const headerCheckbox = page.locator('thead [role="checkbox"]').first();
       await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
-      await headerCheckbox.click();
+      await expect(async () => {
+        if ((await headerCheckbox.getAttribute("aria-checked")) !== "true") {
+          await headerCheckbox.click({ timeout: 3000 });
+        }
+        await expect(headerCheckbox).toBeChecked({ timeout: 2000 });
+      }).toPass({ timeout: 20_000 });
 
       // Auto-tag action should be offered with LLM integration configured
       // (as a button when the toolbar is wide, as a kebab item when compact)
