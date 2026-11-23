@@ -512,7 +512,9 @@ function AuditLogsContent({ session }: { session: Session }) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // Firefox and Safari start the download after this handler returns
+      // and drop it if the address is already gone.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
 
       // Log the export for audit trail
       await logDataExport({
