@@ -151,16 +151,21 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
         {
           params: {
             q: JSON.stringify({
-              where: { workflowId, projectId: { in: beforeProjectIds } },
+              where: { workflowId },
               select: { projectId: true },
             }),
           },
         }
       );
       expect(afterRes.ok()).toBeTruthy();
+      // Filtered here, not in the query: the pre-edit set can be thousands
+      // of ids, which no longer fits in a request URL.
+      const before = new Set(beforeProjectIds);
       const afterProjectIds = (
         ((await afterRes.json())?.data ?? []) as Array<{ projectId: number }>
-      ).map((a) => a.projectId);
+      )
+        .map((a) => a.projectId)
+        .filter((id) => before.has(id));
       const duplicateProjectIds = [
         ...new Set(
           afterProjectIds.filter((id, i) => afterProjectIds.indexOf(id) !== i)

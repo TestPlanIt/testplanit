@@ -140,7 +140,12 @@ test.describe("Dashboard pending reviews", () => {
       .patch(`${url}/api/model/userPreferences/update`, {
         data: {
           where: { userId: reviewer.data.id },
-          data: { hasCompletedInitialPreferencesSetup: true },
+          // With setup done, the welcome tour starts a second after the
+          // dashboard loads and its overlay swallows clicks too.
+          data: {
+            hasCompletedInitialPreferencesSetup: true,
+            hasCompletedWelcomeTour: true,
+          },
         },
       })
       .catch(() => {});

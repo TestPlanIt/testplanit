@@ -225,7 +225,9 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     });
 
     await test.step("Verify the ES search input appears in selection mode", async () => {
-      // Navigate to test runs page and open AddTestRunModal
+      // Firefox and Safari cancel a page load started while the page being
+      // left still has a request in flight.
+      await page.waitForLoadState("networkidle");
       await page.goto(`/en-US/projects/runs/${projectId}`);
       await page.waitForLoadState("load");
 
@@ -259,7 +261,9 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
       // Wait for ES indexing
       await page.waitForTimeout(2000);
 
-      // Navigate to test runs page and open AddTestRunModal
+      // Firefox and Safari cancel a page load started while the page being
+      // left still has a request in flight.
+      await page.waitForLoadState("networkidle");
       await page.goto(`/en-US/projects/runs/${projectId}`);
       await page.waitForLoadState("load");
 

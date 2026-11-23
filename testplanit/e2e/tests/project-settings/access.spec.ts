@@ -61,10 +61,11 @@ test.describe("Project Settings - Access", () => {
       await expect(
         page.getByTestId(`project-access-row-${adminId}`)
       ).toHaveCount(0);
-      await page.getByTestId("project-access-filter").fill("");
+      await page.getByTestId("project-access-filter").fill("admin@example.com");
       await expect(
         page.getByTestId(`project-access-row-${adminId}`)
       ).toBeVisible();
+      await page.getByTestId("project-access-filter").fill("");
     });
 
     await test.step("An admin sees the edit link, not the admin-only note", async () => {

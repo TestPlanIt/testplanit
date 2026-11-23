@@ -237,16 +237,13 @@ test.describe("User trash", () => {
     await test.step("Select both and restore them together", async () => {
       await page.goto(`/en-US/users/profile/${me}`);
       await page.getByTestId("profile-trash-trigger").click();
+      // Narrow to this test's rows before select-all; the trash holds other
+      // tests' leftovers and only loads its first rows.
+      await page.getByTestId("user-trash-search").fill(tag);
       for (const id of caseIds) {
         await expect(page.getByTestId(`user-trash-row-${id}`)).toBeVisible({
           timeout: 15000,
         });
-      }
-      // Narrow to this test's rows before select-all; serial mode keeps the
-      // other tests' leftovers out, the filter keeps the assertion honest.
-      await page.getByTestId("user-trash-search").fill(`Trash Bulk`);
-      for (const id of caseIds) {
-        await expect(page.getByTestId(`user-trash-row-${id}`)).toBeVisible();
       }
       await page.getByTestId("user-trash-select-all").click();
       const bulk = page.getByTestId("user-trash-restore-selected");

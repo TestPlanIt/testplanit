@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import { pickSelectOption } from "../../utils/select-option";
 
 /**
  * Project Creation Wizard E2E Tests (PROJ-01)
@@ -219,9 +220,7 @@ test.describe("Project Creation Wizard", () => {
       await expect(defaultSelect).toBeVisible({ timeout: 15000 });
       await expect(defaultSelect).toHaveText(/use system default/i);
 
-      await defaultSelect.click();
-      await page.getByRole("option", { name: templateName }).click();
-      await expect(defaultSelect).toHaveText(templateName);
+      await pickSelectOption(page, defaultSelect, templateName);
     });
 
     await test.step("Finish the wizard", async () => {

@@ -48,7 +48,9 @@ test.describe("User Management Gaps", () => {
         });
 
         await test.step("Locate test user row and confirm active toggle", async () => {
-          // Find the test user row and the active toggle
+          await page
+            .getByPlaceholder("Filter users...")
+            .fill("Deactivate Test User");
           const userRow = page.getByRole("row").filter({ hasText: testEmail });
           await expect(userRow).toBeVisible();
 
@@ -162,6 +164,9 @@ test.describe("User Management Gaps", () => {
             await page.waitForLoadState("networkidle");
           }
 
+          await page
+            .getByPlaceholder("Filter users...")
+            .fill("Active Toggle Gap User");
           await expect(activeSwitch).toBeVisible();
         });
 
