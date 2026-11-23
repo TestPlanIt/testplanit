@@ -168,7 +168,7 @@ test.describe("Copy/Move dialog same-project", () => {
   });
 
   test("setup: create project + folders + 3 cases", async ({ api }) => {
-    const ts = Date.now();
+    const ts = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     await test.step("Create project, root folder, sibling and nested folders", async () => {
       projectId = await api.createProject(`E2E CopyMoveDialog ${ts}`);
@@ -448,8 +448,8 @@ test.describe("Copy/Move dialog same-project", () => {
     await test.step("Select two cases and pick the sibling folder", async () => {
       // Source A still lives in the root folder — test 2 COPIED it, did not
       // move. Source C is untouched.
-      await selectCase(page, sourceCaseAId);
-      await selectCase(page, sourceCaseCId);
+      await selectCase(page, sourceCaseAId, rootFolderId);
+      await selectCase(page, sourceCaseCId, rootFolderId);
       await clickOverflowAction(page, "copy-move-button", "cases-actions-menu");
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();
