@@ -103,6 +103,9 @@ const { setCurrentPageSpy, toastErrorSpy, caseDetailsSpy } = vi.hoisted(() => ({
   caseDetailsSpy: vi.fn(),
 }));
 
+const syncNodeUrlParamSpy = vi.hoisted(() => vi.fn());
+vi.mock("./nodeUrlParam", () => ({ syncNodeUrlParam: syncNodeUrlParamSpy }));
+
 vi.mock("sonner", () => ({
   toast: {
     error: toastErrorSpy,
@@ -660,6 +663,7 @@ describe("run-mode first-folder auto-select vs shared filter links", () => {
     renderRunFolders();
 
     expect(lastProps(treeViewSpy).selectedFolderId).toBe(9);
+    expect(syncNodeUrlParamSpy).toHaveBeenCalledWith(9);
   });
 
   it("stands down when the link already carries f params", () => {

@@ -42,6 +42,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -870,6 +871,20 @@ const TreeView: React.FC<{
     return buildTree(null);
   }, [buildTree, folders]);
 
+  // The tree library selects the node named by its `selection` prop whenever
+  // that prop changes, and the effect further down moves the tree to the
+  // folder the parent holds. Neither is a choice made in the tree, so neither
+  // is reported back or written to the URL: doing so answers a change with
+  // the value it came from, and when a click and the default-folder
+  // selection land together the two then swap places in the URL and the
+  // parent's state without end.
+  const selectionProp = selectedId || selectedFolderId?.toString() || undefined;
+  const selectionPropRef = useRef(selectionProp);
+  useLayoutEffect(() => {
+    selectionPropRef.current = selectionProp;
+  }, [selectionProp]);
+  const mirroringParentRef = useRef(false);
+
   // Handle folder selection
   const handleSelect = useCallback(
     (nodes: NodeApi<ArboristNode>[]) => {
@@ -878,6 +893,12 @@ const TreeView: React.FC<{
         const folderId = node.data?.data?.folderId;
         if (folderId) {
           setSelectedId(node.id);
+          if (
+            mirroringParentRef.current ||
+            node.id === selectionPropRef.current
+          ) {
+            return;
+          }
           onSelectFolder(folderId);
           syncNodeUrlParam(folderId);
         }
@@ -1018,7 +1039,12 @@ const TreeView: React.FC<{
         if (node) {
           // Selecting on load must not take keyboard focus: focus moving to
           // the tree closes any menu the user has just opened.
-          node.tree.select(node, { focus: false });
+          mirroringParentRef.current = true;
+          try {
+            node.tree.select(node, { focus: false });
+          } finally {
+            mirroringParentRef.current = false;
+          }
           setSelectedId(nodeId);
 
           // Also ensure parent nodes are open
@@ -1781,7 +1807,7 @@ const TreeView: React.FC<{
             rowHeight={32}
             overscanCount={8}
             rowClassName="min-w-0!"
-            selection={selectedId || selectedFolderId?.toString() || undefined}
+            selection={selectionProp}
             onSelect={handleSelect}
             onToggle={async (id) => {
               const folderId = Number(id);

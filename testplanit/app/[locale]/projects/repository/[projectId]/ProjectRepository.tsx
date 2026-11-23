@@ -99,6 +99,7 @@ import { FindDuplicatesButton } from "@/components/duplicates/FindDuplicatesButt
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
+import { syncNodeUrlParam } from "./nodeUrlParam";
 import * as React from "react";
 import {
   useCallback,
@@ -1580,6 +1581,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const handleBreadcrumbClick = useCallback(
     (folderId: number) => {
       handleSelectFolder(folderId);
+      syncNodeUrlParam(folderId);
     },
     [handleSelectFolder]
   );
@@ -2012,6 +2014,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     if (!initialUrlRef.current?.hadZeroFParams) return;
     if (isRunMode && folderIdsWithTestCases.length > 0 && !selectedFolderId) {
       handleSelectFolder(folderIdsWithTestCases[0]);
+      syncNodeUrlParam(folderIdsWithTestCases[0]);
     }
   }, [isRunMode, folderIdsWithTestCases, selectedFolderId, handleSelectFolder]);
 
