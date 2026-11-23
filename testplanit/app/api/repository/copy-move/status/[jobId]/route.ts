@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getCopyMoveQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
 import { withRequestRouting } from "~/lib/db/requestRouting";
+import { finishedJob } from "~/lib/finishedJob";
 
 async function handleGET(
   _request: Request,
@@ -47,13 +48,7 @@ async function handleGET(
 
     const state = await job.getState();
 
-    // The job was read before its state. If it finished in between, that copy
-    // has no result or failure reason yet, so read it again.
-    const finished = state === "completed" || state === "failed";
-    const current =
-      finished && job.finishedOn == null
-        ? ((await queue.getJob(jobId)) ?? job)
-        : job;
+    const current = await finishedJob(queue, job, state);
 
     // BullMQ may return returnvalue as a JSON string or parsed object
     // depending on how it was stored/retrieved. Ensure it's always an object.

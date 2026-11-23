@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getDuplicateScanQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
 import { withRequestRouting } from "~/lib/db/requestRouting";
+import { finishedJob } from "~/lib/finishedJob";
 
 async function handleGET(
   _request: Request,
@@ -46,26 +47,27 @@ async function handleGET(
     }
 
     const state = await job.getState();
+    const current = await finishedJob(queue, job, state);
 
     // BullMQ may return returnvalue as a JSON string or parsed object
     // depending on how it was stored/retrieved. Ensure it's always an object.
     let result = null;
-    if (state === "completed" && job.returnvalue != null) {
+    if (state === "completed" && current.returnvalue != null) {
       result =
-        typeof job.returnvalue === "string"
-          ? JSON.parse(job.returnvalue)
-          : job.returnvalue;
+        typeof current.returnvalue === "string"
+          ? JSON.parse(current.returnvalue)
+          : current.returnvalue;
     }
 
     return NextResponse.json({
-      jobId: job.id,
+      jobId: current.id,
       state,
-      progress: job.progress,
+      progress: current.progress,
       result,
-      failedReason: state === "failed" ? job.failedReason : null,
-      timestamp: job.timestamp,
-      processedOn: job.processedOn,
-      finishedOn: job.finishedOn,
+      failedReason: state === "failed" ? current.failedReason : null,
+      timestamp: current.timestamp,
+      processedOn: current.processedOn,
+      finishedOn: current.finishedOn,
     });
   } catch (error) {
     console.error("Duplicate scan status error:", error);

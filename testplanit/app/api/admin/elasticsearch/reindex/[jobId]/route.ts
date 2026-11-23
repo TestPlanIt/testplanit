@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getServerAuthSession } from "~/server/auth";
 import { withRequestRouting } from "~/lib/db/requestRouting";
+import { finishedJob } from "~/lib/finishedJob";
 
 // Helper to check admin authentication (session or API token)
 async function checkAdminAuth(
@@ -99,7 +100,8 @@ async function handleGET(
     }
 
     const state = await job.getState();
-    const progress = job.progress;
+    const current = await finishedJob(elasticsearchReindexQueue, job, state);
+    const progress = current.progress;
 
     // Get job logs from Redis
     const logsKey = `${BULLMQ_PREFIX}:${elasticsearchReindexQueue.name}:${jobId}:logs`;
@@ -110,21 +112,21 @@ async function handleGET(
     let failedReason = null;
 
     if (state === "completed") {
-      result = job.returnvalue;
+      result = current.returnvalue;
     } else if (state === "failed") {
-      failedReason = job.failedReason;
+      failedReason = current.failedReason;
     }
 
     return NextResponse.json({
-      jobId: job.id,
+      jobId: current.id,
       state,
       progress,
       logs: logs || [],
       result,
       failedReason,
-      timestamp: job.timestamp,
-      processedOn: job.processedOn,
-      finishedOn: job.finishedOn,
+      timestamp: current.timestamp,
+      processedOn: current.processedOn,
+      finishedOn: current.finishedOn,
     });
   } catch (error: any) {
     console.error("Job status error:", error);
