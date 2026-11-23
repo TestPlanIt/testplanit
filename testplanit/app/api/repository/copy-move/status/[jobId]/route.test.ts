@@ -131,6 +131,33 @@ describe("GET /api/repository/copy-move/status/[jobId]", () => {
     expect(data.finishedOn).toBe(1700000002000);
   });
 
+  it("reads the job again when it finished between the two reads", async () => {
+    (getServerSession as any).mockResolvedValue({ user: { id: "user-1" } });
+    const returnvalue = { copiedCount: 0, movedCount: 1, droppedLinkCount: 0 };
+    const staleJob = createMockJob({
+      getState: vi.fn().mockResolvedValue("completed"),
+      returnvalue: null,
+      finishedOn: undefined,
+    });
+    const freshJob = createMockJob({ returnvalue });
+    const mockQueue = {
+      getJob: vi
+        .fn()
+        .mockResolvedValueOnce(staleJob)
+        .mockResolvedValueOnce(freshJob),
+    };
+    (getCopyMoveQueue as any).mockReturnValue(mockQueue);
+
+    const response = await GET({} as Request, {
+      params: createMockParams("job-123"),
+    });
+    const data = await response.json();
+
+    expect(data.state).toBe("completed");
+    expect(data.result).toEqual(returnvalue);
+    expect(data.finishedOn).toBe(1700000002000);
+  });
+
   it("returns failedReason for a failed job", async () => {
     (getServerSession as any).mockResolvedValue({ user: { id: "user-1" } });
     const mockJob = createMockJob({
