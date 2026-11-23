@@ -556,6 +556,7 @@ const BasicInfoDialog = React.memo(
               <Button
                 type="button"
                 onClick={handleNextStep}
+                disabled={workflowsOptions.length === 0}
                 data-testid="run-next-button"
               >
                 {tCommon("actions.next")}

@@ -443,6 +443,10 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
                       }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
+                          // The form would also submit by itself on Enter,
+                          // and Firefox does so even after this handler has
+                          // disabled the field: two cases were created.
+                          e.preventDefault();
                           void handleSubmit(onSubmit)();
                         }
                       }}
