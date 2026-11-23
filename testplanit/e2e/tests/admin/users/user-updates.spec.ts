@@ -17,22 +17,15 @@ import { expect, test } from "../../../fixtures";
 
 test.describe("User Update Operations", () => {
   test.describe("Profile Page Updates", () => {
-    test("User can update their display name", async ({ page }) => {
+    test("User can update their display name", async ({
+      page,
+      adminUserId,
+    }) => {
       const newName = `Updated Name ${Date.now()}`;
       let originalName: string | undefined;
 
       await test.step("Open admin user profile in edit mode", async () => {
-        // Navigate to admin users page and click on admin user to get to profile
-        await page.goto("/en-US/admin/users");
-        await page.waitForLoadState("networkidle");
-
-        // Find admin user row by email and click profile link
-        const adminRow = page
-          .getByRole("row")
-          .filter({ hasText: "admin@example.com" });
-        await expect(adminRow).toBeVisible();
-        const adminProfileLink = adminRow.locator("a").first();
-        await adminProfileLink.click();
+        await page.goto(`/en-US/users/profile/${adminUserId}`);
 
         // Wait for profile page
         await page.waitForURL(/\/users\/profile\//);
@@ -94,21 +87,11 @@ test.describe("User Update Operations", () => {
       });
     });
 
-    test("User can update theme preference", async ({ page }) => {
+    test("User can update theme preference", async ({ page, adminUserId }) => {
       let originalTheme: string | undefined;
 
       await test.step("Open admin user profile in edit mode", async () => {
-        // Navigate to admin users page and click on admin user
-        await page.goto("/en-US/admin/users");
-        await page.waitForLoadState("networkidle");
-
-        // Find admin user row by email and click profile link
-        const adminRow = page
-          .getByRole("row")
-          .filter({ hasText: "admin@example.com" });
-        await expect(adminRow).toBeVisible();
-        const adminProfileLink = adminRow.locator("a").first();
-        await adminProfileLink.click();
+        await page.goto(`/en-US/users/profile/${adminUserId}`);
 
         await page.waitForURL(/\/users\/profile\//);
         await page.waitForLoadState("networkidle");
@@ -197,21 +180,14 @@ test.describe("User Update Operations", () => {
       });
     });
 
-    test("User can update items per page preference", async ({ page }) => {
+    test("User can update items per page preference", async ({
+      page,
+      adminUserId,
+    }) => {
       let originalValue: string | undefined;
 
       await test.step("Open admin user profile in edit mode", async () => {
-        // Navigate to admin users page and click on admin user
-        await page.goto("/en-US/admin/users");
-        await page.waitForLoadState("networkidle");
-
-        // Find admin user row by email and click profile link
-        const adminRow = page
-          .getByRole("row")
-          .filter({ hasText: "admin@example.com" });
-        await expect(adminRow).toBeVisible();
-        const adminProfileLink = adminRow.locator("a").first();
-        await adminProfileLink.click();
+        await page.goto(`/en-US/users/profile/${adminUserId}`);
 
         await page.waitForURL(/\/users\/profile\//);
         await page.waitForLoadState("networkidle");
@@ -316,6 +292,9 @@ test.describe("User Update Operations", () => {
         await test.step("Open admin users page with inactive users shown", async () => {
           await page.goto("/en-US/admin/users");
           await page.waitForLoadState("networkidle");
+          await page
+            .getByPlaceholder("Filter users...")
+            .fill("Toggle Test User");
 
           // Enable "Show Inactive" so users remain visible when toggled to inactive
           const showInactiveSwitch = page.getByRole("switch", {
@@ -383,6 +362,7 @@ test.describe("User Update Operations", () => {
         await test.step("Open edit modal for the test user", async () => {
           await page.goto("/en-US/admin/users");
           await page.waitForLoadState("networkidle");
+          await page.getByPlaceholder("Filter users...").fill("Edit Test User");
 
           // Find the test user row
           const userRow = page.getByRole("row").filter({ hasText: testEmail });
@@ -429,6 +409,7 @@ test.describe("User Update Operations", () => {
           // Reload the page to force a fresh fetch
           await page.reload();
           await page.waitForLoadState("networkidle");
+          await page.getByPlaceholder("Filter users...").fill("Edit Test User");
 
           // Verify update - the updated name should appear in the table
           await expect(
@@ -458,6 +439,9 @@ test.describe("User Update Operations", () => {
         await test.step("Open delete confirmation for the test user", async () => {
           await page.goto("/en-US/admin/users");
           await page.waitForLoadState("networkidle");
+          await page
+            .getByPlaceholder("Filter users...")
+            .fill("Delete Test User");
 
           // Find the test user row
           const userRow = page.getByRole("row").filter({ hasText: testEmail });
@@ -492,6 +476,9 @@ test.describe("User Update Operations", () => {
           // Reload the page to ensure we see the updated list
           await page.reload();
           await page.waitForLoadState("networkidle");
+          await page
+            .getByPlaceholder("Filter users...")
+            .fill("Delete Test User");
 
           // User should no longer be visible (soft deleted users are excluded from the default view)
           await expect(
@@ -535,6 +522,9 @@ test.describe("User Update Operations", () => {
         await test.step("Open Add User dialog and fill in deleted user's details", async () => {
           await page.goto("/en-US/admin/users");
           await page.waitForLoadState("networkidle");
+          await page
+            .getByPlaceholder("Filter users...")
+            .fill("Restore Test User");
 
           // Click Add User button
           const addUserButton = page.getByRole("button", { name: /add user/i });
@@ -592,6 +582,9 @@ test.describe("User Update Operations", () => {
           // Reload page to see restored user
           await page.reload();
           await page.waitForLoadState("networkidle");
+          await page
+            .getByPlaceholder("Filter users...")
+            .fill("Restore Test User");
 
           // Verify the user is now visible in the table (not deleted)
           const userRow = page.getByRole("row").filter({ hasText: testEmail });

@@ -126,6 +126,9 @@ test.describe("Requirement provenance and promotion", () => {
       timeout: 15000,
     });
 
+    // Safari cancels a page load started while the page it is leaving
+    // still has an address update in flight, so let that settle first.
+    await page.waitForLoadState("networkidle");
     await page.goto(`/en-US/projects/issues/${projectId}`);
     const row = page.getByTestId(`issue-row-${requirementId}`);
     await expect(row).toBeVisible({ timeout: 15000 });

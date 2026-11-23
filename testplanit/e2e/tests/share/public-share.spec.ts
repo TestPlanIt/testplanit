@@ -1,4 +1,5 @@
 import { expect, stubLiveStreams, test } from "../../fixtures";
+import { openShareDialog } from "../../utils/run-report";
 
 /**
  * Public Share Flow E2E Tests
@@ -36,7 +37,16 @@ test.describe("Public Share Flow", () => {
    */
   async function runReport(page: import("@playwright/test").Page) {
     const runButton = page.locator('[data-testid="run-report-button"]');
+    // The page has usually run the report once already from its URL, so
+    // results on screen say nothing about this run. Wait for its response:
+    // acting while the report re-renders loses the click.
+    const ran = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/report-builder/") &&
+        response.request().method() === "POST"
+    );
     await runButton.click();
+    await ran;
     await page.waitForLoadState("networkidle");
 
     // Wait for results to be visible
@@ -79,9 +89,7 @@ test.describe("Public Share Flow", () => {
 
     await test.step("Open the share dialog and select public mode", async () => {
       // Click the Share button
-      const shareButton = page.getByTestId("share-report-button");
-      await expect(shareButton).toBeVisible({ timeout: 5000 });
-      await shareButton.click();
+      await openShareDialog(page);
 
       // Wait for share dialog to open
       const shareDialog = page.locator('[role="dialog"]');
@@ -213,8 +221,7 @@ test.describe("Public Share Flow", () => {
     await runReport(page);
 
     // Create a public share
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     const publicModeRadio = page.getByTestId("share-mode-public");
     await publicModeRadio.click();
@@ -288,8 +295,7 @@ test.describe("Public Share Flow", () => {
     await runReport(page);
 
     // Create a public share
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     const publicModeRadio = page.getByTestId("share-mode-public");
     await publicModeRadio.click();
@@ -357,8 +363,7 @@ test.describe("Public Share Flow", () => {
     await runReport(page);
 
     // Create a public share
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     const publicModeRadio = page.getByTestId("share-mode-public");
     await publicModeRadio.click();
@@ -401,8 +406,7 @@ test.describe("Public Share Flow", () => {
     await runReport(page);
 
     // Create a public share with expiration
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     const publicModeRadio = page.getByTestId("share-mode-public");
     await publicModeRadio.click();

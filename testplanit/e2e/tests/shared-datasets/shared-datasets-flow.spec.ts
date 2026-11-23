@@ -58,9 +58,16 @@ test.describe("Shared datasets - happy path @shared-datasets", () => {
       // Click the editor save (whatever the empty grid contains is the
       // post-edit payload — the lazy v1 backfill captures the pre-edit
       // baseline, the v2 row captures the post-edit payload).
+      // The next step loads another page; Safari aborts a save that is
+      // still in flight then, so wait for its response.
+      const saved = page.waitForResponse(
+        (response) =>
+          /\/api\/.*datasets?\//.test(response.url()) &&
+          response.request().method() !== "GET"
+      );
       await page.getByTestId("shared-dataset-editor-save").click();
+      expect((await saved).ok()).toBe(true);
 
-      // Wait for the save to land (toast + non-error state).
       await expect(
         page.getByTestId("shared-dataset-editor-save-error")
       ).not.toBeVisible();

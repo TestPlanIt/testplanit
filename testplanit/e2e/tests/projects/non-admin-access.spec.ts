@@ -43,12 +43,19 @@ test.describe("Non-admin member access", () => {
       await test.step("Admin pages redirect the member home", async () => {
         await page.goto(`${baseURL}/en-US/admin/users`);
         await page.waitForURL(/\/en-US\/?$/, { timeout: 15000 });
+        // Safari cancels a page load started while the page it is leaving
+        // still has an address update in flight, so let that settle first.
+        await page.waitForLoadState("networkidle");
       });
 
       await test.step("Project settings are withheld", async () => {
-        await page.goto(
-          `${baseURL}/en-US/projects/settings/${projectId}/parameters`
-        );
+        await expect(async () => {
+          await page.goto(
+            `${baseURL}/en-US/projects/settings/${projectId}/parameters`
+          );
+          await page.waitForLoadState("networkidle");
+          expect(page.url()).toContain(`/settings/${projectId}/parameters`);
+        }).toPass({ timeout: 30000 });
         await expect(
           page.getByTestId("junit-iteration-property-input")
         ).toHaveCount(0, { timeout: 15000 });

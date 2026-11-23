@@ -1,4 +1,5 @@
 import { expect, stubLiveStreams, test } from "../../fixtures";
+import { openShareDialog } from "../../utils/run-report";
 
 /**
  * Password-Protected Share Flow E2E Tests
@@ -35,7 +36,16 @@ test.describe("Password-Protected Share Flow", () => {
    */
   async function runReport(page: import("@playwright/test").Page) {
     const runButton = page.locator('[data-testid="run-report-button"]');
+    // The page has usually run the report once already from its URL, so
+    // results on screen say nothing about this run. Wait for its response:
+    // acting while the report re-renders loses the click.
+    const ran = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/report-builder/") &&
+        response.request().method() === "POST"
+    );
     await runButton.click();
+    await ran;
     await page.waitForLoadState("networkidle");
 
     const resultsCard = page.locator("text=/Results/i");
@@ -75,8 +85,7 @@ test.describe("Password-Protected Share Flow", () => {
     });
 
     await test.step("Create a password-protected share", async () => {
-      const shareButton = page.getByTestId("share-report-button");
-      await shareButton.click();
+      await openShareDialog(page);
 
       // Select PASSWORD_PROTECTED mode
       const passwordModeRadio = page.getByTestId("share-mode-password");
@@ -192,8 +201,7 @@ test.describe("Password-Protected Share Flow", () => {
     await navigateToRepositoryStatsReport(page, projectId);
     await runReport(page);
 
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     const passwordModeRadio = page.getByTestId("share-mode-password");
     await passwordModeRadio.click();
@@ -282,8 +290,7 @@ test.describe("Password-Protected Share Flow", () => {
     await navigateToRepositoryStatsReport(page, projectId);
     await runReport(page);
 
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     const passwordModeRadio = page.getByTestId("share-mode-password");
     await passwordModeRadio.click();
@@ -381,8 +388,7 @@ test.describe("Password-Protected Share Flow", () => {
     await runReport(page);
 
     // Open share dialog
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     // Select password-protected mode
     const passwordModeRadio = page.getByTestId("share-mode-password");
@@ -431,8 +437,7 @@ test.describe("Password-Protected Share Flow", () => {
     await navigateToRepositoryStatsReport(page, projectId);
     await runReport(page);
 
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     const passwordModeRadio = page.getByTestId("share-mode-password");
     await passwordModeRadio.click();
@@ -517,8 +522,7 @@ test.describe("Password-Protected Share Flow", () => {
     await runReport(page);
 
     // Open share dialog
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     // Select password-protected mode
     const passwordModeRadio = page.getByTestId("share-mode-password");

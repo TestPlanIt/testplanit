@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import { clickRunReport } from "../../utils/run-report";
 
 /**
  * Report Builder - Drill-Down and Forecasting E2E Tests
@@ -45,10 +46,7 @@ test.describe("Report Builder - Drill-Down", () => {
    * Run the report by clicking the run button
    */
   async function runReport(page: import("@playwright/test").Page) {
-    const runButton = page.locator('[data-testid="run-report-button"]');
-    await expect(runButton).toBeVisible({ timeout: 5000 });
-    await expect(runButton).toBeEnabled({ timeout: 10000 });
-    await runButton.click();
+    await clickRunReport(page);
     await expect(
       page
         .locator(

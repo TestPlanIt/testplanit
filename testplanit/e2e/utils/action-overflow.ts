@@ -62,13 +62,18 @@ export async function clickOverflowAction(
   menuTestId: ActionOverflowMenuId,
   options: { timeout?: number } = {}
 ): Promise<void> {
-  const action = await revealOverflowAction(
-    page,
-    actionTestId,
-    menuTestId,
-    options
-  );
-  await action.click();
+  // The bar switches between wide and compact as the page lays out, which
+  // closes an open kebab menu and removes its items. Reveal and click again
+  // when that happens under the click.
+  await expect(async () => {
+    const action = await revealOverflowAction(
+      page,
+      actionTestId,
+      menuTestId,
+      options
+    );
+    await action.click({ timeout: 3_000 });
+  }).toPass({ timeout: 30_000 });
 }
 
 /**

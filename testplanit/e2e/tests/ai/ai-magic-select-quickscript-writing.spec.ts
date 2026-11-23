@@ -115,6 +115,7 @@ test.describe("Magic Select in Test Run Creation (AI-03)", () => {
       // Proceed to step 2
       const nextButton = page.getByTestId("run-next-button").first();
       await expect(nextButton).toBeVisible({ timeout: 5000 });
+      await expect(nextButton).toBeEnabled({ timeout: 15000 });
       await nextButton.dispatchEvent("click");
 
       // Step 2: Wait for test case selection modal
@@ -201,6 +202,7 @@ test.describe("Magic Select in Test Run Creation (AI-03)", () => {
     await test.step("Proceed to step 2 and verify Magic Select button still renders", async () => {
       const nextButton = page.getByTestId("run-next-button").first();
       await expect(nextButton).toBeVisible({ timeout: 5000 });
+      await expect(nextButton).toBeEnabled({ timeout: 15000 });
       await nextButton.dispatchEvent("click");
 
       // Step 2 should render with save button
@@ -360,6 +362,13 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     await test.step("Trigger AI export when toggle present and verify template selector", async () => {
       const qsDialog = page.getByTestId("quickscript-dialog");
 
+      // The template selector is on the options screen whether or not the AI
+      // toggle is offered. Checked before the export: the preview that
+      // follows replaces this screen.
+      await expect(
+        qsDialog.getByTestId("quickscript-template-select")
+      ).toBeVisible({ timeout: 5000 });
+
       // Check for AI export toggle
       const aiToggle = qsDialog.getByTestId("ai-export-toggle");
       const aiToggleVisible = await aiToggle
@@ -381,11 +390,6 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
           .first();
         await expect(previewContent).toBeVisible({ timeout: 10000 });
       }
-
-      // Template selector should always be visible regardless of AI toggle
-      await expect(
-        qsDialog.getByTestId("quickscript-template-select")
-      ).toBeVisible({ timeout: 5000 });
     });
   });
 

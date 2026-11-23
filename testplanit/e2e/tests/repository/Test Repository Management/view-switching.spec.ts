@@ -1,5 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
+import { selectRepositoryView } from "../../../utils/view-selector";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
 
 /**
@@ -76,19 +77,7 @@ test.describe("View Switching", () => {
     page: import("@playwright/test").Page,
     viewName: string
   ) {
-    const viewSwitcher = await getViewSwitcher(page);
-    await expect(viewSwitcher).toBeVisible({ timeout: 5000 });
-    await viewSwitcher.click();
-
-    // Wait for dropdown to open and select the option
-    const option = page
-      .locator('[role="option"]')
-      .filter({ hasText: new RegExp(viewName, "i") })
-      .first();
-    await expect(option).toBeVisible({ timeout: 3000 });
-    await option.click();
-
-    await page.waitForLoadState("networkidle");
+    await selectRepositoryView(page, new RegExp(viewName, "i"));
   }
 
   test("Default View is Folders @smoke", async ({ api, page }) => {

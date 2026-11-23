@@ -33,11 +33,14 @@ test.describe("Project Settings - Access", () => {
     });
 
     await test.step("The admin and the assigned member are listed", async () => {
+      const filter = page.getByTestId("project-access-filter");
+      await filter.fill("admin@example.com");
       const adminRow = page.getByTestId(`project-access-row-${adminId}`);
       await expect(adminRow).toBeVisible({ timeout: 15000 });
       await expect(adminRow).toContainText("Admin");
       await expect(adminRow).toContainText("System Access");
 
+      await filter.fill(member.data.name);
       const memberRow = page.getByTestId(
         `project-access-row-${member.data.id}`
       );

@@ -499,12 +499,25 @@ test.describe("User trash", () => {
 
       await test.step("Setting it back to 30 from the admin row re-enables the Trash", async () => {
         await page.getByTestId("user-trash-window-input").fill("30");
+        // Loading another page right away aborts the unfinished save in
+        // Safari, so let it land first.
+        const saved = page.waitForResponse(
+          (response) =>
+            response.url().includes("/api/model/appConfig/upsert") &&
+            response.request().method() !== "GET"
+        );
         await page.getByTestId("user-trash-window-save").click();
+        expect((await saved).ok()).toBe(true);
         await page.goto(`/en-US/users/profile/${me}`);
-        await page.getByTestId("profile-trash-trigger").click();
-        await expect(page.getByTestId(`user-trash-row-${caseId}`)).toBeVisible({
-          timeout: 15000,
-        });
+        // A click that lands before the section is interactive is lost in
+        // Firefox and WebKit, so open it until the row shows.
+        const row = page.getByTestId(`user-trash-row-${caseId}`);
+        await expect(async () => {
+          if (!(await row.isVisible())) {
+            await page.getByTestId("profile-trash-trigger").click();
+          }
+          await expect(row).toBeVisible({ timeout: 4000 });
+        }).toPass({ timeout: 30000 });
       });
     } finally {
       await setWindowDays(request, baseURL!, null);

@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import { openShareDialog } from "../../utils/run-report";
 
 /**
  * Share Management E2E Tests
@@ -35,7 +36,16 @@ test.describe("Share Management", () => {
    */
   async function runReport(page: import("@playwright/test").Page) {
     const runButton = page.locator('[data-testid="run-report-button"]');
+    // The page has usually run the report once already from its URL, so
+    // results on screen say nothing about this run. Wait for its response:
+    // acting while the report re-renders loses the click.
+    const ran = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/report-builder/") &&
+        response.request().method() === "POST"
+    );
     await runButton.click();
+    await ran;
     await page.waitForLoadState("networkidle");
 
     const resultsCard = page.locator("text=/Results/i");
@@ -51,8 +61,7 @@ test.describe("Share Management", () => {
     title: string,
     password?: string
   ): Promise<string> {
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     // Wait for dialog to be visible
     const shareDialog = page.locator('[role="dialog"]');
@@ -68,8 +77,7 @@ test.describe("Share Management", () => {
       // Close and re-open to get fresh dialog
       await page.keyboard.press("Escape");
       await page.waitForTimeout(500);
-      await shareButton.click();
-      await expect(shareDialog).toBeVisible({ timeout: 5000 });
+      await openShareDialog(page);
     }
 
     // Always click on "Create" tab to ensure we're on the right tab

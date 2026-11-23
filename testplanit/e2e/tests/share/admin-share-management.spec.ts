@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import { clickRunReport, openShareDialog } from "../../utils/run-report";
 
 /**
  * Admin Share Management E2E Tests
@@ -35,11 +36,7 @@ test.describe("Admin Share Management", () => {
    */
   async function runCrossProjectReport(page: import("@playwright/test").Page) {
     // Report should already be configured via URL params, just run it
-    const runButton = page.locator('[data-testid="run-report-button"]');
-    await expect(runButton).toBeVisible({ timeout: 5000 });
-    await expect(runButton).toBeEnabled({ timeout: 10000 });
-    await runButton.click();
-    await page.waitForLoadState("networkidle");
+    await clickRunReport(page);
 
     // Wait for results
     const resultsCard = page.locator("text=/Results/i");
@@ -53,8 +50,7 @@ test.describe("Admin Share Management", () => {
     page: import("@playwright/test").Page,
     title: string
   ): Promise<string> {
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     // Wait for dialog
     const shareDialog = page.locator('[role="dialog"]');
@@ -208,10 +204,7 @@ test.describe("Admin Share Management", () => {
       );
       await page.waitForLoadState("networkidle");
 
-      const runButton1 = page.locator('[data-testid="run-report-button"]');
-      await expect(runButton1).toBeVisible({ timeout: 5000 });
-      await runButton1.click();
-      await page.waitForLoadState("networkidle");
+      await clickRunReport(page);
 
       const shareKey1 = await createShare(page, `Project 1 Share ${timestamp}`);
       const share1Data = await api.getShareLinkByKey(shareKey1);
@@ -226,10 +219,7 @@ test.describe("Admin Share Management", () => {
       );
       await page.waitForLoadState("networkidle");
 
-      const runButton2 = page.locator('[data-testid="run-report-button"]');
-      await expect(runButton2).toBeVisible({ timeout: 5000 });
-      await runButton2.click();
-      await page.waitForLoadState("networkidle");
+      await clickRunReport(page);
 
       const shareKey2 = await createShare(page, `Project 2 Share ${timestamp}`);
       const share2Data = await api.getShareLinkByKey(shareKey2);
@@ -280,10 +270,7 @@ test.describe("Admin Share Management", () => {
     );
     await page.waitForLoadState("networkidle");
 
-    const runButton = page.locator('[data-testid="run-report-button"]');
-    await expect(runButton).toBeVisible({ timeout: 5000 });
-    await runButton.click();
-    await page.waitForLoadState("networkidle");
+    await clickRunReport(page);
 
     const shareKey = await createShare(page, `Admin Manage Share ${timestamp}`);
     const shareLinkData = await api.getShareLinkByKey(shareKey);
@@ -342,10 +329,7 @@ test.describe("Admin Share Management", () => {
     );
     await page.waitForLoadState("networkidle");
 
-    const runButton = page.locator('[data-testid="run-report-button"]');
-    await expect(runButton).toBeVisible({ timeout: 5000 });
-    await runButton.click();
-    await page.waitForLoadState("networkidle");
+    await clickRunReport(page);
 
     const shareKey = await createShare(page, `Admin Delete Share ${timestamp}`);
     const shareLinkData = await api.getShareLinkByKey(shareKey);

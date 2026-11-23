@@ -21,6 +21,7 @@ test.describe("Admin trash", () => {
     await test.step("The deleted tag is listed under Tags", async () => {
       await page.goto("/en-US/admin/trash");
       await page.getByRole("button", { name: "Tags", exact: true }).click();
+      await page.getByTestId("trash-item-filter").fill(name);
       await expect(page.getByTestId(`trash-Tags-row-${tagId}`)).toBeVisible({
         timeout: 15000,
       });
@@ -67,6 +68,7 @@ test.describe("Admin trash", () => {
     await test.step("Purge it from the Tags list and confirm", async () => {
       await page.goto("/en-US/admin/trash");
       await page.getByRole("button", { name: "Tags", exact: true }).click();
+      await page.getByTestId("trash-item-filter").fill(name);
       const row = page.getByTestId(`trash-Tags-row-${tagId}`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.getByRole("button", { name: "Purge" }).click();

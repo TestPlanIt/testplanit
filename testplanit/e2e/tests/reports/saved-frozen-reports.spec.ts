@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "../../fixtures";
+import { openShareDialog } from "../../utils/run-report";
 
 /**
  * Saved Reports and frozen (captured) report data.
@@ -192,7 +193,7 @@ test.describe("Saved and frozen reports", () => {
 
     await runRepositoryStatsReport(page, projectId);
 
-    await page.getByTestId("share-report-button").click();
+    await openShareDialog(page);
     await page.getByTestId("report-data-mode-frozen").click();
     await page.getByTestId("share-mode-public").click();
     await page.getByTestId("share-title-input").fill(`Frozen public ${ts}`);
@@ -247,7 +248,7 @@ test.describe("Saved and frozen reports", () => {
 
     await runRepositoryStatsReport(page, projectId);
 
-    await page.getByTestId("share-report-button").click();
+    await openShareDialog(page);
     await page.getByTestId("report-data-mode-frozen").click();
     await page.getByTestId("share-mode-password").click();
     await page.getByTestId("share-password-input").fill(password);

@@ -119,6 +119,10 @@ test.describe("Sorting", () => {
       .first();
     await button.scrollIntoViewIfNeeded();
     await expect(button).toBeVisible({ timeout: 5000 });
+    // A menu closed by the previous step stays mounted while it animates
+    // out. In WebKit it takes focus back as it goes, which closes a menu
+    // opened in the meantime, so wait until it is gone.
+    await expect(page.locator('[role="menu"]')).toHaveCount(0);
     // Open the menu via keyboard: a pointer click on a neighbouring header can
     // be intercepted by a sticky column (e.g. Name, z-index 21) overlapping it.
     // Keyboard activation has no such interception and also dismisses any menu
@@ -1274,6 +1278,10 @@ test.describe("Sorting with ViewSelector Filters", () => {
       .first();
     await button.scrollIntoViewIfNeeded();
     await expect(button).toBeVisible({ timeout: 5000 });
+    // A menu closed by the previous step stays mounted while it animates
+    // out. In WebKit it takes focus back as it goes, which closes a menu
+    // opened in the meantime, so wait until it is gone.
+    await expect(page.locator('[role="menu"]')).toHaveCount(0);
     // Open the menu via keyboard: a pointer click on a neighbouring header can
     // be intercepted by a sticky column (e.g. Name, z-index 21) overlapping it.
     // Keyboard activation has no such interception and also dismisses any menu
@@ -1843,6 +1851,7 @@ test.describe("Run Mode Sorting", () => {
       .first();
     await button.scrollIntoViewIfNeeded();
     await expect(button).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[role="menu"]')).toHaveCount(0);
     await button.focus();
     await button.press("Enter");
     // Scope to the OPEN menu: a menu closed moments earlier is still in the

@@ -149,13 +149,13 @@ test.describe("Parameters - authoring + step mentions @parameters", () => {
         const dataTransfer = new DataTransfer();
         dataTransfer.setData("text/html", html);
         dataTransfer.setData("text/plain", "@notDeclared");
-        el.dispatchEvent(
-          new ClipboardEvent("paste", {
-            bubbles: true,
-            cancelable: true,
-            clipboardData: dataTransfer,
-          })
-        );
+        // Firefox ignores `clipboardData` passed to the constructor.
+        const event = new ClipboardEvent("paste", {
+          bubbles: true,
+          cancelable: true,
+        });
+        Object.defineProperty(event, "clipboardData", { value: dataTransfer });
+        el.dispatchEvent(event);
       });
 
       await expect(

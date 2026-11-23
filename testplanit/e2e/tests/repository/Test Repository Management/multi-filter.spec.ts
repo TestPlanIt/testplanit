@@ -1,5 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
+import { selectRepositoryView } from "../../../utils/view-selector";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
 import { waitForStableBox } from "../../../utils/wait-for-stable";
 
@@ -122,14 +123,7 @@ async function openChipEditor(
 
 /** Switches the "View by" grouping axis. */
 async function selectViewAxis(page: Page, label: RegExp): Promise<void> {
-  const trigger = page.getByTestId("view-selector-trigger");
-  await expect(trigger).toBeVisible({ timeout: 15000 });
-  await trigger.click();
-
-  const option = page.locator('[role="option"]').filter({ hasText: label });
-  await expect(option.first()).toBeVisible({ timeout: 10000 });
-  await option.first().click();
-  await page.waitForLoadState("networkidle");
+  await selectRepositoryView(page, label);
 }
 
 /**

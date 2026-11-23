@@ -1,5 +1,9 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "../../fixtures";
+import {
+  clickRunReport,
+  openShareDialog as openDialog,
+} from "../../utils/run-report";
 
 /**
  * Relative date ranges on saved and shared live reports.
@@ -22,16 +26,14 @@ test.describe("Relative date ranges", () => {
   }
 
   async function runReport(page: Page) {
-    const runButton = page.getByTestId("run-report-button");
-    await expect(runButton).toBeEnabled({ timeout: 10000 });
-    await runButton.click();
+    await clickRunReport(page);
     await expect(page.getByTestId("report-results-summary")).toBeVisible({
       timeout: 15000,
     });
   }
 
   async function openShareDialog(page: Page) {
-    await page.getByTestId("share-report-button").click();
+    await openDialog(page);
     await expect(page.getByTestId("share-mode-public")).toBeVisible();
   }
 

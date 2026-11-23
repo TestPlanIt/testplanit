@@ -426,6 +426,9 @@ test.describe("User Profile Management", () => {
       await test.step("Open the test user's profile from the users list", async () => {
         await page.goto("/en-US/admin/users");
         await page.waitForLoadState("networkidle");
+        await page
+          .getByPlaceholder("Filter users...")
+          .fill("Test User To Delete");
 
         // Find and click the test user's profile link
         const profileLink = page.getByRole("link", {
@@ -544,7 +547,7 @@ test.describe("User Profile Management", () => {
 
     await test.step("Verify a validation error is shown", async () => {
       // Should show validation error
-      await expect(page.getByText(/invalid.*email|email.*valid/i)).toBeVisible({
+      await expect(page.getByText("Invalid email address")).toBeVisible({
         timeout: 5000,
       });
     });

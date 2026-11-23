@@ -458,18 +458,14 @@ test.describe("SSO and Magic Link", () => {
           const sessionCookies = savedCookies.filter((c) =>
             c.name.includes("session-token")
           );
-          const setCookieHeaders = sessionCookies.map(
-            (c) =>
-              `${c.name}=${c.value}; Path=${c.path ?? "/"}; ${c.secure ? "Secure; " : ""}${c.httpOnly ? "HttpOnly; " : ""}SameSite=Lax`
-          );
+          // A page that redirects, not a 302: WebKit cannot fulfil a mocked
+          // redirect. The session cookies go straight into the context,
+          // since a Set-Cookie on this response would belong to the IdP host.
+          await page.context().addCookies(sessionCookies);
           await route.fulfill({
-            status: 302,
-            headers: {
-              Location: `${baseURL}/en-US`,
-              ...(setCookieHeaders.length > 0
-                ? { "Set-Cookie": setCookieHeaders[0] }
-                : {}),
-            },
+            status: 200,
+            contentType: "text/html",
+            body: `<script>location.replace(${JSON.stringify(`${baseURL}/en-US`)})</script>`,
           });
         });
       });

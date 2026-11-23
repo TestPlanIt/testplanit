@@ -542,6 +542,7 @@ test.describe("Test Run Configuration Combobox", () => {
       // Click "Next" to go to step 2 (use dispatchEvent to bypass dialog overlay)
       const nextButton = dialog.getByTestId("run-next-button");
       await expect(nextButton).toBeVisible({ timeout: 10000 });
+      await expect(nextButton).toBeEnabled({ timeout: 15000 });
       await nextButton.dispatchEvent("click");
 
       // Verify step 2 is shown (test case selection with repository)

@@ -50,22 +50,41 @@ test.describe("Markdown Paste & Import", () => {
   }
 
   /**
-   * Simulate pasting text into the currently focused element via ClipboardEvent
+   * Paste text into the currently focused element through the clipboard
    */
   async function pasteTextIntoFocusedEditor(
     page: Page,
     text: string
   ): Promise<void> {
+    // A real copy and paste: the text is copied from a scratch textarea, then
+    // pasted into the element that had focus, with the caret placed at its
+    // end (Firefox gives a focused editor no caret until one is set).
     await page.evaluate((pasteText) => {
-      const dt = new DataTransfer();
-      dt.setData("text/plain", pasteText);
-      const event = new ClipboardEvent("paste", {
-        clipboardData: dt,
-        bubbles: true,
-        cancelable: true,
-      });
-      document.activeElement?.dispatchEvent(event);
+      const target = document.activeElement as HTMLElement | null;
+      (window as any).__pasteTarget = target;
+      const source = document.createElement("textarea");
+      source.id = "e2e-paste-source";
+      source.value = pasteText;
+      source.style.position = "fixed";
+      source.style.top = "0";
+      document.body.appendChild(source);
+      source.focus();
+      source.select();
     }, text);
+    await page.keyboard.press("ControlOrMeta+C");
+    await page.evaluate(() => {
+      document.getElementById("e2e-paste-source")?.remove();
+      const target = (window as any).__pasteTarget as HTMLElement | null;
+      if (!target) return;
+      target.focus();
+      const range = document.createRange();
+      range.selectNodeContents(target);
+      range.collapse(false);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    });
+    await page.keyboard.press("ControlOrMeta+V");
     // Give editor time to process the paste event
     await page.waitForTimeout(500);
   }

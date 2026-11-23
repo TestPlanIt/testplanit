@@ -140,6 +140,9 @@ test("blocked badge, panel notice and link direction labels", async ({
   });
 
   await test.step("The Linked Cases panel labels the direction from each side", async () => {
+    // Safari cancels a page load started while the page it is leaving
+    // still has an address update in flight, so let that settle first.
+    await page.waitForLoadState("networkidle");
     await page.goto(`/en-US/projects/repository/${projectId}/${caseB}`);
     await page.waitForLoadState("load");
     await expect(page.getByTestId(`linked-case-type-${linkId}`)).toHaveText(
@@ -159,12 +162,18 @@ test("blocked badge, panel notice and link direction labels", async ({
     // On C's page, link D with "Blocks": D must end up depending on C.
     await page.goto(`/en-US/projects/repository/${projectId}/${caseC}`);
     await page.waitForLoadState("load");
-    await page
-      .getByRole("button", { name: /add link/i })
-      .first()
-      .click();
+    // A click that lands before the page is interactive is lost in WebKit,
+    // so ask again until the dialog opens.
     const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
+    await expect(async () => {
+      if (!(await dialog.isVisible())) {
+        await page
+          .getByRole("button", { name: /add link/i })
+          .first()
+          .click();
+      }
+      await expect(dialog).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 20000 });
 
     await dialog.getByRole("combobox").first().click();
     await page.keyboard.type(`DGU D ${ts}`);

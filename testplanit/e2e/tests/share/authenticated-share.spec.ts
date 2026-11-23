@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import { openShareDialog } from "../../utils/run-report";
 
 /**
  * Authenticated Share Flow E2E Tests
@@ -35,7 +36,16 @@ test.describe("Authenticated Share Flow", () => {
    */
   async function runReport(page: import("@playwright/test").Page) {
     const runButton = page.locator('[data-testid="run-report-button"]');
+    // The page has usually run the report once already from its URL, so
+    // results on screen say nothing about this run. Wait for its response:
+    // acting while the report re-renders loses the click.
+    const ran = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/report-builder/") &&
+        response.request().method() === "POST"
+    );
     await runButton.click();
+    await ran;
     await page.waitForLoadState("networkidle");
 
     const resultsCard = page.locator("text=/Results/i");
@@ -74,8 +84,7 @@ test.describe("Authenticated Share Flow", () => {
     });
 
     await test.step("Create an authenticated share link", async () => {
-      const shareButton = page.getByTestId("share-report-button");
-      await shareButton.click();
+      await openShareDialog(page);
 
       // Select AUTHENTICATED mode
       // Note: The data-testid uses lowercase version of the mode
@@ -160,8 +169,7 @@ test.describe("Authenticated Share Flow", () => {
     });
 
     await test.step("Create an authenticated share link", async () => {
-      const shareButton = page.getByTestId("share-report-button");
-      await shareButton.click();
+      await openShareDialog(page);
 
       const authModeRadio = page.getByTestId("share-mode-authenticated");
       await authModeRadio.click();
@@ -226,8 +234,7 @@ test.describe("Authenticated Share Flow", () => {
     await runReport(page);
 
     // Create an authenticated share
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     const authModeRadio = page.getByTestId("share-mode-authenticated");
     await authModeRadio.click();
@@ -285,8 +292,7 @@ test.describe("Authenticated Share Flow", () => {
     await runReport(page);
 
     // Open share dialog
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await openShareDialog(page);
 
     // Select AUTHENTICATED mode
     const authModeRadio = page.getByTestId("share-mode-authenticated");

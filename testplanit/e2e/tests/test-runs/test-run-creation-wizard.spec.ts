@@ -87,6 +87,7 @@ test.describe("Test Run Creation Wizard", () => {
       // Proceed to Step 2 (test case selection)
       const nextButton = dialog.getByTestId("run-next-button");
       await expect(nextButton).toBeVisible({ timeout: 5000 });
+      await expect(nextButton).toBeEnabled({ timeout: 15000 });
       await nextButton.dispatchEvent("click");
 
       // Step 2: Select a test case from the repository
@@ -160,6 +161,7 @@ test.describe("Test Run Creation Wizard", () => {
       // Proceed to Step 2 — skip config selection to avoid dialog-closing issues
       const nextBtn = dialog.getByTestId("run-next-button");
       await expect(nextBtn).toBeVisible({ timeout: 5000 });
+      await expect(nextBtn).toBeEnabled({ timeout: 15000 });
       await nextBtn.dispatchEvent("click");
 
       // Wait for step 2 to load

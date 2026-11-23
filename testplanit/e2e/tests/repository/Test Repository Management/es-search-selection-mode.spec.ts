@@ -183,6 +183,7 @@ async function openModalAndGoToStep2(
   // Click Next to go to step 2 (test case selection)
   // Use evaluate click to bypass overflow-y-auto intercepting pointer events
   const nextButton = dialog.getByTestId("run-next-button");
+  await expect(nextButton).toBeEnabled({ timeout: 15000 });
   await nextButton.evaluate((el: HTMLElement) => el.click());
 
   // Wait for step 2 dialog content to appear (ProjectRepository in selection mode)

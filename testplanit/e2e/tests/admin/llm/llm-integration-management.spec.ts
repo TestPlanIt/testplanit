@@ -449,6 +449,9 @@ test.describe("LLM Integration Management - Test Connection", () => {
         await page.goto("/en-US/admin/llm");
         await page.waitForLoadState("networkidle");
 
+        await page
+          .getByPlaceholder("Filter AI models...")
+          .fill(integrationName);
         const row = page.getByRole("row").filter({ hasText: integrationName });
         await expect(row).toBeVisible({ timeout: 10000 });
 
