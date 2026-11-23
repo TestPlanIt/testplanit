@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RedmineAdapter } from "./RedmineAdapter";
 
 const mockFetch = vi.fn();
@@ -291,6 +291,220 @@ describe("RedmineAdapter", () => {
         },
       });
       expect(result.id).toBe("100");
+    });
+
+    it("sends custom field values and leaves out empty ones and other keys", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issue: { id: 101 } }));
+
+      await adapter.createIssue({
+        title: "x",
+        projectId: "5",
+        customFields: {
+          "1": "2026.11",
+          "2": ["Firefox", "Safari"],
+          "3": 3,
+          "4": "",
+          "5": [],
+          reporter: { accountId: "8" },
+        },
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.issue.custom_fields).toEqual([
+        { id: 1, value: "2026.11" },
+        { id: 2, value: ["Firefox", "Safari"] },
+        { id: 3, value: "3" },
+      ]);
+    });
+  });
+
+  describe("getIssueTypeFields", () => {
+    const def = (overrides: Record<string, unknown>) => ({
+      customized_type: "issue",
+      field_format: "string",
+      is_required: false,
+      is_for_all: true,
+      multiple: false,
+      default_value: "",
+      trackers: [{ id: 2, name: "Bug" }],
+      ...overrides,
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    /** Answer each endpoint by URL; a missing entry is a 403. */
+    function respond(routes: Record<string, unknown>) {
+      mockFetch.mockImplementation(async (url: string) => {
+        const match = Object.keys(routes).find((path) => url.includes(path));
+        return match ? okJson(routes[match]) : httpError(403, "Forbidden");
+      });
+    }
+
+    it("lists the fields of the project and tracker, typed for the form", async () => {
+      await authenticate();
+      respond({
+        "/projects/web.json": {
+          project: {
+            id: 5,
+            identifier: "web",
+            name: "Web",
+            issue_custom_fields: [{ id: 20, name: "Listed" }],
+          },
+        },
+        "/custom_fields.json": {
+          custom_fields: [
+            def({
+              id: 1,
+              name: "Build",
+              is_required: true,
+              default_value: "n/a",
+            }),
+            def({ id: 2, name: "Notes", field_format: "text" }),
+            def({
+              id: 3,
+              name: "Retries",
+              field_format: "int",
+              default_value: "2",
+            }),
+            def({ id: 4, name: "Found on", field_format: "date" }),
+            def({
+              id: 5,
+              name: "Blocked",
+              field_format: "bool",
+              default_value: "0",
+              possible_values: [
+                { value: "1", label: "Yes" },
+                { value: "0", label: "No" },
+              ],
+            }),
+            def({
+              id: 6,
+              name: "Browsers",
+              field_format: "list",
+              multiple: true,
+              default_value: "Safari",
+              possible_values: [
+                { value: "Firefox", label: "Firefox" },
+                { value: "Safari", label: "Safari" },
+              ],
+            }),
+            def({
+              id: 7,
+              name: "Severity",
+              field_format: "enumeration",
+              possible_values: [{ value: "11", label: "Major" }],
+            }),
+            def({ id: 8, name: "Fixed in", field_format: "version" }),
+            def({ id: 9, name: "Owner", field_format: "user" }),
+            def({ id: 10, name: "Log", field_format: "attachment" }),
+            def({ id: 11, name: "Other tracker", trackers: [{ id: 3 }] }),
+            def({ id: 12, name: "Other project", is_for_all: false }),
+            def({ id: 13, name: "Project field", customized_type: "project" }),
+            def({ id: 20, name: "Listed", is_for_all: false }),
+            def({
+              id: 21,
+              name: "By project",
+              is_for_all: false,
+              projects: [{ id: 5, name: "Web" }],
+            }),
+          ],
+        },
+        "/projects/web/versions.json": {
+          versions: [
+            { id: 31, name: "1.0", status: "closed" },
+            { id: 32, name: "1.1", status: "open" },
+          ],
+        },
+        "/projects/web/memberships.json": {
+          memberships: [
+            { user: { id: 8, name: "Ada Lovelace" } },
+            { group: { id: 9, name: "QA" } },
+          ],
+        },
+      });
+
+      const fields = await adapter.getIssueTypeFields("web", "2");
+      const byName = Object.fromEntries(fields.map((f) => [f.name, f]));
+
+      expect(fields.map((f) => f.name)).toEqual([
+        "Build",
+        "Notes",
+        "Retries",
+        "Found on",
+        "Blocked",
+        "Browsers",
+        "Severity",
+        "Fixed in",
+        "Owner",
+        "Listed",
+        "By project",
+      ]);
+      expect(byName.Build).toMatchObject({
+        key: "1",
+        required: true,
+        schema: { type: "string" },
+        defaultValue: "n/a",
+      });
+      expect(byName.Notes.input).toBe("textarea");
+      expect(byName.Retries).toMatchObject({
+        schema: { type: "number" },
+        defaultValue: 2,
+      });
+      expect(byName["Found on"].input).toBe("date");
+      expect(byName.Blocked).toMatchObject({
+        allowedValues: [
+          { id: "1", name: "Yes" },
+          { id: "0", name: "No" },
+        ],
+        defaultValue: "0",
+      });
+      expect(byName.Browsers).toMatchObject({
+        input: "multiselect",
+        defaultValue: ["Safari"],
+      });
+      expect(byName.Severity.allowedValues).toEqual([
+        { id: "11", name: "Major" },
+      ]);
+      expect(byName["Fixed in"].allowedValues).toEqual([
+        { id: "32", name: "1.1" },
+      ]);
+      expect(byName.Owner.allowedValues).toEqual([
+        { id: "8", name: "Ada Lovelace" },
+      ]);
+    });
+
+    it("offers the project's fields as text inputs when the key is not an administrator's", async () => {
+      await authenticate();
+      respond({
+        "/projects/web.json": {
+          project: {
+            id: 5,
+            identifier: "web",
+            name: "Web",
+            issue_custom_fields: [{ id: 1, name: "Build" }],
+          },
+        },
+      });
+
+      expect(await adapter.getIssueTypeFields("web", "2")).toEqual([
+        {
+          key: "1",
+          name: "Build",
+          required: false,
+          hasDefaultValue: false,
+          schema: { type: "string" },
+        },
+      ]);
+    });
+
+    it("returns no fields when the project cannot be read", async () => {
+      await authenticate();
+      respond({});
+
+      expect(await adapter.getIssueTypeFields("web", "2")).toEqual([]);
     });
   });
 

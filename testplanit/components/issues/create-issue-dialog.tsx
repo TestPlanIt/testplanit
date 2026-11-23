@@ -112,6 +112,48 @@ function pageOf<T>(
   };
 }
 
+type ChoiceOption = { id: string; name: string };
+
+const EMPTY_OPTIONS: ChoiceOption[] = [];
+const EMPTY_SELECTION: string[] = [];
+
+/** A tracker field that takes several of a fixed list of values. */
+function MultiChoiceField({
+  name,
+  options,
+  value,
+  onChange,
+}: {
+  name: string;
+  options: ChoiceOption[];
+  value: string[];
+  onChange: (value: string[]) => void;
+}) {
+  const fetchOptions = useCallback(
+    async (query: string, page: number, pageSize: number) =>
+      pageOf(options, (option) => option.name, query, page, pageSize),
+    [options]
+  );
+  const selected = useMemo(
+    () => options.filter((option) => value.includes(option.id)),
+    [options, value]
+  );
+  return (
+    <MultiAsyncCombobox<ChoiceOption>
+      value={selected}
+      onValueChange={(next) => onChange(next.map((option) => option.id))}
+      fetchOptions={fetchOptions}
+      renderOption={(option) => option.name}
+      getOptionValue={(option) => option.id}
+      getOptionLabel={(option) => option.name}
+      placeholder={`Select ${name}`}
+      ariaLabel={name}
+      className="w-full"
+      hideSelectAll
+    />
+  );
+}
+
 const createIssueSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
@@ -482,7 +524,16 @@ export function CreateIssueDialog({
       );
       if (response.ok) {
         const data = await response.json();
-        setIssueTypeFields(data.fields || []);
+        const fields: any[] = data.fields || [];
+        setIssueTypeFields(fields);
+        const defaults = Object.fromEntries(
+          fields
+            .filter((field) => field.defaultValue !== undefined)
+            .map((field) => [field.key, field.defaultValue])
+        );
+        if (Object.keys(defaults).length > 0) {
+          setCustomFieldValues((prev) => ({ ...defaults, ...prev }));
+        }
       }
     } catch (error) {
       console.error("Failed to fetch issue type fields:", error);
@@ -938,7 +989,45 @@ export function CreateIssueDialog({
 
   const renderField = (field: any) => {
     // Handle different field types
-    if (field.allowedValues && field.allowedValues.length > 0) {
+    if (field.input === "multiselect") {
+      return (
+        <MultiChoiceField
+          name={field.name}
+          options={field.allowedValues ?? EMPTY_OPTIONS}
+          value={customFieldValues[field.key] ?? EMPTY_SELECTION}
+          onChange={(next) =>
+            setCustomFieldValues((prev) => ({ ...prev, [field.key]: next }))
+          }
+        />
+      );
+    } else if (field.input === "date") {
+      return (
+        <Input
+          id={field.key}
+          type="date"
+          value={customFieldValues[field.key] || ""}
+          onChange={(e) =>
+            setCustomFieldValues((prev) => ({
+              ...prev,
+              [field.key]: e.target.value,
+            }))
+          }
+        />
+      );
+    } else if (field.input === "textarea") {
+      return (
+        <Textarea
+          id={field.key}
+          value={customFieldValues[field.key] || ""}
+          onChange={(e) =>
+            setCustomFieldValues((prev) => ({
+              ...prev,
+              [field.key]: e.target.value,
+            }))
+          }
+        />
+      );
+    } else if (field.allowedValues && field.allowedValues.length > 0) {
       // Dropdown field
       return (
         <Select
