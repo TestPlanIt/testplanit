@@ -229,4 +229,25 @@ describe("useAsyncComboboxOptions", () => {
     expect(result.current.hasMore).toBe(false);
     expect(fetcher).toHaveBeenCalledWith("It", 0, 10);
   });
+
+  it("replaces the list when more loads between a keystroke and the search", async () => {
+    const all = makeOptions(25);
+    const fetcher = vi.fn(async (query: string, page: number, size: number) => {
+      const matching = query ? all.slice(0, 3) : all;
+      return {
+        results: matching.slice(page * size, (page + 1) * size),
+        total: matching.length,
+      };
+    });
+    const { result } = renderOptionsHook(fetcher);
+
+    await waitFor(() => expect(result.current.options).toHaveLength(10));
+
+    act(() => result.current.setSearch("It"));
+    act(() => result.current.loadMore());
+
+    await waitFor(() => expect(fetcher).toHaveBeenCalledWith("It", 0, 10));
+    await waitFor(() => expect(result.current.options).toHaveLength(3));
+    expect(result.current.total).toBe(3);
+  });
 });

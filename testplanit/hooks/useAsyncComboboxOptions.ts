@@ -164,9 +164,12 @@ export function useAsyncComboboxOptions<T>({
 
   // Restart from page 0 when the query or the fetcher changes; the in-flight
   // request for the old page is discarded by the effect's `ignore` cleanup.
+  // The debounced value restarts it too: more of the old list can load
+  // between a keystroke and the search it leads to, and that search must
+  // not be fetched as a later page.
   useEffect(() => {
     setPage(0);
-  }, [search, fetchOptions]);
+  }, [search, debouncedSearch, fetchOptions]);
 
   const loadMore = useCallback(() => setPage((p) => p + 1), []);
 
