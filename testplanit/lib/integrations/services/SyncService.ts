@@ -754,7 +754,7 @@ export class SyncService {
         omit: { credentials: false },
         include: {
           userIntegrationAuths: {
-            where: { isActive: true },
+            where: { isActive: true, needsReauthAt: null },
             orderBy: { updatedAt: "desc" },
             take: 1,
           },
@@ -1778,7 +1778,7 @@ export class SyncService {
         omit: { credentials: false },
         include: {
           userIntegrationAuths: {
-            where: { isActive: true },
+            where: { isActive: true, needsReauthAt: null },
             orderBy: { updatedAt: "desc" },
             take: 1,
           },
@@ -1870,7 +1870,7 @@ export class SyncService {
         omit: { credentials: false },
         include: {
           userIntegrationAuths: {
-            where: { isActive: true },
+            where: { isActive: true, needsReauthAt: null },
             orderBy: { updatedAt: "desc" },
             take: 1,
           },

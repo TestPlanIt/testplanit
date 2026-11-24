@@ -43,6 +43,59 @@ export const isIntegrationApiError = (
   error: unknown
 ): error is IntegrationApiError => error instanceof IntegrationApiError;
 
+/**
+ * The provider terminally rejected a refresh token: it was revoked, rotated
+ * away, or expired. Retrying cannot succeed — the owner has to reconnect.
+ * Timeouts, network failures and 5xx responses are NOT this error; the token
+ * may well still be valid once the provider recovers.
+ */
+export class RefreshTokenRevokedError extends Error {
+  constructor(
+    readonly provider: string,
+    detail: string,
+    options?: { cause?: unknown }
+  ) {
+    super(`${provider} rejected the refresh token: ${detail}`, options);
+    this.name = "RefreshTokenRevokedError";
+  }
+}
+
+export const isRefreshTokenRevokedError = (
+  error: unknown
+): error is RefreshTokenRevokedError =>
+  error instanceof RefreshTokenRevokedError;
+
+/**
+ * Whether an OAuth token endpoint's error response to a refresh grant means
+ * the refresh token itself is dead. RFC 6749 says `invalid_grant`; Atlassian
+ * also answers `unauthorized_client` / "refresh_token is invalid" for a
+ * refresh token it has already rotated. A bare `unauthorized_client` is a
+ * misconfigured OAuth app, not a dead token, so it needs the description.
+ */
+export const isDeadRefreshTokenResponse = (
+  status: number,
+  body: string
+): boolean => {
+  if (status >= 500 || status === 429) return false;
+  let parsed: { error?: unknown; error_description?: unknown };
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return false;
+  }
+  if (!parsed || typeof parsed !== "object") return false;
+  const code = typeof parsed.error === "string" ? parsed.error : "";
+  const description =
+    typeof parsed.error_description === "string"
+      ? parsed.error_description
+      : "";
+  if (code === "invalid_grant") return true;
+  if (/refresh[_ ]token is invalid/i.test(description)) return true;
+  return (
+    code === "unauthorized_client" && /refresh[_ ]token/i.test(description)
+  );
+};
+
 const JIRA_API_TOKEN_URL =
   "https://id.atlassian.com/manage-profile/security/api-tokens";
 
@@ -168,6 +221,17 @@ export const toIntegrationError = (
   provider: string
 ): IntegrationApiError => {
   if (isIntegrationApiError(error)) return error;
+
+  if (isRefreshTokenRevokedError(error)) {
+    const label = providerLabel(provider || error.provider);
+    return new IntegrationApiError(
+      provider || error.provider,
+      401,
+      "auth",
+      `The stored ${label} authorization is no longer valid. Reconnect your ${label} account.`,
+      { cause: error }
+    );
+  }
 
   if (error instanceof Error) {
     const httpMatch = error.message.match(/^HTTP (\d{3}):/);

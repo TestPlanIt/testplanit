@@ -35,7 +35,12 @@ import {
   userRefField,
 } from "./jiraDeployment";
 import { adfToWikiMarkup } from "./jiraWikiMarkup";
-import { IntegrationApiError, integrationErrorFromStatus } from "../errors";
+import {
+  IntegrationApiError,
+  RefreshTokenRevokedError,
+  integrationErrorFromStatus,
+  isDeadRefreshTokenResponse,
+} from "../errors";
 
 /**
  * Board -> project ownership is near-static (boards rarely move between
@@ -559,6 +564,9 @@ export class JiraAdapter extends BaseAdapter {
 
     if (!response.ok) {
       const error = await response.text();
+      if (isDeadRefreshTokenResponse(response.status, error)) {
+        throw new RefreshTokenRevokedError("JIRA", error);
+      }
       throw new Error(`Failed to refresh tokens: ${error}`);
     }
 
@@ -595,7 +603,12 @@ export class JiraAdapter extends BaseAdapter {
     );
 
     if (!response.ok) {
-      throw new Error("Failed to get accessible resources");
+      throw integrationErrorFromStatus("JIRA", response.status, {
+        userMessage:
+          response.status === 401
+            ? "The stored Jira authorization is no longer valid. Reconnect your Jira account."
+            : undefined,
+      });
     }
 
     return response.json();

@@ -59,13 +59,13 @@ export async function GET(
     const manager = IntegrationManager.getInstance();
     // The integration is intentionally inactive until this authorization
     // completes, so allow building the adapter to generate the authorize URL.
+    // The URL comes from the integration's settings alone — a stored token
+    // must not be touched, or a dead one blocks the flow that replaces it.
     const adapter = await manager.getAdapter(
       integrationId,
       undefined,
       undefined,
-      {
-        allowInactive: true,
-      }
+      { allowInactive: true, skipAuthentication: true }
     );
 
     if (!adapter) {

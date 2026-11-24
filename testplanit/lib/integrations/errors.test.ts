@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   IntegrationApiError,
+  RefreshTokenRevokedError,
   credentialsCorruptError,
   integrationErrorBody,
   integrationErrorFromStatus,
+  isDeadRefreshTokenResponse,
   isIntegrationApiError,
   responseStatusForIntegrationError,
   toIntegrationError,
@@ -167,5 +169,44 @@ describe("integrationErrorBody", () => {
       provider: "JIRA",
       upstreamStatus: 401,
     });
+  });
+});
+
+describe("isDeadRefreshTokenResponse", () => {
+  it.each([
+    [
+      403,
+      '{"error":"unauthorized_client","error_description":"refresh_token is invalid"}',
+    ],
+    [400, '{"error":"invalid_grant","error_description":"revoked"}'],
+    [403, '{"error":"invalid_grant"}'],
+  ])("is true for %i %s", (status, body) => {
+    expect(isDeadRefreshTokenResponse(status, body)).toBe(true);
+  });
+
+  it.each([
+    [503, "upstream connect error or disconnect/reset before headers"],
+    [503, '{"error":"invalid_grant"}'],
+    [429, '{"error":"invalid_grant"}'],
+    [
+      401,
+      '{"error":"unauthorized_client","error_description":"bad client secret"}',
+    ],
+    [400, '{"error":"invalid_request"}'],
+    [400, "not json"],
+  ])("is false for %i %s", (status, body) => {
+    expect(isDeadRefreshTokenResponse(status, body)).toBe(false);
+  });
+});
+
+describe("toIntegrationError with a dead refresh token", () => {
+  it("is an auth error that asks the user to reconnect, without the upstream body", () => {
+    const error = toIntegrationError(
+      new RefreshTokenRevokedError("JIRA", "refresh_token is invalid"),
+      "JIRA"
+    );
+    expect(error.kind).toBe("auth");
+    expect(error.userMessage).toMatch(/reconnect your jira account/i);
+    expect(error.userMessage).not.toContain("refresh_token");
   });
 });

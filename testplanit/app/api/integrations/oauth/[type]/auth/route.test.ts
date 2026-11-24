@@ -92,7 +92,9 @@ describe("GET /api/integrations/oauth/[type]/auth", () => {
       "2",
       undefined,
       undefined,
-      expect.objectContaining({ allowInactive: true })
+      // skipAuthentication: the authorize URL must never depend on a stored
+      // token, or a dead one blocks the flow that replaces it.
+      expect.objectContaining({ allowInactive: true, skipAuthentication: true })
     );
     expect(storeOAuthStateMock).toHaveBeenCalledWith(
       "user-1",

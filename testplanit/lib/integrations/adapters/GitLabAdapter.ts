@@ -1,3 +1,7 @@
+import {
+  RefreshTokenRevokedError,
+  isDeadRefreshTokenResponse,
+} from "../errors";
 import { FIXED_TRACKER_STATUSES } from "../fixedTrackerStatuses";
 import { BaseAdapter } from "./BaseAdapter";
 import {
@@ -183,6 +187,12 @@ export class GitLabAdapter extends BaseAdapter {
 
     if (!response.ok) {
       const error = await response.text();
+      if (
+        extra.grant_type === "refresh_token" &&
+        isDeadRefreshTokenResponse(response.status, error)
+      ) {
+        throw new RefreshTokenRevokedError("GITLAB", error);
+      }
       throw new Error(`Failed to obtain GitLab tokens: ${error}`);
     }
 

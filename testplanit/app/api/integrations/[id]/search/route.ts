@@ -47,6 +47,11 @@ export async function GET(
     );
   }
 
+  // Known once the integration is loaded; the outer catch needs both to name
+  // the provider and to offer OAuth users a reconnect link.
+  let provider = "";
+  let oauthKickoffUrl: string | undefined;
+
   try {
     const db = await getEnhancedDb(session);
     const { id } = await params;
@@ -57,7 +62,7 @@ export async function GET(
       where: { id: integrationId },
       include: {
         userIntegrationAuths: {
-          where: { userId: session.user.id },
+          where: { userId: session.user.id, isActive: true },
         },
       },
     });
@@ -66,11 +71,21 @@ export async function GET(
       return Response.json({ error: "Integration not found" }, { status: 404 });
     }
 
-    // Check authentication based on integration type
-    if (
+    provider = integration.provider;
+    const usesStoredCredentials =
       integration.authType === "API_KEY" ||
-      integration.authType === "PERSONAL_ACCESS_TOKEN"
-    ) {
+      integration.authType === "PERSONAL_ACCESS_TOKEN";
+    // Only OAuth integrations can be repaired by the user re-authorizing;
+    // expired API keys/PATs are fixed by an admin on the integration.
+    if (!usesStoredCredentials) {
+      oauthKickoffUrl = buildOAuthKickoffUrl(
+        integration.provider,
+        integrationId
+      );
+    }
+
+    // Check authentication based on integration type
+    if (usesStoredCredentials) {
       // For API key/PAT integrations, authentication is stored in the integration itself
       const stored = await baseDb.integration.findUnique({
         where: { id: integrationId },
@@ -96,7 +111,7 @@ export async function GET(
         return Response.json(
           {
             error: "Authentication required",
-            authUrl: buildOAuthKickoffUrl(integration.provider, integrationId),
+            authUrl: oauthKickoffUrl,
             requiresAuth: true,
           },
           { status: 401 }
@@ -104,19 +119,22 @@ export async function GET(
       }
     }
 
-    // Search issues using the adapter
+    // Search issues using the adapter. OAuth searches run on the caller's own
+    // token (the check above guarantees they have one), so another user's
+    // dead token cannot break their search.
     const manager = IntegrationManager.getInstance();
-    const adapter = await manager.getAdapter(integrationId.toString());
+    const adapter = await manager.getAdapter(
+      integrationId.toString(),
+      undefined,
+      usesStoredCredentials ? undefined : session.user.id
+    );
 
     if (!adapter) {
       return Response.json({ error: "Adapter not found" }, { status: 404 });
     }
 
     // Set authentication based on integration type
-    if (
-      integration.authType === "API_KEY" ||
-      integration.authType === "PERSONAL_ACCESS_TOKEN"
-    ) {
+    if (usesStoredCredentials) {
       // For API key/PAT auth, the adapter is already authenticated via IntegrationManager
       // No need to set access token
     } else if (integration.userIntegrationAuths[0]) {
@@ -131,71 +149,50 @@ export async function GET(
       }
     }
 
-    try {
-      // If projectId is provided, use it to filter the search
-      const searchOptions: any = {
-        query,
-        maxResults: 20,
-      };
+    // If projectId is provided, use it to filter the search
+    const searchOptions: any = {
+      query,
+      maxResults: 20,
+    };
 
-      if (projectId) {
-        searchOptions.projectId = projectId;
-      }
-
-      const searchResult = await adapter.searchIssues(searchOptions);
-
-      // Handle both array and object return types
-      const issues = Array.isArray(searchResult)
-        ? searchResult
-        : searchResult.issues || [];
-      const total = Array.isArray(searchResult)
-        ? searchResult.length
-        : searchResult.total || issues.length;
-
-      return Response.json({
-        issues,
-        total,
-      });
-    } catch (error: any) {
-      const integrationError = toIntegrationError(error, integration.provider);
-
-      if (integrationError.kind === "auth") {
-        // Only OAuth integrations can be repaired by the user re-authorizing;
-        // expired API keys/PATs are fixed by an admin on the integration, so
-        // those get the actionable message instead of a re-auth prompt that
-        // cannot resolve them.
-        if (
-          integration.authType !== "API_KEY" &&
-          integration.authType !== "PERSONAL_ACCESS_TOKEN"
-        ) {
-          return Response.json(
-            {
-              ...integrationErrorBody(integrationError),
-              authUrl: buildOAuthKickoffUrl(
-                integration.provider,
-                integrationId
-              ),
-              requiresAuth: true,
-            },
-            { status: 401 }
-          );
-        }
-
-        return Response.json(integrationErrorBody(integrationError), {
-          status: responseStatusForIntegrationError(integrationError),
-        });
-      }
-
-      throw integrationError;
+    if (projectId) {
+      searchOptions.projectId = projectId;
     }
+
+    const searchResult = await adapter.searchIssues(searchOptions);
+
+    // Handle both array and object return types
+    const issues = Array.isArray(searchResult)
+      ? searchResult
+      : searchResult.issues || [];
+    const total = Array.isArray(searchResult)
+      ? searchResult.length
+      : searchResult.total || issues.length;
+
+    return Response.json({
+      issues,
+      total,
+    });
   } catch (error: any) {
     console.error("Search error:", error);
 
-    // `toIntegrationError` is idempotent, so an error already typed by the
-    // inner catch passes through unchanged. Responding with its `userMessage`
-    // rather than `error.message` keeps adapter internals and upstream
-    // response bodies out of the client.
-    const integrationError = toIntegrationError(error, "");
+    // Responding with the typed error's `userMessage` rather than
+    // `error.message` keeps adapter internals and upstream response bodies
+    // out of the client.
+    const integrationError = toIntegrationError(error, provider);
+
+    // Rejected OAuth credentials — whether building the adapter (dead refresh
+    // token) or running the search — are fixed by the user reconnecting.
+    if (integrationError.kind === "auth" && oauthKickoffUrl) {
+      return Response.json(
+        {
+          ...integrationErrorBody(integrationError),
+          authUrl: oauthKickoffUrl,
+          requiresAuth: true,
+        },
+        { status: 401 }
+      );
+    }
     return Response.json(integrationErrorBody(integrationError), {
       status: responseStatusForIntegrationError(integrationError),
     });
