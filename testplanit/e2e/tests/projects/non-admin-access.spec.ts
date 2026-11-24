@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, test } from "../../fixtures";
 import { signInSecondaryContext } from "../../utils/secondary-context-login";
 
@@ -15,7 +16,7 @@ test.describe("Non-admin member access", () => {
     baseURL,
   }) => {
     const ts = uid();
-    const email = `member-${ts}@example.com`;
+    const email = uniqueEmail("member");
     const password = "Password123!";
     const projectId = await api.createProject(`E2E Member Access ${ts}`);
     await api.enableRequirements(projectId);

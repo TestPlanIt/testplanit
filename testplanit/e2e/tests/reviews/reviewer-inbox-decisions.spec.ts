@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, test } from "../../fixtures";
 import {
   createGatedTestWorkflow,
@@ -102,7 +103,7 @@ test.describe("Reviewer inbox decisions", () => {
       // schema's "assignee != requester" validate doesn't reject the seed.
       const requester = await api.createUser({
         name: `IA-Req ${Date.now()}`,
-        email: `ia-req-${Date.now()}@example.com`,
+        email: uniqueEmail("ia-req"),
         password: "S3cure!password",
         access: "USER",
         isActive: true,
@@ -247,7 +248,7 @@ test.describe("Reviewer inbox decisions", () => {
 
       const requester = await api.createUser({
         name: `ID-Req ${Date.now()}`,
-        email: `id-req-${Date.now()}@example.com`,
+        email: uniqueEmail("id-req"),
         password: "S3cure!password",
         access: "USER",
         isActive: true,

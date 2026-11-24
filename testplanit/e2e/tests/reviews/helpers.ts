@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import type {
   APIRequestContext,
   Browser,
@@ -32,8 +33,8 @@ export async function signInGateActor(
   api: ApiHelper,
   createdUserIds: string[]
 ): Promise<{ context: BrowserContext; userId: string }> {
-  const ts = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const email = `gate-actor-${ts}@example.com`;
+  const ts = Date.now();
+  const email = uniqueEmail("gate-actor");
   const password = "S3cure!password";
   // Pin the seeded "user" role explicitly instead of trusting the signup-time
   // default: role-management.spec.ts flips which role is isDefault mid-suite,

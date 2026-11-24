@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, test } from "../../fixtures";
 import {
   createGatedTestWorkflow,
@@ -86,7 +87,7 @@ test.describe("Request review on a case", () => {
       // Need a separate reviewer — schema validates assignee != requester.
       const reviewer = await api.createUser({
         name: `RR-Reviewer ${Date.now()}`,
-        email: `rr-reviewer-${Date.now()}@example.com`,
+        email: uniqueEmail("rr-reviewer"),
         password: "S3cure!password",
         access: "USER",
         roleId: approverRoleId,
@@ -258,7 +259,7 @@ test.describe("Request review on a case", () => {
       // Need a separate reviewer — schema validates assignee != requester.
       const reviewer = await api.createUser({
         name: `Dup-Reviewer ${Date.now()}`,
-        email: `dup-reviewer-${Date.now()}@example.com`,
+        email: uniqueEmail("dup-reviewer"),
         password: "S3cure!password",
         access: "USER",
         isActive: true,

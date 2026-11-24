@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, test } from "../../fixtures";
 import {
   createGatedTestWorkflow,
@@ -129,7 +130,7 @@ test.describe("Role-eligible assignees", () => {
       //    the role should appear.
       newUser = await api.createUser({
         name: `RA-User ${Date.now()}`,
-        email: `ra-user-${Date.now()}@example.com`,
+        email: uniqueEmail("ra-user"),
         password: "S3cure!password",
         access: "USER",
         roleId: createdRoleId!,

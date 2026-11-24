@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../../utils/unique-email";
 import { expect, test } from "../../../fixtures";
 
 const TEST_EMAIL_DOMAIN = process.env.TEST_EMAIL_DOMAIN || "example.com";
@@ -63,7 +64,7 @@ test.describe("Admin revoke password", () => {
     });
 
     const timestamp = Date.now();
-    const testEmail = `revoke-pw-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("revoke-pw", TEST_EMAIL_DOMAIN);
     let userId: string | undefined;
     await test.step("Create a test user with a password", async () => {
       const userResult = await api.createUser({

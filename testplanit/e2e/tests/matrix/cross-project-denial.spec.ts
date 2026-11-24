@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, test } from "../../fixtures";
 
 /**
@@ -26,7 +27,7 @@ test.describe("Matrix view — cross-project denial @matrix", () => {
     request,
   }) => {
     const stamp = Date.now();
-    const email = `matrix-noaccess-${stamp}@example.com`;
+    const email = uniqueEmail("matrix-noaccess");
     const password = "Password123!";
 
     let targetProjectId: number | undefined;

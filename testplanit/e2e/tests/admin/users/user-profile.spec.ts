@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../../utils/unique-email";
 import { expect, test } from "../../../fixtures";
 
 /**
@@ -87,7 +88,7 @@ test.describe("User Profile Management", () => {
 
   test("Admin can soft delete a user", async ({ page, api }) => {
     // Create a test user to delete
-    const testEmail = `delete-test-${Date.now()}@example.com`;
+    const testEmail = uniqueEmail("delete-test");
     const userResult = await api.createUser({
       name: "Test User To Delete",
       email: testEmail,
@@ -233,8 +234,7 @@ test.describe("User Profile Management", () => {
     context,
   }) => {
     // Create a dedicated test user to avoid data conflicts with other tests
-    const timestamp = Date.now();
-    const testEmail = `persist-test-${timestamp}@example.com`;
+    const testEmail = uniqueEmail("persist-test");
     const testPassword = "Password123!";
 
     const userResult = await api.createUser({
@@ -632,8 +632,7 @@ test.describe("User Profile Management", () => {
   }) => {
     // This test verifies that French language works end-to-end with proper labels
     // Use a dedicated test user to avoid conflicts with other tests running in parallel
-    const timestamp = Date.now();
-    const testEmail = `french-test-${timestamp}@example.com`;
+    const testEmail = uniqueEmail("french-test");
     const testPassword = "Password123!";
 
     const userResult = await api.createUser({
@@ -762,8 +761,7 @@ test.describe("User Profile Access Control", () => {
     context,
   }) => {
     // Create a test user with NONE access
-    const timestamp = Date.now();
-    const testEmail = `none-access-test-${timestamp}@example.com`;
+    const testEmail = uniqueEmail("none-access-test");
     const testPassword = "Password123!";
 
     const userResult = await api.createUser({
@@ -829,8 +827,7 @@ test.describe("User Profile Access Control", () => {
     adminUserId,
   }) => {
     // Create a test user with NONE access
-    const timestamp = Date.now();
-    const testEmail = `none-access-other-${timestamp}@example.com`;
+    const testEmail = uniqueEmail("none-access-other");
     const testPassword = "Password123!";
 
     const userResult = await api.createUser({
@@ -895,7 +892,7 @@ test.describe("User Profile Access Control", () => {
   }) => {
     // Create a test user with NONE access
     const timestamp = Date.now();
-    const testEmail = `none-edit-test-${timestamp}@example.com`;
+    const testEmail = uniqueEmail("none-edit-test");
     const testPassword = "Password123!";
 
     const userResult = await api.createUser({
@@ -981,8 +978,7 @@ test.describe("User Profile Access Control", () => {
     adminUserId,
   }) => {
     // Create a test user with USER access (to verify non-NONE users can still view other profiles)
-    const timestamp = Date.now();
-    const testEmail = `user-access-test-${timestamp}@example.com`;
+    const testEmail = uniqueEmail("user-access-test");
     const testPassword = "Password123!";
 
     const userResult = await api.createUser({

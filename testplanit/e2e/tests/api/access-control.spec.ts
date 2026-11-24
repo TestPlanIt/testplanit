@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, test } from "../../fixtures/index";
 import type { BrowserContext } from "@playwright/test";
 import {
@@ -251,7 +252,7 @@ test.describe("Access Control - Member Read/No-Delete (ACL-02)", () => {
 
   test.beforeAll(async ({ browser, baseURL, api }) => {
     // Create a regular USER-access member
-    memberEmail = `acl-member-${Date.now()}@example.com`;
+    memberEmail = uniqueEmail("acl-member");
     const memberResult = await api.createUser({
       name: "ACL Member",
       email: memberEmail,
@@ -326,7 +327,7 @@ test.describe("Access Control - NO_ACCESS Denial (ACL-03)", () => {
 
   test.beforeAll(async ({ browser, baseURL, api, request }) => {
     // Create a NO_ACCESS test user
-    noAccessEmail = `acl-noaccess-${Date.now()}@example.com`;
+    noAccessEmail = uniqueEmail("acl-noaccess");
     const userResult = await api.createUser({
       name: "ACL NoAccess",
       email: noAccessEmail,
@@ -452,7 +453,7 @@ test.describe("Access Control - Role-Based Area Permissions (ACL-05)", () => {
     // 3. Create a restricted USER whose global account role is the restricted role.
     //    This ensures the GLOBAL_ROLE fallback policy uses the restricted role (canAddEdit: false)
     //    rather than the default 'user' role (which has canAddEdit: true for TestCaseRepository).
-    restrictedEmail = `acl-restricted-${Date.now()}@example.com`;
+    restrictedEmail = uniqueEmail("acl-restricted");
     const userResult = await api.createUser({
       name: "ACL Restricted",
       email: restrictedEmail,
@@ -629,7 +630,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
 
   test.beforeAll(async ({ browser, baseURL, api }) => {
     // Create a regular USER-access member with the default "user" role
-    memberEmail = `acl-steps-${Date.now()}@example.com`;
+    memberEmail = uniqueEmail("acl-steps");
 
     // Look up the seeded "user" role by NAME — not by `isDefault: true`,
     // because the role-management test toggles `isDefault` on a custom role
@@ -885,7 +886,7 @@ test.describe("Access Control - Identity Escalation (ACL-07)", () => {
   };
 
   test.beforeAll(async ({ browser, baseURL, api }) => {
-    memberEmail = `acl-escalation-${Date.now()}@example.com`;
+    memberEmail = uniqueEmail("acl-escalation");
     const memberResult = await api.createUser({
       name: "ACL Escalation Member",
       email: memberEmail,
@@ -912,7 +913,7 @@ test.describe("Access Control - Identity Escalation (ACL-07)", () => {
     request,
     baseURL,
   }) => {
-    const email = `acl-unauth-admin-${Date.now()}@example.com`;
+    const email = uniqueEmail("acl-unauth-admin");
     const unauthCtx = await browser.newContext({ storageState: undefined });
     try {
       const response = await unauthCtx.request.post(
@@ -1156,7 +1157,7 @@ test.describe("Access Control - Locked Identity and Decision Fields (ACL-08)", (
     projectA = await api.createProject(`ACL-07 A ${Date.now()}`);
     projectB = await api.createProject(`ACL-07 B ${Date.now()}`);
 
-    const memberEmail = `acl07-member-${Date.now()}@example.com`;
+    const memberEmail = uniqueEmail("acl07-member");
     const member = await api.createUser({
       name: "ACL-07 Member",
       email: memberEmail,
@@ -1204,7 +1205,7 @@ test.describe("Access Control - Locked Identity and Decision Fields (ACL-08)", (
     request,
     baseURL,
   }) => {
-    const identifier = `acl07-vt-${Date.now()}@example.com`;
+    const identifier = uniqueEmail("acl07-vt");
     const token = `acl07-token-${Date.now()}`;
 
     await test.step("Seed a verification token as admin", async () => {

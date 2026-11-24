@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../../utils/unique-email";
 import { expect, test } from "../../../fixtures";
 
 /**
@@ -301,7 +302,7 @@ test.describe("Group Management", () => {
         expect(createdGroupId).toBeDefined();
 
         // Create a test user
-        const testEmail = `group-assign-user-${Date.now()}@example.com`;
+        const testEmail = uniqueEmail("group-assign-user");
         const testUser = await api.createUser({
           name: "Group Assignment User",
           email: testEmail,

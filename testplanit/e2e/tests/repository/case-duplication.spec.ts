@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { type APIResponse, type APIRequestContext } from "@playwright/test";
 import { expect, test } from "../../fixtures/index";
 
@@ -95,7 +96,7 @@ test.describe("Case duplication", () => {
       // the original.
       const author = await api.createUser({
         name: `Duplication Author ${ts}`,
-        email: `duplication-author-${ts}@example.com`,
+        email: uniqueEmail("duplication-author"),
         password: "Duplication!Pass123",
       });
       sourceAuthorId = author.data.id;

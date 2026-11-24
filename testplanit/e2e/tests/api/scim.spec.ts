@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { randomUUID } from "crypto";
 import type { APIRequestContext, Page } from "@playwright/test";
 import { expect, test } from "../../fixtures";
@@ -109,7 +110,7 @@ test.describe("SCIM provisioning API", () => {
     request,
   }) => {
     const ts = uid();
-    const userName = `scim.user.${ts}@example.com`;
+    const userName = uniqueEmail("scim.user");
     let userId = "";
 
     await test.step("POST /Users creates the user", async () => {
@@ -209,7 +210,7 @@ test.describe("SCIM provisioning API", () => {
     request,
   }) => {
     const ts = uid();
-    const userName = `scim.member.${ts}@example.com`;
+    const userName = uniqueEmail("scim.member");
     const displayName = `SCIM Group ${ts}`;
     let userId = "";
     let groupId = "";

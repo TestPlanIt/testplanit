@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { createHash, randomBytes } from "crypto";
 import { expect, test } from "../../fixtures";
 import { SigninPage } from "../../page-objects/signin.page";
@@ -131,7 +132,7 @@ test.describe("SSO and Magic Link", () => {
     baseURL,
   }) => {
     const timestamp = Date.now();
-    const testEmail = `sso-google-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("sso-google", TEST_EMAIL_DOMAIN);
     const testPassword = "Password123!";
 
     let userId: string | undefined;
@@ -251,7 +252,7 @@ test.describe("SSO and Magic Link", () => {
     baseURL,
   }) => {
     const timestamp = Date.now();
-    const testEmail = `sso-ms-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("sso-ms", TEST_EMAIL_DOMAIN);
     const testPassword = "Password123!";
 
     let userId: string | undefined;
@@ -369,7 +370,7 @@ test.describe("SSO and Magic Link", () => {
     baseURL,
   }) => {
     const timestamp = Date.now();
-    const testEmail = `sso-saml-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("sso-saml", TEST_EMAIL_DOMAIN);
     const testPassword = "Password123!";
 
     // Sign in as admin for provider setup
@@ -519,7 +520,7 @@ test.describe("SSO and Magic Link", () => {
     baseURL,
   }) => {
     const timestamp = Date.now();
-    const testEmail = `magic-link-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("magic-link", TEST_EMAIL_DOMAIN);
     const testPassword = "Password123!";
 
     // Read NEXTAUTH_SECRET from the environment (available in Node.js test runner context)
@@ -638,8 +639,6 @@ test.describe("SSO and Magic Link", () => {
     request,
     baseURL,
   }) => {
-    const timestamp = Date.now();
-
     const providerResult: { id: string; created: boolean } | null =
       await test.step("Sign in as admin, create Magic Link provider, then sign out", async () => {
         // Sign in as admin to create the Magic Link SSO provider
@@ -682,7 +681,7 @@ test.describe("SSO and Magic Link", () => {
         const emailInput = dialog
           .locator('input[type="email"], input[name="email"]')
           .first();
-        await emailInput.fill(`test-magic-${timestamp}@${TEST_EMAIL_DOMAIN}`);
+        await emailInput.fill(uniqueEmail("test-magic", TEST_EMAIL_DOMAIN));
 
         // Click the send button
         const sendButton = dialog

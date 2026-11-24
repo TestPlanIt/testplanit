@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../../utils/unique-email";
 import { expect, test } from "../../../fixtures";
 
 /**
@@ -275,7 +276,7 @@ test.describe("User Update Operations", () => {
   test.describe("Admin User Management", () => {
     test("Admin can toggle user active status", async ({ page, api }) => {
       // Create a test user first
-      const testEmail = `toggle-test-${Date.now()}@example.com`;
+      const testEmail = uniqueEmail("toggle-test");
       const testUser = await api.createUser({
         name: "Toggle Test User",
         email: testEmail,
@@ -350,7 +351,7 @@ test.describe("User Update Operations", () => {
 
     test("Admin can edit user details via modal", async ({ page, api }) => {
       // Create a test user first
-      const testEmail = `edit-test-${Date.now()}@example.com`;
+      const testEmail = uniqueEmail("edit-test");
       const testUser = await api.createUser({
         name: "Edit Test User",
         email: testEmail,
@@ -427,7 +428,7 @@ test.describe("User Update Operations", () => {
 
     test("Admin can soft delete a user", async ({ page, api }) => {
       // Create a test user
-      const testEmail = `delete-test-${Date.now()}@example.com`;
+      const testEmail = uniqueEmail("delete-test");
       const testUser = await api.createUser({
         name: "Delete Test User",
         email: testEmail,
@@ -500,7 +501,7 @@ test.describe("User Update Operations", () => {
       api,
     }) => {
       // Create and delete a test user
-      const testEmail = `restore-test-${Date.now()}@example.com`;
+      const testEmail = uniqueEmail("restore-test");
       const testUser = await api.createUser({
         name: "Restore Test User",
         email: testEmail,
@@ -648,7 +649,7 @@ test.describe("User Update Operations", () => {
   test.describe("API Endpoint Direct Tests", () => {
     test("API endpoint handles user basic field updates", async ({ api }) => {
       // Create test user
-      const testEmail = `api-test-${Date.now()}@example.com`;
+      const testEmail = uniqueEmail("api-test");
       const testUser = await api.createUser({
         name: "API Test User",
         email: testEmail,
@@ -681,7 +682,7 @@ test.describe("User Update Operations", () => {
 
     test("API endpoint handles preference updates", async ({ api }) => {
       // Create test user
-      const testEmail = `api-pref-test-${Date.now()}@example.com`;
+      const testEmail = uniqueEmail("api-pref-test");
       const testUser = await api.createUser({
         name: "API Pref Test User",
         email: testEmail,
@@ -720,7 +721,7 @@ test.describe("User Update Operations", () => {
       baseURL,
     }) => {
       // Create a test user
-      const testEmail = `auth-test-${Date.now()}@example.com`;
+      const testEmail = uniqueEmail("auth-test");
       const testUser = await api.createUser({
         name: "Auth Test User",
         email: testEmail,

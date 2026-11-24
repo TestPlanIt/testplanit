@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../../utils/unique-email";
 import { expect, test } from "../../../fixtures";
 import type { APIResponse } from "@playwright/test";
 
@@ -17,7 +18,7 @@ test.describe("User Management Gaps", () => {
       api,
       browser,
     }) => {
-      const testEmail = `deactivate-test-${Date.now()}@example.com`;
+      const testEmail = uniqueEmail("deactivate-test");
       const testPassword = "password123";
       const testUser = await api.createUser({
         name: "Deactivate Test User",
@@ -136,7 +137,7 @@ test.describe("User Management Gaps", () => {
       page,
       api,
     }) => {
-      const testEmail = `active-toggle-gap-${Date.now()}@example.com`;
+      const testEmail = uniqueEmail("active-toggle-gap");
       const testUser = await api.createUser({
         name: "Active Toggle Gap User",
         email: testEmail,
@@ -201,7 +202,7 @@ test.describe("User Management Gaps", () => {
       page,
       api,
     }) => {
-      const testEmail = `2fa-view-test-${Date.now()}@example.com`;
+      const testEmail = uniqueEmail("2fa-view-test");
       const testUser = await api.createUser({
         name: "2FA View Test User",
         email: testEmail,
@@ -263,7 +264,7 @@ test.describe("User Management Gaps", () => {
       page,
       api,
     }) => {
-      const testEmail = `api-key-revoke-${Date.now()}@example.com`;
+      const testEmail = uniqueEmail("api-key-revoke");
       const testUser = await api.createUser({
         name: "API Key Revoke User",
         email: testEmail,

@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import type { APIRequestContext, Page } from "@playwright/test";
 
 import { expect, test } from "../../fixtures";
@@ -106,7 +107,7 @@ test.describe("Per-type notification preferences", () => {
 
     const user = await api.createUser({
       name: `Mute User ${ts}`,
-      email: `mute-user-${ts}@testplanit.com`,
+      email: uniqueEmail("mute-user", "testplanit.com"),
       password,
     });
     const userId = user.data.id;

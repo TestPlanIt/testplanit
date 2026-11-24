@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../../utils/unique-email";
 import { expect, stubBellSSE, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
 
@@ -1475,7 +1476,7 @@ test.describe("Case Creation - Restricted Fields", () => {
     }
 
     // Create a regular user with the custom restricted role
-    const regularUserEmail = `user-${Date.now()}@example.com`;
+    const regularUserEmail = uniqueEmail("user");
     const regularUserPassword = "testpassword123";
     const userResult = await api.createUser({
       name: "Regular User",

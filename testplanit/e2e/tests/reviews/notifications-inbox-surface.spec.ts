@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, test } from "../../fixtures";
 import {
   createGatedTestWorkflow,
@@ -112,7 +113,7 @@ test.describe("Notification surfaces", () => {
       // hook's polling cadence — give it the time it needs.
       const requester = await api.createUser({
         name: `NS-Req ${Date.now()}`,
-        email: `ns-req-${Date.now()}@example.com`,
+        email: uniqueEmail("ns-req"),
         password: "S3cure!password",
         access: "USER",
         isActive: true,

@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../../utils/unique-email";
 import { expect, test } from "../../../fixtures";
 
 /**
@@ -12,7 +13,7 @@ test.describe("User Profile Management - own account", () => {
     page,
     adminUserId,
   }) => {
-    const newEmail = `updated-${Date.now()}@example.com`;
+    const newEmail = uniqueEmail("updated");
     let originalEmail: string | undefined;
 
     await test.step("Open the admin user's profile page", async () => {

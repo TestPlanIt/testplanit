@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import type { APIRequestContext } from "@playwright/test";
 
 import { expect, test } from "../../fixtures";
@@ -178,7 +179,7 @@ test("blocks dependants until their prerequisites pass in the same run, then han
 
     const tester = await api.createUser({
       name: `DepGate Tester ${ts}`,
-      email: `depgate-${ts}@example.com`,
+      email: uniqueEmail("depgate"),
       password: "DepGate!Pass123",
     });
     testerId = tester.data.id;

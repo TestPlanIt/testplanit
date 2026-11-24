@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { createRawDbClient } from "~/lib/rawDbClient";
 import { expect, test } from "../../fixtures";
 import { SigninPage } from "../../page-objects/signin.page";
@@ -35,7 +36,7 @@ test.describe("Sign Up with Email Verification", () => {
     api,
   }, testInfo) => {
     const timestamp = Date.now();
-    const testEmail = `test-verify-${timestamp}@example.com`;
+    const testEmail = uniqueEmail("test-verify");
     const testPassword = "SecurePassword123!";
 
     let userId: string | undefined;
@@ -133,7 +134,7 @@ test.describe("Sign Up with Email Verification", () => {
       api,
     }) => {
       const timestamp = Date.now();
-      const testEmail = `unverified-${timestamp}@example.com`;
+      const testEmail = uniqueEmail("unverified");
       const testPassword = "TestPassword123!";
 
       let userId: string | undefined;
@@ -181,7 +182,7 @@ test.describe("Sign Up with Email Verification", () => {
       api,
     }) => {
       const timestamp = Date.now();
-      const testEmail = `back-link-${timestamp}@example.com`;
+      const testEmail = uniqueEmail("back-link");
       const testPassword = "TestPassword123!";
 
       let userId: string | undefined;
@@ -222,7 +223,7 @@ test.describe("Sign Up with Email Verification", () => {
       api,
     }) => {
       const timestamp = Date.now();
-      const testEmail = `resend-test-${timestamp}@example.com`;
+      const testEmail = uniqueEmail("resend-test");
       const testPassword = "TestPassword123!";
 
       let userId: string | undefined;

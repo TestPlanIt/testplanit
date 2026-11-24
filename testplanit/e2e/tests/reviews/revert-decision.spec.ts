@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, test } from "../../fixtures";
 import {
   createGatedTestWorkflow,
@@ -127,7 +128,7 @@ test.describe("Revert a review decision", () => {
 
       const requester = await api.createUser({
         name: `Revert-Req ${Date.now()}`,
-        email: `revert-req-${Date.now()}@example.com`,
+        email: uniqueEmail("revert-req"),
         password: "S3cure!password",
         access: "USER",
         isActive: true,
@@ -283,7 +284,7 @@ test.describe("Revert a review decision", () => {
 
       const requester = await api.createUser({
         name: `RevertRej-Req ${Date.now()}`,
-        email: `revertrej-req-${Date.now()}@example.com`,
+        email: uniqueEmail("revertrej-req"),
         password: "S3cure!password",
         access: "USER",
         isActive: true,
@@ -400,7 +401,7 @@ test.describe("Revert a review decision", () => {
 
       const requester = await api.createUser({
         name: `RevertSup-Req ${Date.now()}`,
-        email: `revertsup-req-${Date.now()}@example.com`,
+        email: uniqueEmail("revertsup-req"),
         password: "S3cure!password",
         access: "USER",
         isActive: true,

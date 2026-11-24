@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, test } from "../../fixtures";
 import { SigninPage } from "../../page-objects/signin.page";
 
@@ -22,7 +23,7 @@ test.describe("Password Change", () => {
     baseURL,
   }) => {
     const timestamp = Date.now();
-    const testEmail = `pw-change-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("pw-change", TEST_EMAIL_DOMAIN);
     const originalPassword = "Password123!";
     const newPassword = "NewPassword456!";
 
@@ -123,7 +124,7 @@ test.describe("Password Change", () => {
     baseURL,
   }) => {
     const timestamp = Date.now();
-    const testEmail = `pw-session-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("pw-session", TEST_EMAIL_DOMAIN);
     const originalPassword = "Password123!";
     const newPassword = "ChangedPassword789!";
 
@@ -190,7 +191,7 @@ test.describe("Password Change", () => {
     baseURL,
   }) => {
     const timestamp = Date.now();
-    const testEmail = `pw-other-sessions-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("pw-other-sessions", TEST_EMAIL_DOMAIN);
     const originalPassword = "Password123!";
     const newPassword = "RotatedPassword321!";
 
@@ -281,7 +282,7 @@ test.describe("Password Change", () => {
 
   test("Wrong current password is rejected", async ({ page, api, baseURL }) => {
     const timestamp = Date.now();
-    const testEmail = `pw-wrong-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("pw-wrong", TEST_EMAIL_DOMAIN);
     const correctPassword = "Password123!";
 
     const userResult = await api.createUser({
@@ -374,7 +375,7 @@ test.describe("Password Change", () => {
     // has no such pre-check, so a too-short password reaches the server.
 
     const timestamp = Date.now();
-    const testEmail = `pw-policy-loc-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("pw-policy-loc", TEST_EMAIL_DOMAIN);
     const originalPassword = "LongEnoughPassword123!";
 
     // Read the tenant's current minPasswordLength so the assertion adapts to

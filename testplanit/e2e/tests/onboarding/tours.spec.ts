@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import type { APIRequestContext, BrowserContext, Page } from "@playwright/test";
 
 import { expect, stubLiveStreams, test } from "../../fixtures";
@@ -256,7 +257,7 @@ test.describe("Welcome tour start", () => {
     baseURL,
     api,
   }) => {
-    const email = `tour-start-${Date.now()}@example.com`;
+    const email = uniqueEmail("tour-start");
     const password = "S3cure!password";
     const user = await api.createUser({
       name: "Tour Start",

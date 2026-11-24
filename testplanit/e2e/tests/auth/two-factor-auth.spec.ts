@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { createHmac } from "crypto";
 import { expect, test } from "../../fixtures";
 import { SigninPage } from "../../page-objects/signin.page";
@@ -86,7 +87,7 @@ test.describe("Two-Factor Authentication", () => {
     baseURL,
   }) => {
     const timestamp = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
-    const testEmail = `2fa-totp-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("2fa-totp", TEST_EMAIL_DOMAIN);
     const testPassword = "Password123!";
 
     // Create a test user
@@ -164,7 +165,7 @@ test.describe("Two-Factor Authentication", () => {
 
   test("2FA verification with backup code", async ({ page, api, baseURL }) => {
     const timestamp = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
-    const testEmail = `2fa-backup-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("2fa-backup", TEST_EMAIL_DOMAIN);
     const testPassword = "Password123!";
 
     const userResult = await api.createUser({
@@ -246,7 +247,7 @@ test.describe("Two-Factor Authentication", () => {
 
   test("2FA with invalid code shows error", async ({ page, api, baseURL }) => {
     const timestamp = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
-    const testEmail = `2fa-invalid-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("2fa-invalid", TEST_EMAIL_DOMAIN);
     const testPassword = "Password123!";
 
     const userResult = await api.createUser({

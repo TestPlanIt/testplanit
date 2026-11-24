@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { type APIResponse, type APIRequestContext } from "@playwright/test";
 import { expect, test } from "../../fixtures/index";
 
@@ -701,7 +702,7 @@ test.describe("Copy-Move API Endpoints", () => {
       // case's creator shows whether the original authorship survived.
       const author = await api.createUser({
         name: `CopyMove Author ${ts}`,
-        email: `copymove-author-${ts}@example.com`,
+        email: uniqueEmail("copymove-author"),
         password: "CopyMove!Pass123",
       });
       moveCaseAuthorId = author.data.id;

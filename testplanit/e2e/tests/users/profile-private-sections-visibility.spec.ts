@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import type { APIRequestContext } from "@playwright/test";
 
 import { expect, test } from "../../fixtures";
@@ -43,13 +44,13 @@ test.describe("Profile private-section visibility", () => {
 
     const target = await api.createUser({
       name: `Profile Target ${ts}`,
-      email: `profile-target-${ts}@testplanit.com`,
+      email: uniqueEmail("profile-target", "testplanit.com"),
       password,
     });
 
     const viewer = await api.createUser({
       name: `PA Viewer ${ts}`,
-      email: `pa-viewer-${ts}@testplanit.com`,
+      email: uniqueEmail("pa-viewer", "testplanit.com"),
       password,
     });
     // Signup only mints USER; escalate via the admin session PATCH.
@@ -89,12 +90,12 @@ test.describe("Profile private-section visibility", () => {
 
     const target = await api.createUser({
       name: `Profile Target2 ${ts}`,
-      email: `profile-target2-${ts}@testplanit.com`,
+      email: uniqueEmail("profile-target2", "testplanit.com"),
       password,
     });
     const viewer = await api.createUser({
       name: `User Viewer ${ts}`,
-      email: `user-viewer-${ts}@testplanit.com`,
+      email: uniqueEmail("user-viewer", "testplanit.com"),
       password,
     });
     await completeOnboarding(request, baseURL!, viewer.data.id);
@@ -133,7 +134,7 @@ test.describe("Profile private-section visibility", () => {
 
     const self = await api.createUser({
       name: `Self Viewer ${ts}`,
-      email: `self-viewer-${ts}@testplanit.com`,
+      email: uniqueEmail("self-viewer", "testplanit.com"),
       password,
     });
     await completeOnboarding(request, baseURL!, self.data.id);

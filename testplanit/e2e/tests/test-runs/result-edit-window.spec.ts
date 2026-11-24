@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, stubBellSSE, test } from "../../fixtures";
 
 /**
@@ -40,7 +41,7 @@ test("blocks a non-admin result edit when the project disables editing; admin st
   for (const area of ["TestCaseRepository", "TestRuns", "TestRunResults"]) {
     await api.setRolePermission({ roleId, area, canAddEdit: true });
   }
-  const email = `ew-user-${ts}@example.com`;
+  const email = uniqueEmail("ew-user");
   const password = "testpassword123";
   const userResult = await api.createUser({
     name: "Edit Window User",

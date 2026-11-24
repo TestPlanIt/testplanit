@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import type { APIRequestContext, BrowserContext } from "@playwright/test";
 
 import { expect, test } from "../../fixtures";
@@ -181,7 +182,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
       // reject our seed requests.
       const requester = await api.createUser({
         name: `BG-Req ${Date.now()}`,
-        email: `bg-req-${Date.now()}@example.com`,
+        email: uniqueEmail("bg-req"),
         password: "S3cure!password",
         access: "USER",
         isActive: true,

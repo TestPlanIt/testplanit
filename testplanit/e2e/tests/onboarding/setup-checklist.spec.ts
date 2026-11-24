@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import type { APIRequestContext } from "@playwright/test";
 
 import { expect, stubLiveStreams, test } from "../../fixtures";
@@ -191,7 +192,7 @@ test.describe("Setup checklist", () => {
     api,
     request,
   }) => {
-    const email = `checklist-user-${Date.now()}@example.com`;
+    const email = uniqueEmail("checklist-user");
     const password = "S3cure!password";
     const user = await api.createUser({
       name: "Checklist User",

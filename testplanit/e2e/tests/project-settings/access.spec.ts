@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, test } from "../../fixtures";
 import { signInSecondaryContext } from "../../utils/secondary-context-login";
 
@@ -19,7 +20,7 @@ test.describe("Project Settings - Access", () => {
     const adminId = await api.getCurrentUserId();
     const member = await api.createUser({
       name: `Access Member ${ts}`,
-      email: `access-member-${ts}@example.com`,
+      email: uniqueEmail("access-member"),
       password: "Password123!",
       access: "USER",
     });
@@ -102,7 +103,7 @@ test.describe("Project Settings - Access", () => {
     baseURL,
   }) => {
     const ts = uid();
-    const email = `access-pa-${ts}@example.com`;
+    const email = uniqueEmail("access-pa");
     const password = "Password123!";
     const projectId = await api.createProject(`E2E Access PA ${ts}`);
     // Signup only accepts USER/ADMIN; promote afterwards.
@@ -151,7 +152,7 @@ test.describe("Project Settings - Access", () => {
     baseURL,
   }) => {
     const ts = uid();
-    const email = `access-user-${ts}@example.com`;
+    const email = uniqueEmail("access-user");
     const password = "Password123!";
     const projectId = await api.createProject(`E2E Access User ${ts}`);
     const member = await api.createUser({

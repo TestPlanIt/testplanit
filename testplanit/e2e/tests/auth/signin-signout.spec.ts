@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, test } from "../../fixtures";
 import { SigninPage } from "../../page-objects/signin.page";
 
@@ -27,8 +28,7 @@ test.describe("Sign In and Sign Out", () => {
       page,
       api,
     }) => {
-      const timestamp = Date.now();
-      const testEmail = `signin-valid-${timestamp}@example.com`;
+      const testEmail = uniqueEmail("signin-valid");
       const testPassword = "TestPassword123!";
       const signinPage = new SigninPage(page);
 
@@ -68,8 +68,7 @@ test.describe("Sign In and Sign Out", () => {
       page,
       api,
     }) => {
-      const timestamp = Date.now();
-      const testEmail = `signin-invalid-pw-${timestamp}@example.com`;
+      const testEmail = uniqueEmail("signin-invalid-pw");
       const signinPage = new SigninPage(page);
 
       let userId: string | undefined;
@@ -107,7 +106,7 @@ test.describe("Sign In and Sign Out", () => {
       await test.step("Attempt sign-in with a non-existent email", async () => {
         await signinPage.goto();
         await signinPage.fillCredentials(
-          `nonexistent-${Date.now()}@example.com`,
+          uniqueEmail("nonexistent"),
           "AnyPassword123!"
         );
         await signinPage.submit();
@@ -120,8 +119,7 @@ test.describe("Sign In and Sign Out", () => {
     });
 
     test("Session persists across page refresh", async ({ page, api }) => {
-      const timestamp = Date.now();
-      const testEmail = `signin-persist-${timestamp}@example.com`;
+      const testEmail = uniqueEmail("signin-persist");
       const testPassword = "TestPassword123!";
       const signinPage = new SigninPage(page);
 
@@ -166,8 +164,7 @@ test.describe("Sign In and Sign Out", () => {
   // page cookies before attempting to sign in, so the browser is unauthenticated.
   test.describe("Deactivated user access", () => {
     test("Deactivated user cannot sign in", async ({ page, api }) => {
-      const timestamp = Date.now();
-      const testEmail = `signin-inactive-${timestamp}@example.com`;
+      const testEmail = uniqueEmail("signin-inactive");
       const testPassword = "TestPassword123!";
       const signinPage = new SigninPage(page);
 

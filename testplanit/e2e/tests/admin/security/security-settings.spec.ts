@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../../utils/unique-email";
 import { expect, test } from "../../../fixtures";
 
 /**
@@ -173,7 +174,7 @@ test.describe("User Table Password Actions", () => {
     api,
   }) => {
     // Create a test user to check menu items on
-    const testEmail = `pwd-actions-test-${Date.now()}@example.com`;
+    const testEmail = uniqueEmail("pwd-actions-test");
 
     await test.step("Create a test user and open the users page", async () => {
       await api.createUser({

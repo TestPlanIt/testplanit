@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../utils/unique-email";
 import { expect, test } from "../../fixtures/index";
 import {
   sameOriginRequestHeaders,
@@ -377,7 +378,7 @@ test.describe("API Token Authentication", () => {
     api,
   }) => {
     // Create a test user
-    const email = `api-token-test-${Date.now()}@example.com`;
+    const email = uniqueEmail("api-token-test");
     const userResult = await api.createUser({
       name: "API Token Test User",
       email,
@@ -536,7 +537,7 @@ test.describe("API Token Authentication", () => {
     browser,
     api,
   }) => {
-    const email = `api-token-nonadmin-${Date.now()}@example.com`;
+    const email = uniqueEmail("api-token-nonadmin");
     const userResult = await api.createUser({
       name: "Non-admin API Token Test User",
       email,

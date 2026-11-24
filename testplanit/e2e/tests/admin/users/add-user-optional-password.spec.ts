@@ -1,3 +1,4 @@
+import { uniqueEmail } from "../../../utils/unique-email";
 import { expect, test } from "../../../fixtures";
 
 const TEST_EMAIL_DOMAIN = process.env.TEST_EMAIL_DOMAIN || "example.com";
@@ -22,7 +23,7 @@ test.describe("AddUser optional password (magic link configured)", () => {
     baseURL,
   }) => {
     const timestamp = Date.now();
-    const testEmail = `add-blank-pw-${timestamp}@${TEST_EMAIL_DOMAIN}`;
+    const testEmail = uniqueEmail("add-blank-pw", TEST_EMAIL_DOMAIN);
     const testName = `Blank PW User ${timestamp}`;
 
     // Ensure a MAGIC_LINK SsoProvider is enabled. page.request inherits the
