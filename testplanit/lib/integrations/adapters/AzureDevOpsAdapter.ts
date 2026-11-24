@@ -26,6 +26,29 @@ const MAX_ATTACHMENT_DOWNLOAD_BYTES = 10 * 1024 * 1024;
 const WIQL_MAX_IDS = 20000;
 
 /**
+ * Give a form value the JSON type its field takes: the create form sends
+ * booleans and numeric choices as strings, and a date as a calendar day.
+ * A day is sent as noon UTC so it stays the same day for viewers in every
+ * timezone from UTC-12 to UTC+11.
+ */
+function coerceFieldValue(type: string | undefined, value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  switch (type) {
+    case "boolean":
+      return value === "true" ? true : value === "false" ? false : value;
+    case "integer":
+    case "double":
+    case "picklistInteger":
+    case "picklistDouble":
+      return Number.isNaN(Number(value)) ? value : Number(value);
+    case "dateTime":
+      return /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T12:00:00Z` : value;
+    default:
+      return value;
+  }
+}
+
+/**
  * Azure DevOps integration adapter using Personal Access Token authentication
  */
 export class AzureDevOpsAdapter extends BaseAdapter {
@@ -168,13 +191,17 @@ export class AzureDevOpsAdapter extends BaseAdapter {
     }
 
     // Add custom fields
-    if (data.customFields) {
-      for (const [field, value] of Object.entries(data.customFields)) {
+    const customFields = Object.entries(data.customFields ?? {}).filter(
+      ([, value]) => value !== undefined && value !== null && value !== ""
+    );
+    if (customFields.length > 0) {
+      const types = await this.loadFieldTypes();
+      for (const [field, value] of customFields) {
         patchDocument.push({
           op: "add",
           path: `/fields/${field}`,
-          value: value,
-        });
+          value: coerceFieldValue(types.get(field), value),
+        } as any);
       }
     }
 
@@ -518,6 +545,122 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       id: type.name,
       name: type.name,
     }));
+  }
+
+  /** Each field's data type, by reference name. Empty when the list cannot be read. */
+  private async loadFieldTypes(project?: string): Promise<Map<string, string>> {
+    try {
+      const response = await this.makeRequest<any>(
+        this.buildUrl(
+          `/${project ? encodeURIComponent(project) : "{project}"}/_apis/wit/fields?api-version=${this.apiVersion}`
+        )
+      );
+      return new Map(
+        (response?.value ?? []).map((f: any) => [
+          String(f.referenceName),
+          String(f.type ?? ""),
+        ])
+      );
+    } catch {
+      return new Map();
+    }
+  }
+
+  /**
+   * The custom fields of one work item type, in the shape the create dialog
+   * renders. A work item type carries a hundred or so built-in fields, so
+   * only the ones an organization added itself are offered: every field
+   * outside the `System.`, `Microsoft.` and board (`WEF_`) namespaces.
+   */
+  async getIssueTypeFields(
+    projectKey: string,
+    issueTypeId: string
+  ): Promise<any[]> {
+    try {
+      const project = projectKey || this.project;
+      if (!project || !issueTypeId) return [];
+      const response = await this.makeRequest<any>(
+        this.buildUrl(
+          `/${encodeURIComponent(project)}/_apis/wit/workitemtypes/${encodeURIComponent(issueTypeId)}/fields?$expand=all&api-version=${this.apiVersion}`
+        )
+      );
+      const types = await this.loadFieldTypes(project);
+
+      const fields: any[] = [];
+      for (const field of response?.value ?? []) {
+        const key = String(field.referenceName ?? "");
+        if (!key || /^(System\.|Microsoft\.|WEF_)/.test(key)) continue;
+        const type = types.get(key) ?? "string";
+        if (["treePath", "history", "guid"].includes(type)) continue;
+
+        const rawDefault = field.defaultValue;
+        const hasDefault =
+          typeof rawDefault === "string" ||
+          typeof rawDefault === "number" ||
+          typeof rawDefault === "boolean";
+        const base = {
+          key,
+          name: String(field.name ?? key),
+          required: field.alwaysRequired === true,
+          hasDefaultValue: hasDefault,
+        };
+        const allowedValues = (field.allowedValues ?? [])
+          .filter(
+            (v: unknown) => typeof v === "string" || typeof v === "number"
+          )
+          .map((v: string | number) => ({ id: String(v), name: String(v) }));
+
+        if (type === "boolean") {
+          fields.push({
+            ...base,
+            schema: { type: "option" },
+            allowedValues: [
+              { id: "true", name: "Yes" },
+              { id: "false", name: "No" },
+            ],
+            ...(hasDefault ? { defaultValue: String(rawDefault) } : {}),
+          });
+        } else if (allowedValues.length > 0) {
+          fields.push({
+            ...base,
+            schema: { type: "option" },
+            allowedValues,
+            ...(hasDefault ? { defaultValue: String(rawDefault) } : {}),
+          });
+        } else if (
+          ["integer", "double", "picklistInteger", "picklistDouble"].includes(
+            type
+          )
+        ) {
+          fields.push({
+            ...base,
+            schema: { type: "number" },
+            ...(hasDefault && !Number.isNaN(Number(rawDefault))
+              ? { defaultValue: Number(rawDefault) }
+              : {}),
+          });
+        } else if (type === "dateTime") {
+          fields.push({ ...base, schema: { type: "date" }, input: "date" });
+        } else if (type === "html" || type === "plainText") {
+          fields.push({
+            ...base,
+            schema: { type: "string" },
+            input: "textarea",
+            ...(hasDefault ? { defaultValue: String(rawDefault) } : {}),
+          });
+        } else {
+          fields.push({
+            ...base,
+            schema: { type: "string" },
+            ...(hasDefault ? { defaultValue: String(rawDefault) } : {}),
+          });
+        }
+      }
+      return fields;
+    } catch (error) {
+      console.error("[AzureDevOpsAdapter] getIssueTypeFields failed:", error);
+      return [];
+    }
   }
 
   /**

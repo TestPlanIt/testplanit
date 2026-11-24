@@ -305,6 +305,10 @@ describe("AzureDevOpsAdapter", () => {
     it("should create work item with custom fields", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        json: () => Promise.resolve({ value: [] }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve(mockWorkItem),
       });
 
@@ -316,13 +320,85 @@ describe("AzureDevOpsAdapter", () => {
         },
       });
 
-      const createCall = mockFetch.mock.calls[1];
+      expect(mockFetch.mock.calls[1][0]).toBe(
+        "https://dev.azure.com/testorg/TestProject/_apis/wit/fields?api-version=7.0"
+      );
+      const createCall = mockFetch.mock.calls[2];
       const body = JSON.parse(createCall[1].body);
 
       expect(body).toContainEqual({
         op: "add",
         path: "/fields/Custom.Field",
         value: "custom value",
+      });
+    });
+
+    it("gives custom field values the type their field takes and leaves out empty ones", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            value: [
+              { referenceName: "Custom.Blocked", type: "boolean" },
+              { referenceName: "Custom.Retries", type: "integer" },
+              { referenceName: "Custom.FoundOn", type: "dateTime" },
+              { referenceName: "Custom.Build", type: "string" },
+            ],
+          }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockWorkItem),
+      });
+
+      await adapter.createIssue({
+        title: "Test",
+        projectId: "TestProject",
+        customFields: {
+          "Custom.Blocked": "true",
+          "Custom.Retries": "3",
+          "Custom.FoundOn": "2026-11-23",
+          "Custom.Build": "2026.11",
+          "Custom.Empty": "",
+        },
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[2][1].body);
+      const custom = Object.fromEntries(
+        body
+          .filter((op: any) => op.path.startsWith("/fields/Custom."))
+          .map((op: any) => [op.path, op.value])
+      );
+      expect(custom).toEqual({
+        "/fields/Custom.Blocked": true,
+        "/fields/Custom.Retries": 3,
+        "/fields/Custom.FoundOn": "2026-11-23T12:00:00Z",
+        "/fields/Custom.Build": "2026.11",
+      });
+    });
+
+    it("sends custom field values as given when the field list cannot be read", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        text: () => Promise.resolve("Forbidden"),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockWorkItem),
+      });
+
+      await adapter.createIssue({
+        title: "Test",
+        projectId: "TestProject",
+        customFields: { "Custom.Retries": "3" },
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls.at(-1)![1].body);
+      expect(body).toContainEqual({
+        op: "add",
+        path: "/fields/Custom.Retries",
+        value: "3",
       });
     });
 
@@ -1742,6 +1818,122 @@ describe("AzureDevOpsAdapter", () => {
 
       await expect(adapterNoProject.getIssueTypes("")).rejects.toThrow(
         "Project not specified"
+      );
+    });
+  });
+
+  describe("getIssueTypeFields", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ value: [] }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "test-token" });
+      mockFetch.mockClear();
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    const respond = (typeFields: unknown[], fieldTypes: unknown[]) => {
+      mockFetch.mockImplementation(async (url: string) => ({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            value: url.includes("/workitemtypes/") ? typeFields : fieldTypes,
+          }),
+      }));
+    };
+
+    it("offers only the fields an organization added, typed for the form", async () => {
+      respond(
+        [
+          {
+            referenceName: "System.Title",
+            name: "Title",
+            alwaysRequired: true,
+          },
+          { referenceName: "Microsoft.VSTS.Common.Priority", name: "Priority" },
+          { referenceName: "WEF_ABC_Kanban.Column", name: "Board Column" },
+          {
+            referenceName: "Custom.Build",
+            name: "Build",
+            alwaysRequired: true,
+            defaultValue: "nightly",
+          },
+          {
+            referenceName: "Custom.Browser",
+            name: "Browser",
+            allowedValues: ["Firefox", "Safari"],
+          },
+          { referenceName: "Custom.Blocked", name: "Blocked" },
+          { referenceName: "Custom.Retries", name: "Retries", defaultValue: 2 },
+          { referenceName: "Custom.FoundOn", name: "Found on" },
+          { referenceName: "Custom.Notes", name: "Notes" },
+          { referenceName: "Custom.Area", name: "Area" },
+        ],
+        [
+          { referenceName: "Custom.Build", type: "string" },
+          { referenceName: "Custom.Browser", type: "picklistString" },
+          { referenceName: "Custom.Blocked", type: "boolean" },
+          { referenceName: "Custom.Retries", type: "integer" },
+          { referenceName: "Custom.FoundOn", type: "dateTime" },
+          { referenceName: "Custom.Notes", type: "html" },
+          { referenceName: "Custom.Area", type: "treePath" },
+        ]
+      );
+
+      const fields = await adapter.getIssueTypeFields(
+        "TestProject",
+        "User Story"
+      );
+
+      const urls = mockFetch.mock.calls.map((call) => call[0]);
+      expect(urls).toContain(
+        "https://dev.azure.com/testorg/TestProject/_apis/wit/workitemtypes/User%20Story/fields?$expand=all&api-version=7.0"
+      );
+      expect(fields.map((f) => f.key)).toEqual([
+        "Custom.Build",
+        "Custom.Browser",
+        "Custom.Blocked",
+        "Custom.Retries",
+        "Custom.FoundOn",
+        "Custom.Notes",
+      ]);
+      const byKey = Object.fromEntries(fields.map((f) => [f.key, f]));
+      expect(byKey["Custom.Build"]).toMatchObject({
+        name: "Build",
+        required: true,
+        schema: { type: "string" },
+        defaultValue: "nightly",
+      });
+      expect(byKey["Custom.Browser"].allowedValues).toEqual([
+        { id: "Firefox", name: "Firefox" },
+        { id: "Safari", name: "Safari" },
+      ]);
+      expect(byKey["Custom.Blocked"].allowedValues).toEqual([
+        { id: "true", name: "Yes" },
+        { id: "false", name: "No" },
+      ]);
+      expect(byKey["Custom.Retries"]).toMatchObject({
+        schema: { type: "number" },
+        defaultValue: 2,
+      });
+      expect(byKey["Custom.FoundOn"].input).toBe("date");
+      expect(byKey["Custom.Notes"].input).toBe("textarea");
+    });
+
+    it("returns no fields when the work item type cannot be read", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockImplementation(async () => ({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve("Not Found"),
+      }));
+
+      expect(await adapter.getIssueTypeFields("TestProject", "Bug")).toEqual(
+        []
       );
     });
   });

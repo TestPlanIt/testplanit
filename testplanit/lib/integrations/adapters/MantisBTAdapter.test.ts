@@ -344,6 +344,219 @@ describe("MantisBTAdapter", () => {
       expect(body.category).toEqual({ name: "Authentication" });
       expect(body.description).toBe(""); // Mantis requires a description
     });
+
+    const projectWithFields = {
+      projects: [
+        {
+          id: 5,
+          name: "Web",
+          custom_fields: [
+            { id: 1, name: "Build", type: "string" },
+            { id: 2, name: "Browsers", type: "multilist" },
+            { id: 3, name: "Found on", type: "date" },
+            { id: 4, name: "Retries", type: "numeric" },
+          ],
+        },
+      ],
+    };
+
+    it("sends custom field values in the formats Mantis takes", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson(projectWithFields));
+      mockFetch.mockResolvedValueOnce(okJson({ issue: { id: 102 } }));
+
+      await adapter.createIssue({
+        title: "x",
+        projectId: "5",
+        customFields: {
+          "1": "2026.11",
+          "2": ["Firefox", "Safari"],
+          "3": "2026-11-23",
+          "4": 3,
+        },
+      });
+
+      expect(mockFetch.mock.calls[0][0]).toBe(`${API}/projects/5`);
+      const body = JSON.parse(mockFetch.mock.calls[1][1].body);
+      expect(body.custom_fields).toEqual([
+        { field: { id: 1, name: "Build" }, value: "2026.11" },
+        { field: { id: 2, name: "Browsers" }, value: "Firefox|Safari" },
+        {
+          field: { id: 3, name: "Found on" },
+          value: String(Date.UTC(2026, 10, 23, 12) / 1000),
+        },
+        { field: { id: 4, name: "Retries" }, value: "3" },
+      ]);
+    });
+
+    it("leaves out empty values and keys that are not fields of the project", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson(projectWithFields));
+      mockFetch.mockResolvedValueOnce(okJson({ issue: { id: 103 } }));
+
+      await adapter.createIssue({
+        title: "x",
+        projectId: "5",
+        customFields: {
+          "1": "",
+          "2": [],
+          "3": "not a date",
+          "4": 0,
+          "99": "unknown field",
+          reporter: { accountId: "8" },
+        },
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[1][1].body);
+      expect(body.custom_fields).toEqual([
+        { field: { id: 4, name: "Retries" }, value: "0" },
+      ]);
+    });
+
+    it("does not read the project when no custom field has a value", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issue: { id: 104 } }));
+
+      await adapter.createIssue({
+        title: "x",
+        projectId: "5",
+        customFields: { "1": "", reporter: { accountId: "8" } },
+      });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.custom_fields).toBeUndefined();
+    });
+  });
+
+  describe("getIssueTypeFields", () => {
+    const field = (overrides: Record<string, unknown>) => ({
+      type: "string",
+      default_value: "",
+      possible_values: "",
+      display_report: true,
+      require_report: false,
+      ...overrides,
+    });
+
+    async function fieldsFor(customFields: unknown[]) {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          projects: [{ id: 5, name: "Web", custom_fields: customFields }],
+        })
+      );
+      return adapter.getIssueTypeFields("5", "9");
+    }
+
+    it("lists the fields Mantis shows or requires when reporting", async () => {
+      const fields = await fieldsFor([
+        field({ id: 1, name: "Shown" }),
+        field({ id: 2, name: "Hidden", display_report: false }),
+        field({
+          id: 3,
+          name: "Required",
+          display_report: false,
+          require_report: true,
+        }),
+      ]);
+
+      expect(mockFetch.mock.calls[0][0]).toBe(`${API}/projects/5`);
+      expect(fields.map((f) => [f.key, f.name, f.required])).toEqual([
+        ["1", "Shown", false],
+        ["3", "Required", true],
+      ]);
+    });
+
+    it("maps each Mantis field type to a form input", async () => {
+      const fields = await fieldsFor([
+        field({ id: 1, name: "Text", default_value: "n/a" }),
+        field({ id: 2, name: "Email", type: "email" }),
+        field({ id: 3, name: "Long", type: "textarea" }),
+        field({ id: 4, name: "Whole", type: "numeric", default_value: "2" }),
+        field({ id: 5, name: "Decimal", type: "float" }),
+        field({ id: 6, name: "Date", type: "date", default_value: "{today}" }),
+        field({
+          id: 7,
+          name: "Enum",
+          type: "enum",
+          possible_values: "|low|high",
+          default_value: "low",
+        }),
+        field({ id: 8, name: "List", type: "list", possible_values: "a|b" }),
+        field({ id: 9, name: "Radio", type: 9, possible_values: "yes|no" }),
+        field({
+          id: 10,
+          name: "Checkbox",
+          type: "checkbox",
+          possible_values: "x|y|z",
+          default_value: "x|z",
+        }),
+        field({
+          id: 11,
+          name: "Multi",
+          type: "multilist",
+          possible_values: "p|q",
+        }),
+      ]);
+      const byName = Object.fromEntries(fields.map((f) => [f.name, f]));
+      const options = (...values: string[]) =>
+        values.map((v) => ({ id: v, name: v }));
+
+      expect(byName.Text).toMatchObject({
+        schema: { type: "string" },
+        defaultValue: "n/a",
+      });
+      expect(byName.Text.input).toBeUndefined();
+      expect(byName.Email.schema).toEqual({ type: "string" });
+      expect(byName.Long).toMatchObject({
+        schema: { type: "string" },
+        input: "textarea",
+      });
+      expect(byName.Whole).toMatchObject({
+        schema: { type: "number" },
+        defaultValue: 2,
+      });
+      expect(byName.Decimal.schema).toEqual({ type: "number" });
+      expect(byName.Date).toMatchObject({ input: "date" });
+      expect(byName.Date.defaultValue).toBeUndefined();
+      expect(byName.Enum).toMatchObject({
+        allowedValues: options("low", "high"),
+        defaultValue: "low",
+      });
+      expect(byName.List.allowedValues).toEqual(options("a", "b"));
+      expect(byName.Radio.allowedValues).toEqual(options("yes", "no"));
+      expect(byName.Checkbox).toMatchObject({
+        input: "multiselect",
+        allowedValues: options("x", "y", "z"),
+        defaultValue: ["x", "z"],
+      });
+      expect(byName.Multi).toMatchObject({
+        input: "multiselect",
+        allowedValues: options("p", "q"),
+      });
+    });
+
+    it("offers a text input for a list Mantis computes itself", async () => {
+      const [fieldDef] = await fieldsFor([
+        field({
+          id: 1,
+          name: "Fixed in",
+          type: "enum",
+          possible_values: "=versions",
+        }),
+      ]);
+
+      expect(fieldDef.schema).toEqual({ type: "string" });
+      expect(fieldDef.allowedValues).toBeUndefined();
+    });
+
+    it("returns no fields when the project cannot be read", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(httpError(404, "Not Found"));
+
+      expect(await adapter.getIssueTypeFields("5", "9")).toEqual([]);
+    });
   });
 
   describe("updateIssue", () => {

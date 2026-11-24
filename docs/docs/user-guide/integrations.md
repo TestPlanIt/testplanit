@@ -127,6 +127,7 @@ Connect to Azure DevOps Boards for work item tracking.
 - Support for all work item types defined in your Azure DevOps process
 - Search work items by text or by exact ID (e.g., `42`)
 - Priority field supported (maps to work item priority)
+- Custom fields of the selected work item type are offered on the create form (text, rich text, number, date, boolean, and picklist fields)
 - Images and videos embedded in the description are uploaded to the created work item as attachments
 - Personal Access Token authentication
 - Inbound webhook support for real-time status sync
@@ -141,7 +142,8 @@ Connect to a self-hosted Redmine instance for issue tracking.
 - Create Redmine issues directly from TestPlanIt, choosing the tracker and priority
 - Search issues by text (subject) or by exact reference (e.g., `#42`)
 - Maps Redmine **trackers** to issue types; statuses and priorities are discovered from your instance
-- Custom field and linked-issue (relations) support
+- Custom fields of the selected tracker and project are offered on the create form (text, long text, integer, float, date, boolean, list, key/value list, version, and user fields) and read back on every synced issue
+- Linked-issue (relations) support
 - API key authentication (Redmine has no OAuth)
 - Inbound webhook support for status sync via the `redmine_webhook` plugin
 - Configurable instance URL — works with any self-hosted Redmine deployment
@@ -155,6 +157,7 @@ Connect to a self-hosted MantisBT instance for issue tracking.
 - Create MantisBT issues directly from TestPlanIt, choosing the category and priority
 - Search issues by text (summary) or by exact reference (e.g., `#42`)
 - Maps MantisBT **categories** to issue types; statuses and priorities are discovered from your instance
+- Custom fields of the linked project are offered on the create form (string, email, textarea, numeric, float, date, enumeration, list, radio, checkbox, and multi-selection list fields) and read back on every synced issue
 - Linked-issue (relationships) support
 - API token authentication (MantisBT has no OAuth)
 - Inbound webhook support for status sync via a MantisBT webhook plugin
@@ -459,6 +462,7 @@ Organization URL: https://dev.azure.com/your-organization
 - The Organization URL is required (e.g., `https://dev.azure.com/myorg` or `https://myserver/tfs/DefaultCollection` for on-premises)
 - Work item types are discovered dynamically from your Azure DevOps process template
 - Priority values (1–4) map directly to Azure DevOps priority field values
+- The create form shows the fields your organization added to the selected work item type (every field outside the built-in `System.` and `Microsoft.` namespaces). Built-in fields other than title, description, priority, and tags are not offered.
 - Work items are always created as the account that owns the personal access token, regardless of which TestPlanIt user created them — Azure DevOps populates `System.CreatedBy` from the authenticating identity and does not allow setting it on another user's behalf
 
 #### Redmine
@@ -476,7 +480,8 @@ Redmine URL: https://your-redmine-instance.com
 
 - The Redmine URL is required — TestPlanIt uses it for all API calls.
 - The API key inherits the permissions of the user it belongs to. Use a dedicated **service account** for shared integrations so issue creation and reads are not tied to one person's account.
-- Redmine **trackers** (Bug, Feature, Support, …) are used as the issue type; statuses and priorities are read from your instance. Custom fields are supported.
+- Redmine **trackers** (Bug, Feature, Support, …) are used as the issue type; statuses and priorities are read from your instance.
+- The create form shows the custom fields that apply to the selected tracker in the linked project. Redmine only describes custom fields (their format, choices, and whether they are required) to **administrators**. With a non-administrator API key the form shows the project's custom fields as plain text inputs (Redmine 4.2 and later): enter a date as `YYYY-MM-DD`, a boolean as `1` or `0`, and a version, user, or key/value choice by its numeric ID.
 - Redmine has no OAuth — issues are always created as the account that owns the API key.
 - The linked Redmine project must have **trackers enabled** and the **Issue tracking** module active, or issue creation will fail with a "Tracker cannot be blank" error.
 
@@ -498,6 +503,9 @@ MantisBT URL: https://your-mantisbt-instance.com
 - MantisBT **categories** are used as the issue type; statuses and priorities are read from your instance.
 - MantisBT has no OAuth — issues are always created as the account that owns the API token.
 - The linked MantisBT project must have at least one **category** defined, since MantisBT requires a category on every new issue.
+- The create form shows the custom fields that MantisBT displays or requires when reporting an issue in the linked project. They appear once a category is selected. Fields marked as required for reporting must be filled in, or MantisBT rejects the issue.
+- A custom field whose values MantisBT computes (for example a list of the project's versions) is shown as a text input; type the value exactly as MantisBT lists it.
+- MantisBT ignores a value for a custom field that the API token's account is not allowed to edit.
 
 #### Simple URL
 
@@ -682,10 +690,10 @@ field support varies by provider:
 
 - **Jira**: Full dynamic discovery — issue types, required fields, and custom fields
   are fetched per-project and per-issue-type from the create metadata API
-- **Azure DevOps**: Work item types are discovered per-project; fields are fixed per type
+- **Azure DevOps**: Work item types are discovered per-project; the fields your organization added to a type are discovered per type
 - **GitHub / GitLab / Gitea**: Fixed field set (title, description, labels); no custom fields
 - **Redmine**: Trackers are discovered as issue types; statuses, priorities, and custom fields are read from the instance
-- **MantisBT**: Categories are discovered as issue types; statuses and priorities are read from the instance
+- **MantisBT**: Categories are discovered as issue types; statuses, priorities, and the linked project's custom fields are read from the instance
 - **ClickUp**: Custom task types are discovered as issue types; the linked List's custom fields are discovered per List (ClickUp scopes fields to Lists rather than task types)
 
 ### Custom Field Support

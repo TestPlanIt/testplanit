@@ -66,10 +66,79 @@ interface MantisIssue {
   relationships?: MantisRelationship[];
 }
 
+/** A custom field definition as listed on a project (`GET /projects/:id`). */
+interface MantisCustomFieldDef {
+  id: number;
+  name: string;
+  /** A type name ("string", "enum", …); types the API has no name for (radio) arrive as their numeric id. */
+  type?: string | number;
+  default_value?: string;
+  /** Pipe-separated; starts with `=` when Mantis computes the list itself (e.g. `=versions`). */
+  possible_values?: string;
+  display_report?: boolean;
+  require_report?: boolean;
+}
+
 interface MantisProject {
   id: number;
   name: string;
   categories?: MantisRef[];
+  custom_fields?: MantisCustomFieldDef[];
+}
+
+const MANTIS_RADIO_TYPE_ID = 9;
+
+type MantisFieldKind =
+  "text" | "textarea" | "number" | "date" | "choice" | "multichoice";
+
+function fieldKind(def: MantisCustomFieldDef): MantisFieldKind {
+  switch (def.type) {
+    case "textarea":
+      return "textarea";
+    case "numeric":
+    case "float":
+      return "number";
+    case "date":
+      return "date";
+    case "enum":
+    case "list":
+    case "radio":
+    case MANTIS_RADIO_TYPE_ID:
+    case String(MANTIS_RADIO_TYPE_ID):
+      return "choice";
+    case "checkbox":
+    case "multilist":
+      return "multichoice";
+    default:
+      return "text";
+  }
+}
+
+/** The selectable values of a choice field; empty when Mantis computes them. */
+function possibleValues(def: MantisCustomFieldDef): string[] {
+  const raw = def.possible_values ?? "";
+  if (raw.startsWith("=")) return [];
+  return raw
+    .split("|")
+    .map((v) => v.trim())
+    .filter((v) => v !== "");
+}
+
+/**
+ * Mantis stores a date field as a Unix timestamp and shows it in each
+ * viewer's timezone. Noon UTC keeps the picked calendar day the same for
+ * viewers in every timezone from UTC-12 to UTC+11.
+ */
+function dateToMantisTimestamp(value: unknown): string | undefined {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value));
+  if (!match) return undefined;
+  const ms = Date.UTC(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]),
+    12
+  );
+  return Number.isNaN(ms) ? undefined : String(Math.floor(ms / 1000));
 }
 
 /**
@@ -244,10 +313,12 @@ export class MantisBTAdapter extends BaseAdapter {
       const handler = this.refFromValue(data.assigneeId);
       if (handler) issue.handler = handler;
     }
-    if (data.customFields) {
-      issue.custom_fields = Object.entries(data.customFields).map(
-        ([id, value]) => ({ field: { id: Number(id) }, value })
-      );
+    const customFields = await this.buildCustomFieldValues(
+      data.projectId,
+      data.customFields
+    );
+    if (customFields.length > 0) {
+      issue.custom_fields = customFields;
     }
 
     const resp = await this.makeRequest<{ issue: MantisIssue }>(
@@ -363,6 +434,142 @@ export class MantisBTAdapter extends BaseAdapter {
       id: String(c.id),
       name: c.name ?? c.label ?? String(c.id),
     }));
+  }
+
+  private async loadCustomFieldDefs(
+    projectId: string
+  ): Promise<MantisCustomFieldDef[]> {
+    const resp = await this.makeRequest<{ projects?: MantisProject[] }>(
+      `${this.apiBase}/projects/${projectId}`
+    );
+    return resp.projects?.[0]?.custom_fields ?? [];
+  }
+
+  /**
+   * The project's custom fields that Mantis shows on its own report form, in
+   * the shape the create dialog renders. Mantis links custom fields to
+   * projects, not categories, so the selected category does not change them.
+   */
+  async getIssueTypeFields(
+    projectKey: string,
+    _issueTypeId: string
+  ): Promise<any[]> {
+    try {
+      const defs = await this.loadCustomFieldDefs(projectKey);
+      return defs
+        .filter((def) => def.display_report || def.require_report)
+        .map((def) => {
+          const kind = fieldKind(def);
+          const options = possibleValues(def);
+          const defaultValue = def.default_value ?? "";
+          const base = {
+            key: String(def.id),
+            name: def.name,
+            required: def.require_report === true,
+            hasDefaultValue: defaultValue !== "",
+          };
+          const allowedValues = options.map((v) => ({ id: v, name: v }));
+          switch (kind) {
+            case "choice":
+              // A list Mantis computes itself has no values to offer here;
+              // it falls back to a text input.
+              if (options.length === 0) {
+                return { ...base, schema: { type: "string" } };
+              }
+              return {
+                ...base,
+                schema: { type: "option" },
+                allowedValues,
+                ...(options.includes(defaultValue) ? { defaultValue } : {}),
+              };
+            case "multichoice": {
+              if (options.length === 0) {
+                return { ...base, schema: { type: "array" } };
+              }
+              const defaults = defaultValue
+                .split("|")
+                .filter((v) => options.includes(v));
+              return {
+                ...base,
+                schema: { type: "array" },
+                input: "multiselect",
+                allowedValues,
+                ...(defaults.length > 0 ? { defaultValue: defaults } : {}),
+              };
+            }
+            case "number":
+              return {
+                ...base,
+                schema: { type: "number" },
+                ...(defaultValue !== "" && !Number.isNaN(Number(defaultValue))
+                  ? { defaultValue: Number(defaultValue) }
+                  : {}),
+              };
+            case "date":
+              // Date defaults are expressions such as `{tomorrow}` that only
+              // Mantis can evaluate, so none is offered.
+              return { ...base, schema: { type: "date" }, input: "date" };
+            case "textarea":
+              return {
+                ...base,
+                schema: { type: "string" },
+                input: "textarea",
+                ...(defaultValue !== "" ? { defaultValue } : {}),
+              };
+            default:
+              return {
+                ...base,
+                schema: { type: "string" },
+                ...(defaultValue !== "" ? { defaultValue } : {}),
+              };
+          }
+        });
+    } catch (error) {
+      console.error("[MantisBTAdapter] getIssueTypeFields failed:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Turn the form's `{fieldId: value}` map into Mantis's
+   * `[{ field: { id }, value }]` list. Mantis takes every value as a string:
+   * several choices are joined with `|` and a date is a Unix timestamp. It
+   * rejects the whole issue over an entry it does not recognize, so empty
+   * values and keys that are not custom fields of the project are left out.
+   */
+  private async buildCustomFieldValues(
+    projectId: string,
+    customFields: Record<string, any> | undefined
+  ): Promise<MantisCustomField[]> {
+    const entries = Object.entries(customFields ?? {}).filter(
+      ([id, value]) =>
+        /^\d+$/.test(id) &&
+        value !== undefined &&
+        value !== null &&
+        value !== "" &&
+        !(Array.isArray(value) && value.length === 0)
+    );
+    if (entries.length === 0) return [];
+
+    const defs = await this.loadCustomFieldDefs(projectId);
+    const byId = new Map(defs.map((def) => [String(def.id), def]));
+    const values: MantisCustomField[] = [];
+
+    for (const [id, raw] of entries) {
+      const def = byId.get(id);
+      if (!def) continue;
+      let value: string | undefined;
+      if (fieldKind(def) === "date") {
+        value = dateToMantisTimestamp(raw);
+      } else if (Array.isArray(raw)) {
+        value = raw.map(String).join("|");
+      } else {
+        value = String(raw);
+      }
+      if (value === undefined) continue;
+      values.push({ field: { id: def.id, name: def.name }, value });
+    }
+    return values;
   }
 
   async getCurrentUser(): Promise<{
