@@ -439,11 +439,16 @@ describe("MantisBTAdapter", () => {
       ...overrides,
     });
 
-    async function fieldsFor(customFields: unknown[]) {
+    async function fieldsFor(
+      customFields: unknown[],
+      project: Record<string, unknown> = {}
+    ) {
       await authenticate();
       mockFetch.mockResolvedValueOnce(
         okJson({
-          projects: [{ id: 5, name: "Web", custom_fields: customFields }],
+          projects: [
+            { id: 5, name: "Web", ...project, custom_fields: customFields },
+          ],
         })
       );
       return adapter.getIssueTypeFields("5", "9");
@@ -537,18 +542,79 @@ describe("MantisBTAdapter", () => {
       });
     });
 
-    it("offers a text input for a list Mantis computes itself", async () => {
-      const [fieldDef] = await fieldsFor([
+    it("lists the project's versions and categories for the lists Mantis computes", async () => {
+      const fields = await fieldsFor(
+        [
+          field({
+            id: 1,
+            name: "All",
+            type: "list",
+            possible_values: "=versions",
+          }),
+          field({
+            id: 2,
+            name: "Released",
+            type: "multilist",
+            possible_values: "=released_versions",
+          }),
+          field({
+            id: 3,
+            name: "Future",
+            type: "enum",
+            possible_values: "=future_versions",
+          }),
+          field({
+            id: 4,
+            name: "Area",
+            type: "enum",
+            possible_values: "=categories",
+          }),
+        ],
+        {
+          versions: [
+            { id: 2, name: "2.0", released: false, obsolete: false },
+            { id: 1, name: "1.0", released: true, obsolete: false },
+            { id: 3, name: "0.1", released: true, obsolete: true },
+          ],
+          categories: [
+            { id: 1, name: "General" },
+            { id: 2, name: "UI" },
+          ],
+        }
+      );
+      const byName = Object.fromEntries(fields.map((f: any) => [f.name, f]));
+      const options = (...values: string[]) =>
+        values.map((v) => ({ id: v, name: v }));
+
+      expect(byName.All.allowedValues).toEqual(options("2.0", "1.0"));
+      expect(byName.Released).toMatchObject({
+        input: "multiselect",
+        allowedValues: options("1.0"),
+      });
+      expect(byName.Future.allowedValues).toEqual(options("2.0"));
+      expect(byName.Area.allowedValues).toEqual(options("General", "UI"));
+    });
+
+    it("offers a text input for a computed list with nothing to list", async () => {
+      const fields = await fieldsFor([
         field({
           id: 1,
+          name: "Sprint",
+          type: "enum",
+          possible_values: "=sprints",
+        }),
+        field({
+          id: 2,
           name: "Fixed in",
           type: "enum",
           possible_values: "=versions",
         }),
       ]);
 
-      expect(fieldDef.schema).toEqual({ type: "string" });
-      expect(fieldDef.allowedValues).toBeUndefined();
+      for (const fieldDef of fields) {
+        expect(fieldDef.schema).toEqual({ type: "string" });
+        expect(fieldDef.allowedValues).toBeUndefined();
+      }
     });
 
     it("returns no fields when the project cannot be read", async () => {

@@ -504,7 +504,8 @@ MantisBT URL: https://your-mantisbt-instance.com
 - MantisBT has no OAuth — issues are always created as the account that owns the API token.
 - The linked MantisBT project must have at least one **category** defined, since MantisBT requires a category on every new issue.
 - The create form shows the custom fields that MantisBT displays or requires when reporting an issue in the linked project. They appear once a category is selected. Fields marked as required for reporting must be filled in, or MantisBT rejects the issue.
-- A custom field whose values MantisBT computes (for example a list of the project's versions) is shown as a text input; type the value exactly as MantisBT lists it.
+- A custom field whose values MantisBT computes from the project (`=versions`, `=released_versions`, `=future_versions`, or `=categories`) lists the project's versions or categories. Version lists leave out obsolete versions.
+- A custom field whose values come from a custom function added to your MantisBT installation is shown as a text input; type the value exactly as MantisBT lists it.
 - MantisBT ignores a value for a custom field that the API token's account is not allowed to edit.
 
 #### Simple URL
