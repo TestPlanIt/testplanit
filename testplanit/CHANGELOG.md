@@ -1,3 +1,9 @@
+## [1.2.10](https://github.com/TestPlanIt/testplanit/compare/v1.2.9...v1.2.10) (2026-11-24)
+
+### Enhancements
+
+* **integrations:** list versions and categories for MantisBT computed custom fields ([#764](https://github.com/TestPlanIt/testplanit/issues/764)) ([65b4249](https://github.com/TestPlanIt/testplanit/commit/65b42492f16c73a4adeaa98866366ed389754cfd))
+
 ## [1.2.9](https://github.com/TestPlanIt/testplanit/compare/v1.2.8...v1.2.9) (2026-11-24)
 
 ### Enhancements
