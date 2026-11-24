@@ -5,7 +5,11 @@ import { EncryptionService, getMasterKey } from "@/utils/encryption";
 import type { Integration, IntegrationProvider } from "~/zenstack/models";
 import { AuthenticationService } from "./AuthenticationService";
 import { resolveStoredCredentials } from "./credentials";
-import { credentialsCorruptError } from "./errors";
+import {
+  RefreshTokenRevokedError,
+  credentialsCorruptError,
+  isRefreshTokenRevokedError,
+} from "./errors";
 import { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
 import { ClickUpAdapter } from "./adapters/ClickUpAdapter";
 import { GiteaAdapter } from "./adapters/GiteaAdapter";
@@ -46,6 +50,10 @@ export class IntegrationManager {
   // can't lapse mid-request (or mid-way through a long sync). Also the
   // freshness bar a concurrent-refresh loser waits for.
   private static readonly TOKEN_REFRESH_MARGIN_MS = 5 * 60 * 1000;
+
+  // How many further auth rows a borrowed read tries after the newest one's
+  // refresh token turns out to be dead.
+  private static readonly MAX_BORROW_FALLBACKS = 2;
 
   // Valkey pub/sub channel used to broadcast adapter-cache invalidations to
   // every other process. Each process caches adapters in its own memory, so a
@@ -106,7 +114,28 @@ export class IntegrationManager {
     integrationId: string,
     dbClient?: typeof rawDb,
     userId?: string,
-    options?: { allowInactive?: boolean }
+    options?: {
+      allowInactive?: boolean;
+      /**
+       * Build the adapter from the integration's own settings and client
+       * credentials only — no stored user token is decrypted, refreshed or
+       * validated. For the OAuth authorize/callback handshake, which must
+       * work precisely when the stored token is missing or dead.
+       */
+      skipAuthentication?: boolean;
+    }
+  ): Promise<IssueAdapter | null> {
+    return this.loadAdapter(integrationId, dbClient, userId, options, []);
+  }
+
+  private async loadAdapter(
+    integrationId: string,
+    dbClient: typeof rawDb | undefined,
+    userId: string | undefined,
+    options:
+      { allowInactive?: boolean; skipAuthentication?: boolean } | undefined,
+    // Auth rows already found dead during this call (borrowed reads only).
+    excludeAuthIds: string[]
   ): Promise<IssueAdapter | null> {
     // Scope the cache key by tenant. A shared multi-tenant worker serves many
     // tenants from ONE IntegrationManager singleton, so without the tenant
@@ -125,7 +154,7 @@ export class IntegrationManager {
     // Check cache first — but never serve an OAuth adapter whose access token
     // has expired. Evict it so the rebuild below refreshes the token; otherwise
     // borrowed reads keep using the stale token and fail with a 401.
-    if (this.adapterCache.has(cacheKey)) {
+    if (!options?.skipAuthentication && this.adapterCache.has(cacheKey)) {
       const expiry = this.adapterCacheExpiry.get(cacheKey);
       if (expiry === undefined || expiry > Date.now()) {
         return this.adapterCache.get(cacheKey)!;
@@ -140,7 +169,16 @@ export class IntegrationManager {
       where: { id: parseInt(integrationId) },
       include: {
         userIntegrationAuths: {
-          where: { isActive: true, ...(userId ? { userId } : {}) },
+          // A caller with a userId gets their own row. A borrowed read takes
+          // the newest row that is not known to be dead, so one user's
+          // revoked token cannot take the integration down for everyone.
+          where: {
+            isActive: true,
+            ...(userId ? { userId } : { needsReauthAt: null }),
+            ...(excludeAuthIds.length > 0
+              ? { id: { notIn: excludeAuthIds } }
+              : {}),
+          },
           orderBy: { updatedAt: "desc" },
           take: 1,
         },
@@ -183,6 +221,11 @@ export class IntegrationManager {
     const authData: any = {
       type: this.mapAuthType(integration.authType),
     };
+
+    if (options?.skipAuthentication) {
+      // Never cached: see the allowInactive note at the end of this method.
+      return adapter;
+    }
 
     // Handle API key or PAT authentication
     if (
@@ -250,7 +293,19 @@ export class IntegrationManager {
         auth.tokenExpiresAt.getTime() <
           Date.now() + IntegrationManager.TOKEN_REFRESH_MARGIN_MS;
       const ownerId = userId ?? auth.userId;
-      if (isExpired && refreshToken && ownerId && adapter.refreshTokens) {
+      let revoked: RefreshTokenRevokedError | undefined;
+      if (isExpired && auth.needsReauthAt) {
+        // Already known dead — don't spend another provider call on it.
+        revoked = new RefreshTokenRevokedError(
+          integration.provider,
+          "authorization is flagged for re-authorization"
+        );
+      } else if (
+        isExpired &&
+        refreshToken &&
+        ownerId &&
+        adapter.refreshTokens
+      ) {
         // Providers rotate refresh tokens — Atlassian revokes the whole token
         // family when one is used twice — so exactly one process may refresh a
         // given auth row at a time. Losers wait for the winner to persist the
@@ -315,17 +370,16 @@ export class IntegrationManager {
               `Failed to refresh OAuth token for integration ${integration.id}:`,
               error
             );
-            // invalid_grant means the refresh token itself is dead (revoked,
-            // rotated away, or past the provider's inactivity window) — flag
-            // the row so the owner is notified to reconnect.
-            if (
-              error instanceof Error &&
-              /invalid_grant/i.test(error.message)
-            ) {
+            // The refresh token itself is dead (revoked, rotated away, or
+            // past the provider's inactivity window) — flag the row so the
+            // owner is notified to reconnect. Timeouts and 5xx never land
+            // here: the token may still be good once the provider recovers.
+            if (isRefreshTokenRevokedError(error)) {
               await AuthenticationService.markNeedsReauth(
                 auth.userId,
                 integration.id
               );
+              revoked = error;
             }
           } finally {
             if (valkeyConnection) {
@@ -335,10 +389,30 @@ export class IntegrationManager {
         }
       }
 
+      if (revoked) {
+        // A borrowed read moves on to the next newest row. A caller using
+        // their own row has nothing to fall back to and must reconnect.
+        if (
+          !userId &&
+          excludeAuthIds.length < IntegrationManager.MAX_BORROW_FALLBACKS
+        ) {
+          return this.loadAdapter(integrationId, dbClient, userId, options, [
+            ...excludeAuthIds,
+            auth.id,
+          ]);
+        }
+        throw revoked;
+      }
+
       authData.accessToken = accessToken;
       authData.refreshToken = refreshToken;
 
       await adapter.authenticate(authData);
+    } else if (excludeAuthIds.length > 0) {
+      throw new RefreshTokenRevokedError(
+        integration.provider,
+        "no other active authorization to fall back to"
+      );
     }
 
     // Cache the adapter — but never the transient ones built for the OAuth

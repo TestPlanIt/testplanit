@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
 import { GitHubAdapter } from "./adapters/GitHubAdapter";
 import { JiraAdapter } from "./adapters/JiraAdapter";
+import { RefreshTokenRevokedError } from "./errors";
 import { IntegrationManager } from "./IntegrationManager";
 
 // Mock rawDb
@@ -436,67 +437,256 @@ describe("IntegrationManager", () => {
       vi.unstubAllEnvs();
     });
 
-    it("marks the auth row needs-reauth when the provider rejects the refresh token", async () => {
-      // invalid_grant = the refresh token itself is dead (revoked/rotated/
-      // inactive too long). The owner must be flagged so they get notified to
-      // reconnect instead of the failure staying log-only.
-      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
-      vi.mocked(EncryptionService.decrypt).mockImplementation(
-        (value: string) => value
-      );
+    describe("dead refresh tokens", () => {
+      const DEAD =
+        '{"error":"unauthorized_client","error_description":"refresh_token is invalid"}';
+      const expired = () => new Date(Date.now() - 1000);
+      const authRow = (id: string, userId: string, extra = {}) => ({
+        id,
+        userId,
+        isActive: true,
+        needsReauthAt: null as Date | null,
+        accessToken: `${id}-access`,
+        refreshToken: `${id}-refresh`,
+        tokenExpiresAt: expired(),
+        updatedAt: new Date(),
+        ...extra,
+      });
 
-      const integration = {
-        id: 63,
-        name: "GitLab OAuth",
-        provider: "GITLAB",
-        status: "ACTIVE",
-        authType: "OAUTH2",
-        credentials: {
-          encrypted: JSON.stringify({
-            clientId: "gl-client",
-            clientSecret: "gl-secret",
-          }),
-        },
-        settings: { instanceUrl: "https://gitlab.com" },
-        userIntegrationAuths: [
-          {
-            userId: "owner-9",
-            isActive: true,
-            accessToken: "old-access",
-            refreshToken: "dead-refresh-token",
-            tokenExpiresAt: new Date(Date.now() - 1000),
-            updatedAt: new Date(),
+      /**
+       * A Jira OAuth integration whose auth rows are served the way the real
+       * query would: newest first, honouring the userId / needsReauthAt /
+       * notIn filters getAdapter sends.
+       */
+      const serveJira = (id: number, rows: ReturnType<typeof authRow>[]) => {
+        const integration = {
+          id,
+          name: "Jira OAuth",
+          provider: "JIRA",
+          status: "ACTIVE",
+          authType: "OAUTH2",
+          credentials: {
+            encrypted: JSON.stringify({
+              clientId: "jira-client",
+              clientSecret: "jira-secret",
+            }),
+          },
+          settings: {},
+        };
+        mockDb.integration.findUnique.mockImplementation(async (args: any) => {
+          const where = args?.include?.userIntegrationAuths?.where;
+          if (!where) return integration;
+          const excluded: string[] = where.id?.notIn ?? [];
+          const matching = rows.filter(
+            (row) =>
+              !excluded.includes(row.id) &&
+              (where.userId === undefined || row.userId === where.userId) &&
+              (!("needsReauthAt" in where) || row.needsReauthAt === null)
+          );
+          return { ...integration, userIntegrationAuths: matching.slice(0, 1) };
+        });
+      };
+
+      const tokenResponse = (status: number, body: string) => ({
+        ok: status < 400,
+        status,
+        text: () => Promise.resolve(body),
+        json: () => Promise.resolve(JSON.parse(body)),
+      });
+      const resources = {
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve([
+            { id: "cloud-1", url: "https://x.atlassian.net", name: "x" },
+          ]),
+      };
+
+      beforeEach(() => {
+        vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+        vi.mocked(EncryptionService.decrypt).mockImplementation(
+          (value: string) => value
+        );
+      });
+      afterEach(() => {
+        vi.unstubAllEnvs();
+        mockDb.integration.findUnique.mockReset();
+      });
+
+      it("flags the row when Atlassian answers unauthorized_client / refresh_token is invalid", async () => {
+        serveJira(70, [authRow("david", "david-id")]);
+        global.fetch = vi.fn().mockResolvedValueOnce(tokenResponse(403, DEAD));
+
+        await expect(manager.getAdapter("70")).rejects.toBeInstanceOf(
+          RefreshTokenRevokedError
+        );
+
+        expect(AuthenticationService.markNeedsReauth).toHaveBeenCalledWith(
+          "david-id",
+          70
+        );
+        expect(AuthenticationService.storeUserAuth).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        [
+          "a 503 from the token endpoint",
+          () => tokenResponse(503, "upstream connect error"),
+        ],
+        [
+          "a timeout",
+          () => {
+            throw Object.assign(new Error("fetch failed"), {
+              cause: { code: "ETIMEDOUT" },
+            });
           },
         ],
-      };
-      mockDb.integration.findUnique.mockResolvedValue(integration);
+      ])("does not flag the row on %s", async (_name, refreshResult) => {
+        serveJira(71, [authRow("david", "david-id")]);
+        global.fetch = vi
+          .fn()
+          .mockImplementationOnce(async () => refreshResult())
+          // authenticate() proceeds with the stale access token
+          .mockResolvedValueOnce(resources);
 
-      const mockFetch = vi
-        .fn()
-        // refresh exchange rejected terminally
-        .mockResolvedValueOnce({
-          ok: false,
-          text: () =>
-            Promise.resolve(
-              '{"error":"invalid_grant","error_description":"revoked"}'
-            ),
-        })
-        // authenticate() then proceeds with the stale token
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ id: 1, username: "u" }),
+        await manager.getAdapter("71");
+
+        expect(AuthenticationService.markNeedsReauth).not.toHaveBeenCalled();
+      });
+
+      it("a borrowed read falls back to the next newest row when the newest is dead", async () => {
+        serveJira(72, [authRow("david", "david-id"), authRow("dan", "dan-id")]);
+        const mockFetch = vi
+          .fn()
+          .mockResolvedValueOnce(tokenResponse(403, DEAD))
+          .mockResolvedValueOnce(
+            tokenResponse(
+              200,
+              '{"access_token":"dan-fresh","refresh_token":"dan-rotated","expires_in":3600}'
+            )
+          )
+          .mockResolvedValueOnce(resources);
+        global.fetch = mockFetch;
+
+        const adapter = await manager.getAdapter("72");
+
+        expect(adapter).toBeInstanceOf(JiraAdapter);
+        expect(AuthenticationService.markNeedsReauth).toHaveBeenCalledWith(
+          "david-id",
+          72
+        );
+        expect(AuthenticationService.storeUserAuth).toHaveBeenCalledWith(
+          "dan-id",
+          72,
+          expect.objectContaining({ accessToken: "dan-fresh" })
+        );
+        expect(JSON.parse(mockFetch.mock.calls[1][1].body).refresh_token).toBe(
+          "dan-refresh"
+        );
+      });
+
+      it("a borrowed read skips a row already flagged for re-authorization", async () => {
+        serveJira(73, [
+          authRow("david", "david-id", { needsReauthAt: new Date() }),
+          authRow("dan", "dan-id", {
+            tokenExpiresAt: new Date(Date.now() + 3600_000),
+          }),
+        ]);
+        const mockFetch = vi.fn().mockResolvedValueOnce(resources);
+        global.fetch = mockFetch;
+
+        await manager.getAdapter("73");
+
+        // No token exchange at all: David's row was never touched.
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+        expect(mockFetch.mock.calls[0][1].headers.Authorization).toBe(
+          "Bearer dan-access"
+        );
+      });
+
+      it("a caller on their own dead row is told to reconnect, never handed another user's token", async () => {
+        serveJira(74, [authRow("david", "david-id"), authRow("dan", "dan-id")]);
+        const mockFetch = vi
+          .fn()
+          .mockResolvedValueOnce(tokenResponse(403, DEAD));
+        global.fetch = mockFetch;
+
+        await expect(
+          manager.getAdapter("74", undefined, "david-id")
+        ).rejects.toBeInstanceOf(RefreshTokenRevokedError);
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("does not re-try a refresh token already flagged dead", async () => {
+        serveJira(75, [
+          authRow("david", "david-id", { needsReauthAt: new Date() }),
+        ]);
+        const mockFetch = vi.fn();
+        global.fetch = mockFetch;
+
+        await expect(
+          manager.getAdapter("75", undefined, "david-id")
+        ).rejects.toBeInstanceOf(RefreshTokenRevokedError);
+        expect(mockFetch).not.toHaveBeenCalled();
+      });
+
+      it("skipAuthentication builds the authorize URL without touching a dead stored token", async () => {
+        serveJira(76, [authRow("david", "david-id")]);
+        const mockFetch = vi.fn();
+        global.fetch = mockFetch;
+        vi.mocked(EncryptionService.decrypt).mockClear();
+
+        const adapter = await manager.getAdapter("76", undefined, undefined, {
+          allowInactive: true,
+          skipAuthentication: true,
         });
-      global.fetch = mockFetch;
 
-      await manager.getAdapter("63");
+        expect(adapter!.getAuthorizationUrl!("state-1")).toContain(
+          "https://auth.atlassian.com/authorize?"
+        );
+        expect(mockFetch).not.toHaveBeenCalled();
+        expect(EncryptionService.decrypt).not.toHaveBeenCalled();
+        expect(valkeyConnection!.set).not.toHaveBeenCalled();
+      });
 
-      expect(AuthenticationService.markNeedsReauth).toHaveBeenCalledWith(
-        "owner-9",
-        63
-      );
-      expect(AuthenticationService.storeUserAuth).not.toHaveBeenCalled();
+      it("flags a GitLab row on a standard invalid_grant", async () => {
+        const integration = {
+          id: 63,
+          name: "GitLab OAuth",
+          provider: "GITLAB",
+          status: "ACTIVE",
+          authType: "OAUTH2",
+          credentials: {
+            encrypted: JSON.stringify({
+              clientId: "gl-client",
+              clientSecret: "gl-secret",
+            }),
+          },
+          settings: { instanceUrl: "https://gitlab.com" },
+        };
+        mockDb.integration.findUnique.mockImplementation(async (args: any) => ({
+          ...integration,
+          userIntegrationAuths: args?.include?.userIntegrationAuths?.where?.id
+            ? []
+            : [authRow("owner", "owner-9")],
+        }));
+        global.fetch = vi
+          .fn()
+          .mockResolvedValueOnce(
+            tokenResponse(
+              400,
+              '{"error":"invalid_grant","error_description":"revoked"}'
+            )
+          );
 
-      vi.unstubAllEnvs();
+        await expect(manager.getAdapter("63")).rejects.toBeInstanceOf(
+          RefreshTokenRevokedError
+        );
+        expect(AuthenticationService.markNeedsReauth).toHaveBeenCalledWith(
+          "owner-9",
+          63
+        );
+      });
     });
 
     it("does not refresh when the row was already refreshed by another process", async () => {
