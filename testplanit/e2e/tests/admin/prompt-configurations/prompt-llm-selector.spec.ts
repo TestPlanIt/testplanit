@@ -82,6 +82,7 @@ test.describe("Prompt LLM Selector - Select Integration", () => {
     });
 
     await test.step("Open the prompt config edit dialog", async () => {
+      await promptsPage.filterByText(configName);
       await promptsPage.clickEditOnRow(configName);
 
       dialog = page.locator('[role="dialog"]').first();
@@ -126,6 +127,7 @@ test.describe("Prompt LLM Selector - Select Integration", () => {
 
     await test.step("Reload and verify the selection persisted", async () => {
       await promptsPage.goto();
+      await promptsPage.filterByText(configName);
       await promptsPage.clickEditOnRow(configName);
 
       const dialog2 = page.locator('[role="dialog"]').first();
@@ -214,6 +216,7 @@ test.describe("Prompt LLM Selector - Clear Integration", () => {
       await promptsPage.goto();
 
       // Open the edit dialog
+      await promptsPage.filterByText(configName);
       await promptsPage.clickEditOnRow(configName);
 
       dialog = page.locator('[role="dialog"]').first();
@@ -262,6 +265,7 @@ test.describe("Prompt LLM Selector - Clear Integration", () => {
     await test.step("Reload and verify the selection was cleared", async () => {
       // Reload and verify the selection was cleared (shows placeholder, not integration name)
       await promptsPage.goto();
+      await promptsPage.filterByText(configName);
       await promptsPage.clickEditOnRow(configName);
 
       const dialog2 = page.locator('[role="dialog"]').first();

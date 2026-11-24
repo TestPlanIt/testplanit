@@ -69,7 +69,12 @@ export function DeletePromptConfig({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onClose}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && !loading) onClose();
+      }}
+    >
       <AlertDialogContent className="border-destructive">
         <AlertDialogHeader>
           <AlertDialogTitle>{t("title")}</AlertDialogTitle>
@@ -86,12 +91,15 @@ export function DeletePromptConfig({
           <p className="text-sm">{t("warning")}</p>
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>
+          <AlertDialogCancel disabled={loading}>
             {tCommon("cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            onClick={handleDelete}
+            onClick={(event) => {
+              event.preventDefault();
+              void handleDelete();
+            }}
             disabled={loading}
           >
             {loading && <Loader2 className="me-2 h-4 w-4 animate-spin" />}

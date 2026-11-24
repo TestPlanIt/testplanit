@@ -321,7 +321,21 @@ test.describe("Prompt Configurations - Delete Operations", () => {
     await test.step("Delete the config and confirm", async () => {
       await promptsPage.clickDeleteOnRow(configName);
       await promptsPage.confirmDelete();
-      // The dialog closes at once; the delete lands after it.
+      await expect(promptsPage.deleteDialog).toBeHidden({ timeout: 20_000 });
+
+      const stored = await page.request.get(
+        "/api/model/promptConfig/findFirst",
+        {
+          params: {
+            q: JSON.stringify({
+              where: { name: configName },
+              select: { isDeleted: true },
+            }),
+          },
+        }
+      );
+      expect((await stored.json()).data?.isDeleted).toBe(true);
+
       await expect(
         page
           .getByRole("table")
