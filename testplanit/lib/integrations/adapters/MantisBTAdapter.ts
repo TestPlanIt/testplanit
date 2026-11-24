@@ -73,16 +73,23 @@ interface MantisCustomFieldDef {
   /** A type name ("string", "enum", …); types the API has no name for (radio) arrive as their numeric id. */
   type?: string | number;
   default_value?: string;
-  /** Pipe-separated; starts with `=` when Mantis computes the list itself (e.g. `=versions`). */
+  /** Pipe-separated, or a formula such as `=versions` when Mantis computes the list itself. */
   possible_values?: string;
   display_report?: boolean;
   require_report?: boolean;
+}
+
+interface MantisVersion {
+  name?: string;
+  released?: boolean;
+  obsolete?: boolean;
 }
 
 interface MantisProject {
   id: number;
   name: string;
   categories?: MantisRef[];
+  versions?: MantisVersion[];
   custom_fields?: MantisCustomFieldDef[];
 }
 
@@ -114,10 +121,40 @@ function fieldKind(def: MantisCustomFieldDef): MantisFieldKind {
   }
 }
 
-/** The selectable values of a choice field; empty when Mantis computes them. */
-function possibleValues(def: MantisCustomFieldDef): string[] {
-  const raw = def.possible_values ?? "";
-  if (raw.startsWith("=")) return [];
+/**
+ * The values of a list Mantis computes from the project, for the formulas it
+ * ships with. Like Mantis's own form, version lists leave out obsolete
+ * versions. A formula backed by a site's own custom function has no values
+ * the API exposes.
+ */
+function computedValues(
+  formula: string,
+  project: MantisProject | undefined
+): string[] {
+  const versions = (project?.versions ?? []).filter((v) => !v.obsolete);
+  const names = (items: { name?: string }[]) =>
+    items.map((i) => i.name ?? "").filter((n) => n !== "");
+  switch (formula) {
+    case "=versions":
+      return names(versions);
+    case "=released_versions":
+      return names(versions.filter((v) => v.released === true));
+    case "=future_versions":
+      return names(versions.filter((v) => v.released !== true));
+    case "=categories":
+      return names(project?.categories ?? []);
+    default:
+      return [];
+  }
+}
+
+/** The selectable values of a choice field; empty when they cannot be listed. */
+function possibleValues(
+  def: MantisCustomFieldDef,
+  project: MantisProject | undefined
+): string[] {
+  const raw = (def.possible_values ?? "").trim();
+  if (raw.startsWith("=")) return computedValues(raw, project);
   return raw
     .split("|")
     .map((v) => v.trim())
@@ -436,13 +473,13 @@ export class MantisBTAdapter extends BaseAdapter {
     }));
   }
 
-  private async loadCustomFieldDefs(
+  private async loadProject(
     projectId: string
-  ): Promise<MantisCustomFieldDef[]> {
+  ): Promise<MantisProject | undefined> {
     const resp = await this.makeRequest<{ projects?: MantisProject[] }>(
       `${this.apiBase}/projects/${projectId}`
     );
-    return resp.projects?.[0]?.custom_fields ?? [];
+    return resp.projects?.[0];
   }
 
   /**
@@ -455,12 +492,12 @@ export class MantisBTAdapter extends BaseAdapter {
     _issueTypeId: string
   ): Promise<any[]> {
     try {
-      const defs = await this.loadCustomFieldDefs(projectKey);
-      return defs
+      const project = await this.loadProject(projectKey);
+      return (project?.custom_fields ?? [])
         .filter((def) => def.display_report || def.require_report)
         .map((def) => {
           const kind = fieldKind(def);
-          const options = possibleValues(def);
+          const options = possibleValues(def, project);
           const defaultValue = def.default_value ?? "";
           const base = {
             key: String(def.id),
@@ -471,8 +508,7 @@ export class MantisBTAdapter extends BaseAdapter {
           const allowedValues = options.map((v) => ({ id: v, name: v }));
           switch (kind) {
             case "choice":
-              // A list Mantis computes itself has no values to offer here;
-              // it falls back to a text input.
+              // A list with no values to offer falls back to a text input.
               if (options.length === 0) {
                 return { ...base, schema: { type: "string" } };
               }
@@ -551,7 +587,7 @@ export class MantisBTAdapter extends BaseAdapter {
     );
     if (entries.length === 0) return [];
 
-    const defs = await this.loadCustomFieldDefs(projectId);
+    const defs = (await this.loadProject(projectId))?.custom_fields ?? [];
     const byId = new Map(defs.map((def) => [String(def.id), def]));
     const values: MantisCustomField[] = [];
 
