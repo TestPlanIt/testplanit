@@ -34,6 +34,7 @@ vi.mock("@/lib/integrations/IntegrationManager", () => ({
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { getEnhancedDb } from "@/lib/auth/utils";
 import { getServerSession } from "next-auth";
+import { RefreshTokenRevokedError } from "~/lib/integrations/errors";
 
 import { GET } from "./route";
 
@@ -230,6 +231,7 @@ describe("GET /api/integrations/[id]/search", () => {
       (getServerSession as any).mockResolvedValue(mockSession);
       mockDb.integration.findUnique.mockResolvedValue({
         id: 1,
+        provider: "GITHUB",
         authType: "PERSONAL_ACCESS_TOKEN",
         credentials: { personalAccessToken: "pat-token" },
         userIntegrationAuths: [],
@@ -248,6 +250,7 @@ describe("GET /api/integrations/[id]/search", () => {
       (getServerSession as any).mockResolvedValue(mockSession);
       mockDb.integration.findUnique.mockResolvedValue({
         id: 1,
+        provider: "JIRA",
         authType: "OAUTH2",
         credentials: null,
         userIntegrationAuths: [
@@ -260,6 +263,25 @@ describe("GET /api/integrations/[id]/search", () => {
 
       expect(response.status).toBe(200);
       expect(data.issues).toBeDefined();
+    });
+
+    it("builds the adapter from the caller's own token, not a borrowed one", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      mockDb.integration.findUnique.mockResolvedValue({
+        id: 1,
+        provider: "JIRA",
+        authType: "OAUTH2",
+        credentials: null,
+        userIntegrationAuths: [
+          { userId: "user-1", accessToken: "oauth-token", isActive: true },
+        ],
+      });
+      const getAdapter = vi.fn().mockResolvedValue(mockAdapter);
+      (IntegrationManager.getInstance as any).mockReturnValue({ getAdapter });
+
+      await GET(createRequest("test"), params);
+
+      expect(getAdapter).toHaveBeenCalledWith("1", undefined, "user-1");
     });
   });
 
@@ -310,6 +332,59 @@ describe("GET /api/integrations/[id]/search", () => {
       expect(data.authUrl).toBe(
         "/api/integrations/oauth/jira/auth?integrationId=1&returnUrl=%2Fintegrations%2Fauth-complete"
       );
+    });
+
+    it("offers a reconnect link when the caller's refresh token is dead", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      mockDb.integration.findUnique.mockResolvedValue({
+        id: 1,
+        provider: "JIRA",
+        authType: "OAUTH2",
+        credentials: null,
+        userIntegrationAuths: [
+          { userId: "user-1", accessToken: "expired-token", isActive: true },
+        ],
+      });
+      (IntegrationManager.getInstance as any).mockReturnValue({
+        getAdapter: vi
+          .fn()
+          .mockRejectedValue(
+            new RefreshTokenRevokedError("JIRA", "refresh_token is invalid")
+          ),
+      });
+
+      const response = await GET(createRequest("test"), params);
+      const data = await response.json();
+
+      expect(response.status).toBe(401);
+      expect(data.requiresAuth).toBe(true);
+      expect(data.authUrl).toContain(
+        "/api/integrations/oauth/jira/auth?integrationId=1"
+      );
+      expect(data.error).not.toContain("refresh_token is invalid");
+    });
+
+    it("names the provider when building the adapter fails", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      mockDb.integration.findUnique.mockResolvedValue({
+        id: 1,
+        provider: "JIRA",
+        authType: "OAUTH2",
+        credentials: null,
+        userIntegrationAuths: [
+          { userId: "user-1", accessToken: "oauth-token", isActive: true },
+        ],
+      });
+      (IntegrationManager.getInstance as any).mockReturnValue({
+        getAdapter: vi.fn().mockRejectedValue(new Error("boom")),
+      });
+
+      const response = await GET(createRequest("test"), params);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.provider).toBe("JIRA");
+      expect(data.error).toContain("The request to Jira could not be");
     });
 
     it("does not offer re-authorization when an API-key credential is rejected", async () => {

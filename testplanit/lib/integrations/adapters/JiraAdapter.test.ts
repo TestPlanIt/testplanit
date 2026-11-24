@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { IntegrationApiError } from "../errors";
+import { IntegrationApiError, RefreshTokenRevokedError } from "../errors";
 
 const mockValkeyGet = vi.fn();
 const mockValkeySet = vi.fn();
@@ -2625,6 +2625,51 @@ describe("JiraAdapter", () => {
 
       vi.unstubAllEnvs();
     });
+
+    it.each([
+      [
+        403,
+        '{"error":"unauthorized_client","error_description":"refresh_token is invalid"}',
+      ],
+      [
+        403,
+        '{"error":"invalid_grant","error_description":"Unknown or invalid refresh token."}',
+      ],
+    ])(
+      "throws RefreshTokenRevokedError for a dead refresh token (%i %s)",
+      async (status, body) => {
+        mockFetch.mockResolvedValueOnce({
+          ok: false,
+          status,
+          text: () => Promise.resolve(body),
+        });
+
+        await expect(
+          adapter.refreshTokens("dead-refresh-token")
+        ).rejects.toBeInstanceOf(RefreshTokenRevokedError);
+      }
+    );
+
+    it.each([
+      [503, "upstream connect error or disconnect/reset before headers"],
+      [500, '{"error":"invalid_grant"}'],
+      [401, '{"error":"unauthorized_client","error_description":"bad client"}'],
+    ])(
+      "does not call a temporary or unrelated failure a dead token (%i %s)",
+      async (status, body) => {
+        mockFetch.mockResolvedValueOnce({
+          ok: false,
+          status,
+          text: () => Promise.resolve(body),
+        });
+
+        const error = await adapter
+          .refreshTokens("refresh-token")
+          .catch((e: unknown) => e);
+        expect(error).toBeInstanceOf(Error);
+        expect(error).not.toBeInstanceOf(RefreshTokenRevokedError);
+      }
+    );
   });
 
   describe("ADF conversion", () => {

@@ -64,7 +64,9 @@ async function handleGET(request: NextRequest) {
     // Initialize Jira adapter
     const manager = IntegrationManager.getInstance();
     const adapter = await manager.getAdapter(
-      userIntegrationAuth.integrationId.toString()
+      userIntegrationAuth.integrationId.toString(),
+      undefined,
+      session.user.id
     );
 
     if (!(adapter instanceof JiraAdapter)) {

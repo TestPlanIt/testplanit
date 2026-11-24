@@ -1,3 +1,4 @@
+import { RefreshTokenRevokedError } from "../errors";
 import { FIXED_TRACKER_STATUSES } from "../fixedTrackerStatuses";
 import {
   GITHUB_NOT_PLANNED_STATUS,
@@ -267,7 +268,7 @@ export class GitHubAdapter extends BaseAdapter {
    * Renew an expiring user access token with its refresh token. GitHub
    * rotates both on every refresh; the manager persists the pair. A dead
    * refresh token (revoked, already rotated, or past its 6-month life) is
-   * reported with `invalid_grant` so the manager flags the row for
+   * thrown as `RefreshTokenRevokedError` so the manager flags the row for
    * re-authorization instead of retrying.
    */
   async refreshTokens(refreshToken: string): Promise<{
@@ -314,10 +315,10 @@ export class GitHubAdapter extends BaseAdapter {
     const data = await response.json();
     if (data.error) {
       const detail = data.error_description || data.error;
-      const dead = data.error === "bad_refresh_token";
-      throw new Error(
-        `Failed to ${what}: ${detail}${dead ? " (invalid_grant)" : ""}`
-      );
+      if (data.error === "bad_refresh_token") {
+        throw new RefreshTokenRevokedError("GITHUB", detail);
+      }
+      throw new Error(`Failed to ${what}: ${detail}`);
     }
 
     return {

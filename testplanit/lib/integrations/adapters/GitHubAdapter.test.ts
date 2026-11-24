@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { RefreshTokenRevokedError } from "../errors";
 import { GitHubAdapter } from "./GitHubAdapter";
 
 // Mock global fetch
@@ -381,7 +382,7 @@ describe("GitHubAdapter", () => {
       );
     });
 
-    it("reports a dead refresh token as invalid_grant", async () => {
+    it("reports a dead refresh token as RefreshTokenRevokedError", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
@@ -392,9 +393,9 @@ describe("GitHubAdapter", () => {
           }),
       });
 
-      await expect(oauthAdapter().refreshTokens("ghr_dead")).rejects.toThrow(
-        /incorrect or expired.*invalid_grant/
-      );
+      await expect(
+        oauthAdapter().refreshTokens("ghr_dead")
+      ).rejects.toBeInstanceOf(RefreshTokenRevokedError);
     });
 
     it("does not call a transport failure invalid_grant", async () => {
