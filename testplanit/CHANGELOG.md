@@ -1,3 +1,13 @@
+## [1.3.0-beta.11](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.10...v1.3.0-beta.11) (2026-11-24)
+
+### Bug Fixes
+
+* **forms:** keep what is being typed when a form's data refreshes ([471b21b](https://github.com/TestPlanIt/testplanit/commit/471b21b83b172228ce6fa59bd0e9dfa13f8c9720))
+
+### Enhancements
+
+* **integrations:** list versions and categories for MantisBT computed custom fields ([#764](https://github.com/TestPlanIt/testplanit/issues/764)) ([80bdd07](https://github.com/TestPlanIt/testplanit/commit/80bdd074af8f347aa4a4900a2f33936fe57ecf45))
+
 ## [1.3.0-beta.10](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.9...v1.3.0-beta.10) (2026-11-24)
 
 ### Bug Fixes
