@@ -64,7 +64,26 @@ interface RedmineProject {
   id: number;
   identifier: string;
   name: string;
+  /** Present from Redmine 4.2 when requested with `include=issue_custom_fields`. */
+  issue_custom_fields?: RedmineNamed[];
 }
+
+/** A custom field definition from `GET /custom_fields.json` (administrators only). */
+interface RedmineCustomFieldDef {
+  id: number;
+  name: string;
+  customized_type?: string;
+  field_format?: string;
+  is_required?: boolean;
+  is_for_all?: boolean;
+  multiple?: boolean;
+  default_value?: string | null;
+  possible_values?: Array<{ value?: string; label?: string }>;
+  trackers?: RedmineNamed[];
+  projects?: RedmineNamed[];
+}
+
+type FieldOption = { id: string; name: string };
 
 /**
  * Adapter for Redmine (https://www.redmine.org) via its REST API.
@@ -214,10 +233,23 @@ export class RedmineAdapter extends BaseAdapter {
     if (data.assigneeId && !Number.isNaN(assigneeId)) {
       issue.assigned_to_id = assigneeId;
     }
-    if (data.customFields) {
-      issue.custom_fields = Object.entries(data.customFields).map(
-        ([id, value]) => ({ id: Number(id), value })
-      );
+    // Keys that are not custom field ids (the create route adds a `reporter`
+    // entry, for instance) and fields left empty are not sent.
+    const customFields = Object.entries(data.customFields ?? {})
+      .filter(
+        ([id, value]) =>
+          /^\d+$/.test(id) &&
+          value !== undefined &&
+          value !== null &&
+          value !== "" &&
+          !(Array.isArray(value) && value.length === 0)
+      )
+      .map(([id, value]) => ({
+        id: Number(id),
+        value: Array.isArray(value) ? value.map(String) : String(value),
+      }));
+    if (customFields.length > 0) {
+      issue.custom_fields = customFields;
     }
 
     const resp = await this.makeRequest<{ issue: RedmineIssue }>(
@@ -349,6 +381,199 @@ export class RedmineAdapter extends BaseAdapter {
       id: String(t.id),
       name: t.name,
     }));
+  }
+
+  /**
+   * The custom fields Redmine applies to issues of one tracker in one
+   * project, in the shape the create dialog renders.
+   *
+   * Redmine only lists field definitions (format, choices, required) to
+   * administrators. With any other API key the fields the project lists by
+   * name (Redmine 4.2 and later) are offered as plain text inputs instead.
+   */
+  async getIssueTypeFields(
+    projectKey: string,
+    issueTypeId: string
+  ): Promise<any[]> {
+    try {
+      const { project } = await this.makeRequest<{ project: RedmineProject }>(
+        `${this.baseUrl}/projects/${encodeURIComponent(projectKey)}.json?include=issue_custom_fields`
+      );
+      const projectFields = project?.issue_custom_fields ?? [];
+
+      let defs: RedmineCustomFieldDef[] | null = null;
+      try {
+        const resp = await this.makeRequest<{
+          custom_fields?: RedmineCustomFieldDef[];
+        }>(`${this.baseUrl}/custom_fields.json`);
+        defs = resp.custom_fields ?? [];
+      } catch {
+        defs = null;
+      }
+
+      if (!defs) {
+        return projectFields.map((f) => ({
+          key: String(f.id),
+          name: f.name,
+          required: false,
+          hasDefaultValue: false,
+          schema: { type: "string" },
+        }));
+      }
+
+      const inProject = new Set(projectFields.map((f) => f.id));
+      const trackerId = Number(issueTypeId);
+      const applicable = defs.filter(
+        (def) =>
+          def.customized_type === "issue" &&
+          def.field_format !== "attachment" &&
+          (def.is_for_all ||
+            inProject.has(def.id) ||
+            (def.projects ?? []).some((p) => p.id === project?.id)) &&
+          (Number.isNaN(trackerId) ||
+            (def.trackers ?? []).some((t) => t.id === trackerId))
+      );
+
+      const formats = new Set(applicable.map((def) => def.field_format));
+      const versions = formats.has("version")
+        ? await this.loadVersionOptions(projectKey)
+        : [];
+      const users = formats.has("user")
+        ? await this.loadMemberOptions(projectKey)
+        : [];
+
+      return applicable.map((def) => {
+        const defaultValue = def.default_value ?? "";
+        const base = {
+          key: String(def.id),
+          name: def.name,
+          required: def.is_required === true,
+          hasDefaultValue: defaultValue !== "",
+        };
+        const withDefault = (value: unknown) =>
+          defaultValue !== "" ? { defaultValue: value } : {};
+        const listed: FieldOption[] = (def.possible_values ?? [])
+          .map((o) => ({
+            id: String(o.value ?? o.label ?? ""),
+            name: String(o.label ?? o.value ?? ""),
+          }))
+          .filter((o) => o.id !== "");
+
+        const choice = (options: FieldOption[]) => {
+          if (options.length === 0) {
+            return { ...base, schema: { type: "string" } };
+          }
+          const known = options.some((o) => o.id === defaultValue);
+          if (def.multiple) {
+            return {
+              ...base,
+              schema: { type: "array" },
+              input: "multiselect",
+              allowedValues: options,
+              ...(known ? { defaultValue: [defaultValue] } : {}),
+            };
+          }
+          return {
+            ...base,
+            schema: { type: "option" },
+            allowedValues: options,
+            ...(known ? { defaultValue } : {}),
+          };
+        };
+
+        switch (def.field_format) {
+          case "list":
+          case "enumeration":
+            return choice(listed);
+          case "version":
+            return choice(versions.length > 0 ? versions : listed);
+          case "user":
+            return choice(users);
+          case "bool":
+            return {
+              ...base,
+              schema: { type: "option" },
+              allowedValues:
+                listed.length > 0
+                  ? listed
+                  : [
+                      { id: "1", name: "Yes" },
+                      { id: "0", name: "No" },
+                    ],
+              ...(defaultValue === "1" || defaultValue === "0"
+                ? { defaultValue }
+                : {}),
+            };
+          case "int":
+          case "float":
+          case "progressbar":
+            return {
+              ...base,
+              schema: { type: "number" },
+              ...(defaultValue !== "" && !Number.isNaN(Number(defaultValue))
+                ? { defaultValue: Number(defaultValue) }
+                : {}),
+            };
+          case "date":
+            return {
+              ...base,
+              schema: { type: "date" },
+              input: "date",
+              ...(/^\d{4}-\d{2}-\d{2}$/.test(defaultValue)
+                ? { defaultValue }
+                : {}),
+            };
+          case "text":
+            return {
+              ...base,
+              schema: { type: "string" },
+              input: "textarea",
+              ...withDefault(defaultValue),
+            };
+          default:
+            return {
+              ...base,
+              schema: { type: "string" },
+              ...withDefault(defaultValue),
+            };
+        }
+      });
+    } catch (error) {
+      console.error("[RedmineAdapter] getIssueTypeFields failed:", error);
+      return [];
+    }
+  }
+
+  /** The project's open versions, for a version-format custom field. */
+  private async loadVersionOptions(projectKey: string): Promise<FieldOption[]> {
+    try {
+      const resp = await this.makeRequest<{
+        versions?: Array<RedmineNamed & { status?: string }>;
+      }>(
+        `${this.baseUrl}/projects/${encodeURIComponent(projectKey)}/versions.json`
+      );
+      return (resp.versions ?? [])
+        .filter((v) => !v.status || v.status === "open")
+        .map((v) => ({ id: String(v.id), name: v.name }));
+    } catch {
+      return [];
+    }
+  }
+
+  /** The project's members, for a user-format custom field. */
+  private async loadMemberOptions(projectKey: string): Promise<FieldOption[]> {
+    try {
+      const resp = await this.makeRequest<{
+        memberships?: Array<{ user?: RedmineNamed }>;
+      }>(
+        `${this.baseUrl}/projects/${encodeURIComponent(projectKey)}/memberships.json?limit=100`
+      );
+      return (resp.memberships ?? [])
+        .filter((m) => m.user)
+        .map((m) => ({ id: String(m.user!.id), name: m.user!.name }));
+    } catch {
+      return [];
+    }
   }
 
   async getStatuses(): Promise<Array<{ id: string; name: string }>> {

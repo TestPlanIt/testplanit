@@ -717,4 +717,130 @@ describe("CreateIssueDialog", () => {
       expect(createBody).not.toHaveProperty("milestone");
     });
   });
+
+  describe("MantisBT custom fields", () => {
+    const fields = [
+      {
+        key: "1",
+        name: "Build",
+        required: true,
+        schema: { type: "string" },
+        defaultValue: "nightly",
+      },
+      { key: "2", name: "Found on", schema: { type: "date" }, input: "date" },
+      {
+        key: "3",
+        name: "Steps",
+        schema: { type: "string" },
+        input: "textarea",
+      },
+      {
+        key: "4",
+        name: "Browsers",
+        schema: { type: "array" },
+        input: "multiselect",
+        allowedValues: [
+          { id: "Firefox", name: "Firefox" },
+          { id: "Safari", name: "Safari" },
+        ],
+        defaultValue: ["Safari"],
+      },
+    ];
+
+    let fieldRequests: string[];
+    let createBody: Record<string, any> | undefined;
+
+    beforeEach(() => {
+      class StubIntersectionObserver {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+        takeRecords() {
+          return [];
+        }
+      }
+      (global as any).IntersectionObserver = StubIntersectionObserver;
+
+      mockUseFindManyProjectIntegration.mockReturnValue({
+        data: [
+          {
+            id: "pi-61",
+            integrationId: 61,
+            isActive: true,
+            config: {
+              externalProjectKey: "5",
+              defaultIssueType: "9",
+              defaultIssueTypeName: "General",
+            },
+            integration: { id: 61, name: "Mantis", provider: "MANTISBT" },
+          },
+        ],
+      });
+      mockUseFindManyIntegrationProject.mockReturnValue({ data: [] });
+
+      fieldRequests = [];
+      createBody = undefined;
+      global.fetch = vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes("/issue-type-fields")) {
+          fieldRequests.push(url);
+          return { ok: true, status: 200, json: async () => ({ fields }) };
+        }
+        if (url.includes("/create-issue")) {
+          createBody = JSON.parse(String(init?.body));
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ id: 1, key: "#1" }),
+          };
+        }
+        if (url.includes("/auth")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ authenticated: true }),
+          };
+        }
+        return { ok: true, status: 200, json: async () => ({}) };
+      }) as any;
+    });
+
+    it("shows the project's custom fields with their defaults and sends the values", async () => {
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/Build/)).toBeTruthy();
+      });
+      expect(fieldRequests[0]).toContain(
+        "/api/integrations/61/issue-type-fields?issueTypeId=9&projectKey=5"
+      );
+      expect((screen.getByLabelText(/Build/) as HTMLInputElement).value).toBe(
+        "nightly"
+      );
+      const date = screen.getByLabelText(/Found on/) as HTMLInputElement;
+      expect(date.type).toBe("date");
+      const steps = screen.getByLabelText(/Steps/);
+      expect(steps.tagName).toBe("TEXTAREA");
+
+      fireEvent.change(date, { target: { value: "2026-11-23" } });
+      fireEvent.change(steps, { target: { value: "Open the page" } });
+      fireEvent.change(screen.getAllByRole("textbox")[0], {
+        target: { value: "Broken login" },
+      });
+      const form = document.querySelector("form");
+      if (form) {
+        fireEvent.submit(form);
+      }
+
+      await waitFor(() => {
+        expect(createBody).toBeDefined();
+      });
+      expect(createBody?.issueType).toBe("9");
+      expect(createBody?.customFields).toEqual({
+        "1": "nightly",
+        "2": "2026-11-23",
+        "3": "Open the page",
+        "4": ["Safari"],
+      });
+    });
+  });
 });
