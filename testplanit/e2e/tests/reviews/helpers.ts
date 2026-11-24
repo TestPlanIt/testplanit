@@ -32,7 +32,7 @@ export async function signInGateActor(
   api: ApiHelper,
   createdUserIds: string[]
 ): Promise<{ context: BrowserContext; userId: string }> {
-  const ts = Date.now();
+  const ts = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const email = `gate-actor-${ts}@example.com`;
   const password = "S3cure!password";
   // Pin the seeded "user" role explicitly instead of trusting the signup-time
