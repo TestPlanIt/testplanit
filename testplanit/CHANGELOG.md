@@ -1,3 +1,9 @@
+## [1.2.9](https://github.com/TestPlanIt/testplanit/compare/v1.2.8...v1.2.9) (2026-11-24)
+
+### Enhancements
+
+* **integrations:** offer custom fields when creating MantisBT, Redmine and Azure DevOps issues ([#763](https://github.com/TestPlanIt/testplanit/issues/763)) ([9241fc8](https://github.com/TestPlanIt/testplanit/commit/9241fc85e27e586574efb0ab777a5f7bc795b8b7))
+
 ## [1.2.8](https://github.com/TestPlanIt/testplanit/compare/v1.2.7...v1.2.8) (2026-11-21)
 
 ### Bug Fixes
