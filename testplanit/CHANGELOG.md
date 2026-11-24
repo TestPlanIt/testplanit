@@ -1,3 +1,22 @@
+## [1.3.0-beta.10](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.9...v1.3.0-beta.10) (2026-11-24)
+
+### Bug Fixes
+
+* **audit-logs:** keep the CSV export's address alive until the download starts ([4706220](https://github.com/TestPlanIt/testplanit/commit/47062204135446ee27a51b08dbfcb9b70cdc7f78))
+* **copy-move:** show the result when the job finishes between the status route's two reads ([44130f2](https://github.com/TestPlanIt/testplanit/commit/44130f22e008f23d56f8d8801559ec221cd79f26))
+* **export:** keep every export's address alive until the download starts ([42b14a7](https://github.com/TestPlanIt/testplanit/commit/42b14a7f4c6be2f735914b31cd154e99c93512ab))
+* **jobs:** return the result when a job finishes between a status route's two reads ([fcee15f](https://github.com/TestPlanIt/testplanit/commit/fcee15f94f8ec7f483094277f351659c79a11756))
+* **milestones:** remove the source badge after unlinking without waiting for the live stream ([d982b7d](https://github.com/TestPlanIt/testplanit/commit/d982b7d3d7361ddb0dc0428757d976fd6657321a))
+* **prompts:** keep the delete dialog open until the prompt configuration is deleted ([aca1707](https://github.com/TestPlanIt/testplanit/commit/aca170774389834fdcd8163b7ac91d9276766726))
+* **repository:** stop the folder tree and the URL swapping folders without end ([1a935be](https://github.com/TestPlanIt/testplanit/commit/1a935bed40c010f596bffed6a7c72f8db8f1924e))
+* **repository:** stop the page pulling the browser back after navigating away ([d6a9fb6](https://github.com/TestPlanIt/testplanit/commit/d6a9fb61dbe3eb00931c5f873b6a3cbaa9dc3719))
+* stop a double case create in Firefox and an early Next in the run wizard ([cfc8ab1](https://github.com/TestPlanIt/testplanit/commit/cfc8ab167b5994fff81110c01c79d49cf095c212))
+* **ui:** filter searchable pickers when more options load mid-search ([3a53981](https://github.com/TestPlanIt/testplanit/commit/3a5398162966af23bd8c47afd4e5f86ee6a1781e))
+
+### Enhancements
+
+* **integrations:** offer custom fields when creating MantisBT, Redmine and Azure DevOps issues ([#763](https://github.com/TestPlanIt/testplanit/issues/763)) ([dd07001](https://github.com/TestPlanIt/testplanit/commit/dd070013c64e756f1e34cedb4ca0f334ecf8a9fe))
+
 ## [1.3.0-beta.9](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.8...v1.3.0-beta.9) (2026-11-22)
 
 ### Features
