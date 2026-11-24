@@ -1,3 +1,9 @@
+## [1.2.11](https://github.com/TestPlanIt/testplanit/compare/v1.2.10...v1.2.11) (2026-11-24)
+
+### Bug Fixes
+
+* **integrations:** stop one dead OAuth refresh token from breaking an integration for every user ([#765](https://github.com/TestPlanIt/testplanit/issues/765)) ([9b597f9](https://github.com/TestPlanIt/testplanit/commit/9b597f99b86506a18f5350ac193ced43f1da898e))
+
 ## [1.2.10](https://github.com/TestPlanIt/testplanit/compare/v1.2.9...v1.2.10) (2026-11-24)
 
 ### Enhancements
