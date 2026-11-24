@@ -39,7 +39,7 @@ const browsers = (process.env.E2E_BROWSERS || "chromium")
  * signs in as, or its preferences.
  */
 const INSTANCE_SETTINGS_SPECS =
-  /(admin\/(sso\/sso-provider-management|security\/security-settings|users\/user-profile-own-account)|users\/user-trash-window|steps-display-layout)\.spec\.ts$/;
+  /(admin\/(sso\/sso-provider-management|security\/security-settings|users\/(user-profile-own-account|user-updates))|users\/user-trash-window|steps-display-layout|onboarding\/setup-checklist)\.spec\.ts$/;
 
 // Optionally report results to a TestPlanIt instance via the local reporter.
 // Inert unless TPI_DOMAIN + TPI_TOKEN + TPI_PROJECT_ID are set, so normal E2E
@@ -172,6 +172,8 @@ export default defineConfig({
             // sign-up or sign-in.
             name: "chromium-instance-settings",
             testMatch: INSTANCE_SETTINGS_SPECS,
+            // One at a time: several of these edit the same admin account.
+            workers: 1,
             use: {
               ...devices["Desktop Chrome"],
               storageState: path.join(__dirname, ".auth/admin.json"),

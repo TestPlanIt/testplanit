@@ -104,7 +104,21 @@ async function walkTour(page: Page, tourName: string) {
       });
     }
     selectors.push(selector!);
-    await page.getByTestId("tour-card-next").click();
+    const next = page.getByTestId("tour-card-next");
+    if (step === total) {
+      await next.click();
+      continue;
+    }
+    // A Next clicked while the page is still writing its own URL can be
+    // lost; click again only while the card still shows this step.
+    await expect(async () => {
+      if ((await card.innerText()).includes(`${step} / ${total}`)) {
+        await next.click();
+      }
+      await expect(card).toContainText(`${step + 1} / ${total}`, {
+        timeout: 8000,
+      });
+    }).toPass({ timeout: 40_000 });
   }
   // No "card is gone" check: finishing the welcome tour hands over to the
   // demo project tour, which opens a card of its own.

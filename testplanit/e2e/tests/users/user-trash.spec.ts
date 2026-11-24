@@ -1,7 +1,10 @@
 import type { APIRequestContext } from "@playwright/test";
 
 import { expect, test } from "../../fixtures";
-import { openProfileTrash } from "../../utils/profile-trash";
+import {
+  openProfileTrash,
+  openRestoreConfirm,
+} from "../../utils/profile-trash";
 import {
   sameOriginRequestHeaders,
   signInSecondaryContext,
@@ -76,11 +79,10 @@ test.describe("User trash", () => {
     });
 
     await test.step("Restore it and confirm", async () => {
-      await page
-        .getByTestId(`user-trash-restore-RepositoryCases:${caseId}`)
-        .click();
-      const alert = page.getByRole("alertdialog");
-      await expect(alert).toBeVisible({ timeout: 10000 });
+      const alert = await openRestoreConfirm(
+        page,
+        `user-trash-restore-RepositoryCases:${caseId}`
+      );
       await alert.getByTestId("user-trash-confirm-restore").click();
       await expect(alert).toBeHidden({ timeout: 15000 });
       await expect(page.getByTestId(`user-trash-row-${caseId}`)).toBeHidden({
@@ -151,11 +153,10 @@ test.describe("User trash", () => {
     });
 
     await test.step("Restore it", async () => {
-      await page
-        .getByTestId(`user-trash-restore-RepositoryFolders:${folderId}`)
-        .click();
-      const alert = page.getByRole("alertdialog");
-      await expect(alert).toBeVisible({ timeout: 10000 });
+      const alert = await openRestoreConfirm(
+        page,
+        `user-trash-restore-RepositoryFolders:${folderId}`
+      );
       await alert.getByTestId("user-trash-confirm-restore").click();
       await expect(alert).toBeHidden({ timeout: 15000 });
       await expect(page.getByTestId(`user-trash-row-${folderId}`)).toBeHidden({
@@ -347,9 +348,10 @@ test.describe("User trash", () => {
       const row = page.getByTestId(`user-trash-row-${runId}`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await expect(row).toContainText(runName);
-      await page.getByTestId(`user-trash-restore-TestRuns:${runId}`).click();
-      const alert = page.getByRole("alertdialog");
-      await expect(alert).toBeVisible({ timeout: 10000 });
+      const alert = await openRestoreConfirm(
+        page,
+        `user-trash-restore-TestRuns:${runId}`
+      );
       await alert.getByTestId("user-trash-confirm-restore").click();
       await expect(alert).toBeHidden({ timeout: 15000 });
       await expect(row).toBeHidden({ timeout: 15000 });
