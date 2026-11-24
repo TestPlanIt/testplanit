@@ -20,6 +20,7 @@ import {
   getBaseReportType,
   reportCsvFileName,
 } from "~/utils/reportCsvUtils";
+import { releaseDownloadUrl } from "~/utils/releaseDownloadUrl";
 
 export interface ReportCsvExportParams {
   reportType: string;
@@ -76,7 +77,7 @@ export function useReportCsvExport() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
+        releaseDownloadUrl(link.href);
 
         void logDataExport({
           exportType: "Report-CSV",

@@ -62,7 +62,10 @@ describe("useReportCsvExport", () => {
     expect(mockUnparse.mock.calls[0][0]).toHaveLength(2);
     expect(clickSpy).toHaveBeenCalledTimes(1);
     expect(global.URL.createObjectURL).toHaveBeenCalled();
-    expect(global.URL.revokeObjectURL).toHaveBeenCalled();
+    await vi.waitFor(
+      () => expect(global.URL.revokeObjectURL).toHaveBeenCalled(),
+      { timeout: 2000 }
+    );
     expect(mockLogDataExport).toHaveBeenCalledWith(
       expect.objectContaining({
         exportType: "Report-CSV",

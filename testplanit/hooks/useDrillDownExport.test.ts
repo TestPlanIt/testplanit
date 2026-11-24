@@ -173,7 +173,10 @@ describe("useDrillDownExport", () => {
 
     expect(clickSpy).toHaveBeenCalledTimes(1);
     expect(global.URL.createObjectURL).toHaveBeenCalled();
-    expect(global.URL.revokeObjectURL).toHaveBeenCalled();
+    await vi.waitFor(
+      () => expect(global.URL.revokeObjectURL).toHaveBeenCalled(),
+      { timeout: 2000 }
+    );
   });
 
   it("should log audit export after successful export", async () => {

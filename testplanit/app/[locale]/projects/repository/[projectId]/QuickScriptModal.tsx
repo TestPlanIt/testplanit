@@ -58,6 +58,7 @@ import { cn } from "~/utils";
 import { ExportPreviewPane } from "./ExportPreviewPane";
 import { sanitizeFilename } from "./quickScriptUtils";
 import { apiFetch } from "~/lib/basePath";
+import { releaseDownloadUrl } from "~/utils/releaseDownloadUrl";
 
 /** Strip leading/trailing markdown code fences that some LLMs emit. */
 function stripFences(code: string): string {
@@ -382,7 +383,7 @@ export function QuickScriptModal({
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        releaseDownloadUrl(url);
       } else {
         const JSZip = (await import("jszip")).default;
         const zip = new JSZip();
@@ -402,7 +403,7 @@ export function QuickScriptModal({
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        releaseDownloadUrl(url);
       }
 
       void logDataExport({

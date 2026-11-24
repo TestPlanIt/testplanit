@@ -12,6 +12,7 @@ import type {
 } from "~/lib/types/reportDrillDown";
 import { toHumanReadable } from "~/utils/duration";
 import { apiFetch } from "~/lib/basePath";
+import { releaseDownloadUrl } from "~/utils/releaseDownloadUrl";
 
 interface UseDrillDownExportProps {
   /** The drill-down context */
@@ -392,7 +393,7 @@ export function useDrillDownExport({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
+      releaseDownloadUrl(link.href);
 
       // Log export for audit trail
       void logDataExport({

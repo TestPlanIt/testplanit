@@ -5,6 +5,7 @@ import Papa from "papaparse";
 import { useCallback } from "react";
 
 import { cellKey, type AxesShape } from "~/lib/matrix/types";
+import { releaseDownloadUrl } from "~/utils/releaseDownloadUrl";
 
 /**
  * Client-side CSV emit for the matrix view, used by the report-builder
@@ -95,6 +96,6 @@ export function useMatrixCsvExport() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
+    releaseDownloadUrl(link.href);
   }, []);
 }

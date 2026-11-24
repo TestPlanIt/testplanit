@@ -73,6 +73,7 @@ import {
   type StepStatus,
   type WizardStepDefinition,
 } from "./ImportWizardLayout";
+import { releaseDownloadUrl } from "~/utils/releaseDownloadUrl";
 
 const formatDuration = (ms: number): string => {
   if (ms < 1000) {
@@ -1127,7 +1128,7 @@ export function TestmoImportPanel() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    releaseDownloadUrl(url);
   }, [mappingConfig, currentJob?.id]);
 
   const handleTriggerImportConfiguration = useCallback(() => {

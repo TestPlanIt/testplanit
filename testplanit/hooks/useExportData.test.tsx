@@ -51,6 +51,10 @@ const mockRevokeObjectURL = vi.fn();
 global.URL.createObjectURL = mockCreateObjectURL;
 global.URL.revokeObjectURL = mockRevokeObjectURL;
 
+vi.mock("~/utils/releaseDownloadUrl", () => ({
+  releaseDownloadUrl: (url: string) => URL.revokeObjectURL(url),
+}));
+
 // --- Helper Data & Types ---
 type SampleDataType = {
   id: number;

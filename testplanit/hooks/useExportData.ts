@@ -10,6 +10,7 @@ import { extractTextWithLineBreaks } from "../utils/extractTextFromJson";
 import { tiptapToMarkdown } from "../utils/tiptapToMarkdown";
 import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
 import { RECORD_TYPES } from "~/lib/recordKey";
+import { releaseDownloadUrl } from "~/utils/releaseDownloadUrl";
 
 // --- Start: Added Helper Functions ---
 // Helper function to parse JSON safely
@@ -742,7 +743,7 @@ export function useExportData<
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-          URL.revokeObjectURL(url);
+          releaseDownloadUrl(url);
 
           // Log export for audit trail
           void logDataExport({

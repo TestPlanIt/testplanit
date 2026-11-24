@@ -30,6 +30,7 @@ import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 import { logDataExport } from "~/lib/services/auditClient";
 import { apiFetch } from "~/lib/basePath";
+import { releaseDownloadUrl } from "~/utils/releaseDownloadUrl";
 
 // Rows fetched per scroll page — matches the admin audit-log surface: audit
 // rows are cheap (heavy Json columns excluded) and operationId grouping can
@@ -370,7 +371,7 @@ export function ProjectAuditLog({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      releaseDownloadUrl(url);
 
       await logDataExport({
         exportType: "CSV",

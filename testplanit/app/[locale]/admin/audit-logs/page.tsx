@@ -34,6 +34,7 @@ import { logDataExport } from "~/lib/services/auditClient";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
 import { buildAuditLogOrderBy, ExtendedAuditLog, useColumns } from "./columns";
 import { apiFetch } from "~/lib/basePath";
+import { releaseDownloadUrl } from "~/utils/releaseDownloadUrl";
 
 // Rows fetched per scroll page. Audit rows are cheap (the heavy `changes` /
 // `metadata` Json columns are excluded from the list select), and operationId
@@ -512,9 +513,7 @@ function AuditLogsContent({ session }: { session: Session }) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      // Firefox and Safari start the download after this handler returns
-      // and drop it if the address is already gone.
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      releaseDownloadUrl(url);
 
       // Log the export for audit trail
       await logDataExport({
