@@ -38,7 +38,7 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { AlertCircle, Asterisk } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
@@ -198,8 +198,11 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
   }, [defaultMilestoneTypeId, setValue]);
 
   // Reset form when dialog opens
+  const wasOpenRef = useRef(false);
   useEffect(() => {
-    if (open) {
+    const opening = open && !wasOpenRef.current;
+    wasOpenRef.current = open;
+    if (opening) {
       reset({
         name: "",
         note: null,

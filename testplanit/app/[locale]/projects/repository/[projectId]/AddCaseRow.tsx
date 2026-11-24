@@ -207,10 +207,13 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   }, [defaultWorkflowId, setValue]);
 
   useEffect(() => {
-    reset({
-      name: "",
-      workflowId: defaultWorkflowId,
-    });
+    reset(
+      {
+        name: "",
+        workflowId: defaultWorkflowId,
+      },
+      { keepDirtyValues: true }
+    );
   }, [reset, defaultWorkflowId]);
 
   const focusNameInput = () => {

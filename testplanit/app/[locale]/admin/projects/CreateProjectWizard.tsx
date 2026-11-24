@@ -12,7 +12,7 @@ import type {
 } from "~/zenstack/input";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
@@ -527,19 +527,42 @@ export function CreateProjectWizard({
   const quickScriptEnabled = watch("quickScriptEnabled");
 
   // Reset form when dialog opens/closes
+  const wasOpenRef = useRef(false);
+  const appliedDefaultsRef = useRef(defaultValues);
   useEffect(() => {
-    if (isOpen) {
-      reset(defaultValues);
-      setCurrentStep(WizardStep.PROJECT_DETAILS);
-      setValidationErrors({});
-      // Initialize local state with default templates
-      const defaultTemplate = templates?.find((t) => t.isDefault);
-      setLocalSelectedTemplates(defaultTemplate ? [defaultTemplate.id] : []);
-      setLocalDefaultTemplateId(null);
-      // Clear validation messages
-      setNameValidationMessage(null);
+    const opening = isOpen && !wasOpenRef.current;
+    wasOpenRef.current = isOpen;
+    if (!isOpen) return;
+    const defaultTemplate = templates?.find((t) => t.isDefault);
+    if (!opening) {
+      // The lists behind the defaults arrive and refresh while the wizard is
+      // open. Only fields still holding the previous default take the new
+      // one; what has been typed or picked stays, and so does the step.
+      const previous = appliedDefaultsRef.current as Record<string, unknown>;
+      const current = getValues() as Record<string, unknown>;
+      const next: Record<string, unknown> = { ...current };
+      for (const [key, value] of Object.entries(defaultValues)) {
+        if (JSON.stringify(current[key]) === JSON.stringify(previous[key])) {
+          next[key] = value;
+        }
+      }
+      appliedDefaultsRef.current = defaultValues;
+      reset(next as CreateProjectFormData);
+      setLocalSelectedTemplates((current) =>
+        current.length > 0 || !defaultTemplate ? current : [defaultTemplate.id]
+      );
+      return;
     }
-  }, [isOpen, reset, defaultValues, templates]);
+    appliedDefaultsRef.current = defaultValues;
+    reset(defaultValues);
+    setCurrentStep(WizardStep.PROJECT_DETAILS);
+    setValidationErrors({});
+    // Initialize local state with default templates
+    setLocalSelectedTemplates(defaultTemplate ? [defaultTemplate.id] : []);
+    setLocalDefaultTemplateId(null);
+    // Clear validation messages
+    setNameValidationMessage(null);
+  }, [isOpen, reset, getValues, defaultValues, templates]);
 
   // Handle default access type changes
   useEffect(() => {

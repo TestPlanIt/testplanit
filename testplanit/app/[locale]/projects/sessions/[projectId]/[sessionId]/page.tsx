@@ -886,6 +886,7 @@ export default function SessionPage() {
   const [isFormLoading, _setIsFormLoading] = useState(false);
   const [initialValues, setInitialValues] = useState<FormValues | null>(null);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
+  const seededFromRef = useRef<unknown>(null);
   const panelLeftRef = useRef<PanelImperativeHandle>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
@@ -1339,7 +1340,12 @@ export default function SessionPage() {
 
   // Update form initialization
   useEffect(() => {
+    // A refresh of the session while it is being edited must not replace
+    // what has been typed or picked.
+    if (isEditMode && seededFromRef.current) return;
+    if (seededFromRef.current === sessionData) return;
     if (sessionData) {
+      seededFromRef.current = sessionData;
       const formValues: FormValues = {
         name: sessionData.name,
         templateId: sessionData.templateId,
@@ -1374,7 +1380,7 @@ export default function SessionPage() {
         setIsFormInitialized(true);
       });
     }
-  }, [sessionData, form, locale]);
+  }, [sessionData, form, locale, isEditMode]);
 
   // Handle edit mode changes
   useEffect(() => {

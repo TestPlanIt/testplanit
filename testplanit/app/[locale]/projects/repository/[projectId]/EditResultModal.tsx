@@ -623,13 +623,25 @@ export function EditResultModal({
   }, [isOpen]);
 
   // Update the form reset effect
+  // Filled once per result and field set: results recorded by others while
+  // this one is open refresh the list, and a refill would replace the edits.
+  const filledForRef = useRef<{ resultId: unknown; fields: unknown } | null>(
+    null
+  );
   useEffect(() => {
     if (resultId && testRunId && testRunCaseId && existingResult) {
       const result = (existingResult as TestRunResult[]).find(
         (r: TestRunResult) => r.id === Number(resultId)
       );
 
-      if (result) {
+      if (
+        result &&
+        !(
+          filledForRef.current?.resultId === resultId &&
+          filledForRef.current?.fields === templateFields
+        )
+      ) {
+        filledForRef.current = { resultId, fields: templateFields };
         // Map step results to individual fields
         const initialStepIssues: Record<number, number[]> = {};
         const stepFields = result.stepResults?.reduce(

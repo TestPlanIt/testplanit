@@ -23,7 +23,7 @@ import {
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { AlertCircle, Asterisk, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DynamicJiraField } from "./dynamic-jira-field";
 import {
@@ -350,8 +350,12 @@ export function CreateIssueJiraForm({
   });
 
   // Update form values when fields change
+  // Filled once per set of fields: callers pass a new defaults object on
+  // every render, and a refill would replace what has been typed.
+  const filledForFieldsRef = useRef<JiraField[] | null>(null);
   useEffect(() => {
-    if (fields.length > 0) {
+    if (fields.length > 0 && filledForFieldsRef.current !== fields) {
+      filledForFieldsRef.current = fields;
       const newDefaults: Record<string, any> = {
         summary: defaultValues?.title || "",
         description: initialDescription,

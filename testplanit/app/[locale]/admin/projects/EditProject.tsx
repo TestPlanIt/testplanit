@@ -12,7 +12,7 @@ import type {
   UserProjectPermission,
 } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -321,7 +321,11 @@ export function EditProjectModal({
   > | null>(null);
 
   // --- Effect to Reset Form when Project or Permissions Data Changes ---
+  const filledForProjectRef = useRef<number | null>(null);
   useEffect(() => {
+    // Filled once: a later refresh of any of these lists must not replace
+    // what has been typed or picked.
+    if (filledForProjectRef.current === project?.id) return;
     // Wait for project, assignments, and initial permissions data to load
     if (
       project &&
@@ -394,18 +398,22 @@ export function EditProjectModal({
           {} as Record<string, GroupPermissionFormState>
         );
 
-      reset({
-        iconUrl: project.iconUrl ?? null,
-        name: project.name ?? "",
-        note: project.note ?? "",
-        isCompleted: project.isCompleted ?? false,
-        completedAt: project.completedAt ?? null,
-        defaultAccessType:
-          project.defaultAccessType ?? ProjectAccessType.GLOBAL_ROLE,
-        defaultRoleId: project.defaultRoleId?.toString() ?? "NONE",
-        userPermissions: processedUserPerms,
-        groupPermissions: processedGroupPerms,
-      });
+      filledForProjectRef.current = project.id;
+      reset(
+        {
+          iconUrl: project.iconUrl ?? null,
+          name: project.name ?? "",
+          note: project.note ?? "",
+          isCompleted: project.isCompleted ?? false,
+          completedAt: project.completedAt ?? null,
+          defaultAccessType:
+            project.defaultAccessType ?? ProjectAccessType.GLOBAL_ROLE,
+          defaultRoleId: project.defaultRoleId?.toString() ?? "NONE",
+          userPermissions: processedUserPerms,
+          groupPermissions: processedGroupPerms,
+        },
+        { keepDirtyValues: true }
+      );
 
       // Store the initial state *after* processing and setting defaults
       setInitialUserPermissions(processedUserPerms);

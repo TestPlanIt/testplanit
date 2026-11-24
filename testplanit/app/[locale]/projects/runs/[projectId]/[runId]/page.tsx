@@ -361,6 +361,7 @@ export default function TestRunPage() {
   const [isFormLoading] = useState(false);
   const [, setInitialValues] = useState<FormValues | null>(null);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
+  const seededFromRef = useRef<unknown>(null);
   const panelLeftRef = useRef<PanelImperativeHandle>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
@@ -1011,7 +1012,12 @@ export default function TestRunPage() {
 
   // Update form initialization
   useEffect(() => {
+    // A live refresh of the run while it is being edited must not replace
+    // what has been typed or picked.
+    if (isEditMode && seededFromRef.current) return;
+    if (seededFromRef.current === testRunData) return;
     if (testRunData && !isSubmitting) {
+      seededFromRef.current = testRunData;
       const initialData = {
         name: testRunData.name,
         configId: testRunData.configId,
@@ -1034,7 +1040,7 @@ export default function TestRunPage() {
       );
       setIsFormInitialized(true);
     }
-  }, [testRunData, form, isSubmitting]);
+  }, [testRunData, form, isSubmitting, isEditMode]);
 
   // Handle edit mode changes
   useEffect(() => {

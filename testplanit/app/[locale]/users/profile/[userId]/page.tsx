@@ -72,7 +72,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
-import { use, useCallback, useEffect, useMemo, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { UserAssignments } from "~/components/users/UserAssignments";
@@ -492,10 +492,17 @@ const UserProfile: React.FC<UserProfileProps> = ({
     return tUserMenu(`themes.${themeName.toLowerCase()}` as any);
   };
 
+  // Filled once per edit: the user and the session refresh while the form is
+  // open, and a refill would replace what has been typed.
+  const filledForEditRef = useRef(false);
   useEffect(() => {
-    if (isEditing && user) {
-      form.reset(defaultFormValues);
+    if (!isEditing) {
+      filledForEditRef.current = false;
+      return;
     }
+    if (!user || filledForEditRef.current) return;
+    filledForEditRef.current = true;
+    form.reset(defaultFormValues);
   }, [isEditing, defaultFormValues, form, user]);
 
   useEffect(() => {
