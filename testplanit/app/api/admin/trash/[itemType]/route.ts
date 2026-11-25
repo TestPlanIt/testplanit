@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth, getTrashModel } from "../shared";
+import { checkAdminAuth, getTrashModel, softDeletedWhere } from "../shared";
 import { withRequestRouting } from "~/lib/db/requestRouting";
 
 async function handleGET(
@@ -29,7 +29,7 @@ async function handleGET(
   const sortDir = searchParams.get("sortDir") === "desc" ? "desc" : "asc";
   const search = searchParams.get("search") || "";
 
-  const whereClause: any = { isDeleted: true };
+  const whereClause: any = softDeletedWhere(itemType);
 
   if (search && entry.searchField) {
     whereClause.AND = [

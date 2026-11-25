@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth, itemTypeToModelMap } from "../shared";
+import {
+  checkAdminAuth,
+  itemTypeToModelMap,
+  softDeletedWhere,
+} from "../shared";
 import { withRequestRouting } from "~/lib/db/requestRouting";
 
 // Returns the number of soft-deleted rows for every trash item type in a
@@ -14,7 +18,9 @@ async function handleGET(request: NextRequest) {
     const results = await Promise.all(
       entries.map(async ([itemType, model]) => {
         try {
-          const count = await model.count({ where: { isDeleted: true } });
+          const count = await model.count({
+            where: softDeletedWhere(itemType),
+          });
           return [itemType, count] as const;
         } catch (error) {
           console.error(

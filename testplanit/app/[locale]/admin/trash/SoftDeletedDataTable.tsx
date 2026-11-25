@@ -21,6 +21,7 @@ import { ColumnDef, VisibilityState } from "@/components/tables/tableFeatures";
 import { AlertTriangle, UndoDot } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { cn } from "~/utils";
 import { apiFetch } from "~/lib/basePath";
 
@@ -53,6 +54,7 @@ export default function SoftDeletedDataTable({
   const tActions = useTranslations("common.actions");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
+  const itemTypeLabel = tGlobal(translationKey as any);
 
   const [data, setData] = useState<SoftDeletedItem[]>([]);
   const [totalItems, setTotalItems] = useState(0);
@@ -193,6 +195,7 @@ export default function SoftDeletedDataTable({
 
   const executeConfirmedAction = async () => {
     if (!alertActionType || alertItemId === null) return;
+    const actionType = alertActionType;
 
     try {
       let response;
@@ -229,8 +232,11 @@ export default function SoftDeletedDataTable({
         void queryClient.invalidateQueries({ queryKey: ["folderStats"] });
       }
     } catch (e: any) {
-      setError(
-        e.message || `An unexpected error occurred during ${alertActionType}.`
+      toast.error(
+        t(actionType === "purge" ? "purgeFailed" : "restoreFailed", {
+          itemType: itemTypeLabel,
+          message: e.message || tCommon("errors.unknown"),
+        })
       );
     } finally {
       setIsAlertOpen(false);
@@ -361,7 +367,6 @@ export default function SoftDeletedDataTable({
     ];
   }, [data, tActions, isInitialLoading]);
 
-  const itemTypeLabel = tGlobal(translationKey as any);
   const hasMore = data.length < totalItems;
 
   return (
@@ -443,9 +448,11 @@ export default function SoftDeletedDataTable({
                   itemType: itemTypeLabel,
                 })}
               {alertActionType === "purge" &&
-                t("purgeConfirmationMessage", {
-                  itemType: itemTypeLabel,
-                })}
+                (itemType === "User"
+                  ? t("purgeUserConfirmationMessage")
+                  : t("purgeConfirmationMessage", {
+                      itemType: itemTypeLabel,
+                    }))}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

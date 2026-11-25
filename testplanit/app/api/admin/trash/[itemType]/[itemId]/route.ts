@@ -3,8 +3,15 @@ import { getS3Client } from "~/lib/s3Client";
 import { storageKeyForSrc } from "~/lib/storageKeys";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
+import { DELETED_USER_ID } from "~/lib/deletedUser";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { syncRunCaseStatusAfterResultRemoval } from "~/lib/services/runCaseStatusSync";
+import {
+  purgeUser,
+  reassignPurgedUserInSearch,
+  UserPurgeError,
+} from "~/lib/services/userPurge";
 import { isForeignKeyError, isNotFoundError } from "~/lib/utils/errors";
 import { db } from "~/server/db";
 import { checkAdminAuth, getTrashModel, TrashModel } from "../../shared";
@@ -60,6 +67,14 @@ function displayName(item: any): string | undefined {
   return item?.name || item?.title || item?.label || item?.email;
 }
 
+// Postgres: ... violates foreign key constraint "X_fkey" on table "X"
+function referencingTable(error: any): string | undefined {
+  const text = `${error?.message ?? ""} ${error?.dbErrorMessage ?? ""}`;
+  return /violates foreign key constraint "[^"]+" on table "([^"]+)"/.exec(
+    text
+  )?.[1];
+}
+
 // PATCH handler for restoring an item (setting isDeleted = false)
 const handlePATCH = withAuditContext(
   async (
@@ -87,6 +102,16 @@ const handlePATCH = withAuditContext(
     const parsed = parseItemId(entry, itemId);
     if ("error" in parsed) return parsed.error;
     const idForQuery = parsed.id;
+
+    if (entry.modelName === "User" && idForQuery === DELETED_USER_ID) {
+      return NextResponse.json(
+        {
+          error:
+            "This is a system user that holds the content of purged users. It cannot be restored.",
+        },
+        { status: 400 }
+      );
+    }
 
     try {
       const restoredItem = await entry.model.update({
@@ -178,6 +203,41 @@ const handleDELETE = withAuditContext(
     const idForQuery = parsed.id;
 
     try {
+      if (entry.modelName === "User") {
+        const { user, reassigned } = await purgeUser(db, String(idForQuery));
+
+        await captureAuditEvent({
+          action: "DELETE",
+          entityType: entry.modelName,
+          entityId: user.id,
+          entityName: displayName(user),
+          metadata: {
+            operation: "permanent_delete",
+            purgedFromTrash: true,
+            contentReassignedTo: DELETED_USER_ID,
+            reassigned,
+          },
+        });
+
+        try {
+          await reassignPurgedUserInSearch(user.id, getCurrentTenantId());
+        } catch (searchError) {
+          console.error(
+            `[PURGE /api/admin/trash/${itemType}/${itemId}] Failed to update the search index for the purged user. Error:`,
+            searchError
+          );
+          // The DB purge already succeeded; report success and log the miss.
+        }
+
+        return NextResponse.json(
+          {
+            message: `${entry.modelName} with ID ${itemId} purged successfully.`,
+            reassigned,
+          },
+          { status: 200 }
+        );
+      }
+
       const itemToPurge = await entry.model.findUnique({
         where: { id: idForQuery as any },
       });
@@ -262,6 +322,12 @@ const handleDELETE = withAuditContext(
         { status: 200 }
       );
     } catch (error: any) {
+      if (error instanceof UserPurgeError) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: error.status }
+        );
+      }
       console.error(
         `Failed to purge ${entry.modelName} with ID ${itemId}:`,
         error
@@ -273,9 +339,12 @@ const handleDELETE = withAuditContext(
         );
       }
       if (isForeignKeyError(error)) {
+        const table = referencingTable(error);
         return NextResponse.json(
           {
-            error: `Failed to purge ${entry.modelName} due to existing related data. Please ensure related items are also removed or handle cascading deletes appropriately.`,
+            error: table
+              ? `Failed to purge ${entry.modelName}: records in ${table} still reference it. Remove those records first.`
+              : `Failed to purge ${entry.modelName} due to existing related data. Please ensure related items are also removed or handle cascading deletes appropriately.`,
           },
           { status: 409 }
         );
