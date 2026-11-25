@@ -1,3 +1,9 @@
+## [1.2.12](https://github.com/TestPlanIt/testplanit/compare/v1.2.11...v1.2.12) (2026-11-25)
+
+### Bug Fixes
+
+* **automation:** let execution targets use any registered code repository ([#767](https://github.com/TestPlanIt/testplanit/issues/767)) ([bfb68e5](https://github.com/TestPlanIt/testplanit/commit/bfb68e5aa9074edd82c6a07250fda9ae52bc6045)), closes [#766](https://github.com/TestPlanIt/testplanit/issues/766)
+
 ## [1.2.11](https://github.com/TestPlanIt/testplanit/compare/v1.2.10...v1.2.11) (2026-11-24)
 
 ### Bug Fixes
