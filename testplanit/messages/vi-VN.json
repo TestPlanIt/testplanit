@@ -3004,6 +3004,10 @@
             "label": "Tích hợp cần được ủy quyền lại",
             "description": "Kết nối của bạn với một tích hợp hết hạn hoặc bị thu hồi và phải được kết nối lại."
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "Webhook endpoint bị vô hiệu hóa",
+            "description": "Webhook gửi đi trong dự án bạn quản trị đã bị tắt sau quá nhiều lần gửi không thành công liên tiếp."
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "Thông báo của quản trị viên",
             "description": "Một quản trị viên gửi thông báo hệ thống cho mọi người dùng."
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "Các Thay Đổi Được Gợi Ý Đang Chờ",
         "casesUpdatedReminderMessage": "{count, plural, one {# gợi ý thay đổi cho {issueKey} vẫn đang chờ quyết định.} other {# gợi ý thay đổi cho {issueKey} vẫn đang chờ quyết định.}}",
         "casesUpdatedLink": "Xem các trường hợp kiểm thử",
+        "webhookEndpointDisabledTitle": "Webhook Endpoint Bị Vô Hiệu Hóa",
+        "webhookEndpointDisabledMessage": "Webhook \"{name}\" trong {projectName} đã bị vô hiệu hóa sau quá nhiều lần gửi không thành công liên tiếp. Không có gì được gửi đến nó cho đến khi nó được bật lại.",
+        "webhookEndpointDisabledSystemMessage": "Webhook hệ thống \"{name}\" đã bị vô hiệu hóa sau quá nhiều lần gửi không thành công liên tiếp. Không có gì được gửi đến nó cho đến khi nó được bật lại.",
+        "webhookEndpointDisabledSystemLink": "Xem webhook hệ thống",
         "integrationAuthExpiredTitle": "Kết nối tích hợp đã hết hạn",
         "integrationAuthExpiredMessage": "Kết nối của bạn tới \"{integrationName}\" đã hết hạn. Kết nối lại để tiếp tục đồng bộ vấn đề.",
         "integrationAuthExpiredReconnect": "Kết nối lại",

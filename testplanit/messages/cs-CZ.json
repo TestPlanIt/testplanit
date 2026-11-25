@@ -3004,6 +3004,10 @@
             "label": "Integrace vyžaduje nové ověření",
             "description": "Vaše připojení k integraci vypršelo nebo bylo odvoláno a musí být znovu připojeno."
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "Webhook endpoint zakázán",
+            "description": "Odchozí webhook v projektu, který spravujete, byl vypnut po příliš mnoha neúspěšných pokusech o doručení za sebou."
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "Oznámení správce",
             "description": "Správce odešle systémové oznámení každému uživateli."
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "Navrhované změny čekají",
         "casesUpdatedReminderMessage": "{count, plural, one {# navrhovaná změna pro {issueKey} stále čeká na rozhodnutí.} few {# navrhované změny pro {issueKey} stále čekají na rozhodnutí.} many {# navrhovaných změn pro {issueKey} stále čeká na rozhodnutí.} other {# navrhovaných změn pro {issueKey} stále čeká na rozhodnutí.}}",
         "casesUpdatedLink": "Zobrazit testovací případy",
+        "webhookEndpointDisabledTitle": "Webhook Endpoint zakázán",
+        "webhookEndpointDisabledMessage": "Webhook \"{name}\" v {projectName} byl zakázán po příliš mnoha neúspěšných pokusech o doručení za sebou. Nic se do něj neodesílá, dokud nebude znovu povolen.",
+        "webhookEndpointDisabledSystemMessage": "Systémový webhook \"{name}\" byl zakázán po příliš mnoha neúspěšných pokusech o doručení za sebou. Nic se do něj neodesílá, dokud nebude znovu povolen.",
+        "webhookEndpointDisabledSystemLink": "Zobrazit systémové webhooky",
         "integrationAuthExpiredTitle": "Platnost připojení integrace vypršela",
         "integrationAuthExpiredMessage": "Platnost vašeho připojení k \"{integrationName}\" vypršela. Znovu se připojte pro obnovení synchronizace úkolů.",
         "integrationAuthExpiredReconnect": "Znovu se připojit",

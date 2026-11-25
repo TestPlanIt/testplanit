@@ -25,6 +25,12 @@ vi.mock("../lib/webhooks/health", () => ({
   transition: (...args: unknown[]) => mockHealthTransition(...args),
 }));
 
+const mockNotifyEndpointDisabled = vi.fn().mockResolvedValue(1);
+vi.mock("../lib/webhooks/endpointDisabledAlert", () => ({
+  notifyEndpointDisabled: (...args: unknown[]) =>
+    mockNotifyEndpointDisabled(...args),
+}));
+
 // daily auto-retire helper invoked when the cron
 // schedules a job named "retire-expired-secrets" onto this worker's queue.
 const mockRetireExpiredSecrets = vi.fn();
@@ -287,7 +293,16 @@ describe("webhookDispatchWorker.processor", () => {
 
 describe("webhookDispatchWorker — health hooks (/)", () => {
   beforeEach(() => {
-    mockHealthTransition.mockClear();
+    mockHealthTransition.mockReset();
+    mockHealthTransition.mockResolvedValue({
+      from: "HEALTHY",
+      to: "HEALTHY",
+      counter: 0,
+    });
+    mockNotifyEndpointDisabled.mockReset();
+    mockNotifyEndpointDisabled.mockResolvedValue(1);
+    mockedGetDb.mockReset();
+    mockedGetDb.mockReturnValue({ __mock: "db" });
   });
 
   it("H1. on('failed') terminal — attemptsMade=6 + maxAttempts=7 → calls health.transition(configId, 'failure')", async () => {
@@ -307,8 +322,10 @@ describe("webhookDispatchWorker — health hooks (/)", () => {
     expect(mockHealthTransition).toHaveBeenCalledTimes(1);
     expect(mockHealthTransition).toHaveBeenCalledWith(
       "cfg-terminal",
-      "failure"
+      "failure",
+      { __mock: "db" }
     );
+    expect(mockNotifyEndpointDisabled).not.toHaveBeenCalled();
   });
 
   it("H2. on('failed') non-terminal — attemptsMade=3 + maxAttempts=7 → does NOT call health.transition (retry pending; event-level only)", async () => {
@@ -343,7 +360,11 @@ describe("webhookDispatchWorker — health hooks (/)", () => {
     await handleCompleted(job, { outcome: "success" });
 
     expect(mockHealthTransition).toHaveBeenCalledTimes(1);
-    expect(mockHealthTransition).toHaveBeenCalledWith("cfg-success", "success");
+    expect(mockHealthTransition).toHaveBeenCalledWith(
+      "cfg-success",
+      "success",
+      { __mock: "db" }
+    );
   });
 
   it("H3a. on('completed') with result.outcome='failure' (DISABLED gate) — does NOT call health.transition; otherwise the gate would be undone immediately", async () => {
@@ -416,5 +437,138 @@ describe("webhookDispatchWorker — health hooks (/)", () => {
     await handleFailed(job, new Error("terminal but malformed jobData"));
 
     expect(mockHealthTransition).not.toHaveBeenCalled();
+  });
+
+  const terminalJob = (data: Record<string, unknown>) =>
+    ({
+      id: "job-terminal",
+      attemptsMade: 6,
+      data: { outboxEventId: "ev1", attempt: 7, ...data },
+      opts: { attempts: 7 },
+    }) as any;
+
+  it("H5. the failure that disables the endpoint tells its administrators, through the job's own database", async () => {
+    const tenantDb = { __mock: "tenant-db" };
+    mockedGetDb.mockReturnValue(tenantDb);
+    mockHealthTransition.mockResolvedValue({
+      from: "DEGRADED",
+      to: "DISABLED",
+      counter: 10,
+    });
+
+    await handleFailed(
+      terminalJob({ webhookConfigId: "cfg-off", tenantId: "tenant-A" }),
+      new Error("upstream 500")
+    );
+
+    expect(mockedGetDb).toHaveBeenCalledWith({ tenantId: "tenant-A" });
+    expect(mockHealthTransition).toHaveBeenCalledWith(
+      "cfg-off",
+      "failure",
+      tenantDb
+    );
+    expect(mockNotifyEndpointDisabled).toHaveBeenCalledTimes(1);
+    expect(mockNotifyEndpointDisabled).toHaveBeenCalledWith(tenantDb, {
+      webhookConfigId: "cfg-off",
+      tenantId: "tenant-A",
+    });
+  });
+
+  it("H6. a failure that leaves the endpoint degraded, or finds it already disabled, tells nobody", async () => {
+    mockHealthTransition.mockResolvedValueOnce({
+      from: "HEALTHY",
+      to: "DEGRADED",
+      counter: 5,
+    });
+    await handleFailed(
+      terminalJob({ webhookConfigId: "cfg-degraded" }),
+      new Error("upstream 500")
+    );
+
+    mockHealthTransition.mockResolvedValueOnce({
+      from: "DISABLED",
+      to: "DISABLED",
+      counter: 11,
+    });
+    await handleFailed(
+      terminalJob({ webhookConfigId: "cfg-still-off" }),
+      new Error("upstream 500")
+    );
+
+    expect(mockHealthTransition).toHaveBeenCalledTimes(2);
+    expect(mockedGetDb).toHaveBeenCalledWith({ tenantId: undefined });
+    expect(mockNotifyEndpointDisabled).not.toHaveBeenCalled();
+  });
+
+  it("H7. a health transition that fails tells nobody and does not throw", async () => {
+    mockHealthTransition.mockRejectedValue(new Error("config gone"));
+
+    await expect(
+      handleFailed(
+        terminalJob({ webhookConfigId: "cfg-gone" }),
+        new Error("upstream 500")
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockNotifyEndpointDisabled).not.toHaveBeenCalled();
+  });
+
+  it("H8. a job with no usable database is logged, not thrown, on either hook", async () => {
+    mockedGetDb.mockImplementation(() => {
+      throw new Error("tenantId is required in multi-tenant mode");
+    });
+
+    await expect(
+      handleFailed(
+        terminalJob({ webhookConfigId: "cfg-no-tenant" }),
+        new Error("upstream 500")
+      )
+    ).resolves.toBeUndefined();
+    await expect(
+      handleCompleted(terminalJob({ webhookConfigId: "cfg-no-tenant" }), {
+        outcome: "success",
+      })
+    ).resolves.toBeUndefined();
+
+    expect(mockHealthTransition).not.toHaveBeenCalled();
+    expect(mockNotifyEndpointDisabled).not.toHaveBeenCalled();
+  });
+
+  it("H9. a notification that cannot be sent does not throw: the endpoint is disabled either way", async () => {
+    mockHealthTransition.mockResolvedValue({
+      from: "DEGRADED",
+      to: "DISABLED",
+      counter: 10,
+    });
+    mockNotifyEndpointDisabled.mockRejectedValue(new Error("queue down"));
+
+    await expect(
+      handleFailed(
+        terminalJob({ webhookConfigId: "cfg-off", tenantId: null }),
+        new Error("upstream 500")
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockNotifyEndpointDisabled).toHaveBeenCalledWith(
+      { __mock: "db" },
+      { webhookConfigId: "cfg-off", tenantId: undefined }
+    );
+  });
+
+  it("H10. a success resets health in the job's own database", async () => {
+    const tenantDb = { __mock: "tenant-db" };
+    mockedGetDb.mockReturnValue(tenantDb);
+
+    await handleCompleted(
+      terminalJob({ webhookConfigId: "cfg-back", tenantId: "tenant-A" }),
+      { outcome: "success" }
+    );
+
+    expect(mockedGetDb).toHaveBeenCalledWith({ tenantId: "tenant-A" });
+    expect(mockHealthTransition).toHaveBeenCalledWith(
+      "cfg-back",
+      "success",
+      tenantDb
+    );
   });
 });

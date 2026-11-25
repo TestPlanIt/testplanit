@@ -3004,6 +3004,10 @@
             "label": "集成需要重新授权",
             "description": "与集成的连接已过期或被撤销，必须重新连接。"
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "Webhook端点已禁用",
+            "description": "您管理的项目中的出站webhook因连续发送失败次数过多而被关闭。"
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "管理员公告",
             "description": "管理员向每个用户发送系统通知。"
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "建议的变更正在等待",
         "casesUpdatedReminderMessage": "{count, plural, one {# 条 {issueKey} 的建议变更仍在等待决定。} other {# 条 {issueKey} 的建议变更仍在等待决定。}}",
         "casesUpdatedLink": "查看测试用例",
+        "webhookEndpointDisabledTitle": "Webhook端点已禁用",
+        "webhookEndpointDisabledMessage": "网络钩子\"{name}\"在{projectName}中因连续发送失败次数过多而被禁用。在重新启用之前，不会向其发送任何内容。",
+        "webhookEndpointDisabledSystemMessage": "系统webhook\"{name}\"因连续发送失败次数过多而被禁用。在重新启用之前，不会向其发送任何内容。",
+        "webhookEndpointDisabledSystemLink": "查看系统webhook",
         "integrationAuthExpiredTitle": "集成连接已过期",
         "integrationAuthExpiredMessage": "您与“{integrationName}”的连接已过期。请重新连接以恢复问题同步。",
         "integrationAuthExpiredReconnect": "重新连接",

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  activeOrSystemAdmins,
   draftRuleRecipients,
   namedRecipients,
   projectAdminIds,
@@ -244,6 +245,28 @@ describe("upkeepRecipients", () => {
     const db = makeDb({ drafted: false, project: null });
     expect(await upkeepRecipients(db, { ...base, options: {} })).toEqual([]);
     expect(db.user.findMany).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("activeOrSystemAdmins", () => {
+  it("returns the active users of the list, once each, with nobody else to add", async () => {
+    const db = makeDb({ liveUsers: ["u1"], systemAdmins: ["admin-1"] });
+    expect(await activeOrSystemAdmins(db, ["u1", "gone", "u1"])).toEqual([
+      "u1",
+    ]);
+    expect(db.user.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns the system administrators for an empty list, and when nobody on it is active", async () => {
+    expect(
+      await activeOrSystemAdmins(makeDb({ systemAdmins: ["admin-1"] }), [])
+    ).toEqual(["admin-1"]);
+    expect(
+      await activeOrSystemAdmins(
+        makeDb({ liveUsers: [], systemAdmins: ["admin-1", "admin-2"] }),
+        ["gone"]
+      )
+    ).toEqual(["admin-1", "admin-2"]);
   });
 });
 

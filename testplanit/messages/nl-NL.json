@@ -3004,6 +3004,10 @@
             "label": "Integratie moet opnieuw worden geautoriseerd",
             "description": "Uw verbinding met een integratie is verlopen of ingetrokken en moet opnieuw verbonden worden."
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "Webhook-eindpunt uitgeschakeld",
+            "description": "Een uitgaande webhook in een project dat u beheert, is uitgeschakeld na te veel mislukte leveringen achter elkaar."
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "Aankondigingen voor beheerders",
             "description": "Een beheerder stuurt een systeemmelding naar elke gebruiker."
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "Voorgestelde wijzigingen wachten",
         "casesUpdatedReminderMessage": "{count, plural, one {# voorgestelde wijziging voor {issueKey} wacht nog op een beslissing.} other {# voorgestelde wijzigingen voor {issueKey} wachten nog op een beslissing.}}",
         "casesUpdatedLink": "De testgevallen weergeven",
+        "webhookEndpointDisabledTitle": "Webhook-eindpunt uitgeschakeld",
+        "webhookEndpointDisabledMessage": "De webhook \"{name}\" in {projectName} is uitgeschakeld na te veel mislukte leveringen achter elkaar. Er wordt niets naar verzonden totdat deze opnieuw wordt ingeschakeld.",
+        "webhookEndpointDisabledSystemMessage": "De systeemwebhook \"{name}\" is uitgeschakeld na te veel mislukte leveringen achter elkaar. Er wordt niets naar verzonden totdat deze opnieuw wordt ingeschakeld.",
+        "webhookEndpointDisabledSystemLink": "De systeemwebhooks weergeven",
         "integrationAuthExpiredTitle": "Integratieverbinding verlopen",
         "integrationAuthExpiredMessage": "Uw verbinding met \"{integrationName}\" is verlopen. Maak opnieuw verbinding om het synchroniseren van issues te hervatten.",
         "integrationAuthExpiredReconnect": "Opnieuw verbinden",

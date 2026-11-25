@@ -369,6 +369,58 @@ describe("NotificationService", () => {
     });
   });
 
+  describe("createWebhookEndpointDisabledNotification", () => {
+    const queued = () => mockQueue.add.mock.calls.at(-1)![1] as any;
+
+    it("queues a notice naming the endpoint and its project", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-disabled" } as any);
+
+      await NotificationService.createWebhookEndpointDisabledNotification({
+        userId: "admin-1",
+        webhookConfigId: "cfg-1",
+        endpointName: "Release channel",
+        projectId: 3,
+        projectName: "Telco",
+        tenantId: "tenant-a",
+      });
+
+      expect(queued()).toEqual({
+        userId: "admin-1",
+        type: NotificationType.WEBHOOK_ENDPOINT_DISABLED,
+        title: "Webhook endpoint disabled",
+        message:
+          'The webhook "Release channel" in project "Telco" was disabled after too many failed deliveries in a row. Nothing is sent to it until it is re-enabled.',
+        relatedEntityId: "cfg-1",
+        relatedEntityType: "WebhookConfig",
+        tenantId: "tenant-a",
+        data: {
+          webhookConfigId: "cfg-1",
+          endpointName: "Release channel",
+          projectId: 3,
+          projectName: "Telco",
+        },
+      });
+    });
+
+    it("words a system-level endpoint without a project", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-disabled" } as any);
+
+      await NotificationService.createWebhookEndpointDisabledNotification({
+        userId: "admin-1",
+        webhookConfigId: "cfg-2",
+        endpointName: "SCIM audit",
+        projectId: null,
+        projectName: "",
+      });
+
+      expect(queued()).toMatchObject({
+        message:
+          'The system webhook "SCIM audit" was disabled after too many failed deliveries in a row. Nothing is sent to it until it is re-enabled.',
+        data: { projectId: null, projectName: "" },
+      });
+    });
+  });
+
   describe("createRunCaseUnblockedNotification", () => {
     it("queues a RUN_CASE_UNBLOCKED notification pointing at the case in its run", async () => {
       mockQueue.add.mockResolvedValue({ id: "job-unblocked" } as any);

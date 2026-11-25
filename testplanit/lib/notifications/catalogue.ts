@@ -170,6 +170,12 @@ export const NOTIFICATION_CATALOGUE: readonly NotificationCatalogueEntry[] = [
     audience: "everyone",
     optional: false,
   },
+  {
+    type: NotificationType.WEBHOOK_ENDPOINT_DISABLED,
+    group: "integrations",
+    audience: "everyone",
+    optional: true,
+  },
   // System — an admin broadcast is the one channel that reaches everyone.
   {
     type: NotificationType.SYSTEM_ANNOUNCEMENT,

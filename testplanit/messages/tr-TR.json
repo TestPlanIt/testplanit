@@ -3004,6 +3004,10 @@
             "label": "Entegrasyon yeniden yetkilendirme gerekiyor",
             "description": "Bir entegrasyonla bağlantınız sona erdi veya iptal edildi ve yeniden bağlanması gerekir."
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "Webhook uç noktası devre dışı",
+            "description": "Yönettiğiniz bir projede yer alan giden webhook çok fazla ardışık başarısız teslim nedeniyle kapatıldı."
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "Yönetici duyuruları",
             "description": "Yönetici her kullanıcıya sistem bildirimi gönderir."
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "Önerilen Değişiklikler Beklemede",
         "casesUpdatedReminderMessage": "{count, plural, one {# {issueKey} için önerilen değişiklik hala karar için beklemede.} other {# {issueKey} için önerilen değişiklikler hala karar için beklemede.}}",
         "casesUpdatedLink": "Test durumlarını görüntüle",
+        "webhookEndpointDisabledTitle": "Webhook Uç Noktası Devre Dışı",
+        "webhookEndpointDisabledMessage": "{projectName} içindeki \"{name}\" webhook çok fazla ardışık başarısız teslim nedeniyle devre dışı bırakıldı. Yeniden etkinleştirilene kadar hiçbir şey gönderilmez.",
+        "webhookEndpointDisabledSystemMessage": "\"{name}\" sistem webhook çok fazla ardışık başarısız teslim nedeniyle devre dışı bırakıldı. Yeniden etkinleştirilene kadar hiçbir şey gönderilmez.",
+        "webhookEndpointDisabledSystemLink": "Sistem webhookları görüntüle",
         "integrationAuthExpiredTitle": "Entegrasyon Bağlantısının Süresi Doldu",
         "integrationAuthExpiredMessage": "\"{integrationName}\" ile bağlantınızın süresi doldu. Sorun senkronizasyonuna devam etmek için yeniden bağlanın.",
         "integrationAuthExpiredReconnect": "Yeniden Bağlan",

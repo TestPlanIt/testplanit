@@ -178754,7 +178754,8 @@
           "ALERT_TRIGGERED",
           "CASES_DRAFTED",
           "NEW_RELEASE_AVAILABLE",
-          "CASES_UPDATED"
+          "CASES_UPDATED",
+          "WEBHOOK_ENDPOINT_DISABLED"
         ]
       },
       "EnumNotificationTypeNullableListFilter": {

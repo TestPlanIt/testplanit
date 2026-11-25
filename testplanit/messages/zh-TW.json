@@ -3004,6 +3004,10 @@
             "label": "整合需要重新授權",
             "description": "與整合的連線已過期或被撤銷，需要重新連線。"
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "Webhook 端點已禁用",
+            "description": "您管理的專案中的出站 webhook 在連續多次傳遞失敗後已關閉。"
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "管理員公告",
             "description": "管理員向每個用戶發送系統通知。"
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "建議的變更正在等待",
         "casesUpdatedReminderMessage": "{count, plural, one {# 個 {issueKey} 的建議變更仍在等待決定。} other {# 個 {issueKey} 的建議變更仍在等待決定。}}",
         "casesUpdatedLink": "檢視測試案例",
+        "webhookEndpointDisabledTitle": "Webhook 端點已禁用",
+        "webhookEndpointDisabledMessage": "Webhook \"{name}\" 在 {projectName} 中由於連續多次傳遞失敗而被禁用。在重新啟用前，不會有任何內容發送到該端點。",
+        "webhookEndpointDisabledSystemMessage": "系統 webhook \"{name}\" 由於連續多次傳遞失敗而被禁用。在重新啟用前，不會有任何內容發送到該端點。",
+        "webhookEndpointDisabledSystemLink": "查看系統 webhook",
         "integrationAuthExpiredTitle": "整合連線已過期",
         "integrationAuthExpiredMessage": "您與「{integrationName}」的連線已過期。請重新連線以繼續問題同步。",
         "integrationAuthExpiredReconnect": "重新連線",

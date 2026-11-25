@@ -144,10 +144,24 @@ export async function upkeepRecipients(
   if (base.length === 0) {
     base = await projectAdminIds(db, params.projectId);
   }
+  return activeOrSystemAdmins(db, base, params.alsoTell);
+}
+
+/**
+ * The active users among `base` and `alsoTell`. When nobody in `base` is an
+ * active user, the active system administrators are told as well, so the
+ * news is never silent. Each person appears once; the System user, and
+ * anyone inactive or deleted, never.
+ */
+export async function activeOrSystemAdmins(
+  db: any,
+  base: string[],
+  alsoTell: (string | null | undefined)[] = []
+): Promise<string[]> {
   const wanted = [
     ...new Set([
       ...base,
-      ...(params.alsoTell ?? []).filter((id): id is string => Boolean(id)),
+      ...alsoTell.filter((id): id is string => Boolean(id)),
     ]),
   ];
   const live: { id: string }[] =

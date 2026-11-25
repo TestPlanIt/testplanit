@@ -3004,6 +3004,10 @@
             "label": "Integração precisa de reautorização",
             "description": "Sua conexão com uma integração expirou ou foi revogada e deve ser reconectada."
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "Endpoint de webhook desabilitado",
+            "description": "Um webhook de saída em um projeto que você administra foi desativado após muitas falhas de entrega consecutivas."
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "Anúncios administrativos",
             "description": "Um administrador envia uma notificação do sistema para cada usuário."
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "Alterações Sugeridas Aguardando",
         "casesUpdatedReminderMessage": "{count, plural, one {# sugestão de alteração para {issueKey} ainda aguarda uma decisão.} other {# sugestões de alteração para {issueKey} ainda aguardam uma decisão.}}",
         "casesUpdatedLink": "Ver os casos de teste",
+        "webhookEndpointDisabledTitle": "Endpoint de Webhook Desabilitado",
+        "webhookEndpointDisabledMessage": "O webhook \"{name}\" em {projectName} foi desabilitado após muitas falhas de entrega consecutivas. Nada é enviado para ele até que seja reabilitado.",
+        "webhookEndpointDisabledSystemMessage": "O webhook do sistema \"{name}\" foi desabilitado após muitas falhas de entrega consecutivas. Nada é enviado para ele até que seja reabilitado.",
+        "webhookEndpointDisabledSystemLink": "Exibir os webhooks do sistema",
         "integrationAuthExpiredTitle": "Conexão de Integração Expirada",
         "integrationAuthExpiredMessage": "Sua conexão com \"{integrationName}\" expirou. Reconecte-se para retomar a sincronização de issues.",
         "integrationAuthExpiredReconnect": "Reconectar",

@@ -3004,6 +3004,10 @@
             "label": "L'integrazione necessita di una nuova autorizzazione",
             "description": "La tua connessione a un'integrazione è scaduta o è stata revocata e deve essere riconnessa."
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "Endpoint webhook disabilitato",
+            "description": "Un webhook in uscita in un progetto che amministri è stato disattivato dopo troppi errori di consegna consecutivi."
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "Annunci dell'amministratore",
             "description": "Un amministratore invia una notifica di sistema a ogni utente."
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "Le modifiche suggerite sono in attesa",
         "casesUpdatedReminderMessage": "{count, plural, one {# modifica suggerita per {issueKey} è ancora in attesa di una decisione.} other {# modifiche suggerite per {issueKey} sono ancora in attesa di una decisione.}}",
         "casesUpdatedLink": "Visualizza i casi di test",
+        "webhookEndpointDisabledTitle": "Endpoint Webhook Disabilitato",
+        "webhookEndpointDisabledMessage": "Il webhook \"{name}\" in {projectName} è stato disabilitato dopo troppi errori di consegna consecutivi. Non viene inviato nulla finché non viene riabilitato.",
+        "webhookEndpointDisabledSystemMessage": "Il webhook di sistema \"{name}\" è stato disabilitato dopo troppi errori di consegna consecutivi. Non viene inviato nulla finché non viene riabilitato.",
+        "webhookEndpointDisabledSystemLink": "Visualizza i webhook di sistema",
         "integrationAuthExpiredTitle": "Connessione all'integrazione scaduta",
         "integrationAuthExpiredMessage": "La connessione a \"{integrationName}\" è scaduta. Riconnettiti per riprendere la sincronizzazione dei problemi.",
         "integrationAuthExpiredReconnect": "Riconnetti",

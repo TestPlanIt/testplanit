@@ -242,6 +242,8 @@ The state machine is failure-driven:
 - After ten consecutive failures the webhook is automatically **Disabled** and stops dispatching. The next attempt would have been delivery 11.
 - A single successful delivery resets the counter and returns the webhook to **Healthy**.
 
+When a webhook is disabled, the project's creator and its project administrators receive a **Webhook endpoint disabled** [notification](./notifications.md#notification-types) with a link to this page. When none of them is an active user, the system administrators receive it. For a system webhook it goes to the system administrators.
+
 Hovering the badge shows the most recent failure or success timestamp.
 
 ### Re-enabling a disabled webhook

@@ -3004,6 +3004,10 @@
             "label": "Integration benötigt erneute Autorisierung",
             "description": "Ihre Verbindung zu einer Integration ist abgelaufen oder wurde widerrufen und muss erneut verbunden werden."
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "Webhook-Endpunkt deaktiviert",
+            "description": "Ein ausgehender Webhook in einem von Ihnen verwalteten Projekt wurde nach zu vielen fehlgeschlagenen Zustellungen hintereinander deaktiviert."
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "Administrator-Ankündigungen",
             "description": "Ein Administrator sendet eine Systembenachrichtigung an jeden Benutzer."
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "Vorgeschlagene Änderungen warten",
         "casesUpdatedReminderMessage": "{count, plural, one {# vorgeschlagene Änderung für {issueKey} wartet immer noch auf eine Entscheidung.} other {# vorgeschlagene Änderungen für {issueKey} warten immer noch auf eine Entscheidung.}}",
         "casesUpdatedLink": "Testfälle anzeigen",
+        "webhookEndpointDisabledTitle": "Webhook-Endpunkt deaktiviert",
+        "webhookEndpointDisabledMessage": "Der Webhook \"{name}\" in {projectName} wurde nach zu vielen fehlgeschlagenen Zustellungen hintereinander deaktiviert. Nichts wird daran gesendet, bis er erneut aktiviert wird.",
+        "webhookEndpointDisabledSystemMessage": "Der System-Webhook \"{name}\" wurde nach zu vielen fehlgeschlagenen Zustellungen hintereinander deaktiviert. Nichts wird daran gesendet, bis er erneut aktiviert wird.",
+        "webhookEndpointDisabledSystemLink": "Zeigen Sie die System-Webhooks an",
         "integrationAuthExpiredTitle": "Integrationsverbindung abgelaufen",
         "integrationAuthExpiredMessage": "Ihre Verbindung zu \"{integrationName}\" ist abgelaufen. Stellen Sie die Verbindung erneut her, um die Issue-Synchronisierung fortzusetzen.",
         "integrationAuthExpiredReconnect": "Erneut verbinden",

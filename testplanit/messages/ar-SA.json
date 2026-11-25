@@ -3004,6 +3004,10 @@
             "label": "التكامل يحتاج إلى إعادة تخويل",
             "description": "انتهت صلاحية الاتصال بالتكامل أو تم إلغاؤه ويجب إعادة الاتصال به."
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "نقطة نهاية Webhook معطلة",
+            "description": "تم إيقاف webhook خارج في مشروع تديره بعد فشل عمليات التسليم المتتالية عديدة."
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "إعلانات الإدارة",
             "description": "يرسل المسؤول إخطارًا لنظام إلى كل مستخدم."
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "التغييرات المقترحة في الانتظار",
         "casesUpdatedReminderMessage": "{count, plural, one {# تغيير مقترح لـ {issueKey} لا يزال في الانتظار للقرار.} other {# تغييرات مقترحة لـ {issueKey} لا تزال في الانتظار للقرار.}}",
         "casesUpdatedLink": "عرض حالات الاختبار",
+        "webhookEndpointDisabledTitle": "نقطة نهاية Webhook معطلة",
+        "webhookEndpointDisabledMessage": "تم تعطيل webhook \"{name}\" في {projectName} بعد فشل عمليات التسليم المتتالية عديدة. لا يتم إرسال شيء إليه حتى يتم إعادة تفعيله.",
+        "webhookEndpointDisabledSystemMessage": "تم تعطيل webhook النظام \"{name}\" بعد فشل عمليات التسليم المتتالية عديدة. لا يتم إرسال شيء إليه حتى يتم إعادة تفعيله.",
+        "webhookEndpointDisabledSystemLink": "عرض webhooks النظام",
         "integrationAuthExpiredTitle": "انتهت صلاحية اتصال التكامل",
         "integrationAuthExpiredMessage": "انتهت صلاحية اتصالك بـ \"{integrationName}\". أعد الاتصال لاستئناف مزامنة المشكلات.",
         "integrationAuthExpiredReconnect": "إعادة الاتصال",

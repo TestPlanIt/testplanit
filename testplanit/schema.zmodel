@@ -566,6 +566,7 @@ enum NotificationType {
     CASES_DRAFTED
     NEW_RELEASE_AVAILABLE
     CASES_UPDATED
+    WEBHOOK_ENDPOINT_DISABLED
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')

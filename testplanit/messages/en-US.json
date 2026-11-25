@@ -3004,6 +3004,10 @@
             "label": "Integration needs re-authorization",
             "description": "Your connection to an integration expired or was revoked and must be reconnected."
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "Webhook endpoint disabled",
+            "description": "An outbound webhook in a project you administer was switched off after too many failed deliveries in a row."
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "Admin announcements",
             "description": "An administrator sends a system notification to every user."
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "Suggested Changes Are Waiting",
         "casesUpdatedReminderMessage": "{count, plural, one {# suggested change for {issueKey} is still waiting for a decision.} other {# suggested changes for {issueKey} are still waiting for a decision.}}",
         "casesUpdatedLink": "View the test cases",
+        "webhookEndpointDisabledTitle": "Webhook Endpoint Disabled",
+        "webhookEndpointDisabledMessage": "The webhook \"{name}\" in {projectName} was disabled after too many failed deliveries in a row. Nothing is sent to it until it is re-enabled.",
+        "webhookEndpointDisabledSystemMessage": "The system webhook \"{name}\" was disabled after too many failed deliveries in a row. Nothing is sent to it until it is re-enabled.",
+        "webhookEndpointDisabledSystemLink": "View the system webhooks",
         "integrationAuthExpiredTitle": "Integration Connection Expired",
         "integrationAuthExpiredMessage": "Your connection to \"{integrationName}\" has expired. Reconnect to resume issue syncing.",
         "integrationAuthExpiredReconnect": "Reconnect",

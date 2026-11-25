@@ -372,6 +372,42 @@ export class NotificationService {
   }
 
   /**
+   * An outbound webhook endpoint was switched off after too many failed
+   * deliveries in a row. The stored `title`/`message` are the English
+   * fallback; the bell renders localized copy from `data`.
+   */
+  static async createWebhookEndpointDisabledNotification(params: {
+    userId: string;
+    webhookConfigId: string;
+    endpointName: string;
+    /** Null for a system-level endpoint, which belongs to no project. */
+    projectId: number | null;
+    projectName: string;
+    tenantId?: string;
+  }) {
+    const subject =
+      params.projectId === null
+        ? `The system webhook "${params.endpointName}"`
+        : `The webhook "${params.endpointName}" in project "${params.projectName}"`;
+
+    return this.createNotification({
+      userId: params.userId,
+      type: NotificationType.WEBHOOK_ENDPOINT_DISABLED,
+      title: "Webhook endpoint disabled",
+      message: `${subject} was disabled after too many failed deliveries in a row. Nothing is sent to it until it is re-enabled.`,
+      relatedEntityId: params.webhookConfigId,
+      relatedEntityType: "WebhookConfig",
+      tenantId: params.tenantId,
+      data: {
+        webhookConfigId: params.webhookConfigId,
+        endpointName: params.endpointName,
+        projectId: params.projectId,
+        projectName: params.projectName,
+      },
+    });
+  }
+
+  /**
    * Alert fired (#651): one notification per subscriber. The
    * stored `title`/`message` are the English fallback; the bell and the
    * email worker render localized copy from `data`, which carries every

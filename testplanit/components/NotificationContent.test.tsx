@@ -109,6 +109,11 @@ describe("NotificationContent", () => {
         casesUpdatedReminderTitle: "Suggested Changes Are Waiting",
         casesUpdatedReminderMessage: "{count} still waiting for {issueKey}",
         casesUpdatedLink: "View the test cases",
+        webhookEndpointDisabledTitle: "Webhook Endpoint Disabled",
+        webhookEndpointDisabledMessage: "{name} in {projectName} was disabled",
+        webhookEndpointDisabledSystemMessage:
+          "System webhook {name} was disabled",
+        webhookEndpointDisabledSystemLink: "View the system webhooks",
         aiStepsDerivedTitle: "AI-Derived Test Steps Ready",
         aiStepsDerivedMessage:
           "{count} test cases were given AI-derived steps — review for accuracy.",
@@ -1149,6 +1154,64 @@ describe("NotificationContent", () => {
       // Should fall back to basic rendering
       expect(screen.getByText("Fallback Title")).toBeInTheDocument();
       expect(screen.getByText("Fallback message")).toBeInTheDocument();
+    });
+  });
+
+  describe("WEBHOOK_ENDPOINT_DISABLED notifications", () => {
+    const disabled = (data: Record<string, unknown>) => ({
+      id: "wd-1",
+      type: "WEBHOOK_ENDPOINT_DISABLED",
+      title: "stored title",
+      message: "stored message",
+      data,
+    });
+
+    it("names the endpoint and its project, and links to the project's webhooks", () => {
+      render(
+        <NotificationContent
+          notification={disabled({
+            webhookConfigId: "cfg-1",
+            endpointName: "Release channel",
+            projectId: 456,
+            projectName: "Telco",
+          })}
+        />
+      );
+      expect(screen.getByText("Webhook Endpoint Disabled")).toBeInTheDocument();
+      expect(
+        screen.getByText("Release channel in Telco was disabled")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "View the project's webhooks" })
+      ).toHaveAttribute("href", "/projects/settings/456/webhooks");
+      expect(screen.queryByText("stored message")).toBeNull();
+    });
+
+    it("links a system-level endpoint to the system webhooks", () => {
+      render(
+        <NotificationContent
+          notification={disabled({
+            webhookConfigId: "cfg-2",
+            endpointName: "SCIM audit",
+            projectId: null,
+            projectName: "",
+          })}
+        />
+      );
+      expect(
+        screen.getByText("System webhook SCIM audit was disabled")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "View the system webhooks" })
+      ).toHaveAttribute("href", "/admin/webhooks");
+    });
+
+    it("still renders when the names are missing", () => {
+      render(<NotificationContent notification={disabled({ projectId: 9 })} />);
+      expect(screen.getByText("in was disabled")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "View the project's webhooks" })
+      ).toHaveAttribute("href", "/projects/settings/9/webhooks");
     });
   });
 });

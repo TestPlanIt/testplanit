@@ -3004,6 +3004,10 @@
             "label": "Integracja wymaga ponownego upoważnienia",
             "description": "Twoje połączenie z integracją wygasło lub zostało odwołane i musi zostać ponownie połączone."
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "Webhook endpoint wyłączony",
+            "description": "Wychodzący webhook w projekcie, którym zarządzasz, został wyłączony po zbyt wielu nieudanych dostawach z rzędu."
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "Ogłoszenia administratora",
             "description": "Administrator wysyła powiadomienie systemowe do każdego użytkownika."
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "Sugerowane zmiany czekają",
         "casesUpdatedReminderMessage": "{count, plural, one {# sugerowana zmiana dla {issueKey} nadal czeka na decyzję.} few {# sugerowane zmiany dla {issueKey} nadal czekają na decyzję.} many {# sugerowanych zmian dla {issueKey} nadal czeka na decyzję.} other {# sugerowanych zmian dla {issueKey} nadal czeka na decyzję.}}",
         "casesUpdatedLink": "Wyświetl przypadki testowe",
+        "webhookEndpointDisabledTitle": "Webhook Endpoint Wyłączony",
+        "webhookEndpointDisabledMessage": "Webhook \"{name}\" w {projectName} został wyłączony po zbyt wielu nieudanych dostawach z rzędu. Nic nie jest do niego wysyłane, dopóki nie zostanie ponownie włączony.",
+        "webhookEndpointDisabledSystemMessage": "Systemowy webhook \"{name}\" został wyłączony po zbyt wielu nieudanych dostawach z rzędu. Nic nie jest do niego wysyłane, dopóki nie zostanie ponownie włączony.",
+        "webhookEndpointDisabledSystemLink": "Wyświetl systemowe webhooks",
         "integrationAuthExpiredTitle": "Połączenie integracji wygasło",
         "integrationAuthExpiredMessage": "Twoje połączenie z „{integrationName}” wygasło. Połącz się ponownie, aby wznowić synchronizację zgłoszeń.",
         "integrationAuthExpiredReconnect": "Połącz ponownie",

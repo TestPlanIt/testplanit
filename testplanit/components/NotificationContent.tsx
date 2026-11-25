@@ -877,6 +877,44 @@ export function NotificationContent({
     );
   }
 
+  if (notification.type === "WEBHOOK_ENDPOINT_DISABLED") {
+    const name: string = data.endpointName ?? "";
+    // A system-level endpoint belongs to no project.
+    const inProject = typeof data.projectId === "number";
+    return (
+      <div className="space-y-2">
+        <h4 className="text-sm font-medium">
+          {t("webhookEndpointDisabledTitle")}
+        </h4>
+        <div className="space-y-1 text-sm text-muted-foreground">
+          <p>
+            {inProject
+              ? t("webhookEndpointDisabledMessage", {
+                  name,
+                  projectName: data.projectName ?? "",
+                })
+              : t("webhookEndpointDisabledSystemMessage", { name })}
+          </p>
+          <div className="flex items-center gap-1">
+            <Link
+              href={
+                inProject
+                  ? `/projects/settings/${data.projectId}/webhooks`
+                  : "/admin/webhooks"
+              }
+              className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+            >
+              {inProject
+                ? t("casesUpdatedFailedLink")
+                : t("webhookEndpointDisabledSystemLink")}
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (notification.type === "AI_STEPS_DERIVED") {
     if (data.projectId && data.testRunId) {
       const runLink = `/projects/runs/${data.projectId}/${data.testRunId}`;

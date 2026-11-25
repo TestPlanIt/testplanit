@@ -3004,6 +3004,10 @@
             "label": "統合の再認可が必要",
             "description": "統合への接続が期限切れまたは取り消されたため、再接続する必要があります。"
           },
+          "WEBHOOK_ENDPOINT_DISABLED": {
+            "label": "Webhookエンドポイントが無効になりました",
+            "description": "管理しているプロジェクトのアウトバウンドWebhookが、連続した配信失敗が多すぎたため無効になりました。"
+          },
           "SYSTEM_ANNOUNCEMENT": {
             "label": "管理者のお知らせ",
             "description": "管理者がすべてのユーザーにシステム通知を送信します。"
@@ -7374,6 +7378,10 @@
         "casesUpdatedReminderTitle": "提案された変更が待機中です",
         "casesUpdatedReminderMessage": "{count, plural, one {# {issueKey} の提案された変更が決定を待機中です。} other {# {issueKey} の提案された変更が決定を待機中です。}}",
         "casesUpdatedLink": "テストケースを表示",
+        "webhookEndpointDisabledTitle": "Webhookエンドポイントが無効になりました",
+        "webhookEndpointDisabledMessage": "Webhook「{name}」は{projectName}内で連続した配信失敗が多すぎたため無効になりました。再度有効にされるまで、何も送信されません。",
+        "webhookEndpointDisabledSystemMessage": "システムWebhook「{name}」は連続した配信失敗が多すぎたため無効になりました。再度有効にされるまで、何も送信されません。",
+        "webhookEndpointDisabledSystemLink": "システムWebhookを表示",
         "integrationAuthExpiredTitle": "統合の接続が期限切れです",
         "integrationAuthExpiredMessage": "「{integrationName}」への接続が期限切れになりました。課題の同期を再開するには再接続してください。",
         "integrationAuthExpiredReconnect": "再接続",

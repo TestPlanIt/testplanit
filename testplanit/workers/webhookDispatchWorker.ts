@@ -7,6 +7,7 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantDb";
 import { WEBHOOK_DISPATCH_QUEUE_NAME } from "../lib/queues";
+import type { DbClient } from "../lib/zenstack";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -14,6 +15,7 @@ import {
   dispatchWebhook,
   type DispatchJobData,
 } from "../lib/webhooks/dispatch";
+import { notifyEndpointDisabled } from "../lib/webhooks/endpointDisabledAlert";
 import { transition as transitionHealth } from "../lib/webhooks/health";
 import { retryDelayForAttempt } from "../lib/webhooks/retry-delay";
 import { retireExpiredSecrets } from "../lib/webhooks/secret-rotation";
@@ -101,13 +103,22 @@ export const dispatch = (
     ? processor(job)
     : contextAwareProcessor(job);
 
+interface HealthJobData {
+  webhookConfigId?: string;
+  tenantId?: string | null;
+}
+
+/** The job's own database: the tenant's in multi-tenant mode. */
+const dbForJob = (data: HealthJobData): DbClient =>
+  getDbClientForJob({ tenantId: data.tenantId ?? undefined });
+
 export async function handleCompleted(
   job: Job,
   result?: { outcome?: string } | null
 ): Promise<void> {
-  const webhookConfigId = (job?.data as { webhookConfigId?: string } | null)
-    ?.webhookConfigId;
-  if (!webhookConfigId) return;
+  const data = job?.data as HealthJobData | null;
+  const webhookConfigId = data?.webhookConfigId;
+  if (!data || !webhookConfigId) return;
   // Only ACTUAL HTTP successes reset endpointHealth. Short-circuit outcomes
   // (DISABLED gate writing endpoint_disabled, skipped_inactive,
   // skipped_unsubscribed) are NOT signals that the endpoint recovered —
@@ -115,7 +126,7 @@ export async function handleCompleted(
   // (DISABLED → HEALTHY) immediately after the gate kept us from firing.
   if (result?.outcome !== "success") return;
   try {
-    await transitionHealth(webhookConfigId, "success");
+    await transitionHealth(webhookConfigId, "success", dbForJob(data));
   } catch (err) {
     console.error(
       `[WebhookDispatchWorker] health transition (success) failed for config ${webhookConfigId}:`,
@@ -129,9 +140,9 @@ export async function handleFailed(
   err: Error
 ): Promise<void> {
   if (!job) return;
-  const webhookConfigId = (job.data as { webhookConfigId?: string } | null)
-    ?.webhookConfigId;
-  if (!webhookConfigId) return;
+  const data = job.data as HealthJobData | null;
+  const webhookConfigId = data?.webhookConfigId;
+  if (!data || !webhookConfigId) return;
   const maxAttempts = job.opts?.attempts ?? 1;
   const isTerminal = job.attemptsMade + 1 >= maxAttempts;
   console.error(
@@ -139,12 +150,29 @@ export async function handleFailed(
     err
   );
   if (!isTerminal) return;
+  let db: DbClient;
+  let justDisabled: boolean;
   try {
-    await transitionHealth(webhookConfigId, "failure");
+    db = dbForJob(data);
+    const { from, to } = await transitionHealth(webhookConfigId, "failure", db);
+    justDisabled = to === "DISABLED" && from !== "DISABLED";
   } catch (transitionErr) {
     console.error(
       `[WebhookDispatchWorker] health transition (failure) failed for config ${webhookConfigId}:`,
       transitionErr
+    );
+    return;
+  }
+  if (!justDisabled) return;
+  try {
+    await notifyEndpointDisabled(db, {
+      webhookConfigId,
+      tenantId: data.tenantId ?? undefined,
+    });
+  } catch (notifyErr) {
+    console.error(
+      `[WebhookDispatchWorker] telling the administrators that config ${webhookConfigId} was disabled failed:`,
+      notifyErr
     );
   }
 }
