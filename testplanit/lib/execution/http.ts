@@ -8,8 +8,18 @@ import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
  * it reads. Errors carry a user-safe message and never include credentials.
  */
 
-export const CI_HTTP_TIMEOUT_MS = 15_000;
+export const DEFAULT_CI_HTTP_TIMEOUT_MS = 30_000;
 export const CI_MAX_BODY_BYTES = 64 * 1024;
+
+/** Per-request timeout for provider calls: EXECUTION_PROVIDER_TIMEOUT_MS, read at call time. */
+export function ciHttpTimeoutMs(
+  env: Record<string, string | undefined> = process.env
+): number {
+  const raw = Number(env.EXECUTION_PROVIDER_TIMEOUT_MS);
+  return Number.isFinite(raw) && raw >= 1_000
+    ? Math.floor(raw)
+    : DEFAULT_CI_HTTP_TIMEOUT_MS;
+}
 
 export type CiRequestErrorCode = "BLOCKED" | "TIMEOUT" | "NETWORK" | "REDIRECT";
 
@@ -106,7 +116,7 @@ export async function ciRequest(
     response = await fetch(safeUrl, {
       ...rest,
       redirect: "manual",
-      signal: AbortSignal.timeout(timeoutMs ?? CI_HTTP_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs ?? ciHttpTimeoutMs()),
     });
   } catch (err) {
     if (err instanceof DOMException && err.name === "TimeoutError") {
