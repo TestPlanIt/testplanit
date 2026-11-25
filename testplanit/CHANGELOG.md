@@ -1,3 +1,11 @@
+## [1.3.0-beta.13](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.12...v1.3.0-beta.13) (2026-11-25)
+
+### Bug Fixes
+
+* **automation:** let execution targets use any registered code repository ([8c206b2](https://github.com/TestPlanIt/testplanit/commit/8c206b2b296425be13b2293575b154b58f5ad37e)), closes [#766](https://github.com/TestPlanIt/testplanit/issues/766)
+* **cases:** track every issue link for text changes, and leave automated test cases out of AI updates ([5bc51c4](https://github.com/TestPlanIt/testplanit/commit/5bc51c4bc72803fc3173792c4bedeb791e6a0666))
+* **jira:** create the issue when Jira refuses the reporter ([c593f52](https://github.com/TestPlanIt/testplanit/commit/c593f52a7e9a9e7a499c80b3dd63b17f39e9bcad))
+
 ## [1.3.0-beta.12](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.11...v1.3.0-beta.12) (2026-11-25)
 
 ### Features
