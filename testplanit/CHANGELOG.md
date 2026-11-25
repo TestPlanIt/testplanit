@@ -1,3 +1,9 @@
+## [1.2.14](https://github.com/TestPlanIt/testplanit/compare/v1.2.13...v1.2.14) (2026-11-25)
+
+### Bug Fixes
+
+* purge users who created content, and dispatch automated executions with the repository's stored credential ([#771](https://github.com/TestPlanIt/testplanit/issues/771)) ([8c873f4](https://github.com/TestPlanIt/testplanit/commit/8c873f4fcbbe080255ec3ec81df47990d2f1b56a))
+
 ## [1.2.13](https://github.com/TestPlanIt/testplanit/compare/v1.2.12...v1.2.13) (2026-11-25)
 
 ### Bug Fixes
