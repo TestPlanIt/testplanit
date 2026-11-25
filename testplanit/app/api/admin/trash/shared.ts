@@ -2,6 +2,7 @@ import { baseDb } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { enrichFromApiAuth } from "~/lib/auditContextWrappers";
+import { DELETED_USER_ID } from "~/lib/deletedUser";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import {
@@ -79,6 +80,14 @@ export function getTrashModel(itemType: string): TrashModel | null {
   const model = (db as unknown as Record<string, unknown>)[entry.delegate];
   if (!model) return null;
   return { ...entry, model };
+}
+
+// The "Deleted User" row is soft-deleted but is never restored or purged.
+export function softDeletedWhere(itemType: string): Record<string, unknown> {
+  if (trashItemTypeByName[itemType]?.modelName === "User") {
+    return { isDeleted: true, id: { not: DELETED_USER_ID } };
+  }
+  return { isDeleted: true };
 }
 
 export const itemTypeToModelMap: Record<string, any> = Object.fromEntries(

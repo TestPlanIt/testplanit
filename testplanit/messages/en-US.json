@@ -6438,7 +6438,10 @@
         "noItems": "No deleted {itemType} found.",
         "noResults": "No deleted {itemType} found matching your search for \"{query}\".",
         "restoreConfirmationMessage": "Are you sure you want to restore this row from the {itemType} table? Associated data might also be restored.",
-        "purgeConfirmationMessage": "Are you sure you want to permanently delete this row from the {itemType} table? This action cannot be undone and might remove associated data."
+        "purgeConfirmationMessage": "Are you sure you want to permanently delete this row from the {itemType} table? This action cannot be undone and might remove associated data.",
+        "purgeUserConfirmationMessage": "Are you sure you want to permanently delete this user? This action cannot be undone. Everything they created is kept and shown as created by a deleted user. Their memberships, API tokens, preferences and share links are removed.",
+        "restoreFailed": "Could not restore this row from the {itemType} table: {message}",
+        "purgeFailed": "Could not purge this row from the {itemType} table: {message}"
       },
       "filterTypesPlaceholder": "Filter item types...",
       "summary": "{count, plural, =0 {Trash is empty} one {# item in trash} other {# items in trash}}",

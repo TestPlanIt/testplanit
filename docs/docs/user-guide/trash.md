@@ -69,7 +69,15 @@ Restoring clears the deleted flag and returns the record to normal use. Unlike a
 **Purge is a permanent hard delete and cannot be undone.** Unlike normal deletion, a purged record is removed from the database entirely. Purging an attachment also deletes the underlying file from object storage.
 :::
 
-If a record can't be purged because other data still references it, TestPlanIt reports a "related data" error rather than leaving things in an inconsistent state — restore or remove the dependent records first.
+If a record can't be purged because other data still references it, nothing is removed and an error names the table whose records still reference it — remove those records first.
+
+#### Purging a user
+
+Purging a user removes their account along with their sign-in methods, API tokens, preferences, notifications, project and group memberships, import mappings and share links.
+
+Everything the user created is kept — projects, folders, test cases, test runs, results, sessions, milestones, issues, comments, attachments and so on — and is shown as created by **Deleted User**, the same way a deleted user's content already appears. Where the user was only assigned to something, such as a run case or a session, the assignment is cleared.
+
+The built-in **System** and **SCIM Provisioner** users cannot be purged.
 
 ### Retention
 

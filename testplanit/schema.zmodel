@@ -266,6 +266,8 @@ model User {
     @@allow('read', auth().collabViaAdminAccess == true && access == 'ADMIN')
     @@allow('read', auth().collabViaOpenDefault == true && access != 'NONE' && !(id in auth().collabOpenDefaultDenied))
     @@allow('read', auth().collabViaGlobalRoleDefault == true && access != 'NONE' && !(id in auth().collabGlobalRoleDefaultDenied))
+    // The "Deleted User" row that purged users' content points at.
+    @@allow('read', id == 'system-deleted-user')
     // SCIM contract: IdP owns the lifecycle of SCIM-provisioned users.
     @@deny('delete', scimGivenName != null)
 }
