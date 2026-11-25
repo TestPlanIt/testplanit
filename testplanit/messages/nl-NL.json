@@ -6589,7 +6589,10 @@
         "noItems": "Geen verwijderde {itemType} gevonden.",
         "noResults": "Er zijn geen verwijderde {itemType} gevonden die overeenkomen met uw zoekopdracht naar \"{query}\".",
         "restoreConfirmationMessage": "Weet u zeker dat u deze rij uit de tabel {itemType} wilt herstellen? Gekoppelde gegevens worden mogelijk ook hersteld.",
-        "purgeConfirmationMessage": "Weet u zeker dat u deze rij definitief uit de tabel {itemType} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt en kan de bijbehorende gegevens verwijderen."
+        "purgeConfirmationMessage": "Weet u zeker dat u deze rij definitief uit de tabel {itemType} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt en kan de bijbehorende gegevens verwijderen.",
+        "purgeUserConfirmationMessage": "Weet u zeker dat u deze gebruiker permanent wilt verwijderen? Deze actie kan niet ongedaan gemaakt worden. Alles wat zij hebben gemaakt, blijft behouden en wordt weergegeven als gemaakt door een verwijderde gebruiker. Hun lidmaatschappen, API-tokens, voorkeuren en sharelinks worden verwijderd.",
+        "restoreFailed": "Kon deze rij niet herstellen uit de {itemType}-tabel: {message}",
+        "purgeFailed": "Kon deze rij niet verwijderen uit de {itemType}-tabel: {message}"
       },
       "filterTypesPlaceholder": "Itemtypen filteren...",
       "summary": "{count, plural, =0 {Prullenbak is leeg} one {# item in prullenbak} other {# items in prullenbak}}",

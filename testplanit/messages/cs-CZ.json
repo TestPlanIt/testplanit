@@ -6589,7 +6589,10 @@
         "noItems": "Nebyly nalezeny žádné smazané {itemType}.",
         "noResults": "Nebyly nalezeny žádné smazané {itemType} odpovídající vašemu vyhledávání \"{query}\".",
         "restoreConfirmationMessage": "Opravdu chcete obnovit tento řádek z tabulky {itemType}? Přidružená data mohou být také obnovena.",
-        "purgeConfirmationMessage": "Opravdu chcete trvale smazat tento řádek z tabulky {itemType}? Tuto akci nelze vrátit zpět a může odstranit přidružená data."
+        "purgeConfirmationMessage": "Opravdu chcete trvale smazat tento řádek z tabulky {itemType}? Tuto akci nelze vrátit zpět a může odstranit přidružená data.",
+        "purgeUserConfirmationMessage": "Opravdu chcete trvale odstranit tohoto uživatele? Tuto akci nelze vrátit zpět. Vše, co vytvořili, se uchovává a zobrazuje jako vytvořené odstraněným uživatelem. Jejich členství, tokeny API, předvolby a odkazy na sdílení budou odstraněny.",
+        "restoreFailed": "Nepodařilo se obnovit tento řádek z tabulky {itemType}: {message}",
+        "purgeFailed": "Nepodařilo se odstranit tento řádek z tabulky {itemType}: {message}"
       },
       "filterTypesPlaceholder": "Filtrovat typy položek...",
       "summary": "{count, plural, =0 {Koš je prázdný} one {# položka v koši} few {# položky v koši} many {# položky v koši} other {# položek v koši}}",

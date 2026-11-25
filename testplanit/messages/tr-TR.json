@@ -6589,7 +6589,10 @@
         "noItems": "Silinmiş {itemType} bulunamadı.",
         "noResults": "\"{query} \" için yaptığınız aramayla eşleşen silinmiş {itemType} bulunamadı.",
         "restoreConfirmationMessage": "{itemType} tablosundan bu satırı geri yüklemek istediğinizden emin misiniz? İlişkili veriler de geri yüklenebilir.",
-        "purgeConfirmationMessage": "{itemType} tablosundan bu satırı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve ilgili verileri silebilir."
+        "purgeConfirmationMessage": "{itemType} tablosundan bu satırı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve ilgili verileri silebilir.",
+        "purgeUserConfirmationMessage": "Bu kullanıcıyı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. Oluşturdukları her şey tutulur ve silinen bir kullanıcı tarafından oluşturulmuş olarak gösterilir. Üyelikleri, API belirteçleri, tercihleri ve paylaşım bağlantıları kaldırılır.",
+        "restoreFailed": "{itemType} tablosundan bu satır geri yüklenemedi: {message}",
+        "purgeFailed": "{itemType} tablosundan bu satır temizlenemedi: {message}"
       },
       "filterTypesPlaceholder": "Öğe türlerini filtrele...",
       "summary": "{count, plural, =0 {Çöp kutusu boş} one {Çöp kutusunda # öğe} other {Çöp kutusunda # öğe}}",

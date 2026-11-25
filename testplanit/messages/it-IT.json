@@ -6589,7 +6589,10 @@
         "noItems": "Nessun {itemType} eliminato trovato.",
         "noResults": "Nessun {itemType} eliminato trovato corrispondente alla tua ricerca per \"{query}\".",
         "restoreConfirmationMessage": "Vuoi davvero ripristinare questa riga dalla tabella {itemType} ? Potrebbero essere ripristinati anche i dati associati.",
-        "purgeConfirmationMessage": "Vuoi davvero eliminare definitivamente questa riga dalla tabella {itemType} ? Questa azione non può essere annullata e potrebbe rimuovere i dati associati."
+        "purgeConfirmationMessage": "Vuoi davvero eliminare definitivamente questa riga dalla tabella {itemType} ? Questa azione non può essere annullata e potrebbe rimuovere i dati associati.",
+        "purgeUserConfirmationMessage": "Sei sicuro di voler eliminare permanentemente questo utente? Questa azione non può essere annullata. Tutto ciò che hanno creato viene conservato e mostrato come creato da un utente eliminato. Le loro appartenenze, token API, preferenze e link di condivisione vengono rimossi.",
+        "restoreFailed": "Impossibile ripristinare questa riga dalla tabella {itemType}: {message}",
+        "purgeFailed": "Impossibile eliminare questa riga dalla tabella {itemType}: {message}"
       },
       "filterTypesPlaceholder": "Filtra i tipi di elemento...",
       "summary": "{count, plural, =0 {Il cestino è vuoto} one {# elemento nel cestino} other {# elementi nel cestino}}",

@@ -6589,7 +6589,10 @@
         "noItems": "Aucun {itemType} supprimé trouvé.",
         "noResults": "Aucun {itemType} supprimé ne correspond à votre recherche pour \"{query}\".",
         "restoreConfirmationMessage": "Êtes-vous sûr de vouloir restaurer cette ligne de la table {itemType}  ? Les données associées pourraient également être restaurées.",
-        "purgeConfirmationMessage": "Êtes-vous sûr de vouloir supprimer définitivement cette ligne du tableau {itemType}  ? Cette action est irréversible et pourrait supprimer les données associées."
+        "purgeConfirmationMessage": "Êtes-vous sûr de vouloir supprimer définitivement cette ligne du tableau {itemType}  ? Cette action est irréversible et pourrait supprimer les données associées.",
+        "purgeUserConfirmationMessage": "Êtes-vous sûr de vouloir supprimer définitivement cet utilisateur ? Cette action ne peut pas être annulée. Tout ce qu'il a créé est conservé et affiché comme créé par un utilisateur supprimé. Ses appartenances, jetons API, préférences et liens de partage sont supprimés.",
+        "restoreFailed": "Impossible de restaurer cette ligne de la table {itemType} : {message}",
+        "purgeFailed": "Impossible de purger cette ligne de la table {itemType} : {message}"
       },
       "filterTypesPlaceholder": "Filtrer les types d'éléments...",
       "summary": "{count, plural, =0 {La corbeille est vide} one {# élément dans la corbeille} other {# éléments dans la corbeille}}",

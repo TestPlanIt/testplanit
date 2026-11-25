@@ -6589,7 +6589,10 @@
         "noItems": "삭제된 {itemType} 항목이 없습니다.",
         "noResults": "삭제된 {itemType} 이 \"{query} \"와 일치하는 항목이 없습니다.",
         "restoreConfirmationMessage": "{itemType} 테이블에서 이 행을 복원하시겠습니까? 관련 데이터도 함께 복원될 수 있습니다.",
-        "purgeConfirmationMessage": "{itemType} 테이블에서 이 행을 영구적으로 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며 관련 데이터도 삭제될 수 있습니다."
+        "purgeConfirmationMessage": "{itemType} 테이블에서 이 행을 영구적으로 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며 관련 데이터도 삭제될 수 있습니다.",
+        "purgeUserConfirmationMessage": "이 사용자를 영구적으로 삭제하시겠습니까? 이 작업은 실행 취소할 수 없습니다. 사용자가 생성한 모든 항목은 유지되며 삭제된 사용자가 생성한 것으로 표시됩니다. 사용자의 멤버십, API 토큰, 기본 설정 및 공유 링크는 제거됩니다.",
+        "restoreFailed": "{itemType} 테이블에서 이 행을 복원할 수 없습니다: {message}",
+        "purgeFailed": "{itemType} 테이블에서 이 행을 제거할 수 없습니다: {message}"
       },
       "filterTypesPlaceholder": "항목 유형 필터...",
       "summary": "{count, plural, =0 {휴지통이 비어 있음} other {휴지통에 항목 #개}}",
