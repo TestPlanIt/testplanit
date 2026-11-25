@@ -460,7 +460,9 @@
       },
       "worker": "Trabalhador",
       "hasCodePins": "Tem Code Pins",
-      "noCodePins": "Sem Code Pins"
+      "noCodePins": "Sem Code Pins",
+      "hasSuggestion": "Aguardando",
+      "noSuggestion": "Nenhum"
     },
     "filter": {
       "placeholder": "Filtrar {item}..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "Escolha o evento que aciona esta ação e o que ela faz.",
           "trigger": {
             "ISSUE_EVENT": "Qualquer evento de problema",
-            "ISSUE_STATUS_ENTERED": "As mudanças de status do problema"
+            "ISSUE_STATUS_ENTERED": "As mudanças de status do problema",
+            "ISSUE_CONTENT_CHANGED": "Alterações no texto do problema"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "Qualquer evento que o rastreador envie sobre um problema.",
             "ISSUE_CREATED": "Um problema que o TestPlanIt nunca viu antes.",
-            "ISSUE_STATUS_ENTERED": "Um problema muda para um dos status escolhidos."
+            "ISSUE_STATUS_ENTERED": "Um problema muda para um dos status escolhidos.",
+            "ISSUE_CONTENT_CHANGED": "O título ou descrição de um problema que o TestPlanIt já possui alterações."
           },
           "outcome": {
             "cases_drafted": "Casos de teste rascunhados",
@@ -1824,8 +1828,22 @@
             "no_target": "Nenhum repositório ou estado padrão",
             "draft_failed": "O rascunho falhou",
             "already_composed": "Execução já criada para esta mudança",
-            "execute_failed": "Execução não solicitada"
+            "execute_failed": "Execução não solicitada",
+            "update_queued": "Verificando casos de teste",
+            "cases_updated": "Casos de teste atualizados",
+            "no_changes": "Nenhuma alteração necessária",
+            "up_to_date": "Casos de teste já estão atualizados",
+            "update_failed": "Falha ao verificar casos de teste"
           },
+          "updateCases": "Atualizar Casos de Teste com IA",
+          "updateHelp": "Depois que as edições do problema se estabilizam, a IA compara cada caso de teste vinculado com o novo texto. Rascunhos que ninguém confirmou são reescritos. Todos os outros casos de teste recebem uma sugestão de alteração para uma pessoa aplicar ou descartar.",
+          "updateScope": "Casos de teste a verificar",
+          "updateScopeOptions": {
+            "all_linked": "Todos os casos de teste vinculados ao problema",
+            "ai_drafted": "Apenas casos de teste rascunhados por IA"
+          },
+          "updateStateHelp": "O estado dos casos de teste que a atualização adiciona.",
+          "updateNotifyHelp": "Quem é informado sobre o que mudou. Quando ninguém é escolhido, as pessoas que a ação Rascunho para este problema notifica são informadas, ou os administradores do projeto quando não há ninguém. As preferências de notificação de cada pessoa ainda se aplicam.",
           "dragToReorder": "Arrastar para reordenar",
           "requirementsOnly": "Apenas requisitos",
           "requirementsOnlyHelp": "Apenas problemas que o projeto classifica como requisitos.",
@@ -2978,6 +2996,10 @@
             "label": "Casos de teste rascunhados por IA",
             "description": "Uma ação de webhook rascunhou casos de teste para um problema e o indicou como revisor."
           },
+          "CASES_UPDATED": {
+            "label": "Casos de teste atualizados após uma alteração de problema",
+            "description": "O texto de um problema mudou e uma ação de webhook reescreveu rascunhos ou sugeriu alterações para casos de teste que você analisa ou está nomeado."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Integração precisa de reautorização",
             "description": "Sua conexão com uma integração expirou ou foi revogada e deve ser reconectada."
@@ -3500,6 +3522,41 @@
       "reload": "Descartar minhas alterações e recarregar",
       "overwrite": "Sobrescrever"
     },
+    "suggestions": {
+      "updateTitle": "A IA sugere alterar este caso de teste",
+      "retireTitle": "A IA sugere excluir este caso de teste",
+      "unreviewedDraft": "A IA escreveu este caso de teste e ninguém confirmou ainda",
+      "issueChanged": "{issue} mudou depois que este caso de teste foi escrito.",
+      "issueChangedList": "Um problema vinculado mudou e este caso de teste não foi verificado em relação ao novo texto",
+      "issueChangedUnchecked": "{issue} mudou depois que este caso de teste foi verificado pela última vez em relação a ele. O caso de teste não foi verificado em relação ao novo texto.",
+      "retireDescription": "O problema não pede mais o que este caso de teste testa.",
+      "stale": "Este caso de teste foi editado desde que a alteração foi sugerida, portanto a sugestão não pode ser aplicada como está.",
+      "name": "Nome",
+      "steps": "Passos",
+      "step": "Passo {number}",
+      "expectedResult": "Resultado esperado: {text}",
+      "review": "Revisar alteração",
+      "hide": "Ocultar alteração",
+      "apply": "Aplicar",
+      "dismiss": "Descartar",
+      "regenerate": "Sugerir novamente",
+      "applied": "A alteração sugerida foi aplicada.",
+      "retired": "O caso de teste foi excluído.",
+      "dismissed": "A sugestão foi descartada.",
+      "regenerated": "Uma nova sugestão está pronta.",
+      "nothingToChange": "O caso de teste não precisa mais ser alterado.",
+      "markAligned": "Marcar como atualizado",
+      "markedAligned": "O caso de teste está marcado como atualizado em relação ao problema.",
+      "markAlignedFailed": "Não foi possível marcar o caso de teste como atualizado.",
+      "errors": {
+        "not_found": "A sugestão não existe mais.",
+        "gone": "O caso de teste ou seu problema não existe mais.",
+        "not_pending": "A sugestão já foi decidida.",
+        "stale": "O caso de teste mudou desde que a alteração foi sugerida.",
+        "no_llm": "Este projeto não tem um modelo de IA ativo.",
+        "failed": "A sugestão não pôde ser processada. Tente novamente."
+      }
+    },
     "templateSwitch": {
       "title": "Trocar modelo?",
       "description": "\"{templateName}\" não inclui {count, plural, =1 {este campo} other {estes campos}}, então suas alterações {count, plural, =1 {nele} other {neles}} serão descartadas:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "Automação",
       "byParameterized": "Parametrização",
       "byReview": "Análise",
+      "bySuggestion": "Alteração Sugerida",
       "allTemplates": "Todos os modelos",
       "allStates": "Todos os estados",
       "allCreators": "Todos os Criadores",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "O recurso de fluxo de trabalho de revisão está desativado no nível do sistema. Alterne as configurações avançadas de um projeto ou defina TESTPLANIT_REVIEW_FEATURE_ENABLED para reativá-lo.",
         "requiresReviewDefaultDisabled": "O estado padrão do fluxo de trabalho não pode exigir revisão — novas entidades chegam aqui e não têm um estado anterior para serem verificadas.",
-        "requiresReviewLabel": "Requer revisão"
+        "requiresReviewLabel": "Requer revisão",
+        "aiDraftLabel": "Contém rascunhos de IA que ninguém confirmou",
+        "aiDraftDefaultDisabled": "O estado padrão não pode conter rascunhos de IA: novos casos de teste que as pessoas escrevem caem nele.",
+        "aiDraftBadge": "Rascunhos de IA"
       },
       "add": {
         "button": "Adicionar fluxo de trabalho",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "Relatório de Candidatos à Automação",
         "derive_case_steps": "Derivação de Passos por IA",
         "impact_analysis": "Impacto: Seleção de Teste Afetado",
-        "failure_triage": "Padrões de Falha: Causa Raiz"
+        "failure_triage": "Padrões de Falha: Causa Raiz",
+        "case_upkeep": "Atualizações de Casos de Teste de Alterações de Problemas"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "Casos de teste rascunhados por IA prontos",
         "casesDraftedMessage": "{count, plural, one {# caso de teste foi rascunhado} other {# casos de teste foram rascunhados}} para {issueKey} — revise a precisão.",
         "casesDraftedReviewLink": "Revisar em {folderName}",
+        "casesUpdatedTitle": "Casos de Teste Atualizados Após uma Alteração de Problema",
+        "casesUpdatedIssueChanged": "O texto de {issueKey} mudou.",
+        "casesUpdatedRewritten": "{count, plural, one {# rascunho de IA foi reescrito.} other {# rascunhos de IA foram reescritos.}}",
+        "casesUpdatedAdded": "{count, plural, one {# caso de teste foi adicionado como rascunho.} other {# casos de teste foram adicionados como rascunhos.}}",
+        "casesUpdatedDeleted": "{count, plural, one {# rascunho de IA foi excluído. Um administrador do sistema pode restaurá-lo em Admin > Lixeira.} other {# rascunhos de IA foram excluídos. Um administrador do sistema pode restaurá-los em Admin > Lixeira.}}",
+        "casesUpdatedSuggested": "{count, plural, one {# sugestão de alteração aguarda uma decisão.} other {# sugestões de alteração aguardam uma decisão.}}",
+        "casesUpdatedFailedTitle": "Casos de Teste Não Puderam Ser Atualizados",
+        "casesUpdatedFailedMessage": "Os casos de teste para {issueKey} não puderam ser verificados em relação ao seu novo texto.",
+        "casesUpdatedFailedReason": "Motivo: {detail}",
+        "casesUpdatedFailedLink": "Ver os webhooks do projeto",
+        "casesUpdatedReminderTitle": "Alterações Sugeridas Aguardando",
+        "casesUpdatedReminderMessage": "{count, plural, one {# sugestão de alteração para {issueKey} ainda aguarda uma decisão.} other {# sugestões de alteração para {issueKey} ainda aguardam uma decisão.}}",
+        "casesUpdatedLink": "Ver os casos de teste",
         "integrationAuthExpiredTitle": "Conexão de Integração Expirada",
         "integrationAuthExpiredMessage": "Sua conexão com \"{integrationName}\" expirou. Reconecte-se para retomar a sincronização de issues.",
         "integrationAuthExpiredReconnect": "Reconectar",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## Ativado\nIndica se este fluxo de trabalho está ativado.",
       "isActive": "## Ativo\nIndica se este estado de fluxo de trabalho está ativo e disponível para uso.\n\n- Fluxos de trabalho ativos podem ser selecionados ao atualizar execuções de teste, sessões ou automação.\n- Fluxos de trabalho inativos ficam ocultos para seleção, mas são preservados nos itens existentes.",
       "requiresReview": "## Requer revisão\nQuando ATIVADO, a transição de um caso, execução de teste ou sessão PARA este estado é condicionada a uma solicitação de revisão aprovada. Sem uma solicitação aprovada, a transição é bloqueada.\n\n- Aprovar uma solicitação executa a transição. A aprovação do revisor move o caso, execução ou sessão para o estado solicitado; o solicitante não precisa repetir a mudança de estado manualmente.\n- As revisões pendentes existentes são preservadas silenciosamente quando o recurso em nível de sistema está DESATIVADO e reaparecem quando reativado.\n- O revisor é escolhido quando um testador clica em Solicitar Revisão na página de detalhes da entidade.\n\nSe o recurso em nível de sistema estiver desativado, este botão fica bloqueado. Reative-o no card Fluxo de Revisão acima para poder ativá-lo.",
+      "isAiDraft": "## Contém rascunhos de IA que ninguém confirmou\nOs casos de teste que uma ação de webhook redige com IA começam neste estado, e mover um caso de teste para fora dele confirma o rascunho.\n\n- Enquanto um rascunho fica aqui e ninguém o salvou, uma ação Atualizar Casos de Teste pode reescrevê-lo quando seu problema muda.\n- Depois que uma pessoa o move para fora, ou o salva, a IA apenas sugere alterações para uma pessoa aplicar ou descartar.\n- A pessoa que move um caso de teste para fora é registrada como seu revisor.\n\nApenas os estados dos casos de teste podem ser marcados, e nunca o estado padrão.",
       "projects": "## Projetos\nIndica os projetos que podem usar este fluxo de trabalho."
     },
     "testResult": {

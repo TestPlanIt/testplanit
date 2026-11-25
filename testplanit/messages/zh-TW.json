@@ -460,7 +460,9 @@
       },
       "worker": "工作者",
       "hasCodePins": "具有代碼釘選",
-      "noCodePins": "無代碼釘選"
+      "noCodePins": "無代碼釘選",
+      "hasSuggestion": "等待中",
+      "noSuggestion": "無"
     },
     "filter": {
       "placeholder": "篩檢 {item}..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "選擇觸發此操作的事件及其執行的操作。",
           "trigger": {
             "ISSUE_EVENT": "任何問題事件",
-            "ISSUE_STATUS_ENTERED": "問題狀態變更"
+            "ISSUE_STATUS_ENTERED": "問題狀態變更",
+            "ISSUE_CONTENT_CHANGED": "問題文字變更"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "追蹤工具傳送的關於問題的任何事件。",
             "ISSUE_CREATED": "TestPlanIt 之前未見過的問題。",
-            "ISSUE_STATUS_ENTERED": "問題移入所選狀態之一。"
+            "ISSUE_STATUS_ENTERED": "問題移入所選狀態之一。",
+            "ISSUE_CONTENT_CHANGED": "問題的標題或描述 TestPlanIt 已有變更。"
           },
           "outcome": {
             "cases_drafted": "測試案例已草擬",
@@ -1824,8 +1828,22 @@
             "no_target": "沒有儲存庫或預設狀態",
             "draft_failed": "草擬失敗",
             "already_composed": "已為此變更建立運行",
-            "execute_failed": "未要求執行"
+            "execute_failed": "未要求執行",
+            "update_queued": "檢查測試案例",
+            "cases_updated": "測試案例已更新",
+            "no_changes": "無需變更",
+            "up_to_date": "測試案例已是最新版本",
+            "update_failed": "檢查測試案例失敗"
           },
+          "updateCases": "使用 AI 更新測試案例",
+          "updateHelp": "問題編輯完成後，AI 會將每個相關測試案例與新文字進行比較。未經任何人確認的草稿將被重新編寫。每個其他測試案例都會獲得建議的變更供人員應用或駁回。",
+          "updateScope": "要檢查的測試案例",
+          "updateScopeOptions": {
+            "all_linked": "所有連結至問題的測試案例",
+            "ai_drafted": "僅限 AI 草擬的測試案例"
+          },
+          "updateStateHelp": "更新所新增的測試案例狀態。",
+          "updateNotifyHelp": "誰會被告知什麼已變更。如果未選擇任何人，則會通知此問題「草稿」動作的通知對象，或在沒有時通知專案的管理員。每個人的通知喜好設定仍會適用。",
           "dragToReorder": "拖曳以重新排序",
           "requirementsOnly": "僅限需求",
           "requirementsOnlyHelp": "僅限專案將其分類為需求的問題。",
@@ -2978,6 +2996,10 @@
             "label": "AI 草擬的測試案例",
             "description": "Webhook 操作為問題草擬了測試案例，並將您指定為審核者。"
           },
+          "CASES_UPDATED": {
+            "label": "問題變更後的測試案例更新",
+            "description": "問題的文字已變更，且 webhook 動作已重新編寫草稿或建議變更您檢查或名字出現在上面的測試案例。"
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "整合需要重新授權",
             "description": "與整合的連線已過期或被撤銷，需要重新連線。"
@@ -3500,6 +3522,41 @@
       "reload": "放棄我的變更並重新加載",
       "overwrite": "覆蓋"
     },
+    "suggestions": {
+      "updateTitle": "AI 建議變更此測試案例",
+      "retireTitle": "AI 建議刪除此測試案例",
+      "unreviewedDraft": "AI 編寫了此測試案例，但還沒有人確認過",
+      "issueChanged": "{issue} 在此測試案例編寫後已變更。",
+      "issueChangedList": "相關問題已變更，且此測試案例尚未針對新文字進行檢查",
+      "issueChangedUnchecked": "{issue} 在此測試案例上次針對其進行檢查後已變更。該測試案例尚未針對新文字進行檢查。",
+      "retireDescription": "問題不再要求此測試案例測試的內容。",
+      "stale": "此測試案例自建議變更後已被編輯，因此無法按原樣應用該建議。",
+      "name": "名稱",
+      "steps": "步驟",
+      "step": "步驟 {number}",
+      "expectedResult": "預期結果：{text}",
+      "review": "檢查變更",
+      "hide": "隱藏變更",
+      "apply": "套用",
+      "dismiss": "駁回",
+      "regenerate": "再次建議",
+      "applied": "已套用建議的變更。",
+      "retired": "測試案例已刪除。",
+      "dismissed": "建議已駁回。",
+      "regenerated": "新建議已準備好。",
+      "nothingToChange": "測試案例不再需要變更。",
+      "markAligned": "標記為最新版本",
+      "markedAligned": "測試案例標記為與問題最新版本相同。",
+      "markAlignedFailed": "無法將測試案例標記為最新版本。",
+      "errors": {
+        "not_found": "建議不再存在。",
+        "gone": "測試案例或其問題不再存在。",
+        "not_pending": "建議已決定。",
+        "stale": "自建議變更後，測試案例已變更。",
+        "no_llm": "此專案沒有有效的 AI 模型。",
+        "failed": "無法處理建議。請重試。"
+      }
+    },
     "templateSwitch": {
       "title": "切換模板？",
       "description": "\"{templateName}\" 不包括 {count, plural, =1 {此欄位} other {這些欄位}}，所以您對 {count, plural, =1 {它} other {它們}} 的變更將被捨棄:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "自動化",
       "byParameterized": "參數化",
       "byReview": "審查",
+      "bySuggestion": "建議的變更",
       "allTemplates": "所有模板",
       "allStates": "所有州",
       "allCreators": "所有創作者",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "系統級已停用審閱工作流程功能。請切換專案的「進階設定」或設定 TESTPLANIT_REVIEW_FEATURE_ENABLED 以重新啟用此功能。",
         "requiresReviewDefaultDisabled": "預設工作流程狀態不需要審核－新實體進入此狀態，且沒有先前的狀態需要控制。",
-        "requiresReviewLabel": "需要審核"
+        "requiresReviewLabel": "需要審核",
+        "aiDraftLabel": "保存未經任何人確認的 AI 草稿",
+        "aiDraftDefaultDisabled": "預設狀態無法保存 AI 草稿：人們編寫的新測試案例會放在其中。",
+        "aiDraftBadge": "AI 草稿"
       },
       "add": {
         "button": "新增工作流程",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "自動化候選報告",
         "derive_case_steps": "AI 步驟推導",
         "impact_analysis": "影響：受影響測試選擇",
-        "failure_triage": "故障模式：根本原因"
+        "failure_triage": "故障模式：根本原因",
+        "case_upkeep": "問題變更導致的測試案例更新"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "AI 草擬的測試案例已就緒",
         "casesDraftedMessage": "{count, plural, other {# 個測試案例}} 已為 {issueKey} 草擬 — 請審核其準確性。",
         "casesDraftedReviewLink": "在 {folderName} 中審核",
+        "casesUpdatedTitle": "問題變更後的測試案例更新",
+        "casesUpdatedIssueChanged": "{issueKey} 的文字已變更。",
+        "casesUpdatedRewritten": "{count, plural, one {# 個 AI 草稿已被重新編寫。} other {# 個 AI 草稿已被重新編寫。}}",
+        "casesUpdatedAdded": "{count, plural, one {# 個測試案例已作為草稿新增。} other {# 個測試案例已作為草稿新增。}}",
+        "casesUpdatedDeleted": "{count, plural, one {# 個 AI 草稿已刪除。系統管理員可以從「管理員 > 垃圾桶」恢復。} other {# 個 AI 草稿已刪除。系統管理員可以從「管理員 > 垃圾桶」恢復。}}",
+        "casesUpdatedSuggested": "{count, plural, one {# 個建議的變更正在等待決定。} other {# 個建議的變更正在等待決定。}}",
+        "casesUpdatedFailedTitle": "無法更新測試案例",
+        "casesUpdatedFailedMessage": "無法根據 {issueKey} 的新文字檢查其測試案例。",
+        "casesUpdatedFailedReason": "原因：{detail}",
+        "casesUpdatedFailedLink": "檢視專案的 webhook",
+        "casesUpdatedReminderTitle": "建議的變更正在等待",
+        "casesUpdatedReminderMessage": "{count, plural, one {# 個 {issueKey} 的建議變更仍在等待決定。} other {# 個 {issueKey} 的建議變更仍在等待決定。}}",
+        "casesUpdatedLink": "檢視測試案例",
         "integrationAuthExpiredTitle": "整合連線已過期",
         "integrationAuthExpiredMessage": "您與「{integrationName}」的連線已過期。請重新連線以繼續問題同步。",
         "integrationAuthExpiredReconnect": "重新連線",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## 已啟用\n指示此工作流程是否已啟用。",
       "isActive": "## 活動\n指示此工作流程狀態是否處於作用中且可供使用。\n\n- 更新測試運行、會話或自動化時，可以選擇活動工作流程。\n- 非活動工作流程將會隱藏，但會保留在現有項目中。",
       "requiresReview": "## 需要審核\n啟用後，將測試案例、測試執行或工作階段轉換至此狀態時，需要經過核准的審核請求才能進行。如果沒有獲得核准的請求，則轉換將被封鎖。\n\n- 核准請求即會執行該轉換。審核人員的核准會將測試案例、測試執行或工作階段移動至請求的狀態；請求者不需要手動重複進行狀態變更。\n- 當系統層級功能關閉時，現有待處理的審核會被靜默保留，並在重新啟用後重新出現。\n- 當測試人員從實體詳細資料頁面點選「請求審核」時，系統會選擇審核人員。\n\n若系統層級功能已停用，此開關將被鎖定。請從上方的「審核工作流程」卡片重新啟用此功能，以切換此設定。",
+      "isAiDraft": "## 保存未經任何人確認的 AI 草稿\nwebhook 動作以 AI 草擬的測試案例在此狀態中開始，將測試案例移出狀態將確認草稿。\n\n- 當草稿保留在此處且沒有人保存時，「更新測試案例」動作可能會在問題變更時重新編寫它。\n- 一旦有人將其移出或儲存，AI 只會建議人員應用或駁回的變更。\n- 將測試案例移出的人員會被記錄為其檢查者。\n\n只有測試案例狀態可以標記，永遠不會是預設狀態。",
       "projects": "## 項目\n指示可以使用此工作流程的項目。"
     },
     "testResult": {

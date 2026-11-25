@@ -460,7 +460,9 @@
       },
       "worker": "Uzel",
       "hasCodePins": "Má kódové piny",
-      "noCodePins": "Bez kódových pinů"
+      "noCodePins": "Bez kódových pinů",
+      "hasSuggestion": "Čekání",
+      "noSuggestion": "Žádný"
     },
     "filter": {
       "placeholder": "Filtrovat {item}..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "Zvolte událost, která spustí tuto akci, a co dělá.",
           "trigger": {
             "ISSUE_EVENT": "Jakákoli událost problému",
-            "ISSUE_STATUS_ENTERED": "Změny stavu problému"
+            "ISSUE_STATUS_ENTERED": "Změny stavu problému",
+            "ISSUE_CONTENT_CHANGED": "Změny textu problému"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "Jakákoli událost, kterou tracker pošle o problému.",
             "ISSUE_CREATED": "Problém, který TestPlanIt ještě neviděl.",
-            "ISSUE_STATUS_ENTERED": "Problém se přesune do jednoho ze zvolených stavů."
+            "ISSUE_STATUS_ENTERED": "Problém se přesune do jednoho ze zvolených stavů.",
+            "ISSUE_CONTENT_CHANGED": "Nadpis nebo popis problému, který TestPlanIt již obsahuje, se změnil."
           },
           "outcome": {
             "cases_drafted": "Testovací případy navrženy",
@@ -1824,8 +1828,22 @@
             "no_target": "Žádné úložiště nebo výchozí stav",
             "draft_failed": "Návrh selhal",
             "already_composed": "Běh už vytvořen pro tuto změnu",
-            "execute_failed": "Spuštění nebylo požadováno"
+            "execute_failed": "Spuštění nebylo požadováno",
+            "update_queued": "Kontrola testovacích případů",
+            "cases_updated": "Testovací případy aktualizovány",
+            "no_changes": "Žádné změny nejsou nutné",
+            "up_to_date": "Testovací případy jsou již aktuální",
+            "update_failed": "Kontrola testovacích případů selhala"
           },
+          "updateCases": "Aktualizace testovacích případů pomocí AI",
+          "updateHelp": "Jakmile se úpravy problému ustálí, AI porovná každý propojený testovací případ s novým textem. Koncepty, které nikdo nepotvrdil, jsou přepsány. Každý ostatní testovací případ obdrží navrhovanou změnu, kterou osoba může použít nebo zamítnout.",
+          "updateScope": "Testovací případy ke kontrole",
+          "updateScopeOptions": {
+            "all_linked": "Každý testovací případ propojený s problémem",
+            "ai_drafted": "Pouze testovací případy vytvořené AI"
+          },
+          "updateStateHelp": "Stav testovacích případů, které aktualizace přidá.",
+          "updateNotifyHelp": "Kdo je informován o tom, co se změnilo. Pokud nikdo není vybrán, jsou informovány osoby, které akce Koncept informuje pro tento problém, nebo správci projektu, pokud žádné nejsou. Přesto se uplatní předvolby oznámení každé osoby.",
           "dragToReorder": "Přetažením změníte pořadí",
           "requirementsOnly": "Pouze požadavky",
           "requirementsOnlyHelp": "Pouze problémy, které projekt klasifikuje jako požadavky.",
@@ -2978,6 +2996,10 @@
             "label": "AI-navržené testovací případy",
             "description": "Akce webhooku navrhla testovací případy pro problém a jmenovala vás jako kontrolora."
           },
+          "CASES_UPDATED": {
+            "label": "Testovací případy aktualizovány po změně problému",
+            "description": "Text problému se změnil a akce webhooku přepsala koncepty nebo navrhla změny testovacích případů, které kontrolujete nebo na kterých jste jmenováni."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Integrace vyžaduje nové ověření",
             "description": "Vaše připojení k integraci vypršelo nebo bylo odvoláno a musí být znovu připojeno."
@@ -3500,6 +3522,41 @@
       "reload": "Zrušit moje změny a znovu načíst",
       "overwrite": "Přepsat"
     },
+    "suggestions": {
+      "updateTitle": "AI navrhuje změnu tohoto testovacího případu",
+      "retireTitle": "AI navrhuje smazání tohoto testovacího případu",
+      "unreviewedDraft": "AI vytvořila tento testovací případ a dosud jej nikdo nepotvrdil",
+      "issueChanged": "Problém {issue} se změnil poté, co byl tento testovací případ napsán.",
+      "issueChangedList": "Propojený problém se změnil a tento testovací případ nebyl zkontrolován vůči novému textu",
+      "issueChangedUnchecked": "Problém {issue} se změnil poté, co byl tento testovací případ poslední kontrolován vůči němu. Testovací případ nebyl zkontrolován vůči novému textu.",
+      "retireDescription": "Problém již nevyžaduje to, co tento testovací případ testuje.",
+      "stale": "Tento testovací případ byl editován od doby, kdy byla změna navržena, takže návrh nelze aplikovat, jak je.",
+      "name": "Název",
+      "steps": "Kroky",
+      "step": "Krok {number}",
+      "expectedResult": "Očekávaný výsledek: {text}",
+      "review": "Kontrola změny",
+      "hide": "Skrýt změnu",
+      "apply": "Použít",
+      "dismiss": "Zamítnout",
+      "regenerate": "Navrhnout znovu",
+      "applied": "Navrhovaná změna byla použita.",
+      "retired": "Testovací případ byl smazán.",
+      "dismissed": "Návrh byl zamítnut.",
+      "regenerated": "Nový návrh je připraven.",
+      "nothingToChange": "Testovací případ již není nutno měnit.",
+      "markAligned": "Označit jako aktuální",
+      "markedAligned": "Testovací případ je označen jako aktuální vůči problému.",
+      "markAlignedFailed": "Testovací případ nelze označit jako aktuální.",
+      "errors": {
+        "not_found": "Návrh již neexistuje.",
+        "gone": "Testovací případ nebo jeho problém již neexistuje.",
+        "not_pending": "Návrh již byl rozhodnut.",
+        "stale": "Testovací případ se změnil od doby, kdy byla změna navržena.",
+        "no_llm": "Tento projekt nemá aktivní model AI.",
+        "failed": "Návrh nelze zpracovat. Zkuste znovu."
+      }
+    },
     "templateSwitch": {
       "title": "Přepnout šablonu?",
       "description": "\"{templateName}\" neobsahuje {count, plural, =1 {toto pole} other {tato pole}}, takže vaše změny v {count, plural, =1 {něm} other {nich}} budou zahozeny:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "Automatizace",
       "byParameterized": "Parametrizace",
       "byReview": "Kontrola",
+      "bySuggestion": "Navrhovaná změna",
       "allTemplates": "Všechny šablony",
       "allStates": "Všechny stavy",
       "allCreators": "Všichni tvůrci",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "Funkce pracovního postupu revize je zakázána na systémové úrovni. Pro opětovné povolení přepněte pokročilé nastavení projektu nebo nastavte proměnnou TESTPLANIT_REVIEW_FEATURE_ENABLED.",
         "requiresReviewDefaultDisabled": "Výchozí stav pracovního postupu nemůže vyžadovat revizi — nové entity sem přicházejí a nemají žádný předchozí stav, který by bylo možné blokovat.",
-        "requiresReviewLabel": "Vyžaduje kontrolu"
+        "requiresReviewLabel": "Vyžaduje kontrolu",
+        "aiDraftLabel": "Obsahuje koncepty AI, které nikdo nepotvrdil",
+        "aiDraftDefaultDisabled": "Výchozí stav nemůže obsahovat koncepty AI: nové testovací případy, které lidé napíší, se do něj dostávají.",
+        "aiDraftBadge": "Koncepty AI"
       },
       "add": {
         "button": "Přidat pracovní postup",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "Report kandidátů na automatizaci",
         "derive_case_steps": "Odvození kroků pomocí AI",
         "impact_analysis": "Dopad: Výběr postižených testů",
-        "failure_triage": "Failure Patterns: Hlavní příčina"
+        "failure_triage": "Failure Patterns: Hlavní příčina",
+        "case_upkeep": "Aktualizace testovacích případů z důvodu změn problémů"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "AI-navržené testovací případy jsou připraveny",
         "casesDraftedMessage": "{count, plural, one {# testovací případ byl navržen} few {# testovací případy byly navrženy} many {# testovacích případů bylo navrženo} other {# testovacích případů bylo navrženo}} pro {issueKey} — zkontrolujte přesnost.",
         "casesDraftedReviewLink": "Zkontrolovat v {folderName}",
+        "casesUpdatedTitle": "Testovací případy aktualizovány po změně problému",
+        "casesUpdatedIssueChanged": "Text problému {issueKey} se změnil.",
+        "casesUpdatedRewritten": "{count, plural, one {# koncept AI byl přepsán.} few {# koncepty AI byly přepsány.} many {# konceptů AI bylo přepsáno.} other {# konceptů AI bylo přepsáno.}}",
+        "casesUpdatedAdded": "{count, plural, one {# testovací případ byl přidán jako koncept.} few {# testovací případy byly přidány jako koncepty.} many {# testovacích případů bylo přidáno jako konceptů.} other {# testovacích případů bylo přidáno jako konceptů.}}",
+        "casesUpdatedDeleted": "{count, plural, one {# koncept AI byl smazán. Správce systému jej může obnovit z Admin > Koš.} few {# koncepty AI byly smazány. Správce systému je může obnovit z Admin > Koš.} many {# konceptů AI bylo smazáno. Správce systému je může obnovit z Admin > Koš.} other {# konceptů AI bylo smazáno. Správce systému je může obnovit z Admin > Koš.}}",
+        "casesUpdatedSuggested": "{count, plural, one {# navrhovaná změna čeká na rozhodnutí.} few {# navrhované změny čekají na rozhodnutí.} many {# navrhovaných změn čeká na rozhodnutí.} other {# navrhovaných změn čeká na rozhodnutí.}}",
+        "casesUpdatedFailedTitle": "Testovací případy nelze aktualizovat",
+        "casesUpdatedFailedMessage": "Testovací případy pro {issueKey} nelze zkontrolovat vůči jeho novému textu.",
+        "casesUpdatedFailedReason": "Důvod: {detail}",
+        "casesUpdatedFailedLink": "Zobrazit webhooku projektu",
+        "casesUpdatedReminderTitle": "Navrhované změny čekají",
+        "casesUpdatedReminderMessage": "{count, plural, one {# navrhovaná změna pro {issueKey} stále čeká na rozhodnutí.} few {# navrhované změny pro {issueKey} stále čekají na rozhodnutí.} many {# navrhovaných změn pro {issueKey} stále čeká na rozhodnutí.} other {# navrhovaných změn pro {issueKey} stále čeká na rozhodnutí.}}",
+        "casesUpdatedLink": "Zobrazit testovací případy",
         "integrationAuthExpiredTitle": "Platnost připojení integrace vypršela",
         "integrationAuthExpiredMessage": "Platnost vašeho připojení k \"{integrationName}\" vypršela. Znovu se připojte pro obnovení synchronizace úkolů.",
         "integrationAuthExpiredReconnect": "Znovu se připojit",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## Povoleno\nUdává, zda je tento pracovní postup povolen.",
       "isActive": "## Aktivní\nUdává, zda je tento stav pracovního postupu aktivní a dostupný k použití.\n\n- Aktivní pracovní postupy lze vybrat při aktualizaci testovacích běhů, relací nebo automatizace\n- Neaktivní pracovní postupy jsou skryty z výběru, ale zachovány ve stávajících položkách",
       "requiresReview": "## Vyžaduje revizi\nPokud je tato funkce ZAPNUTÁ, přechod případu, testovacího běhu nebo relace DO tohoto stavu je podmíněn schválenou žádostí o revizi. Bez schválené žádosti je přechod zablokován.\n\n- Schválení žádosti provede přechod. Schválení revidenta přesune případ, běh nebo relaci do požadovaného stavu; žadatel změnu stavu ručně neopakuje.\n- Existující čekající revize zůstávají tiše zachovány, pokud je systémová funkce VYPNUTÁ, a znovu se objeví po jejím opětovném zapnutí.\n- Revident je vybrán, když tester klikne na Vyžádat revizi na stránce podrobností entity.\n\nPokud je systémová funkce zakázána, tento přepínač je uzamčen. Pro jeho zapnutí znovu povolte funkci pomocí karty Pracovní postup revize výše.",
+      "isAiDraft": "## Obsahuje koncepty AI, které nikdo nepotvrdil\nTestovací případy, které akce webhooku vytváří pomocí AI, začínají v tomto stavu a přesunutí testovacího případu z něj potvrzuje koncept.\n\n- Pokud koncept zůstane zde a nikdo jej neuložil, akce Aktualizace testovacích případů jej může přepsat, když se jeho problém změní.\n- Jakmile jej osoba přesune ven nebo jej uloží, AI pouze navrhuje změny, které osoba může použít nebo zamítnout.\n- Osoba, která přesune testovací případ ven, je zaznamenána jako jeho kontrolor.\n\nJe možné označit pouze stavy testovacích případů, nikdy ne výchozí stav.",
       "projects": "## Projekty\nUdává projekty, které mohou tento pracovní postup používat."
     },
     "testResult": {

@@ -460,7 +460,9 @@
       },
       "worker": "Worker",
       "hasCodePins": "Code-Pins vorhanden",
-      "noCodePins": "Keine Code-Pins"
+      "noCodePins": "Keine Code-Pins",
+      "hasSuggestion": "Ausstehend",
+      "noSuggestion": "Keine"
     },
     "filter": {
       "placeholder": "{item} filtern..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "Wählen Sie das Ereignis, das diese Aktion auslöst, und was sie tut.",
           "trigger": {
             "ISSUE_EVENT": "Beliebiges Issue-Ereignis",
-            "ISSUE_STATUS_ENTERED": "Issue-Status ändert sich"
+            "ISSUE_STATUS_ENTERED": "Issue-Status ändert sich",
+            "ISSUE_CONTENT_CHANGED": "Problemtext-Änderungen"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "Jedes Ereignis, das der Tracker über ein Issue sendet.",
             "ISSUE_CREATED": "Ein Issue, das TestPlanIt noch nicht gesehen hat.",
-            "ISSUE_STATUS_ENTERED": "Ein Issue wechselt in einen der gewählten Status."
+            "ISSUE_STATUS_ENTERED": "Ein Issue wechselt in einen der gewählten Status.",
+            "ISSUE_CONTENT_CHANGED": "Der Titel oder die Beschreibung eines Problems, das TestPlanIt bereits hat, hat sich geändert."
           },
           "outcome": {
             "cases_drafted": "Testfälle entworfen",
@@ -1824,8 +1828,22 @@
             "no_target": "Kein Repository oder Standardstatus",
             "draft_failed": "Entwurf fehlgeschlagen",
             "already_composed": "Durchlauf bereits für diese Änderung erstellt",
-            "execute_failed": "Ausführung nicht angefordert"
+            "execute_failed": "Ausführung nicht angefordert",
+            "update_queued": "Testfälle werden überprüft",
+            "cases_updated": "Testfälle aktualisiert",
+            "no_changes": "Keine Änderungen erforderlich",
+            "up_to_date": "Testfälle sind bereits aktuell",
+            "update_failed": "Überprüfung der Testfälle fehlgeschlagen"
           },
+          "updateCases": "Testfälle mit KI aktualisieren",
+          "updateHelp": "Sobald sich die Bearbeitungen des Problems stabilisieren, vergleicht die KI jeden verknüpften Testfall mit dem neuen Text. Entwürfe, die niemand bestätigt hat, werden umgeschrieben. Jeder andere Testfall erhält eine vorgeschlagene Änderung, die eine Person anwenden oder verwerfen kann.",
+          "updateScope": "Zu überprüfende Testfälle",
+          "updateScopeOptions": {
+            "all_linked": "Alle mit dem Problem verknüpften Testfälle",
+            "ai_drafted": "Nur von KI erstellte Testfallentwürfe"
+          },
+          "updateStateHelp": "Der Status der Testfälle, die das Update hinzufügt.",
+          "updateNotifyHelp": "Wer wird über Änderungen informiert. Wenn niemand ausgewählt ist, werden die Personen informiert, die die Entwurfsmaßnahme für dieses Problem benachrichtigt, oder die Projektadministratoren, wenn es keine gibt. Die Benachrichtigungseinstellungen jeder Person gelten weiterhin.",
           "dragToReorder": "Zum Neuordnen ziehen",
           "requirementsOnly": "Nur Anforderungen",
           "requirementsOnlyHelp": "Nur Tickets, die das Projekt als Anforderungen einstuft.",
@@ -2978,6 +2996,10 @@
             "label": "KI-entworfene Testfälle",
             "description": "Eine Webhook-Aktion hat Testfälle für ein Issue entworfen und Sie als Reviewer benannt."
           },
+          "CASES_UPDATED": {
+            "label": "Testfälle nach einer Problemänderung aktualisiert",
+            "description": "Der Text eines Problems hat sich geändert und eine Webhook-Aktion hat Entwürfe umgeschrieben oder Änderungen an Testfällen vorgeschlagen, die Sie überprüfen oder bei denen Sie namentlich erwähnt sind."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Integration benötigt erneute Autorisierung",
             "description": "Ihre Verbindung zu einer Integration ist abgelaufen oder wurde widerrufen und muss erneut verbunden werden."
@@ -3500,6 +3522,41 @@
       "reload": "Meine Änderungen verwerfen und neu laden",
       "overwrite": "Überschreiben"
     },
+    "suggestions": {
+      "updateTitle": "KI schlägt vor, diesen Testfall zu ändern",
+      "retireTitle": "KI schlägt vor, diesen Testfall zu löschen",
+      "unreviewedDraft": "KI hat diesen Testfall geschrieben und niemand hat ihn noch bestätigt",
+      "issueChanged": "{issue} hat sich geändert, nachdem dieser Testfall geschrieben wurde.",
+      "issueChangedList": "Ein verknüpftes Problem hat sich geändert und dieser Testfall wurde nicht gegen den neuen Text überprüft",
+      "issueChangedUnchecked": "{issue} hat sich geändert, nachdem dieser Testfall zuletzt dagegen überprüft wurde. Der Testfall wurde nicht gegen den neuen Text überprüft.",
+      "retireDescription": "Das Problem fordert nicht mehr an, was dieser Testfall testet.",
+      "stale": "Dieser Testfall wurde bearbeitet, seit die Änderung vorgeschlagen wurde, daher kann der Vorschlag nicht wie vorhanden angewendet werden.",
+      "name": "Name",
+      "steps": "Schritte",
+      "step": "Schritt {number}",
+      "expectedResult": "Erwartetes Ergebnis: {text}",
+      "review": "Änderung überprüfen",
+      "hide": "Änderung ausblenden",
+      "apply": "Anwenden",
+      "dismiss": "Verwerfen",
+      "regenerate": "Erneut vorschlagen",
+      "applied": "Die vorgeschlagene Änderung wurde angewendet.",
+      "retired": "Der Testfall wurde gelöscht.",
+      "dismissed": "Der Vorschlag wurde verworfen.",
+      "regenerated": "Ein neuer Vorschlag ist bereit.",
+      "nothingToChange": "Der Testfall muss nicht mehr geändert werden.",
+      "markAligned": "Als aktuell markieren",
+      "markedAligned": "Der Testfall ist als aktuell mit dem Problem gekennzeichnet.",
+      "markAlignedFailed": "Der Testfall konnte nicht als aktuell gekennzeichnet werden.",
+      "errors": {
+        "not_found": "Der Vorschlag existiert nicht mehr.",
+        "gone": "Der Testfall oder sein Problem existiert nicht mehr.",
+        "not_pending": "Der Vorschlag wurde bereits entschieden.",
+        "stale": "Der Testfall hat sich geändert, seit die Änderung vorgeschlagen wurde.",
+        "no_llm": "Dieses Projekt hat kein aktives KI-Modell.",
+        "failed": "Der Vorschlag konnte nicht verarbeitet werden. Versuchen Sie es erneut."
+      }
+    },
     "templateSwitch": {
       "title": "Vorlage wechseln?",
       "description": "\"{templateName}\" enthält {count, plural, =1 {dieses Feld} other {diese Felder}} nicht, daher werden Ihre Änderungen {count, plural, =1 {daran} other {daran}} verworfen:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "Automatisierung",
       "byParameterized": "Parametrisierung",
       "byReview": "Überprüfung",
+      "bySuggestion": "Vorgeschlagene Änderung",
       "allTemplates": "Alle Vorlagen",
       "allStates": "Alle Staaten",
       "allCreators": "Alle Ersteller",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "Die Funktion für den Überprüfungsworkflow ist systemweit deaktiviert. Um sie wieder zu aktivieren, ändern Sie die erweiterten Projekteinstellungen oder setzen Sie TESTPLANIT_REVIEW_FEATURE_ENABLED.",
         "requiresReviewDefaultDisabled": "Der Standard-Workflow-Status darf keine Überprüfung erfordern – neue Entitäten landen hier und haben keinen vorherigen Status, der geprüft werden muss.",
-        "requiresReviewLabel": "Überprüfung erforderlich"
+        "requiresReviewLabel": "Überprüfung erforderlich",
+        "aiDraftLabel": "Enthält KI-Entwürfe, die niemand bestätigt hat",
+        "aiDraftDefaultDisabled": "Der Standardstatus kann keine KI-Entwürfe enthalten: neue Testfälle, die Personen schreiben, landen darin.",
+        "aiDraftBadge": "KI-Entwürfe"
       },
       "add": {
         "button": "Workflow hinzufügen",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "Bericht über Automatisierungskandidaten",
         "derive_case_steps": "KI-Schrittableitung",
         "impact_analysis": "Auswirkung: Auswahl der betroffenen Tests",
-        "failure_triage": "Fehlermuster: Grundursache"
+        "failure_triage": "Fehlermuster: Grundursache",
+        "case_upkeep": "Testfallupdates aus Problemänderungen"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "KI-entworfene Testfälle bereit",
         "casesDraftedMessage": "{count, plural, one {# Testfall wurde} other {# Testfälle wurden}} für {issueKey} entworfen — überprüfen Sie auf Richtigkeit.",
         "casesDraftedReviewLink": "Überprüfung in {folderName}",
+        "casesUpdatedTitle": "Testfälle nach einer Problemänderung aktualisiert",
+        "casesUpdatedIssueChanged": "Der Text von {issueKey} hat sich geändert.",
+        "casesUpdatedRewritten": "{count, plural, one {# KI-Entwurf wurde umgeschrieben.} other {# KI-Entwürfe wurden umgeschrieben.}}",
+        "casesUpdatedAdded": "{count, plural, one {# Testfall wurde als Entwurf hinzugefügt.} other {# Testfälle wurden als Entwürfe hinzugefügt.}}",
+        "casesUpdatedDeleted": "{count, plural, one {# KI-Entwurf wurde gelöscht. Ein Systemadministrator kann ihn unter Admin > Papierkorb wiederherstellen.} other {# KI-Entwürfe wurden gelöscht. Ein Systemadministrator kann sie unter Admin > Papierkorb wiederherstellen.}}",
+        "casesUpdatedSuggested": "{count, plural, one {# vorgeschlagene Änderung wartet auf eine Entscheidung.} other {# vorgeschlagene Änderungen warten auf eine Entscheidung.}}",
+        "casesUpdatedFailedTitle": "Testfälle konnten nicht aktualisiert werden",
+        "casesUpdatedFailedMessage": "Die Testfälle für {issueKey} konnten nicht gegen den neuen Text überprüft werden.",
+        "casesUpdatedFailedReason": "Grund: {detail}",
+        "casesUpdatedFailedLink": "Webhooks des Projekts anzeigen",
+        "casesUpdatedReminderTitle": "Vorgeschlagene Änderungen warten",
+        "casesUpdatedReminderMessage": "{count, plural, one {# vorgeschlagene Änderung für {issueKey} wartet immer noch auf eine Entscheidung.} other {# vorgeschlagene Änderungen für {issueKey} warten immer noch auf eine Entscheidung.}}",
+        "casesUpdatedLink": "Testfälle anzeigen",
         "integrationAuthExpiredTitle": "Integrationsverbindung abgelaufen",
         "integrationAuthExpiredMessage": "Ihre Verbindung zu \"{integrationName}\" ist abgelaufen. Stellen Sie die Verbindung erneut her, um die Issue-Synchronisierung fortzusetzen.",
         "integrationAuthExpiredReconnect": "Erneut verbinden",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## Aktiviert\nGibt an, ob dieser Workflow aktiviert ist.",
       "isActive": "## Aktiv\nZeigt an, ob dieser Workflow-Status aktiv und verfügbar ist.\n\n– Aktive Workflows können beim Aktualisieren von Testläufen, Sitzungen oder Automatisierungen ausgewählt werden.\n– Inaktive Workflows sind nicht auswählbar, bleiben aber in bestehenden Elementen erhalten.",
       "requiresReview": "## Überprüfung erforderlich\nWenn diese Option aktiviert ist, wird der Übergang eines Falls, Testlaufs oder einer Sitzung in diesen Status durch eine genehmigte Überprüfungsanfrage blockiert. Ohne eine genehmigte Anfrage ist der Übergang nicht möglich.\n\n- Die Genehmigung einer Anfrage führt den Übergang aus. Die Genehmigung des Prüfers versetzt den Fall, Testlauf oder die Sitzung in den angeforderten Status; der Anfragende muss die Statusänderung nicht manuell wiederholen.\n- Vorhandene ausstehende Überprüfungen bleiben im Hintergrund erhalten, wenn die Systemfunktion deaktiviert ist, und werden nach der Reaktivierung wieder angezeigt.\n- Der Prüfer wird ausgewählt, wenn ein Tester auf der Entitätsdetailseite auf \"Überprüfung anfordern\" klickt.\n\nWenn die Systemfunktion deaktiviert ist, ist dieser Schalter gesperrt. Aktivieren Sie ihn über den Abschnitt \"Überprüfungs-Workflow\" oben, um ihn einzuschalten.",
+      "isAiDraft": "## Enthält KI-Entwürfe, die niemand bestätigt hat\nTestfälle, die eine Webhook-Aktion mit KI entwerft, beginnen in diesem Status, und das Verschieben eines Testfalls aus diesem Status bestätigt den Entwurf.\n\n- Während ein Entwurf hier bleibt und niemand ihn gespeichert hat, kann eine Aktion zum Aktualisieren von Testfällen ihn möglicherweise umschreiben, wenn sich sein Problem ändert.\n- Sobald eine Person ihn verschiebt oder speichert, schlägt die KI nur Änderungen vor, die eine Person anwenden oder verwerfen kann.\n- Die Person, die einen Testfall verschiebt, wird als dessen Prüfer aufgezeichnet.\n\nNur Testfall-Status können markiert werden, nie der Standardstatus.",
       "projects": "## Projekte\nZeigt die Projekte an, die diesen Workflow nutzen können."
     },
     "testResult": {

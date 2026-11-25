@@ -460,7 +460,9 @@
       },
       "worker": "ワーカー",
       "hasCodePins": "コードピンあり",
-      "noCodePins": "コードピンなし"
+      "noCodePins": "コードピンなし",
+      "hasSuggestion": "待機中",
+      "noSuggestion": "なし"
     },
     "filter": {
       "placeholder": "フィルター {item}..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "このアクションをトリガーするイベントと実行内容を選択します。",
           "trigger": {
             "ISSUE_EVENT": "任意の課題イベント",
-            "ISSUE_STATUS_ENTERED": "課題のステータスが変更"
+            "ISSUE_STATUS_ENTERED": "課題のステータスが変更",
+            "ISSUE_CONTENT_CHANGED": "課題テキストの変更"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "トラッカーが課題について送信するあらゆるイベント。",
             "ISSUE_CREATED": "TestPlanIt がまだ見たことのない課題。",
-            "ISSUE_STATUS_ENTERED": "課題が選択されたステータスのいずれかに移動します。"
+            "ISSUE_STATUS_ENTERED": "課題が選択されたステータスのいずれかに移動します。",
+            "ISSUE_CONTENT_CHANGED": "課題のタイトルまたは説明が TestPlanIt に既に変更されています。"
           },
           "outcome": {
             "cases_drafted": "テストケースをドラフト",
@@ -1824,8 +1828,22 @@
             "no_target": "リポジトリまたはデフォルトステータスなし",
             "draft_failed": "ドラフト作成に失敗しました",
             "already_composed": "この変更に対してランは既に作成されています",
-            "execute_failed": "実行が要求されていません"
+            "execute_failed": "実行が要求されていません",
+            "update_queued": "テストケースを確認中",
+            "cases_updated": "テストケースが更新されました",
+            "no_changes": "変更の必要はありません",
+            "up_to_date": "テストケースは最新です",
+            "update_failed": "テストケースの確認に失敗しました"
           },
+          "updateCases": "AI でテストケースを更新",
+          "updateHelp": "課題の編集が確定した後、AI は各リンク済みテストケースを新しいテキストと比較します。誰も確認していないドラフトは書き直されます。その他のテストケースはすべて、ユーザーが適用または却下できる提案された変更を受け取ります。",
+          "updateScope": "確認するテストケース",
+          "updateScopeOptions": {
+            "all_linked": "課題にリンクされているすべてのテストケース",
+            "ai_drafted": "AI が作成したドラフトのみ"
+          },
+          "updateStateHelp": "更新によって追加されるテストケースの状態。",
+          "updateNotifyHelp": "変更内容を通知する対象者。選択ユーザーがいない場合は、この課題の起草操作で通知されるユーザーに通知されます。選択ユーザーがいない場合は、プロジェクト管理者に通知されます。各ユーザーの通知設定が適用されます。",
           "dragToReorder": "ドラッグして並べ替え",
           "requirementsOnly": "要件のみ",
           "requirementsOnlyHelp": "プロジェクトが要件として分類する課題のみ。",
@@ -2978,6 +2996,10 @@
             "label": "AI生成テストケース",
             "description": "ウェブフックアクションがある問題のテストケースをドラフトし、レビューアーとしてあなたの名前を入れました。"
           },
+          "CASES_UPDATED": {
+            "label": "課題の変更後にテストケースが更新されました",
+            "description": "課題のテキストが変更され、ウェブフック操作によってドラフトが書き直されたか、またはレビューするユーザーまたは指定されているテストケースへの変更が提案されました。"
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "統合の再認可が必要",
             "description": "統合への接続が期限切れまたは取り消されたため、再接続する必要があります。"
@@ -3500,6 +3522,41 @@
       "reload": "変更内容を破棄して再度読み込む",
       "overwrite": "上書き"
     },
+    "suggestions": {
+      "updateTitle": "このテストケースを変更することが提案されています",
+      "retireTitle": "このテストケースを削除することが提案されています",
+      "unreviewedDraft": "AI がこのテストケースを作成し、まだ誰も確認していません",
+      "issueChanged": "{issue} はこのテストケースが作成された後に変更されました。",
+      "issueChangedList": "リンク済み課題が変更されたため、このテストケースが新しいテキストに対して確認されていません",
+      "issueChangedUnchecked": "{issue} はこのテストケースが最後に確認された後に変更されました。このテストケースが新しいテキストに対して確認されていません。",
+      "retireDescription": "課題はこのテストケースがテストしている内容をリクエストしなくなりました。",
+      "stale": "このテストケースは変更が提案されて以来編集されているため、提案されたとおりに提案を適用することはできません。",
+      "name": "名前",
+      "steps": "ステップ",
+      "step": "ステップ {number}",
+      "expectedResult": "期待される結果: {text}",
+      "review": "変更を確認",
+      "hide": "変更を非表示",
+      "apply": "適用",
+      "dismiss": "却下",
+      "regenerate": "再度提案",
+      "applied": "提案された変更が適用されました。",
+      "retired": "テストケースが削除されました。",
+      "dismissed": "提案が却下されました。",
+      "regenerated": "新しい提案が準備できました。",
+      "nothingToChange": "テストケースはもう変更の必要がありません。",
+      "markAligned": "最新としてマーク",
+      "markedAligned": "テストケースは課題と同期していると示されています。",
+      "markAlignedFailed": "テストケースを最新としてマークできませんでした。",
+      "errors": {
+        "not_found": "提案は存在しません。",
+        "gone": "テストケースまたはその課題は存在しません。",
+        "not_pending": "提案は既に決定されています。",
+        "stale": "変更が提案された後、テストケースが変更されています。",
+        "no_llm": "このプロジェクトには有効な AI モデルがありません。",
+        "failed": "提案を処理できませんでした。もう一度試してください。"
+      }
+    },
     "templateSwitch": {
       "title": "テンプレートを切り替えますか？",
       "description": "\"{templateName}\"には{count, plural, =1 {このフィールド} other {これらのフィールド}}が含まれていないため、{count, plural, =1 {それ} other {それら}}への変更は破棄されます:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "オートメーション",
       "byParameterized": "パラメータ化",
       "byReview": "レビュー",
+      "bySuggestion": "提案された変更",
       "allTemplates": "すべてのテンプレート",
       "allStates": "すべての州",
       "allCreators": "すべてのクリエイター",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "レビューワークフロー機能はシステムレベルで無効になっています。プロジェクトの詳細設定を切り替えるか、TESTPLANIT_REVIEW_FEATURE_ENABLED を設定して再度有効にしてください。",
         "requiresReviewDefaultDisabled": "デフォルトのワークフロー状態ではレビューを要求できません。新しいエンティティはここに到着し、ゲートするための以前の状態がありません。",
-        "requiresReviewLabel": "レビューが必須"
+        "requiresReviewLabel": "レビューが必須",
+        "aiDraftLabel": "誰も確認していない AI ドラフトを保持",
+        "aiDraftDefaultDisabled": "デフォルト状態は AI ドラフトを保持することはできません。ユーザーが作成した新しいテストケースはここに配置されます。",
+        "aiDraftBadge": "AI ドラフト"
       },
       "add": {
         "button": "ワークフローを追加",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "自動化候補者レポート",
         "derive_case_steps": "AIステップ導出",
         "impact_analysis": "影響: 影響を受けたテスト選択",
-        "failure_triage": "障害パターン：根本原因"
+        "failure_triage": "障害パターン：根本原因",
+        "case_upkeep": "課題の変更からのテストケース更新"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "AI生成テストケースの準備が完了",
         "casesDraftedMessage": "{count, plural, one {# テストケースが} other {# テストケースが}}ドラフトされました {issueKey} について — 正確性を確認してください。",
         "casesDraftedReviewLink": "{folderName} でレビュー",
+        "casesUpdatedTitle": "課題の変更後にテストケースが更新されました",
+        "casesUpdatedIssueChanged": "{issueKey} のテキストが変更されました。",
+        "casesUpdatedRewritten": "{count, plural, one {# AI ドラフトが書き直されました。} other {# AI ドラフトが書き直されました。}}",
+        "casesUpdatedAdded": "{count, plural, one {# テストケースがドラフトとして追加されました。} other {# テストケースがドラフトとして追加されました。}}",
+        "casesUpdatedDeleted": "{count, plural, one {# AI ドラフトが削除されました。システム管理者は Admin > ゴミ箱 から復元できます。} other {# AI ドラフトが削除されました。システム管理者は Admin > ゴミ箱 から復元できます。}}",
+        "casesUpdatedSuggested": "{count, plural, one {# 提案された変更が決定を待機中です。} other {# 提案された変更が決定を待機中です。}}",
+        "casesUpdatedFailedTitle": "テストケースを更新できませんでした",
+        "casesUpdatedFailedMessage": "{issueKey} のテストケースを新しいテキストに対して確認できませんでした。",
+        "casesUpdatedFailedReason": "理由: {detail}",
+        "casesUpdatedFailedLink": "プロジェクトのウェブフックを表示",
+        "casesUpdatedReminderTitle": "提案された変更が待機中です",
+        "casesUpdatedReminderMessage": "{count, plural, one {# {issueKey} の提案された変更が決定を待機中です。} other {# {issueKey} の提案された変更が決定を待機中です。}}",
+        "casesUpdatedLink": "テストケースを表示",
         "integrationAuthExpiredTitle": "統合の接続が期限切れです",
         "integrationAuthExpiredMessage": "「{integrationName}」への接続が期限切れになりました。課題の同期を再開するには再接続してください。",
         "integrationAuthExpiredReconnect": "再接続",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## 有効\nこのワークフローが有効かどうかを示します。",
       "isActive": "## アクティブ\nこのワークフローの状態がアクティブで使用可能かどうかを示します。\n\n- アクティブなワークフローは、テスト実行、セッション、または自動化を更新するときに選択できます。\n- 非アクティブなワークフローは選択から非表示になりますが、既存の項目に保持されます。",
       "requiresReview": "## レビューが必要\nONの場合、ケース、テスト実行、またはセッションをこの状態に移行させるには、承認されたレビュー依頼が必要です。承認された依頼がない場合、移行はブロックされます。\n\n- 依頼を承認すると移行が実行されます。レビュー担当者の承認によって、ケース、実行、またはセッションが依頼された状態に移行します。依頼者が手動で状態変更を行う必要はありません。\n- システムレベルの機能が OFF の場合、保留中の既存のレビューはサイレントに保持され、再度有効にすると再び表示されます。\n- テスターがエンティティの詳細ページから「レビューを依頼」をクリックすると、レビュー担当者が選択されます。\n\nシステムレベルの機能が無効になっている場合、このスイッチはロックされます。上記の「レビューワークフロー」セクションから再度有効にすると、オンに切り替えることができます。",
+      "isAiDraft": "## 誰も確認していない AI ドラフトを保持\nウェブフック操作が AI でドラフトしたテストケースはこの状態で開始されます。テストケースをこの状態から出すことでドラフトが確認されます。\n\n- ドラフトがここに留まっており、誰も保存していない場合、課題が変更されるとテストケース更新操作によってそれが書き直される可能性があります。\n- ユーザーがテストケースを出したとき、または保存したときは、AI はユーザーが適用または却下できる変更のみを提案します。\n- テストケースを出したユーザーはレビュアーとして記録されます。\n\nテストケース状態のみをマークできます。デフォルト状態はマークできません。",
       "projects": "## プロジェクト\nこのワークフローを使用できるプロジェクトを示します。"
     },
     "testResult": {

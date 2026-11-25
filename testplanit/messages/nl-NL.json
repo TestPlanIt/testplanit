@@ -460,7 +460,9 @@
       },
       "worker": "Werker",
       "hasCodePins": "Heeft codepinnen",
-      "noCodePins": "Geen codepinnen"
+      "noCodePins": "Geen codepinnen",
+      "hasSuggestion": "Wachten",
+      "noSuggestion": "Geen"
     },
     "filter": {
       "placeholder": "{item} filteren..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "Kies de gebeurtenis die deze actie activeert en wat deze doet.",
           "trigger": {
             "ISSUE_EVENT": "Elk probleemgebeurtenis",
-            "ISSUE_STATUS_ENTERED": "Probleemstatus verandert"
+            "ISSUE_STATUS_ENTERED": "Probleemstatus verandert",
+            "ISSUE_CONTENT_CHANGED": "Wijzigingen in issue-tekst"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "Elke gebeurtenis die de tracker over een probleem verzendt.",
             "ISSUE_CREATED": "Een probleem dat TestPlanIt nog niet eerder heeft gezien.",
-            "ISSUE_STATUS_ENTERED": "Een probleem gaat naar een van de gekozen statussen."
+            "ISSUE_STATUS_ENTERED": "Een probleem gaat naar een van de gekozen statussen.",
+            "ISSUE_CONTENT_CHANGED": "De titel of beschrijving van een issue in TestPlanIt is al gewijzigd."
           },
           "outcome": {
             "cases_drafted": "Testgevallen opgesteld",
@@ -1824,8 +1828,22 @@
             "no_target": "Geen repository of standaardstatus",
             "draft_failed": "Opstellen mislukt",
             "already_composed": "Run al gemaakt voor deze wijziging",
-            "execute_failed": "Uitvoering niet aangevraagd"
+            "execute_failed": "Uitvoering niet aangevraagd",
+            "update_queued": "Testgevallen controleren",
+            "cases_updated": "Testgevallen bijgewerkt",
+            "no_changes": "Geen wijzigingen nodig",
+            "up_to_date": "Testgevallen zijn al up-to-date",
+            "update_failed": "Controleren van testgevallen is mislukt"
           },
+          "updateCases": "Testgevallen bijwerken met AI",
+          "updateHelp": "Zodra de wijzigingen van de issue zijn voltooid, vergelijkt AI elk gekoppeld testgeval met de nieuwe tekst. Concepten die niemand heeft bevestigd, worden herschreven. Elk ander testgeval krijgt een voorgestelde wijziging die een persoon kan toepassen of verwerpen.",
+          "updateScope": "Testgevallen om te controleren",
+          "updateScopeOptions": {
+            "all_linked": "Elk testgeval dat is gekoppeld aan de issue",
+            "ai_drafted": "Alleen AI-gegenereerde concepttestgevallen"
+          },
+          "updateStateHelp": "De status van testgevallen die de update toevoegt.",
+          "updateNotifyHelp": "Wie wordt geïnformeerd over wijzigingen. Als niemand is geselecteerd, worden de personen geïnformeerd die de Concept-actie voor deze issue notificeert, of de projectbeheerders als er niemand is. De berichtgeving voorkeuren van elke persoon blijven van toepassing.",
           "dragToReorder": "Sleep om opnieuw in te delen",
           "requirementsOnly": "Alleen vereisten",
           "requirementsOnlyHelp": "Alleen problemen die het project als vereisten classificeert.",
@@ -2978,6 +2996,10 @@
             "label": "Door AI opgestelde testgevallen",
             "description": "Een webhook-actie stelde testgevallen voor een probleem op en noemde je als revisor."
           },
+          "CASES_UPDATED": {
+            "label": "Testgevallen bijgewerkt na een issue-wijziging",
+            "description": "De tekst van een issue is gewijzigd en een webhook-actie heeft concepten herschreven of wijzigingen in testgevallen die u controleert of waarop u bent vermeld voorgesteld."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Integratie moet opnieuw worden geautoriseerd",
             "description": "Uw verbinding met een integratie is verlopen of ingetrokken en moet opnieuw verbonden worden."
@@ -3500,6 +3522,41 @@
       "reload": "Mijn wijzigingen verwerpen en opnieuw laden",
       "overwrite": "Overschrijven"
     },
+    "suggestions": {
+      "updateTitle": "AI stelt voor dit testgeval te wijzigen",
+      "retireTitle": "AI stelt voor dit testgeval te verwijderen",
+      "unreviewedDraft": "AI heeft dit testgeval geschreven en niemand heeft het nog bevestigd",
+      "issueChanged": "{issue} is gewijzigd nadat dit testgeval is geschreven.",
+      "issueChangedList": "Een gekoppelde issue is gewijzigd en dit testgeval is niet gecontroleerd met de nieuwe tekst",
+      "issueChangedUnchecked": "{issue} is gewijzigd nadat dit testgeval voor het laatst is gecontroleerd. Het testgeval is niet gecontroleerd met de nieuwe tekst.",
+      "retireDescription": "De issue vraagt niet meer om wat dit testgeval test.",
+      "stale": "Dit testgeval is bewerkt sinds de wijziging is voorgesteld, dus de suggestie kan niet als zodanig worden toegepast.",
+      "name": "Naam",
+      "steps": "Stappen",
+      "step": "Stap {number}",
+      "expectedResult": "Verwacht resultaat: {text}",
+      "review": "Wijziging beoordelen",
+      "hide": "Wijziging verbergen",
+      "apply": "Toepassen",
+      "dismiss": "Verwerpen",
+      "regenerate": "Opnieuw voorstellen",
+      "applied": "De voorgestelde wijziging is toegepast.",
+      "retired": "Het testgeval is verwijderd.",
+      "dismissed": "De suggestie is verworpen.",
+      "regenerated": "Een nieuwe suggestie is klaar.",
+      "nothingToChange": "Het testgeval hoeft niet meer te worden gewijzigd.",
+      "markAligned": "Markeren als up-to-date",
+      "markedAligned": "Het testgeval is gemarkeerd als up-to-date met de issue.",
+      "markAlignedFailed": "Het testgeval kan niet als up-to-date worden gemarkeerd.",
+      "errors": {
+        "not_found": "De suggestie bestaat niet meer.",
+        "gone": "Het testgeval of de bijbehorende issue bestaat niet meer.",
+        "not_pending": "De suggestie was al besloten.",
+        "stale": "Het testgeval is gewijzigd sinds de wijziging is voorgesteld.",
+        "no_llm": "Dit project heeft geen actief AI-model.",
+        "failed": "De suggestie kan niet worden verwerkt. Probeer het opnieuw."
+      }
+    },
     "templateSwitch": {
       "title": "Template wisselen?",
       "description": "\"{templateName}\" bevat {count, plural, =1 {dit veld} other {deze velden}} niet, dus uw wijzigingen in {count, plural, =1 {dit veld} other {deze velden}} worden verwijderd:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "Automatisering",
       "byParameterized": "Parameterisering",
       "byReview": "Beoordeling",
+      "bySuggestion": "Voorgestelde wijziging",
       "allTemplates": "Alle sjablonen",
       "allStates": "Alle staten",
       "allCreators": "Alle makers",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "De functie voor het beoordelen van de workflow is op systeemniveau uitgeschakeld. Schakel de geavanceerde instellingen van een project in of uit, of stel TESTPLANIT_REVIEW_FEATURE_ENABLED in om deze opnieuw in te schakelen.",
         "requiresReviewDefaultDisabled": "De standaard workflowstatus vereist geen beoordeling; nieuwe entiteiten komen hier terecht en hebben geen voorafgaande status die gecontroleerd moet worden.",
-        "requiresReviewLabel": "Vereist beoordeling"
+        "requiresReviewLabel": "Vereist beoordeling",
+        "aiDraftLabel": "Bevat AI-concepten die niemand heeft bevestigd",
+        "aiDraftDefaultDisabled": "De standaardstatus kan geen AI-concepten bevatten: nieuwe testgevallen die personen schrijven, worden hierin opgeslagen.",
+        "aiDraftBadge": "AI-concepten"
       },
       "add": {
         "button": "Workflow toevoegen",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "Rapport over automatiseringskandidaten",
         "derive_case_steps": "AI-afleiding van stappen",
         "impact_analysis": "Impact: beïnvloede testeselectie",
-        "failure_triage": "Foutpatronen: Hoofdoorzaak"
+        "failure_triage": "Foutpatronen: Hoofdoorzaak",
+        "case_upkeep": "Testgevalactualisaties van Issue-wijzigingen"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "Door AI opgestelde testgevallen klaar",
         "casesDraftedMessage": "{count, plural, one {# testgeval werd} other {# testgevallen werden}} opgesteld voor {issueKey} — controleer op nauwkeurigheid.",
         "casesDraftedReviewLink": "Bekijk in {folderName}",
+        "casesUpdatedTitle": "Testgevallen bijgewerkt na een issue-wijziging",
+        "casesUpdatedIssueChanged": "De tekst van {issueKey} is gewijzigd.",
+        "casesUpdatedRewritten": "{count, plural, one {# AI-concept is herschreven.} other {# AI-concepten zijn herschreven.}}",
+        "casesUpdatedAdded": "{count, plural, one {# testgeval is toegevoegd als concept.} other {# testgevallen zijn toegevoegd als concepten.}}",
+        "casesUpdatedDeleted": "{count, plural, one {# AI-concept is verwijderd. Een systeembeheerder kan het herstellen via Admin > Prullenbak.} other {# AI-concepten zijn verwijderd. Een systeembeheerder kan ze herstellen via Admin > Prullenbak.}}",
+        "casesUpdatedSuggested": "{count, plural, one {# voorgestelde wijziging wacht op een beslissing.} other {# voorgestelde wijzigingen wachten op een beslissing.}}",
+        "casesUpdatedFailedTitle": "Testgevallen kunnen niet worden bijgewerkt",
+        "casesUpdatedFailedMessage": "De testgevallen voor {issueKey} kunnen niet worden gecontroleerd met de nieuwe tekst ervan.",
+        "casesUpdatedFailedReason": "Reden: {detail}",
+        "casesUpdatedFailedLink": "De webhooks van het project weergeven",
+        "casesUpdatedReminderTitle": "Voorgestelde wijzigingen wachten",
+        "casesUpdatedReminderMessage": "{count, plural, one {# voorgestelde wijziging voor {issueKey} wacht nog op een beslissing.} other {# voorgestelde wijzigingen voor {issueKey} wachten nog op een beslissing.}}",
+        "casesUpdatedLink": "De testgevallen weergeven",
         "integrationAuthExpiredTitle": "Integratieverbinding verlopen",
         "integrationAuthExpiredMessage": "Uw verbinding met \"{integrationName}\" is verlopen. Maak opnieuw verbinding om het synchroniseren van issues te hervatten.",
         "integrationAuthExpiredReconnect": "Opnieuw verbinden",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## Ingeschakeld\nGeeft aan of deze workflow is ingeschakeld.",
       "isActive": "## Actief\nGeeft aan of deze workflowstatus actief en beschikbaar is voor gebruik.\n\n- Actieve workflows kunnen worden geselecteerd bij het bijwerken van testruns, sessies of automatisering.\n- Inactieve workflows zijn niet selecteerbaar, maar blijven behouden in bestaande items.",
       "requiresReview": "## Vereist beoordeling\nWanneer AAN, is de overgang van een testgeval, testrun of sessie NAAR deze status afhankelijk van een goedgekeurd beoordelingsverzoek. Zonder een goedgekeurd verzoek wordt de overgang geblokkeerd.\n\n- Het goedkeuren van een verzoek voert de overgang uit. De goedkeuring van de beoordelaar verplaatst het testgeval, de run of de sessie naar de gevraagde status; de aanvrager hoeft de statuswijziging niet handmatig te herhalen.\n- Bestaande, nog niet uitgevoerde beoordelingen worden stilzwijgend bewaard wanneer de systeemfunctie UIT staat en verschijnen opnieuw wanneer deze weer wordt ingeschakeld.\n- De beoordelaar wordt geselecteerd wanneer een tester op 'Beoordeling aanvragen' klikt op de detailpagina van de entiteit.\n\nAls de systeemfunctie is uitgeschakeld, is deze schakelaar vergrendeld. Schakel deze opnieuw in via de kaart 'Beoordelingsworkflow' hierboven om deze in te schakelen.",
+      "isAiDraft": "## Bevat AI-concepten die niemand heeft bevestigd\nTestgevallen die een webhook-actie met AI-concepten maakt, beginnen in deze status, en het verplaatsen van een testgeval eruit bevestigt het concept.\n\n- Zolang een concept hier blijft en niemand het heeft opgeslagen, kan een Update Test Cases-actie het herschrijven als de issue ervan verandert.\n- Zodra een persoon het verplaatst of het opslaat, stelt AI alleen wijzigingen voor die een persoon kan toepassen of verwerpen.\n- De persoon die een testgeval verplaatst, wordt opgenomen als de reviewer.\n\nAlleen testgevalstatussen kunnen worden gemarkeerd, nooit de standaardstatus.",
       "projects": "## Projecten\nGeeft de projecten aan die deze workflow kunnen gebruiken."
     },
     "testResult": {

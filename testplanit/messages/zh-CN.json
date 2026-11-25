@@ -460,7 +460,9 @@
       },
       "worker": "工作进程",
       "hasCodePins": "有代码固定",
-      "noCodePins": "无代码固定"
+      "noCodePins": "无代码固定",
+      "hasSuggestion": "等待中",
+      "noSuggestion": "无"
     },
     "filter": {
       "placeholder": "筛选 {item}..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "选择触发此操作的事件以及它执行的操作。",
           "trigger": {
             "ISSUE_EVENT": "任何问题事件",
-            "ISSUE_STATUS_ENTERED": "问题状态更改"
+            "ISSUE_STATUS_ENTERED": "问题状态更改",
+            "ISSUE_CONTENT_CHANGED": "问题文本变更"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "跟踪器发送的关于问题的任何事件。",
             "ISSUE_CREATED": "TestPlanIt 之前未见过的问题。",
-            "ISSUE_STATUS_ENTERED": "问题进入所选状态之一。"
+            "ISSUE_STATUS_ENTERED": "问题进入所选状态之一。",
+            "ISSUE_CONTENT_CHANGED": "TestPlanIt 中某问题的标题或描述已发生变更。"
           },
           "outcome": {
             "cases_drafted": "测试用例已起草",
@@ -1824,8 +1828,22 @@
             "no_target": "无存储库或默认状态",
             "draft_failed": "起草失败",
             "already_composed": "已为此更改创建运行",
-            "execute_failed": "未请求执行"
+            "execute_failed": "未请求执行",
+            "update_queued": "正在检查测试用例",
+            "cases_updated": "测试用例已更新",
+            "no_changes": "无需更改",
+            "up_to_date": "测试用例已是最新版本",
+            "update_failed": "检查测试用例失败"
           },
+          "updateCases": "使用 AI 更新测试用例",
+          "updateHelp": "问题的编辑确定后，AI 会将每个关联的测试用例与新文本进行对比。未经任何人确认的草稿将被重写。其他所有测试用例都会获得一条建议的变更，供人员应用或拒绝。",
+          "updateScope": "要检查的测试用例",
+          "updateScopeOptions": {
+            "all_linked": "所有关联到该问题的测试用例",
+            "ai_drafted": "仅限 AI 起草的测试用例"
+          },
+          "updateStateHelp": "更新添加的测试用例的状态。",
+          "updateNotifyHelp": "通知谁哪些内容发生了变更。如果未选择任何人，则会通知此问题的Draft操作所涉及的人员，或在没有这些人员时通知项目的管理员。每个人的通知偏好设置仍然适用。",
           "dragToReorder": "拖动以重新排序",
           "requirementsOnly": "仅需求",
           "requirementsOnlyHelp": "仅项目分类为需求的问题。",
@@ -2978,6 +2996,10 @@
             "label": "AI 起草的测试用例",
             "description": "webhook 操作为问题起草了测试用例，并将您列为审阅者。"
           },
+          "CASES_UPDATED": {
+            "label": "问题变更后测试用例已更新",
+            "description": "某问题的文本已变更，且 Webhook 操作已重写草稿或建议对您审核或已命名的测试用例进行变更。"
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "集成需要重新授权",
             "description": "与集成的连接已过期或被撤销，必须重新连接。"
@@ -3500,6 +3522,41 @@
       "reload": "放弃我的更改并重新加载",
       "overwrite": "覆盖"
     },
+    "suggestions": {
+      "updateTitle": "AI 建议变更此测试用例",
+      "retireTitle": "AI 建议删除此测试用例",
+      "unreviewedDraft": "AI 编写了此测试用例，但尚未有人确认",
+      "issueChanged": "{issue} 在编写此测试用例后发生了变更。",
+      "issueChangedList": "关联的问题已变更，此测试用例尚未针对新文本进行检查",
+      "issueChangedUnchecked": "{issue} 在此测试用例上次针对其进行检查后已发生变更。此测试用例尚未针对新文本进行检查。",
+      "retireDescription": "此问题不再要求进行此测试用例测试的操作。",
+      "stale": "自建议变更以来，此测试用例已被编辑，因此无法按原样应用该建议。",
+      "name": "名称",
+      "steps": "步骤",
+      "step": "步骤 {number}",
+      "expectedResult": "预期结果：{text}",
+      "review": "查看变更",
+      "hide": "隐藏变更",
+      "apply": "应用",
+      "dismiss": "拒绝",
+      "regenerate": "重新建议",
+      "applied": "已应用建议的变更。",
+      "retired": "测试用例已被删除。",
+      "dismissed": "建议已被拒绝。",
+      "regenerated": "新建议已准备就绪。",
+      "nothingToChange": "测试用例无需更改。",
+      "markAligned": "标记为最新",
+      "markedAligned": "测试用例已标记为与问题保持同步。",
+      "markAlignedFailed": "无法将测试用例标记为最新。",
+      "errors": {
+        "not_found": "建议不再存在。",
+        "gone": "测试用例或其问题不再存在。",
+        "not_pending": "建议已被决定。",
+        "stale": "自建议变更以来，测试用例已发生变更。",
+        "no_llm": "此项目没有活跃的 AI 模型。",
+        "failed": "无法处理建议。请重试。"
+      }
+    },
     "templateSwitch": {
       "title": "切换模板？",
       "description": "\"{templateName}\"不包含{count, plural, =1 {此字段} other {这些字段}},因此对{count, plural, =1 {它} other {它们}}的更改将被丢弃:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "自动化",
       "byParameterized": "参数化",
       "byReview": "审查",
+      "bySuggestion": "建议的变更",
       "allTemplates": "所有模板",
       "allStates": "所有州",
       "allCreators": "所有创作者",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "系统级已禁用审阅工作流程功能。请切换项目的“高级设置”或设置 TESTPLANIT_REVIEW_FEATURE_ENABLED 以重新启用该功能。",
         "requiresReviewDefaultDisabled": "默认工作流状态不需要审核——新实体进入此状态，并且没有先前的状态需要控制。",
-        "requiresReviewLabel": "需要审核"
+        "requiresReviewLabel": "需要审核",
+        "aiDraftLabel": "保存没有人确认的 AI 草稿",
+        "aiDraftDefaultDisabled": "默认状态不能保存 AI 草稿：人员编写的新测试用例会落在其中。",
+        "aiDraftBadge": "AI 草稿"
       },
       "add": {
         "button": "添加工作流",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "自动化候选报告",
         "derive_case_steps": "AI 步骤推导",
         "impact_analysis": "影响：受影响测试选择",
-        "failure_triage": "失败模式：根本原因"
+        "failure_triage": "失败模式：根本原因",
+        "case_upkeep": "来自问题变更的测试用例更新"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "AI 起草的测试用例已就绪",
         "casesDraftedMessage": "{count, plural, one {# 个测试用例已} other {# 个测试用例已}}为 {issueKey} 起草 — 请检查其准确性。",
         "casesDraftedReviewLink": "在 {folderName} 中审查",
+        "casesUpdatedTitle": "问题变更后测试用例已更新",
+        "casesUpdatedIssueChanged": "{issueKey} 的文本已变更。",
+        "casesUpdatedRewritten": "{count, plural, one {# 个 AI 草稿已被重写。} other {# 个 AI 草稿已被重写。}}",
+        "casesUpdatedAdded": "{count, plural, one {# 个测试用例已作为草稿添加。} other {# 个测试用例已作为草稿添加。}}",
+        "casesUpdatedDeleted": "{count, plural, one {# 个 AI 草稿已被删除。系统管理员可以从管理员 > 垃圾箱还原它。} other {# 个 AI 草稿已被删除。系统管理员可以从管理员 > 垃圾箱还原它们。}}",
+        "casesUpdatedSuggested": "{count, plural, one {# 条建议的变更正在等待决定。} other {# 条建议的变更正在等待决定。}}",
+        "casesUpdatedFailedTitle": "无法更新测试用例",
+        "casesUpdatedFailedMessage": "无法根据 {issueKey} 的新文本检查其测试用例。",
+        "casesUpdatedFailedReason": "原因：{detail}",
+        "casesUpdatedFailedLink": "查看项目的 Webhook",
+        "casesUpdatedReminderTitle": "建议的变更正在等待",
+        "casesUpdatedReminderMessage": "{count, plural, one {# 条 {issueKey} 的建议变更仍在等待决定。} other {# 条 {issueKey} 的建议变更仍在等待决定。}}",
+        "casesUpdatedLink": "查看测试用例",
         "integrationAuthExpiredTitle": "集成连接已过期",
         "integrationAuthExpiredMessage": "您与“{integrationName}”的连接已过期。请重新连接以恢复问题同步。",
         "integrationAuthExpiredReconnect": "重新连接",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## 已启用\n指示此工作流程是否已启用。",
       "isActive": "## 活动\n指示此工作流状态是否处于活动状态且可供使用。\n\n- 更新测试运行、会话或自动化时，可以选择活动工作流。\n- 非活动工作流将隐藏，但会保留在现有项中。",
       "requiresReview": "## 需要审核\n启用后，将用例、测试运行或会话转换为此状态需要经过已批准的审核请求。如果没有获得批准的请求，转换将被阻止。\n\n- 批准请求即会执行该转换。审核人员批准后，用例、运行或会话将进入所请求的状态；请求人无需再手动进行状态更改。\n- 当系统级功能关闭时，现有待处理的审核将被静默保留，并在重新启用后重新出现。\n- 当测试人员从实体详情页面点击",
+      "isAiDraft": "## 保存没有人确认的 AI 草稿\nWebhook 操作使用 AI 起草的测试用例从此状态开始，将测试用例移出此状态即确认了该草稿。\n\n- 当草稿保留在此处且没有人保存时，更新测试用例操作可能会在其问题变更时重写该草稿。\n- 一旦人员将其移出或保存，AI 仅建议为人员应用或拒绝的变更。\n- 将测试用例移出此状态的人员将被记录为其审核人。\n\n只有测试用例状态可以标记，默认状态永远不能标记。",
       "projects": "## 项目\n指示可以使用此工作流程的项目。"
     },
     "testResult": {

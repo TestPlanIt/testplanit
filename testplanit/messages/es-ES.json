@@ -460,7 +460,9 @@
       },
       "worker": "Trabajador",
       "hasCodePins": "Has Code Pins",
-      "noCodePins": "No Code Pins"
+      "noCodePins": "No Code Pins",
+      "hasSuggestion": "Esperando",
+      "noSuggestion": "Ninguno"
     },
     "filter": {
       "placeholder": "Filtrar {item}..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "Elija el evento que activa esta acción y qué hace.",
           "trigger": {
             "ISSUE_EVENT": "Cualquier evento de problema",
-            "ISSUE_STATUS_ENTERED": "Los cambios de estado del problema"
+            "ISSUE_STATUS_ENTERED": "Los cambios de estado del problema",
+            "ISSUE_CONTENT_CHANGED": "Cambios en el texto del problema"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "Cualquier evento que el rastreador envía sobre un problema.",
             "ISSUE_CREATED": "Un problema que TestPlanIt no ha visto antes.",
-            "ISSUE_STATUS_ENTERED": "Un problema se mueve a uno de los estados elegidos."
+            "ISSUE_STATUS_ENTERED": "Un problema se mueve a uno de los estados elegidos.",
+            "ISSUE_CONTENT_CHANGED": "El título o la descripción de un problema que TestPlanIt ya tiene cambios."
           },
           "outcome": {
             "cases_drafted": "Casos de prueba elaborados",
@@ -1824,8 +1828,22 @@
             "no_target": "Sin repositorio o estado predeterminado",
             "draft_failed": "La elaboración falló",
             "already_composed": "La ejecución ya se creó para este cambio",
-            "execute_failed": "La ejecución no fue solicitada"
+            "execute_failed": "La ejecución no fue solicitada",
+            "update_queued": "Verificando casos de prueba",
+            "cases_updated": "Casos de prueba actualizados",
+            "no_changes": "No se necesitan cambios",
+            "up_to_date": "Los casos de prueba están actualizados",
+            "update_failed": "La verificación de casos de prueba falló"
           },
+          "updateCases": "Actualizar casos de prueba con IA",
+          "updateHelp": "Una vez que las ediciones del problema se estabilizan, la IA compara cada caso de prueba vinculado con el nuevo texto. Los borradores que nadie ha confirmado se reescriben. Todos los demás casos de prueba reciben un cambio sugerido para que una persona lo aplique o descarte.",
+          "updateScope": "Casos de prueba a verificar",
+          "updateScopeOptions": {
+            "all_linked": "Todos los casos de prueba vinculados al problema",
+            "ai_drafted": "Solo casos de prueba redactados por IA"
+          },
+          "updateStateHelp": "El estado de los casos de prueba que añade la actualización.",
+          "updateNotifyHelp": "A quién se le comunica qué cambió. Cuando nadie es elegido, se notifica a las personas que la acción Borrador para este problema notifica, o a los administradores del proyecto cuando no hay ninguno. Las preferencias de notificación de cada persona aún se aplican.",
           "dragToReorder": "Arrastra para reordenar",
           "requirementsOnly": "Solo requisitos",
           "requirementsOnlyHelp": "Solo problemas que el proyecto clasifica como requisitos.",
@@ -2978,6 +2996,10 @@
             "label": "Casos de prueba elaborados por IA",
             "description": "Una acción de webhook elaboró casos de prueba para un problema y lo nombró como revisor."
           },
+          "CASES_UPDATED": {
+            "label": "Casos de prueba actualizados después de un cambio en el problema",
+            "description": "El texto de un problema cambió y una acción de webhook reescribió borradores o sugirió cambios a casos de prueba que revisa o en los que figura."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "La integración necesita reautorización",
             "description": "Su conexión con una integración expiró o fue revocada y debe reconectarse."
@@ -3500,6 +3522,41 @@
       "reload": "Descartar mis cambios y recargar",
       "overwrite": "Sobrescribir"
     },
+    "suggestions": {
+      "updateTitle": "La IA sugiere cambiar este caso de prueba",
+      "retireTitle": "La IA sugiere eliminar este caso de prueba",
+      "unreviewedDraft": "La IA escribió este caso de prueba y nadie lo ha confirmado aún",
+      "issueChanged": "{issue} cambió después de que se escribió este caso de prueba.",
+      "issueChangedList": "Un problema vinculado cambió y este caso de prueba no ha sido verificado contra el nuevo texto",
+      "issueChangedUnchecked": "{issue} cambió después de que este caso de prueba fue verificado por última vez contra él. El caso de prueba no ha sido verificado contra el nuevo texto.",
+      "retireDescription": "El problema ya no solicita lo que prueba este caso de prueba.",
+      "stale": "Este caso de prueba ha sido editado desde que se sugirió el cambio, por lo que la sugerencia no puede aplicarse tal como está.",
+      "name": "Nombre",
+      "steps": "Pasos",
+      "step": "Paso {number}",
+      "expectedResult": "Resultado esperado: {text}",
+      "review": "Revisar cambio",
+      "hide": "Ocultar cambio",
+      "apply": "Aplicar",
+      "dismiss": "Descartar",
+      "regenerate": "Sugerir de nuevo",
+      "applied": "El cambio sugerido fue aplicado.",
+      "retired": "El caso de prueba fue eliminado.",
+      "dismissed": "La sugerencia fue descartada.",
+      "regenerated": "Una nueva sugerencia está lista.",
+      "nothingToChange": "El caso de prueba ya no necesita cambios.",
+      "markAligned": "Marcar como actualizado",
+      "markedAligned": "El caso de prueba está marcado como actualizado con respecto al problema.",
+      "markAlignedFailed": "El caso de prueba no pudo marcarse como actualizado.",
+      "errors": {
+        "not_found": "La sugerencia ya no existe.",
+        "gone": "El caso de prueba o su problema ya no existe.",
+        "not_pending": "La sugerencia ya fue decidida.",
+        "stale": "El caso de prueba ha cambiado desde que se sugirió el cambio.",
+        "no_llm": "Este proyecto no tiene un modelo de IA activo.",
+        "failed": "La sugerencia no pudo ser procesada. Intenta de nuevo."
+      }
+    },
     "templateSwitch": {
       "title": "¿Cambiar plantilla?",
       "description": "\"{templateName}\" no incluye {count, plural, =1 {este campo} other {estos campos}}, por lo que tus cambios en {count, plural, =1 {él} other {ellos}} se descartarán:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "Automatización",
       "byParameterized": "Parametrización",
       "byReview": "Revisión",
+      "bySuggestion": "Cambio sugerido",
       "allTemplates": "Todas las plantillas",
       "allStates": "Todos los Estados",
       "allCreators": "Todos los Creadores",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "La función de flujo de trabajo de revisión está deshabilitada a nivel del sistema. Para volver a habilitarla, modifique la configuración avanzada del proyecto o establezca TESTPLANIT_REVIEW_FEATURE_ENABLED.",
         "requiresReviewDefaultDisabled": "El estado predeterminado del flujo de trabajo no puede requerir revisión: las nuevas entidades llegan aquí y no tienen un estado previo que controlar.",
-        "requiresReviewLabel": "Requiere revisión"
+        "requiresReviewLabel": "Requiere revisión",
+        "aiDraftLabel": "Contiene borradores de IA que nadie ha confirmado",
+        "aiDraftDefaultDisabled": "El estado predeterminado no puede contener borradores de IA: los nuevos casos de prueba que las personas escriben llegan a él.",
+        "aiDraftBadge": "Borradores de IA"
       },
       "add": {
         "button": "Añadir flujo de trabajo",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "Informe de candidatos para la automatización",
         "derive_case_steps": "Derivación de pasos por IA",
         "impact_analysis": "Impacto: selección de pruebas afectadas",
-        "failure_triage": "Patrones de Fallos: Causa Raíz"
+        "failure_triage": "Patrones de Fallos: Causa Raíz",
+        "case_upkeep": "Actualizaciones de casos de prueba por cambios en problemas"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "Casos de Prueba Elaborados por IA Listos",
         "casesDraftedMessage": "{count, plural, one {# caso de prueba fue elaborado} other {# casos de prueba fueron elaborados}} para {issueKey} — revisar la precisión.",
         "casesDraftedReviewLink": "Revisar en {folderName}",
+        "casesUpdatedTitle": "Casos de prueba actualizados después de un cambio en el problema",
+        "casesUpdatedIssueChanged": "El texto de {issueKey} cambió.",
+        "casesUpdatedRewritten": "{count, plural, one {# borrador de IA fue reescrito.} other {# borradores de IA fueron reescritos.}}",
+        "casesUpdatedAdded": "{count, plural, one {# caso de prueba fue añadido como borrador.} other {# casos de prueba fueron añadidos como borradores.}}",
+        "casesUpdatedDeleted": "{count, plural, one {# borrador de IA fue eliminado. Un administrador del sistema puede restaurarlo desde Admin > Papelera.} other {# borradores de IA fueron eliminados. Un administrador del sistema puede restaurarlos desde Admin > Papelera.}}",
+        "casesUpdatedSuggested": "{count, plural, one {# cambio sugerido está esperando una decisión.} other {# cambios sugeridos están esperando una decisión.}}",
+        "casesUpdatedFailedTitle": "Los casos de prueba no pudieron ser actualizados",
+        "casesUpdatedFailedMessage": "Los casos de prueba para {issueKey} no pudieron ser verificados contra su nuevo texto.",
+        "casesUpdatedFailedReason": "Razón: {detail}",
+        "casesUpdatedFailedLink": "Ver los webhooks del proyecto",
+        "casesUpdatedReminderTitle": "Cambios sugeridos están esperando",
+        "casesUpdatedReminderMessage": "{count, plural, one {# cambio sugerido para {issueKey} aún está esperando una decisión.} other {# cambios sugeridos para {issueKey} aún están esperando una decisión.}}",
+        "casesUpdatedLink": "Ver los casos de prueba",
         "integrationAuthExpiredTitle": "Conexión de integración caducada",
         "integrationAuthExpiredMessage": "Su conexión con \"{integrationName}\" ha caducado. Vuelva a conectarse para reanudar la sincronización de incidencias.",
         "integrationAuthExpiredReconnect": "Reconectar",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## Habilitado\nIndica si este flujo de trabajo está activo.",
       "isActive": "## Activo\nIndica si este estado de flujo de trabajo está activo y disponible para su uso.\n\n- Los flujos de trabajo activos se pueden seleccionar al actualizar ejecuciones de pruebas, sesiones o automatización.\n- Los flujos de trabajo inactivos se ocultan de la selección, pero se conservan en los elementos existentes.",
       "requiresReview": "## Requiere revisión\nCuando está ACTIVADO, la transición de un caso, ejecución de prueba o sesión A este estado está sujeta a una solicitud de revisión aprobada. Sin una solicitud aprobada, la transición está bloqueada.\n\n- Aprobar una solicitud realiza la transición. La aprobación del revisor mueve el caso, la ejecución o la sesión al estado solicitado; el solicitante no repite el cambio de estado manualmente.\n- Las revisiones pendientes existentes se conservan silenciosamente cuando la función a nivel de sistema está DESACTIVADA y reaparecen cuando se vuelve a habilitar.\n- El revisor se selecciona cuando un evaluador hace clic en Solicitar revisión desde la página de detalles de la entidad.\n\nSi la función a nivel de sistema está deshabilitada, este interruptor está bloqueado. Vuelva a habilitarlo desde la tarjeta Flujo de trabajo de revisión anterior para activarlo.",
+      "isAiDraft": "## Contiene borradores de IA que nadie ha confirmado\nLos casos de prueba que una acción de webhook redacta con IA comienzan en este estado, y mover un caso de prueba fuera de él confirma el borrador.\n\n- Mientras un borrador permanece aquí y nadie lo ha guardado, una acción Actualizar casos de prueba puede reescribirlo cuando su problema cambia.\n- Una vez que una persona lo mueve, o lo guarda, la IA solo sugiere cambios para que una persona los aplique o descarte.\n- La persona que mueve un caso de prueba fuera se registra como su revisor.\n\nSolo los estados de casos de prueba pueden ser marcados, nunca el estado predeterminado.",
       "projects": "## Proyecta\nIndica los proyectos que pueden usar este flujo de trabajo."
     },
     "testResult": {

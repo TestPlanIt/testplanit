@@ -460,7 +460,9 @@
       },
       "worker": "작업자",
       "hasCodePins": "코드 핀 있음",
-      "noCodePins": "코드 핀 없음"
+      "noCodePins": "코드 핀 없음",
+      "hasSuggestion": "대기 중",
+      "noSuggestion": "없음"
     },
     "filter": {
       "placeholder": "필터 {item}..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "이 작업을 트리거하는 이벤트와 해당 작업이 수행할 작업을 선택합니다.",
           "trigger": {
             "ISSUE_EVENT": "모든 이슈 이벤트",
-            "ISSUE_STATUS_ENTERED": "이슈 상태 변경"
+            "ISSUE_STATUS_ENTERED": "이슈 상태 변경",
+            "ISSUE_CONTENT_CHANGED": "문제 텍스트 변경"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "추적기가 이슈에 대해 보내는 모든 이벤트입니다.",
             "ISSUE_CREATED": "TestPlanIt이 이전에 본 적 없는 이슈입니다.",
-            "ISSUE_STATUS_ENTERED": "이슈가 선택한 상태 중 하나로 이동합니다."
+            "ISSUE_STATUS_ENTERED": "이슈가 선택한 상태 중 하나로 이동합니다.",
+            "ISSUE_CONTENT_CHANGED": "문제의 제목 또는 설명이 TestPlanIt에서 이미 변경되었습니다."
           },
           "outcome": {
             "cases_drafted": "테스트 케이스 작성됨",
@@ -1824,8 +1828,22 @@
             "no_target": "리포지토리 또는 기본 상태 없음",
             "draft_failed": "작성 실패",
             "already_composed": "이 변경에 대해 이미 생성된 실행",
-            "execute_failed": "실행이 요청되지 않음"
+            "execute_failed": "실행이 요청되지 않음",
+            "update_queued": "테스트 케이스 확인 중",
+            "cases_updated": "테스트 케이스 업데이트됨",
+            "no_changes": "변경 필요 없음",
+            "up_to_date": "테스트 케이스가 이미 최신 상태임",
+            "update_failed": "테스트 케이스 확인 실패"
           },
+          "updateCases": "AI를 사용하여 테스트 케이스 업데이트",
+          "updateHelp": "문제의 편집이 완료된 후 AI가 각 연결된 테스트 케이스를 새 텍스트와 비교합니다. 아무도 확인하지 않은 초안을 다시 작성합니다. 다른 모든 테스트 케이스는 적용하거나 거부할 수 있는 제안된 변경 사항을 받습니다.",
+          "updateScope": "확인할 테스트 케이스",
+          "updateScopeOptions": {
+            "all_linked": "문제에 연결된 모든 테스트 케이스",
+            "ai_drafted": "AI로 작성된 테스트 케이스만"
+          },
+          "updateStateHelp": "업데이트가 추가하는 테스트 케이스의 상태입니다.",
+          "updateNotifyHelp": "누가 무엇이 변경되었는지를 알립니다. 아무도 선택하지 않으면 이 문제에 대한 초안 작업이 알리는 사람들이 알림을 받거나 없을 때 프로젝트 관리자가 알림을 받습니다. 각 사람의 알림 기본 설정은 여전히 적용됩니다.",
           "dragToReorder": "드래그하여 순서 변경",
           "requirementsOnly": "요구사항만",
           "requirementsOnlyHelp": "프로젝트에서 요구사항으로 분류하는 이슈만입니다.",
@@ -2978,6 +2996,10 @@
             "label": "AI가 작성한 테스트 케이스",
             "description": "웹훅 작업이 이슈에 대한 테스트 케이스를 작성했으며 검토자로 이름을 지정했습니다."
           },
+          "CASES_UPDATED": {
+            "label": "문제 변경 후 테스트 케이스 업데이트됨",
+            "description": "문제의 텍스트가 변경되었고 웹훅 작업이 초안을 다시 작성했거나 검토하거나 이름이 지정된 테스트 케이스에 변경 사항을 제안했습니다."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "통합 재인증 필요",
             "description": "통합 연결이 만료되었거나 취소되어 다시 연결해야 합니다."
@@ -3500,6 +3522,41 @@
       "reload": "변경 사항을 버리고 다시 로드",
       "overwrite": "덮어쓰기"
     },
+    "suggestions": {
+      "updateTitle": "AI가 이 테스트 케이스 변경을 제안합니다",
+      "retireTitle": "AI가 이 테스트 케이스 삭제를 제안합니다",
+      "unreviewedDraft": "AI가 이 테스트 케이스를 작성했으며 아직 아무도 확인하지 않았습니다",
+      "issueChanged": "{issue}이 이 테스트 케이스가 작성된 후 변경되었습니다.",
+      "issueChangedList": "연결된 문제가 변경되었으며 이 테스트 케이스가 새 텍스트에 대해 확인되지 않았습니다",
+      "issueChangedUnchecked": "{issue}이 이 테스트 케이스가 마지막으로 확인된 후 변경되었습니다. 테스트 케이스가 새 텍스트에 대해 확인되지 않았습니다.",
+      "retireDescription": "문제가 더 이상 이 테스트 케이스가 테스트하는 사항을 요청하지 않습니다.",
+      "stale": "이 테스트 케이스가 변경 제안 이후로 편집되었으므로 제안을 그대로 적용할 수 없습니다.",
+      "name": "이름",
+      "steps": "단계",
+      "step": "단계 {number}",
+      "expectedResult": "예상 결과: {text}",
+      "review": "변경 검토",
+      "hide": "변경 숨기기",
+      "apply": "적용",
+      "dismiss": "거부",
+      "regenerate": "다시 제안",
+      "applied": "제안된 변경 사항이 적용되었습니다.",
+      "retired": "테스트 케이스가 삭제되었습니다.",
+      "dismissed": "제안이 거부되었습니다.",
+      "regenerated": "새 제안이 준비되었습니다.",
+      "nothingToChange": "테스트 케이스를 더 이상 변경할 필요가 없습니다.",
+      "markAligned": "최신 상태로 표시",
+      "markedAligned": "테스트 케이스가 문제와 최신 상태로 표시되었습니다.",
+      "markAlignedFailed": "테스트 케이스를 최신 상태로 표시할 수 없습니다.",
+      "errors": {
+        "not_found": "제안이 더 이상 존재하지 않습니다.",
+        "gone": "테스트 케이스 또는 해당 문제가 더 이상 존재하지 않습니다.",
+        "not_pending": "제안이 이미 결정되었습니다.",
+        "stale": "변경 제안 이후로 테스트 케이스가 변경되었습니다.",
+        "no_llm": "이 프로젝트에 활성 AI 모델이 없습니다.",
+        "failed": "제안을 처리할 수 없습니다. 다시 시도하십시오."
+      }
+    },
     "templateSwitch": {
       "title": "템플릿을 전환하시겠습니까?",
       "description": "\"{templateName}\"에는 {count, plural, =1 {이 필드} other {이러한 필드}}가 포함되지 않으므로 {count, plural, =1 {이것} other {이들}}에 대한 변경 사항이 삭제됩니다:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "오토메이션",
       "byParameterized": "매개변수화",
       "byReview": "검토",
+      "bySuggestion": "제안된 변경 사항",
       "allTemplates": "모든 템플릿",
       "allStates": "모든 주",
       "allCreators": "모든 크리에이터",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "시스템 수준에서 검토 워크플로 기능이 비활성화되어 있습니다. 프로젝트의 고급 설정을 변경하거나 TESTPLANIT_REVIEW_FEATURE_ENABLED를 설정하여 다시 활성화하십시오.",
         "requiresReviewDefaultDisabled": "기본 워크플로 상태에서는 검토가 필요하지 않습니다. 새로운 엔티티는 이 상태에 도달하며, 검토를 거쳐야 할 이전 상태가 없습니다.",
-        "requiresReviewLabel": "검토 필요"
+        "requiresReviewLabel": "검토 필요",
+        "aiDraftLabel": "아무도 확인하지 않은 AI 초안을 보관합니다",
+        "aiDraftDefaultDisabled": "기본 상태는 AI 초안을 보관할 수 없습니다. 사람들이 작성한 새 테스트 케이스가 이 상태에 나타납니다.",
+        "aiDraftBadge": "AI 초안"
       },
       "add": {
         "button": "워크플로 추가",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "자동화 후보 보고서",
         "derive_case_steps": "AI 단계 도출",
         "impact_analysis": "영향: 영향을 받는 테스트 선택",
-        "failure_triage": "실패 패턴: 근본 원인"
+        "failure_triage": "실패 패턴: 근본 원인",
+        "case_upkeep": "문제 변경으로 인한 테스트 케이스 업데이트"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "AI가 작성한 테스트 케이스 준비 완료",
         "casesDraftedMessage": "{count, plural, one {# 테스트 케이스가} other {# 테스트 케이스가}} {issueKey}에 대해 작성되었습니다 — 정확성을 검토하세요.",
         "casesDraftedReviewLink": "{folderName}에서 검토",
+        "casesUpdatedTitle": "문제 변경 후 테스트 케이스 업데이트됨",
+        "casesUpdatedIssueChanged": "{issueKey}의 텍스트가 변경되었습니다.",
+        "casesUpdatedRewritten": "{count, plural, one {# AI 초안이 다시 작성되었습니다.} other {# AI 초안이 다시 작성되었습니다.}}",
+        "casesUpdatedAdded": "{count, plural, one {# 테스트 케이스가 초안으로 추가되었습니다.} other {# 테스트 케이스가 초안으로 추가되었습니다.}}",
+        "casesUpdatedDeleted": "{count, plural, one {# AI 초안이 삭제되었습니다. 시스템 관리자는 관리 > 휴지통에서 복원할 수 있습니다.} other {# AI 초안이 삭제되었습니다. 시스템 관리자는 관리 > 휴지통에서 복원할 수 있습니다.}}",
+        "casesUpdatedSuggested": "{count, plural, one {# 제안된 변경 사항이 결정 대기 중입니다.} other {# 제안된 변경 사항이 결정 대기 중입니다.}}",
+        "casesUpdatedFailedTitle": "테스트 케이스를 업데이트할 수 없습니다",
+        "casesUpdatedFailedMessage": "{issueKey}의 테스트 케이스를 새 텍스트에 대해 확인할 수 없습니다.",
+        "casesUpdatedFailedReason": "이유: {detail}",
+        "casesUpdatedFailedLink": "프로젝트의 웹훅 보기",
+        "casesUpdatedReminderTitle": "제안된 변경 사항이 대기 중입니다",
+        "casesUpdatedReminderMessage": "{count, plural, one {# {issueKey}에 대한 제안된 변경 사항이 여전히 결정 대기 중입니다.} other {# {issueKey}에 대한 제안된 변경 사항이 여전히 결정 대기 중입니다.}}",
+        "casesUpdatedLink": "테스트 케이스 보기",
         "integrationAuthExpiredTitle": "통합 연결이 만료되었습니다",
         "integrationAuthExpiredMessage": "\"{integrationName}\"에 대한 연결이 만료되었습니다. 이슈 동기화를 재개하려면 다시 연결하세요.",
         "integrationAuthExpiredReconnect": "다시 연결",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## 활성화됨\n이 워크플로가 활성화되었는지 여부를 나타냅니다.",
       "isActive": "## 활성\n이 워크플로 상태가 활성화되어 사용 가능한지 여부를 나타냅니다.\n\n- 활성 워크플로는 테스트 실행, 세션 또는 자동화를 업데이트할 때 선택할 수 있습니다.\n- 비활성 워크플로는 선택 항목에서 숨겨지지만 기존 항목에는 유지됩니다.",
       "requiresReview": "## 검토 필요\n이 기능이 켜져 있으면 케이스, 테스트 실행 또는 세션을 이 상태로 전환하려면 승인된 검토 요청이 있어야 합니다. 승인된 요청이 없으면 전환이 차단됩니다.\n\n- 요청을 승인하면 전환이 수행됩니다. 검토자의 승인으로 케이스, 실행 또는 세션이 요청된 상태로 이동하며, 요청자가 수동으로 상태 변경을 반복할 필요가 없습니다.\n- 시스템 수준 기능이 꺼져 있을 때 기존의 보류 중인 검토는 자동으로 유지되며 다시 활성화하면 다시 나타납니다.\n- 테스터가 엔티티 세부 정보 페이지에서 검토 요청을 클릭하면 검토자가 선택됩니다.\n\n시스템 수준 기능이 비활성화된 경우 이 스위치는 잠깁니다. 위의 검토 워크플로 섹션에서 다시 활성화하여 이 기능을 켜십시오.",
+      "isAiDraft": "## 아무도 확인하지 않은 AI 초안을 보관합니다\n웹훅 작업이 AI로 작성한 테스트 케이스는 이 상태에서 시작되며, 테스트 케이스를 이 상태에서 이동하면 초안이 확인됩니다.\n\n- 초안이 여기에 머물면서 아무도 저장하지 않은 경우 문제가 변경될 때 업데이트 테스트 케이스 작업이 초안을 다시 작성할 수 있습니다.\n- 사람이 초안을 이동하거나 저장한 후에는 AI가 사람이 적용하거나 거부할 수 있도록 제안된 변경 사항만 제안합니다.\n- 테스트 케이스를 이동하는 사람이 검토자로 기록됩니다.\n\n테스트 케이스 상태만 표시할 수 있으며 기본 상태는 절대 표시할 수 없습니다.",
       "projects": "## 프로젝트\n이 워크플로를 사용할 수 있는 프로젝트를 나타냅니다."
     },
     "testResult": {

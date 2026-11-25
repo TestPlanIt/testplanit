@@ -460,7 +460,9 @@
       },
       "worker": "Trình xử lý",
       "hasCodePins": "Có Code Pin",
-      "noCodePins": "Không có Code Pin"
+      "noCodePins": "Không có Code Pin",
+      "hasSuggestion": "Đang chờ",
+      "noSuggestion": "Không có"
     },
     "filter": {
       "placeholder": "Bộ lọc {item}..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "Chọn sự kiện kích hoạt hành động này và nó làm gì.",
           "trigger": {
             "ISSUE_EVENT": "Bất kỳ sự kiện vấn đề nào",
-            "ISSUE_STATUS_ENTERED": "Trạng thái vấn đề thay đổi"
+            "ISSUE_STATUS_ENTERED": "Trạng thái vấn đề thay đổi",
+            "ISSUE_CONTENT_CHANGED": "Thay đổi văn bản vấn đề"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "Bất kỳ sự kiện nào mà trình theo dõi gửi về một vấn đề.",
             "ISSUE_CREATED": "Một vấn đề mà TestPlanIt chưa từng thấy trước đây.",
-            "ISSUE_STATUS_ENTERED": "Một vấn đề chuyển vào một trong những trạng thái đã chọn."
+            "ISSUE_STATUS_ENTERED": "Một vấn đề chuyển vào một trong những trạng thái đã chọn.",
+            "ISSUE_CONTENT_CHANGED": "Tiêu đề hoặc mô tả của một vấn đề TestPlanIt đã có các thay đổi."
           },
           "outcome": {
             "cases_drafted": "Các trường hợp thử nghiệm được soạn thảo",
@@ -1824,8 +1828,22 @@
             "no_target": "Không có kho lưu trữ hoặc trạng thái mặc định",
             "draft_failed": "Soạn thảo thất bại",
             "already_composed": "Chạy đã được tạo cho thay đổi này",
-            "execute_failed": "Không yêu cầu thực thi"
+            "execute_failed": "Không yêu cầu thực thi",
+            "update_queued": "Kiểm tra các trường hợp kiểm thử",
+            "cases_updated": "Các trường hợp kiểm thử đã được cập nhật",
+            "no_changes": "Không cần thay đổi",
+            "up_to_date": "Các trường hợp kiểm thử đã cập nhật",
+            "update_failed": "Kiểm tra các trường hợp kiểm thử không thành công"
           },
+          "updateCases": "Cập nhật Các Trường Hợp Kiểm Thử với AI",
+          "updateHelp": "Sau khi các chỉnh sửa của vấn đề ổn định, AI sẽ so sánh từng trường hợp kiểm thử được liên kết với văn bản mới. Các bản nháp mà không ai xác nhận sẽ được viết lại. Mọi trường hợp kiểm thử khác sẽ nhận được một gợi ý thay đổi để một người áp dụng hoặc bỏ qua.",
+          "updateScope": "Các trường hợp kiểm thử cần kiểm tra",
+          "updateScopeOptions": {
+            "all_linked": "Mọi trường hợp kiểm thử được liên kết với vấn đề",
+            "ai_drafted": "Chỉ các trường hợp kiểm thử được AI soạn thảo"
+          },
+          "updateStateHelp": "Trạng thái của các trường hợp kiểm thử mà cập nhật thêm.",
+          "updateNotifyHelp": "Ai được thông báo những gì đã thay đổi. Khi không ai được chọn, những người được Hành động Nháp cho vấn đề này thông báo sẽ được thông báo, hoặc các quản trị viên dự án khi không có ai. Tùy chọn thông báo của mỗi người vẫn được áp dụng.",
           "dragToReorder": "Kéo để sắp xếp lại",
           "requirementsOnly": "Chỉ yêu cầu",
           "requirementsOnlyHelp": "Chỉ những vấn đề mà dự án phân loại là yêu cầu.",
@@ -2978,6 +2996,10 @@
             "label": "Các trường hợp thử nghiệm được AI soạn thảo",
             "description": "Một hành động webhook đã soạn thảo các trường hợp thử nghiệm cho một vấn đề và gọi bạn là người xem xét."
           },
+          "CASES_UPDATED": {
+            "label": "Các trường hợp kiểm thử được cập nhật sau khi vấn đề thay đổi",
+            "description": "Văn bản của vấn đề đã thay đổi và một hành động webhook đã viết lại các bản nháp hoặc gợi ý các thay đổi đối với các trường hợp kiểm thử mà bạn xem xét hoặc được đặt tên trên."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Tích hợp cần được ủy quyền lại",
             "description": "Kết nối của bạn với một tích hợp hết hạn hoặc bị thu hồi và phải được kết nối lại."
@@ -3500,6 +3522,41 @@
       "reload": "Loại bỏ các thay đổi của tôi và tải lại",
       "overwrite": "Ghi đè"
     },
+    "suggestions": {
+      "updateTitle": "AI gợi ý thay đổi trường hợp kiểm thử này",
+      "retireTitle": "AI gợi ý xóa trường hợp kiểm thử này",
+      "unreviewedDraft": "AI đã viết trường hợp kiểm thử này và không ai xác nhận nó chưa",
+      "issueChanged": "{issue} đã thay đổi sau khi trường hợp kiểm thử này được viết.",
+      "issueChangedList": "Một vấn đề liên kết đã thay đổi và trường hợp kiểm thử này chưa được kiểm tra dựa trên văn bản mới",
+      "issueChangedUnchecked": "{issue} đã thay đổi kể từ lần cuối cùng trường hợp kiểm thử này được kiểm tra dựa vào nó. Trường hợp kiểm thử chưa được kiểm tra dựa trên văn bản mới.",
+      "retireDescription": "Vấn đề không còn yêu cầu những gì mà trường hợp kiểm thử này kiểm thử.",
+      "stale": "Trường hợp kiểm thử này đã được chỉnh sửa kể từ khi gợi ý thay đổi, vì vậy gợi ý không thể được áp dụng như hiện tại.",
+      "name": "Tên",
+      "steps": "Các bước",
+      "step": "Bước {number}",
+      "expectedResult": "Kết quả dự kiến: {text}",
+      "review": "Xem xét thay đổi",
+      "hide": "Ẩn thay đổi",
+      "apply": "Áp dụng",
+      "dismiss": "Bỏ qua",
+      "regenerate": "Gợi ý lại",
+      "applied": "Thay đổi được gợi ý đã được áp dụng.",
+      "retired": "Trường hợp kiểm thử đã bị xóa.",
+      "dismissed": "Gợi ý đã bị bỏ qua.",
+      "regenerated": "Một gợi ý mới đã sẵn sàng.",
+      "nothingToChange": "Trường hợp kiểm thử không còn cần thay đổi.",
+      "markAligned": "Đánh dấu là cập nhật",
+      "markedAligned": "Trường hợp kiểm thử được đánh dấu là cập nhật với vấn đề.",
+      "markAlignedFailed": "Trường hợp kiểm thử không thể được đánh dấu là cập nhật.",
+      "errors": {
+        "not_found": "Gợi ý không còn tồn tại.",
+        "gone": "Trường hợp kiểm thử hoặc vấn đề của nó không còn tồn tại.",
+        "not_pending": "Gợi ý đã được quyết định.",
+        "stale": "Trường hợp kiểm thử đã thay đổi kể từ khi thay đổi được gợi ý.",
+        "no_llm": "Dự án này không có mô hình AI hoạt động.",
+        "failed": "Gợi ý không thể được xử lý. Hãy thử lại."
+      }
+    },
     "templateSwitch": {
       "title": "Chuyển đổi mẫu?",
       "description": "\"{templateName}\" không bao gồm {count, plural, =1 {trường này} other {các trường này}}, do đó những thay đổi của bạn đối với {count, plural, =1 {nó} other {chúng}} sẽ bị loại bỏ:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "Tự động hóa",
       "byParameterized": "Tham số hóa",
       "byReview": "Đánh giá",
+      "bySuggestion": "Thay Đổi Được Gợi Ý",
       "allTemplates": "Tất cả các mẫu",
       "allStates": "Tất cả các tiểu bang",
       "allCreators": "Tất cả những người sáng tạo",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "Tính năng quy trình xem xét đã bị vô hiệu hóa ở cấp độ hệ thống. Hãy bật/tắt cài đặt Nâng cao của dự án hoặc đặt TESTPLANIT_REVIEW_FEATURE_ENABLED để kích hoạt lại.",
         "requiresReviewDefaultDisabled": "Trạng thái quy trình làm việc mặc định không thể yêu cầu xem xét — các thực thể mới được đưa vào đây và không có trạng thái trước đó để được kiểm soát.",
-        "requiresReviewLabel": "Cần xem xét"
+        "requiresReviewLabel": "Cần xem xét",
+        "aiDraftLabel": "Giữ các bản nháp AI mà không ai xác nhận",
+        "aiDraftDefaultDisabled": "Trạng thái mặc định không thể giữ các bản nháp AI: các trường hợp kiểm thử mới mà mọi người viết sẽ nằm trong đó.",
+        "aiDraftBadge": "Các bản nháp AI"
       },
       "add": {
         "button": "Thêm quy trình làm việc",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "Báo cáo ứng viên tự động hóa",
         "derive_case_steps": "Suy luận bước bằng AI",
         "impact_analysis": "Tác động: Lựa chọn bài kiểm tra bị ảnh hưởng",
-        "failure_triage": "Các mẫu lỗi: Nguyên nhân gốc"
+        "failure_triage": "Các mẫu lỗi: Nguyên nhân gốc",
+        "case_upkeep": "Cập Nhật Trường Hợp Kiểm Thử từ Thay Đổi Vấn Đề"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "Các Trường hợp Thử nghiệm Được AI Soạn thảo Sẵn sàng",
         "casesDraftedMessage": "{count, plural, one {# trường hợp thử nghiệm đã} other {# trường hợp thử nghiệm đã}} được soạn thảo cho {issueKey} — hãy xem xét lại độ chính xác.",
         "casesDraftedReviewLink": "Xem xét trong {folderName}",
+        "casesUpdatedTitle": "Các Trường Hợp Kiểm Thử Được Cập Nhật Sau Khi Vấn Đề Thay Đổi",
+        "casesUpdatedIssueChanged": "Văn bản của {issueKey} đã thay đổi.",
+        "casesUpdatedRewritten": "{count, plural, one {# bản nháp AI đã được viết lại.} other {# bản nháp AI đã được viết lại.}}",
+        "casesUpdatedAdded": "{count, plural, one {# trường hợp kiểm thử được thêm làm bản nháp.} other {# trường hợp kiểm thử được thêm làm bản nháp.}}",
+        "casesUpdatedDeleted": "{count, plural, one {# bản nháp AI đã bị xóa. Quản trị viên hệ thống có thể khôi phục nó từ Admin > Thùng rác.} other {# bản nháp AI đã bị xóa. Quản trị viên hệ thống có thể khôi phục chúng từ Admin > Thùng rác.}}",
+        "casesUpdatedSuggested": "{count, plural, one {# gợi ý thay đổi đang chờ quyết định.} other {# gợi ý thay đổi đang chờ quyết định.}}",
+        "casesUpdatedFailedTitle": "Các Trường Hợp Kiểm Thử Không Thể Được Cập Nhật",
+        "casesUpdatedFailedMessage": "Các trường hợp kiểm thử cho {issueKey} không thể được kiểm tra dựa trên văn bản mới của nó.",
+        "casesUpdatedFailedReason": "Lý do: {detail}",
+        "casesUpdatedFailedLink": "Xem webhooks của dự án",
+        "casesUpdatedReminderTitle": "Các Thay Đổi Được Gợi Ý Đang Chờ",
+        "casesUpdatedReminderMessage": "{count, plural, one {# gợi ý thay đổi cho {issueKey} vẫn đang chờ quyết định.} other {# gợi ý thay đổi cho {issueKey} vẫn đang chờ quyết định.}}",
+        "casesUpdatedLink": "Xem các trường hợp kiểm thử",
         "integrationAuthExpiredTitle": "Kết nối tích hợp đã hết hạn",
         "integrationAuthExpiredMessage": "Kết nối của bạn tới \"{integrationName}\" đã hết hạn. Kết nối lại để tiếp tục đồng bộ vấn đề.",
         "integrationAuthExpiredReconnect": "Kết nối lại",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## Đã bật\nCho biết liệu quy trình làm việc này có được bật hay không.",
       "isActive": "## Hoạt động\nCho biết trạng thái quy trình công việc này có đang hoạt động và sẵn sàng sử dụng hay không.\n\n- Các quy trình công việc đang hoạt động có thể được chọn khi cập nhật các lần chạy thử nghiệm, phiên hoặc tự động hóa.\n- Các quy trình công việc không hoạt động sẽ bị ẩn khỏi lựa chọn nhưng vẫn được lưu giữ trong các mục hiện có.",
       "requiresReview": "## Yêu cầu Xem xét\nKhi BẬT, việc chuyển đổi một trường hợp, lần chạy kiểm thử hoặc phiên sang trạng thái này sẽ bị chặn bởi yêu cầu xem xét được phê duyệt. Nếu không có yêu cầu được phê duyệt, quá trình chuyển đổi sẽ bị chặn.\n\n- Việc phê duyệt một yêu cầu sẽ thực hiện quá trình chuyển đổi. Sự phê duyệt của người xem xét sẽ chuyển trường hợp, lần chạy hoặc phiên vào trạng thái được yêu cầu; người yêu cầu không cần thực hiện lại thay đổi trạng thái theo cách thủ công.\n- Các đánh giá đang chờ xử lý hiện có sẽ được giữ nguyên một cách âm thầm khi tính năng cấp hệ thống TẮT và sẽ xuất hiện lại khi được bật lại.\n- Người xem xét được chọn khi người kiểm thử nhấp vào Yêu cầu xem xét từ trang chi tiết thực thể.\n\nNếu tính năng cấp hệ thống bị vô hiệu hóa, công tắc này sẽ bị khóa. Hãy bật lại công tắc này từ phần Quy trình xem xét ở trên để bật tính năng này.",
+      "isAiDraft": "## Giữ các bản nháp AI mà không ai xác nhận\nCác trường hợp kiểm thử mà hành động webhook soạn thảo với AI bắt đầu ở trạng thái này, và di chuyển một trường hợp kiểm thử ra khỏi nó sẽ xác nhận bản nháp.\n\n- Khi một bản nháp ở đây và không ai đã lưu nó, một hành động Cập Nhật Trường Hợp Kiểm Thử có thể viết lại nó khi vấn đề của nó thay đổi.\n- Sau khi một người di chuyển nó ra ngoài hoặc lưu nó, AI chỉ gợi ý các thay đổi để một người áp dụng hoặc bỏ qua.\n- Người di chuyển trường hợp kiểm thử ra ngoài được ghi lại là người xem xét của nó.\n\nChỉ các trạng thái trường hợp kiểm thử có thể được đánh dấu và không bao giờ là trạng thái mặc định.",
       "projects": "## Dự án\nCho biết các dự án có thể sử dụng quy trình làm việc này."
     },
     "testResult": {

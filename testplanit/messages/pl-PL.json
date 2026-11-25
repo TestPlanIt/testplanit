@@ -460,7 +460,9 @@
       },
       "worker": "Proces roboczy",
       "hasCodePins": "Posiada Code Piny",
-      "noCodePins": "Brak Code Pinów"
+      "noCodePins": "Brak Code Pinów",
+      "hasSuggestion": "Oczekiwanie",
+      "noSuggestion": "Brak"
     },
     "filter": {
       "placeholder": "Filtr {item}..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "Wybierz zdarzenie wyzwalające tę akcję i co robi.",
           "trigger": {
             "ISSUE_EVENT": "Dowolne zdarzenie problemu",
-            "ISSUE_STATUS_ENTERED": "Zmiana statusu problemu"
+            "ISSUE_STATUS_ENTERED": "Zmiana statusu problemu",
+            "ISSUE_CONTENT_CHANGED": "Zmiany tekstu problemu"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "Dowolne zdarzenie wysłane przez śledzącego dotyczące problemu.",
             "ISSUE_CREATED": "Problem, który TestPlanIt wcześniej nie widział.",
-            "ISSUE_STATUS_ENTERED": "Problem przechodzi do jednego z wybranych statusów."
+            "ISSUE_STATUS_ENTERED": "Problem przechodzi do jednego z wybranych statusów.",
+            "ISSUE_CONTENT_CHANGED": "Tytuł lub opis problemu, który TestPlanIt już zawiera, uległ zmianie."
           },
           "outcome": {
             "cases_drafted": "Przypadki testowe opracowane",
@@ -1824,8 +1828,22 @@
             "no_target": "Brak repozytorium lub stanu domyślnego",
             "draft_failed": "Opracowanie nie powiodło się",
             "already_composed": "Przebieg już utworzony dla tej zmiany",
-            "execute_failed": "Wykonanie nie zostało zażądane"
+            "execute_failed": "Wykonanie nie zostało zażądane",
+            "update_queued": "Sprawdzanie przypadków testowych",
+            "cases_updated": "Przypadki testowe zaktualizowane",
+            "no_changes": "Nie są potrzebne żadne zmiany",
+            "up_to_date": "Przypadki testowe są już aktualne",
+            "update_failed": "Sprawdzanie przypadków testowych nie powiodło się"
           },
+          "updateCases": "Aktualizuj przypadki testowe za pomocą AI",
+          "updateHelp": "Po ustabilizowaniu się zmian w problemie AI porównuje każdy powiązany przypadek testowy z nowym tekstem. Projekty, które nikt nie potwierdził, są przepisywane. Każdy inny przypadek testowy otrzymuje sugerowaną zmianę, którą osoba może zastosować lub odrzucić.",
+          "updateScope": "Przypadki testowe do sprawdzenia",
+          "updateScopeOptions": {
+            "all_linked": "Każdy przypadek testowy powiązany z problemem",
+            "ai_drafted": "Tylko przypadki testowe opracowane przez AI"
+          },
+          "updateStateHelp": "Stan przypadków testowych, które dodaje aktualizacja.",
+          "updateNotifyHelp": "Kto jest powiadamiany o zmianach. Gdy nikt nie jest wybrany, osoby powiadamiane przez akcję Szkic dla tego problemu są powiadamiane lub administratorzy projektu, gdy ich nie ma. Preferencje powiadomień każdej osoby nadal obowiązują.",
           "dragToReorder": "Przeciągnij, aby zmienić kolejność",
           "requirementsOnly": "Tylko wymagania",
           "requirementsOnlyHelp": "Tylko problemy, które projekt klasyfikuje jako wymagania.",
@@ -2978,6 +2996,10 @@
             "label": "Przypadki testowe opracowane przez AI",
             "description": "Akcja webhooka opracowała przypadki testowe dla problemu i wymienił Cię jako recenzenta."
           },
+          "CASES_UPDATED": {
+            "label": "Przypadki testowe zaktualizowane po zmianie problemu",
+            "description": "Tekst problemu zmienił się, a akcja webhook przepisała szkice lub zasugerowała zmiany w przypadkach testowych, które przeglądasz lub na których jesteś wymieniony."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Integracja wymaga ponownego upoważnienia",
             "description": "Twoje połączenie z integracją wygasło lub zostało odwołane i musi zostać ponownie połączone."
@@ -3500,6 +3522,41 @@
       "reload": "Odrzuć moje zmiany i załaduj ponownie",
       "overwrite": "Zastąp"
     },
+    "suggestions": {
+      "updateTitle": "AI sugeruje zmianę tego przypadku testowego",
+      "retireTitle": "AI sugeruje usunięcie tego przypadku testowego",
+      "unreviewedDraft": "AI napisał ten przypadek testowy i nikt go jeszcze nie potwierdził",
+      "issueChanged": "{issue} zmienił się po napisaniu tego przypadku testowego.",
+      "issueChangedList": "Powiązany problem zmienił się, a ten przypadek testowy nie został sprawdzony pod kątem nowego tekstu",
+      "issueChangedUnchecked": "{issue} zmienił się od czasu ostatniego sprawdzenia tego przypadku testowego. Przypadek testowy nie został sprawdzony pod kątem nowego tekstu.",
+      "retireDescription": "Problem nie wymaga już tego, co testuje ten przypadek testowy.",
+      "stale": "Ten przypadek testowy został zmieniony od czasu zasugerowania zmiany, dlatego sugestia nie może być zastosowana w obecnej postaci.",
+      "name": "Nazwa",
+      "steps": "Kroki",
+      "step": "Krok {number}",
+      "expectedResult": "Oczekiwany wynik: {text}",
+      "review": "Przejrzyj zmianę",
+      "hide": "Ukryj zmianę",
+      "apply": "Zastosuj",
+      "dismiss": "Odrzuć",
+      "regenerate": "Zasugeruj ponownie",
+      "applied": "Sugerowana zmiana została zastosowana.",
+      "retired": "Przypadek testowy został usunięty.",
+      "dismissed": "Sugestia została odrzucona.",
+      "regenerated": "Nowa sugestia jest gotowa.",
+      "nothingToChange": "Przypadek testowy nie wymaga już zmian.",
+      "markAligned": "Oznacz jako aktualne",
+      "markedAligned": "Przypadek testowy jest oznaczony jako aktualny w stosunku do problemu.",
+      "markAlignedFailed": "Nie można oznaczyć przypadku testowego jako aktualnego.",
+      "errors": {
+        "not_found": "Sugestia już nie istnieje.",
+        "gone": "Przypadek testowy lub powiązany z nim problem już nie istnieje.",
+        "not_pending": "Sugestia została już rozstrzygnięta.",
+        "stale": "Przypadek testowy zmienił się od czasu zasugerowania zmiany.",
+        "no_llm": "Ten projekt nie ma aktywnego modelu AI.",
+        "failed": "Nie można przetworzyć sugestii. Spróbuj ponownie."
+      }
+    },
     "templateSwitch": {
       "title": "Zmienić szablon?",
       "description": "\"{templateName}\" nie zawiera {count, plural, =1 {tego pola} few {tych pól} many {tych pól} other {tych pól}}, dlatego Twoje zmiany {count, plural, =1 {w nim} few {w nich} many {w nich} other {w nich}} będą odrzucone:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "Automatyzacja",
       "byParameterized": "Parametryzacja",
       "byReview": "Recenzja",
+      "bySuggestion": "Sugerowana zmiana",
       "allTemplates": "Wszystkie szablony",
       "allStates": "Wszystkie stany",
       "allCreators": "Wszyscy twórcy",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "Funkcja przeglądu przepływu pracy jest wyłączona na poziomie systemu. Przełącz ustawienia zaawansowane projektu lub ustaw opcję TESTPLANIT_REVIEW_FEATURE_ENABLED, aby ją ponownie włączyć.",
         "requiresReviewDefaultDisabled": "Domyślny stan przepływu pracy nie może wymagać przeglądu — nowe jednostki trafiają tutaj i nie mają żadnego poprzedniego stanu do przejęcia.",
-        "requiresReviewLabel": "Wymaga przeglądu"
+        "requiresReviewLabel": "Wymaga przeglądu",
+        "aiDraftLabel": "Przechowuje szkice AI, które nikt nie potwierdził",
+        "aiDraftDefaultDisabled": "Stan domyślny nie może przechowywać szkiców AI: nowe przypadki testowe pisane przez ludzi trafiają do niego.",
+        "aiDraftBadge": "Szkice AI"
       },
       "add": {
         "button": "Dodaj przepływ pracy",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "Raport kandydatów do automatyzacji",
         "derive_case_steps": "Generowanie kroków przez AI",
         "impact_analysis": "Wpływ: Wybór testów pod wpływem",
-        "failure_triage": "Wzorce awarii: przyczyna główna"
+        "failure_triage": "Wzorce awarii: przyczyna główna",
+        "case_upkeep": "Aktualizacje przypadków testowych ze zmian problemów"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "Przypadki testowe opracowane przez AI są gotowe",
         "casesDraftedMessage": "{count, plural, one {# przypadek testowy został opracowany} few {# przypadki testowe zostały opracowane} many {# przypadków testowych zostało opracowanych} other {# przypadku testowego zostało opracowane}} dla {issueKey} — przejrzyj dokładność.",
         "casesDraftedReviewLink": "Przejrzyj w {folderName}",
+        "casesUpdatedTitle": "Przypadki testowe zaktualizowane po zmianie problemu",
+        "casesUpdatedIssueChanged": "Tekst {issueKey} zmienił się.",
+        "casesUpdatedRewritten": "{count, plural, one {# szkic AI został przepisany.} few {# szkice AI zostały przepisane.} many {# szkiców AI zostało przepisanych.} other {# szkiców AI zostało przepisanych.}}",
+        "casesUpdatedAdded": "{count, plural, one {# przypadek testowy został dodany jako szkic.} few {# przypadki testowe zostały dodane jako szkice.} many {# przypadków testowych zostało dodanych jako szkice.} other {# przypadków testowych zostało dodanych jako szkice.}}",
+        "casesUpdatedDeleted": "{count, plural, one {# szkic AI został usunięty. Administrator systemu może go przywrócić z Admin > Kosz.} few {# szkice AI zostały usunięte. Administrator systemu może je przywrócić z Admin > Kosz.} many {# szkiców AI zostało usuniętych. Administrator systemu może je przywrócić z Admin > Kosz.} other {# szkiców AI zostało usuniętych. Administrator systemu może je przywrócić z Admin > Kosz.}}",
+        "casesUpdatedSuggested": "{count, plural, one {# sugerowana zmiana czeka na decyzję.} few {# sugerowane zmiany czekają na decyzję.} many {# sugerowanych zmian czeka na decyzję.} other {# sugerowanych zmian czeka na decyzję.}}",
+        "casesUpdatedFailedTitle": "Nie można zaktualizować przypadków testowych",
+        "casesUpdatedFailedMessage": "Nie można sprawdzić przypadków testowych dla {issueKey} pod kątem nowego tekstu.",
+        "casesUpdatedFailedReason": "Przyczyna: {detail}",
+        "casesUpdatedFailedLink": "Wyświetl webhooks projektu",
+        "casesUpdatedReminderTitle": "Sugerowane zmiany czekają",
+        "casesUpdatedReminderMessage": "{count, plural, one {# sugerowana zmiana dla {issueKey} nadal czeka na decyzję.} few {# sugerowane zmiany dla {issueKey} nadal czekają na decyzję.} many {# sugerowanych zmian dla {issueKey} nadal czeka na decyzję.} other {# sugerowanych zmian dla {issueKey} nadal czeka na decyzję.}}",
+        "casesUpdatedLink": "Wyświetl przypadki testowe",
         "integrationAuthExpiredTitle": "Połączenie integracji wygasło",
         "integrationAuthExpiredMessage": "Twoje połączenie z „{integrationName}” wygasło. Połącz się ponownie, aby wznowić synchronizację zgłoszeń.",
         "integrationAuthExpiredReconnect": "Połącz ponownie",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## Włączone\nWskazuje, czy ten przepływ pracy jest włączony.",
       "isActive": "## Aktywny\nWskazuje, czy ten stan przepływu pracy jest aktywny i dostępny do użycia.\n\n— Aktywne przepływy pracy można wybierać podczas aktualizowania przebiegów testów, sesji lub automatyzacji.\n— Nieaktywne przepływy pracy są ukryte przed wyborem, ale zachowywane w istniejących elementach.",
       "requiresReview": "## Wymaga przeglądu\nPo włączeniu tej opcji, przejście przypadku testowego, przebiegu testowego lub sesji DO tego stanu jest zablokowane przez zatwierdzoną prośbę o przegląd. Bez zatwierdzonej prośby przejście jest zablokowane.\n\n– Zatwierdzenie prośby powoduje wykonanie przejścia. Zatwierdzenie przez recenzenta przenosi przypadek, przebieg lub sesję do żądanego stanu; osoba składająca prośbę nie musi ponownie wykonywać zmiany stanu ręcznie.\n– Istniejące oczekujące recenzje są zachowywane w trybie cichym, gdy funkcja na poziomie systemu jest WYŁĄCZONA, i pojawiają się ponownie po ponownym włączeniu.\n– Recenzent jest wybierany, gdy tester kliknie opcję „Poproś o przegląd",
+      "isAiDraft": "## Przechowuje szkice AI, które nikt nie potwierdził\nPrzypadki testowe, które akcja webhook szkicuje za pomocą AI, zaczynają się w tym stanie, a przeniesienie przypadku testowego poza niego potwierdza szkic.\n\n- Gdy szkic zostaje tutaj i nikt go nie zapisał, akcja Aktualizuj przypadki testowe może go przepisać, gdy zmieni się jego problem.\n- Po przeniesieniu go przez osobę lub zapisaniu, AI sugeruje tylko zmiany, aby osoba mogła je zastosować lub odrzucić.\n- Osoba, która przenosi przypadek testowy, jest rejestrowana jako jego recenzent.\n\nTylko stany przypadków testowych mogą być oznaczane, nigdy stan domyślny.",
       "projects": "## Projekty\nWskazuje projekty, które mogą korzystać z tego przepływu pracy."
     },
     "testResult": {

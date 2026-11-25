@@ -460,7 +460,9 @@
       },
       "worker": "Çalışan",
       "hasCodePins": "Kod Pinleri Var",
-      "noCodePins": "Kod Pinleri Yok"
+      "noCodePins": "Kod Pinleri Yok",
+      "hasSuggestion": "Bekleniyor",
+      "noSuggestion": "Yok"
     },
     "filter": {
       "placeholder": "Filtre {item}..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "Bu eylemi tetikleyen olayı ve ne yaptığını seçin.",
           "trigger": {
             "ISSUE_EVENT": "Herhangi bir sorun olayı",
-            "ISSUE_STATUS_ENTERED": "Sorun durumu değişiklikleri"
+            "ISSUE_STATUS_ENTERED": "Sorun durumu değişiklikleri",
+            "ISSUE_CONTENT_CHANGED": "Sorun metni değişiklikleri"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "İzleyicinin bir sorun hakkında gönderdiği herhangi bir olay.",
             "ISSUE_CREATED": "TestPlanIt'in daha önce görmediği bir sorun.",
-            "ISSUE_STATUS_ENTERED": "Bir sorun seçilen durumlardan birine taşınır."
+            "ISSUE_STATUS_ENTERED": "Bir sorun seçilen durumlardan birine taşınır.",
+            "ISSUE_CONTENT_CHANGED": "TestPlanIt'in zaten sahip olduğu bir sorunun başlığı veya açıklaması değişti."
           },
           "outcome": {
             "cases_drafted": "Test senaryoları taslağı oluşturuldu",
@@ -1824,8 +1828,22 @@
             "no_target": "Depo veya varsayılan durum yok",
             "draft_failed": "Taslak oluşturma başarısız oldu",
             "already_composed": "Bu değişiklik için çalıştırma zaten oluşturuldu",
-            "execute_failed": "Yürütme istenmedi"
+            "execute_failed": "Yürütme istenmedi",
+            "update_queued": "Test durumları kontrol ediliyor",
+            "cases_updated": "Test durumları güncellendi",
+            "no_changes": "Değişiklik gerekmez",
+            "up_to_date": "Test durumları zaten günceldir",
+            "update_failed": "Test durumlarını kontrol etme başarısız oldu"
           },
+          "updateCases": "Test Durumlarını AI ile Güncelle",
+          "updateHelp": "Sorunun değişiklikleri yerleştikten sonra, AI bağlantılı her test durumunu yeni metinle karşılaştırır. Kimse tarafından onaylanmamış taslaklar yeniden yazılır. Diğer her test durumu, bir kişinin uygulaması veya reddetmesi için önerilen bir değişiklik alır.",
+          "updateScope": "Kontrol edilecek test durumları",
+          "updateScopeOptions": {
+            "all_linked": "Soruna bağlantılı her test durumu",
+            "ai_drafted": "Yalnızca AI tarafından hazırlanan test durumları"
+          },
+          "updateStateHelp": "Güncellemenin eklediği test durumlarının durumu.",
+          "updateNotifyHelp": "Neyin değiştiği söylenir. Hiç kimse seçilmediğinde, bu sorunun Taslak işlemi hakkında bildirilen kişilere veya hiç kimse olmadığında projenin yöneticilerine söylenir. Her kişinin bildirim tercihleri hala geçerlidir.",
           "dragToReorder": "Yeniden sıralamak için sürükleyin",
           "requirementsOnly": "Yalnızca gereksinimler",
           "requirementsOnlyHelp": "Yalnızca projenin gereksinimler olarak sınıflandırdığı sorunlar.",
@@ -2978,6 +2996,10 @@
             "label": "Yapay zeka tarafından oluşturulan test senaryoları",
             "description": "Bir web kancası eylemi bir sorun için test senaryoları oluşturdu ve sizi inceleyici olarak adlandırdı."
           },
+          "CASES_UPDATED": {
+            "label": "Sorun değişikliğinden sonra güncellenen test durumları",
+            "description": "Bir sorunun metni değişti ve bir webhook işlemi incelediğiniz veya adı geçen test durumlarına taslaklar yeniden yazdı veya değişiklikler önerdi."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Entegrasyon yeniden yetkilendirme gerekiyor",
             "description": "Bir entegrasyonla bağlantınız sona erdi veya iptal edildi ve yeniden bağlanması gerekir."
@@ -3500,6 +3522,41 @@
       "reload": "Değişikliklerimi iptal et ve yeniden yükle",
       "overwrite": "Üzerine yaz"
     },
+    "suggestions": {
+      "updateTitle": "AI bu test durumunu değiştirmeyi öneriyor",
+      "retireTitle": "AI bu test durumunu silmeyi öneriyor",
+      "unreviewedDraft": "AI bu test durumunu yazdı ve hiç kimse henüz onaylamadı",
+      "issueChanged": "{issue} bu test durumu yazıldıktan sonra değişti.",
+      "issueChangedList": "Bağlantılı bir sorun değişti ve bu test durumu yeni metne karşı kontrol edilmedi",
+      "issueChangedUnchecked": "{issue} bu test durumu son kez ona karşı kontrol edildikten sonra değişti. Test durumu yeni metne karşı kontrol edilmedi.",
+      "retireDescription": "Sorun artık bu test durumunun test ettiği şeyi istemiyor.",
+      "stale": "Bu test durumu değişiklik önerilmesinden sonra düzenlendiği için, öneri olduğu gibi uygulanamaz.",
+      "name": "Ad",
+      "steps": "Adımlar",
+      "step": "Adım {number}",
+      "expectedResult": "Beklenen sonuç: {text}",
+      "review": "Değişikliği gözden geçir",
+      "hide": "Değişikliği gizle",
+      "apply": "Uygula",
+      "dismiss": "Reddet",
+      "regenerate": "Yeniden öner",
+      "applied": "Önerilen değişiklik uygulandı.",
+      "retired": "Test durumu silindi.",
+      "dismissed": "Öneri reddedildi.",
+      "regenerated": "Yeni bir öneri hazır.",
+      "nothingToChange": "Test durumu artık değiştirilmesine gerek kalmadı.",
+      "markAligned": "Güncellemeleri tamamlandı olarak işaretle",
+      "markedAligned": "Test durumu, sorunla güncellemeleri tamamlandı olarak işaretlendi.",
+      "markAlignedFailed": "Test durumu güncellemeleri tamamlandı olarak işaretlenemedi.",
+      "errors": {
+        "not_found": "Öneri artık mevcut değil.",
+        "gone": "Test durumu veya bağlantılı sorunu artık mevcut değil.",
+        "not_pending": "Öneri zaten kararlaştırıldı.",
+        "stale": "Test durumu, değişiklik önerilmesinden sonra değişti.",
+        "no_llm": "Bu projenin etkin bir AI modeli yok.",
+        "failed": "Öneri işlenemedi. Tekrar deneyin."
+      }
+    },
     "templateSwitch": {
       "title": "Şablonu değiştir?",
       "description": "\"{templateName}\" {count, plural, =1 {bu alanı} other {bu alanları}} içermez, bu nedenle {count, plural, =1 {buna} other {bunlara}} yapılan değişiklikleriniz iptal edilecektir:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "Otomasyon",
       "byParameterized": "Parametrizasyon",
       "byReview": "İnceleme",
+      "bySuggestion": "Önerilen Değişiklik",
       "allTemplates": "Tüm Şablonlar",
       "allStates": "Tüm Eyaletler",
       "allCreators": "Tüm Yaratıcılar",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "İnceleme iş akışı özelliği sistem düzeyinde devre dışı bırakılmıştır. Yeniden etkinleştirmek için bir projenin Gelişmiş ayarlarını açıp kapatın veya TESTPLANIT_REVIEW_FEATURE_ENABLED özelliğini ayarlayın.",
         "requiresReviewDefaultDisabled": "Varsayılan iş akışı durumu inceleme gerektiremez; yeni varlıklar buraya gelir ve kontrol edilmesi gereken önceden belirlenmiş bir durumları yoktur.",
-        "requiresReviewLabel": "İnceleme gerektiriyor"
+        "requiresReviewLabel": "İnceleme gerektiriyor",
+        "aiDraftLabel": "Kimse tarafından onaylanmamış AI taslakları tutar",
+        "aiDraftDefaultDisabled": "Varsayılan durum AI taslakları tutamaz: yeni test durumları insanlar yazarak buraya düşer.",
+        "aiDraftBadge": "AI taslakları"
       },
       "add": {
         "button": "İş Akışı Ekle",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "Otomasyon Adayları Raporu",
         "derive_case_steps": "Yapay Zeka Adım Türetme",
         "impact_analysis": "Etki: Etkilenen Test Seçimi",
-        "failure_triage": "Başarısızlık Desenleri: Temel Neden"
+        "failure_triage": "Başarısızlık Desenleri: Temel Neden",
+        "case_upkeep": "Sorun Değişikliklerinden Test Durumu Güncellemeleri"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "Yapay Zeka Tarafından Oluşturulan Test Senaryoları Hazır",
         "casesDraftedMessage": "{count, plural, one {# test senaryosu} other {# test senaryosu}} {issueKey} için oluşturuldu — doğruluğu için gözden geçirin.",
         "casesDraftedReviewLink": "{folderName} içinde gözden geçirin",
+        "casesUpdatedTitle": "Sorun Değişikliğinden Sonra Güncellenen Test Durumları",
+        "casesUpdatedIssueChanged": "{issueKey} metni değişti.",
+        "casesUpdatedRewritten": "{count, plural, one {# AI taslağı yeniden yazıldı.} other {# AI taslakları yeniden yazıldı.}}",
+        "casesUpdatedAdded": "{count, plural, one {# test durumu taslak olarak eklendi.} other {# test durumları taslak olarak eklendi.}}",
+        "casesUpdatedDeleted": "{count, plural, one {# AI taslağı silindi. Sistem yöneticisi bunu Admin > Çöp Kutusu'ndan geri yükleyebilir.} other {# AI taslakları silindi. Sistem yöneticisi bunları Admin > Çöp Kutusu'ndan geri yükleyebilir.}}",
+        "casesUpdatedSuggested": "{count, plural, one {# önerilen değişiklik karar için beklemede.} other {# önerilen değişiklikler karar için beklemede.}}",
+        "casesUpdatedFailedTitle": "Test Durumları Güncellenemedi",
+        "casesUpdatedFailedMessage": "{issueKey} için test durumları yeni metne karşı kontrol edilemedi.",
+        "casesUpdatedFailedReason": "Neden: {detail}",
+        "casesUpdatedFailedLink": "Projenin webhook'larını görüntüle",
+        "casesUpdatedReminderTitle": "Önerilen Değişiklikler Beklemede",
+        "casesUpdatedReminderMessage": "{count, plural, one {# {issueKey} için önerilen değişiklik hala karar için beklemede.} other {# {issueKey} için önerilen değişiklikler hala karar için beklemede.}}",
+        "casesUpdatedLink": "Test durumlarını görüntüle",
         "integrationAuthExpiredTitle": "Entegrasyon Bağlantısının Süresi Doldu",
         "integrationAuthExpiredMessage": "\"{integrationName}\" ile bağlantınızın süresi doldu. Sorun senkronizasyonuna devam etmek için yeniden bağlanın.",
         "integrationAuthExpiredReconnect": "Yeniden Bağlan",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## Etkin\nBu iş akışının etkin olup olmadığını gösterir.",
       "isActive": "## Aktif\nBu iş akışı durumunun aktif ve kullanıma hazır olup olmadığını gösterir.\n\n- Aktif iş akışları, test çalıştırmaları, oturumlar veya otomasyon güncellenirken seçilebilir.\n- Etkin olmayan iş akışları seçimden gizlenir ancak mevcut öğelerde korunur.",
       "requiresReview": "## İnceleme Gerektirir\nAÇIK olduğunda, bir durumun, test çalıştırmasının veya oturumun bu duruma geçişi, onaylanmış bir inceleme talebiyle sınırlandırılır. Onaylanmış bir talep olmadan geçiş engellenir.\n\n- Bir talebin onaylanması geçişi gerçekleştirir. İnceleyicinin onayı durumu, çalıştırmayı veya oturumu talep edilen duruma taşır; talep eden kişi durum değişikliğini elle tekrarlamaz.\n- Sistem düzeyindeki özellik KAPALI olduğunda mevcut bekleyen incelemeler sessizce korunur ve yeniden etkinleştirildiğinde tekrar görünür.\n- Bir test uzmanı, varlık detay sayfasından İnceleme İste düğmesine tıkladığında inceleyici seçilir.\n\nSistem düzeyindeki özellik devre dışı bırakılmışsa, bu anahtar kilitlidir. Bunu açmak için yukarıdaki İnceleme İş Akışı kartından yeniden etkinleştirin.",
+      "isAiDraft": "## Kimse tarafından onaylanmamış AI taslakları tutar\nBir webhook işlemi AI ile taslaklandırılan test durumları bu durumda başlar ve bir test durumunu dışarı taşımak taslağı onaylar.\n\n- Taslak burada kalırken ve hiç kimse kaydetmediği sürece, bir Test Durumlarını Güncelle işlemi sorunu değiştiğinde onu yeniden yazabilir.\n- Bir kişi onu dışarı taşıdıktan veya kaydettikten sonra, AI yalnızca bir kişinin uygulaması veya reddetmesi için değişiklikler önerir.\n- Bir test durumunu dışarı taşıyan kişi, inceleyici olarak kaydedilir.\n\nYalnızca test durumu durumları işaretlenebilir ve asla varsayılan durum değil.",
       "projects": "## Projeler\nBu iş akışını kullanabilecek projeleri belirtir."
     },
     "testResult": {
