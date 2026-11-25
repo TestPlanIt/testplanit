@@ -1,3 +1,9 @@
+## [1.2.13](https://github.com/TestPlanIt/testplanit/compare/v1.2.12...v1.2.13) (2026-11-25)
+
+### Bug Fixes
+
+* **jira:** create the issue when Jira refuses the reporter ([#768](https://github.com/TestPlanIt/testplanit/issues/768)) ([577f36c](https://github.com/TestPlanIt/testplanit/commit/577f36c4d56e4aef3cf77c9622160d7391b2421f))
+
 ## [1.2.12](https://github.com/TestPlanIt/testplanit/compare/v1.2.11...v1.2.12) (2026-11-25)
 
 ### Bug Fixes
