@@ -18,7 +18,8 @@ test.describe("Markdown Export & Import", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    return await api.createProject(`E2E Markdown Test ${Date.now()}`);
+    const suffix = Math.random().toString(36).slice(2, 8);
+    return await api.createProject(`E2E Markdown Test ${Date.now()}-${suffix}`);
   }
 
   /**
