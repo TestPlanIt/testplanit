@@ -146,6 +146,8 @@ export interface IssueData {
     name: string;
     email?: string;
   };
+  /** The tracker refused the requested reporter when creating the issue. */
+  reporterRejected?: boolean;
   labels?: string[];
   /** Hex colour per label name, for the trackers that colour labels. */
   labelColors?: Record<string, string>;

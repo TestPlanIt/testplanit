@@ -27,11 +27,11 @@
     "selectMultiple": "Mehrere auswählen...",
     "searchUsers": "Benutzer suchen...",
     "searchGroups": "Nach Gruppen suchen...",
-    "searchCases": "{count, plural, =0 {Fälle durchsuchen} one {Fall # durchsuchen} other {Fälle # durchsuchen}}",
-    "searchProjects": "{count, plural, =0 {Projekte suchen} one {Projekt # suchen} other {Projekte # suchen}}",
+    "searchCases": "{count, plural, =0 {Fälle durchsuchen} one {# Fall durchsuchen} other {# Fälle durchsuchen}}",
+    "searchProjects": "{count, plural, =0 {Projekte suchen} one {# Projekt suchen} other {# Projekte suchen}}",
     "searchTags": "Nach Schlagwörtern suchen...",
-    "searchRuns": "{count, plural, =0 {Suche Testläufe} one {Suche # Testläufe} other {Suche # Testläufe}}",
-    "searchSessions": "{count, plural, =0 {Sitzungen durchsuchen} one {Sitzung # durchsuchen} other {Sitzung # durchsuchen}}",
+    "searchRuns": "{count, plural, =0 {Suche Testläufe} one {Suche # Testlauf} other {Suche # Testläufe}}",
+    "searchSessions": "{count, plural, =0 {Sitzungen durchsuchen} one {# Sitzung durchsuchen} other {# Sitzungen durchsuchen}}",
     "searchMilestones": "{count, plural, =0 {Meilensteine durchsuchen} one {# Meilenstein durchsuchen} other {# Meilensteine durchsuchen}}",
     "search": "Suchen...",
     "defaultOption": "Standardoption",
@@ -91,12 +91,12 @@
       "actionsLabel": "Aktionen",
       "actionsWithAlerts": "Aktionen ({count, number} ungelesen)",
       "assign": "Zuordnen",
-      "assignSelected": "Weisen Sie {count, plural, one {zu # Fall} other {# Fälle}} zu",
+      "assignSelected": "Weisen Sie {count, plural, one {# Fall} other {# Fälle}} zu",
       "refresh": "Aktualisieren",
-      "addResultSelected": "Füge Ergebnis zu {count, plural, one {hinzu # Fall} other {# Fälle}}",
+      "addResultSelected": "Ergebnis zu {count, plural, one {# Fall} other {# Fällen}} hinzufügen",
       "resultsAdded": "{count, plural, one {# Ergebnis} other {# Ergebnisse}} Hinzugefügt",
-      "resultsAddedDescription": "{count, plural, one {Ergebnis wurde zu Testfall # hinzugefügt} other {Ergebnisse wurden zu Testfällen # hinzugefügt}} erfolgreich",
-      "addingResultsToMultiple": "Ergebnisse zu {count, plural, one {hinzufügen # Testfall} other {# Testfälle}} hinzufügen",
+      "resultsAddedDescription": "{count, plural, one {Ergebnis wurde erfolgreich zu # Testfall hinzugefügt} other {Ergebnisse wurden erfolgreich zu # Testfällen hinzugefügt}}",
+      "addingResultsToMultiple": "Ergebnisse werden zu {count, plural, one {# Testfall} other {# Testfällen}} hinzugefügt",
       "addedToTestRun": "Zum Testlauf hinzugefügt",
       "addedToTestRunDescription": "Der Testfall wurde dem Testlauf hinzugefügt.",
       "noAvailableTestRuns": "Alle aktiven Testläufe beinhalten diesen Testfall bereits.",
@@ -143,7 +143,7 @@
           "title": "Ergebnisse des Importtests",
           "description": "Laden Sie Testergebnisdateien hoch, um sie in einen neuen Testlauf zu importieren. Unterstützt die Formate JUnit, TestNG, xUnit, NUnit, MSTest, Mocha und Cucumber.",
           "testRun": {
-            "label": "Probelauf",
+            "label": "Testlauf",
             "placeholder": "Wählen Sie einen Testlauf aus"
           },
           "file": {
@@ -284,7 +284,7 @@
       "tags": "Tags",
       "createdBy": "Erstellt von",
       "description": "Beschreibung",
-      "description_placeholder": "Füge eine Beschreibung hinzu...",
+      "description_placeholder": "Beschreibung hinzufügen...",
       "testCases": "Testfälle",
       "sessions": "Sitzungen",
       "sharedSteps": "Gemeinsame Schritte",
@@ -490,7 +490,7 @@
     "dialogs": {
       "confirmAction": {
         "title": "Bestätigen {action}",
-        "message": "Bist du sicher, dass du {action}möchtest?"
+        "message": "Sind Sie sicher, dass Sie {action} möchten?"
       },
       "confirmDelete": {
         "description": "Sind Sie sicher, dass Sie diesen Eintrag löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
@@ -502,7 +502,7 @@
       },
       "assignBulk": {
         "title": "Testfälle massenhaft zuweisen",
-        "description": "Weisen Sie {count, plural, one {# ausgewählten Testfall} other {# ausgewählten Testfall}} einem Benutzer zu"
+        "description": "Weisen Sie {count, plural, one {# ausgewählten Testfall} other {# ausgewählte Testfälle}} einem Benutzer zu"
       },
       "complete": {
         "title": "Vollständiger Testlauf",
@@ -831,7 +831,7 @@
       "noTestCasesSelected": "Keine Testfälle ausgewählt",
       "editToSelectTestCases": "Bearbeiten Sie den Testlauf, um Testfälle auszuwählen.",
       "casesInRun": "{count, plural, =0 {Keine Testfälle im Testlauf} =1 {1 Testfall im Testlauf} other {# Testfälle im Testlauf}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 eindeutiger Fall} other {# eindeutige Fälle}} insgesamt {configCount, plural, =1 {1 Konfiguration} other {# Konfigurationen}} ({totalCount, number} Gesamtzahl der Fälle)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 eindeutiger Fall} other {# eindeutige Fälle}} über {configCount, plural, =1 {1 Konfiguration} other {# Konfigurationen}} ({totalCount, number} Gesamtzahl der Fälle)",
       "viewTestRunDetails": "Details zum Testlauf anzeigen",
       "sortByStatus": "Nach Status gruppieren",
       "sortByDate": "Nach Datum sortieren",
@@ -910,10 +910,10 @@
       "goToPrevious": "Zur vorherigen Seite",
       "goToNext": "Weiter zur nächsten Seite",
       "all": "Alle Artikel",
-      "entries": "{count, plural, =1 {# Artikel} other {# Artikel}}",
+      "entries": "{count, plural, =1 {# Eintrag} other {# Einträge}}",
       "pageSize": "Seitengröße",
       "showing": "Anzeige",
-      "total": "Gesamt {count, plural, =1 {# Artikel} other {# Artikel}}",
+      "total": "Gesamt {count, plural, =1 {# Eintrag} other {# Einträge}}",
       "filtered": "gefiltert von",
       "pageOfPages": "Seite {current} von {total}",
       "loadedOfTotal": "{loaded, number} von {total, number}"
@@ -924,9 +924,9 @@
       "attachments": {
         "title": "Anhänge hochladen",
         "description": "Ziehen Sie Ihre Dateien per Drag & Drop in die App oder klicken Sie auf die Schaltfläche unten, um Dateien auszuwählen.",
-        "selectFiles": "{count, plural, =0 {Dateien auswählen} one {1 ausgewählte Datei} other {# ausgewählten Dateien}}",
+        "selectFiles": "{count, plural, =0 {Dateien auswählen} one {1 ausgewählte Datei} other {# ausgewählte Dateien}}",
         "selectFile": "{count, plural, =0 {Datei auswählen} other {1 Datei ausgewählt}}",
-        "filesSelected": "{count, plural, one {1 Datei ausgewählt} other {# ausgewählten Dateien}}",
+        "filesSelected": "{count, plural, one {1 Datei ausgewählt} other {# Dateien ausgewählt}}",
         "addMoreFiles": "Weitere Dateien hinzufügen...",
         "replaceFile": "Datei ersetzen...",
         "invalidFileType": "Ungültiger Dateityp. Nur {types} -Dateien sind zulässig.",
@@ -989,7 +989,7 @@
         "addColumnAfter": "Spalte hinzufügen nach",
         "deleteColumn": "Spalte löschen",
         "addRowBefore": "Fügen Sie vor der Zeile eine weitere Zeile ein.",
-        "addRowAfter": "Füge nach",
+        "addRowAfter": "Zeile danach einfügen",
         "deleteRow": "Zeile löschen",
         "deleteTable": "Tabelle löschen"
       },
@@ -1146,7 +1146,7 @@
       "assigned": "Testfall erfolgreich zugewiesen",
       "unassigned": "Testfall erfolgreich abgemeldet",
       "bulkAssigned": "{count, plural, one {# Testfall} other {# Testfälle}} erfolgreich zugewiesen",
-      "bulkUnassigned": "{count, plural, one {# Testfall} other {# Testfälle}} erfolgreich nicht zugewiesen"
+      "bulkUnassigned": "Zuweisung von {count, plural, one {# Testfall} other {# Testfällen}} erfolgreich aufgehoben"
     },
     "tabs": {
       "general": "Allgemein",
@@ -1500,7 +1500,7 @@
           "switchWarning4": "Entfernen Sie den für die aktuelle Integration konfigurierten eingehenden Webhook.",
           "importIssues": "Ticket importieren",
           "importTitle": "Ticket aus {name} importieren",
-          "importDescription": "Übernimm Tickets aus diesem verknüpften Projekt in dein Projekt. Bestehende Tickets werden nicht dupliziert, und importierte Tickets bleiben durch die Synchronisierung auf dem aktuellen Stand.",
+          "importDescription": "Übernehmen Sie Tickets aus diesem verknüpften Projekt in Ihr Projekt. Bestehende Tickets werden nicht dupliziert, und importierte Tickets bleiben durch die Synchronisierung auf dem aktuellen Stand.",
           "importUpdatedWithin": "Aktualisiert innerhalb",
           "importLastDays": "Letzte {days} Tage",
           "importAllHistory": "Vollständiger Verlauf",
@@ -1570,13 +1570,13 @@
             "description": "Verbinden Sie Ihr Jira-Konto, um Tickets direkt in TestPlanIt zu verwalten."
           },
           "simple_url": {
-            "description": "Verbinde dich mit einem Drittanbietersystem zur Ticket-Verfolgung."
+            "description": "Verbindung zu einem Drittanbietersystem für die Ticket-Verfolgung herstellen."
           },
           "github": {
-            "description": "Verbinde dich mit GitHub für die Ticket-Verfolgung und Repository-Verwaltung."
+            "description": "Verbindung zu GitHub für die Ticket-Verfolgung und Repository-Verwaltung herstellen."
           },
           "gitlab": {
-            "description": "Verbinde dich mit GitLab, um Tickets und Merge-Anfragen zu verfolgen."
+            "description": "Verbindung zu GitLab herstellen, um Tickets und Merge-Requests zu verfolgen."
           },
           "gitea": {
             "description": "Verbinden Sie sich mit einer selbst gehosteten Gitea-, Forgejo- oder Gogs-Instanz, um Tickets zu verfolgen."
@@ -1742,7 +1742,7 @@
         "outboundDeleteError": "Webhook konnte nicht gelöscht werden.",
         "outboundSecretCopy": "Geheimnis kopieren",
         "outboundSecretShownOnce": "Bewahre dieses Geheimnis jetzt auf – es darf nicht wieder enthüllt werden.",
-        "inboundAddButton": "Füge einen eingehenden Webhook hinzu.",
+        "inboundAddButton": "Eingehenden Webhook hinzufügen",
         "inboundChooserJira": "Jira",
         "inboundChooserGithub": "GitHub",
         "inboundChooserAdo": "Azure DevOps",
@@ -1931,12 +1931,12 @@
           "eventBranchPushHelp": "Analysieren Sie jeden Push zu einem anderen Zweig gegen den Basiszweig, wie einen Pull-Request, und verfassen Sie einen Testlauf für jeden.",
           "baseBranch": "Basis-Zweig",
           "baseBranchHelp": "Pushes zu diesem Zweig werden von selbst analysiert; Pull-Anfragen und andere Zweige werden damit verglichen. Leer lassen, um den Standard-Zweig der Verbindung zu verwenden.",
-          "minScoreHelp": "Jede zusammengesetzte Testabfolge enthält alle Testfälle, deren Analyseergebnis mindestens diese Punktzahl aufweist (0–100). Lassen Sie dieses Feld leer, um die angehefteten und betroffenen Tests wie bei einer manuell gestarteten Abfolge zu übernehmen.",
+          "minScoreHelp": "Jeder zusammengesetzte Testlauf enthält alle Testfälle, deren Analyseergebnis mindestens diese Punktzahl aufweist (0–100). Lassen Sie dieses Feld leer, um die angehefteten und betroffenen Tests wie bei einem manuell gestarteten Testlauf zu übernehmen.",
           "minScoreInvalid": "Geben Sie eine ganze Zahl von 0 bis 100 ein, oder lassen Sie das Feld leer",
           "autoExecute": "Automatisierte Fälle ausführen",
-          "autoExecuteHelp": "Nach dem Erstellen der Testabfolge wird die automatisierte Ausführung ihrer automatisierten Fälle auf diesem Ziel angefordert. Manuelle Fälle bleiben in der Abfolge für Tester.",
-          "autoExecuteNoTargets": "Für dieses Projekt ist kein Ausführungsziel konfiguriert. <link>Fügen Sie eines hinzu</link>, um Testabfolgen automatisch auszuführen.",
-          "autoExecuteTargetMissing": "Das ausgewählte Ausführungsziel wurde gelöscht oder deaktiviert. Testabfolgen werden weiterhin erstellt, aber es wird keine Ausführung angefordert, bis Sie ein anderes Ziel auswählen.",
+          "autoExecuteHelp": "Nach dem Erstellen des Testlaufs wird die automatisierte Ausführung seiner automatisierten Fälle auf diesem Ziel angefordert. Manuelle Fälle bleiben im Testlauf für Tester.",
+          "autoExecuteNoTargets": "Für dieses Projekt ist kein Ausführungsziel konfiguriert. <link>Fügen Sie eines hinzu</link>, um Testläufe automatisch auszuführen.",
+          "autoExecuteTargetMissing": "Das ausgewählte Ausführungsziel wurde gelöscht oder deaktiviert. Testläufe werden weiterhin erstellt, aber es wird keine Ausführung angefordert, bis Sie ein anderes Ziel auswählen.",
           "autoExecuteSaveError": "Die Einstellungen für die automatisierte Ausführung konnten nicht gespeichert werden"
         },
         "inboundEmptyState": "Noch keine eingehenden Webhooks. <link>Fügen Sie eines hinzu</link>, um Problemupdates von Ihrem Issue-Tracker oder Pull-Anfragen und Pushes aus einem verbundenen Repository zu erhalten.",
@@ -2051,13 +2051,13 @@
         "delete": {
           "title": "Löschen \"{name}\"?",
           "descriptionStage1": "Dieser Datensatz wird aus dem Projekt entfernt. Bestehende Testläufe, die bereits Momentaufnahmen seiner Werte erstellt haben, sind davon nicht betroffen.",
-          "descriptionStage2": "Dieser Datensatz wird von {count, plural, =1 {# Fall} other {# Fälle}}verwendet. Durch das Löschen dieses Datensatzes wird die Zuordnung zum gemeinsamen Datensatz für diese Fälle aufgehoben. Bestehende Testläufe sind davon nicht betroffen (Snapshots sind unveränderlich).",
+          "descriptionStage2": "Dieser Datensatz wird von {count, plural, =1 {# Fall} other {# Fällen}} verwendet. Durch das Löschen dieses Datensatzes wird die Zuordnung zum gemeinsamen Datensatz für diese Fälle aufgehoben. Bestehende Testläufe sind davon nicht betroffen (Snapshots sind unveränderlich).",
           "confirm": "Datensatz löschen",
           "confirmAnyway": "Trotzdem löschen ({count, plural, =1 {# Fall} other {# Fälle}})",
           "error": "Datensatz konnte nicht gelöscht werden"
         },
         "deleteSuccess": "Gelöscht \"{name}\"",
-        "deleteSuccessWithAssignments": "Gelöscht \"{name}\" und nicht zugewiesen {count, plural, =1 {# Fall} other {# Fälle}}",
+        "deleteSuccessWithAssignments": "\"{name}\" gelöscht und Zuweisung von {count, plural, =1 {# Fall} other {# Fällen}} aufgehoben",
         "editor": {
           "back": "Zurück zu den Datensätzen",
           "loadError": "Dieser Datensatz konnte nicht geladen werden.",
@@ -2258,8 +2258,8 @@
         "excludeNotStarted": {
           "label": "Entwurfsfälle von Testläufen ausschließen",
           "description": "Wenn diese Option aktiviert ist, werden Testfälle im Workflow-Status „Nicht gestartet“ in der Fallauswahl ausgeblendet und können keinem Lauf hinzugefügt werden. Wird ein bestehender Fall auf „Nicht gestartet“ zurückgesetzt (z. B. durch Ablehnung im Rahmen der Überprüfung und Genehmigung), wird er aus allen offenen Läufen entfernt, es sei denn, es liegt bereits ein Ergebnis vor. In diesem Fall bleibt er im Lauf erhalten, ist aber schreibgeschützt.",
-          "enabledToast": "Entwürfe werden von den Auswertungen ausgeschlossen.",
-          "disabledToast": "Entwürfe können nun zu Spielzügen hinzugefügt werden.",
+          "enabledToast": "Entwürfe werden von den Testläufen ausgeschlossen.",
+          "disabledToast": "Entwürfe können nun zu Testläufen hinzugefügt werden.",
           "saveError": "Fehler beim Aktualisieren der Einstellung zum Ausschluss von Entwürfen",
           "skippedToast": "{count, plural, =1 {1 Entwurf wurde übersprungen, da er sich im Status „Nicht begonnen“ befindet.} other {# Entwürfe wurden übersprungen, da sie sich im Status „Nicht begonnen“ befinden.}}"
         },
@@ -2362,7 +2362,7 @@
           "enableLabel": "Code-Pins aus Commit-Nachrichten ableiten",
           "enableDescription": "Scannt aktuelle Commits im Zweig bei jeder Cache-Aktualisierung. Deaktivieren Sie diese Option, um Analysen die Ticket-Schlüssel nur aus den analysierten Commits lesen zu lassen; manuelle Scans werden trotzdem ausgeführt.",
           "resultLinksLabel": "Auch Tickets zählen, die zu Testergebnissen hinzugefügt wurden",
-          "resultLinksDescription": "Ein Ticket, das zu einem Testergebnis oder Schritttestergebnis hinzugefügt wird, verlinkt auch den Fall, für den dieses Ergebnis aufgezeichnet wurde, sodass seine Commits diese Anfrage auch anheften und auswählen. Aus, nur Tickets, die direkt mit einem Testfall verlinkt sind, werden gezählt.",
+          "resultLinksDescription": "Ein Ticket, das zu einem Testergebnis oder Schritttestergebnis hinzugefügt wird, verlinkt auch den Fall, für den dieses Ergebnis aufgezeichnet wurde, sodass seine Commits diesen Testfall auch anheften und auswählen. Aus, nur Tickets, die direkt mit einem Testfall verlinkt sind, werden gezählt.",
           "skippedLarge": "{count, plural, one {# Commit wurde übersprungen, da er zu groß zum Pinnen ist.} other {# Commits wurden übersprungen, da sie zu groß zum Pinnen sind.}}",
           "fetchCapped": "Nicht jeder Commit, der ein verknüpftes Ticket benannt hat, ließ seine Dateien in diesem Durchgang lesen; die restlichen werden beim nächsten Scan aufgegriffen.",
           "scanRecent": "Aktuelle Commits erneut scannen",
@@ -2378,7 +2378,7 @@
           "imported": "{imported, plural, =0 {Es wurden keine neuen Tickets vom Tracker importiert.} one {# Ticket wurde vom Tracker importiert.} other {# Tickets wurden vom Tracker importiert.}}",
           "fullCapped": "Der Durchlauf stoppte bei {count, number} Commits, bevor er den Anfang des Zweigs erreichte. Führen Sie „Vollständigen Verlauf scannen",
           "stale": "Ein Scan, der {date} gestartet wurde, hat nie Bericht erstattet — der Worker wurde möglicherweise neu gestartet. Reihen Sie ihn erneut in die Warteschlange ein, um fortzufahren.",
-          "summaryCommits": "{commits, plural, one {# Commit} other {# Commits}} gelesen{cached, plural, =0 {} other { ({cached, number} aus dem Commit-Cache)}} · {naming, number} benannte ein Ticket · {tickets, plural, one {# unterschiedliches Ticket} other {# unterschiedliche Tickets}}",
+          "summaryCommits": "{commits, plural, one {# Commit} other {# Commits}} gelesen{cached, plural, =0 {} other { ({cached, number} aus dem Commit-Cache)}} · {naming, number} mit Ticketbezug · {tickets, plural, one {# unterschiedliches Ticket} other {# unterschiedliche Tickets}}",
           "summaryPins": "Pins: {created, number} erstellt · {updated, number} aktualisiert · {removed, number} entfernt",
           "noLinkedHint": "Tickets pinnen Testfälle nur, wenn ein Testfall mit ihnen verknüpft ist. Verknüpfen Sie Fälle mit den importierten Tickets und scannen Sie dann erneut.",
           "importFailuresTitle": "Schlüssel nicht im Tracker gefunden ({shown} von {total}):",
@@ -2403,7 +2403,7 @@
           "problems": "{count, plural, one {# Problem} other {# Probleme}}"
         },
         "saved": "Auswirkungsanalysekonfiguration gespeichert",
-        "disconnectWarning1": "{count, plural, one {# Code-Pin entfernen} other {# Code-Pins entfernen}} und den Analyseverlauf für dieses Repository",
+        "disconnectWarning1": "{count, plural, one {# Code-Pin} other {# Code-Pins}} und den Analyseverlauf für dieses Repository entfernen",
         "disconnectSuccess": "Anwendungs-Repository getrennt",
         "disconnectError": "Fehler beim Trennen des Anwendungs-Repositorys",
         "repositories": {
@@ -2429,13 +2429,13 @@
         },
         "bulk": {
           "label": "{count, plural, one {Ihr Repository:} other {Alle # Repositories:}}",
-          "scanRecentHint": "Aktuelle Commits im {count, plural, one {verbundenen Repository} other {allen # verbundenen Repositories}} erneut scannen.",
-          "scanFullHint": "Jeden Commit im Branch des {count, plural, one {verbundenen Repositorys} other {aller # verbundenen Repositories}} durchlaufen und Pins für vorhandene Tickets ergänzen.",
-          "scanFullConfirm": "Dies durchläuft jeden Commit im Branch des {count, plural, one {verbundenen Repositorys} other {aller # verbundenen Repositories}}. Repositories werden nacheinander gescannt, daher kann dies lange dauern, und jeder Durchlauf liest Commits über die API des Anbieters, was auf sein Ratenlimit angerechnet wird.",
-          "checkStaleHint": "Überprüfen Sie die Code Pins des {count, plural, one {verbundenen Repositorys} other {aller # verbundenen Repositories}} gegen jeden Branch-Tip.",
+          "scanRecentHint": "Aktuelle Commits {count, plural, one {im verbundenen Repository} other {in allen # verbundenen Repositories}} erneut scannen.",
+          "scanFullHint": "Jeden Commit im Branch {count, plural, one {des verbundenen Repositorys} other {aller # verbundenen Repositories}} durchlaufen und Pins für vorhandene Tickets ergänzen.",
+          "scanFullConfirm": "Dies durchläuft jeden Commit im Branch {count, plural, one {des verbundenen Repositorys} other {aller # verbundenen Repositories}}. Repositories werden nacheinander gescannt, daher kann dies lange dauern, und jeder Durchlauf liest Commits über die API des Anbieters, was auf sein Ratenlimit angerechnet wird.",
+          "checkStaleHint": "Überprüfen Sie die Code Pins {count, plural, one {des verbundenen Repositorys} other {aller # verbundenen Repositories}} gegen jeden Branch-Tip.",
           "removeStaleHint": "Entfernen Sie {count, plural, one {# veralteten Code Pin} other {# veraltete Code Pins}} über {repos, plural, one {# Repository} other {# Repositories}}.",
           "removeConfirm": "Entfernen Sie {count, plural, one {# Code Pin, den} other {# Code Pins, die}} die letzten Überprüfungen nicht am Branch-Tip finden konnten, über {repos, plural, one {# Repository} other {# Repositories}}?",
-          "queued": "In Warteschlange für {count, plural, one {# Repository} other {# Repositories}}.{skipped, plural, =0 {} one { # wurde bereits ausgeführt.} other { # wurden bereits ausgeführt.}}",
+          "queued": "In Warteschlange für {count, plural, one {# Repository} other {# Repositories}}.{skipped, plural, =0 {} one { # lief bereits.} other { # liefen bereits.}}",
           "allRunning": "Bereits in der Warteschlange oder wird für jedes Repository ausgeführt.",
           "failed": "Konnte nicht starten für: {names}"
         },
@@ -2547,8 +2547,8 @@
       "description": "Keine Beschreibung vorhanden",
       "documentation": "Es wurde keine Dokumentation bereitgestellt.",
       "testRuns": "Keine Testläufe",
-      "noMatchingTestRuns": "Keine Testläufe entsprechen deinen Filtern.",
-      "noMatchingSessions": "Keine Sitzungen entsprechen deinen Filtern.",
+      "noMatchingTestRuns": "Keine Testläufe entsprechen Ihren Filtern.",
+      "noMatchingSessions": "Keine Sitzungen entsprechen Ihren Filtern.",
       "forecasts": "Es sind keine Prognosedaten verfügbar."
     },
     "cardFilters": {
@@ -2638,7 +2638,7 @@
       "alreadyLinked": "Bereits verlinkt",
       "selectedCount": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
       "confirmSelection": "Ausgewählte importieren",
-      "confirmSelectionCount": "{count, plural, one {Meilenstein # importieren} other {# Meilensteine importieren}}",
+      "confirmSelectionCount": "{count, plural, one {# Meilenstein importieren} other {# Meilensteine importieren}}",
       "empty": "Keine Meilensteine gefunden",
       "previewFailed": "Meilensteine konnten nicht aus {provider} geladen werden",
       "importFailed": "Ausgewählte Meilensteine konnten nicht importiert werden",
@@ -2649,7 +2649,7 @@
       "kindRelease": "Version",
       "kindSprint": "Sprint",
       "searchPlaceholder": "Releases und Sprints durchsuchen...",
-      "emptyFiltered": "Keine Meilensteine entsprechen deinen Filtern.",
+      "emptyFiltered": "Keine Meilensteine entsprechen Ihren Filtern.",
       "partialWarning": "Einige {provider}-Projekte konnten nicht abgerufen werden:",
       "importing": "Importiere {count, plural, one {# Meilenstein} other {# Meilensteine}} aus {provider}…",
       "completed": "{count, plural, one {# Meilenstein} other {# Meilensteine}} aus {provider} importiert",
@@ -2664,7 +2664,7 @@
       "syncNow": "Jetzt synchronisieren",
       "unlinkMenuItem": "Von {provider} trennen",
       "unlinkConfirmTitle": "Meilenstein trennen?",
-      "unlinkConfirmDescription": "Dies beendet die Synchronisierung mit dem Tracker: Felder werden wieder bearbeitbar, synchronisierte Problem-Verknüpfungen werden manuell (du kannst sie behalten oder entfernen), und eine erneute Verknüpfung ist später möglich, indem dieses Artefakt erneut importiert wird.",
+      "unlinkConfirmDescription": "Dies beendet die Synchronisierung mit dem Tracker: Felder werden wieder bearbeitbar, synchronisierte Problem-Verknüpfungen werden manuell (Sie können sie behalten oder entfernen), und eine erneute Verknüpfung ist später möglich, indem dieses Artefakt erneut importiert wird.",
       "unlinkSuccess": "Meilenstein wurde vom Tracker getrennt.",
       "unlinkError": "Der Meilenstein konnte nicht getrennt werden.",
       "sourceRemoved": "Quelle entfernt in {provider}",
@@ -2765,7 +2765,7 @@
     "actions": {
       "add": "Sitzung hinzufügen",
       "create": "Neue Sitzung erstellen",
-      "edit": "Bearbeitungssitzung",
+      "edit": "Sitzung bearbeiten",
       "complete": "Sitzung abschließen",
       "delete": "Sitzung löschen",
       "viewSessionDetails": "Sitzung ansehen"
@@ -2782,7 +2782,7 @@
     },
     "duplicateDialog": {
       "title": "Doppelte Sitzung",
-      "description": "Erstelle eine Kopie der Sitzung <nameStyle>{name}</nameStyle> mit allen Metadaten, aber ohne Ergebnisse.",
+      "description": "Erstellen Sie eine Kopie der Sitzung <nameStyle>{name}</nameStyle> mit allen Metadaten, aber ohne Ergebnisse.",
       "templateUnassignedWarning": "Die ursprüngliche Sitzung verwendete eine Vorlage, die diesem Projekt nicht mehr zugewiesen ist. Die neue Sitzung verwendet stattdessen <strong>{name}</strong>.",
       "stateUnassignedWarning": "Die ursprüngliche Sitzung verwendete einen Workflow-Status, der für dieses Projekt nicht mehr aktiviert ist. Die neue Sitzung verwendet stattdessen <strong>{name}</strong>."
     },
@@ -2824,7 +2824,7 @@
         "completionDate": "Fertigstellungsdatum"
       },
       "placeholders": {
-        "pickDate": "Wähle ein Datum"
+        "pickDate": "Datum auswählen"
       }
     },
     "summary": {
@@ -2863,7 +2863,7 @@
     "results": {
       "section": "Sitzungsprotokoll",
       "add": "Sitzungsergebnis hinzufügen",
-      "edit": "Ergebnis der Bearbeitungssitzung",
+      "edit": "Ergebnis der Sitzung bearbeiten",
       "editDescription": "Nehmen Sie die gewünschten Änderungen am Sitzungsergebnis vor und klicken Sie anschließend auf Speichern.",
       "details": "Geben Sie hier Details zum Ergebnis ein...",
       "noResults": "Es wurden noch keine Ergebnisse hinzugefügt.",
@@ -2884,14 +2884,14 @@
   "home": {
     "dashboard": {
       "title": "Ihr Dashboard",
-      "users": "Es gibt {count, plural, =1 {# Benutzer} other {sind # Benutzer}}",
+      "users": "Es gibt {count, plural, =1 {# Benutzer} other {# Benutzer}}",
       "yourProjects": "Ihre Projekte",
       "projects": "Sie haben Zugriff auf {count, plural, =1 {# Projekt} other {# Projekte}}",
       "loading": "Dashboard wird geladen...",
-      "noItems": "Alles erledigt – dir sind derzeit keine Aufgaben zugewiesen.",
+      "noItems": "Derzeit erfordert keine Ihnen zugewiesene Aufgabe Ihre Aufmerksamkeit.",
       "pendingRuns": "Ausstehende Testläufe",
       "activeSessions": "Aktive Sitzungen",
-      "yourActiveSessions": "{count, plural, =0 {Keine aktiven Sitzungen} =1 {# Aktive Sitzungen} other {# Aktive Sitzungen}}",
+      "yourActiveSessions": "{count, plural, =0 {Keine aktiven Sitzungen} =1 {# Aktive Sitzung} other {# Aktive Sitzungen}}",
       "yourPendingRuns": "{count, plural, =0 {Keine ausstehenden Testläufe} =1 {# Aktiver Testlauf} other {# Aktive Testläufe}}",
       "yourAssignments": "Ihre Aufgaben",
       "totalTime": "Geschätzte Gesamtzeit: ",
@@ -2913,14 +2913,14 @@
       "title": "Kein Projektzugriff",
       "description": "Sie haben keinen Zugriff auf Projekte in diesem System.",
       "contact": "Wenden Sie sich an Ihren Systemadministrator, um Zugriff auf Projekte zu beantragen.",
-      "adminAddProject": "Füge dein erstes Projekt hinzu, um loszulegen!",
+      "adminAddProject": "Fügen Sie Ihr erstes Projekt hinzu, um loszulegen!",
       "footer": "Für die Teilnahme an den Testplanungsaktivitäten ist ein Zugriff erforderlich."
     },
     "getStarted": {
       "title": "Erste Schritte",
-      "description": "Füge dein eigenes Projekt hinzu, wenn du bereit bist, mit der Planung zu beginnen.",
-      "adminAddProject": "Erstelle dein erstes Projekt",
-      "footer": "Das Demo-Projekt enthält Beispieldaten, die du jederzeit erkunden oder entfernen kannst."
+      "description": "Fügen Sie Ihr eigenes Projekt hinzu, wenn Sie bereit sind, mit der Planung zu beginnen.",
+      "adminAddProject": "Erstellen Sie Ihr erstes Projekt",
+      "footer": "Das Demo-Projekt enthält Beispieldaten, die Sie jederzeit erkunden oder entfernen können."
     },
     "noProjectAccess": {
       "description": "Sie haben keinen Zugriff auf dieses Projekt.",
@@ -3277,7 +3277,7 @@
       "hasLink": "Hat Link",
       "noLink": "Kein Link",
       "hasSteps": "Hat Schritte",
-      "noSteps": "Keine Stufen",
+      "noSteps": "Keine Schritte",
       "unchecked": "Ungeprüft",
       "linkedCases": "Zusammenhängende Fälle",
       "clickToViewFullContent": "Klicken Sie hier, um den vollständigen Inhalt anzuzeigen."
@@ -3288,9 +3288,9 @@
       "delete": "Schritt löschen",
       "removedFromCase": "Aus Testfall entfernt",
       "confirmDelete": "Löschvorgang bestätigen Schritt {number, number}?",
-      "createSharedSteps": "Gemeinsame Schritte erstellen {number, plural, one {Schritt} other {Schritte}}",
+      "createSharedSteps": "{number, plural, one {Gemeinsamen Schritt} other {Gemeinsame Schritte}} erstellen",
       "sharedStepsName": "Gemeinsame Schritte Name",
-      "sharedStepsDescription": "Geben Sie einen Namen für Ihren neuen gemeinsamen Schritt {number, plural, one {} other {}}ein. Dieser umfasst {number, plural, one {# ausgewählte Schritte} other {# ausgewählte Schritte}}.",
+      "sharedStepsDescription": "Geben Sie einen Namen für {number, plural, one {Ihren neuen gemeinsamen Schritt} other {Ihre neuen gemeinsamen Schritte}} ein. Dies umfasst {number, plural, one {# ausgewählten Schritt} other {# ausgewählte Schritte}}.",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "Bitte wählen Sie Schritte aus und geben Sie einen Namen ein, um gemeinsame Schritte zu erstellen.",
         "failedToCreateSharedStepGroupError": "Die gemeinsamen Schritte konnten nicht erstellt werden. Bitte versuchen Sie es erneut.",
@@ -3336,10 +3336,10 @@
     "showDescendants": "Alle untergeordneten Elemente anzeigen",
     "addFolder": "Ordner hinzufügen",
     "emptyFolders": "Klicken Sie oben auf die Schaltfläche „Ordner hinzufügen“, um den ersten Ordner hinzuzufügen.",
-    "selectedAllCases": "{count, plural, =0 {Alle Fälle ausgewählt} one {# Fälle auf allen Seiten ausgewählt} other {# Fälle auf allen Seiten ausgewählt}}",
+    "selectedAllCases": "{count, plural, =0 {Alle Fälle ausgewählt} one {# Fall auf allen Seiten ausgewählt} other {# Fälle auf allen Seiten ausgewählt}}",
     "deselectedAllCases": "Alle Fälle auf allen Seiten abgewählt.",
     "selectAllTooltip": "Alle Fälle auf dieser Seite auswählen/abwählen",
-    "selectAllShiftTooltip": "{count, plural, =0 {Alle Fälle auf allen Seiten auswählen/abwählen} one {# Fälle auf allen Seiten auswählen/abwählen} other {# Fälle auf allen Seiten auswählen/abwählen}}",
+    "selectAllShiftTooltip": "{count, plural, =0 {Alle Fälle auf allen Seiten auswählen/abwählen} one {# Fall auf allen Seiten auswählen/abwählen} other {# Fälle auf allen Seiten auswählen/abwählen}}",
     "deselectAllShiftTooltip": "Alle Fälle auf allen Seiten auswählen/abwählen",
     "shiftClickHint": "Halten Sie die Umschalttaste gedrückt, um alle Seiten auszuwählen/die Auswahl aufzuheben",
     "treeView": {
@@ -3359,9 +3359,9 @@
       "promptTitle": "Was möchten Sie tun?",
       "copying": "Kopieren…",
       "copyComplete": "{count, plural, =1 {1 Fall kopiert nach {folder}} other {# Fälle kopiert nach {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
-      "moveComplete": "{count, plural, =1 {1 Fall nach {folder}} other {verschoben. # Fälle nach {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}} verschoben.",
+      "moveComplete": "{count, plural, =1 {1 Fall nach {folder}} other {# Fälle nach {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}} verschoben.",
       "copyError": "{count, plural, =1 {Fehler beim Kopieren von 1 Fall nach {folder}} other {Fehler beim Kopieren von # Fällen nach {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
-      "moveError": "{count, plural, one {}=1 {Fehler beim Verschieben von 1 Fall nach {folder}} other {Fehler beim Verschieben von # Fällen nach {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
+      "moveError": "{count, plural, =1 {Fehler beim Verschieben von 1 Fall nach {folder}} other {Fehler beim Verschieben von # Fällen nach {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
       "copyAlreadyRunning": "Ein weiterer Kopiervorgang ist bereits in Arbeit. Bitte warten Sie, bis er abgeschlossen ist.",
       "currentSuffix": "(Aktuell)",
       "moveDisabledSameFolder": "Fälle befinden sich bereits in diesem Ordner",
@@ -3450,10 +3450,10 @@
           "markdownParseFailed": "Fehler beim Parsen der Markdown-Datei",
           "markdownLlmFailed": "KI-Parsing nicht verfügbar, Standardparser wird verwendet",
           "validationTitle": "Importvalidierung fehlgeschlagen",
-          "validationSummary": "{count, plural, one {# Ticket wurde} other {# Tickets wurden}} in Ihrer Datei gefunden. Es wurden keine Testfälle importiert.",
+          "validationSummary": "{count, plural, one {# Problem wurde} other {# Probleme wurden}} in Ihrer Datei gefunden. Es wurden keine Testfälle importiert.",
           "validationEntry": "Zeile {row, number} · {field}: {message}",
           "validationEntryNamed": "Zeile {row, number} \"{name}\" · {field}: {message}",
-          "validationMore": "{count, plural, one {# weiteres Ticket wird} other {# weitere Tickets werden}} nicht angezeigt.",
+          "validationMore": "{count, plural, one {# weiteres Problem wird} other {# weitere Probleme werden}} nicht angezeigt.",
           "validationMultiRowNote": "Die Zeilennummern beziehen sich auf die gruppierten Testfälle in der Vorschau, nicht auf die rohen CSV-Zeilen.",
           "partialTitle": "Einige Testfälle wurden nicht importiert",
           "partialSummary": "{failed, plural, one {# Zeile konnte} other {# Zeilen konnten}} nicht importiert werden. {imported, plural, one {# Testfall wurde} other {# Testfälle wurden}} erfolgreich importiert."
@@ -3572,10 +3572,10 @@
       "confirmMessageStart": "Sind Sie sicher, dass Sie den Testfall löschen möchten? ",
       "confirmMessageEnd": "?",
       "warning": "Dieser Testfall wird aus dem Projekt entfernt. Die historischen Daten dieses Testfalls, einschließlich der Ergebnisse, bleiben jedoch im Projekt erhalten.",
-      "activeRunWarningMessage": "Dieser Testfall ist Teil von {count, plural, =1 {# aktiver Testlauf} other {# aktive Testläufe}}. Durch das Löschen wird er innerhalb dieser Läufe als gelöscht markiert."
+      "activeRunWarningMessage": "Dieser Testfall ist Teil von {count, plural, =1 {# aktivem Testlauf} other {# aktiven Testläufen}}. Durch das Löschen wird er innerhalb dieser Läufe als gelöscht markiert."
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {Durch das Löschen dieses Ordners werden auch alle Unterordner gelöscht. Sind Sie sicher?} one {Durch das Löschen dieses Ordners werden auch 1 Testfall in diesem Ordner und allen Unterordnern gelöscht. Sind Sie sicher?} other {Durch das Löschen dieses Ordners werden auch # Testfälle in diesem Ordner und allen Unterordnern gelöscht. Sind Sie sicher?}}",
+      "confirmMessage": "{count, plural, =0 {Durch das Löschen dieses Ordners werden auch alle Unterordner gelöscht. Sind Sie sicher?} one {Durch das Löschen dieses Ordners wird auch 1 Testfall in diesem Ordner und allen Unterordnern gelöscht. Sind Sie sicher?} other {Durch das Löschen dieses Ordners werden auch # Testfälle in diesem Ordner und allen Unterordnern gelöscht. Sind Sie sicher?}}",
       "warning": "Dieser Ordner und alle darin enthaltenen Testfälle werden aus dem Projekt entfernt. Die historischen Daten dieser Testfälle, einschließlich der Ergebnisse, bleiben jedoch im Projekt erhalten.",
       "confirm": "Ordner löschen bestätigen",
       "success": "Ordner und alle Unterordner/Fälle wurden erfolgreich gelöscht."
@@ -3604,10 +3604,10 @@
     "noFoldersTitle": "Noch keine Ordner",
     "noFoldersDescription": "Beginnen Sie damit, Ihren ersten Ordner anzulegen, um Ihre Testfälle zu organisieren.",
     "noFoldersOrCasesNoPermission": "Es sind keine Ordner oder Testfälle zum Anzeigen vorhanden.",
-    "createFirstFolder": "Erstelle deinen ersten Ordner",
+    "createFirstFolder": "Erstellen Sie Ihren ersten Ordner",
     "bulkEdit": {
       "title": "Massenbearbeitung {count, plural, one {# Fall} other {# Fälle}}",
-      "description": "Bearbeiten {count, plural, one {# ausgewählter Fall} other {# ausgewählter Fall}}. Markieren Sie ein Feld, um die Bearbeitung zu aktivieren.",
+      "description": "Bearbeitung von {count, plural, one {# ausgewähltem Fall} other {# ausgewählten Fällen}}. Markieren Sie ein Feld, um die Bearbeitung zu aktivieren.",
       "defineStepsTitle": "Schritte für die Massenaktualisierung definieren",
       "saveNewSteps": "Neue Schritte speichern",
       "newStepsDefined": "Neue Schritte definiert ({count, number}) - Zum Bearbeiten auf die Schaltfläche klicken.",
@@ -3636,7 +3636,7 @@
       "stepsCannotBeBulkEdited": "Schritte können nicht in großen Mengen bearbeitet werden",
       "stepsInfoTitle": "Schrittinformationen",
       "stepsCannotBeBulkEditedInfo": "Schritte können nicht in großen Mengen bearbeitet werden. Bearbeiten Sie die Schritte, indem Sie die einzelnen Fälle bearbeiten.",
-      "confirmDeleteCases": "Möchten Sie wirklich {count, plural, one {# ausgewählte Fälle} other {# ausgewählte Fälle}}löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "confirmDeleteCases": "Möchten Sie wirklich {count, plural, one {# ausgewählten Fall} other {# ausgewählte Fälle}} löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
       "replaceAll": "Alle ersetzen",
       "searchReplace": "Suchen und Ersetzen",
       "searchFor": "Suchen nach",
@@ -3734,7 +3734,7 @@
       "retryScan": "Scan wiederholen",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Ergebnisse durch KI verbessern...",
-      "scanComplete": "Duplikatanalyse abgeschlossen — {count, plural, =0 {Keine Duplikate gefunden} one {# Potenzielle Duplikate gefunden} other {# Potenzielle Duplikate gefunden}}",
+      "scanComplete": "Duplikatanalyse abgeschlossen — {count, plural, =0 {Keine Duplikate gefunden} one {# potenzielles Duplikat gefunden} other {# potenzielle Duplikate gefunden}}",
       "scanFailed": "Duplikatanalyse fehlgeschlagen",
       "scanFailedDescription": "Es ist ein unerwarteter Fehler aufgetreten.",
       "pageTitle": "Doppelte Kandidaten",
@@ -3770,7 +3770,7 @@
       "merging": "Zusammenführen...",
       "linking": "Verknüpfung...",
       "dismissing": "Entlassen...",
-      "mergeSuccess": "Fälle erfolgreich zusammengeführt. {runsTransferred, plural, =0 {Keine Testläufe übertragen} one {# Testläufe übertragen} other {# Testläufe übertragen}}.",
+      "mergeSuccess": "Fälle erfolgreich zusammengeführt. {runsTransferred, plural, =0 {Keine Testläufe übertragen} one {# Testlauf übertragen} other {# Testläufe übertragen}}.",
       "linkSuccess": "Fälle, die miteinander verknüpft sind.",
       "dismissSuccess": "Das Paar wurde entlassen. Es wird in zukünftigen Scans nicht mehr angezeigt.",
       "resolveError": "Das doppelte Paar konnte nicht aufgelöst werden. Bitte versuchen Sie es erneut.",
@@ -3788,7 +3788,7 @@
       "duplicateWarningDescription": "{count, plural, one {# bestehender Fall kann} other {# bestehende Fälle können}} ähnliche Funktionalitäten abdecken",
       "duplicateWarningReview": "Rezension",
       "importWarning": "Mögliches Duplikat",
-      "importWarningTooltip": "Dieser Fallname ähnelt {count, plural, one {# bestehender Fall} other {# bestehende Fälle}}: {names}",
+      "importWarningTooltip": "Dieser Fallname ähnelt {count, plural, one {# bestehendem Fall} other {# bestehenden Fällen}}: {names}",
       "importIntraWarning": "Duplikat innerhalb des Imports",
       "importIntraWarningTooltip": "Die Zeilen {rows} in diesem Import haben den gleichen oder einen sehr ähnlichen Namen",
       "checkingDuplicates": "Suche nach Duplikaten..."
@@ -3817,7 +3817,7 @@
         "folderContextEmptyTitle": "Noch keine Testfälle in diesem Ordner",
         "folderContextEmpty": "\"{folderName}\" und seine übergeordneten/untergeordneten Ordner haben keine Testfälle. Die KI sucht nach verwandten Testfällen an anderer Stelle in diesem Projekt, um Ihren Stil zu erlernen und Duplikate zu vermeiden. Für beste Ergebnisse starten Sie den Generator aus dem Ordner, dem diese Testfälle angehören.",
         "currentFolder": "aktueller Ordner",
-        "fromIssue": "Aus der Ausgabe",
+        "fromIssue": "Aus dem Ticket",
         "fromDocument": "Aus dem Dokument",
         "documentTitle": "Dokumenttitel",
         "documentTitlePlaceholder": "Geben Sie den Titel Ihres Anforderungsdokuments ein.",
@@ -3831,7 +3831,7 @@
         "recentJobInfo": "{pages, plural, one {# Seite} other {# Seiten}}{hasTestCases, select, true { · {testCases, plural, one {# Testfall} other {# Testfälle}}} other {}}",
         "recentJobHasResults": "Bereit zur Überprüfung",
         "recentJobClickToGenerate": "Klicken Sie hier, um Testfälle zu generieren.",
-        "recentJobCrawling": "Kriechen... {pages, plural, one {# Seite} other {# Seiten}} bisher",
+        "recentJobCrawling": "Crawlen... {pages, plural, one {# Seite} other {# Seiten}} bisher",
         "removeJobTitle": "Generation entfernen",
         "confirmRemoveJob": "Dadurch werden der zwischengespeicherte Crawl und alle generierten Testfälle gelöscht. Sie können jederzeit von derselben URL aus erneut generieren.",
         "loadingRecentJobs": "Aktuelle Jobs werden geladen...",
@@ -3846,7 +3846,7 @@
         "followLinksHint": "Es werden nur Seiten gecrawlt, die sich auf derselben Domain wie die eingegebene URL befinden.",
         "maxDepth": "Maximale Tiefe",
         "maxPages": "Maximale Seiten",
-        "crawlProgress": "{current, plural, one {Bisher # Seiten abgerufen...} other {Bisher # Seiten abgerufen...}}",
+        "crawlProgress": "{current, plural, one {Bisher # Seite abgerufen...} other {Bisher # Seiten abgerufen...}}",
         "generatingSinglePage": "Generiere Testfälle...",
         "generatingSetup": "Vorbereitung zur Generierung von Testfällen...",
         "robotsSkipped": "{count, plural, one {# Seite übersprungen} other {# Seiten übersprungen}} (robots.txt)"
@@ -3854,7 +3854,7 @@
       "selectIssue": {
         "title": "Externes Ticket auswählen",
         "description": "Wählen Sie ein Ticket aus Ihrem externen System (z. B. Jira) aus, um Testfälle zu generieren.",
-        "searchButton": "Ausgaben suchen"
+        "searchButton": "Tickets suchen"
       },
       "selectTemplate": {
         "title": "Testfallvorlage auswählen",
@@ -3893,7 +3893,7 @@
         "selected": "{count, number} von {total, number} ausgewählt",
         "moreSteps": "... und {count, plural, one {# weiterer Schritt} other {# weitere Schritte}}",
         "templateFields": "Vorlagenfelder:",
-        "moreFields": "... und {count, plural, one {# weitere Felder} other {# weitere Felder}}",
+        "moreFields": "... und {count, plural, one {# weiteres Feld} other {# weitere Felder}}",
         "crawledUrls": "{count, plural, one {# Seite durchsucht} other {# Seiten durchsucht}}",
         "spaWarning": "Diese Seite erfordert möglicherweise JavaScript-Rendering. Die Ergebnisse sind möglicherweise unvollständig.",
         "filterByPage": "Nach Seite filtern",
@@ -3902,7 +3902,7 @@
       "generatingLegacy": "Generierung von Testfällen mit KI...",
       "expandProgress": "{done, number} von {total, number} generiert",
       "import": "{count, plural, =0 {Testfälle importieren} =1 {1 Testfall importieren} other {# Testfälle importieren}}",
-      "stage": "{count, plural, =0 {Testfälle inszenieren} =1 {1 Testfall inszenieren} other {# Testfälle inszenieren}}",
+      "stage": "{count, plural, =0 {Testfälle bereitstellen} =1 {1 Testfall bereitstellen} other {# Testfälle bereitstellen}}",
       "stageDescription": "Bereitgestellte Testfälle sind privat für Sie. Überprüfen Sie sie unter \"Meine bereitgestellten Fälle\" und erstellen Sie sie von dort aus. Nichts wird zum Repository hinzugefügt, bis Sie dies tun.",
       "importing": "{count, plural, =0 {Importiere Testfälle...} =1 {Importiere 1 Testfall...} other {Importiere # Testfälle...}}",
       "externalSystem": "Externes System",
@@ -4058,7 +4058,7 @@
       "updated": "Aktualisiert {age}",
       "createSelected": "{count, plural, =0 {Ausgewählte erstellen} other {{count} Ausgewählte erstellen}}",
       "createdToast": "{count, plural, one {{count} Testfall erstellt} other {{count} Testfälle erstellt}}",
-      "failedToast": "{count, plural, one {{count} eingereiht Fall konnte nicht erstellt werden} other {{count} eingereiht Fälle konnten nicht erstellt werden}}",
+      "failedToast": "{count, plural, one {{count} eingereihter Fall konnte nicht erstellt werden} other {{count} eingereihte Fälle konnten nicht erstellt werden}}",
       "problemFolder": "Der Ordner wurde gelöscht. Öffnen Sie den eingereiht Fall, um einen Ordner auszuwählen.",
       "problemTemplate": "Die Vorlage ist nicht mehr diesem Projekt zugewiesen. Öffnen Sie den eingereiht Fall, um eine auszuwählen.",
       "problemState": "Der Status existiert nicht mehr. Öffnen Sie den eingereiht Fall, um einen auszuwählen.",
@@ -4066,7 +4066,7 @@
       "notCreated": "Nicht erstellt: {message}",
       "openToFix": "Öffnen Sie den eingereiht Fall, um ihn zu beheben.",
       "elsewhereTitle": "Sie haben auch eingereiht Fälle in",
-      "elsewhereCount": "{count, plural, one {{count} eingereiht Fall} other {{count} eingereiht Fälle}}"
+      "elsewhereCount": "{count, plural, one {{count} eingereihter Fall} other {{count} eingereihte Fälle}}"
     },
     "filterBar": {
       "addFilter": "Filter hinzufügen",
@@ -4215,7 +4215,7 @@
       }
     },
     "manageTags": {
-      "searchPlaceholder": "Suchbegriffe...",
+      "searchPlaceholder": "Tags suchen...",
       "searchOrAddPlaceholder": "Tags suchen oder hinzufügen...",
       "noOptions": "Keine Optionen"
     }
@@ -4402,7 +4402,7 @@
     "dependencies": {
       "blocked": "Blockiert",
       "blockedBy": "Blockiert bis {count, plural, one {dieser Fall besteht} other {diese # Fälle bestehen}} in diesem Lauf:",
-      "blockedNotice": "Dieser Testfall kann nicht ausgeführt werden, bis {count, plural, one {der Fall, von dem er abhängt, bestanden hat} other {alle # Fälle, von denen er abhängt, bestanden haben}} in diesem Lauf.",
+      "blockedNotice": "Dieser Testfall kann nicht ausgeführt werden, bis {count, plural, one {der Fall, von dem er abhängt, in diesem Lauf bestanden hat} other {alle # Fälle, von denen er abhängt, in diesem Lauf bestanden haben}}.",
       "notInRun": "{count, plural, one {# Fall, von dem dieser abhängt, ist nicht in diesem Lauf und blockiert die Ausführung nicht:} other {# Fälle, von denen dieser abhängt, sind nicht in diesem Lauf und blockieren die Ausführung nicht:}}",
       "unblocked": "Alle Fälle, von denen dieser abhängt, haben in diesem Lauf bestanden."
     },
@@ -4428,7 +4428,7 @@
       "existingOnlyUnassigned": "Nur nicht zugewiesene Fälle auffüllen",
       "existingReassignAll": "Alles neu zuweisen",
       "previewTitle": "Vorschau",
-      "previewNoUsers": "Wähle Teammitglieder aus, um die Verteilung in der Vorschau anzuzeigen.",
+      "previewNoUsers": "Wählen Sie Teammitglieder aus, um die Verteilung in der Vorschau anzuzeigen.",
       "previewUser": "Teammitglied",
       "previewCases": "Fälle",
       "previewSkipped": "{count, plural, one {# Fall übersprungen} other {# Fälle übersprungen}} (bereits zugewiesen oder abgeschlossen)",
@@ -4436,7 +4436,7 @@
       "success": "{count, plural, one {# Fall} other {# Fälle}} auf {users, plural, one {# Mitglied} other {# Mitglieder}} verteilt",
       "errorGeneric": "Zuweisungen konnten nicht verteilt werden",
       "errorRunCompleted": "Dieser Lauf ist abgeschlossen und kann nicht mehr geändert werden",
-      "errorNeedUsers": "Wähle mindestens ein Projektmitglied aus, dem verteilt werden soll",
+      "errorNeedUsers": "Wählen Sie mindestens ein Projektmitglied aus, an das verteilt werden soll",
       "errorNoAssignable": "In diesem Lauf gibt es keine Fälle zum Verteilen"
     },
     "auditLog": {
@@ -4445,7 +4445,7 @@
     "notFound": "Testlauf nicht gefunden.",
     "add": {
       "title": "Testlauf hinzufügen",
-      "description": "Füge dem Projekt einen neuen Testlauf hinzu.",
+      "description": "Dem Projekt einen neuen Testlauf hinzufügen",
       "success": {
         "title": "Testlauf erfolgreich hinzugefügt",
         "description": "{name} wurde dem Projekt hinzugefügt",
@@ -4456,7 +4456,7 @@
         "automated": "Geschätzte automatische Zeit",
         "mixed": "Geschätzte manuelle/automatisierte Zeit"
       },
-      "creatingProgress": "Erstelle Testlauf {current, number} von {total, number}..."
+      "creatingProgress": "Testlauf {current, number} von {total, number} wird erstellt..."
     },
     "magicSelect": {
       "title": "Magic Select",
@@ -4469,8 +4469,8 @@
       "noLlmIntegration": "Die KI-Funktionen erfordern eine LLM-Integration. Konfigurieren Sie diese in den Projekteinstellungen.",
       "configure": {
         "title": "Testfallumfang",
-        "description": "Im Repository wurden folgende Testfälle gefunden: {count, plural, =1 {# Testfälle} other {# Testfälle}}",
-        "descriptionFiltered": "Gefunden: {count, plural, =1 {# möglicherweise relevanter Testfall} other {# möglicherweise relevanter Testfall}} von {total, plural, =1 {# insgesamt} other {# insgesamt}} im Repository",
+        "description": "{count, plural, =1 {# Testfall wurde} other {# Testfälle wurden}} im Repository gefunden",
+        "descriptionFiltered": "Gefunden: {count, plural, =1 {# möglicherweise relevanter Testfall} other {# möglicherweise relevante Testfälle}} von {total, plural, =1 {# insgesamt} other {# insgesamt}} im Repository",
         "noMatchesTitle": "Keine passenden Testfälle gefunden",
         "noMatchesDescription": "Name und Beschreibung des Testlaufs stimmten mit keinem Testfall überein. Gehen Sie zurück zum vorherigen Schritt und fügen Sie genauere Details wie Funktionsnamen, Komponentennamen oder Schlüsselwörter hinzu, die in Ihren Testfällen vorkommen.",
         "maxResultsTitle": "Maximale Anzahl übereinstimmender Testfälle",
@@ -4486,14 +4486,14 @@
         "analyzing": "Analyse der Testfälle...",
         "progress": "Analysierte {analyzed, number} von {total, number} Testfällen...",
         "waitingForAi": "Warte auf KI-Antwort (Batch {batch} von {total})...",
-        "selectedSoFar": "{count, plural, =1 {# Bisher ausgewählte Testfälle} other {# Bisher ausgewählte Testfälle}}",
+        "selectedSoFar": "{count, plural, =1 {# Testfall bisher ausgewählt} other {# Testfälle bisher ausgewählt}}",
         "resolving_integration": "Lösung der KI-Integration...",
         "fetching_cases": "Testfälle werden abgerufen..."
       },
       "success": {
         "title": "Vorgeschlagene Testfälle",
         "description": "{count, plural, =1 {# ausgewählter Testfall} other {# ausgewählte Testfälle}} basierend auf Ihrem Testlaufkontext",
-        "linkedCasesAdded": "{count, plural, =1 {# verknüpfte Fälle automatisch eingeschlossen} other {# verknüpfte Fälle automatisch eingeschlossen}}",
+        "linkedCasesAdded": "{count, plural, =1 {# verknüpfter Fall automatisch eingeschlossen} other {# verknüpfte Fälle automatisch eingeschlossen}}",
         "truncationWarningTitle": "Teilergebnisse",
         "truncationWarning": "{count, plural, =1 {# Batch wurde abgeschnitten} other {# Batches wurden abgeschnitten}} durch das KI-Modell — einige Testfälle wurden möglicherweise nicht ausgewertet."
       },
@@ -4558,7 +4558,7 @@
     },
     "duplicateDialog": {
       "title": "Testlauf duplizieren",
-      "description": "Erstelle eine Kopie des Testlaufs <nameStyle>{name}</nameStyle>.",
+      "description": "Erstellen Sie eine Kopie des Testlaufs <nameStyle>{name}</nameStyle>.",
       "fields": {
         "duplicateScope": {
           "label": "Zu duplizierende Testfälle",
@@ -4705,7 +4705,7 @@
       },
       "reasons": {
         "pin": "Pin",
-        "issue": "Ausgabe",
+        "issue": "Ticket",
         "path": "Schlüsselwort",
         "history": "Verlauf",
         "ai": "KI",
@@ -4963,8 +4963,8 @@
         "mappingDatasetEmptyTitle": "Keine Datensätze erhalten",
         "mappingDatasetEmptyDescription": "Die Analyse hat keine Konfigurationsdatensätze gespeichert. Laden Sie einen anderen Export hoch, wenn Sie zusätzliche Daten erwarten.",
         "importProgressTitle": "Importfortschritt",
-        "importProgressDescription": "{count, plural, =0 {Alle importierten Datensätze aller verfolgten Entitäten.} =1 {1 Datensatz aller verfolgten Entitäten verbleibend.} other {# verbleibenden Datensätze aller verfolgten Entitäten.}}",
-        "importProgressTotalRemaining": "{count, plural, =0 {Keine Datensätze mehr} =1 {1 Datensatz übrig} other {# verbleibenden Datensätze}}",
+        "importProgressDescription": "{count, plural, =0 {Alle Datensätze aller verfolgten Entitäten importiert.} =1 {1 Datensatz aller verfolgten Entitäten verbleibend.} other {# verbleibende Datensätze aller verfolgten Entitäten.}}",
+        "importProgressTotalRemaining": "{count, plural, =0 {Keine Datensätze mehr} =1 {1 Datensatz übrig} other {# verbleibende Datensätze}}",
         "importProgressProcessed": "{processed, number}/{total, number} Datensätze importiert",
         "importProgressAria": "{percent, number}% des Imports abgeschlossen",
         "importProgressPercentLabel": "{percent, number}%",
@@ -5013,7 +5013,7 @@
         "mappingImportInProgress": "Hintergrundimport läuft",
         "mappingImportInProgressDescription": "Der Importprozess verarbeitet die Konfiguration. Den Status können Sie oben überwachen.",
         "mapping": {
-          "datasetTotalLabel": "{count, plural, =1 {# Aufnahme} other {# Aufnahmen}} ",
+          "datasetTotalLabel": "{count, plural, =1 {# Datensatz} other {# Datensätze}} ",
           "columnSource": "Testmo-Entität",
           "columnSourceDetails": "Details",
           "columnSuggestedWorkflowType": "Empfohlener Typ",
@@ -5141,7 +5141,7 @@
           "configurationNameLabel": "Konfigurationsname",
           "userSelectPlaceholder": "Benutzer auswählen",
           "userApiLabel": "API-Benutzer",
-          "templateCaseFieldsLabel": "Großbuchstaben",
+          "templateCaseFieldsLabel": "Testfallfelder",
           "templateResultFieldsLabel": "Ergebnisfelder",
           "templateNoFieldsPlaceholder": "Für diese Vorlage sind keine Felder konfiguriert.",
           "templateTargetAlreadyUsed": "Das Ziel ist bereits einer anderen Vorlage zugeordnet.",
@@ -5150,7 +5150,7 @@
           "templateFieldOptionsInitialHeightLabel": "Anfangshöhe",
           "templateFieldTemplateLabelSingular": "Vorlage",
           "templateFieldTemplateLabelPlural": "Vorlagen",
-          "templateFieldTargetGroupCase": "Großbuchstaben",
+          "templateFieldTargetGroupCase": "Testfallfelder",
           "templateFieldTargetGroupResult": "Ergebnisfelder",
           "columnAction": "Aktion",
           "configurationVariantSelectPlaceholder": "Konfigurationsvariante auswählen",
@@ -5813,13 +5813,13 @@
     },
     "scim": {
       "description": "Benutzer Ihres Identitätsanbieters werden über SCIM 2.0 in TestPlanIt bereitgestellt.",
-      "mintCta": "Präge einen neuen Token",
+      "mintCta": "Neues Token erstellen",
       "filterPlaceholder": "Nach Token-Namen oder IdP filtern...",
       "showRevoked": "Show widerrufen",
       "noTokens": "Es wurden noch keine SCIM-Token erstellt.",
       "emptyTitle": "Noch keine SCIM-Token",
       "emptyBody": "Erstellen Sie ein Token, damit Ihr Identitätsanbieter Benutzer in TestPlanIt automatisch anlegen und aktualisieren kann.",
-      "emptyCta": "Präge deinen ersten Token",
+      "emptyCta": "Erstes Token erstellen",
       "sectionConflicts": "Konflikte mit externen Identitäten",
       "conflictsPlaceholder": "Keine Konflikte. Schiffe zur Konfliktverfolgung werden in einer späteren Version implementiert.",
       "conflicts": {
@@ -5860,7 +5860,7 @@
         "deactivated": "Deaktiviert"
       },
       "mint": {
-        "title": "Präge einen neuen SCIM-Token",
+        "title": "Neues SCIM-Token erstellen",
         "description": "Generieren Sie ein Bearer-Token, das Ihr Identitätsanbieter (IdP) zur Synchronisierung von Benutzern mit TestPlanIt verwendet.",
         "nameLabel": "Token-Name",
         "namePlaceholder": "z.B. Okta-Produktion",
@@ -6168,7 +6168,7 @@
       "filterPlaceholder": "Filterkonfigurationen...",
       "allProjects": "Alle Projekte",
       "selectAllTooltip": "Alle Konfigurationen auf dieser Seite auswählen/abwählen",
-      "selectAllShiftTooltip": "{count, plural, =0 {Alle Konfigurationen auf allen Seiten auswählen/abwählen} one {# Konfigurationen auf allen Seiten auswählen/abwählen} other {# Konfigurationen auf allen Seiten auswählen/abwählen}}",
+      "selectAllShiftTooltip": "{count, plural, =0 {Alle Konfigurationen auf allen Seiten auswählen/abwählen} one {# Konfiguration auf allen Seiten auswählen/abwählen} other {# Konfigurationen auf allen Seiten auswählen/abwählen}}",
       "deselectAllShiftTooltip": "Alle Konfigurationen auf allen Seiten abwählen/auswählen",
       "shiftClickHint": "Halten Sie die Umschalttaste gedrückt, um alle Seiten auszuwählen/die Auswahl aufzuheben",
       "bulkEdit": {
@@ -6255,7 +6255,7 @@
       "delete": {
         "deleteGroup": "Gruppe löschen",
         "deleteGroupDescription": "Durch diese Aktion werden die Gruppe und alle zugehörigen Benutzer gelöscht.",
-        "confirmMessage": "Möchtest du diese Gruppe wirklich löschen?"
+        "confirmMessage": "Möchten Sie diese Gruppe wirklich löschen?"
       },
       "noUsersSelected": "Es wurden noch keine Benutzer ausgewählt.",
       "noUsersAssigned": "Dieser Gruppe sind keine Benutzer zugewiesen.",
@@ -6294,7 +6294,7 @@
       "defaultLockedDescription": "Um den Standard zu ändern, bearbeiten Sie einen anderen Meilensteintyp und legen Sie diesen als Standard fest.",
       "wizard": {
         "selectProjects": "Projekte auswählen",
-        "projectsSelected": "{count, plural, =0 {Keine Projekte ausgewählt} one {# Projekte ausgewählt} other {# Projekte ausgewählt}}",
+        "projectsSelected": "{count, plural, =0 {Keine Projekte ausgewählt} one {# Projekt ausgewählt} other {# Projekte ausgewählt}}",
         "createMilestone": "Meilenstein erstellen",
         "noCommonTypesTitle": "Keine gemeinsamen Meilensteintypen",
         "noCommonTypesDescription": "Die ausgewählten Projekte weisen keine gemeinsamen Meilensteintypen auf. Bitte stellen Sie sicher, dass alle ausgewählten Projekte mindestens einen gemeinsamen Meilensteintyp haben, oder wählen Sie unterschiedliche Projekte aus."
@@ -6392,9 +6392,9 @@
         "title": "Ticket löschen",
         "confirmMessage": "Möchten Sie das Ticket \"{name}\" wirklich löschen?"
       },
-      "syncIssue": "Synchronisierungsproblem durch externes System",
+      "syncIssue": "Ticket aus externem System synchronisieren",
       "syncSuccess": "Ticket erfolgreich synchronisiert",
-      "syncSuccessDescription": "Die Ausgabe \"{name}\" wurde mit den neuesten Informationen aus dem externen System aktualisiert.",
+      "syncSuccessDescription": "Das Ticket \"{name}\" wurde mit den neuesten Informationen aus dem externen System aktualisiert.",
       "syncError": "Synchronisierungsproblem fehlgeschlagen",
       "syncErrorDescription": "Das Problem konnte nicht synchronisiert werden. Bitte versuchen Sie es später erneut."
     },
@@ -6549,7 +6549,7 @@
         "warning4": "Zuerst muss die Problemintegration aus allen Projekten entfernt werden."
       },
       "deleteSuccess": "Problemintegration gelöscht",
-      "deleteSuccessDescription": "Das Integrationsproblem wurde erfolgreich behoben.",
+      "deleteSuccessDescription": "Die Ticket-Integration wurde erfolgreich entfernt.",
       "deleteError": "Löschfehler",
       "add": {
         "description": "Konfigurieren einer neuen Problemintegration mit einem externen Dienst",
@@ -6567,7 +6567,7 @@
         },
         "github": {
           "name": "GitHub",
-          "description": "Verbinde dich mit GitHub, um Probleme zu verfolgen."
+          "description": "Verbindung zu GitHub für die Ticket-Verfolgung herstellen."
         },
         "gitlab": {
           "name": "GitLab",
@@ -6606,8 +6606,8 @@
         "successMessage": "Problemintegration erfolgreich aktualisiert",
         "successDescription": "Die Einstellungen für die Problemintegration wurden gespeichert."
       },
-      "editIntegration": "Integration von Bearbeitungsproblemen",
-      "saveIntegration": "Speicherproblemintegration",
+      "editIntegration": "Ticket-Integration bearbeiten",
+      "saveIntegration": "Ticket-Integration speichern",
       "deleteIntegration": "Problemintegration löschen",
       "config": {
         "name": "Name der Problemintegration",
@@ -6670,12 +6670,12 @@
         "encrypted": "Verschlüsselt",
         "encryptedHelp": "Dieses Feld ist verschlüsselt und sicher gespeichert.",
         "leaveBlankToKeep": "Leer lassen, um den vorhandenen Wert zu behalten",
-        "apiKeyWarningTitle": "Hinweis zur API-Schlüsselauthentifizierung",
-        "apiKeyWarningDescription": "Bei der API-Schlüssel-Authentifizierung stimmt der Melder erstellter Probleme möglicherweise nicht mit dem TestPlanIt-Benutzer überein, der sie erstellt hat – selbst wenn die E-Mail-Adressen übereinstimmen:",
-        "apiKeyWarningPoint1": "Für die Festlegung des Jira-Melders muss das API-Token-Konto über die Jira-Administratorberechtigung („Melder bearbeiten“) verfügen. Andernfalls ignoriert Jira den Melder, und der API-Token-Inhaber wird als Ersteller erfasst.",
-        "apiKeyWarningPoint2": "Sofern zulässig, gleicht TestPlanIt Ihre TestPlanIt-E-Mail-Adresse mit der E-Mail-Adresse eines Jira-Benutzers ab, um den Melder festzulegen, und greift dann auf übereinstimmende Anzeigenamen zurück.",
-        "apiKeyWarningPoint3": "Wird keine Übereinstimmung gefunden – oder fehlt dem Konto die Berechtigung – wird der Inhaber des API-Tokens zum Melder.",
-        "apiKeyWarningPoint4": "Verwenden Sie stattdessen OAuth 2.0, um eine genaue Zuordnung der Meldungen pro Benutzer ohne Administratorrechte zu gewährleisten.",
+        "apiKeyWarningTitle": "Jedes Problem kann vom Besitzer des API-Tokens gemeldet werden",
+        "apiKeyWarningDescription": "Bei der API-Schlüssel-Authentifizierung wird jedes Problem, das in TestPlanIt erstellt wird, in Jira vom Konto gemeldet, das den API-Token besitzt, es sei denn, Jira erlaubt diesem Konto, einen anderen Berichterstatter festzulegen:",
+        "apiKeyWarningPoint1": "Jira erlaubt dies nur, wenn das Konto über die Berechtigung \"Berichterstatter ändern\" im Projekt verfügt (normalerweise nur von Jira-Administratoren) und das Feld \"Berichterstatter\" auf dem Erstellungsbildschirm des Projekts vorhanden ist. Andernfalls ist der Besitzer des API-Tokens der Berichterstatter, auch wenn die E-Mails übereinstimmen.",
+        "apiKeyWarningPoint2": "Wenn Jira dies erlaubt, legt TestPlanIt den Berichterstatter auf den Jira-Benutzer fest, dessen E-Mail mit dem TestPlanIt-Benutzer übereinstimmt, der das Problem erstellt, und greift dann auf den Abgleich von Anzeigenamen zurück.",
+        "apiKeyWarningPoint3": "Wenn kein Jira-Benutzer übereinstimmt, ist der Besitzer des API-Tokens der Berichterstatter.",
+        "apiKeyWarningPoint4": "Verwenden Sie in Jira Cloud stattdessen OAuth 2.0, damit jedes Problem von der Person gemeldet wird, die es erstellt hat. OAuth 2.0 ist nicht für Jira Server oder Data Center verfügbar.",
         "tokenCreatorNoticeTitle": "Urheber des Problems",
         "tokenCreatorNoticeDescription": "Durch diese Integration erstellte Probleme werden immer dem Konto zugeordnet, dem dieses Zugriffstoken gehört, und nicht dem TestPlanIt-Benutzer, der sie erstellt hat. Die API dieses Anbieters erlaubt es nicht, den Ersteller im Namen eines anderen Benutzers festzulegen.",
         "callbackUrlLabel": "Callback-URL (Weiterleitungs-URI)",
@@ -7029,7 +7029,7 @@
         "configureDescription": "Um die Parallelität anzupassen, müssen Umgebungsvariablen gesetzt und die Worker neu gestartet werden. Weitere Informationen finden Sie in der Dokumentation.",
         "envVars": {
           "TESTMO_IMPORT_CONCURRENCY": "Testmo-Importe (Standard: 1, speicherintensiv)",
-          "SYNC_CONCURRENCY": "Ausgabesynchronisierung (Standard: 2, E/A-intensiv)",
+          "SYNC_CONCURRENCY": "Ticket-Synchronisierung (Standard: 2, E/A-intensiv)",
           "EMAIL_CONCURRENCY": "E-Mail-Versand (Standard: 3, E/A-intensiv)",
           "NOTIFICATION_CONCURRENCY": "Benachrichtigungen (Standard: 5, ressourcenschonend)",
           "FORECAST_CONCURRENCY": "Wettervorhersageaktualisierungen (Standard: 5, CPU-intensiv)"
@@ -7191,11 +7191,11 @@
         "commentMentionTitle": "Du wurdest in einem Kommentar erwähnt.",
         "systemAnnouncementTitle": "Systemankündigung",
         "assignedTestCase": "Ihnen wurde der Testfall zugewiesen",
-        "assignedMultipleTestCases": "dir zugewiesen {count, plural, one {# Testfall} other {# Testfälle}}",
+        "assignedMultipleTestCases": "hat Ihnen {count, plural, one {# Testfall} other {# Testfälle}} zugewiesen",
         "assignedSession": "Sie wurden der Sitzung zugewiesen",
-        "mentionedYouInComment": "Ich habe dich in einem Kommentar erwähnt auf",
+        "mentionedYouInComment": "hat Sie in einem Kommentar erwähnt:",
         "inProject": "im Projekt",
-        "testRun": "Probelauf:",
+        "testRun": "Testlauf:",
         "casesInProject": "{count, plural, =1 {# Fall} other {# Fälle}} in",
         "sentBy": "Gesendet von {name}",
         "milestoneDueSoonTitle": "Meilenstein bald erreicht",
@@ -7224,7 +7224,7 @@
         "reviewRejectedAction": "Ihre Überprüfungsanfrage wurde abgelehnt am",
         "reviewCancelledAction": "Die Überprüfungsanfrage wurde storniert am",
         "reviewEntityLabelCase": "Testfall",
-        "reviewEntityLabelRun": "Probelauf",
+        "reviewEntityLabelRun": "Testlauf",
         "reviewEntityLabelSession": "Sitzung",
         "reviewBulkEntityLabelCase": "Testfälle",
         "reviewBulkEntityLabelRun": "Testläufe",
@@ -7282,23 +7282,23 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "Das Ergebnis dauerte {elapsed}, {deviation}% abweichend von der Baseline von {baseline} (mehr als {threshold}% zulässig).",
-          "CASE_REGRESSED": "Der Fall fehlgeschlagen nach bestandenem {passedBefore, plural, one {seinen letzten Ergebnis} other {seinen letzten # Ergebnisse}}.",
-          "CASE_RECOVERED": "Der Fall bestanden nach Fehler {failedBefore, plural, one {seinen letzten Ergebnis} other {seinen letzten # Ergebnisse}}.",
+          "CASE_REGRESSED": "Der Fall ist fehlgeschlagen, nachdem er {passedBefore, plural, one {bei seinem letzten Ergebnis} other {bei seinen letzten # Ergebnissen}} bestanden hatte.",
+          "CASE_RECOVERED": "Der Fall hat bestanden, nachdem er {failedBefore, plural, one {bei seinem letzten Ergebnis} other {bei seinen letzten # Ergebnissen}} fehlgeschlagen war.",
           "RUN_DURATION_DEVIATION": "Der Durchlauf dauerte {elapsed}, {deviation}% abweichend von der Baseline von {baseline} (mehr als {threshold}% zulässig).",
           "RUN_NOT_PROGRESSING": "Der Durchlauf hat {idleHours, plural, one {# Stunde} other {# Stunden}} lang kein neues Ergebnis (Schwelle {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "Die automatisierte Ausführung auf {target} endete mit {status}{error, select, other {: {error}}}",
           "RUN_UNTESTED_SHARE": "{untestedPercent}% der Fälle des Durchlaufs haben kein Ergebnis mit {daysRemaining, plural, one {# Tag} other {# Tagen}} bis zum Fälligkeitsdatum des Meilensteins (Schwelle {threshold}%).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# Ticket ist} other {# Tickets sind}} mit den Ergebnissen des Durchlaufs verknüpft (Schwelle {threshold}).",
-          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# Fehlermuster ist} other {# Fehlermuster sind}} zum ersten Mal in der Ausführung angezeigt (Schwelle {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# Fehlermuster ist} other {# Fehlermuster sind}} zum ersten Mal in der Ausführung aufgetreten (Schwelle {threshold}).",
           "SESSION_OVERRUN": "Die Sitzung dauerte {elapsed} gegen eine Schätzung von {estimate}, {overrun}% über (mehr als {threshold}% zulässig).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} von {total} Anforderungen ({coverage}%) {basis, select, PASSING {haben ein bestandenes letztes Ergebnis} other {sind mit einem Testfall verknüpft}} (Schwelle {threshold}%).",
-          "STALE_CASES": "{stale, plural, one {# Fall hat} other {# Fälle haben}} {days, plural, one {# Tag} other {# Tagen}} lang kein Ergebnis (Schwelle {threshold}).",
+          "STALE_CASES": "{stale, plural, one {# Fall hat} other {# Fälle haben}} {days, plural, one {# Tag} other {# Tage}} lang kein Ergebnis (Schwelle {threshold}).",
           "AUTOMATION_SHARE_BELOW": "{automated} von {total} Fällen ({automatedPercent}%) sind automatisiert (Schwelle {threshold}%).",
           "WEBHOOK_FAILURE_RATE": "{failed} der letzten {sampleCount} Lieferungen fehlgeschlagen ({failureRate}%, Schwelle {threshold}%).",
-          "CONSECUTIVE_FAILURES": "Der Fall hat {streak, plural, one {# Mal} other {# Male}} hintereinander fehlgeschlagen (Schwelle {threshold}).",
-          "CASE_FLAKY": "Das Ergebnis wechselte {flips, plural, one {# Mal} other {# Male}} in den letzten {sampleCount} Ergebnissen (Schwelle {threshold}).",
+          "CONSECUTIVE_FAILURES": "Der Fall ist {streak, plural, one {# Mal} other {# Mal}} hintereinander fehlgeschlagen (Schwelle {threshold}).",
+          "CASE_FLAKY": "Das Ergebnis wechselte {flips, plural, one {# Mal} other {# Mal}} in den letzten {sampleCount} Ergebnissen (Schwelle {threshold}).",
           "RUN_PASS_RATE_BELOW": "Die Bestehensquote liegt bei {passRate}% über {sampleCount} Ergebnisse (Schwelle {threshold}%).",
-          "RUN_FAILURE_COUNT": "{failed, plural, one {# Ergebnis hat} other {# Ergebnisse haben}} fehlgeschlagen (Schwelle {threshold}).",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# Ergebnis ist} other {# Ergebnisse sind}} fehlgeschlagen (Schwelle {threshold}).",
           "MILESTONE_BEHIND": "Der Meilenstein ist zu {completion}% abgeschlossen mit {daysRemaining, plural, one {# Tag} other {# Tagen}} verbleibend (Schwelle {threshold}%).",
           "MILESTONE_OVERDUE": "Der Meilenstein ist {daysOverdue, plural, one {# Tag} other {# Tage}} nach seinem Fälligkeitsdatum.",
           "LLM_BUDGET_USED": "Ausgaben für den Abrechnungszeitraum sind {spend} des monatlichen Budgets von {budget} ({percent}%, Schwelle {threshold}%).",
@@ -7306,7 +7306,7 @@
           "LLM_RATE_LIMITED": "Der Anbieter hat {blocked, plural, one {# Anfrage} other {# Anfragen}} in den letzten {hours, plural, one {# Stunde} other {# Stunden}} begrenzt (Schwelle {threshold}).",
           "CODE_REPOSITORY_CACHE_FAILING": "Der Repository-Cache hat {hours, plural, one {# Stunde} other {# Stunden}} lang nicht funktioniert (Schwelle {threshold}){error, select, other {: {error}}}",
           "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# Benutzer muss} other {# Benutzer müssen}} die Integration erneut autorisieren (Schwelle {threshold}).",
-          "QUEUE_FAILED_JOBS": "{failed, plural, one {# Job hat} other {# Jobs haben}} in der Warteschlange fehlgeschlagen (Schwelle {threshold}).",
+          "QUEUE_FAILED_JOBS": "{failed, plural, one {# Job ist} other {# Jobs sind}} in der Warteschlange fehlgeschlagen (Schwelle {threshold}).",
           "QUEUE_BACKLOG": "Der älteste von {waiting, plural, one {# wartenden Job} other {# wartenden Jobs}} hat {minutes, plural, one {# Minute} other {# Minuten}} gewartet (Schwelle {threshold}).",
           "AUDIT_BACKLOG": "Die älteste unverarbeitete Audit-Änderung ist {minutes, plural, one {# Minute} other {# Minuten}} alt (Schwelle {threshold}).",
           "ACCOUNT_LOCKOUTS": "{locked, plural, one {# Konto ist} other {# Konten sind}} nach fehlgeschlagenen Anmeldeversuchen gesperrt (Schwelle {threshold}).",
@@ -7356,12 +7356,12 @@
         "description": "Sie müssen Ihr Konto mit {integrationName} verbinden, um Probleme zu erstellen."
       },
       "search_issues_dialog": {
-        "title": "Such- und Linkprobleme",
+        "title": "Tickets suchen und verknüpfen",
         "placeholder": "Nach Problemen suchen...",
         "searching": "Suche...",
         "searchError": "Suche nach Problemen fehlgeschlagen",
         "linkButton": "Link",
-        "linkedCount": "{count, plural, one {# Problem} other {# Probleme}} verknüpft"
+        "linkedCount": "{count, plural, one {# Ticket} other {# Tickets}} verknüpft"
       }
     },
     "copyMove": {
@@ -7411,7 +7411,7 @@
   "issues": {
     "linkedIssues": "Verknüpfte Tickets",
     "linkedIssuesDescription": "Probleme im Zusammenhang mit diesem Artikel",
-    "refreshed": "Aktualisierte Ausgaben",
+    "refreshed": "Aktualisierte Tickets",
     "refreshedDescription": "Die Liste der verlinkten Probleme wurde aktualisiert.",
     "unlinked": "Problem nicht verknüpft",
     "unlinkedDescription": "Das Problem wurde aus diesem Eintrag entfernt.",
@@ -7424,7 +7424,7 @@
     "unlink": "Link aufheben",
     "linkError": "Problem beim Verknüpfen",
     "linkExternalIssue": "Link {provider} Problem",
-    "linkIssue": "Linkproblem",
+    "linkIssue": "Ticket verknüpfen",
     "addIssue": "Problem hinzufügen",
     "unlinkError": "Problem konnte nicht gelöst werden",
     "noIssuesFound": "Es wurden keine Probleme gefunden",
@@ -7437,9 +7437,9 @@
     "authenticationDescription": "Sie müssen sich mit {provider} authentifizieren, um nach Problemen zu suchen.",
     "searchIn": "Suche in {provider}",
     "searchPlaceholder": "Suchprobleme...",
-    "searchIssues": "Suchprobleme",
+    "searchIssues": "Tickets suchen",
     "searchIssuesDescription": "Suchen Sie nach internen Problemen, um einen Link zu diesem Eintrag zu erstellen.",
-    "searchExternalDescription": "Suche nach {provider} Ausgaben, um auf diesen Eintrag zu verlinken.",
+    "searchExternalDescription": "Suche nach {provider} Tickets, um auf diesen Eintrag zu verlinken.",
     "error": "Fehler beim Laden",
     "errorDescription": "Probleme beim Laden. Bitte versuchen Sie es erneut.",
     "selectIssues": "Tickets auswählen",
@@ -7456,13 +7456,14 @@
     "authenticatedAndReady": "Authentifiziert und bereit, Probleme zu erstellen",
     "created": "Problem erstellt",
     "createdInExternal": "Problem erstellt in {provider}",
+    "createdReporterRejected": "Jira würde Sie nicht als Berichterstatter akzeptieren, daher wird dieses Problem vom Konto gemeldet, das den API-Token der Integration besitzt. Ihr TestPlanIt-Administrator kann im Jira-Integrationseinstellungen nachsehen, warum dies der Fall ist.",
     "createdInternal": "Problem lokal erstellt",
     "createdInternalSimpleUrl": "Dieses Ticket wurde intern erstellt und kann über eine einfache URL verlinkt werden.",
     "createError": "Problem konnte nicht erstellt werden",
     "useIntegration": "Verwenden Sie {provider}",
     "useIntegrationDescription": "Problem im externen System erstellen",
     "externalProject": "Externes Projekt",
-    "issueType": "Ausgabetyp",
+    "issueType": "Ticket-Typ",
     "selectIssueType": "Problemtyp auswählen",
     "noIssueTypes": "Keine Problemtypen verfügbar",
     "assignees": "Verantwortliche",
@@ -7487,7 +7488,7 @@
     "addLabel": "Fügen Sie eine Beschriftung hinzu und drücken Sie die Eingabetaste.",
     "labelHint": "Leerzeichen werden durch Bindestriche ersetzt.",
     "labelFormatNote": "Beschriftungen dürfen keine Leerzeichen enthalten. Leerzeichen werden automatisch durch Bindestriche ersetzt.",
-    "enterIssueKey": "Ausgabeschlüssel eingeben (z. B. PROJ-123)",
+    "enterIssueKey": "Ticket-Schlüssel eingeben (z. B. PROJ-123)",
     "issueLinkHelp": "Geben Sie den Schlüssel eines bestehenden Vorgangs ein, um ihn zu verknüpfen.",
     "searchForIssue": "Suche nach einem Problem, das verknüpft werden soll",
     "searchUsers": "Benutzer suchen",
@@ -7582,7 +7583,7 @@
       "modePromote": "Befördern Sie ein vorhandenes Ticket",
       "promoteDescription": "Verwenden Sie ein bereits mit diesem Projekt synchronisiertes Ticket als Anforderung. Es verschwindet aus den Ticket-Ansichten, behält seine Tracker-Hierarchie und bleibt eine Anforderung, auch bei Synchronisierungen und Konfigurationsänderungen.",
       "promoteParentNote": "Folgt der Hierarchie des Trackers",
-      "promoteIssueLabel": "Ausgabe",
+      "promoteIssueLabel": "Ticket",
       "promoteChooseIssue": "Ticket auswählen",
       "promoteNoneSelected": "Kein Ticket ausgewählt",
       "promoteSubmit": "Als Anforderung verwenden",
@@ -7704,7 +7705,7 @@
   },
   "Pages": {
     "Issues": {
-      "description": "Alle Ausgaben durchsuchen und verwalten.",
+      "description": "Alle Tickets durchsuchen und verwalten.",
       "filterPlaceholder": "Probleme nach Namen filtern..."
     }
   },
@@ -8102,7 +8103,7 @@
       "configurationGroup": "## Konfigurationsgruppe\nSitzungen in einer Konfigurationsgruppe decken denselben Test unter verschiedenen Konfigurationen ab, sodass Sie zwischen ihnen wechseln und ihre Ergebnisse an einem Ort vergleichen können.\n\nSitzungen, die zusammen für mehrere Konfigurationen erstellt wurden, werden automatisch gruppiert. Verknüpfen Sie hier eine Sitzung, wenn sie eigenständig erstellt wurde.\n\nSie verknüpfen sich mit einer Sitzung, treten aber allem bei, mit dem diese Sitzung bereits gruppiert ist — eine Gruppe hat keinen Besitzer, daher ist jedes Mitglied mit jedem anderen verknüpft.\n\nDie Gruppierung ändert nur, wie die Sitzungen zusammen dargestellt werden. Testfälle oder Ergebnisse werden dabei nie verschoben.",
       "milestone": "## Meilenstein\nVerknüpft diese Sitzung mit einem Projektmeilenstein.\n\n– Hilft, den Testfortschritt im Hinblick auf die Projektziele zu verfolgen.\n– Gruppiert zusammengehörige Testsitzungen.\n– Unterstützt die meilensteinbasierte Berichterstellung.",
       "description": "## Beschreibung\nEin kurzer Überblick über den Inhalt dieser Testsitzung.\n\n- Wichtige Testbereiche oder Funktionen\n- Wichtiger Kontext oder Hintergrund\n- Besondere Überlegungen oder Anforderungen",
-      "mission": "## Mission\nDie Mission definiert die spezifischen Ziele und Vorgaben für diese Testphase.\n\n- Was wird getestet?\n- Worauf liegt der Fokus?\n- Welche Ergebnisse werden erwartet?\n\nEine klare Mission trägt dazu bei, dass das Testen fokussiert und produktiv bleibt.",
+      "mission": "## Mission\nDie Mission definiert die spezifischen Ziele und Vorgaben für diese Sitzung.\n\n- Was wird getestet?\n- Worauf liegt der Fokus?\n- Welche Ergebnisse werden erwartet?\n\nEine klare Mission trägt dazu bei, dass das Testen fokussiert und produktiv bleibt.",
       "estimate": "## Zeitschätzung\nGeschätzte Zeit für diese Testsitzung.\n\nBeispiele:\n- \"30m\" für 30 Minuten\n- \"1h 30m\" für 1 Stunde und 30 Minuten\n- \"2 Tage\" für 2 Tage\n- \"1 Woche\" für 1 Woche",
       "elapsed": "## Verstrichene Zeit\nDie tatsächlich für diese Testsitzung aufgewendete Zeit.\n\nBeispiele:\n- \"45m\" für 45 Minuten\n- \"2h 15m\" für 2 Stunden und 15 Minuten\n- \"3 days\" für 3 Tage\n\nErfassen Sie die Zeit genau, um zukünftige Schätzungen zu verbessern.",
       "state": "## Workflow-Status\nDer aktuelle Status dieser Testsitzung in Ihrem Workflow.\n\n- Hilft bei der Nachverfolgung des Sitzungsfortschritts.\n- Unterstützt die Workflow-Verwaltung.\n- Wird für Berichte und die Nachverfolgung verwendet.",
@@ -8160,7 +8161,7 @@
     },
     "template": {
       "name": "## Template Name\nEin eindeutiger und beschreibender Name für diese Vorlage (z. B. 'Standard Test Case', 'API Test Results').",
-      "isEnabled": "## Aktiviert\nWenn diese Option aktiviert ist, steht diese Vorlage beim Erstellen neuer Testfälle oder beim Definieren von Testablaufstrukturen zur Auswahl. Wenn eine Vorlage als „Standard“ festgelegt ist, muss sie auch auf „Aktiviert“ gesetzt sein.",
+      "isEnabled": "## Aktiviert\nWenn diese Option aktiviert ist, steht diese Vorlage beim Erstellen neuer Testfälle oder beim Definieren von Testlaufstrukturen zur Auswahl. Wenn eine Vorlage als „Standard“ festgelegt ist, muss sie auch auf „Aktiviert“ gesetzt sein.",
       "isDefault": "## Standard\nWenn diese Option aktiviert ist, wird diese Vorlage automatisch für neue Projekte ausgewählt oder als Standard für alle Projekte festgelegt, falls keine projektspezifische Standardvorlage definiert ist. Nur eine Vorlage kann projektübergreifend als Standard festgelegt sein. Durch Aktivieren dieser Option werden alle anderen aktuell als Standard festgelegten Vorlagen deaktiviert.",
       "caseFields": "## Testfallfelder\nWählen Sie die benutzerdefinierten Felder aus, die beim Erstellen oder Bearbeiten von Testfällen mit dieser Vorlage verfügbar sein sollen, und ordnen Sie sie an.\n\n- Fügen Sie Felder aus der Dropdown-Liste hinzu, um sie in die Vorlage aufzunehmen\n- Felder per Drag & Drop neu anordnen\n- Die Reihenfolge bestimmt, wie die Felder in Formularen angezeigt werden\n- Nur aktivierte Testfallfelder sind auswählbar\n- Testfallfelder definieren die Struktur und die für Testfälle erfassten Daten\n- Der Sparkles-Schalter legt fest, ob ein Feld im Assistenten „Testfälle generieren“ standardmäßig ausgewählt ist; Benutzer können die Auswahl dort weiterhin ändern",
       "resultFields": "## Ergebnisfelder\nWählen Sie die benutzerdefinierten Felder aus, die beim Hinzufügen von Testergebnissen mit dieser Vorlage verfügbar sein sollen, und ordnen Sie sie an.\n\n- Fügen Sie Felder aus der Dropdown-Liste hinzu, um sie in die Vorlage aufzunehmen.\n- Felder per Drag & Drop neu anordnen.\n- Die Reihenfolge bestimmt, wie die Felder bei der Eingabe von Testergebnissen angezeigt werden.\n- Nur aktivierte Ergebnisfelder stehen zur Auswahl.\n- Ergebnisfelder erfassen zusätzliche Daten, die spezifisch für die Ergebnisse der Testausführung sind.",
@@ -8173,7 +8174,7 @@
       "endpoint": "## API-Endpunkt\nDie Basis-URL für die API des LLM-Anbieters.\n\n- Für OpenAI, Anthropic, Gemini und DeepSeek leer lassen – offizielle URLs werden automatisch verwendet\n- Erforderlich für Ollama (z. B. `http://localhost:11434`), Azure OpenAI und benutzerdefiniertes LLM\n- Optional für jeden Anbieter – geben Sie einen OpenAI-kompatiblen Proxy (z. B. LiteLLM) an, indem Sie dessen URL eingeben\n- **Private/interne Adressen** (localhost, 127.0.0.1, private IPs, Cloud-Metadaten) sind blockiert, sofern sie nicht explizit über die Umgebungsvariable `ALLOWED_PRIVATE_HOSTS` zugelassen werden",
       "deploymentName": "## Azure-Bereitstellungsname\nDer Name Ihrer Azure OpenAI-Modellbereitstellung.\n\n- Zu finden in Azure OpenAI Studio unter Bereitstellungen.\n- Unterscheidet sich vom Modellnamen – z. B. wird `my-gpt4-deploy` auf `gpt-4` abgebildet.\n- Nur für Azure OpenAI erforderlich.",
       "defaultModel": "## Standardmodell\nDas für KI-Anfragen mit dieser Integration verwendete Modell.\n\n- Für OpenAI, Anthropic, Gemini, DeepSeek, Ollama und OpenAI-kompatible benutzerdefinierte Endpunkte (z. B. LiteLLM) – verfügbare Modelle werden automatisch abgerufen\n- Wenn der Anbieter auch Modellpreise meldet, werden die Kostenfelder bei der Auswahl automatisch ausgefüllt\n- Stellen Sie sicher, dass das Modell in Ihrem Anbieterkonto aktiviert ist\n- Beispiel: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`, `deepseek-v4-flash`",
-      "maxTokensPerRequest": "## Max Tokens Per Request\nDie **feste Obergrenze für _Ausgabe_-Tokens**, die das Modell in einer einzelnen Antwort erzeugen darf.\n\n- Begrenzt die Länge der **Antwort** des Modells — nicht, wie viel Kontext du ihm sendest\n- Anfragen, die mehr als dieses Limit verlangen, werden **abgelehnt, bevor sie das Modell erreichen**\n- Setze es auf das tatsächliche maximale Ausgabelimit deines Modells — z. B. `128000` für Claude Opus/Sonnet, `64000` für Claude Haiku, `65536` für Gemini, `16384` für GPT-4o\n- Zu niedrig → KI-Funktionen schlagen fehl oder erzeugen abgeschnittene Ausgaben",
+      "maxTokensPerRequest": "## Max Tokens Per Request\nDie **feste Obergrenze für _Ausgabe_-Tokens**, die das Modell in einer einzelnen Antwort erzeugen darf.\n\n- Begrenzt die Länge der **Antwort** des Modells — nicht, wie viel Kontext Sie ihm senden\n- Anfragen, die mehr als dieses Limit verlangen, werden **abgelehnt, bevor sie das Modell erreichen**\n- Setzen Sie es auf das tatsächliche maximale Ausgabelimit Ihres Modells — z. B. `128000` für Claude Opus/Sonnet, `64000` für Claude Haiku, `65536` für Gemini, `16384` für GPT-4o\n- Zu niedrig → KI-Funktionen schlagen fehl oder erzeugen abgeschnittene Ausgaben",
       "defaultMaxTokens": "## Standard-Max-Tokens\nDie **_Ausgabe_-Länge**, die dieses KI-Modell anfordert, begrenzt durch _Max Tokens Per Request_.\n\n- **Testfallgenerierung** (jede Quelle, einschließlich des Jira-Issue-Panels), **Markdown-Testfall-Parsing**, **Editor-Schreibassistent** und **Intelligente Testfallauswahl** verwenden immer diesen Wert — ihre Prompt-Config-_Max Output Tokens_ werden nicht angewendet\n- **Export-Codegenerierung**, **KI-Tag-Vorschläge**, **KI-Schritt-Ableitung** und der **Bericht zu Automatisierungskandidaten** verwenden stattdessen ihre eigenen _Max Output Tokens_ aus **Admin → Prompt Config**\n- Modelle, die vor der Antwort nachdenken (z. B. Claude Opus 5), verbrauchen einen Teil dieses Budgets für das Reasoning — lassen Sie Raum für die Antwort\n- Es steuert **nicht**, wie viel Repository-Code QuickScript an das Modell sendet — dieses Budget wird automatisch aus dem Kontextfenster des Modells abgeleitet\n- Halten Sie es ≤ _Max Tokens Per Request_",
       "repoContextBudget": "## Repository-Kontextbudget\nWie viel Code Ihres verbundenen Repositorys QuickScript dem Modell bei der Skriptgenerierung zuführt.\n\n- **Wird automatisch festgelegt** anhand des Eingabekontextfensters des ausgewählten Modells – hier gibt es nichts zu konfigurieren\n- Modelle mit größerem Kontext (Claude, Gemini, DeepSeek) erhalten mehr; kleine lokale Modelle erhalten eine sichere Menge, die nicht überläuft\n- Mehr Kontext verankert das Skript in Ihren echten Page Objects und Fixtures – es ändert nicht, wie lang das generierte Skript ist",
       "costPerInputToken": "## Kosten pro 1 Million Input-Token (USD)\nDie Kosten in USD pro **Million** gesendeter Input- (Prompt-) Token an das Modell.\n\n- Wird zur Kostenverfolgung und für Budgetwarnungen verwendet\n- Wird automatisch ausgefüllt, wenn Ihr Anbieter die Modellpreise meldet (LiteLLM, OpenRouter, Together AI) — angewendet, wenn Sie ein Modell auswählen oder eine Testverbindung durchführen\n- Andernfalls finden Sie diese Angabe auf der Preisseite Ihres Anbieters\n- Beispiel: `0.15` = 0,15 $ pro Million Input-Token",
@@ -8237,7 +8238,7 @@
       "title": "## Titel des Problems\nEin lesbarer Titel, der das Problem beschreibt.\n\n- Bietet Kontext zum Thema des Problems.\n- Wird in Listen und Problemübersichten angezeigt.\n- Sollte klar und beschreibend sein.",
       "externalKey": "## Externer Schlüssel\nDer eindeutige Schlüssel oder die Kennung des externen Problemverfolgungssystems.\n\n- Für JIRA: Problemschlüssel wie \"PROJ-123\"\n- Für GitHub: Problemnummer wie \"456\"\n- Für Azure DevOps: Arbeitselement-ID\n- Wird beim Speichern automatisch die externe URL generiert",
       "externalId": "## Externe ID\nDie eindeutige Kennung für dieses Problem im Problemverfolgungssystem (z. B. „Problem-123“, „Bug456“ usw.).\n\n– Dies wird als Platzhalter für das Problem in der Basis-URL verwendet.",
-      "description": "## Beschreibung\nEine kurze Übersicht über den Inhalt dieser Ausgabe.\n\n- Wichtige Bereiche oder Funktionen, die getestet werden\n- Wichtiger Kontext oder Hintergrund\n- Besondere Überlegungen oder Anforderungen",
+      "description": "## Beschreibung\nEine kurze Übersicht über den Inhalt dieses Tickets.\n\n- Wichtige Bereiche oder Funktionen, die getestet werden\n- Wichtiger Kontext oder Hintergrund\n- Besondere Überlegungen oder Anforderungen",
       "project": "## Projekt\nDas Projekt, dem dieses Problem zugeordnet ist.\n\n- Probleme können mit Testfällen in mehreren Projekten verknüpft werden.\n- Die Festlegung eines Hauptprojekts erleichtert die Organisation von Problemen.\n- Kann für projektübergreifende Probleme leer gelassen werden.",
       "state": "## Status\nGeben Sie den aktuellen Status oder das Ergebnis dieses Vorgangs gemäß dem Workflow Ihres Projekts an.",
       "tags": "## Tags\nWenden Sie relevante Tags an, um dieses Problem zu kategorisieren und zu filtern.",
@@ -8653,7 +8654,7 @@
           "content": "Organisieren Sie Testfälle in Ordnern mit benutzerdefinierten Feldern, Schritten und Prioritäten. Sehen Sie sich die Beispielordner an, um zu erfahren, wie Testfälle strukturiert sind."
         },
         "repositoryPanels": {
-          "title": "Ordner & Hüllen",
+          "title": "Ordner & Testfälle",
           "content": "Im linken Bereich werden Ordner angezeigt. Klicken Sie auf einen Ordner, um dessen Testfälle anzuzeigen. Jeder Testfall enthält Schritte, Beschreibungen und Verweise auf gemeinsame Schritte."
         },
         "repositoryCases": {
@@ -8788,11 +8789,11 @@
           "last": "Letzter",
           "amount": "Anzahl der Zeiträume",
           "unit": "Zeitraum",
-          "days": "Letzte {count, plural, one {# Tag} other {# Tage}}",
+          "days": "{count, plural, one {Letzter # Tag} other {Letzte # Tage}}",
           "weeks": "Letzte {count, plural, one {# Woche} other {# Wochen}}",
-          "months": "Letzte {count, plural, one {# Monat} other {# Monate}}",
+          "months": "{count, plural, one {Letzter # Monat} other {Letzte # Monate}}",
           "calendarWeeks": "Letzte {count, plural, one {# Kalenderwoche} other {# Kalenderwochen}}",
-          "calendarMonths": "Letzte {count, plural, one {# Kalendermonat} other {# Kalendermonate}}"
+          "calendarMonths": "{count, plural, one {Letzter # Kalendermonat} other {Letzte # Kalendermonate}}"
         },
         "rollingUnits": {
           "days": "Tage",
@@ -8864,7 +8865,7 @@
           "description": "Verfolgen Sie den Automatisierungsfortschritt wöchentlich nach Priorität."
         },
         "flakyTests": {
-          "label": "Schuppige Tests",
+          "label": "Instabile Tests",
           "description": "Identifizieren Sie Tests mit inkonsistenten Ergebnissen (bestanden/nicht bestanden)."
         },
         "testCaseHealth": {
@@ -8918,10 +8919,10 @@
         "flipThreshold": "Mindestanzahl an Flips",
         "flipThresholdHelp": "Mindestanzahl an Übergängen zwischen bestanden und nicht bestanden erforderlich, um als unzuverlässig zu gelten.",
         "flips": "Überschläge",
-        "lastNResults": "Letztes Ergebnis {count, plural, one {# Ergebnis} other {# Ergebnisse}}",
+        "lastNResults": "{count, plural, one {Letztes # Ergebnis} other {Letzte # Ergebnisse}}",
         "newest": "Neu",
         "oldest": "Alt",
-        "noFlakyTests": "Es wurden keine fehlerhaften Tests gefunden, die den Kriterien entsprechen.",
+        "noFlakyTests": "Es wurden keine instabilen Tests gefunden, die den Kriterien entsprechen.",
         "includeFilter": "Enthalten",
         "caseTags": "Testfall-Tags",
         "runTags": "Testlauf-Tags",
@@ -8936,7 +8937,7 @@
           "failureRate": "Ausfallrate",
           "recency": "Aktualitätswert",
           "backlogTitle": "Tests mit niedrigerer Priorität",
-          "backlogDescription": "{count, plural, one {# zusätzlicher fehlerhafter Test} other {# zusätzliche fehlerhafte Tests}} nicht angezeigt"
+          "backlogDescription": "{count, plural, one {# zusätzlicher instabiler Test} other {# zusätzliche instabile Tests}} nicht angezeigt"
         }
       },
       "testCaseHealth": {
@@ -9033,7 +9034,7 @@
             "random": "Die Fälle stellen eine unvoreingenommene Zufallsstichprobe aus der infrage kommenden Menge dar."
           },
           "rationale": {
-            "mostExecutedWithCount": "Ausgeführt {count, plural, =1 {1 Mal} other {# Mal}} manuell über die Testläufe dieses Projekts hinweg — die Automatisierung spart direkt Zeit beim Testen bei jedem zukünftigen Lauf.",
+            "mostExecutedWithCount": "{count, plural, =1 {1 Mal} other {# Mal}} manuell über die Testläufe dieses Projekts hinweg ausgeführt — die Automatisierung spart direkt Zeit beim Testen bei jedem zukünftigen Lauf.",
             "mostExecutedNone": "Bisher liegen keine Hinrichtungshistorien vor – die Heuristik der am häufigsten Hingerichteten liefert kein Signal, um diesen Fall im Vergleich zu den anderen zu bewerten.",
             "flakiestWithScore": "Unzuverlässigkeit {percent}% (Ergebnis „bestanden/nicht bestanden“ wechselt in {description} der Ausführungen) — unzuverlässige manuelle Tests verschwenden bei jedem Durchlauf die Zeit des Testers und profitieren am meisten von einem deterministischen Automatisierungsorakel.",
             "flakiestNone": "Bisher keine unterschiedlichen Ergebnisse – die Flakiest-First-Heuristik kann in diesem Fall noch keine Wechsel zwischen bestanden und nicht bestanden messen.",
@@ -9057,7 +9058,7 @@
           },
           "relativeAge": {
             "today": "Heute",
-            "days": "{count, plural, =1 {Vor 1 Tag} other {# Tage zuvor}}",
+            "days": "{count, plural, =1 {Vor 1 Tag} other {Vor # Tagen}}",
             "months": "{count, plural, =1 {Vor einem Monat} other {Vor # Monaten}}",
             "years": "{count, plural, =1 {Vor 1 Jahr} other {Vor # Jahren}}",
             "unknown": "zu einem unbekannten Zeitpunkt"
@@ -9102,9 +9103,9 @@
       },
       "issueTestCoverage": {
         "viewMode": "Ansichtsmodus",
-        "summaryView": "Zusammenfassung (nach Ausgabe)",
+        "summaryView": "Zusammenfassung (nach Ticket)",
         "detailView": "Details (nach Testfall)",
-        "issue": "Ausgabe",
+        "issue": "Ticket",
         "testCase": "Testfall",
         "testCases": "{count, plural, =1 {Testfall} other {Testfälle}}",
         "linkedTests": "Verknüpfte Tests",
@@ -9115,15 +9116,15 @@
         "lastExecuted": "Zuletzt ausgeführt",
         "notTested": "Nicht getestet",
         "noData": "Es wurden keine Probleme mit den verknüpften Testfällen gefunden.",
-        "noIssuesNeedingAttention": "Alle Ausgaben haben die Tests bestanden – hervorragende Arbeit!",
+        "noIssuesNeedingAttention": "Alle Tickets haben die Tests bestanden – hervorragende Arbeit!",
         "stats": {
-          "totalIssues": "Gesamtzahl der Ausgaben",
+          "totalIssues": "Gesamtzahl der Tickets",
           "issuesWithFailures": "Mit Fehlern",
           "issuesWithFailuresTooltip": "Probleme mit mindestens einem fehlgeschlagenen Testfall",
           "issuesWithUntested": "Mit ungetestet",
           "issuesWithUntestedTooltip": "Probleme mit mindestens einem Testfall, der nicht ausgeführt wurde",
           "issuesAllPassing": "Alle vorbei",
-          "numberOfIssues": "Anzahl der Ausgaben"
+          "numberOfIssues": "Anzahl der Tickets"
         },
         "charts": {
           "passRateDistribution": "Verteilung der Testbestehensquote",
@@ -9435,9 +9436,9 @@
       "weekEnding": "Woche endet",
       "period": "Zeitraum",
       "automationStatus": "Automatisierungsstatus",
-      "issueType": "Ausgabetyp",
+      "issueType": "Ticket-Typ",
       "issueTracker": "Ticket-Verfolgung",
-      "issueStatus": "Ausgabestatus",
+      "issueStatus": "Ticket-Status",
       "issue": "Problem",
       "resultSource": "Ergebnisquelle",
       "rootCause": "Grundursache",
@@ -9477,7 +9478,7 @@
       "sessionParticipation": "Sitzungsteilnahme",
       "averageElapsed": "Durchschnittliche Zeit pro Ausführung",
       "lastActiveDate": "Letztes Aktivitätsdatum",
-      "issueCount": "Ausgabeanzahl",
+      "issueCount": "Ticket-Anzahl",
       "linkedCaseCount": "Verknüpfte Fälle",
       "firstCaseCreated": "Erster Fall erstellt",
       "lastCaseCreated": "Letzter Fall erstellt",
@@ -9659,7 +9660,7 @@
           "expiresSoon": "Dieser Link läuft am Ende des"
         },
         "actions": {
-          "createAnother": "Erstelle einen weiteren"
+          "createAnother": "Weiteren erstellen"
         }
       },
       "editDialog": {
@@ -9842,7 +9843,7 @@
       "noMatchesForFilters": "Keine Treffer entsprechen den aktuellen Filtern. Verringern Sie die Mindestwerte, um die Ergebnisse zu erweitern.",
       "selected": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
       "bulkDismiss": "Schließen ({count, number})",
-      "bulkDismissSuccess": "{count, plural, one {# Spiel abgebrochen} other {# Spiele abgebrochen}}",
+      "bulkDismissSuccess": "{count, plural, one {# Übereinstimmung verworfen} other {# Übereinstimmungen verworfen}}",
       "bulkError": "Es sind einige Vorgänge fehlgeschlagen. Bitte versuchen Sie es erneut.",
       "tableHint": "Klicken Sie auf eine Zeile, um die zugehörigen Schritte in der Vorschau anzuzeigen. Markieren Sie Zeilen mit Kontrollkästchen, um Massenaktionen durchzuführen.",
       "matchedStepsCount": "{count, plural, one {# übereinstimmender Schritt} other {# übereinstimmende Schritte}}",
@@ -10098,7 +10099,7 @@
     }
   },
   "Trial": {
-    "daysRemaining": "Die Prüfung endet in {count, plural, =1 {1 Tag} other {# Tagen}}",
+    "daysRemaining": "Die Testversion endet in {count, plural, =1 {1 Tag} other {# Tagen}}",
     "expiresT oday": "Die Testphase läuft heute ab",
     "expired": "{count, plural, =1 {Testversion vor 1 Tag abgelaufen} other {Testversion vor # Tagen abgelaufen}}",
     "contactSales": "Aktualisieren"
@@ -10241,7 +10242,7 @@
     "deleteDescription": "Dieser Parameter wird in den Schritten {stepCount} und den Datensatzzeilen {rowCount} referenziert. Durch das Löschen bleiben diese Referenzen als Klartext erhalten und der Fall wird auf Version {nextVersion} aktualisiert.",
     "deleteConfirm": "Parameter löschen",
     "renameTitle": "\"@{oldName}\" in \"@{newName} \" umbenennen?",
-    "renameDescriptionLead": "Dies wird {totalCount, plural, =1 {# Referenz} other {# Referenzen}} : überschreiben",
+    "renameDescriptionLead": "Dies wird {totalCount, plural, =1 {# Referenz} other {# Referenzen}} überschreiben:",
     "renameDescriptionStepCount": "{stepCount, plural, =1 {# Schritttextreferenz} other {# Schritttextreferenzen}}",
     "renameDescriptionExpectedCount": "{expectedCount, plural, =1 {# Referenz auf erwartetes Ergebnis} other {# Referenzen auf erwartetes Ergebnis}}",
     "renameDescriptionRowCount": "{rowCount, plural, =1 {# Datensatzzeile} other {# Datensatzzeilen}}",
@@ -10274,8 +10275,8 @@
     "datasetEmptyHeading": "Noch keine Datensätze",
     "datasetEmptyBody": "Um loszulegen, fügen Sie eine Zeile hinzu, fügen Sie eine CSV-Datei ein oder importieren Sie eine Datei.",
     "datasetSensitiveDeniedTooltip": "Sie haben keine Berechtigung, sensible Daten preiszugeben.",
-    "datasetSaveBlocked": "Beheben Sie die Fehler {count, plural, =1 {#,} other {# und}} , bevor Sie fortfahren.",
-    "datasetBulkDeleteTitle": "Löschen {count, plural, =1 {# Zeile} other {# Zeilen}}?",
+    "datasetSaveBlocked": "Beheben Sie {count, plural, =1 {# Fehler} other {# Fehler}}, bevor Sie fortfahren.",
+    "datasetBulkDeleteTitle": "{count, plural, =1 {# Zeile} other {# Zeilen}} löschen?",
     "datasetBulkDeleteDescription": "Diese Handlung kann nicht rückgängig gemacht werden.",
     "datasetCounts": "{paramCount} Parameter · {rowCount} Zeilen",
     "datasetSelectedCount": "{count} ausgewählt",
@@ -10319,7 +10320,7 @@
     "confirmSummaryMode": "Modus: {mode}",
     "cancelUploadTitle": "Upload verwerfen?",
     "cancelUploadDescription": "Die von Ihnen hochgeladenen CSV-Daten gehen verloren.",
-    "importSuccess": "Importiert {count, plural, =1 {# Zeile} other {# Zeilen}}",
+    "importSuccess": "{count, plural, =1 {# Zeile} other {# Zeilen}} importiert",
     "addSuccess": "Parameter \"{name}\" hinzugefügt",
     "addError": "Parameter konnte nicht hinzugefügt werden",
     "updateSuccess": "Parameter gespeichert",
@@ -10339,17 +10340,17 @@
     "chipTooltipUndeclared": "\"@{name}\" ist kein deklarierter Parameter. Öffnen Sie \"Parameter konfigurieren\", um ihn hinzuzufügen.",
     "editorUndeclaredWarning": "Nicht deklarierte Referenzen: {names}. Fügen Sie diese über die Konfigurationsparameter hinzu, um die Iterationssubstitution zu aktivieren.",
     "runProgressTitle": "Generiere Iterationen für \"{runName}\"",
-    "runProgressDescriptionAsync": "Im Hintergrund werden {count, plural, =1 {# Iterationen} other {# Iterationen}} erstellt. Sie können weiterarbeiten – wir benachrichtigen Sie, sobald der Vorgang abgeschlossen ist.",
-    "runProgressDescriptionSync": "Erstellt {count, plural, =1 {# Iteration} other {# Iterationen}}.",
+    "runProgressDescriptionAsync": "Im Hintergrund {count, plural, =1 {wird # Iteration} other {werden # Iterationen}} erstellt. Sie können weiterarbeiten – wir benachrichtigen Sie, sobald der Vorgang abgeschlossen ist.",
+    "runProgressDescriptionSync": "{count, plural, =1 {# Iteration} other {# Iterationen}} erstellt.",
     "runProgressFailed": "Die Iterationsgenerierung konnte nicht gestartet werden.",
     "runHardRefuseTitle": "Zu viele Iterationen, um zu erstellen",
     "runHardRefuseDescription": "Dieser Durchlauf würde {count} Iterationen erzeugen und damit das Limit von {cap}überschreiten. Reduzieren Sie die Anzahl der Zeilen im Datensatz, heben Sie die Auswahl bestimmter Fälle auf oder teilen Sie den Durchlauf in mehrere Durchläufe auf.",
-    "runPreflightSync": "Erzeugt sofort {n, plural, =1 {# Iterationen} other {# Iterationen}}",
-    "runPreflightAsync": "Erzeugt {n, plural, =1 {# Iterationen} other {# Iterationen}} (Hintergrundprozess)",
-    "runPreflightSoftConfirm": "Es werden {n, plural, =1 {# Iterationen} other {# Iterationen}} erstellt – Bestätigung erforderlich",
+    "runPreflightSync": "Erzeugt sofort {n, plural, =1 {# Iteration} other {# Iterationen}}",
+    "runPreflightAsync": "Erzeugt {n, plural, =1 {# Iteration} other {# Iterationen}} (Hintergrundprozess)",
+    "runPreflightSoftConfirm": "Es {n, plural, =1 {wird # Iteration} other {werden # Iterationen}} erstellt – Bestätigung erforderlich",
     "runPreflightHardRefuse": "Erstellung nicht möglich – {n} überschreitet die Obergrenze von {cap}",
     "runPreflightTooltip": "{iterations, plural, =1 {# Iteration} other {# Iterationen}} = {cases, plural, =1 {# Fall} other {# Fälle}} × {configs, plural, =1 {# Konfiguration} other {# Konfigurationen}} × Datensatzzeilen",
-    "runPreflightTooltipHeader": "{iterations, plural, =1 {# Iteration} other {# Iterationen}} über {cases, plural, =1 {# parametrisierter Fall} other {# parametrisierte Fälle}} × {configs, plural, =1 {# Konfiguration} other {# Konfigurationen}}",
+    "runPreflightTooltipHeader": "{iterations, plural, =1 {# Iteration} other {# Iterationen}} über {cases, plural, =1 {# parametrisierten Fall} other {# parametrisierte Fälle}} × {configs, plural, =1 {# Konfiguration} other {# Konfigurationen}}",
     "runPreflightTooltipCaseRow": "{title} — {rows, plural, =1 {# Zeile} other {# Zeilen}}",
     "chipClickToReveal": "Zum Anzeigen klicken",
     "chipCopyValue": "Wert kopieren",
@@ -10370,12 +10371,12 @@
     "hardRefuseSuggestion1": "Reduziere die Anzahl der Datensätze anhand des größten Beitragsfalls.",
     "hardRefuseSuggestion2": "Eine oder mehrere Konfigurationen abwählen.",
     "hardRefuseSuggestion3": "Teilen Sie die Arbeit in mehrere Testläufe auf.",
-    "softConfirmTitle": "Generieren {n, plural, =1 {# Iterationen} other {# Iterationen}}?",
-    "softConfirmDescription": "{n, plural, =1 {# Iteration} other {# Iterationen}} von {cases, plural, =1 {# Fall} other {# Fälle}} × {configs, plural, =1 {# Konfiguration} other {# Konfigurationen}}.",
+    "softConfirmTitle": "{n, plural, =1 {# Iteration} other {# Iterationen}} generieren?",
+    "softConfirmDescription": "{n, plural, =1 {# Iteration} other {# Iterationen}} von {cases, plural, =1 {# Fall} other {# Fällen}} × {configs, plural, =1 {# Konfiguration} other {# Konfigurationen}}.",
     "softConfirmGo": "Iterationen generieren",
     "runProgressCounter": "{done} / {total}",
     "runProgressDismissAria": "Fortschritt verwerfen",
-    "runProgressComplete": "Generiert {total, plural, =1 {# Iteration} other {# Iterationen}} für \"{runName}\"",
+    "runProgressComplete": "{total, plural, =1 {# Iteration} other {# Iterationen}} für \"{runName}\" generiert",
     "runProgressFailedToast": "Fehler beim Generieren von Iterationen für \"{runName}\". {reason}",
     "runProgressNavAway": "Zeig mir den Rest des Laufs",
     "runGeneratingHeading": "Generiere Iterationen…",
@@ -10427,10 +10428,10 @@
     "iterationBulkConfirmDescription": "Für jede ausgewählte Iteration wird ein neues Ergebnis mit dem Status \"{statusName} \" ausgegeben.",
     "iterationBulkConfirm": "{action} markieren",
     "iterationBulkConfirmReplace": "Ersetzen Sie durch {action}",
-    "iterationBulkOverwriteWarning": "{count, plural, =1 {# der ausgewählten Iterationen haben bereits ein Ergebnis geliefert.} other {# der ausgewählten Iterationen haben bereits ein Ergebnis geliefert.}} Ein neues Ergebnis wird gespeichert und das aktuelle ersetzt.",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {# der ausgewählten Iterationen hat bereits ein Ergebnis geliefert.} other {# der ausgewählten Iterationen haben bereits ein Ergebnis geliefert.}} Ein neues Ergebnis wird gespeichert und das aktuelle ersetzt.",
     "iterationBulkReasonLabel": "Grund (optional)",
     "iterationBulkReasonHelp": "Wird bei jedem Ergebnis vermerkt.",
-    "iterationBulkSuccess": "{count, plural, =1 {# Iteration} other {# Iterationen}} markiert {action}",
+    "iterationBulkSuccess": "{count, plural, =1 {# Iteration} other {# Iterationen}} als {action} markiert",
     "iterationBulkError": "Iterationen konnten nicht markiert werden",
     "iterationBulkNa": "N/A markieren",
     "iterationListLoadError": "Iterationen konnten nicht geladen werden.",
@@ -10489,15 +10490,15 @@
     "namedTitle": "{name} · {project}",
     "signInCta": "Bei TestPlanIt anmelden",
     "testCaseLabel": "Testfall",
-    "testRunLabel": "Probelauf",
+    "testRunLabel": "Testlauf",
     "sessionLabel": "Erkundungssitzung",
     "projectLabel": "Projekt",
     "milestoneLabel": "Meilenstein",
     "appLabel": "Testmanagement",
     "testCaseGeneric": "Ein Testfall in TestPlanIt. Melden Sie sich an, um seine Schritte, Ergebnisse und den Verlauf anzuzeigen.",
-    "testRunGeneric": "Ein Probelauf in TestPlanIt. Melden Sie sich an, um seinen Fortschritt und die Ergebnisse anzuzeigen.",
+    "testRunGeneric": "Ein Testlauf in TestPlanIt. Melden Sie sich an, um seinen Fortschritt und die Ergebnisse anzuzeigen.",
     "sessionGeneric": "Eine Erkundungssitzung in TestPlanIt. Melden Sie sich an, um die Notizen und Ergebnisse anzuzeigen.",
-    "projectGeneric": "Ein Projekt in TestPlanIt. Melden Sie sich an, um die Testfälle, Probeläufe und Berichte anzuzeigen.",
+    "projectGeneric": "Ein Projekt in TestPlanIt. Melden Sie sich an, um die Testfälle, Testläufe und Berichte anzuzeigen.",
     "milestoneGeneric": "Ein Meilenstein in TestPlanIt. Melden Sie sich an, um den Umfang und den Fortschritt anzuzeigen.",
     "appGeneric": "Modernes Testmanagement — planen, durchführen und verfolgen Sie Ihre Tests an einem Ort.",
     "shareReportLabel": "Gemeinsamer Bericht",
@@ -10546,7 +10547,7 @@
     "deleteRule": "Warnmeldung löschen",
     "deleteConfirm": "Die Warnmeldung \"{name}\" löschen? Ihre Abonnenten erhalten keine Benachrichtigungen mehr und sie kann aus dem Papierkorb wiederhergestellt werden.",
     "pauseTitle": "Diese Warnmeldung für alle pausieren?",
-    "pauseConfirm": "\"{name}\" wird für {count, plural, =0 {alle} one {seinen einzigen Abonnenten} =2 {beide seiner Abonnenten} other {alle # seiner Abonnenten}} nicht mehr ausgelöst, nicht nur für Sie, bis jemand sie wieder aktiviert. Um nur Ihre eigenen Benachrichtigungen zu stoppen, schalten Sie stattdessen \"Benachrichtige mich\" aus.",
+    "pauseConfirm": "\"{name}\" wird für {count, plural, =0 {alle} one {ihren einzigen Abonnenten} =2 {beide ihrer Abonnenten} other {alle # ihrer Abonnenten}} nicht mehr ausgelöst, nicht nur für Sie, bis jemand sie wieder aktiviert. Um nur Ihre eigenen Benachrichtigungen zu stoppen, schalten Sie stattdessen \"Benachrichtige mich\" aus.",
     "columns": {
       "name": "Regel",
       "condition": "Bedingung",
@@ -10819,17 +10820,17 @@
       "CASE_RECOVERED": {
         "label": "Fall wiederhergestellt",
         "description": "Ein Fall besteht nach Fehler bei allen seinen letzten Ergebnissen.",
-        "summary": "Ein Fall besteht nach Fehler bei {window, plural, one {# Ergebnis} other {# Ergebnisse}}"
+        "summary": "Ein Fall besteht, nachdem er bei {window, plural, one {seinem letzten # Ergebnis} other {seinen letzten # Ergebnissen}} fehlgeschlagen ist"
       },
       "CONSECUTIVE_FAILURES": {
         "label": "Aufeinanderfolgende Fehler",
         "description": "Ein Fall schlägt mehrere Male hintereinander fehl.",
-        "summary": "Ein Fall schlägt {threshold, plural, one {# Mal} other {# Male}} hintereinander fehl"
+        "summary": "Ein Fall schlägt {threshold, plural, one {# Mal} other {# Mal}} hintereinander fehl"
       },
       "CASE_FLAKY": {
         "label": "Fall wurde instabil",
         "description": "Ein Fall wechselt in seinen letzten Ergebnissen wiederholt zwischen Bestanden und Fehler. Verwendet die gleichen Eingaben wie der Bericht \"Instabile Tests\".",
-        "summary": "Ein Fall wechselt zwischen Bestanden und Fehler mindestens {threshold, plural, one {# Mal} other {# Male}} über die letzten {window} Ergebnisse"
+        "summary": "Ein Fall wechselt zwischen Bestanden und Fehler mindestens {threshold, plural, one {# Mal} other {# Mal}} über die letzten {window} Ergebnisse"
       },
       "RUN_PASS_RATE_BELOW": {
         "label": "Durchlaufquote unter Schwelle",
@@ -10864,7 +10865,7 @@
       "RUN_ISSUES_OPENED": {
         "label": "Probleme, die von einem Durchlauf geöffnet werden",
         "description": "Mehr als eine bestimmte Anzahl von Problemen ist mit den Ergebnissen eines Durchlaufs verknüpft.",
-        "summary": "Mehr als {threshold, plural, one {# Problem ist} other {# Probleme sind}} mit den Ergebnissen eines Durchlaufs verknüpft, {evaluateOn, select, AS_RESULTS_ARRIVE {bewertet, während Ergebnisse ankommen} other {bewertet, wenn der Durchlauf abgeschlossen ist}}"
+        "summary": "Mehr als {threshold, plural, one {# Ticket ist} other {# Tickets sind}} mit den Ergebnissen eines Durchlaufs verknüpft, {evaluateOn, select, AS_RESULTS_ARRIVE {bewertet, während Ergebnisse ankommen} other {bewertet, wenn der Durchlauf abgeschlossen ist}}"
       },
       "NEW_FAILURE_SIGNATURES": {
         "label": "Neue Fehlermuster in einer Ausführung",
@@ -10894,7 +10895,7 @@
       "STALE_CASES": {
         "label": "Abgelaufene Fälle",
         "description": "Mehr als eine bestimmte Anzahl von Fällen hatten {days, plural, one {# Tag} other {# Tagen}} lang kein Ergebnis. Wird täglich überprüft.",
-        "summary": "Mehr als {threshold, plural, one {# Fall hat} other {# Fälle haben}} {days, plural, one {# Tag} other {# Tagen}} lang kein Ergebnis"
+        "summary": "Mehr als {threshold, plural, one {# Fall hat} other {# Fälle haben}} {days, plural, one {# Tag} other {# Tage}} lang kein Ergebnis"
       },
       "AUTOMATION_SHARE_BELOW": {
         "label": "Automatisierter Anteil unter Schwelle",
@@ -10934,7 +10935,7 @@
       "QUEUE_FAILED_JOBS": {
         "label": "Warteschlange fehlgeschlagene Jobs",
         "description": "Eine Hintergrund-Warteschlange enthält zu viele fehlgeschlagene Jobs. Wird stündlich überprüft.",
-        "summary": "Mehr als {threshold, plural, one {# Job hat} other {# Jobs haben}} in einer Warteschlange fehlgeschlagen"
+        "summary": "Mehr als {threshold, plural, one {# Job ist} other {# Jobs sind}} in einer Warteschlange fehlgeschlagen"
       },
       "QUEUE_BACKLOG": {
         "label": "Warteschlangen-Rückstand",

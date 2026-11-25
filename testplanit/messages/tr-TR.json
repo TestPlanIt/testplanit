@@ -28,10 +28,10 @@
     "searchUsers": "Kullanıcıları ara...",
     "searchGroups": "Grupları arayın...",
     "searchCases": "{count, plural, =0 {Vaka arama} one {# vaka ara} other {# vaka ara}}",
-    "searchProjects": "{count, plural, =0 {Projeleri ara} one {Proje # ara} other {Proje # ara}}",
+    "searchProjects": "{count, plural, =0 {Projeleri ara} one {# proje ara} other {# proje ara}}",
     "searchTags": "Etiketleri ara...",
-    "searchRuns": "{count, plural, =0 {Arama test çalıştırmaları} one {Arama # test çalıştırmaları} other {Arama # test çalıştırmaları}}",
-    "searchSessions": "{count, plural, =0 {Oturumları ara} one {Oturum # ara} other {Oturum # ara}}",
+    "searchRuns": "{count, plural, =0 {Test çalıştırmalarını ara} one {# test çalıştırmasını ara} other {# test çalıştırmasını ara}}",
+    "searchSessions": "{count, plural, =0 {Oturumları ara} one {# oturum ara} other {# oturum ara}}",
     "searchMilestones": "{count, plural, =0 {Dönüm noktalarını ara} one {# dönüm noktasını ara} other {# dönüm noktasını ara}}",
     "search": "Aramak...",
     "defaultOption": "Varsayılan Seçenek",
@@ -91,12 +91,12 @@
       "actionsLabel": "Eylemler",
       "actionsWithAlerts": "İşlemler ({count, number} okunmamış)",
       "assign": "Atamak",
-      "assignSelected": "Atama {count, plural, one {# durum} other {# durumlar}}",
+      "assignSelected": "{count, plural, one {# durumu ata} other {# durumu ata}}",
       "refresh": "Yenile",
-      "addResultSelected": "Sonucu {count, plural, one {# durum} other {# durumlar}}'e ekle",
-      "resultsAdded": "{count, plural, one {# Sonuç} other {# Sonuçlar}} Eklendi",
-      "resultsAddedDescription": "{count, plural, one {Sonuç # test durumuna eklendi} other {Sonuçlar # test durumlarına başarıyla eklendi}}",
-      "addingResultsToMultiple": "Sonuçlar {count, plural, one {# test durumuna} other {# test durumlarına ekleniyor}}",
+      "addResultSelected": "Sonucu {count, plural, one {# duruma} other {# duruma}} ekle",
+      "resultsAdded": "{count, plural, one {# Sonuç} other {# Sonuç}} Eklendi",
+      "resultsAddedDescription": "{count, plural, one {Sonuç # test durumuna başarıyla eklendi} other {Sonuçlar # test durumuna başarıyla eklendi}}",
+      "addingResultsToMultiple": "Sonuçlar {count, plural, one {# test durumuna ekleniyor} other {# test durumuna ekleniyor}}",
       "addedToTestRun": "Test Çalıştırmasına Eklendi",
       "addedToTestRunDescription": "Test senaryosu Test Çalıştırmasına eklendi.",
       "noAvailableTestRuns": "Aktif test çalıştırmalarının tümü bu test senaryosunu zaten içermektedir.",
@@ -463,8 +463,8 @@
         "invalidUrl": "Geçersiz URL biçimi"
       },
       "worker": "Çalışan",
-      "hasCodePins": "Kod Pimleri Var",
-      "noCodePins": "Kod Pimleri Yok"
+      "hasCodePins": "Kod Pinleri Var",
+      "noCodePins": "Kod Pinleri Yok"
     },
     "filter": {
       "placeholder": "Filtre {item}..."
@@ -502,13 +502,13 @@
       },
       "assignBulk": {
         "title": "Toplu Test Senaryoları Ata",
-        "description": "{count, plural, one {# seçilen test durumunu} other {# seçilen test durumlarını}} bir kullanıcıya atayın."
+        "description": "{count, plural, one {# seçilen test durumunu} other {# seçilen test durumunu}} bir kullanıcıya atayın."
       },
       "complete": {
         "title": "Test Çalıştırması Tamamlandı",
         "description": "Bu test çalışmasını tamamlamak istediğinizden emin misiniz?",
         "allCasesCompletedDescription": "Bu çalışmadaki her test durumunun artık bir sonucu var. Bu test çalışmasını tamamlamak ister misiniz?",
-        "warning": "Test işlemi tamamlandıktan sonra, üzerinde herhangi bir değişiklik yapılamayacaktır.",
+        "warning": "Test çalıştırması tamamlandıktan sonra, üzerinde herhangi bir değişiklik yapılamayacaktır.",
         "completing": "Tamamlanıyor...",
         "apple": {
           "title": "Apple Oturum Açma İşlemini Yapılandır",
@@ -602,7 +602,7 @@
       "enterUrl": "URL girin",
       "enterUrlPattern": "URL kalıbı girin...",
       "domainExample": "ornek.com",
-      "issueIdExample": "SAYI-123",
+      "issueIdExample": "SORUN-123",
       "selectPriorityValuesOrEmpty": "Öncelik değerlerini seçin (veya tümü için boş bırakın)"
     },
     "errors": {
@@ -652,7 +652,7 @@
       },
       "issueManagement": {
         "linkedSuccess": "Sorun başarıyla bağlantılandırıldı.",
-        "linkError": "Bağlantı sorunuyla ilgili hata",
+        "linkError": "Sorunu bağlamada hata oluştu",
         "unlinkedSuccess": "Sorun başarıyla bağlantısı kesildi.",
         "unlinkError": "Bağlantıyı kaldırmada hata oluştu",
         "noActiveIntegration": "Bu proje için aktif bir entegrasyon bulunamadı."
@@ -663,7 +663,7 @@
       "workflowStateExists": "İş akışı durumu zaten mevcut. Lütfen yeni bir ad seçin.",
       "failedToLoadCaseData": "Vaka verileri yüklenemedi. Kaydedilemiyor.",
       "atLeastOneTagRequired": "En az bir etiket gereklidir.",
-      "atLeastOneIssueRequired": "En az bir konu gereklidir.",
+      "atLeastOneIssueRequired": "En az bir sorun gereklidir.",
       "atLeastOneOptionRequired": "En az bir seçenek seçilmelidir.",
       "valueRequired": "Değer gereklidir.",
       "contentRequired": "İçerik gereklidir.",
@@ -796,7 +796,7 @@
       "candidateInGroupTooltipSession": "{count, plural, one {Bu grupta # oturum} other {Bu grupta # oturum}}"
     },
     "labels": {
-      "projects": "{count, plural, =1 {# Proje} other {# Projeler}}",
+      "projects": "{count, plural, =1 {# Proje} other {# Proje}}",
       "templates": "Şablonlar ve Alanlar",
       "workflows": "İş akışları",
       "statuses": "Durumlar",
@@ -825,13 +825,13 @@
       "noCases": "Test senaryosu yok.",
       "unknown": "Bilinmiyor",
       "selectedTestCases": "Seçilen Test Senaryoları",
-      "selectedTestCasesCount": "{count, plural, one {# Seçilen Test Senaryosu} other {# Seçilen Test Senaryoları}}",
+      "selectedTestCasesCount": "{count, plural, one {# Seçilen Test Senaryosu} other {# Seçilen Test Senaryosu}}",
       "editToModifyCasesTitle": "Bu liste değiştirilemez.",
       "editToModifyCases": "Test Çalıştırmasını düzenleyin ve listeyi değiştirmek için Seçilen Test Senaryoları'na tıklayın.",
       "noTestCasesSelected": "Hiçbir test senaryosu seçilmedi.",
       "editToSelectTestCases": "Test senaryolarını seçmek için Test Çalıştırmasını düzenleyin.",
       "casesInRun": "{count, plural, =0 {Test Çalıştırmasında Test Durumu Yok} =1 {Test Çalıştırmasında 1 Test Durumu} other {Test Çalıştırmasında # Test Durumu}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Benzersiz Durum} other {# Benzersiz Durumlar}} genelinde {configCount, plural, =1 {1 Yapılandırma} other {# Yapılandırmalar}} ({totalCount, number} toplam durum)",
+      "casesInRunMultiConfig": "{configCount, plural, =1 {1 Yapılandırma} other {# Yapılandırma}} genelinde {uniqueCount, plural, =1 {1 Benzersiz Durum} other {# Benzersiz Durum}} ({totalCount, number} toplam durum)",
       "viewTestRunDetails": "Test çalıştırma ayrıntılarını görüntüle",
       "sortByStatus": "Duruma göre gruplandır",
       "sortByDate": "Tarihe göre sırala",
@@ -839,7 +839,7 @@
       "estimateEntered": "Tahmin: {value} (durum üzerinde girilen)",
       "forecastFromHistory": "Tahmin: {value} (geçmiş yürütme sürelerinden)",
       "testRuns": "{count, plural, =0 {Test Çalıştırması Yok} =1 {1 Test Çalıştırması} other {# Test Çalıştırması}}",
-      "sessions": "{count, plural, =0 {Oturum Yok} =1 {1 Oturum} other {# Oturumlar}}",
+      "sessions": "{count, plural, =0 {Oturum Yok} =1 {1 Oturum} other {# Oturum}}",
       "issues": "{count, plural, =0 {Sorun Yok} =1 {1 Sorun} other {# Sorun}}",
       "noOptions": "Hiçbir seçenek mevcut değil.",
       "multiConfiguration": "Çoklu konfigürasyon grubunun bir parçası",
@@ -865,12 +865,12 @@
       "unknownUser": "Bilinmeyen Kullanıcı",
       "unknownProject": "Bilinmeyen Proje",
       "unknownTag": "Bilinmeyen Etiket",
-      "filesSelectedForUpload": "{count, plural, =1 {Yüklemek için 1 dosya seçildi} other {Yüklemek için seçilen dosya #}}"
+      "filesSelectedForUpload": "{count, plural, =1 {Yüklemek için 1 dosya seçildi} other {Yüklemek için # dosya seçildi}}"
     },
     "empty": {
       "description": "Açıklama yok",
       "documentation": "Belge yok.",
-      "childMilestones": "Çocuk gelişim aşamaları yok",
+      "childMilestones": "Alt dönüm noktası yok",
       "sessions": "Oturum Yok",
       "activeSessions": "Aktif oturum yok",
       "completedSessions": "Tamamlanmış oturum yok",
@@ -910,10 +910,10 @@
       "goToPrevious": "Önceki sayfaya git",
       "goToNext": "Sonraki sayfaya git",
       "all": "Tüm Ürünler",
-      "entries": "{count, plural, =1 {# öğe} other {# öğeler}}",
+      "entries": "{count, plural, =1 {# öğe} other {# öğe}}",
       "pageSize": "Sayfa Boyutu",
       "showing": "Gösteriliyor",
-      "total": "Toplam {count, plural, =1 {# öğe} other {# öğeler}}",
+      "total": "Toplam {count, plural, =1 {# öğe} other {# öğe}}",
       "filtered": "filtrelenmiş",
       "pageOfPages": "Sayfa {current} / {total}",
       "loadedOfTotal": "{loaded, number} / {total, number}"
@@ -924,16 +924,16 @@
       "attachments": {
         "title": "Ekleri Yükle",
         "description": "Dosyalarınızı sürükleyip bırakın veya dosya seçmek için aşağıdaki düğmeye tıklayın.",
-        "selectFiles": "{count, plural, =0 {Dosya Seç} one {1 Seçili Dosya} other {# Seçili Dosyalar}}",
+        "selectFiles": "{count, plural, =0 {Dosya Seç} one {1 Seçili Dosya} other {# Seçili Dosya}}",
         "selectFile": "{count, plural, =0 {Dosya Seçin} other {1 Dosya Seçildi}}",
-        "filesSelected": "{count, plural, one {1 dosya seçildi} other {# seçilen dosyalar}}",
+        "filesSelected": "{count, plural, one {1 dosya seçildi} other {# dosya seçildi}}",
         "addMoreFiles": "Daha fazla dosya ekle...",
         "replaceFile": "Dosyayı değiştir...",
         "invalidFileType": "Geçersiz dosya türü. Yalnızca {types} dosyalarına izin verilir.",
         "altText": {
           "emoji": "emoji"
         },
-        "count": "{count, plural, =1 {# ek} other {# ekler}}",
+        "count": "{count, plural, =1 {# ek} other {# ek}}",
         "link": {
           "addButton": "Bağlantı Ekle",
           "urlLabel": "URL",
@@ -1137,22 +1137,22 @@
       "time": "Zaman"
     },
     "plural": {
-      "case": "{count, plural, =1 {durum} other {durumlar}}",
+      "case": "{count, plural, =1 {durum} other {durum}}",
       "result": "{count, plural, =1 {sonuç} other {sonuçlar}}",
-      "run": "{count, plural, =1 {koşuyor} other {koşuyor}}",
-      "comment": "{count, plural, =1 {# yorum} other {# yorumlar}}"
+      "run": "{count, plural, =1 {çalıştırma} other {çalıştırma}}",
+      "comment": "{count, plural, =1 {# yorum} other {# yorum}}"
     },
     "success": {
       "assigned": "Test senaryosu başarıyla atandı.",
       "unassigned": "Test senaryosu başarıyla atanmamış olarak işaretlendi.",
-      "bulkAssigned": "{count, plural, one {# test durumu} other {# test durumları}} başarıyla atandı",
-      "bulkUnassigned": "{count, plural, one {# test durumu} other {# test durumları}} başarıyla atama kaldırıldı"
+      "bulkAssigned": "{count, plural, one {# test durumu} other {# test durumu}} başarıyla atandı",
+      "bulkUnassigned": "{count, plural, one {# test durumunun} other {# test durumunun}} ataması başarıyla kaldırıldı"
     },
     "tabs": {
       "general": "Genel",
       "settings": "Ayarlar"
     },
-    "selectFilter": "Test örneklerini görüntülemek için lütfen bir filtre değeri seçin.",
+    "selectFilter": "Test senaryolarını görüntülemek için lütfen bir filtre değeri seçin.",
     "invalidProject": "Geçersiz proje kimliği.",
     "visualization": "Görselleştirme",
     "results": "Sonuçlar",
@@ -1383,7 +1383,7 @@
       "currentMilestones": "Güncel Dönüm Noktaları",
       "seeAllMilestones": "{count, plural, =1 {# Dönüm Noktasına Bak} =2 {Her İki Dönüm Noktasına Bak} other {Tüm # Dönüm Noktasına Bak}}",
       "seeAllTestCases": "{count, plural, =1 {# Test Durumuna Bak} =2 {Her İki Test Durumuna Bak} other {Tüm # Test Durumuna Bak}}",
-      "latestTestCases": "En Son Test Örnekleri",
+      "latestTestCases": "En Son Test Senaryoları",
       "createdOn": "Oluşturulma tarihi",
       "seeAllTagsCount": "{count, plural, =1 {# Etikete Bak} =2 {Her İki Etikete Bak} other {Tüm # Etikete Bak}}",
       "seeAllActiveSessions": "{count, plural, =1 {# Aktif Oturuma Bak} =2 {Her İki Aktif Oturuma Bak} other {Tüm # Aktif Oturuma Bak}}",
@@ -1542,7 +1542,7 @@
             "detachedCallout": "{count, plural, one {Bunlardan {count} tanesi izleyiciden ayrılmış veya yerel olarak düzenlenmiş olup gereksinim durumunu kaybedecek} other {Bunlardan {count} tanesi izleyiciden ayrılmış veya yerel olarak düzenlenmiş olup gereksinim durumunu kaybedecek}}",
             "reversibilityNote": "Bir türü yeniden eklemek sınıflandırmayı geri yükler. Hiçbir şey silinmez.",
             "noChanges": "Uygulanacak sınıflandırma değişikliği yok.",
-            "importOfferBodyExact": "{count, plural, one {{count} sorun izleyicide bulunuyor} other {{count} sorun izleyicide bulunuyor}}",
+            "importOfferBodyExact": "Seçilen türlerden {count, plural, one {{count} sorun} other {{count} sorun}} izleyicide bulunuyor.",
             "importOfferBodyFloor": "Seçilen türlerden en az {count, plural, one {{count} sorun} other {{count} sorun}} izleyicide bulunuyor — içe aktarma bu sayıyla sınırlı değildir.",
             "importOfferBodyUnknown": "Seçilen türlerden izleyicide kaç sorun bulunduğu kesin olarak belirlenemedi. İçe aktarma işlemi yine de devam edebilir ve eşleşen tüm sorunları getirir.",
             "importOfferConfirm": "Şimdi İçe Aktar",
@@ -1690,11 +1690,11 @@
           "sessionDuplicated": "Oturum yinelendi",
           "sessionResultAdded": "Oturum sonucu eklendi",
           "issueCreated": "Sorun oluşturuldu",
-          "issueUpdated": "Sayı güncellendi.",
+          "issueUpdated": "Sorun güncellendi.",
           "issueDeleted": "Sorun silindi.",
-          "caseCreated": "Oluşturulan dosya",
-          "caseUpdated": "Dosya güncellendi.",
-          "caseDeleted": "Dosya silindi.",
+          "caseCreated": "Oluşturulan test senaryosu",
+          "caseUpdated": "Test senaryosu güncellendi.",
+          "caseDeleted": "Test senaryosu silindi.",
           "jiraIssueCreated": "Jira sorunu oluşturuldu.",
           "jiraIssueUpdated": "Jira sorunu güncellendi.",
           "jiraIssueDeleted": "Jira sorunu silindi",
@@ -2051,13 +2051,13 @@
         "delete": {
           "title": "\"{name} \" silinecek mi?",
           "descriptionStage1": "Bu veri seti projeden kaldırılacaktır. Değerlerini zaten kaydetmiş olan mevcut test çalışmaları etkilenmeyecektir.",
-          "descriptionStage2": "Bu veri seti {count, plural, =1 {# durum} other {# durumlar}}tarafından kullanılmaktadır. Silinmesi, bu durumlardan paylaşılan veri seti atamasını kaldıracaktır. Mevcut test çalışmaları etkilenmez (anlık görüntüler değiştirilemez).",
+          "descriptionStage2": "Bu veri seti {count, plural, =1 {# durum} other {# durum}} tarafından kullanılmaktadır. Silinmesi, bu durumlardan paylaşılan veri seti atamasını kaldıracaktır. Mevcut test çalışmaları etkilenmez (anlık görüntüler değiştirilemez).",
           "confirm": "Veri kümesini sil",
-          "confirmAnyway": "Yine de sil ({count, plural, =1 {# durum} other {# durumlar}})",
+          "confirmAnyway": "Yine de sil ({count, plural, =1 {# durum} other {# durum}})",
           "error": "Veri kümesi silinemedi."
         },
         "deleteSuccess": "Silindi \"{name}\"",
-        "deleteSuccessWithAssignments": "\"{name}\" silindi ve {count, plural, =1 {atanmadı # durum} other {# durumlar}}",
+        "deleteSuccessWithAssignments": "\"{name}\" silindi ve {count, plural, =1 {# durumun ataması kaldırıldı} other {# durumun ataması kaldırıldı}}",
         "editor": {
           "back": "Veri kümelerine geri dön",
           "loadError": "Bu veri seti yüklenemedi.",
@@ -2160,7 +2160,7 @@
         "pathPatterns": {
           "addPath": "Yol Ekle",
           "exclude": "Hariç tut",
-          "files": "{count, plural, one {# dosya} other {# dosyalar}}",
+          "files": "{count, plural, one {# dosya} other {# dosya}}",
           "pathLabel": "Yol",
           "patternLabel": "Model",
           "previewFiles": "Dosyaları Önizle",
@@ -2258,9 +2258,9 @@
         "excludeNotStarted": {
           "label": "Taslak vakaları test çalışmalarından hariç tutun.",
           "description": "Etkinleştirildiğinde, \"Başlatılmadı\" iş akışı durumundaki test senaryoları \"Senaryo Ekle\" seçicisinden gizlenir ve bir çalıştırmaya eklenemez. Mevcut bir senaryo \"Başlatılmadı\" durumuna geri döndürülürse (örneğin, İnceleme ve Onay reddi nedeniyle), zaten kaydedilmiş bir sonucu yoksa açık olan tüm çalıştırmalardan kaldırılır; eğer varsa, çalıştırmada kalır ancak salt okunur hale gelir.",
-          "enabledToast": "Taslak vakalar, işlemlerden hariç tutulacaktır.",
+          "enabledToast": "Taslak vakalar, çalıştırmalardan hariç tutulacaktır.",
           "disabledToast": "Taslak vakalar artık çalıştırmalara eklenebilir.",
-          "saveError": "Taslak dava hariç tutma ayarı güncellenemedi.",
+          "saveError": "Taslak senaryo hariç tutma ayarı güncellenemedi.",
           "skippedToast": "{count, plural, =1 {1 taslak vaka başlatılmadı durumunda olduğu için atlandı} other {# taslak vaka başlatılmadı durumunda olduğu için atlandı}}"
         },
         "autoLockComposition": {
@@ -2352,75 +2352,75 @@
           "pathPlaceholder": "src"
         },
         "cache": {
-          "description": "Dosyalar Valkey'de ön belleğe alındı, bu nedenle Kod Pimi dosya seçici ve depo işaretçileri hızlı kalır.",
-          "disabledWarning": "Dosya ön belleklemesi devre dışı bırakıldı. Depo işaretçileri taranmaz ve Kod Pimi dosya seçici sağlayıcınızdan açıldığında dosyaları canlı listeler.",
+          "description": "Dosyalar Valkey'de ön belleğe alındı, bu nedenle Kod Pini dosya seçici ve depo işaretçileri hızlı kalır.",
+          "disabledWarning": "Dosya ön belleklemesi devre dışı bırakıldı. Depo işaretçileri taranmaz ve Kod Pini dosya seçici sağlayıcınızdan açıldığında dosyaları canlı listeler.",
           "contentsIncomplete": "Yalnızca {cached} / {total} dosya içeriği ön belleğe alındı. Tamamlamak için tekrar yenileyin."
         },
         "tickets": {
-          "title": "Bağlantılı Biletler",
-          "description": "Bir commit'i bir bileti adlandıran (PROJ-123, #42, AB#42), bu billete bağlı her test senaryosu üzerinde - commit'in değiştirdiği fonksiyonlar veya sınıflarda nerede diff onları gösteriyorsa, aksi takdirde tüm dosya üzerinde - Kod Pimleri haline getirir; böylece o kodu yapılan sonraki değişiklikler senaryoları yeniden bulur. TestPlanIt'in henüz tutmadığı adlandırılmış bir bilet, projenin sorun izleyicisinden içe aktarılır; bu nedenle bağlanabilir.",
-          "enableLabel": "Commit mesajlarından Kod Pimleri türet",
-          "enableDescription": "Her ön bellek yenilemesinde daldaki son commit'leri tarar. Yalnızca analiz edilen commit'lerden bilet anahtarlarını okuyan analizi tutmak için kapatın; manuel taramalar yine de çalışır.",
-          "resultLinksLabel": "Ayrıca test sonuçlarına eklenen biletleri say",
-          "resultLinksDescription": "Bir test sonucuna veya adım sonucuna eklenen bir bilet, o sonucun kaydedildiği durumu da bağlantılandırır, böylece işlemeleri de o durumu sabitleştirir ve seçer. Kapalı olduğunda, yalnızca doğrudan bir test durumuna bağlantılanan biletler sayılır.",
-          "skippedLarge": "{count, plural, one {# commit sabitlenecek kadar büyük olduğu için atlandı} other {# commit sabitlenecek kadar büyük olduğu için atlandı}}",
-          "fetchCapped": "Bağlı bir bileti adlandıran her commit'in dosyaları bu geçişte okunmadı; geri kalanlar sonraki taramada alınır.",
+          "title": "Bağlantılı Sorunlar",
+          "description": "Bir commit'i bir sorunu adlandıran (PROJ-123, #42, AB#42), bu soruna bağlı her test senaryosu üzerinde - commit'in değiştirdiği fonksiyonlar veya sınıflarda nerede diff onları gösteriyorsa, aksi takdirde tüm dosya üzerinde - Kod Pinleri haline getirir; böylece o kodu yapılan sonraki değişiklikler senaryoları yeniden bulur. TestPlanIt'in henüz tutmadığı adlandırılmış bir sorun, projenin sorun izleyicisinden içe aktarılır; bu nedenle bağlanabilir.",
+          "enableLabel": "Commit mesajlarından Kod Pinleri türet",
+          "enableDescription": "Her ön bellek yenilemesinde daldaki son commit'leri tarar. Yalnızca analiz edilen commit'lerden sorun anahtarlarını okuyan analizi tutmak için kapatın; manuel taramalar yine de çalışır.",
+          "resultLinksLabel": "Ayrıca test sonuçlarına eklenen sorunları say",
+          "resultLinksDescription": "Bir test sonucuna veya adım sonucuna eklenen bir sorun, o sonucun kaydedildiği durumu da bağlantılandırır, böylece işlemeleri de o durumu sabitleştirir ve seçer. Kapalı olduğunda, yalnızca doğrudan bir test durumuna bağlantılanan sorunlar sayılır.",
+          "skippedLarge": "{count, plural, one {# commit sabitlenemeyecek kadar büyük olduğu için atlandı} other {# commit sabitlenemeyecek kadar büyük olduğu için atlandı}}",
+          "fetchCapped": "Bağlı bir sorunu adlandıran her commit'in dosyaları bu geçişte okunmadı; geri kalanlar sonraki taramada alınır.",
           "scanRecent": "Son Commit'leri Yeniden Tara",
           "scanFull": "Tam Geçmişi Tara",
-          "scanFullHint": "Tam geçmiş daldaki her commit'i yürür ve mevcut biletler için pin'leri geri doldurur. Zaten okunan commit'ler bir önbellekten sunulur ve sınırda duran bir yürüyüş bir sonraki sefer oradan devam eder.",
-          "scanStarted": "Bilet taraması kuyruğa alındı.",
-          "scanStillRunning": "Bilet taraması arka planda hâlâ çalışıyor. Tamamlandığında burada güncellenecek.",
-          "scanFailedToStart": "Bilet taraması başlatılamadı",
+          "scanFullHint": "Tam geçmiş daldaki her commit'i yürür ve mevcut sorunlar için pin'leri geri doldurur. Zaten okunan commit'ler bir önbellekten sunulur ve sınırda duran bir yürüyüş bir sonraki sefer oradan devam eder.",
+          "scanStarted": "Sorun taraması kuyruğa alındı.",
+          "scanStillRunning": "Sorun taraması arka planda hâlâ çalışıyor. Tamamlandığında burada güncellenecek.",
+          "scanFailedToStart": "Sorun taraması başlatılamadı",
           "runningRecent": "Son commit'ler taranıyor…",
           "runningFull": "Tam geçmiş taranıyor…",
-          "runningProgress": "{commits, number} commit okundu · {matched, number} bağlantılı bir bileti adlandırdı · {fetched, number} tanesi incelendi",
+          "runningProgress": "{commits, number} commit okundu · {matched, number} bağlantılı bir sorunu adlandırdı · {fetched, number} tanesi incelendi",
           "fullBadge": "Tam geçmiş",
-          "imported": "{imported, plural, =0 {İzleyiciden yeni bilet içe aktarılmadı.} one {# bilet izleyiciden içe aktarıldı.} other {# bilet izleyiciden içe aktarıldı.}}",
+          "imported": "{imported, plural, =0 {İzleyiciden yeni sorun içe aktarılmadı.} one {# sorun izleyiciden içe aktarıldı.} other {# sorun izleyiciden içe aktarıldı.}}",
           "fullCapped": "Yürüyüş, dalın başlangıcına ulaşmadan {count, number} commit'te durdu. Durduğu yerden devam etmek için Tam Geçmişi Tara'yı çalıştırın.",
           "stale": "Bir tarama başladı {date} asla rapor vermedi — çalışan yeniden başlatılmış olabilir. Devam etmek için tekrar kuyruğa alın.",
-          "summaryCommits": "{commits, plural, one {# commit} other {# commit}} okundu{cached, plural, =0 {} other { ({cached, number} commit önbelleğinden)}} · {naming, number} bir bileti adlandırdı · {tickets, plural, one {# ayrı bilet} other {# ayrı bilet}}",
+          "summaryCommits": "{commits, plural, one {# commit} other {# commit}} okundu{cached, plural, =0 {} other { ({cached, number} commit önbelleğinden)}} · {naming, number} bir sorunu adlandırdı · {tickets, plural, one {# ayrı sorun} other {# ayrı sorun}}",
           "summaryPins": "Pin'ler: {created, number} oluşturuldu · {updated, number} güncellendi · {removed, number} kaldırıldı",
-          "noLinkedHint": "Biletler yalnızca bir test senaryosu bunlara bağlandıktan sonra test senaryolarını sabitle. Vakaları içe aktarılan biletlere bağlayın ve sonra yeniden tarayın.",
+          "noLinkedHint": "Sorunlar yalnızca bir test senaryosu bunlara bağlandıktan sonra test senaryolarını sabitle. Vakaları içe aktarılan sorunlara bağlayın ve sonra yeniden tarayın.",
           "importFailuresTitle": "İzleyicide bulunamayan anahtarlar ({shown} / {total}):",
           "windowCapped": "Yalnızca en yeni {count, number} commit okundu (son pencere sınırı). Eski olanları okumak için Tam Geçmişi Tara'yı kullanın.",
-          "runningWalk": "{commits, number} commit şimdiye kadar okundu{cached, plural, =0 {} other { ({cached, number} commit önbelleğinden)}} — yürüyüş bittiğinde biletler aranır",
-          "runningImport": "{commits, number} commit okundu · biletleri içe aktarma: {lookups, number} izleyicide arandı · {imported, number} içe aktarıldı",
+          "runningWalk": "{commits, number} commit şimdiye kadar okundu{cached, plural, =0 {} other { ({cached, number} commit önbelleğinden)}} — yürüyüş bittiğinde sorunlar aranır",
+          "runningImport": "{commits, number} commit okundu · sorunları içe aktarma: {lookups, number} izleyicide arandı · {imported, number} içe aktarıldı",
           "summaryCommitsOnly": "{commits, plural, one {# commit} other {# commit}} okundu",
-          "importSkipped": "{skipped, plural, one {# anahtar} other {# anahtar}} henüz bakılmadı, çünkü bir tarama sınırlı sayıda izleyici bakışı yapar. Devam etmek için taramayı yeniden çalıştırın.",
+          "importSkipped": "{skipped, plural, one {# anahtara} other {# anahtara}} henüz bakılmadı, çünkü bir tarama sınırlı sayıda izleyici bakışı yapar. Devam etmek için taramayı yeniden çalıştırın.",
           "cancelRequested": "İptal talep edildi. Tarama bir sonraki adımında durur; okunan commit'ler ön belleğe alınmış olarak kalır.",
           "cancelled": "Tarama iptal edildi {date}. İptal edilmeden önce okunan commit'ler commit önbelleğinde tutulur; pin'ler güncellenmedi.",
-          "importMoved": "{moved, plural, one {# anahtar} other {# anahtar}} zaten içe aktarılan biletlerin eski adları; izleyicide taşındı veya yeniden adlandırıldı.",
+          "importMoved": "{moved, plural, one {# anahtar} other {# anahtar}} zaten içe aktarılan sorunların eski adları; izleyicide taşındı veya yeniden adlandırıldı.",
           "importFailed": "{failed, plural, one {# anahtar} other {# anahtar}} izleyicide bulunamadı; aşağıda listelenir.",
-          "summaryMatched": "{matched, plural, one {# commit} other {# commit}} bir test senaryosuna bağlantılı bir bileti adlandırdı",
+          "summaryMatched": "{matched, plural, one {# commit} other {# commit}} bir test senaryosuna bağlantılı bir sorunu adlandırdı",
           "summarySymbolPins": "(Oluşturulan pin'lerden {count, number} tanesi tüm dosya yerine bir fonksiyonu veya sınıfı hedefler.)"
         },
         "markers": {
           "title": "Depo İşaretçileri",
-          "description": "@testplanit case:123 gibi yorum açıklamaları ve .testplanit/testmap.yml girişleri her ön bellek yenilemesinde her test senaryosu üzerinde Kod Pimleri haline gelir.",
+          "description": "@testplanit case:123 gibi yorum açıklamaları ve .testplanit/testmap.yml girişleri her ön bellek yenilemesinde her test senaryosu üzerinde Kod Pinleri haline gelir.",
           "skippedPrivacy": "Atlandı: dosya ön belleklemesi devre dışı bırakıldı.",
           "skippedPartial": "Atlandı: dosya içeriği yalnızca kısmen ön belleğe alındı.",
           "summary": "{annotations, plural, one {# açıklama} other {# açıklama}} · {mapEntries, plural, one {# harita girişi} other {# harita girişi}} · {created} oluşturuldu · {updated} güncellendi · {removed} kaldırıldı",
           "problems": "{count, plural, one {# sorun} other {# sorun}}"
         },
         "saved": "Etki Analizi yapılandırması kaydedildi",
-        "disconnectWarning1": "{count, plural, one {# Kod Pimi} other {# Kod Pimleri}} kaldırın ve bu deponun analiz geçmişi",
+        "disconnectWarning1": "{count, plural, one {# Kod Pinini} other {# Kod Pinini}} ve bu deponun analiz geçmişini kaldırın",
         "disconnectSuccess": "Uygulama deposu bağlantısı kesildi",
         "disconnectError": "Uygulama deposunun bağlantısı kesilmesi başarısız oldu",
         "repositories": {
           "title": "Bağlantılı Depolar",
-          "description": "Bu projenin analiz ettiği her depo. Her biri kendi dalını, yol desenlerini, önbelleğini ve Kod Pimleri'ni tutar.",
+          "description": "Bu projenin analiz ettiği her depo. Her biri kendi dalını, yol desenlerini, önbelleğini ve Kod Pinleri'ni tutar.",
           "connect": "Depo Bağla",
           "allConnected": "Kayıtlı her depo zaten bağlı.",
           "columnCache": "Ön Bellek",
-          "pinTotal": "{count, plural, one {# Kod Pimi} other {# Kod Pimleri}}",
+          "pinTotal": "{count, plural, one {# Kod Pini} other {# Kod Pini}}",
           "cacheDisabled": "Ön bellek kapalı",
           "edit": "Bağlantıyı düzenle",
           "connectTitle": "Bir depo bağla",
           "editTitle": "{name} öğesini düzenle",
           "view": "Bağlantıyı görüntüle",
           "connectDescription": "Test altındaki uygulamanın kayıtlı bir deposunu seçin ve hangi dalı ve yolları okuyacağını belirtin.",
-          "editDescription": "Bu bağlantı için dalı, yol desenlerini, önbelleği ve bilet taramasını değiştirin.",
-          "viewDescription": "Bu depo nasıl bağlanır. Ayarları değiştirmek için Düzenle'yi kullanarak önbellekten yenile veya bilet taraması çalıştırın.",
+          "editDescription": "Bu bağlantı için dalı, yol desenlerini, önbelleği ve sorun taramasını değiştirin.",
+          "viewDescription": "Bu depo nasıl bağlanır. Ayarları değiştirmek için Düzenle'yi kullanarak önbellekten yenile veya sorun taraması çalıştırın.",
           "empty": "Henüz hiçbir depo bağlanmadı",
           "emptyDescription": "Analiz yapmaya başlamak için test altındaki uygulamanın deposunu bağlayın.",
           "lastScan": "{created, plural, one {# pin} other {# pin}} son tarama tarafından oluşturuldu",
@@ -2430,21 +2430,21 @@
         "bulk": {
           "label": "{count, plural, one {Deponuz:} other {Tüm # depo:}}",
           "scanRecentHint": "Son commit'leri {count, plural, one {bağlı depoda} other {tüm # bağlı depoda}} yeniden tara.",
-          "scanFullHint": "{count, plural, one {Bağlı deponun} other {Tüm # bağlı deponun}} dalındaki her commit'i yürüyün ve mevcut biletler için pin'leri geri doldur.",
-          "scanFullConfirm": "{count, plural, one {Bağlı deponun} other {Tüm # bağlı deponun}} dalındaki her commit'i yürür. Depolar birer birer taranır, bu nedenle uzun sürebilir ve her yürüyüş, sağlayıcının API'si aracılığıyla commit'leri okur; bu da hız sınırınıza karşılık gelir.",
+          "scanFullHint": "{count, plural, one {Bağlı deponun} other {Tüm # bağlı deponun}} dalındaki her commit'i dolaşın ve mevcut biletler için pin'leri geri doldur.",
+          "scanFullConfirm": "{count, plural, one {Bağlı deponun} other {Tüm # bağlı deponun}} dalındaki her commit'i dolaşır. Depolar birer birer taranır, bu nedenle uzun sürebilir ve her yürüyüş, sağlayıcının API'si aracılığıyla commit'leri okur; bu da hız sınırınıza karşılık gelir.",
           "checkStaleHint": "{count, plural, one {Bağlı deponun} other {Tüm # bağlı deponun}} Kod Pin'lerini her dal ucuna karşı kontrol et.",
           "removeStaleHint": "{count, plural, one {# eski Kod Pin} other {# eski Kod Pin}} {repos, plural, one {# depo} other {# depo}} genelinde kaldır.",
-          "removeConfirm": "{count, plural, one {# Kod Pin} other {# Kod Pin}} son kontroller {repos, plural, one {# depo} other {# depo}} genelinde dal ucunda bulamadığı kaldırılsın mı?",
+          "removeConfirm": "{count, plural, one {Son kontrollerin dal ucunda bulamadığı # Kod Pin} other {Son kontrollerin dal ucunda bulamadığı # Kod Pin}}, {repos, plural, one {# depo} other {# depo}} genelinde kaldırılsın mı?",
           "queued": "{count, plural, one {# depo} other {# depo}} için sıraya alındı.{skipped, plural, =0 {} one { # zaten çalışıyordu.} other { # zaten çalışıyordu.}}",
           "allRunning": "Her depo için zaten sıraya alındı veya çalışıyor.",
           "failed": "Şu depolar için başlatılamadı: {names}"
         },
-        "initialScanStarted": "Depo dosyaları getiriliyor ve depo işaretçileri ve bağlantılı biletleri taranıyor…",
+        "initialScanStarted": "Depo dosyaları getiriliyor ve depo işaretçileri ve bağlantılı sorunları taranıyor…",
         "scanError": "Tarama başarısız oldu: {error}",
         "scanLastScan": "Son tarama: {date}",
         "scanNever": "Henüz taranmadı",
         "stalePins": {
-          "title": "Bayat Kod Pimleri",
+          "title": "Bayat Kod Pinleri",
           "check": "Bayat Pin'leri Kontrol Et",
           "checkHint": "Her sabitlenmiş dosyayı dal ucunda okur ve pin'leri, dosya, satırlar veya sembol artık bulunamayan pin'leri işaretler.",
           "remove": "Bayat Pin'leri Kaldır",
@@ -2457,14 +2457,14 @@
           "unreadable": "{count, plural, one {# dosya} other {# dosya}} okunamadığı için, o pin'ler kontrol edilmedi.",
           "removed": "{count, plural, =0 {Bayat pin kaldırılmadı} one {# bayat pin kaldırıldı} other {# bayat pin kaldırıldı}}",
           "removeFailed": "Bayat pin'ler kaldırılamadı",
-          "removeConfirm": "Son kontrol {name} ucunda bulamadığı {count, plural, one {# Kod Pimi} other {# Kod Pimi}} kaldırılsın mı?",
+          "removeConfirm": "Son kontrolün {name} ucunda bulamadığı {count, plural, one {# Kod Pini} other {# Kod Pini}} kaldırılsın mı?",
           "removeConfirmNote": "Bayat rozeti kapatılan pin'ler ve depo işaretçileri tarafından tutulan pin'ler tutulur. Kaldırılan pin'ler Çöp Kutusu'ndan geri yüklenebilir.",
           "checkCancelled": "Son kontrol iptal edildi",
           "interrupted": "{date} tarihinde başlayan bir kontrol geri rapor vermedi — çalışan yeniden başlatılmış olabilir. Devam etmek için tekrar sıraya alın."
         },
         "jobs": {
           "queued": "Kuyruğa alındı",
-          "queuedBehind": "{what, select, sweep {Gece önbellek yenilemesinin bitmesini bekliyor.} refresh {Bir önbellek yenilemesinin bitmesini bekliyor.} scan {Bir bilet taramasının bitmesini bekliyor.} stale {Eski bir pin kontrolünün bitmesini bekliyor.} other {Başka bir işin bitmesini bekliyor.}}",
+          "queuedBehind": "{what, select, sweep {Gece önbellek yenilemesinin bitmesini bekliyor.} refresh {Bir önbellek yenilemesinin bitmesini bekliyor.} scan {Bir sorun taramasının bitmesini bekliyor.} stale {Eski bir pin kontrolünün bitmesini bekliyor.} other {Başka bir işin bitmesini bekliyor.}}",
           "notResponding": "Yanıt vermiyor",
           "notRespondingHint": "{date} tarihinden beri çalışıyor ancak ilerleme rapor edilmedi. Sağlayıcıyı bekliyor olabilir; devam etmezse iptal edin.",
           "interruptedRescan": "Kesildi — yeniden tara",
@@ -2525,11 +2525,11 @@
       "dueDate": "Bitiş tarihi",
       "automaticCompletion": "Son teslim tarihinde otomatik tamamlama",
       "notifyDaysBefore": "Son teslim tarihinden günler önce bildirimde bulunun.",
-      "notifyDaysBeforeValue": "Son teslim tarihinden {count, plural, one {# gün} other {# gün önce bildirim gönder}}",
+      "notifyDaysBeforeValue": "Son teslim tarihinden {count, plural, one {# gün} other {# gün}} önce bildirim gönder",
       "dueDateNotifications": "Son tarih bildirimleri"
     },
     "labels": {
-      "childMilestones": "Çocukluk Dönemi Gelişim Aşamaları"
+      "childMilestones": "Alt Dönüm Noktaları"
     },
     "placeholders": {
       "description": "Dönüm noktası açıklaması girin...",
@@ -2616,9 +2616,9 @@
     "completeDialog": {
       "confirmTitle": "Dönüm Noktasının Tamamlanmasını Onayla",
       "confirmDescription": "Bu aşamayı tamamlamak, aşağıdaki ilgili maddeleri de tamamlayacaktır:",
-      "impactActiveTestRuns": "{count, plural, one {# aktif test çalıştırması} other {# aktif test çalıştırmaları}}",
-      "impactActiveSessions": "{count, plural, one {# aktif oturum} other {# aktif oturumlar}}",
-      "impactDescendantMilestones": "{count, plural, one {# soyundan gelen dönüm noktası} other {# soyundan gelen dönüm noktaları}}",
+      "impactActiveTestRuns": "{count, plural, one {# aktif test çalıştırması} other {# aktif test çalıştırması}}",
+      "impactActiveSessions": "{count, plural, one {# aktif oturum} other {# aktif oturum}}",
+      "impactDescendantMilestones": "{count, plural, one {# soyundan gelen dönüm noktası} other {# soyundan gelen dönüm noktası}}",
       "completeTestRunsLabel": "İlgili Test Çalıştırmalarını Tamamla ({count, plural, one {# aktif} other {# aktif}})",
       "completeSessionsLabel": "İlgili Oturumları Tamamla ({count, plural, one {# aktif} other {# aktif}})",
       "testRunStateLabel": "Test Çalıştırma Tamamlama Durumu",
@@ -2688,7 +2688,7 @@
       "tooltipAhead": "İdealin {count, number} önünde"
     },
     "members": {
-      "casesOtherProjects": "{count, plural, one {# başka projede test senaryosu} other {# başka projede test senaryosu}}",
+      "casesOtherProjects": "{count, plural, one {Başka bir projede # test senaryosu} other {Diğer projelerde # test senaryosu}}",
       "inScope": "Kapsamda",
       "foundInTesting": "Testte bulundu",
       "foundInTestingEmpty": "Testte hiçbir sorun bulunamadı.",
@@ -2886,12 +2886,12 @@
       "title": "Kontrol Paneliniz",
       "users": "{count, plural, =1 {# Kullanıcı var} other {# Kullanıcı var}}",
       "yourProjects": "Projeleriniz",
-      "projects": "Şu projelere erişiminiz var: {count, plural, =1 {# Proje} other {# Projeler}}",
+      "projects": "Şu projelere erişiminiz var: {count, plural, =1 {# Proje} other {# Proje}}",
       "loading": "Kontrol paneli yükleniyor...",
       "noItems": "Size verilen hiçbir görev şu anda dikkat gerektirmiyor.",
       "pendingRuns": "Bekleyen Test Çalıştırmaları",
       "activeSessions": "Aktif Oturumlar",
-      "yourActiveSessions": "{count, plural, =0 {Aktif Oturum Yok} =1 {# Aktif Oturum} other {# Aktif Oturumlar}}",
+      "yourActiveSessions": "{count, plural, =0 {Aktif Oturum Yok} =1 {# Aktif Oturum} other {# Aktif Oturum}}",
       "yourPendingRuns": "{count, plural, =0 {Bekleyen Test Çalıştırması Yok} =1 {# Aktif Test Çalıştırması} other {# Aktif Test Çalıştırması}}",
       "yourAssignments": "Ödevleriniz",
       "totalTime": "Tahmini Toplam Süre: ",
@@ -2927,12 +2927,12 @@
       "contact": "Erişim talebinde bulunmak için proje yöneticinizle iletişime geçin."
     },
     "counts": {
-      "testCases": "{count, plural, =0 {# Test Durumları} =1 {# Test Durumu} other {# Test Durumları}}",
-      "activeMilestones": "{count, plural, =0 {# Aktif Kilometre Taşları} =1 {# Aktif Kilometre Taşı} other {# Aktif Kilometre Taşları}}",
-      "activeRuns": "{count, plural, =0 {# Aktif Koşular} =1 {# Aktif Koşu} other {# Aktif Koşular}}",
+      "testCases": "{count, plural, =0 {# Test Durumu} =1 {# Test Durumu} other {# Test Durumu}}",
+      "activeMilestones": "{count, plural, =0 {# Aktif Kilometre Taşı} =1 {# Aktif Kilometre Taşı} other {# Aktif Kilometre Taşı}}",
+      "activeRuns": "{count, plural, =0 {# Aktif Koşu} =1 {# Aktif Koşu} other {# Aktif Koşu}}",
       "automationRunsInProgress": "{count, plural, =0 {# Otomasyon Çalıştırması Devam Ediyor} =1 {# Otomasyon Çalıştırması Devam Ediyor} other {# Otomasyon Çalıştırması Devam Ediyor}}",
-      "activeSessions": "{count, plural, =0 {# Aktif Oturumlar} =1 {# Aktif Oturum} other {# Aktif Oturumlar}}",
-      "issues": "{count, plural, =0 {# Sorunlar} =1 {# Sorun} other {# Sorunlar}}"
+      "activeSessions": "{count, plural, =0 {# Aktif Oturum} =1 {# Aktif Oturum} other {# Aktif Oturum}}",
+      "issues": "{count, plural, =0 {# Sorun} =1 {# Sorun} other {# Sorun}}"
     }
   },
   "users": {
@@ -3277,7 +3277,7 @@
       "hasLink": "Bağlantısı var",
       "noLink": "Bağlantı yok",
       "hasSteps": "Adımları Var",
-      "noSteps": "Basamak Yok",
+      "noSteps": "Adım Yok",
       "unchecked": "Kontrol edilmemiş",
       "linkedCases": "Bağlantılı Vakalar",
       "clickToViewFullContent": "İçeriğin tamamını görüntülemek için tıklayın."
@@ -3288,9 +3288,9 @@
       "delete": "Adımı Sil",
       "removedFromCase": "Test senaryosundan kaldırıldı",
       "confirmDelete": "Silme işlemini onayla Adım {number, number}?",
-      "createSharedSteps": "Paylaşılan Adım Oluştur {number, plural, one {Adımlar} other {Adımlar}}",
+      "createSharedSteps": "Paylaşılan {number, plural, one {Adım} other {Adımlar}} Oluştur",
       "sharedStepsName": "Paylaşılan Adımların Adı",
-      "sharedStepsDescription": "Yeni paylaşılan {number, plural, one {adımınız} other {adımlarınız}}için bir ad girin. Bu, {number, plural, one {# seçilen adım} other {# seçilen adımlar}} içerecektir.",
+      "sharedStepsDescription": "Yeni paylaşılan {number, plural, one {adımınız} other {adımlarınız}} için bir ad girin. Bu, {number, plural, one {# seçilen adım} other {# seçilen adım}} içerecektir.",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "Lütfen adımları seçin ve paylaşılan adımlar oluşturmak için bir ad girin.",
         "failedToCreateSharedStepGroupError": "Paylaşılan adımlar oluşturulamadı. Lütfen tekrar deneyin.",
@@ -3336,10 +3336,10 @@
     "showDescendants": "Tüm alt sınıfları göster",
     "addFolder": "Klasör Ekle",
     "emptyFolders": "İlk klasörü eklemek için yukarıdaki \"Klasör Ekle\" düğmesine tıklayın.",
-    "selectedAllCases": "{count, plural, =0 {Tüm vakalar seçildi} one {Tüm sayfalardaki vaka # seçildi} other {Tüm sayfalardaki vaka # seçildi}}",
+    "selectedAllCases": "{count, plural, =0 {Tüm vakalar seçildi} one {Tüm sayfalarda # vaka seçildi} other {Tüm sayfalarda # vaka seçildi}}",
     "deselectedAllCases": "Tüm sayfalardaki tüm seçeneklerin seçimi kaldırıldı.",
     "selectAllTooltip": "Bu sayfadaki tüm seçenekleri seçin/seçimi kaldırın",
-    "selectAllShiftTooltip": "{count, plural, =0 {Tüm sayfalardaki tüm durumları seçin/seçimi kaldırın} one {Tüm sayfalardaki # durumu seçin/seçimi kaldırın} other {# durumu seçin/seçimi kaldırın}}",
+    "selectAllShiftTooltip": "{count, plural, =0 {Tüm sayfalardaki tüm durumları seçin/seçimi kaldırın} one {Tüm sayfalardaki # durumu seçin/seçimi kaldırın} other {Tüm sayfalardaki # durumu seçin/seçimi kaldırın}}",
     "deselectAllShiftTooltip": "Tüm sayfalardaki tüm seçeneklerin seçimini kaldır/seçimi kaldır",
     "shiftClickHint": "Tüm sayfaları seçmek/seçimi kaldırmak için Shift tuşunu basılı tutun.",
     "treeView": {
@@ -3358,15 +3358,15 @@
       "move": "Taşınmak",
       "promptTitle": "Ne yapmak istersiniz?",
       "copying": "Kopyalanıyor…",
-      "copyComplete": "{count, plural, =1 {1 vaka kopyalandı {folder}} other {# vaka kopyalandı {folder}}}{dest, select, samename {} crossProject { içinde {projectName}} other {}}",
-      "moveComplete": "{count, plural, =1 {1 vaka {folder}konumuna taşındı} other {# vaka {folder}konumuna taşındı}}{dest, select, samename {} crossProject { içinde {projectName}} other {}}",
-      "copyError": "{count, plural, =1 {1 vakayı {folder}konumuna kopyalama başarısız oldu.} other {# vakayı {folder}konumuna kopyalama başarısız oldu.}}{dest, select, samename {} crossProject { konumunda {projectName}} other {}}",
-      "moveError": "{count, plural, =1 {1 vakayı {folder}konumuna taşıma başarısız oldu} other {# vakayı {folder}konumuna taşıma başarısız oldu}}{dest, select, samename {} crossProject { konumunda {projectName}} other {}}",
+      "copyComplete": "{count, plural, =1 {1 vaka {folder} konumuna kopyalandı} other {# vaka {folder} konumuna kopyalandı}}{dest, select, samename {} crossProject { ({projectName} projesinde)} other {}}",
+      "moveComplete": "{count, plural, =1 {1 vaka {folder} konumuna taşındı} other {# vaka {folder} konumuna taşındı}}{dest, select, samename {} crossProject { ({projectName} projesinde)} other {}}",
+      "copyError": "{count, plural, =1 {1 vakayı {folder} konumuna kopyalama başarısız oldu} other {# vakayı {folder} konumuna kopyalama başarısız oldu}}{dest, select, samename {} crossProject { ({projectName} projesinde)} other {}}",
+      "moveError": "{count, plural, =1 {1 vakayı {folder} konumuna taşıma başarısız oldu} other {# vakayı {folder} konumuna taşıma başarısız oldu}}{dest, select, samename {} crossProject { ({projectName} projesinde)} other {}}",
       "copyAlreadyRunning": "Diğer bir kopyanın yapımına başlandı bile. Lütfen tamamlanmasını bekleyin.",
       "currentSuffix": "(Akım)",
-      "moveDisabledSameFolder": "Dosyalar zaten bu klasörde bulunuyor.",
+      "moveDisabledSameFolder": "Senaryolar zaten bu klasörde bulunuyor.",
       "dragPreviewCase": "Test Durumu",
-      "dragPreviewCount": "{count, plural, =1 {# test durumu} other {# test durumları}}",
+      "dragPreviewCount": "{count, plural, =1 {# test durumu} other {# test durumu}}",
       "modifierHintMac": "Bu menüyü atlamak için sürüklerken ⇧ tuşunu basılı tutarak taşıyabilir veya ⌥ tuşunu basılı tutarak kopyalayabilirsiniz.",
       "modifierHintWin": "Bu menüyü atlamak için sürüklerken Shift tuşunu basılı tutarak taşıyın veya Ctrl tuşunu basılı tutarak kopyalayın.",
       "dropZoneReorder": "Yeniden sıralamak için bırakın",
@@ -3392,7 +3392,7 @@
       "filter": "Filtreleme işlemleri...",
       "selectFolder": "Test senaryoları eklemek veya görüntülemek için bir klasör seçin.",
       "selectCases": "Test Senaryolarını Seçin",
-      "noTestCases": "Gösterilecek test örneği yok.",
+      "noTestCases": "Gösterilecek test senaryosu yok.",
       "addCase": "Vaka Ekle",
       "caseDetails": "Test senaryosu detayları",
       "expandDetails": "Tam genişliğe genişlet",
@@ -3441,7 +3441,7 @@
           "caseIdDescription": "TestPlanIt Test Durumu ID"
         },
         "success": {
-          "description": "{count, plural, one {# test durumu} other {# test durumları}} başarıyla içe aktarıldı"
+          "description": "{count, plural, one {# test durumu} other {# test durumu}} başarıyla içe aktarıldı"
         },
         "errors": {
           "templateRequired": "Şablon seçimi gereklidir.",
@@ -3472,9 +3472,9 @@
           "useAiParsing": "Saha haritalamasında yapay zekadan yararlanın.",
           "importLocation": {
             "label": "İthalat Konumu",
-            "singleFolder": "Tüm dosyaları tek bir klasöre ekleyin.",
-            "rootFolder": "Tüm dosyaları ve klasörleri kök klasöre ekleyin (eşleme gereklidir).",
-            "topLevel": "Tüm dosyaları ve klasörleri en üst seviyeye ekleyin (eşleme gereklidir)."
+            "singleFolder": "Tüm senaryoları tek bir klasöre ekleyin.",
+            "rootFolder": "Tüm senaryoları ve klasörleri kök klasöre ekleyin (eşleme gereklidir).",
+            "topLevel": "Tüm senaryoları ve klasörleri en üst seviyeye ekleyin (eşleme gereklidir)."
           },
           "selectFolder": "Klasör Seç",
           "selectFolderPlaceholder": "Bir klasör seçin...",
@@ -3492,7 +3492,7 @@
           "title": "CSV Sütunlarını Alanlara Eşleme",
           "description": "Her CSV sütununu şablondaki bir alana eşleştirin veya yok saymayı seçin.",
           "ignoreColumn": "Sütunu Yok Say",
-          "requiredFieldsWarning": "{count, plural, one {# gerekli alan} other {# gerekli alanlar}} eşleştirilmemiş",
+          "requiredFieldsWarning": "{count, plural, one {# gerekli alan} other {# gerekli alan}} eşleştirilmemiş",
           "caseIdHint": "Bu, sayısal Test Durumu ID'si olmalıdır — eşleşen durumların üzerine yazılır."
         },
         "page3": {
@@ -3515,7 +3515,7 @@
           "showing": "{start, number}-{end, number} / {total, number} vaka gösteriliyor.",
           "case": "Durum {number, number}",
           "multiRow": {
-            "aggregated": "Çok satırlı mod, {rows, number} CSV satırlarını {cases, plural, one {# test durumu} other {# test durumları}} şeklinde gruplandırdı.",
+            "aggregated": "Çok satırlı mod, {rows, number} CSV satırını {cases, plural, one {# test durumu} other {# test durumu}} şeklinde gruplandırdı.",
             "noStepColumn": "Çok satırlı mod etkinleştirildi ancak adım sütunu algılanmadı. Beklenenler: Adım İçeriği, Adım, Adımlar, Eylem, Açıklama (büyük/küçük harf duyarsız). Her CSV satırı ayrı bir test durumu olarak içe aktarılacaktır.",
             "noKeyColumn": "Çoklu satır modu etkinleştirilmiş ancak hiçbir Kimlik veya Ad sütunu eşleştirilmemiş. Satırların vakalara gruplandırılabilmesi için önceki adımda bir Kimlik veya Ad sütunu eşleştirin.",
             "noGrouping": "Çoklu satır modu etkinleştirildi ancak hiçbir satır gruplandırılmadı. Her satırın farklı bir Kimliği/Adı var, bu nedenle her biri ayrı bir test durumu haline gelecek. Devam satırlarında Kimlik ve Ad alanlarını boş bırakın veya aynı Kimliği/Adı tek bir duruma ait satırlarda tekrarlayın."
@@ -3569,16 +3569,16 @@
     "createInSelectedFolder": "Üst klasöre geri dön",
     "deleteCase": {
       "title": "Test Durumunu Sil",
-      "confirmMessageStart": "Test dosyasını silmek istediğinizden emin misiniz? ",
+      "confirmMessageStart": "Test senaryosunu silmek istediğinizden emin misiniz? ",
       "confirmMessageEnd": "?",
       "warning": "Bu test senaryosu projeden kaldırılacaktır. Bu test senaryosuna ait geçmiş veriler, sonuçlar da dahil olmak üzere, projede kalmaya devam edecektir.",
-      "activeRunWarningMessage": "Bu test durumu, {count, plural, =1 {# aktif test çalıştırması} other {# aktif test çalıştırmaları}}'nin bir parçasıdır. Silinmesi, bu çalıştırmalar içinde silinmiş olarak işaretlenmesine neden olacaktır."
+      "activeRunWarningMessage": "Bu test durumu, {count, plural, =1 {# aktif test çalıştırmasının} other {# aktif test çalıştırmasının}} bir parçasıdır. Silinmesi, bu çalıştırmalar içinde silinmiş olarak işaretlenmesine neden olacaktır."
     },
     "deleteFolder": {
       "confirmMessage": "{count, plural, =0 {Bu klasörü silmek, tüm alt klasörleri de silecektir. Emin misiniz?} one {Bu klasörü silmek, bu klasördeki 1 test senaryosunu ve tüm alt klasörleri de silecektir. Emin misiniz?} other {Bu klasörü silmek, bu klasördeki # test senaryosunu ve tüm alt klasörleri de silecektir. Emin misiniz?}}",
-      "warning": "Bu klasör ve içindeki tüm test örnekleri projeden kaldırılacaktır. Bu test örneklerine ait geçmiş veriler, sonuçlar da dahil olmak üzere, projede kalmaya devam edecektir.",
+      "warning": "Bu klasör ve içindeki tüm test senaryoları projeden kaldırılacaktır. Bu test senaryolarına ait geçmiş veriler, sonuçlar da dahil olmak üzere, projede kalmaya devam edecektir.",
       "confirm": "Klasörü Silme Onayını Ver",
-      "success": "Klasör ve tüm alt klasörler/dosyalar başarıyla silindi."
+      "success": "Klasör ve tüm alt klasörler/senaryolar başarıyla silindi."
     },
     "editFolder": {
       "errors": {
@@ -3606,12 +3606,12 @@
     "noFoldersOrCasesNoPermission": "Görüntülenecek klasör veya test senaryosu yok.",
     "createFirstFolder": "İlk klasörünüzü oluşturun",
     "bulkEdit": {
-      "title": "Toplu Düzenleme {count, plural, one {# Durum} other {# Durumlar}}",
-      "description": "Düzenleme {count, plural, one {# seçili durum} other {# seçili durumlar}}. Düzenlemeyi etkinleştirmek için bir alanı işaretleyin.",
+      "title": "Toplu Düzenleme {count, plural, one {# Durum} other {# Durum}}",
+      "description": "Düzenleme {count, plural, one {# seçili durum} other {# seçili durum}}. Düzenlemeyi etkinleştirmek için bir alanı işaretleyin.",
       "defineStepsTitle": "Toplu Güncelleme İçin Adımları Tanımlama",
       "saveNewSteps": "Yeni Adımları Kaydet",
       "newStepsDefined": "Yeni adımlar tanımlandı ({count, number}) - Düzenlemek için düğmeye tıklayın",
-      "clearExistingStepsWarning": "Mevcut basamaklar kaldırılacaktır.",
+      "clearExistingStepsWarning": "Mevcut adımlar kaldırılacaktır.",
       "warnings": {
         "templateMismatch": {
           "title": "Birden fazla şablon seçildi",
@@ -3636,7 +3636,7 @@
       "stepsCannotBeBulkEdited": "Adımlar toplu olarak düzenlenemez.",
       "stepsInfoTitle": "Adımlar Bilgisi",
       "stepsCannotBeBulkEditedInfo": "Adımlar toplu olarak düzenlenemez. Adımları düzenlemek için vakaları tek tek düzenleyin.",
-      "confirmDeleteCases": "{count, plural, one {# seçili durum} other {# seçili durumlar}}'yi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "confirmDeleteCases": "{count, plural, one {# seçili durumu} other {# seçili durumu}} silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
       "replaceAll": "Tümünü Değiştir",
       "searchReplace": "Arama ve Değiştirme",
       "searchFor": "Arama",
@@ -3706,7 +3706,7 @@
       "outputModeLabel": "Çıkış Modu",
       "outputModeSingle": "Tek dosya ({count, plural, one {# durum} =2 {her iki durum} other {tüm # durum}})",
       "outputModeIndividual": "{count, plural, one {Bireysel dosya (.zip)} other {Bireysel dosyalar (.zip)}}",
-      "casesToExport": "{count, plural, one {# durum} other {# durumlar}} dışa aktarılacak",
+      "casesToExport": "{count, plural, one {# durum} other {# durum}} dışa aktarılacak",
       "exportSuccess": "Dışa aktarma işlemi başarıyla tamamlandı.",
       "noAvailableTemplates": "Kullanılabilir şablon yok. Lütfen yöneticinizle iletişime geçin."
     },
@@ -3716,14 +3716,14 @@
       "generatingProgress": "{total, number}'in {current, number} durumunu oluşturma...",
       "generatingBatch": "{count, plural, one {# durum} other {# durum}} tek bir dosyada oluşturuluyor...",
       "previewTitle": "Dışa Aktar Önizleme",
-      "previewDescription": "{count, plural, one {# dosya} other {# dosyalar}} oluşturuldu",
+      "previewDescription": "{count, plural, one {# dosya} other {# dosya}} oluşturuldu",
       "copySuccess": "Panoya kopyalandı",
       "fallbackBadge": "Şablon kullanılarak oluşturuldu (Yapay zeka kullanılamıyor)",
       "retryButton": "Yapay zeka üretimini yeniden dene",
       "aiGenerated": "Yapay Zeka Tarafından Üretildi",
       "templateGenerated": "Şablon Oluşturuldu",
       "truncatedWarning": "Çıktı kesildi — model belirteç sınırına ulaştı. Lütfen toplu işlem boyutunu küçültmeyi veya İstemi Yapılandırmanızda Maksimum Çıktı Belirteçleri sayısını artırmayı deneyin.",
-      "contextFiles": "{count, plural, one {(# bağlam dosyası)} other {(# bağlam dosyaları)}}",
+      "contextFiles": "{count, plural, one {(# bağlam dosyası)} other {(# bağlam dosyası)}}",
       "noCodeContextHint": "Herhangi bir kod deposu yapılandırılmamış. Yapay zeka standart çerçeve kalıplarını kullanacak.",
       "generatingParallelProgress": "{total, number} dosyadan {done, number} dosya oluşturuldu...",
       "cancelledGeneration": "İptal edildi"
@@ -3751,13 +3751,13 @@
       "columnMatchedFields": "Eşleşen Alanlar",
       "columnScore": "Gol",
       "compareButton": "Karşılaştırmak",
-      "viewCaseDetails": "Dava detaylarını görüntüle",
+      "viewCaseDetails": "Senaryo detaylarını görüntüle",
       "selectAll": "Tümünü seç",
       "selected": "{count, plural, one {# seçili} other {# seçili}}",
       "bulkDismiss": "Yinelenenler Yok ({count, number})",
       "bulkLink": "Bağlantıyı İlgili Olarak Bağla ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# reddedilen çift} other {# reddedilen çift}}",
-      "bulkLinkSuccess": "{count, plural, one {# bağlantılı çift} other {# bağlantılı çiftler}}",
+      "bulkLinkSuccess": "{count, plural, one {# bağlantılı çift} other {# bağlantılı çift}}",
       "bulkError": "Bazı işlemler başarısız oldu. Lütfen tekrar deneyin.",
       "tableHint": "Yinelenen kayıtları incelemek ve çözmek için bir satıra veya Karşılaştır düğmesine tıklayın.",
       "comparisonTitle": "{caseA} ile {caseB} karşılaştırması",
@@ -3774,7 +3774,7 @@
       "linkSuccess": "Vakalar birbiriyle bağlantılı olarak gösterilmiştir.",
       "dismissSuccess": "Çift görevden alındı. Gelecek taramalarda görünmeyecek.",
       "resolveError": "Yinelenen çifti çözümleme başarısız oldu. Lütfen tekrar deneyin.",
-      "loadingDetails": "Dava detayları yükleniyor...",
+      "loadingDetails": "Senaryo detayları yükleniyor...",
       "caseDetailsError": "Vaka detayları yüklenemedi.",
       "sourceLabel": "Kaynak",
       "fieldValuesLabel": "Alan Değerleri",
@@ -3785,10 +3785,10 @@
       "runStatusDate": "{status} — {date}",
       "noFolder": "Klasör yok",
       "duplicateWarning": "Olası mükerrer kayıtlar bulundu.",
-      "duplicateWarningDescription": "{count, plural, one {# mevcut durum} other {# mevcut durumlar}} benzer işlevselliği kapsayabilir",
+      "duplicateWarningDescription": "{count, plural, one {# mevcut durum} other {# mevcut durum}} benzer işlevselliği kapsayabilir",
       "duplicateWarningReview": "Gözden geçirmek",
       "importWarning": "Muhtemel mükerrer",
-      "importWarningTooltip": "Bu vaka adı, {count, plural, one {# mevcut vaka} other {# mevcut vakalar}}: {names} ile benzerdir.",
+      "importWarningTooltip": "Bu vaka adı, {count, plural, one {# mevcut vaka} other {# mevcut vaka}}: {names} ile benzerdir.",
       "importIntraWarning": "İçe aktarma işleminde yinelenen kayıt",
       "importIntraWarningTooltip": "Bu içe aktarmadaki {rows} satırlarının adı aynı veya çok benzer.",
       "checkingDuplicates": "Yinelenen kayıtları kontrol ediliyor..."
@@ -3812,12 +3812,12 @@
       "selectSource": {
         "title": "Gereksinim Kaynağını Seçin",
         "description": "Test senaryolarını bir sorun belgesinden mi yoksa gereksinimler belgesinden mi oluşturacağınızı seçin.",
-        "folderContextTip": "\"{folderName}\" ve üst/alt klasörlerindeki mevcut test örnekleri, tekrarları önlemek için bağlam olarak kullanılacaktır. Devam etmeden önce doğru klasörü seçtiğinizden emin olun.",
+        "folderContextTip": "\"{folderName}\" ve üst/alt klasörlerindeki mevcut test senaryoları, tekrarları önlemek için bağlam olarak kullanılacaktır. Devam etmeden önce doğru klasörü seçtiğinizden emin olun.",
         "folderContextCount": "\"{folderName}\" ve onun üst/alt klasörleri {count, plural, =1 {# mevcut test senaryosu} other {# mevcut test senaryosu}} içerir. Yapay zeka, projenizin stilini eşleştirmek ve tekrarlamalardan kaçınmak için bağlamına sığan kadarını kullanır.",
         "folderContextEmptyTitle": "Bu klasörde henüz test senaryosu yok",
         "folderContextEmpty": "\"{folderName}\" ve alt/üst klasörleri test senaryosu içermiyor. Yapay zeka, stilinizi öğrenmek ve tekrarları önlemek için bu projede başka yerlerde ilgili test senaryoları arayacaktır. En iyi sonuçlar için üreteçi, bu test senaryolarının ait olduğu klasörden başlatın.",
         "currentFolder": "mevcut klasör",
-        "fromIssue": "Sayıdan itibaren",
+        "fromIssue": "Sorundan",
         "fromDocument": "Belgeden",
         "documentTitle": "Belge Başlığı",
         "documentTitlePlaceholder": "Gereksinimler belgenizin başlığını girin.",
@@ -3828,10 +3828,10 @@
         "saveDocument": "Belge Gereksinimlerini Kaydet",
         "fromUrl": "URL'den",
         "recentGenerations": "Son URL'den Test Senaryoları Oluşturma işleri",
-        "recentJobInfo": "{pages, plural, one {# sayfa} other {# sayfalar}}{hasTestCases, select, true { · {testCases, plural, one {# test durumu} other {# test durumları}}} other {}}",
+        "recentJobInfo": "{pages, plural, one {# sayfa} other {# sayfa}}{hasTestCases, select, true { · {testCases, plural, one {# test durumu} other {# test durumu}}} other {}}",
         "recentJobHasResults": "İncelemeye hazır",
         "recentJobClickToGenerate": "Test senaryoları oluşturmak için tıklayın.",
-        "recentJobCrawling": "Sürünüyor... {pages, plural, one {# sayfa} other {# sayfalar}} şimdiye kadar",
+        "recentJobCrawling": "Taranıyor... şimdiye kadar {pages, plural, one {# sayfa} other {# sayfa}}",
         "removeJobTitle": "Nesli kaldır",
         "confirmRemoveJob": "Bu işlem, önbelleğe alınmış tarama verilerini ve oluşturulan tüm test senaryolarını silecektir. Aynı URL'den her zaman yeniden oluşturabilirsiniz.",
         "loadingRecentJobs": "Son iş ilanları yükleniyor...",
@@ -3849,7 +3849,7 @@
         "crawlProgress": "{current, plural, one {Şu ana kadar # sayfa getirildi...} other {Şu ana kadar # sayfa getirildi...}}",
         "generatingSinglePage": "Test senaryoları oluşturuluyor...",
         "generatingSetup": "Test senaryoları oluşturmaya hazırlanılıyor...",
-        "robotsSkipped": "{count, plural, one {# atlanan sayfa} other {# atlanan sayfalar}} (robots.txt)"
+        "robotsSkipped": "{count, plural, one {# atlanan sayfa} other {# atlanan sayfa}} (robots.txt)"
       },
       "selectIssue": {
         "title": "Harici Sorunu Seçin",
@@ -3891,18 +3891,18 @@
         "title": "Oluşturulan Test Senaryolarını İnceleyin",
         "description": "Yapay zeka tarafından oluşturulan test senaryolarını inceleyin, gerekli düzenlemeleri yapın ve hangilerinin içe aktarılacağını seçin.",
         "selected": "{count, number} / {total, number} seçildi",
-        "moreSteps": "... ve {count, plural, one {# daha fazla adım} other {# daha fazla adım}}",
+        "moreSteps": "... ve {count, plural, one {# adım daha} other {# adım daha}}",
         "templateFields": "Şablon Alanları:",
-        "moreFields": "... ve {count, plural, one {# daha fazla alan} other {# daha fazla alan}}",
-        "crawledUrls": "{count, plural, one {# taranan sayfa sayısı} other {# taranan sayfa sayısı}}",
+        "moreFields": "... ve {count, plural, one {# alan daha} other {# alan daha}}",
+        "crawledUrls": "{count, plural, one {# sayfa tarandı} other {# sayfa tarandı}}",
         "spaWarning": "Bu sayfa JavaScript ile işlenmeyi gerektirebilir. Sonuçlar eksik olabilir.",
         "filterByPage": "Sayfaya göre filtrele",
-        "allPages": "Tüm sayfalar ({pages, plural, one {# sayfa} other {# sayfalar}}, {cases, plural, one {# vaka} other {# vakalar}})"
+        "allPages": "Tüm sayfalar ({pages, plural, one {# sayfa} other {# sayfa}}, {cases, plural, one {# vaka} other {# vaka}})"
       },
       "generatingLegacy": "Yapay zekâ ile test senaryoları oluşturma...",
       "expandProgress": "{done, number} 'dan {total, number} üretildi",
       "import": "{count, plural, =0 {Test Senaryolarını İçe Aktar} =1 {1 Test Senaryosunu İçe Aktar} other {# Test Senaryosunu İçe Aktar}}",
-      "stage": "{count, plural, =0 {Aşama Test Senaryoları} =1 {Aşama 1 Test Senaryosu} other {Aşama # Test Senaryoları}}",
+      "stage": "{count, plural, =0 {Test Senaryolarını Hazırla} =1 {1 Test Senaryosunu Hazırla} other {# Test Senaryosunu Hazırla}}",
       "stageDescription": "Hazırlanmış test senaryoları size özeldir. Bunları Benim Hazırlanmış Senaryolarımda inceleyin ve oradan oluşturun; depo'ya depoya kadar hiçbir şey eklenmez.",
       "importing": "{count, plural, =0 {Test Senaryoları İçe Aktarılıyor...} =1 {1 Test Senaryosu İçe Aktarılıyor...} other {# Test Senaryosu İçe Aktarılıyor...}}",
       "externalSystem": "Harici Sistem",
@@ -3914,7 +3914,7 @@
       "datasetTruncatedWarning": "Veri seti yapay zeka tarafından kısaltılmıştır. Kaydettikten sonra parametre düzenleyicisinde manuel olarak satır ekleyebilirsiniz.",
       "datasetCappedWarning": "Veri kümesi maksimum satır sayısıyla sınırlandırıldı. Fazla satırlar silindi.",
       "invalidParameterWarning": "Önerilen parametrelerden bir veya daha fazlası geçersizdi ve elendi.",
-      "datasetMoreRows": "...ve {count, plural, one {# daha fazla satır} other {# daha fazla satır}}",
+      "datasetMoreRows": "...ve {count, plural, one {# satır daha} other {# satır daha}}",
       "parameterChipSensitive": "hassas",
       "success": {
         "imported": "{count, plural, =1 {1 test durumu başarıyla içe aktarıldı} other {# test durumu başarıyla içe aktarıldı}}",
@@ -4022,9 +4022,9 @@
         "saveAllAndStage": "Tümünü Kaydet ve Hazırla",
         "discardAndStage": "Düzenlemeleri İptal Et ve Hazırla"
       },
-      "linkedIssuesDroppedTitle": "Bağlantılı bazı konular dahil edilmemiştir.",
-      "linkedIssuesDropped": "{count, plural, =1 {# bağlantılı sorun, token bütçesi nedeniyle kaldırıldı} other {# bağlantılı sorunlar, token bütçesi nedeniyle kaldırıldı}} : {keys}.",
-      "linkedIssuesPreviewHeading": "Dahil edilecek bağlantılı konular",
+      "linkedIssuesDroppedTitle": "Bağlantılı bazı sorunlar dahil edilmemiştir.",
+      "linkedIssuesDropped": "{count, plural, =1 {# bağlantılı sorun, token bütçesi nedeniyle kaldırıldı} other {# bağlantılı sorun, token bütçesi nedeniyle kaldırıldı}} : {keys}.",
+      "linkedIssuesPreviewHeading": "Dahil edilecek bağlantılı sorunlar",
       "contextImages": {
         "pickerHeading": "Bağlam olarak eklenecek görseller (en fazla {max})",
         "tooLarge": "Çok büyük",
@@ -4124,14 +4124,14 @@
       "contentUnavailable": "Dosya içeriği kullanılamıyor.",
       "description": "Bu senaryonun kapsadığı kod. Sabitlenmiş blok içindeki bir değişiklik, Etki analizlerine senaryoyu çeker.",
       "duplicate": "Bu pin zaten mevcut.",
-      "empty": "Henüz Kod Pimi yok.",
+      "empty": "Henüz Kod Pini yok.",
       "endLine": "Son satır",
       "errorFileNotFound": "Dosya dal ucunda bulunamadı.",
       "errorLineOutOfRange": "Satır aralığı dosya dışında.",
       "errorSnippetTooLarge": "Sabitlenmiş blok çok büyük.",
       "errorSymbolNotFound": "Sembol dosyada bulunamadı.",
       "filePlaceholder": "Dosyaları ara...",
-      "filesCached": "{count, plural, one {# dosya} other {# dosyalar}} ön belleğe alındı · {date}",
+      "filesCached": "{count, plural, one {# dosya} other {# dosya}} ön belleğe alındı · {date}",
       "filesLive": "Depodan canlı olarak dosyalar listeleniyor",
       "globMatches": "{count, plural, =0 {Ön belleğe alınan dosya eşleşmiyor} one {# ön belleğe alınan dosya eşleşiyor} other {# ön belleğe alınan dosya eşleşiyor}}",
       "globPlaceholder": "src/payments/**",
@@ -4170,7 +4170,7 @@
       "editAction": "Pin'i düzenle",
       "symbolSearchPlaceholder": "Sembolleri ara...",
       "symbolUseTyped": "\"{symbol}\" kullan",
-      "title": "Kod Pimleri",
+      "title": "Kod Pinleri",
       "viewerFailed": "Dosya yüklenemedi.",
       "viewerLoading": "Dosya yükleniyor…",
       "viewerTooLarge": "Bu dosya çok büyük. Bunun yerine satır numaralarını girin.",
@@ -4267,7 +4267,7 @@
       "saveBlockedByFormErrors": "Kaydetmeden önce vurgulanan form hatalarını düzeltin.",
       "bulkBlockedHeading": "{count, plural, one {# durum} other {# durum}} \"{gateName}\" kapısı tarafından engellendi:",
       "bulkBlockedHeadingMixed": "{count, plural, one {# durum} other {# durum}} bu geçişten önce onay gerektiriyor:",
-      "bulkBlockedMore": "ve {count, plural, one {# daha fazla durum} other {# daha fazla durum}}",
+      "bulkBlockedMore": "ve {count, plural, one {# durum daha} other {# durum daha}}",
       "bulkBlockedFooter": "Engellenen her durum, bu geçişten önce onaylanmış bir inceleme gerektirir.",
       "toastReviewRequired": "Bu geçiş için onay gereklidir. Bir inceleme talep edin — onaylandığında geçiş sizin için otomatik olarak uygulanır.",
       "toastPendingReviewExists": "Bu geçiş için zaten bir inceleme süreci başlatıldı. Kararı bekleyin veya tekrar denemeden önce işlemi iptal edin."
@@ -4403,7 +4403,7 @@
       "blocked": "Engellendi",
       "blockedBy": "Bu çalıştırmada {count, plural, one {bu vaka geçene} other {bu # vaka geçene}} kadar engellendi:",
       "blockedNotice": "Bu test vakası {count, plural, one {bağlı olduğu vaka geçene} other {bağlı olduğu tüm # vaka geçene}} kadar bu çalıştırmada yürütülemez.",
-      "notInRun": "{count, plural, one {Bu vakaya bağlı olan # vaka} other {Bu vakaya bağlı olan # vaka}} bu çalıştırmada değil ve yürütmeyi engellemeyecektir:",
+      "notInRun": "{count, plural, one {Bu vakanın bağlı olduğu # vaka} other {Bu vakanın bağlı olduğu # vaka}} bu çalıştırmada değil ve yürütmeyi engellemeyecektir:",
       "unblocked": "Bu vakaya bağlı olan tüm vakalar bu çalıştırmada geçmiştir."
     },
     "distribute": {
@@ -4469,8 +4469,8 @@
       "noLlmIntegration": "Yapay zeka özellikleri için LLM entegrasyonu gereklidir. Bunu proje ayarlarında yapılandırın.",
       "configure": {
         "title": "Test Durumu Kapsamı",
-        "description": "Depoda {count, plural, =1 {# test durumu} other {# test durumları}} bulundu.",
-        "descriptionFiltered": "Depoda bulunan test durumları: {count, plural, =1 {# olası ilgili test durumları} other {# olası ilgili test durumları}} , {total, plural, =1 {'ten # toplam} other {# toplam}}",
+        "description": "Depoda {count, plural, =1 {# test durumu} other {# test durumu}} bulundu.",
+        "descriptionFiltered": "{count, plural, =1 {# olası ilgili test durumu} other {# olası ilgili test durumu}} bulundu (depodaki toplam {total, plural, =1 {# test durumu arasından} other {# test durumu arasından}})",
         "noMatchesTitle": "Eşleşen test senaryosu bulunamadı.",
         "noMatchesDescription": "Test çalıştırma adı ve açıklaması hiçbir test senaryosuyla eşleşmedi. Önceki adıma geri dönün ve test senaryolarınızda geçen özellik adları, bileşen adları veya anahtar kelimeler gibi daha spesifik ayrıntılar ekleyin.",
         "maxResultsTitle": "Maksimum Test Senaryosu Eşleşme Sayısı",
@@ -4478,7 +4478,7 @@
         "batchSize": "Parti boyutu",
         "batchSizeAll": "Tüm vakalar (tek talep)",
         "batchSizePercent": "{percent}% ({count} durum)",
-        "requestsNeeded": "{count, plural, =1 {# Yapay zeka isteği yapılacak} other {# Yapay zeka istekleri yapılacak}}",
+        "requestsNeeded": "{count, plural, =1 {# Yapay zeka isteği yapılacak} other {# Yapay zeka isteği yapılacak}}",
         "batchNote": "Tüm partilerden elde edilen sonuçlar birleştirilecektir."
       },
       "loading": {
@@ -4486,16 +4486,16 @@
         "analyzing": "Test senaryolarının analizi...",
         "progress": "{total, number} test durumundan {analyzed, number} 'i analiz edildi...",
         "waitingForAi": "Yapay zeka yanıtı bekleniyor (parti {batch} / {total})...",
-        "selectedSoFar": "{count, plural, =1 {# Şu ana kadar seçilen test senaryoları} other {# Şu ana kadar seçilen test senaryoları}}",
+        "selectedSoFar": "{count, plural, =1 {Şu ana kadar # test senaryosu seçildi} other {Şu ana kadar # test senaryosu seçildi}}",
         "resolving_integration": "Yapay zeka entegrasyonu sorununu çözmek...",
         "fetching_cases": "Test senaryoları getiriliyor..."
       },
       "success": {
         "title": "Önerilen Test Senaryoları",
-        "description": "{count, plural, =1 {# seçilen test durumu} other {# seçilen test durumları}} test çalıştırma bağlamınıza göre",
+        "description": "Test çalıştırma bağlamınıza göre {count, plural, =1 {# test durumu seçildi} other {# test durumu seçildi}}",
         "linkedCasesAdded": "{count, plural, =1 {# Bağlantılı durum otomatik olarak dahil edildi} other {# Bağlantılı durum otomatik olarak dahil edildi}}",
         "truncationWarningTitle": "Kısmi sonuçlar",
-        "truncationWarning": "{count, plural, =1 {# Toplu işlem kesildi} other {# Toplu işlemler kesildi}} Yapay zeka modeli tarafından — bazı test durumları değerlendirilmemiş olabilir."
+        "truncationWarning": "{count, plural, =1 {# toplu işlem yapay zeka modeli tarafından kesildi} other {# toplu işlem yapay zeka modeli tarafından kesildi}} — bazı test durumları değerlendirilmemiş olabilir."
       },
       "noSuggestions": {
         "title": "Eşleşen Test Senaryosu Yok",
@@ -4508,7 +4508,7 @@
       },
       "actions": {
         "start": "Test Senaryolarını Analiz Et",
-        "startBatched": "Test Durumlarını Analiz Et ({count, plural, one {# toplu işlem} other {# toplu işlemler}})",
+        "startBatched": "Test Durumlarını Analiz Et ({count, plural, one {# toplu işlem} other {# toplu işlem}})",
         "accept": "Seçime Ekle"
       },
       "errors": {
@@ -4617,7 +4617,7 @@
       "analyzeImpact": "Etkiyi analiz et",
       "description": "Test altındaki uygulamanın iki commit'ini seçin ve değişikliklerin etkilediği test senaryolarını seçin.",
       "noRepository": "Etki'yi kullanmak için proje ayarlarında uygulama deposunu bağlayın.",
-      "aiUnavailable": "Hiçbir etkin LLM entegrasyonu yok: sonuçlar yalnızca Kod Pimleri, anahtar kelime eşleştirmesi ve çalıştırma geçmişinden gelir.",
+      "aiUnavailable": "Hiçbir etkin LLM entegrasyonu yok: sonuçlar yalnızca Kod Pinleri, anahtar kelime eşleştirmesi ve çalıştırma geçmişinden gelir.",
       "steps": {
         "review": "Etkilenen Testler"
       },
@@ -4670,8 +4670,8 @@
         "analyzing": "Analiz ediliyor…",
         "resolving_config": "Depo yapılandırması çözümleniyor…",
         "fetching_diff": "Diff getiriliyor…",
-        "matching_pins": "Kod Pimleri eşleştiriliyor…",
-        "matching_issues": "Commit'lerde adlandırılan biletler eşleştiriliyor…",
+        "matching_pins": "Kod Pinleri eşleştiriliyor…",
+        "matching_issues": "Commit'lerde adlandırılan sorunlar eşleştiriliyor…",
         "searching_cases": "Anahtar kelime ile test senaryoları aranıyor…",
         "scoring_history": "Çalıştırma geçmişi puanlandırılıyor…",
         "waiting_for_ai": "Yapay zeka bekleniyor…",
@@ -4687,17 +4687,17 @@
         "minScore": "Minimum impact skoru",
         "selectShown": "Gösterilen olanları seçin ({count, number})",
         "deselectShown": "Gösterilen olanların seçimini kaldırın ({count, number})",
-        "hiddenSelected": "{count, plural, one {# seçilen test durumu filtreleriniz tarafından gizlenmiştir} other {# seçilen test durumları filtreleriniz tarafından gizlenmiştir}}.",
+        "hiddenSelected": "{count, plural, one {# seçilen test durumu filtreleriniz tarafından gizlenmiştir} other {# seçilen test durumu filtreleriniz tarafından gizlenmiştir}}.",
         "deselectHidden": "Gizli olanları seçimden kaldır",
         "noneShown": "Hiçbir test filtreleri eşleştirmiyor.",
         "reasons": "Neden",
         "tierPinned": "Sabitlendi",
         "tierAffected": "Etkilendi",
         "tierRelated": "İlişkili",
-        "tierPinnedTooltip": "Bu senaryodaki bir Kod Pimi değişiklikle kesişir. Sabitlenmiş senaryolar her zaman ilk sırada yer alır.",
+        "tierPinnedTooltip": "Bu senaryodaki bir Kod Pini değişiklikle kesişir. Sabitlenmiş senaryolar her zaman ilk sırada yer alır.",
         "tierAffectedTooltip": "Diğer sinyaller bu senaryoyu {threshold, number} etki eşiğinde veya üzerinde koyar.",
         "tierRelatedTooltip": "Güçlü etkilenen senaryoya bağlı veya sinyalleri {threshold, number} altında puanladı.",
-        "excluded": "{count, plural, one {# senaryo zaten çalıştırmada atlandı} other {# senaryo zaten çalıştırmada atlandı}}"
+        "excluded": "{count, plural, one {Çalıştırmada zaten bulunan # senaryo atlandı} other {Çalıştırmada zaten bulunan # senaryo atlandı}}"
       },
       "noAffected": {
         "title": "Etkilenen test bulunamadı",
@@ -4718,10 +4718,10 @@
         "fieldContent": "senaryo içeriği",
         "fieldTag": "etiket",
         "fieldFolder": "klasör",
-        "historyDetail": "{count, plural, one {# önceki çalıştırma} other {# önceki çalıştırma}} dosya değişikliğinden sonra",
+        "historyDetail": "{count, plural, one {# önceki çalıştırma} other {# önceki çalıştırma}} aynı dosyalardaki değişikliklerden sonra",
         "historyFailed": "Benzer değişikliklerden sonra önceki çalıştırmada başarısız",
         "linkedDetail": "{caseId} senaryosuna bağlı",
-        "issueDetail": "{key} adresine bağlı, {count, plural, one {commit {sha}} other {# commit}} içinde adlandırıldı"
+        "issueDetail": "{key} ile bağlantılı, {count, plural, one {commit {sha}} other {# commit}} içinde adlandırıldı"
       },
       "stale": {
         "badge": "Bayat",
@@ -4736,7 +4736,7 @@
       },
       "warnings": {
         "diff_truncated_by_provider": "Sağlayıcı kısmi bir diff döndürdü.",
-        "diff_truncated_by_budget": "Diff'in yalnızca bir kısmı yapay zeka bağlamına sığdı; {count, plural, one {# dosya} other {# dosya}} yalnızca yol tarafından özetlendi.",
+        "diff_truncated_by_budget": "Diff'in yalnızca bir kısmı yapay zeka bağlamına sığdı; {count, plural, one {# dosya} other {# dosya}} yalnızca dosya yolu ile özetlendi.",
         "llm_not_configured": "Hiçbir etkin LLM entegrasyonu yok: yapay zeka sıralaması atlandı.",
         "search_fallback_db": "Arama dizini kullanılamıyor: anahtar kelime eşleştirmesi veritabanını kullandı.",
         "search_index_empty": "Arama dizini bu proje için hiçbir test senaryosu tutmadığından, anahtar kelime eşleştirmesi veritabanında test senaryosu adlarına geri döndü ve senaryo içeriğinde eşleşmeleri kaçırmış olabilir. Bir yönetici tarafından Yönetim → Arama Motoru altında arama dizinini yeniden oluşturmayı isteyin.",
@@ -4744,7 +4744,7 @@
         "ai_truncated": "{count, plural, one {# yapay zeka toplu işi} other {# yapay zeka toplu işi}} model tarafından kesildi.",
         "no_candidates": "Hiçbir test senaryosu eşleşmedi.",
         "anchor_fetch_capped": "Bazı sabitlenmiş dosyalar yalnızca yol tarafından eşleştirildi (getirme sınırına ulaşıldı).",
-        "issue_commit_fetch_capped": "Biletleri adlandıran bazı commit'ler dosya dosya okunmadı (getirme sınırına ulaşıldı); kendi senaryoları belirli dosyaları kapsamıyor.",
+        "issue_commit_fetch_capped": "Sorunları adlandıran bazı commit'ler dosya dosya okunmadı (getirme sınırına ulaşıldı); kendi senaryoları belirli dosyaları kapsamıyor.",
         "paths_excluded_by_settings": "{count, plural, one {# değişen dosya} other {# değişen dosya}} depo tarafından hariç tutulan yollar nedeniyle göz ardı edildi."
       },
       "actions": {
@@ -4885,7 +4885,7 @@
         "mappingSummaryPending": "{count, plural, =1 {# beklemede} other {# beklemede}}",
         "mappingOutstandingTitle": "Bekleyen eşlemeleri çözün",
         "mappingOutstandingDescription": "İçe aktarma işlemine başlamadan önce kalan eşleştirmeleri tamamlayın.",
-        "mappingOutstandingItem": "{count, plural, =1 {# çözümlenmemiş öğe} other {# çözümlenmemiş öğeler}} {label} içinde",
+        "mappingOutstandingItem": "{count, plural, =1 {# çözümlenmemiş öğe} other {# çözümlenmemiş öğe}} {label} içinde",
         "mappingSummaryTemplateFields": "Şablon alanları",
         "mappingDatasetLabels": {
           "field_values": "Alan değerleri",
@@ -4926,8 +4926,8 @@
           "run_issues": "Test çalıştırma sorunları",
           "run_result_issues": "Test çalıştırma sonucu sorunları",
           "session_result_issues": "Oturum sonucu sorunları",
-          "automation_cases": "Otomasyon örnekleri",
-          "automation_runs": "Otomasyon işlemleri",
+          "automation_cases": "Otomasyon senaryoları",
+          "automation_runs": "Otomasyon çalıştırmaları",
           "automation_run_tests": "Otomasyon testleri çalıştırıyor",
           "automation_run_test_fields": "Otomasyon çalıştırma test alanları",
           "automation_run_links": "Otomasyon çalıştırma bağlantıları",
@@ -4963,15 +4963,15 @@
         "mappingDatasetEmptyTitle": "Hiçbir veri seti saklanmadı.",
         "mappingDatasetEmptyDescription": "Analiz, yapılandırma için herhangi bir veri seti saklamadı. Ek veri bekliyorsanız farklı bir dışa aktarma dosyası yükleyin.",
         "importProgressTitle": "İçe aktarma işlemi devam ediyor",
-        "importProgressDescription": "{count, plural, =0 {İzlenen varlıklar genelinde tüm kayıtlar içe aktarıldı.} =1 {İzlenen varlıklar genelinde 1 kayıt kaldı.} other {İzlenen varlıklar genelinde kalan kayıt #.}}",
-        "importProgressTotalRemaining": "{count, plural, =0 {Kalan kayıt yok} =1 {1 kayıt kaldı} other {# kalan kayıt sayısı}}",
+        "importProgressDescription": "{count, plural, =0 {İzlenen varlıklar genelinde tüm kayıtlar içe aktarıldı.} =1 {İzlenen varlıklar genelinde 1 kayıt kaldı.} other {İzlenen varlıklar genelinde # kayıt kaldı.}}",
+        "importProgressTotalRemaining": "{count, plural, =0 {Kalan kayıt yok} =1 {1 kayıt kaldı} other {# kayıt kaldı}}",
         "importProgressProcessed": "{processed, number}/{total, number} kayıt içe aktarıldı",
         "importProgressAria": "{percent, number}İçe aktarma işleminin tamamlanma yüzdesi",
         "importProgressPercentLabel": "{percent, number}%",
         "importDurationLabel": "Toplam süre:",
         "activityLogTitle": "İçe aktarma etkinliği",
         "activityLogDescription": "Arka planda gerçekleşen içe aktarma adımlarının ayrıntılı kaydı. Zaman damgaları sunucu saat dilimine göre belirlenmiştir.",
-        "activitySummaryProcessed": "{count, plural, =1 {# işlenen kayıt sayısı} other {# işlenen kayıt sayısı}}",
+        "activitySummaryProcessed": "{count, plural, =1 {# kayıt işlendi} other {# kayıt işlendi}}",
         "activitySummaryCreated": "{count, plural, =1 {# oluşturuldu} other {# oluşturuldu}}",
         "activitySummaryMapped": "{count, plural, =1 {# eşlenmiş} other {# eşlenmiş}}",
         "activitySummaryUnknown": "İçe aktarma adımı",
@@ -5013,7 +5013,7 @@
         "mappingImportInProgress": "Arka plan içe aktarma işlemi devam ediyor.",
         "mappingImportInProgressDescription": "İçe aktarma işlemi yapılandırmayı işliyor. Durumu yukarıdan takip edebilirsiniz.",
         "mapping": {
-          "datasetTotalLabel": "{count, plural, =1 {# kayıt} other {# kayıtlar}} ",
+          "datasetTotalLabel": "{count, plural, =1 {# kayıt} other {# kayıt}} ",
           "columnSource": "Testmo kuruluşu",
           "columnSourceDetails": "Detaylar",
           "columnSuggestedWorkflowType": "Önerilen tür",
@@ -5100,8 +5100,8 @@
           "templateFieldStatusCreate": "Yeni alan oluştur",
           "templateFieldStatusMissing": "Haritalanmamış",
           "templateFieldStatusMismatch": "Hedef uyumsuzluğu",
-          "templateCaseFieldCountBadge": "{count, plural, =1 {# durum alanı} other {# durum alanları}}",
-          "templateResultFieldCountBadge": "{count, plural, =1 {# sonuç alanı} other {# sonuç alanları}}",
+          "templateCaseFieldCountBadge": "{count, plural, =1 {# durum alanı} other {# durum alanı}}",
+          "templateResultFieldCountBadge": "{count, plural, =1 {# sonuç alanı} other {# sonuç alanı}}",
           "templateMapLabel": "Mevcut şablona eşle",
           "templateCreateLabel": "Yeni şablon oluştur",
           "templateNoMatchingTargets": "Uygun şablon bulunamadı.",
@@ -5298,7 +5298,7 @@
         "defaultAccessUpdateFailed": "Varsayılan erişim düzeyini güncelleme başarısız oldu.",
         "emailVerificationEnabled": "Yeni kullanıcılar için artık e-posta doğrulaması zorunludur.",
         "emailVerificationDisabled": "Yeni kullanıcılar için e-posta doğrulaması artık gerekli değil.",
-        "emailVerificationDisabledAndVerified": "E-posta doğrulaması devre dışı bırakıldı ve {count, plural, one {# kullanıcı hesabı} other {# kullanıcı hesapları}} doğrulandı.",
+        "emailVerificationDisabledAndVerified": "E-posta doğrulaması devre dışı bırakıldı ve {count, plural, one {# kullanıcı hesabı} other {# kullanıcı hesabı}} doğrulandı.",
         "emailVerificationUpdateFailed": "E-posta doğrulama ayarı güncellenemedi.",
         "emailServerNotConfigured": "E-posta doğrulaması etkinleştirilemiyor: E-posta sunucusu yapılandırılmamış.",
         "openRegistrationEnabled": "Kendi kendine kayıt olma özelliği artık etkinleştirildi.",
@@ -5646,7 +5646,7 @@
           "fileExtension": "Örneğin, .spect.ts",
           "language": "örneğin, TypeScript",
           "headerBody": "İsteğe bağlı. En üstte yalnızca bir kez görüntülenen içerik (örneğin, içe aktarma ifadeleri).",
-          "templateBody": "Bıyık şablonuna girin...\n\nKullanılabilir değişkenler:\n'{{name}}', '{{id}}', '{{folder}}', '{{state}}', '{{estimate}}', '{{automated}}', '{{tags}}', '{{createdBy}}', '{{createdAt}}'\n\nAdımlar bölümü:\n'{{#steps}}{{order}}', '{{step}}', '{{expectedResult}}{{/steps}}'\n\nÖzel alanlar:\n'{{fields.fieldSystemName}}'",
+          "templateBody": "Mustache şablonunu girin...\n\nKullanılabilir değişkenler:\n'{{name}}', '{{id}}', '{{folder}}', '{{state}}', '{{estimate}}', '{{automated}}', '{{tags}}', '{{createdBy}}', '{{createdAt}}'\n\nAdımlar bölümü:\n'{{#steps}}{{order}}', '{{step}}', '{{expectedResult}}{{/steps}}'\n\nÖzel alanlar:\n'{{fields.fieldSystemName}}'",
           "footerBody": "İsteğe bağlı. İçerik, en altta bir kez görüntülenir (örneğin, kapanış kodu)."
         },
         "combobox": {
@@ -5671,7 +5671,7 @@
       },
       "filterPlaceholder": "Filtre şablonları...",
       "noResults": "Filtrenize uyan şablon bulunamadı.",
-      "templateCount": "{count, plural, one {# şablon} other {# şablonlar}}",
+      "templateCount": "{count, plural, one {# şablon} other {# şablon}}",
       "allFrameworks": "Tüm Çerçeveler",
       "allFileExtensions": "Tüm Uzantılar",
       "allLanguages": "Tüm Diller",
@@ -6172,11 +6172,11 @@
       "deselectAllShiftTooltip": "Tüm sayfalardaki tüm yapılandırmaların seçimini kaldır/seçimi kaldır",
       "shiftClickHint": "Tüm sayfaları seçmek/seçimi kaldırmak için Shift tuşunu basılı tutun.",
       "bulkEdit": {
-        "button": "{count, plural, one {1. yapılandırmayı düzenle} other {#. yapılandırmaları düzenle}}",
+        "button": "{count, plural, one {1 yapılandırmayı düzenle} other {# yapılandırmayı düzenle}}",
         "title": "{count, plural, one {1 yapılandırmada projeleri düzenle} other {# yapılandırmada projeleri düzenle}}",
         "description": "Seçilen yapılandırmalardaki proje atamalarını değiştirin. Yapılandırma adı toplu olarak düzenlenemez.",
         "applyButton": "{count, plural, one {1 yapılandırmaya uygula} other {# yapılandırmaya uygula}}",
-        "deleteButton": "{count, plural, one {1 yapılandırma silindi} other {# yapılandırma silindi}}",
+        "deleteButton": "{count, plural, one {1 yapılandırmayı sil} other {# yapılandırmayı sil}}",
         "deleteConfirmTitle": "{count, plural, one {1 yapılandırma silinsin mi?} other {# yapılandırma silinsin mi?}}",
         "deleteConfirmMessage": "{count, plural, one {Bu işlem 1 yapılandırmayı silecektir. Bu işlem geri alınamaz.} other {Bu işlem # yapılandırmayı silecektir. Bu işlem geri alınamaz.}}",
         "applyEnabledLabel": "Etkinleştirilmiş durumu değiştir"
@@ -6294,7 +6294,7 @@
       "defaultLockedDescription": "Varsayılanı değiştirmek için farklı bir Kilometre Taşı Türünü düzenleyin ve onu varsayılan olarak ayarlayın.",
       "wizard": {
         "selectProjects": "Projeleri Seç",
-        "projectsSelected": "{count, plural, =0 {Hiçbir proje seçilmedi} one {# Seçilen proje sayısı} other {# Seçilen proje sayısı}}",
+        "projectsSelected": "{count, plural, =0 {Hiçbir proje seçilmedi} one {# proje seçildi} other {# proje seçildi}}",
         "createMilestone": "Dönüm Noktası Oluştur",
         "noCommonTypesTitle": "Ortak Dönüm Noktası Türleri Yok",
         "noCommonTypesDescription": "Seçilen projelerin ortak bir kilometre taşı türü bulunmamaktadır. Lütfen seçilen tüm projelerin en az bir ortak kilometre taşı türüne sahip olduğundan emin olun veya farklı projeler seçin."
@@ -6333,12 +6333,12 @@
       },
       "delete": {
         "confirmMessage": "{name} temel nedenini silmek istediğinizden emin misiniz?",
-        "inUse": "{count, plural, one {# başarısızlık deseni bunu kullanır.} other {# başarısızlık desenleri bunu kullanır.}}",
-        "moveLabel": "{count, plural, one {Deseni şuraya taşı} other {# desenleri şuraya taşı}}"
+        "inUse": "{count, plural, one {# başarısızlık deseni bunu kullanır.} other {# başarısızlık deseni bunu kullanır.}}",
+        "moveLabel": "{count, plural, one {Deseni şuraya taşı} other {# deseni şuraya taşı}}"
       }
     },
     "issue_config": {
-      "link_title": "Bağlantı Sorun Takipçisi",
+      "link_title": "Sorun Takipçisi Bağla",
       "link_description": "Manuel olarak bağlantı verilen sorunlar için temel URL'yi yapılandırın. Yalnızca Harici Kimlik kullanarak bir soruna bağlantı verirken, tam bağlantıyı oluşturmak için bu Temel URL öne eklenecektir.",
       "filter": {
         "show_inactive": "Devre dışı bırakılmış yapılandırmaları göster",
@@ -6394,7 +6394,7 @@
       },
       "syncIssue": "Harici sistemden kaynaklanan senkronizasyon sorunu",
       "syncSuccess": "Sorun başarıyla senkronize edildi.",
-      "syncSuccessDescription": "\"{name}\" sayısı, harici sistemden gelen en son bilgilerle güncellendi.",
+      "syncSuccessDescription": "\"{name}\" sorunu, harici sistemden gelen en son bilgilerle güncellendi.",
       "syncError": "Senkronizasyon sorunu başarısız oldu.",
       "syncErrorDescription": "Sorun senkronize edilemedi. Lütfen daha sonra tekrar deneyin."
     },
@@ -6487,7 +6487,7 @@
         "send": "Bildirim Gönder",
         "success": {
           "title": "Bildirim Gönderildi",
-          "description": "Sistem bildirimi {count, plural, one {# kullanıcı} other {# kullanıcılar}} adresine gönderildi."
+          "description": "Sistem bildirimi {count, plural, one {# kullanıcıya} other {# kullanıcıya}} gönderildi."
         },
         "error": {
           "description": "Sistem bildirimi gönderilemedi.",
@@ -6511,7 +6511,7 @@
         "message": "Henüz yapılandırılmış entegrasyon sorunu yok."
       },
       "addIntegration": "Sorun Entegrasyonu Ekle",
-      "allIntegrations": "Tüm Konu Entegrasyonları",
+      "allIntegrations": "Tüm Sorun Entegrasyonları",
       "manageDescription": "Harici hizmet sorun entegrasyonlarınızı yapılandırın ve yönetin.",
       "status": {
         "active": "Aktif",
@@ -6670,12 +6670,12 @@
         "encrypted": "Şifrelenmiş",
         "encryptedHelp": "Bu alan şifrelenmiş ve güvenli bir şekilde saklanmaktadır.",
         "leaveBlankToKeep": "Mevcut değeri korumak için boş bırakın",
-        "apiKeyWarningTitle": "API Anahtarı Kimlik Doğrulama Bildirimi",
-        "apiKeyWarningDescription": "API anahtarı kimlik doğrulamasıyla, oluşturulan sorunlardaki raporu hazırlayan kişi, e-posta adresleri eşleşse bile, sorunları oluşturan TestPlanIt kullanıcısıyla aynı olmayabilir:",
-        "apiKeyWarningPoint1": "Jira raporlayıcısını ayarlamak için API belirteci hesabının Jira yöneticisi (\"Raporlayıcıyı Değiştir\") iznine sahip olması gerekir. Bu izin olmadan Jira raporlayıcıyı yok sayar ve API belirteci sahibi oluşturucu olarak kaydedilir.",
-        "apiKeyWarningPoint2": "İzin verildiğinde, TestPlanIt, raporlayanı belirlemek için TestPlanIt e-postanızı bir Jira kullanıcısının e-postasıyla eşleştirir, ardından eşleşen görünen adlara geri döner.",
-        "apiKeyWarningPoint3": "Eşleşme bulunamazsa veya hesabın gerekli izni yoksa, API belirtecinin sahibi bildirimi yapan kişi olur.",
-        "apiKeyWarningPoint4": "Yönetici izinlerine gerek kalmadan kullanıcı bazında doğru raporlama yapan kişiyi belirlemek için bunun yerine OAuth 2.0 kullanın.",
+        "apiKeyWarningTitle": "Her sorun API token sahibi tarafından bildirilebilir",
+        "apiKeyWarningDescription": "API anahtar kimlik doğrulaması ile, TestPlanIt'ten oluşturulan her sorun, API tokenin sahibi olan hesap tarafından Jira'da bildirilir; Jira o hesaba farklı bir muhabir belirleme izni vermedikçe:",
+        "apiKeyWarningPoint1": "Jira bunu yalnızca hesap projede \"Modify Reporter\" iznine sahip olduğunda (genellikle yalnızca Jira yöneticileri tarafından tutulan) ve Muhabir alanı projenin oluşturma ekranında olduğunda izin verir. Aksi takdirde API token sahibi muhabir olur; e-postalar eşleşse bile.",
+        "apiKeyWarningPoint2": "Jira bunu izlediğinde, TestPlanIt muhabiri e-postası TestPlanIt kullanıcısıyla eşleşen Jira kullanıcısına ayarlar; ardından görünen adları eşleştirmeye geri döner.",
+        "apiKeyWarningPoint3": "Eğer hiçbir Jira kullanıcısı eşleşmezse, API token sahibi muhabir olur.",
+        "apiKeyWarningPoint4": "Jira Cloud'da, her sorunu onu oluşturan kişi tarafından bildirilmek üzere bunun yerine OAuth 2.0 kullanın. OAuth 2.0, Jira Server veya Data Center için kullanılamaz.",
         "tokenCreatorNoticeTitle": "Sorun yaratıcısının atıfı",
         "tokenCreatorNoticeDescription": "Bu entegrasyon aracılığıyla oluşturulan sorunlar, her zaman bu erişim belirtecinin sahibi olan hesap olarak kaydedilir, sorunu oluşturan TestPlanIt kullanıcısı olarak değil. Bu sağlayıcının API'si, oluşturucuyu başka bir kullanıcı adına ayarlamaya izin vermez.",
         "callbackUrlLabel": "Geri çağırma URL'si (yönlendirme URI'si)",
@@ -6884,7 +6884,7 @@
       "addPromptConfig": "İstemi Yapılandırmasını Ekle",
       "filterPlaceholder": "Filtre istemi yapılandırmaları...",
       "features": "Özellikler",
-      "featureCount": "{count, plural, one {# özellik} other {# özellikler}}",
+      "featureCount": "{count, plural, one {# özellik} other {# özellik}}",
       "llmIntegration": "LLM Entegrasyonu",
       "modelOverride": "Model Geçersiz Kılma",
       "modelOverridePlaceholder": "Entegrasyon Varsayılanı",
@@ -6985,7 +6985,7 @@
         },
         "success": {
           "title": "Yeniden indeksleme başarılı",
-          "description": "{count, plural, one {# belge} other {# belgeler}} başarıyla indekslendi"
+          "description": "{count, plural, one {# belge} other {# belge}} başarıyla indekslendi"
         },
         "error": {
           "title": "Yeniden indeksleme başarısız oldu",
@@ -7191,12 +7191,12 @@
         "commentMentionTitle": "Bir yorumda adınız geçti.",
         "systemAnnouncementTitle": "Sistem Duyurusu",
         "assignedTestCase": "Size test senaryosu atandı.",
-        "assignedMultipleTestCases": "Size atandı {count, plural, one {# test durumu} other {# test durumları}}",
+        "assignedMultipleTestCases": "size {count, plural, one {# test durumu atadı} other {# test durumu atadı}}",
         "assignedSession": "sizi oturuma atadı",
         "mentionedYouInComment": "Bir yorumda senden bahsetmiştim.",
         "inProject": "projede",
         "testRun": "Test Çalıştırması:",
-        "casesInProject": "{count, plural, =1 {# durum} other {# durumlar}} içinde",
+        "casesInProject": "{count, plural, =1 {# durum, proje:} other {# durum, proje:}}",
         "sentBy": "{name} tarafından gönderildi",
         "milestoneDueSoonTitle": "Önemli bir dönüm noktasına yakında ulaşılacak.",
         "milestoneOverdueTitle": "Gecikmiş Dönüm Noktası",
@@ -7282,14 +7282,14 @@
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "Sonuç {elapsed} sürmüş, {baseline} tabanından {deviation}% uzakta ({threshold}%'den fazlası izin verilmiyor).",
-          "CASE_REGRESSED": "Vaka {passedBefore, plural, one {son sonucundan} other {son # sonucundan}} sonra başarısız oldu.",
-          "CASE_RECOVERED": "Vaka {failedBefore, plural, one {son sonucundan} other {son # sonucundan}} sonra başarılı oldu.",
+          "CASE_REGRESSED": "Vaka {passedBefore, plural, one {son sonucunda geçtikten} other {son # sonucunda geçtikten}} sonra başarısız oldu.",
+          "CASE_RECOVERED": "Vaka {failedBefore, plural, one {son sonucunda başarısız olduktan} other {son # sonucunda başarısız olduktan}} sonra başarılı oldu.",
           "RUN_DURATION_DEVIATION": "Çalıştırma {elapsed} sürmüş, {baseline} tabanından {deviation}% uzakta ({threshold}%'den fazlası izin verilmiyor).",
           "RUN_NOT_PROGRESSING": "Çalıştırma {idleHours, plural, one {# saat} other {# saat}} boyunca yeni bir sonuç almadı (eşik {threshold}).",
           "AUTOMATED_EXECUTION_FAILED": "{target} üzerinde otomatik yürütme {status} ile sona erdi{error, select, other {: {error}}}",
-          "RUN_UNTESTED_SHARE": "{untestedPercent}% of the run's cases have no result with {daysRemaining, plural, one {# gün} other {# gün}} before its milestone is due (threshold {threshold}%).",
+          "RUN_UNTESTED_SHARE": "Çalıştırmanın vakalarının %{untestedPercent} kadarının, dönüm noktasının bitiş tarihine {daysRemaining, plural, one {# gün} other {# gün}} kala hâlâ sonucu yok (eşik %{threshold}).",
           "RUN_ISSUES_OPENED": "{issues, plural, one {# sorun} other {# sorun}} çalıştırmanın sonuçlarına bağlı (eşik {threshold}).",
-          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# başarısızlık deseni ilk kez göründü} other {# başarısızlık desenleri ilk kez göründü}} çalıştırma sırasında (eşik {threshold}).",
+          "NEW_FAILURE_SIGNATURES": "{signatures, plural, one {# başarısızlık deseni} other {# başarısızlık deseni}} çalıştırmada ilk kez göründü (eşik {threshold}).",
           "SESSION_OVERRUN": "Oturum {elapsed} boyunca {estimate} tahminine karşı, {overrun}% fazla ({threshold}%'den fazlası izin verilmiyor).",
           "REQUIREMENT_COVERAGE_BELOW": "{covered} / {total} gereklilik ({coverage}%) {basis, select, PASSING {en son geçen bir sonuca sahip} other {bir test durumuna bağlı}} (eşik {threshold}%).",
           "STALE_CASES": "{stale, plural, one {# vaka} other {# vaka}} {days, plural, one {# gün} other {# gün}} boyunca sonuç almadı (eşik {threshold}).",
@@ -7299,7 +7299,7 @@
           "CASE_FLAKY": "Sonuç son {sampleCount} sonuç arasında {flips, plural, one {# kez} other {# kez}} değişti (eşik {threshold}).",
           "RUN_PASS_RATE_BELOW": "Geçiş oranı {passRate}% üzerinde {sampleCount} sonuç (eşik {threshold}%).",
           "RUN_FAILURE_COUNT": "{failed, plural, one {# sonuç} other {# sonuç}} başarısız oldu (eşik {threshold}).",
-          "MILESTONE_BEHIND": "The milestone is {completion}% complete with {daysRemaining, plural, one {# gün} other {# gün}} remaining (threshold {threshold}%).",
+          "MILESTONE_BEHIND": "Dönüm noktası %{completion} tamamlandı, {daysRemaining, plural, one {# gün} other {# gün}} kaldı (eşik %{threshold}).",
           "MILESTONE_OVERDUE": "Dönüm noktası son tarihinden {daysOverdue, plural, one {# gün} other {# gün}} geçti.",
           "LLM_BUDGET_USED": "Faturalandırma döneminin harcaması {spend} / {budget} aylık bütçe ({percent}%, eşik {threshold}%).",
           "LLM_ERROR_RATE": "Son {sampleCount} isteğinden {failed} tanesi başarısız oldu ({failureRate}%, eşik {threshold}%).",
@@ -7321,8 +7321,8 @@
     },
     "issues": {
       "manage_issues": {
-        "placeholder": "Arama veya bağlantı sorunları...",
-        "create_label": "Bağlantı Sorunu \"{name}\""
+        "placeholder": "Sorunları arayın veya bağlayın...",
+        "create_label": "Sorunu Bağla \"{name}\""
       },
       "create_issue_dialog": {
         "placeholders": {
@@ -7356,12 +7356,12 @@
         "description": "Sorun oluşturmak için hesabınızı {integrationName} ile bağlamanız gerekiyor."
       },
       "search_issues_dialog": {
-        "title": "Arama ve Bağlantı Sorunları",
+        "title": "Sorunları Ara ve Bağla",
         "placeholder": "Sorunları arayın...",
         "searching": "Arama...",
         "searchError": "Arama sorunları başarısız oldu.",
         "linkButton": "Bağlantı",
-        "linkedCount": "{count, plural, one {# sorun} other {# sorunlar}} bağlantılı"
+        "linkedCount": "{count, plural, one {# sorun} other {# sorun}} bağlantılı"
       }
     },
     "copyMove": {
@@ -7379,7 +7379,7 @@
       "operation": "Operasyon",
       "operationCopyDesc": "Seçilen vakaların bir kopyasını hedef projede oluşturur. Orijinaller değiştirilmeden kalır.",
       "operationMove": "Taşınmak",
-      "operationMoveDesc": "Seçilen dosyaları hedef projeye taşır. Orijinal dosyalar kaynak projeden silinecektir.",
+      "operationMoveDesc": "Seçilen senaryoları hedef projeye taşır. Orijinal senaryolar kaynak projeden silinecektir.",
       "checkingCompatibility": "Uyumluluk kontrol ediliyor...",
       "noTargetWriteAccess": "Hedef projeye yazma erişiminiz yok.",
       "noSourceUpdateAccess": "Kaynak projede vakaları taşımak için düzenleme izniniz yok.",
@@ -7405,14 +7405,14 @@
       "errorCount": "{count, number} vaka(lar) başarısız oldu",
       "viewInTargetProject": "Hedef projede görüntüle",
       "failed": "Arızalı",
-      "folderMode": "Klasör \"{folderName}\" — {caseCount, plural, one {# durum} other {# durumlar}}"
+      "folderMode": "Klasör \"{folderName}\" — {caseCount, plural, one {# durum} other {# durum}}"
     }
   },
   "issues": {
-    "linkedIssues": "İlgili Konular",
+    "linkedIssues": "İlgili Sorunlar",
     "linkedIssuesDescription": "Bu ürünle ilgili sorunlar",
-    "refreshed": "Sayılar Güncellendi",
-    "refreshedDescription": "İlgili konular listesi güncellendi.",
+    "refreshed": "Sorunlar Güncellendi",
+    "refreshedDescription": "İlgili sorunlar listesi güncellendi.",
     "unlinked": "Sorun Bağlantısız",
     "unlinkedDescription": "Bu sorun bu öğeden kaldırıldı.",
     "linked": "Bağlantılı Sorun",
@@ -7422,9 +7422,9 @@
     "noLinkedIssues": "Bağlantılı sorun yok.",
     "viewExternal": "{provider} içinde görüntüle",
     "unlink": "Bağlantıyı kaldır",
-    "linkError": "Bağlantı sorunu çözülemedi.",
+    "linkError": "Sorun bağlanamadı.",
     "linkExternalIssue": "Bağlantı {provider} Sorunu",
-    "linkIssue": "Bağlantı Sorunu",
+    "linkIssue": "Sorun Bağla",
     "addIssue": "Sorun Ekle",
     "unlinkError": "Bağlantıyı kaldırma işlemi başarısız oldu.",
     "noIssuesFound": "Herhangi bir sorun bulunamadı.",
@@ -7442,7 +7442,7 @@
     "searchExternalDescription": "Bu öğeye bağlantı vermek için {provider} sorun arayın.",
     "error": "Yükleme sorunları",
     "errorDescription": "Yükleme sorunları yaşandı. Lütfen tekrar deneyin.",
-    "selectIssues": "Seçili Sayılar",
+    "selectIssues": "Seçili Sorunlar",
     "authRequiredDescription": "Sorunları aramak için lütfen kimliğinizi doğrulayın.",
     "integrationNotConfigured": "Entegrasyon Yapılandırılmadı",
     "integrationNotConfiguredDescription": "Bu entegrasyon henüz tam olarak yapılandırılmamıştır. Lütfen proje ayarlarında harici projeyi yapılandırmak için proje yöneticinizle iletişime geçin.",
@@ -7456,6 +7456,7 @@
     "authenticatedAndReady": "Kimlik doğrulaması yapıldı ve sorun oluşturmaya hazır.",
     "created": "Sorun Oluşturuldu",
     "createdInExternal": "{provider} tarihinde sorun oluşturuldu.",
+    "createdReporterRejected": "Jira sizi muhabir olarak kabul etmedi; bu nedenle bu sorun, entegrasyonun API tokeninin sahibi olan hesap tarafından bildirilmiştir. TestPlanIt yöneticiniz, Jira entegrasyonu ayarlarında nedenini görebilir.",
     "createdInternal": "Yerel olarak oluşturulan sorun",
     "createdInternalSimpleUrl": "Bu sorun şirket içinde oluşturulmuştur ve basit bir URL aracılığıyla bağlantı verilebilir.",
     "createError": "Sorun oluşturulamadı.",
@@ -7649,7 +7650,7 @@
     "references": {
       "title": "{count, plural, =0 {Referanslar} =1 {{count} Referans} other {{count} Referans}}",
       "empty": "Henüz referans yok.",
-      "emptyHint": "Bu gereksinimi şekillendiren biletleri ekleyin.",
+      "emptyHint": "Bu gereksinimi şekillendiren sorunları ekleyin.",
       "addReference": "Referans Ekle",
       "createDialogLabel": "Referanslar",
       "attachSuccess": "Referans eklendi.",
@@ -7826,7 +7827,7 @@
       "ref": "Dal veya ref",
       "refHelp": "Hedefin varsayılan dalını kullanmak için boş bırakın.",
       "caseCountSummary": "{count, plural, one {# otomatikleştirilmiş senaryo talep edilecek} other {# otomatikleştirilmiş senaryo talep edilecek}}",
-      "buttonSelected": "{count, plural, one {# seçilen otomatikleştirilmiş senaryoyu yürüt} other {# seçilen otomatikleştirilmiş senaryoları yürüt}}",
+      "buttonSelected": "{count, plural, one {# seçilen otomatikleştirilmiş senaryoyu yürüt} other {# seçilen otomatikleştirilmiş senaryoyu yürüt}}",
       "noAutomatedSelected": "Seçilen senaryoların hiçbiri bu çalıştırmada otomatikleştirilmiş senaryo değildir.",
       "selectedCaseCountSummary": "{count, plural, one {# seçilen otomatikleştirilmiş senaryo talep edilecek} other {# seçilen otomatikleştirilmiş senaryo talep edilecek}}",
       "skippedSelection": "{count, plural, one {# seçilen senaryo bu çalıştırmada otomatikleştirilmiş senaryo değildir ve atlanır.} other {# seçilen senaryo bu çalıştırmada otomatikleştirilmiş senaryo değildir ve atlanır.}}",
@@ -7916,7 +7917,7 @@
     "completed": "Tamamlandı: {count}",
     "durationRange": "Süre: {from}s - {to}s",
     "seconds": "{seconds}s",
-    "testCases": "{count, plural, one {# test durumu} other {# test durumları}}",
+    "testCases": "{count, plural, one {# test durumu} other {# test durumu}}",
     "estimate": "Kuruluş: {value}",
     "partOf": "( {parent}'nın bir parçası )",
     "status": "Durum: {status}",
@@ -7931,7 +7932,7 @@
     "noLinkedCases": "Bağlantılı test senaryosu yok.",
     "linkedBy": "Bağlantılı",
     "on": "Bağlantı şurada:",
-    "alreadyLinked": "Bu dava zaten bağlantılı.",
+    "alreadyLinked": "Bu senaryo zaten bağlantılı.",
     "cannotLinkSelf": "Bir vakayı kendi kendine bağlayamazsınız.",
     "circularLink": "Dairesel bağlantı tespit edildi.",
     "dependsOn": "Bağımlı",
@@ -8234,10 +8235,10 @@
     },
     "issue": {
       "name": "## Sorun Adı\nTüm projelerde kullanılan açık ve açıklayıcı bir ad.\n\n- Sorunu açıklamaya yardımcı olur (örneğin \"Sorun 123\", \"Hata 456\", vb.).",
-      "title": "## Konu Başlığı\nKonuyu açıklayan, insan tarafından okunabilir bir başlık.\n\n- Konunun neyle ilgili olduğuna dair bağlam sağlar\n- Listelerde ve konu ekranlarında görüntülenir\n- Açık ve açıklayıcı olmalıdır",
+      "title": "## Sorun Başlığı\nSorunu açıklayan, insan tarafından okunabilir bir başlık.\n\n- Sorunun neyle ilgili olduğuna dair bağlam sağlar\n- Listelerde ve sorun ekranlarında görüntülenir\n- Açık ve açıklayıcı olmalıdır",
       "externalKey": "## Harici Anahtar\nHarici sorun takip sisteminden alınan benzersiz anahtar veya tanımlayıcı.\n\n- JIRA için: \"PROJ-123\" gibi sorun anahtarı\n- GitHub için: \"456\" gibi sorun numarası\n- Azure DevOps için: İş öğesi kimliği\n- Kaydedildiğinde harici URL'yi otomatik olarak oluşturur",
       "externalId": "## Harici Kimlik\nBu sorun için sorun takip sistemindeki benzersiz tanımlayıcı (örneğin \"Sorun-123\", \"Hata456\", vb.).\n\n- Bu, temel URL'de sorun yer tutucusu olarak kullanılır.",
-      "description": "## Açıklama\nBu sayının neleri kapsadığına dair kısa bir genel bakış.\n\n- Test edilen temel alanlar veya özellikler\n- Önemli bağlam veya arka plan bilgileri\n- Özel hususlar veya gereksinimler",
+      "description": "## Açıklama\nBu sorunun neleri kapsadığına dair kısa bir genel bakış.\n\n- Test edilen temel alanlar veya özellikler\n- Önemli bağlam veya arka plan bilgileri\n- Özel hususlar veya gereksinimler",
       "project": "## Proje\nBu sorunun ilişkili olduğu proje.\n\n- Sorunlar birden fazla projedeki test durumlarına bağlanabilir\n- Birincil bir proje belirlemek, sorunları düzenlemeye yardımcı olur\n- Projeler arası sorunlar için boş bırakılabilir",
       "state": "## Durum\nProjenizin iş akışına göre bu sorunun mevcut durumunu veya sonucunu belirtin.",
       "tags": "## Etiketler\nBu sorunu kategorize etmek ve filtrelemek için ilgili etiketleri uygulayın.",
@@ -8354,7 +8355,7 @@
       "automationRate": "## Otomasyon Oranı\nOtomatikleştirilen test senaryolarının yüzdesi.",
       "averageSteps": "## Test Durumu Başına Ortalama Adım Sayısı\nTest durumu başına ortalama adım sayısı.",
       "automatedCount": "## Otomatik Test Senaryoları\nOtomatik test senaryolarının sayısı.",
-      "manualCount": "## Manuel Test Örnekleri\nManuel test örneklerinin sayısı.",
+      "manualCount": "## Manuel Test Senaryoları\nManuel test senaryolarının sayısı.",
       "totalSteps": "## Toplam Adım Sayısı\nTüm durumlar için toplam test adımı sayısı.",
       "createdCaseCount": "## Oluşturulan Test Senaryoları\nBu dönemde oluşturulan test senaryolarının sayısı.",
       "sessionResultCount": "## Oturum Sonuçları\nOturum test sonuçlarının sayısı.",
@@ -8382,7 +8383,7 @@
       "successRate": "## Başarı Oranı\nBu gruptaki hatasız tamamlanan çağrıların yüzdesi.",
       "errorCount": "## Başarısız Çağrılar\nBu gruptaki hatayla sonuçlanan çağrı sayısı.",
       "impactAnalysisCount": "## Etki Analizi Sayısı\nBu grupta başlatılan Etki analizi sayısı, bir çalıştırma oluştursun veya olmasın.",
-      "affectedCasesSelected": "## Seçilen Etkilenen Senaryolar\nEtkilenen senaryoların analiz ettiği iğnelenmemiş ve etkilenen senaryolar, toplanmış.",
+      "affectedCasesSelected": "## Seçilen Etkilenen Senaryolar\nEtkilenen senaryoların analiz ettiği sabitlenmiş ve etkilenen senaryolar, toplanmış.",
       "selectionPrecision": "## Seçim Hassasiyeti (%)\nEtki analizlerinin seçtiği ve daha sonra yürütülen senaryoların başarısız olanlarının payı. Hiçbir şey seçilmediğinde boş."
     },
     "reportDimensions": {
@@ -8653,8 +8654,8 @@
           "content": "Test senaryolarını özel alanlar, adımlar ve öncelikler içeren klasörler halinde düzenleyin. Senaryoların nasıl yapılandırıldığını görmek için örnek klasörlere göz atın."
         },
         "repositoryPanels": {
-          "title": "Klasörler ve Kılıflar",
-          "content": "Sol panelde klasörler gösterilmektedir. Bir klasöre tıklayarak ilgili test örneklerini görebilirsiniz. Her test örneğinin adımları, açıklamaları ve paylaşılan adım referansları bulunmaktadır."
+          "title": "Klasörler ve Senaryolar",
+          "content": "Sol panelde klasörler gösterilmektedir. Bir klasöre tıklayarak ilgili test senaryolarını görebilirsiniz. Her test senaryosunun adımları, açıklamaları ve paylaşılan adım referansları bulunmaktadır."
         },
         "repositoryCases": {
           "title": "Test Senaryoları",
@@ -8716,7 +8717,7 @@
     "pathPatterns": "## Yol Desenleri\nHer satır bir temel **yol** ile glob **deseni** birleştirir. Satırlar toplanır: bir dosya herhangi bir satır eşleştiğinde dahil edilir.\n\n- `src` + `**/*` — `src` altındaki her şey\n- boş veya `.` + `**/*` — depodaki her dosya\n- `src` + `**/!(*.test|*.spec).ts` — testler hariç `.ts` dosyaları\n\n### Hariç Tut\nBir satırda **Hariç Tut** işaretini tıklayarak dosyalarını, başka bir satır onları dahil etse bile kaldırın. İstisnalar dosya seçici ve önbelleğe uygulanır ve Etki için bir analizin değiştirilmiş dosyalarına uygulanır, bu nedenle neredeyse her çekme talebinde değişen bir dosya ilgisiz test çalışmalarını çekmez. En az bir satırın işaretsiz kalması gerekir.\n\n- boş + `**/CHANGELOG*` — her changelog, herhangi bir derinlikte\n- `app` + `build.gradle.kts` — yalnızca sürümü güncelleyen bir derleme dosyası",
     "projectAutomation": "## Otomatikleştirilmiş Yürütme\nYürütme hedefleri, TestPlanIt'e bu projenin otomatikleştirilmiş senaryolarını nerede yürüteceğini söyler: bir GitHub Actions iş akışı, bir GitLab CI işlem hattı veya diğer herhangi bir sistem için imzalı bir web kancası. Bir çalıştırma yürütüldüğünde, TestPlanIt işi çalıştırma kimliği ve bir plan URL'si ile başlatır; iş planı okur, eşleşen testleri çalıştırır ve sonuçları o çalıştırmaya sabitlenmiş bir muhabir veya CLI ile geri bildirir. Hedefler silinmeden devre dışı bırakılabilir.",
     "userAlerts": "## Bildirimler & Uyarılar\n**Bildirim Tercihleri**, nasıl ulaşıldığınızı (uygulama içi, e-posta, özet) ve hangi bildirim türlerini aldığınızı belirler.\n\n**Uyarılar** bir test metriğini izler ve eşiği aştığında abonelerine bildirimde bulunur. Örneğin, normalde çalışma süresinden %50 daha uzun süren bir sonuç, arka arkaya 3 kez başarısız olan bir test senaryosu, başarı oranı %90'ın altına düşen bir çalıştırma veya yapılacak günleri kalan geride bir dönüm noktası. Liste projelerinizin tüm uyarılarını gösterir; **Beni Bilgilendir** anahtarı birini izler veya terk eder. **Uyarı Ekle**, rolünüzün **Uyarılar** Ekle/Düzenle yetkisine sahip olduğu herhangi bir projede kendi uyarılarınızı oluşturur; proje yöneticileri projelerindeki tüm uyarıları ve diğer kişilerin aboneliklerini yönetir. Bir uyarı, soğutma süresi içinde konu başına en fazla bir kez tetiklenir ve yeterli sonuç elde edene kadar sessiz kalır.",
-    "projectTriage": "## Başarısızlık Desenleri\nAynı istisna, ileti ve üst yığın çerçeveleri paylaşan otomatik başarısızlıklar bir **başarısızlık desenine** gruplandırılır. Her desen, ne sıklıkta oluştuğunu, hangi test durumlarına ve çalıştırmalara dokunduğunu ve AI'nin temel nedeni hakkındaki görüşünü (ürün hatası, test hatası, ortam veya varsayılan olarak değişken) gösterir. Bir desen işlendikten sonra çözün veya yoksayın; başarısızlık geri gelirse kendiliğinden yeniden açılır.",
+    "projectTriage": "## Başarısızlık Desenleri\nAynı istisna, ileti ve üst yığın çerçeveleri paylaşan otomatik başarısızlıklar bir **başarısızlık desenine** gruplandırılır. Her desen, ne sıklıkta oluştuğunu, hangi test durumlarına ve çalıştırmalara dokunduğunu ve AI'nin temel nedeni hakkındaki görüşünü (ürün hatası, test hatası, ortam veya varsayılan olarak kararsız) gösterir. Bir desen işlendikten sonra çözün veya yoksayın; başarısızlık geri gelirse kendiliğinden yeniden açılır.",
     "projectTriageSettings": "## Başarısızlık Desenleri ayarları\nHer otomatik sonuç geldiğinde çalıştırmaları gruplandırma ve hiçbir maliyeti yoktur. AI temel nedeni önerisi, AI Modelleri sayfasında **Başarısızlık Desenleri: Temel Neden** özelliğine atanan AI modelini kullanır; herhangi bir AI çağrısı yapmadan gruplandırmayı devam ettirmek için burada kapatın. **Mevcut sonuçları analiz et** bu projede zaten kaydedilmiş her otomatik başarısızlığı gruplandırır.",
     "projectQuarantine": "## Karantinaya alınan test durumları\nKarantinaya alınmış bir test durumu çalışmaya ve sonuçları kaydetmeye devam eder, ancak başarısızlıkları çalıştırma geçme/başarısızlıktan çıkarılır ve ayrı bir sayı olarak gösterilir. Neden düzeltilirken test durumunu bir başarısızlık deseninden karantinaya alın. Karantina, Başarısızlık Desenleri ayarlarında belirlenen sayıda arka arkaya test durumu geçtikten sonra kendiliğinden kaldırılır; el ile işaretlenmişse, burada veya desenden herhangi bir zamanda serbest bırakın.",
     "rootCauses": "## Temel Nedenler\nBaşarısızlık Desenleri'nin yapay zeka veya elle atadığı temel nedenler. Her birinin, AI'nin ne zaman uygulandığına karar vermesi için okuduğu bir açıklaması vardır. Adlarını değiştirin, yeniden renklendirin veya yeniden sıralayın, kendinizinkini ekleyin veya kullanmadığınızları silin; birini silmek desenleri temel nedensiz bırakır.",
@@ -8918,7 +8919,7 @@
         "flipThreshold": "Minimum Çevirmeler",
         "flipThresholdHelp": "Bir sistemin istikrarsız olarak değerlendirilmesi için gereken minimum geçme/kalma geçiş sayısı.",
         "flips": "Taklalar",
-        "lastNResults": "Son {count, plural, one {# Sonuç} other {# Sonuçlar}}",
+        "lastNResults": "Son {count, plural, one {# Sonuç} other {# Sonuç}}",
         "newest": "Yeni",
         "oldest": "Eskimiş",
         "noFlakyTests": "Kriterlere uyan, güvenilir olmayan hiçbir test bulunamadı.",
@@ -8936,7 +8937,7 @@
           "failureRate": "Başarısızlık oranı",
           "recency": "Güncellik puanı",
           "backlogTitle": "Daha Düşük Öncelikli Testler",
-          "backlogDescription": "{count, plural, one {# ek arıza testi} other {# ek arıza testleri}} gösterilmiyor"
+          "backlogDescription": "{count, plural, one {# ek dengesiz test} other {# ek dengesiz test}} gösterilmiyor"
         }
       },
       "testCaseHealth": {
@@ -8999,7 +9000,7 @@
         "casesToRank": "Sıralanacak Vakalar",
         "casesToRankHelp": "Sıralama için LLM'ye kaç adet manuel test vakası gönderilecek? Daha yüksek sayılar daha geniş bir kapsama alanı sağlar, ancak LLM'nin işlem süresi orantılı olarak daha uzun sürer (aralık: 5-100; düşünme modelleri en üst seviyede birkaç dakika sürebilir).",
         "selectionStrategy": "Seçim Stratejisi",
-        "selectionStrategyHelp": "Projenin nesil başına belirlenen sınırın üzerinde manuel vakaya sahip olması durumunda hangi manuel vakaların gönderileceğine hangi strateji karar verir? **En Çok Çalıştırılan** (varsayılan), test çalıştırmaları boyunca en çok çalıştırılan vakaları seçer - otomasyon için en iyi yatırım getirisi. **En Değişken**, geçme/kalma sonuçları en çok değişen vakaları seçer - deterministik bir otomasyon kehaneti için en uygun adaylar. **En Uzun Süren**, en yüksek manuel yürütme tahmini olan vakaları seçer (test uzmanı tarafından türetilmiştir; orijinal tahmine geri döner) - otomasyon, test uzmanının zamanından en fazla tasarruf sağlar. **En Eski**, uzun ömürlü manuel vakaları seçer (istikrarlı, olgun). **En Yeni**, en son oluşturulan vakaları seçer. **Rastgele**, tarafsız bir örnektir. Yalnızca iş akışı durumu *Devam Ediyor* veya *Tamamlandı* olan manuel vakalar uygundur.",
+        "selectionStrategyHelp": "Projenin nesil başına belirlenen sınırın üzerinde manuel vakaya sahip olması durumunda hangi manuel vakaların gönderileceğine hangi strateji karar verir? **En Çok Çalıştırılan** (varsayılan), test çalıştırmaları boyunca en çok çalıştırılan vakaları seçer - otomasyon için en iyi yatırım getirisi. **En Kararsız**, geçme/kalma sonuçları en çok değişen vakaları seçer - deterministik bir otomasyon kehaneti için en uygun adaylar. **En Uzun Süren**, en yüksek manuel yürütme tahmini olan vakaları seçer (test uzmanı tarafından türetilmiştir; orijinal tahmine geri döner) - otomasyon, test uzmanının zamanından en fazla tasarruf sağlar. **En Eski**, uzun ömürlü manuel vakaları seçer (istikrarlı, olgun). **En Yeni**, en son oluşturulan vakaları seçer. **Rastgele**, tarafsız bir örnektir. Yalnızca iş akışı durumu *Devam Ediyor* veya *Tamamlandı* olan manuel vakalar uygundur.",
         "strategies": {
           "most_executed": "En Çok Uygulanan (en yüksek yatırım getirisi)",
           "flakiest_first": "En Kararsız İlk (geçme/kalma denemeleri)",
@@ -9036,7 +9037,7 @@
             "mostExecutedWithCount": "Bu projedeki test çalıştırmaları boyunca {count, plural, =1 {1 kez} other {# kez}} manuel olarak yürütüldü; bunu doğrudan otomatikleştirmek, gelecekteki her çalıştırmada test uzmanının zamanını geri kazandırır.",
             "mostExecutedNone": "Henüz bir infaz geçmişi yok — En Çok İnfaz Edilen vaka algoritması, bu vakayı diğerleriyle karşılaştırmak için herhangi bir sinyal vermiyor.",
             "flakiestWithScore": "Kararsızlık {percent}% (geçme/kalma sonuçları {description} çalıştırmada değişiyor) — kararsız manuel testler, her çalıştırmada test uzmanının zamanını boşa harcar ve deterministik bir otomasyon kehanetinden en çok fayda sağlar.",
-            "flakiestNone": "Henüz farklı sonuçlar elde edilemedi — En Değişken İlk Yöntemi, bu durum için geçme/kalma durumunu henüz ölçemiyor.",
+            "flakiestNone": "Henüz farklı sonuçlar elde edilemedi — En Kararsız İlk Yöntemi, bu durum için geçme/kalma durumunu henüz ölçemiyor.",
             "longestWithDuration": "Manuel yürütme tahmini {duration} — uzun süren manuel testlerin otomatikleştirilmesi, her çalıştırmada orantılı olarak daha fazla test uzmanı zamanı kazandırır.",
             "longestNone": "Tahmin veya öngörü belirlenmedi — En Uzun Süreli Yürütme sezgisel algoritmasının bu durum için süre verisi yok.",
             "oldest": "{age} tarafından yazılmıştır — uzun süreli manuel vakalar, yeniden çalışma gerektirmeden otomatikleştirilebilecek olgun ve istikrarlı davranışlar sergileme eğilimindedir.",
@@ -9102,7 +9103,7 @@
       },
       "issueTestCoverage": {
         "viewMode": "Görünüm Modu",
-        "summaryView": "Özet (Sayıya Göre)",
+        "summaryView": "Özet (Soruna Göre)",
         "detailView": "Detay (Test Durumuna Göre)",
         "issue": "Sorun",
         "testCase": "Test Durumu",
@@ -9117,7 +9118,7 @@
         "noData": "Bağlantılı test senaryolarında herhangi bir sorun bulunmadı.",
         "noIssuesNeedingAttention": "Tüm sorunlar testlerden başarıyla geçti - harika iş!",
         "stats": {
-          "totalIssues": "Toplam Sayılar",
+          "totalIssues": "Toplam Sorunlar",
           "issuesWithFailures": "Başarısızlıklarla",
           "issuesWithFailuresTooltip": "En az bir başarısız test senaryosuyla ilgili sorunlar.",
           "issuesWithUntested": "Test edilmemiş",
@@ -9326,7 +9327,7 @@
         "coverageGaps": "Sabitlemeler olmadan değiştirildi",
         "coveragePinned": "Sabitlemelerle",
         "kindBreakdown": "{file, number} bütün dosya · {range, number} satır · {symbol, number} sembol · {glob, number} glob",
-        "sourceBreakdown": "{manual, number} manual · {ai, number} AI · {annotation, number} ek açıklama · {mapfile, number} harita dosyası · {issue, number} bilet",
+        "sourceBreakdown": "{manual, number} manual · {ai, number} AI · {annotation, number} ek açıklama · {mapfile, number} harita dosyası · {issue, number} sorun",
         "stats": {
           "casesWithPinsTooltip": "En az bir Kod Sabitleme içeren test senaryoları, projenin senaryolarının payı olarak.",
           "gapDirectories": "Sabitlemeler olmadan değiştirilen dizinler",
@@ -9467,7 +9468,7 @@
       "avgStepsPerCase": "Vaka başına ortalama adım sayısı",
       "averageSteps": "Vaka Başına Ortalama Adım Sayısı",
       "automatedCount": "Otomatik Vakalar",
-      "manualCount": "Manuel Kılıflar",
+      "manualCount": "Manuel Senaryolar",
       "totalCount": "Toplam Vaka Sayısı",
       "totalSteps": "Toplam Adımlar",
       "executionCount": "Test Yürütmeleri",
@@ -9512,7 +9513,7 @@
       "loadingMore": "Daha fazlası yükleniyor...",
       "noRecords": "Hiçbir kayıt bulunamadı.",
       "error": "Kayıtlar yüklenemedi.",
-      "recordCount": "{count, plural, =1 {# kayıt} other {# kayıtlar}}",
+      "recordCount": "{count, plural, =1 {# kayıt} other {# kayıt}}",
       "allRecords": "Tüm Kayıtlar",
       "allLoaded": "Tüm kayıtlar yüklendi."
     },
@@ -9683,7 +9684,7 @@
       },
       "attempts": {
         "noAttemptsRemaining": "Kullanılmayan deneme hakkınız var. Lütfen daha sonra tekrar deneyin.",
-        "attemptsRemaining": "{count, plural, =1 {1 deneme} other {# kalan denemeler}}."
+        "attemptsRemaining": "{count, plural, =1 {1 deneme} other {# deneme}} kaldı."
       }
     },
     "sharedReport": {
@@ -9770,8 +9771,8 @@
     "deleteDescription": "Bu paylaşılan adım grubunu silmek istediğinizden emin misiniz? Bu adımlar, onları kullanan tüm test senaryolarından kaldırılacaktır.",
     "saveSuccess": "Paylaşılan adımlar başarıyla güncellendi.",
     "saveError": "Paylaşılan adımlar kaydedilirken bir hata oluştu.",
-    "stepsCount": "{count, plural, one {# adım} other {# adımlar}}",
-    "testCasesUsing": "{count, plural, one {# test durumu} other {# test durumları}}",
+    "stepsCount": "{count, plural, one {# adım} other {# adım}}",
+    "testCasesUsing": "{count, plural, one {# test durumu} other {# test durumu}}",
     "importWizard": {
       "title": "Paylaşılan Adımları İçe Aktar",
       "fields": {
@@ -9783,12 +9784,12 @@
         "stepsData": "Adım Verileri"
       },
       "success": {
-        "description": "{count, plural, one {# paylaşılan adım} other {# paylaşılan adımlar}} başarıyla içe aktarıldı"
+        "description": "{count, plural, one {# paylaşılan adım} other {# paylaşılan adım}} başarıyla içe aktarıldı"
       },
       "errors": {
         "parseFailed": "CSV dosyasını ayrıştırma başarısız oldu.",
         "validationFailed": "Doğrulama başarısız oldu",
-        "validationDescription": "{count, plural, one {# doğrulama hatası} other {# doğrulama hataları}} bulundu",
+        "validationDescription": "{count, plural, one {# doğrulama hatası} other {# doğrulama hatası}} bulundu",
         "importFailed": "İçe aktarma başarısız oldu",
         "fileRequired": "CSV dosyası gereklidir."
       },
@@ -9811,7 +9812,7 @@
         "title": "CSV Sütunlarını Paylaşılan Adım Alanlarına Eşleme",
         "description": "CSV sütunlarınızı paylaşılan adım alanlarıyla eşleştirin. Gerekli alanlar eşleştirilmelidir.",
         "ignoreColumn": "Bu sütunu dikkate almayın.",
-        "requiredFieldsWarning": "{count, plural, one {# Gerekli alan} other {# Gerekli alanlar}} eşleştirilmemiş. Devam etmek için lütfen tüm gerekli alanları eşleştirin."
+        "requiredFieldsWarning": "{count, plural, one {# Gerekli alan} other {# Gerekli alan}} eşleştirilmemiş. Devam etmek için lütfen tüm gerekli alanları eşleştirin."
       },
       "page3": {
         "title": "İçe Aktarılan Verileri Önizle",
@@ -9836,13 +9837,13 @@
       "noResultsFound": "Hiçbir adım dizisi tekrarı bulunamadı.",
       "noResultsDescription": "Test senaryolarınızda tekrarlanan adım dizilerini tespit etmek için bir tarama çalıştırın.",
       "filterPlaceholder": "Vaka adına göre filtrele...",
-      "minCasesLabel": "Min. Kılıf",
+      "minCasesLabel": "Min. Senaryo",
       "minStepsLabel": "Min. Adım",
       "minThresholdOption": "{count, number}+",
       "noMatchesForFilters": "Geçerli filtrelerle eşleşen sonuç yok. Sonuçları genişletmek için minimum değerleri düşürün.",
       "selected": "{count, plural, one {# seçili} other {# seçili}}",
       "bulkDismiss": "Kapat ({count, number})",
-      "bulkDismissSuccess": "{count, plural, one {# iptal edilen maçlar} other {# iptal edilen maçlar}}",
+      "bulkDismissSuccess": "{count, plural, one {# eşleşme reddedildi} other {# eşleşme reddedildi}}",
       "bulkError": "Bazı işlemler başarısız oldu. Lütfen tekrar deneyin.",
       "tableHint": "Eşleşen adımları önizlemek için bir satıra tıklayın. Toplu işlemler için onay kutulu satırları seçin.",
       "matchedStepsCount": "{count, plural, one {# eşleşen adım} other {# eşleşen adım}}",
@@ -9852,7 +9853,7 @@
         "review": "Gözden geçirmek"
       },
       "scanning": "Tarama...",
-      "scanComplete": "{count, plural, one {# bulunan eşleşme} other {# bulunan eşleşmeler}}",
+      "scanComplete": "{count, plural, one {# bulunan eşleşme} other {# bulunan eşleşme}}",
       "scanFailed": "Tarama başarısız oldu",
       "scanFailedDescription": "Tarama sırasında bir hata oluştu. Lütfen tekrar deneyin.",
       "cancelScan": "Tarama işlemini iptal et",
@@ -9875,9 +9876,9 @@
         "dismissSuccess": "Maç sona erdi.",
         "dismissError": "Kapatma işlemi başarısız oldu. Lütfen tekrar deneyin.",
         "viewSharedStep": "Paylaşılan Adım Grubunu Görüntüle",
-        "skippedWarning": "{count, plural, one {# durum atlandı} other {# durumlar atlandı}} (eskimiş veya zaten dönüştürülmüş).",
+        "skippedWarning": "{count, plural, one {# durum atlandı} other {# durum atlandı}} (eskimiş veya zaten dönüştürülmüş).",
         "noCasesSelected": "Dönüştürmek istediğiniz en az bir durumu seçin.",
-        "stepsUnavailable": "Eşleşen adımlar artık bu test kılıfında bulunmuyor. Bu eşleşmeyi yoksayın ve yeni bir tarama çalıştırın."
+        "stepsUnavailable": "Eşleşen adımlar artık bu test senaryosunda bulunmuyor. Bu eşleşmeyi yoksayın ve yeni bir tarama çalıştırın."
       }
     },
     "findStepDuplicates": "Yinelenenleri bul"
@@ -9932,7 +9933,7 @@
       "tryAgain": "Tekrar deneyin"
     },
     "startTyping": "Arama yapmak için yazmaya başlayın.",
-    "typesSelected": "{count, plural, one {# tür} other {# türler}}",
+    "typesSelected": "{count, plural, one {# tür} other {# tür}}",
     "customFieldFilters": "Özel Alan Filtreleri",
     "customFiltersApplied": "özel filtreler",
     "customFields": "Özel Alanlar",
@@ -9984,7 +9985,7 @@
     "filters": {
       "title": "Gelişmiş Filtreler",
       "active": "filtreler aktif",
-      "activeCount": "{count, plural, =0 {Filtre yok} one {# filtre} other {# filtreler}} aktif",
+      "activeCount": "{count, plural, =0 {Filtre yok} one {# filtre} other {# filtre}} aktif",
       "apply": "Filtreleri Uygula",
       "common": "Ortak Filtreler",
       "entitySpecific": "Türe Özgü Filtreler",
@@ -10098,7 +10099,7 @@
     }
   },
   "Trial": {
-    "daysRemaining": "Duruşma {count, plural, =1 {1 gün sonra} other {# gün sonra sona eriyor}}",
+    "daysRemaining": "Deneme süresi {count, plural, =1 {1 gün sonra} other {# gün sonra}} sona eriyor",
     "expiresT oday": "Deneme süresi bugün sona eriyor.",
     "expired": "{count, plural, =1 {Deneme süresi 1 gün önce sona erdi} other {Deneme süresi # gün önce sona erdi}}",
     "contactSales": "Yükselt"
@@ -10129,20 +10130,20 @@
       "description": "Etiketlere tıklayarak kabul edip etmeme durumunu değiştirebilirsiniz. Etiket adını düzenlemek için çift tıklayın.",
       "selectEntity": "Etiket önerilerini görüntülemek için bir varlık seçin.",
       "noTagsSelected": "Hiçbir etiket seçilmedi.",
-      "footerSummary": "{assignCount, plural, one {# etiket} other {# etiketler}} atanacak, {newCount, plural, one {# yeni etiket} other {# yeni etiketler}} oluşturulacak",
-      "footerAssignCount": "{assignCount, plural, one {# etiket} other {# etiketler}} atanacak",
-      "footerNewCount": "{newCount, plural, one {# yeni etiket} other {# yeni etiketler}} oluşturulacak",
+      "footerSummary": "{assignCount, plural, one {# etiket} other {# etiket}} atanacak, {newCount, plural, one {# yeni etiket} other {# yeni etiket}} oluşturulacak",
+      "footerAssignCount": "{assignCount, plural, one {# etiket} other {# etiket}} atanacak",
+      "footerNewCount": "{newCount, plural, one {# yeni etiket} other {# yeni etiket}} oluşturulacak",
       "newTagsPopoverTitle": "Oluşturulacak yeni etiketler",
       "applying": "Başvuruluyor...",
-      "applySuccess": "{tagCount, plural, one {# etiket} other {# etiketler}} şu varlığa uygulandı: {entityCount, plural, one {# varlık} other {# varlıklar}}",
-      "applySuccessNewTags": "{tagCount, plural, one {# etiket} other {# etiketler}} şu varlığa uygulandı: {entityCount, plural, one {# varlık} other {# varlıklar}}, {newCount, plural, one {# yeni etiket} other {# yeni etiketler}} oluşturuldu",
+      "applySuccess": "{tagCount, plural, one {# etiket} other {# etiket}} şu varlığa uygulandı: {entityCount, plural, one {# varlık} other {# varlık}}",
+      "applySuccessNewTags": "{tagCount, plural, one {# etiket} other {# etiket}} şu varlığa uygulandı: {entityCount, plural, one {# varlık} other {# varlık}}, {newCount, plural, one {# yeni etiket} other {# yeni etiket}} oluşturuldu",
       "applyError": "Etiketler uygulanamadı. Lütfen tekrar deneyin.",
       "suggestedTags": "Önerilen Etiketler",
       "noSuggestions": "Yapay zeka hiçbir etiket oluşturamadı.",
       "alreadyApplied": "Zaten Başvuruldu",
       "filterEntities": "Filtreleme seçenekleri...",
       "noEntitiesMatch": "Arama kriterlerinize uyan hiçbir kayıt bulunamadı.",
-      "tagCount": "{count, plural, one {# etiket} other {# etiketler}}",
+      "tagCount": "{count, plural, one {# etiket} other {# etiket}}",
       "noTags": "hiçbiri",
       "failed": "Arızalı",
       "analysisFailed": "Bu varlık analiz edilemedi.",
@@ -10241,10 +10242,10 @@
     "deleteDescription": "Bu parametreye {stepCount} adımda ve {rowCount} veri kümesi satırında referans verilmiştir. Silme işlemi bu referansları düz metin olarak bırakacak ve bu durumu {nextVersion} sürümüne yükseltecektir.",
     "deleteConfirm": "Parametreyi sil",
     "renameTitle": "\"@{oldName}\" adını \"@{newName} \" olarak yeniden adlandırmak mı istiyorsunuz?",
-    "renameDescriptionLead": "Bu, {totalCount, plural, =1 {# referans} other {# referanslar}} : şeklinde yeniden yazılacaktır.",
-    "renameDescriptionStepCount": "{stepCount, plural, =1 {# adım metni referansı} other {# adım metni referansları}}",
-    "renameDescriptionExpectedCount": "{expectedCount, plural, =1 {# beklenen sonuç referansı} other {# beklenen sonuç referansları}}",
-    "renameDescriptionRowCount": "{rowCount, plural, =1 {# veri kümesi satırı} other {# veri kümesi satırları}}",
+    "renameDescriptionLead": "Bu işlem {totalCount, plural, =1 {# referansı} other {# referansı}} yeniden yazacak:",
+    "renameDescriptionStepCount": "{stepCount, plural, =1 {# adım metni referansı} other {# adım metni referansı}}",
+    "renameDescriptionExpectedCount": "{expectedCount, plural, =1 {# beklenen sonuç referansı} other {# beklenen sonuç referansı}}",
+    "renameDescriptionRowCount": "{rowCount, plural, =1 {# veri kümesi satırı} other {# veri kümesi satırı}}",
     "renameDescriptionVersion": "Bu, bu test senaryosunun {nextVersion} sürümünü oluşturacaktır.",
     "renameConfirm": "Yeniden isimlendirmek",
     "renameNoRefsToast": "Parametre yeniden adlandırıldı (mevcut referans yok)",
@@ -10265,8 +10266,8 @@
     "datasetColumnDeleteTitle": "\"{name} \" sütununu silmek mi?",
     "datasetColumnDeleteChecking": "Bu sütuna atıfta bulunan durumları kontrol etme…",
     "datasetColumnDeleteDescription": "Sütun ve her satırdaki değerleri silinecektir. Bu değerlerin daha önce anlık görüntüsünü almış olan mevcut test çalışmaları etkilenmeyecektir.",
-    "datasetColumnDeleteBlocked": "{count, plural, =1 {# durum, bir parametreyi bu sütuna eşler} other {# durumlar, bir parametreyi bu sütuna eşler}}. Önce bu eşlemeleri güncelleyin, ardından sütunu silin.",
-    "datasetColumnDeleteAndMore": "ve {count, plural, =1 {# daha fazla durum} other {# daha fazla durum}}",
+    "datasetColumnDeleteBlocked": "{count, plural, =1 {# durum, bir parametreyi bu sütuna eşler} other {# durum, bir parametreyi bu sütuna eşler}}. Önce bu eşlemeleri güncelleyin, ardından sütunu silin.",
+    "datasetColumnDeleteAndMore": "ve {count, plural, =1 {# durum daha} other {# durum daha}}",
     "datasetColumnDeleteCheckError": "Bu sütuna atıfta bulunan vakalar kontrol edilemedi. Tekrar deneyin.",
     "datasetRowDefaultLabel": "Satır {number}",
     "datasetPasteCsv": "CSV dosyasını yapıştırın",
@@ -10274,8 +10275,8 @@
     "datasetEmptyHeading": "Henüz veri kümesi satırı yok.",
     "datasetEmptyBody": "Başlamak için bir satır ekleyin, CSV dosyasını yapıştırın veya bir dosya içe aktarın.",
     "datasetSensitiveDeniedTooltip": "Hassas bilgileri ifşa etme izniniz yok.",
-    "datasetSaveBlocked": "Devam etmeden önce {count, plural, =1 {# hatasını} other {# hatalarını}} düzeltin.",
-    "datasetBulkDeleteTitle": "{count, plural, =1 {# satır} other {# satırlar}} ? silinecek mi?",
+    "datasetSaveBlocked": "Devam etmeden önce {count, plural, =1 {# hatayı} other {# hatayı}} düzeltin.",
+    "datasetBulkDeleteTitle": "{count, plural, =1 {# satır} other {# satır}} silinsin mi?",
     "datasetBulkDeleteDescription": "Bu işlem geri alınamaz.",
     "datasetCounts": "{paramCount} parametre · {rowCount} satır",
     "datasetSelectedCount": "{count} seçildi",
@@ -10304,7 +10305,7 @@
     "importStep2HeaderParameter": "Parametre",
     "importStep2RequiredUnmapped": "Gerekli parametre \"@{name}\" için eşlenmiş CSV sütunu bulunmamaktadır.",
     "importStep2Label": "Harita sütunları",
-    "importStep3SummaryOk": "{totalRows, plural, =1 {# satır} other {# satırlar}} ayrıştırıldı, hata yok.",
+    "importStep3SummaryOk": "{totalRows, plural, =1 {# satır} other {# satır}} ayrıştırıldı, hata yok.",
     "importStep3SummaryErrors": "{totalRows, plural, =1 {# satır} other {# satır}} ayrıştırıldı; {errorCount, plural, =1 {# satırda hata var} other {# satırda hata var}}.",
     "importStep3PreviewLimit": "İlk {limit} satır gösteriliyor. Tüm satırlar bir sonraki adımda doğrulanacaktır.",
     "importStep3Label": "Önizleme",
@@ -10319,7 +10320,7 @@
     "confirmSummaryMode": "Mod: {mode}",
     "cancelUploadTitle": "Yüklemeyi iptal et?",
     "cancelUploadDescription": "Yüklediğiniz CSV verileri kaybolacak.",
-    "importSuccess": "İçe aktarılan {count, plural, =1 {# satır} other {# satırlar}}",
+    "importSuccess": "İçe aktarılan {count, plural, =1 {# satır} other {# satır}}",
     "addSuccess": "\"{name}\" parametresi eklendi",
     "addError": "Parametre eklenemedi.",
     "updateSuccess": "Parametre kaydedildi.",
@@ -10340,7 +10341,7 @@
     "editorUndeclaredWarning": "Bildirilmemiş referanslar: {names}. Yineleme ikamesini etkinleştirmek için bunları Yapılandırma parametreleri aracılığıyla ekleyin.",
     "runProgressTitle": "\"{runName} \" için yinelemeler oluşturuluyor",
     "runProgressDescriptionAsync": "Arka planda {count, plural, =1 {# yineleme} other {# yineleme}} oluşturuluyor. Çalışmaya devam edebilirsiniz; bu işlem bittiğinde sizi bilgilendireceğiz.",
-    "runProgressDescriptionSync": "Oluşturuldu {count, plural, =1 {# yineleme} other {# yinelemeler}}.",
+    "runProgressDescriptionSync": "{count, plural, =1 {# yineleme} other {# yineleme}} oluşturuldu.",
     "runProgressFailed": "Yineleme oluşturma işlemi başlatılamadı.",
     "runHardRefuseTitle": "Oluşturmak için çok fazla yineleme var.",
     "runHardRefuseDescription": "Bu çalıştırma, {count} yineleme oluşturacak ve {cap}sınırını aşacaktır. Veri kümesi satır sayısını azaltın, bazı durumları seçimden çıkarın veya birden fazla çalıştırmaya bölün.",
@@ -10348,9 +10349,9 @@
     "runPreflightAsync": "{n, plural, =1 {# yineleme} other {# yineleme}} oluşturulacak (arka plan görevi)",
     "runPreflightSoftConfirm": "{n, plural, =1 {# yineleme} other {# yineleme}} oluşturulacak — onay gerekli",
     "runPreflightHardRefuse": "Oluşturulamaz — {n} {cap} sınırını aşıyor",
-    "runPreflightTooltip": "{iterations, plural, =1 {# yineleme} other {# yinelemeler}} = {cases, plural, =1 {# durum} other {# durumlar}} × {configs, plural, =1 {# yapılandırma} other {# yapılandırmalar}} × veri kümesi satırları",
-    "runPreflightTooltipHeader": "{iterations, plural, =1 {# yineleme} other {# yinelemeler}} boyunca {cases, plural, =1 {# parametreli durum} other {# parametreli durumlar}} × {configs, plural, =1 {# yapılandırma} other {# yapılandırmalar}}",
-    "runPreflightTooltipCaseRow": "{title} — {rows, plural, =1 {# satır} other {# satırlar}}",
+    "runPreflightTooltip": "{iterations, plural, =1 {# yineleme} other {# yineleme}} = {cases, plural, =1 {# durum} other {# durum}} × {configs, plural, =1 {# yapılandırma} other {# yapılandırma}} × veri kümesi satırları",
+    "runPreflightTooltipHeader": "{iterations, plural, =1 {# yineleme} other {# yineleme}} ({cases, plural, =1 {# parametreli durum} other {# parametreli durum}} × {configs, plural, =1 {# yapılandırma} other {# yapılandırma}} genelinde)",
+    "runPreflightTooltipCaseRow": "{title} — {rows, plural, =1 {# satır} other {# satır}}",
     "chipClickToReveal": "Göstermek için tıklayın",
     "chipCopyValue": "Değeri kopyala",
     "chipCopyAriaLabel": "{label} değerini panoya kopyala",
@@ -10363,15 +10364,15 @@
     "iterationAllComplete": "Tüm yinelemeler tamamlandı",
     "hardRefuseTitle": "Oluşturulamıyor — çok fazla yineleme",
     "hardRefuseDescription": "Sistemin hızlı yanıt vermesini sağlamak için test çalıştırması oluşturma işlemi {cap} yineleme ile sınırlandırılmıştır. Aşağıdaki katkıda bulunanlardan birini azaltın.",
-    "hardRefuseColumnCase": "Dava",
+    "hardRefuseColumnCase": "Senaryo",
     "hardRefuseColumnRows": "Veri kümesi satırları",
     "hardRefuseColumnConfigs": "Yapılandırmalar",
     "hardRefuseSuggestionsHeading": "Önerilen eylemler",
     "hardRefuseSuggestion1": "En fazla katkı sağlayan vakaya göre veri kümesindeki satır sayısını azaltın.",
     "hardRefuseSuggestion2": "Bir veya daha fazla yapılandırmanın seçimini kaldırın.",
     "hardRefuseSuggestion3": "İşi birden fazla test çalışmasına bölün.",
-    "softConfirmTitle": "{n, plural, =1 {# yineleme} other {# yineleme}}?",
-    "softConfirmDescription": "{n, plural, =1 {# yineleme} other {# yinelemeler}} -den {cases, plural, =1 {# durum} other {# durumlar}} × {configs, plural, =1 {# yapılandırma} other {# yapılandırmalar}}.",
+    "softConfirmTitle": "{n, plural, =1 {# yineleme} other {# yineleme}} oluşturulsun mu?",
+    "softConfirmDescription": "{n, plural, =1 {# yineleme} other {# yineleme}}, {cases, plural, =1 {# durum} other {# durum}} × {configs, plural, =1 {# yapılandırma} other {# yapılandırma}} üzerinden.",
     "softConfirmGo": "Yinelemeler oluşturun",
     "runProgressCounter": "{done} / {total}",
     "runProgressDismissAria": "İlerlemeyi reddet",
@@ -10392,7 +10393,7 @@
     "iterationSkip": "Durumu… ile işaretle",
     "iterationReset": "Yineleme sonucunu sıfırla",
     "iterationSelectedCount": "{count} seçildi",
-    "iterationBulkSkip": "Mark {count, plural, =1 {# yineleme} other {# yinelemeler}} durumu… ile",
+    "iterationBulkSkip": "{count, plural, =1 {# yinelemeyi} other {# yinelemeyi}} şu durumla işaretle…",
     "iterationIssueTitleSnapshot": "{total} sorununun {n} yinelemesi: {caseName}",
     "iterationIssueTitleCiExtended": "İterasyon {n} (CI-genişletilmiş) sorunu: {caseName}",
     "iterationIssueProseSnapshot": "{label} üzerinde {total} 'in {n} yinelemesi.",
@@ -10423,14 +10424,14 @@
     "overrideUnsavedDescription": "Yaptığınız değişiklikler kaydedilmedi. Diyalog kutusunu kapatmak bu değişiklikleri silecektir.",
     "overrideUnsavedKeep": "Düzenlemeye devam edin",
     "overrideUnsavedDiscard": "Değişiklikleri iptal et",
-    "iterationBulkConfirmTitle": "Mark {count, plural, =1 {# yineleme} other {# yinelemeler}} olarak {action}?",
+    "iterationBulkConfirmTitle": "{count, plural, =1 {# yineleme} other {# yineleme}} {action} olarak işaretlensin mi?",
     "iterationBulkConfirmDescription": "Seçilen her yineleme, \"{statusName} \" durumuna sahip yeni bir sonuç alacaktır.",
     "iterationBulkConfirm": "{action} olarak işaretle",
     "iterationBulkConfirmReplace": "{action} ile değiştirin",
     "iterationBulkOverwriteWarning": "{count, plural, =1 {Seçilen yinelemelerden # tanesinde} other {Seçilen yinelemelerden # tanesinde}} zaten bir sonuç var. Yeni bir sonuç kaydedilecek ve en güncel sonuç mevcut olanın yerine geçecek.",
     "iterationBulkReasonLabel": "Sebep (isteğe bağlı)",
     "iterationBulkReasonHelp": "Her sonuç kaydedildi.",
-    "iterationBulkSuccess": "{count, plural, =1 {# yineleme} other {# yineleme}} işaretli {action}",
+    "iterationBulkSuccess": "{count, plural, =1 {# yineleme} other {# yineleme}} {action} olarak işaretlendi",
     "iterationBulkError": "Yinelemeler işaretlenemedi.",
     "iterationBulkNa": "İşaret Yok",
     "iterationListLoadError": "Yinelemeler yüklenemedi.",
@@ -10448,8 +10449,8 @@
     "datasetSharedVersionFollowLatest": "v{version} (en son gelişmeleri takip et)",
     "datasetSharedEditAssignment": "Görevi düzenle",
     "datasetSharedReadOnly": "Paylaşılan görünümde düzenleme devre dışı bırakılmıştır. Değişiklik yapmak için kaynak veri setini kullanın.",
-    "datasetOwnerWinsLocal": "Bu örnekte hem yerel bir veri kümesi hem de paylaşılan bir veri kümesi referansı bulunmaktadır. Yineleme yerel satırları kullanır. Paylaşılan atama referans için saklanır ve yerel veri kümesi kaldırılırsa etkin hale gelir.",
-    "datasetOwnerWinsShared": "Bu görünüm, referans için paylaşılan veri kümesi satırlarını gösterir. Bu örnekteki yineleme, yerel veri kümesini kullanır (Yerel altında görünür). Bu paylaşılan atamayı yineleme kaynağı yapmak için yerel veri kümesini kaldırın.",
+    "datasetOwnerWinsLocal": "Bu senaryoda hem yerel bir veri kümesi hem de paylaşılan bir veri kümesi referansı bulunmaktadır. Yineleme yerel satırları kullanır. Paylaşılan atama referans için saklanır ve yerel veri kümesi kaldırılırsa etkin hale gelir.",
+    "datasetOwnerWinsShared": "Bu görünüm, referans için paylaşılan veri kümesi satırlarını gösterir. Bu senaryodaki yineleme, yerel veri kümesini kullanır (Yerel altında görünür). Bu paylaşılan atamayı yineleme kaynağı yapmak için yerel veri kümesini kaldırın.",
     "datasetViewSharedRef": "Paylaşılan referansı görüntüle",
     "datasetSwitchToLocal": "Yerel'e geç",
     "datasetSwitchToLocalTitle": "Yerel sürüme geçilsin mi?",
@@ -10457,7 +10458,7 @@
     "datasetSwitchToLocalConfirm": "Paylaşılan görevi kaldır",
     "assignSharedTitle": "Paylaşılan veri kümesini atayın",
     "assignSharedDescription": "Ortak bir veri kümesi seçin, sürümlerin nasıl izleneceğini belirleyin ve sütunları bu durumun parametreleriyle eşleştirin.",
-    "assignSharedHasOwnerInfo": "Bu örnekte yerel bir veri kümesi bulunmaktadır. Kaydetme işlemi, paylaşılan bir veri kümesi referansı oluşturacaktır, ancak yerel veri kümesini kaldırmadığınız sürece yineleme yerel satırları kullanmaya devam edecektir.",
+    "assignSharedHasOwnerInfo": "Bu senaryoda yerel bir veri kümesi bulunmaktadır. Kaydetme işlemi, paylaşılan bir veri kümesi referansı oluşturacaktır, ancak yerel veri kümesini kaldırmadığınız sürece yineleme yerel satırları kullanmaya devam edecektir.",
     "assignSharedSection1": "1. Veri kümesini seçin",
     "assignSharedSection2": "2. Pin versiyonu",
     "assignSharedSection3": "3. Sütunları parametrelere eşleştirin.",
@@ -10819,7 +10820,7 @@
       "CASE_RECOVERED": {
         "label": "Vaka iyileşti",
         "description": "Vaka, son sonuçlarının tamamını kaybettikten sonra geçer.",
-        "summary": "Vaka son {window, plural, one {# sonucundan} other {# sonucundan}} sonra geçer"
+        "summary": "Vaka son {window, plural, one {# sonucunda başarısız olduktan} other {# sonucunda başarısız olduktan}} sonra geçer"
       },
       "CONSECUTIVE_FAILURES": {
         "label": "Arka arkaya hata",
@@ -10827,8 +10828,8 @@
         "summary": "Vaka {threshold, plural, one {# kez} other {# kez}} arka arkaya başarısız olur"
       },
       "CASE_FLAKY": {
-        "label": "Vaka talih haline geldi",
-        "description": "Vaka, son sonuçlarında geçme ve başarısızlık arasında tekrarlanan olarak döner. Tavlı Testler raporu ile aynı girdileri kullanır.",
+        "label": "Vaka kararsız hale geldi",
+        "description": "Vaka, son sonuçlarında geçme ve başarısızlık arasında tekrarlanan olarak döner. Kararsız Testler raporu ile aynı girdileri kullanır.",
         "summary": "Vaka son {window} sonucu arasında geçme ve başarısızlık arasında en az {threshold, plural, one {# kez} other {# kez}} döner"
       },
       "RUN_PASS_RATE_BELOW": {
@@ -10849,7 +10850,7 @@
       "RUN_NOT_PROGRESSING": {
         "label": "Çalıştırma ilerlemesi yok",
         "description": "Açık çalıştırma belirli sayıda saat boyunca yeni sonuç almamıştır. Saatte kontrol edilir.",
-        "summary": "Açık çalıştırma {threshold, plural, one {# saatden} other {# saatden}} fazla yeni sonuç almamıştır"
+        "summary": "Açık çalıştırma {threshold, plural, one {# saatten} other {# saatten}} fazla yeni sonuç almamıştır"
       },
       "AUTOMATED_EXECUTION_FAILED": {
         "label": "Otomatik yürütme başarısız oldu",
@@ -10859,17 +10860,17 @@
       "RUN_UNTESTED_SHARE": {
         "label": "Çalıştırma test edilmemiş paylaşım",
         "description": "Çalıştırmanın çok fazla durumunda hâlâ son tarihine kadar kaç gün kaldığı konusunda hiçbir sonuç yok. Günde kontrol edilir.",
-        "summary": "More than {threshold}% of a run's cases have no result with {days, plural, one {# gün} other {# gün}} or fewer before its milestone is due"
+        "summary": "Bir çalıştırmanın vakalarının %{threshold} kadarından fazlasının, dönüm noktasının bitiş tarihine {days, plural, one {# gün} other {# gün}} veya daha az kala sonucu yok"
       },
       "RUN_ISSUES_OPENED": {
         "label": "Çalıştırmadan açılan sorunlar",
         "description": "Çalıştırmanın sonuçlarına belirli sayıdan fazla sorun bağlıdır.",
-        "summary": "Çalıştırmanın sonuçlarına {threshold, plural, one {# sorun bağlıdır} other {# sorun bağlıdır}}, {evaluateOn, select, AS_RESULTS_ARRIVE {sonuçlar geldikçe değerlendirilir} other {çalıştırma tamamlandığında değerlendirilir}}"
+        "summary": "Çalıştırmanın sonuçlarına {threshold, plural, one {# sorundan fazlası bağlıdır} other {# sorundan fazlası bağlıdır}}, {evaluateOn, select, AS_RESULTS_ARRIVE {sonuçlar geldikçe değerlendirilir} other {çalıştırma tamamlandığında değerlendirilir}}"
       },
       "NEW_FAILURE_SIGNATURES": {
         "label": "Çalıştırmada yeni başarısızlık desenleri",
         "description": "Bir çalıştırma, projenin daha önce görmediği başarısızlık desenleri getirir. Proje için Başarısızlık Desenleri etkin olması gerekir.",
-        "summary": "{threshold, plural, one {# başarısızlık deseni ilk kez göründü} other {# başarısızlık desenleri ilk kez göründü}} bir çalıştırmada, {evaluateOn, select, AS_RESULTS_ARRIVE {sonuçlar gelirken değerlendirilir} other {çalıştırma tamamlandığında değerlendirilir}}"
+        "summary": "{threshold, plural, one {# başarısızlık deseninden fazlası} other {# başarısızlık deseninden fazlası}} bir çalıştırmada ilk kez görünür, {evaluateOn, select, AS_RESULTS_ARRIVE {sonuçlar gelirken değerlendirilir} other {çalıştırma tamamlandığında değerlendirilir}}"
       },
       "SESSION_OVERRUN": {
         "label": "Oturum tahmini aşmış",
@@ -10879,7 +10880,7 @@
       "MILESTONE_BEHIND": {
         "label": "Dönüm noktası tamamlanması geride",
         "description": "Dönüm noktasının çalıştırma durumları son tarihine kadar kaç gün kaldığı açısından yeterince tamamlanmamıştır. Günde kontrol edilir.",
-        "summary": "A milestone is under {threshold}% complete with {days, plural, one {# gün} other {# gün}} or fewer remaining"
+        "summary": "Bir dönüm noktası %{threshold} oranının altında tamamlanmış ve {days, plural, one {# gün} other {# gün}} veya daha az kalmış"
       },
       "MILESTONE_OVERDUE": {
         "label": "Dönüm noktası geçti",
@@ -10894,7 +10895,7 @@
       "STALE_CASES": {
         "label": "Eski durumlar",
         "description": "Belirli sayıdan fazla vaka, belirli sayıda gün boyunca sonuç olmadan kaldı. Günde kontrol edilir.",
-        "summary": "More than {threshold, plural, one {# case has} other {# cases have}} had no result in {days, plural, one {# gün} other {# gün}}"
+        "summary": "{threshold, plural, one {# vakadan fazlası} other {# vakadan fazlası}} {days, plural, one {# gün} other {# gün}} boyunca sonuç almadı"
       },
       "AUTOMATION_SHARE_BELOW": {
         "label": "Otomatik paylaşım eşiğin altında",
@@ -10919,32 +10920,32 @@
       "LLM_RATE_LIMITED": {
         "label": "Yapay zeka sağlayıcı hız sınırlaması",
         "description": "Sağlayıcı, yapay zeka modeli entegrasyonunun isteklerini tekrarlanan şekilde azaltmıştır.",
-        "summary": "The provider rate-limited at least {threshold, plural, one {# request} other {# requests}} within {days, plural, one {# saat} other {# saat}}"
+        "summary": "En az {threshold, plural, one {# istek} other {# istek}}, {days, plural, one {# saat} other {# saat}} içinde sağlayıcı tarafından hız sınırına takıldı"
       },
       "CODE_REPOSITORY_CACHE_FAILING": {
         "label": "Depo önbelleği başarısız",
         "description": "Kod depo bağlantısı, önbelleğini başarılı şekilde bir süredir yenilemedi. Saatte kontrol edilir.",
-        "summary": "A repository connection's cache has been failing for at least {threshold, plural, one {# saat} other {# saat}}"
+        "summary": "Bir depo bağlantısının önbelleği en az {threshold, plural, one {# saattir} other {# saattir}} başarısız oluyor"
       },
       "INTEGRATION_REAUTH_NEEDED": {
         "label": "Entegrasyon yeniden yetkilendirmesi gerekli",
         "description": "Birçok kullanıcı entegrasyonla bağlantısını kaybetti ve yeniden yetkilendirmesi gerekiyor. Günde kontrol edilir.",
-        "summary": "En az {threshold, plural, one {# kullanıcı yeniden yetkilendirilmesi gerekir} other {# kullanıcı yeniden yetkilendirilmesi gerekir}} bir entegrasyon için"
+        "summary": "En az {threshold, plural, one {# kullanıcının} other {# kullanıcının}} bir entegrasyonu yeniden yetkilendirmesi gerekiyor"
       },
       "QUEUE_FAILED_JOBS": {
         "label": "Sıra başarısız işler",
         "description": "Arka plan sırası çok fazla başarısız iş tutar. Saatte kontrol edilir.",
-        "summary": "{threshold, plural, one {# işin} other {# işin}} bir kuyrukta başarısız oldu"
+        "summary": "{threshold, plural, one {# işten fazlası} other {# işten fazlası}} bir kuyrukta başarısız oldu"
       },
       "QUEUE_BACKLOG": {
         "label": "Sıra biriktirmesi",
         "description": "Arka plan sırasının en eski bekleme işi çok uzun beklemiştir; durdurulmuş işçi işareti. Saatte kontrol edilir.",
-        "summary": "A queue's oldest waiting job is older than {threshold, plural, one {# dakika} other {# dakika}}"
+        "summary": "Bir kuyruğun bekleyen en eski işi {threshold, plural, one {# dakikadan} other {# dakikadan}} daha eski"
       },
       "AUDIT_BACKLOG": {
         "label": "Denetim günlüğü biriktirmesi",
         "description": "Yakalanan değişiklikler denetim günlüğüne yazılmıyor; durdurulmuş denetim işçi işareti. Saatte kontrol edilir.",
-        "summary": "The oldest unprocessed audit change is older than {threshold, plural, one {# dakika} other {# dakika}}"
+        "summary": "İşlenmemiş en eski denetim değişikliği {threshold, plural, one {# dakikadan} other {# dakikadan}} daha eski"
       },
       "ACCOUNT_LOCKOUTS": {
         "label": "Hesap kilitlenmeleri",
@@ -10954,7 +10955,7 @@
       "NO_AUTOMATED_RESULTS": {
         "label": "Otomatik sonuç yok",
         "description": "Herhangi bir boru hattından bir süredir otomatik test sonucu gelmedi. Günde kontrol edilir.",
-        "summary": "No automated result has arrived for {threshold, plural, one {# saat} other {# saat}}"
+        "summary": "{threshold, plural, one {# saattir} other {# saattir}} otomatik sonuç gelmedi"
       }
     },
     "sourceSummary": "Sonuçlar: {source, select, MANUAL {manuel} AUTOMATED {otomatik} other {manuel ve otomatik}}",
@@ -11014,7 +11015,7 @@
     },
     "filters": {
       "searchPlaceholder": "Başarısızlık desenleri ara...",
-      "flakyOnly": "Değişken adayları",
+      "flakyOnly": "Kararsız adaylar",
       "sourceAll": "Herkese göre ayarlanan",
       "sourceAi": "AI tarafından ayarlanan",
       "sourceManual": "Elle ayarlanan",
@@ -11032,7 +11033,7 @@
       "frames": "Üst yığın çerçeveleri",
       "sampleTrace": "Son hata",
       "affectedCases": "{count, plural, one {# etkilenen test senaryosu} other {# etkilenen test senaryosu}}",
-      "recentOccurrences": "{count, plural, one {# son oluşum} other {# son oluşumlar}}",
+      "recentOccurrences": "{count, plural, one {# son oluşum} other {# son oluşum}}",
       "rationale": "Mantık",
       "suggestedIssueTitle": "Önerilen sorun başlığı",
       "nextStep": "Önerilen sonraki adım",
@@ -11045,10 +11046,10 @@
       "signatureLabel": "Başarısızlık deseni",
       "affectedCasesLabel": "Etkilenen test senaryoları"
     },
-    "flakyCandidate": "Değişken adayı",
+    "flakyCandidate": "Kararsız aday",
     "flakyCandidateHint": "Etkilenen test senaryoları son geçmişlerinde başarılı ve başarısız arasında dalgalanır.",
     "knownIssue": "Bilinen sorun",
-    "notGrouped": "{count, plural, one {# hata henüz gruplandırılmadı} other {# hatalar henüz gruplandırılmadı}}",
+    "notGrouped": "{count, plural, one {# hata henüz gruplandırılmadı} other {# hata henüz gruplandırılmadı}}",
     "runPanel": {
       "title": "Başarısızlık desenleri",
       "inRun": "{count, plural, one {# bu çalışmada} other {# bu çalışmada}}",
@@ -11078,7 +11079,7 @@
       "backfillLabel": "Mevcut sonuçları analiz et",
       "backfillDescription": "Bu projede zaten kaydedilmiş olan her otomatik hatayı gruplandırın. Arka planda çalışır.",
       "backfillStarted": "Analiz başlatıldı",
-      "backfillRunning": "Analiz ediliyor... {processed, plural, one {# hata gruplandırıldı} other {# hatalar gruplandırıldı}}",
+      "backfillRunning": "Analiz ediliyor... {processed, plural, one {# hata gruplandırıldı} other {# hata gruplandırıldı}}",
       "backfillDone": "Analiz tamamlandı",
       "backfillFailed": "Analiz başarısız oldu",
       "backfillQueueUnavailable": "Arka plan işi kuyruk kullanılamıyor",
@@ -11107,13 +11108,13 @@
       "reasonPlaceholder": "Bu test durumu neden karantinaya alındı? (isteğe bağlı)",
       "keepLabel": "Elle serbest bırakılıncaya kadar karantinaya al",
       "keepHint": "Ardışık geçişlerden sonra otomatik yayını atlar.",
-      "dialogTitle": "{count, plural, one {# test durumunu karantinaya al} other {# test durumlarını karantinaya al}}",
+      "dialogTitle": "{count, plural, one {# test durumunu karantinaya al} other {# test durumunu karantinaya al}}",
       "releaseConfirmTitle": "Karantinadan serbest bırakılsın mı?",
       "releaseConfirmDescription": "Test durumunun başarısızlıkları yeniden çalıştırma geçme/başarısızlığına karşı sayılır.",
-      "quarantinedToast": "{count, plural, one {# test durumu karantinaya alındı} other {# test durumları karantinaya alındı}}",
+      "quarantinedToast": "{count, plural, one {# test durumu karantinaya alındı} other {# test durumu karantinaya alındı}}",
       "releasedToast": "Test durumu karantinadan serbest bırakıldı",
       "failedToast": "Karantina güncellenemedi",
-      "listButton": "{count, plural, =0 {Karantinaya alınan test durumları} one {# karantinaya alınan test durumu} other {# karantinaya alınan test durumları}}",
+      "listButton": "{count, plural, =0 {Karantinaya alınan test durumları} one {# karantinaya alınan test durumu} other {# karantinaya alınan test durumu}}",
       "columns": {
         "signature": "Başarısızlık deseni",
         "by": "Karantinaya alınan",
@@ -11140,7 +11141,7 @@
       },
       "lastExecuted": "Son yürütülme",
       "neverExecuted": "Hiçbir zaman yürütülmedi",
-      "verdicts": "{sampled, plural, one {# son otomasyon sonucunun} other {# son otomasyon sonucunun}} {failed} başarısız oldu",
+      "verdicts": "{sampled, plural, one {# son otomasyon sonucunun} other {# son otomasyon sonucunun}} {failed} tanesi başarısız oldu",
       "flips": "{flips, plural, one {# geçme/başarısızlık değişimi} other {# geçme/başarısızlık değişimi}}",
       "requirements": "{count, plural, one {# bağlantılı gereksinim} other {# bağlantılı gereksinim}} · en yüksek öncelik {priority}",
       "suspect": "{count, plural, one {# gereksinim değiştirildi} other {# gereksinim değiştirildi}} son çalıştırmadan bu yana",

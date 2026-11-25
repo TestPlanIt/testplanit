@@ -894,6 +894,104 @@ describe("JiraAdapter", () => {
       expect(body.fields.assignee).toEqual({ accountId: "user-123" });
     });
 
+    describe("reporter rejected by Jira", () => {
+      const rejection = (errors: Record<string, string>) => ({
+        ok: false,
+        status: 400,
+        text: () =>
+          Promise.resolve(JSON.stringify({ errorMessages: [], errors })),
+      });
+      const reporterError =
+        "Field 'reporter' cannot be set. It is not on the appropriate screen, or unknown.";
+      const createCalls = () =>
+        mockFetch.mock.calls.filter((call: any) => call[1]?.method === "POST");
+      const createInput = {
+        title: "Test Issue",
+        projectId: "TEST",
+        assigneeId: "user-123",
+        labels: ["bug"],
+        customFields: {
+          reporter: { accountId: "reporter-123" },
+          customfield_10050: "kept",
+        },
+      };
+
+      const queueRejectedThenCreated = (recordedReporterId: string) => {
+        mockFetch.mockResolvedValueOnce(rejection({ reporter: reporterError }));
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ id: "10001", key: "TEST-123" }),
+        });
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              ...mockJiraIssue,
+              fields: {
+                ...mockJiraIssue.fields,
+                reporter: {
+                  accountId: recordedReporterId,
+                  displayName: "Recorded Reporter",
+                },
+              },
+            }),
+        });
+      };
+
+      it("creates the issue without the reporter and flags it", async () => {
+        queueRejectedThenCreated("token-owner");
+
+        const result = await adapter.createIssue(createInput);
+
+        expect(result.key).toBe("TEST-123");
+        expect(result.reporterRejected).toBe(true);
+        const [first, second] = createCalls().map(
+          (call: any) => JSON.parse(call[1].body).fields
+        );
+        expect(first.reporter).toEqual({ accountId: "reporter-123" });
+        expect(second).toEqual({ ...first, reporter: undefined });
+        expect(second).not.toHaveProperty("reporter");
+      });
+
+      it("does not flag the issue when Jira recorded the refused reporter anyway", async () => {
+        queueRejectedThenCreated("reporter-123");
+
+        const result = await adapter.createIssue(createInput);
+
+        expect(createCalls()).toHaveLength(2);
+        expect(result.reporterRejected).toBeUndefined();
+      });
+
+      it("retries when the reporter error sits past the truncated message excerpt", async () => {
+        const longReason = "x".repeat(400);
+        mockFetch.mockResolvedValueOnce(
+          rejection({ customfield_10050: longReason, reporter: reporterError })
+        );
+        mockFetch.mockResolvedValueOnce(
+          rejection({ customfield_10050: longReason })
+        );
+
+        const failure = await adapter
+          .createIssue(createInput)
+          .catch((error: Error) => error);
+
+        expect(createCalls()).toHaveLength(2);
+        expect((failure as Error).message).toMatch(/^HTTP 400: /);
+        expect((failure as Error).message).not.toContain("reporter");
+      });
+
+      it("does not retry when Jira rejects a different field", async () => {
+        mockFetch.mockResolvedValueOnce(
+          rejection({ customfield_10050: "Option id 'kept' is not valid" })
+        );
+
+        await expect(adapter.createIssue(createInput)).rejects.toThrow(
+          "HTTP 400"
+        );
+        expect(createCalls()).toHaveLength(1);
+      });
+    });
+
     describe("priority mapping (dialog tokens vs numeric IDs)", () => {
       async function captureCreateBody(priority: string | undefined) {
         mockFetch.mockResolvedValueOnce({
