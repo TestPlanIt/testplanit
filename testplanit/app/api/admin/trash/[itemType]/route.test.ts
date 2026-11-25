@@ -203,6 +203,20 @@ describe("Admin Trash Route", () => {
       );
     });
 
+    it("leaves the Deleted User row out of the User list", async () => {
+      setupAdminSession();
+      mockModel.count.mockResolvedValue(0);
+      mockModel.findMany.mockResolvedValue([]);
+
+      await GET(createMockRequest(), createMockContext("User"));
+
+      const where = { isDeleted: true, id: { not: "system-deleted-user" } };
+      expect(mockModel.count).toHaveBeenCalledWith({ where });
+      expect(mockModel.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where })
+      );
+    });
+
     it("applies pagination with skip and take from searchParams", async () => {
       setupAdminSession();
       mockModel.count.mockResolvedValue(10);

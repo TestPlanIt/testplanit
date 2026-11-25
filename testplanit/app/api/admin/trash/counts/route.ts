@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth, itemTypeToModelMap } from "../shared";
+import {
+  checkAdminAuth,
+  itemTypeToModelMap,
+  softDeletedWhere,
+} from "../shared";
 
 // Returns the number of soft-deleted rows for every trash item type in a
 // single batched request, so the Trash UI can show at-a-glance counts without
@@ -13,7 +17,9 @@ export async function GET(request: NextRequest) {
     const results = await Promise.all(
       entries.map(async ([itemType, model]) => {
         try {
-          const count = await model.count({ where: { isDeleted: true } });
+          const count = await model.count({
+            where: softDeletedWhere(itemType),
+          });
           return [itemType, count] as const;
         } catch (error) {
           console.error(

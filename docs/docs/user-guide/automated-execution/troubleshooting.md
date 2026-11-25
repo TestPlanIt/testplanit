@@ -25,6 +25,7 @@ Start from what the run page shows. The execution chip's tooltip and the **Execu
 The error text on the chip says which:
 
 - **422 from GitHub.** An undeclared input or a missing `workflow_dispatch` trigger. Run **Verify** on the target; it lists what the workflow declares.
+- **The provider did not respond in time.** The CI server took longer than `EXECUTION_PROVIDER_TIMEOUT_MS` (default 30 seconds) to answer. A slow self-hosted server may still have started the job; check its pipelines before retrying, and have the operator raise the variable.
 - **403 or 401.** The token cannot start jobs. GitHub needs `workflow` (classic) or *Actions: Read and write* (fine-grained); GitLab needs `api` or a trigger token. A 401 can also mean the token was revoked.
 - **404.** The workflow file does not exist on the branch being dispatched, or the repository path is wrong. Commit the workflow to that branch, or change the target's branch.
 - **Request blocked: "host" is a private or internal address.** See [Private addresses](generic-webhook.md#private-addresses).

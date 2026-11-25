@@ -6438,7 +6438,10 @@
         "noItems": "Es wurden keine gelöschten {itemType} gefunden.",
         "noResults": "Es wurden keine gelöschten {itemType} gefunden, die Ihrer Suche nach \"{query}\" entsprechen.",
         "restoreConfirmationMessage": "Sind Sie sicher, dass Sie diese Zeile aus der Tabelle {itemType} wiederherstellen möchten? Zugehörige Daten werden möglicherweise ebenfalls wiederhergestellt.",
-        "purgeConfirmationMessage": "Sind Sie sicher, dass Sie diese Zeile aus der Tabelle {itemType} endgültig löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden und könnte zugehörige Daten löschen."
+        "purgeConfirmationMessage": "Sind Sie sicher, dass Sie diese Zeile aus der Tabelle {itemType} endgültig löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden und könnte zugehörige Daten löschen.",
+        "purgeUserConfirmationMessage": "Sind Sie sicher, dass Sie diesen Benutzer permanent löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden. Alles, was der Benutzer erstellt hat, wird beibehalten und als von einem gelöschten Benutzer erstellt angezeigt. Seine Zugehörigkeiten, API-Token, Einstellungen und Freigabelinks werden entfernt.",
+        "restoreFailed": "Diese Zeile konnte nicht aus der Tabelle {itemType} wiederhergestellt werden: {message}",
+        "purgeFailed": "Diese Zeile konnte nicht aus der Tabelle {itemType} gelöscht werden: {message}"
       },
       "filterTypesPlaceholder": "Elementtypen filtern...",
       "summary": "{count, plural, =0 {Papierkorb ist leer} one {# Element im Papierkorb} other {# Elemente im Papierkorb}}",

@@ -39,6 +39,7 @@ vi.mock("~/lib/auth-security", () => ({
   getAppBaseUrl: () => "https://tpi.example.com",
 }));
 
+import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { webhookEvents } from "~/lib/webhooks/events";
 import {
@@ -89,6 +90,33 @@ function execution(overrides: Record<string, unknown> = {}) {
   };
 }
 
+type ExecutionQueryArgs = {
+  include?: {
+    target?: {
+      include?: { codeRepository?: { select?: { credentials?: boolean } } };
+    };
+  };
+};
+
+// Like the ORM: CodeRepository.credentials is @omit, so it comes back only
+// when the query selects it.
+function omitRepositoryCredentials(
+  row: Record<string, unknown>,
+  args: ExecutionQueryArgs | undefined
+) {
+  const target = row.target as Record<string, unknown> | undefined;
+  const repository = target?.codeRepository as
+    Record<string, unknown> | null | undefined;
+  if (
+    !repository ||
+    args?.include?.target?.include?.codeRepository?.select?.credentials
+  ) {
+    return row;
+  }
+  const { credentials: _omitted, ...rest } = repository;
+  return { ...row, target: { ...target, codeRepository: rest } };
+}
+
 function fakeDb(
   rows: Record<string, unknown>[],
   run: { isCompleted: boolean; isDeleted: boolean } | null = {
@@ -105,10 +133,14 @@ function fakeDb(
     },
     testRunExecution: {
       findUnique: vi.fn(
-        async ({ where }: { where: { id: number } }) =>
-          rows.find((r) => r.id === where.id) ?? null
+        async (args: ExecutionQueryArgs & { where: { id: number } }) => {
+          const row = rows.find((r) => r.id === args.where.id);
+          return row ? omitRepositoryCredentials(row, args) : null;
+        }
       ),
-      findMany: vi.fn(async () => rows),
+      findMany: vi.fn(async (args?: ExecutionQueryArgs) =>
+        rows.map((row) => omitRepositoryCredentials(row, args))
+      ),
       update: vi.fn(
         async (args: { where: unknown; data: Record<string, unknown> }) => {
           updates.push(args);
@@ -196,6 +228,20 @@ describe("dispatchExecution", () => {
       "test_run.execution_completed",
       expect.objectContaining({ id: 7, status: "DISPATCH_FAILED" }),
       expect.anything()
+    );
+  });
+
+  it("dispatches with the repository's stored credential when the target has none", async () => {
+    adapterMock.dispatch.mockResolvedValueOnce({
+      ref: "main",
+      externalRunId: "555",
+      externalUrl: null,
+    });
+    const db = fakeDb([execution()]);
+    await dispatchExecution(db as never, 7);
+    expect(resolveStoredCredentials).toHaveBeenCalledWith(
+      { encrypted: "x" },
+      "GITHUB"
     );
   });
 
@@ -292,6 +338,28 @@ describe("pollActiveExecutions", () => {
       status: "SUCCEEDED",
       externalStatus: "completed/success",
     });
+  });
+
+  it("polls with the repository's stored credential when the target has none", async () => {
+    adapterMock.getStatus.mockResolvedValueOnce({
+      state: "in_progress",
+      conclusion: null,
+      url: null,
+      raw: "in_progress",
+    });
+    const db = fakeDb([
+      execution({
+        status: "RUNNING",
+        dispatchedAt: new Date("2026-09-10T09:50:00Z"),
+        lastPolledAt: new Date("2026-09-10T09:58:00Z"),
+        externalRunId: "1",
+      }),
+    ]);
+    await pollActiveExecutions(db as never, { now });
+    expect(resolveStoredCredentials).toHaveBeenCalledWith(
+      { encrypted: "x" },
+      "GITHUB"
+    );
   });
 
   it("moves DISPATCHED → RUNNING and bumps the poll counter", async () => {

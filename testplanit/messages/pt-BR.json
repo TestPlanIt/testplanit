@@ -6438,7 +6438,10 @@
         "noItems": "Nenhum {itemType} excluído encontrado.",
         "noResults": "Nenhum {itemType} excluído encontrado que corresponda à sua pesquisa por \"{query}\".",
         "restoreConfirmationMessage": "Tem certeza de que deseja restaurar esta linha da tabela {itemType} ? Os dados associados também podem ser restaurados.",
-        "purgeConfirmationMessage": "Tem certeza de que deseja excluir permanentemente esta linha da tabela {itemType} ? Esta ação não pode ser desfeita e pode remover dados associados."
+        "purgeConfirmationMessage": "Tem certeza de que deseja excluir permanentemente esta linha da tabela {itemType} ? Esta ação não pode ser desfeita e pode remover dados associados.",
+        "purgeUserConfirmationMessage": "Tem certeza de que deseja excluir permanentemente este usuário? Esta ação não pode ser desfeita. Tudo o que foi criado por ele é mantido e mostrado como criado por um usuário excluído. Suas associações, tokens de API, preferências e links compartilhados serão removidos.",
+        "restoreFailed": "Não foi possível restaurar esta linha da tabela {itemType}: {message}",
+        "purgeFailed": "Não foi possível excluir esta linha da tabela {itemType}: {message}"
       },
       "filterTypesPlaceholder": "Filtrar tipos de item...",
       "summary": "{count, plural, =0 {A lixeira está vazia} one {# item na lixeira} other {# itens na lixeira}}",

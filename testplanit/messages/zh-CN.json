@@ -6438,7 +6438,10 @@
         "noItems": "未找到已删除的 {itemType} 。",
         "noResults": "没有找到与您的搜索“{query}”匹配的已删除的 {itemType} 。",
         "restoreConfirmationMessage": "您确定要从 {itemType} 表中恢复此行吗？关联数据也可能会恢复。",
-        "purgeConfirmationMessage": "您确定要从 {itemType} 表中永久删除此行吗？此操作无法撤销，并且可能会删除关联数据。"
+        "purgeConfirmationMessage": "您确定要从 {itemType} 表中永久删除此行吗？此操作无法撤销，并且可能会删除关联数据。",
+        "purgeUserConfirmationMessage": "您确定要永久删除此用户吗？此操作无法撤销。他们创建的所有内容将保留并显示为由已删除用户创建。他们的成员资格、API令牌、偏好和共享链接将被删除。",
+        "restoreFailed": "无法从{itemType}表中恢复此行：{message}",
+        "purgeFailed": "无法从{itemType}表中清除此行：{message}"
       },
       "filterTypesPlaceholder": "筛选项目类型……",
       "summary": "{count, plural, =0 {回收站为空} other {回收站中有 # 个项目}}",
