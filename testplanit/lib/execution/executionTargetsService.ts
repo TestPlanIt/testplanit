@@ -288,11 +288,7 @@ async function validateShape(
     };
   }
   const repo = await baseDb.codeRepository.findFirst({
-    where: {
-      id: input.codeRepositoryId,
-      isDeleted: false,
-      projectConfigs: { some: { projectId } },
-    },
+    where: { id: input.codeRepositoryId, isDeleted: false },
     select: { id: true, provider: true },
   });
   if (!repo) {
