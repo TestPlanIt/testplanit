@@ -133,6 +133,7 @@ describe("useProjectCaseFilterOptions", () => {
       "attachments",
       "tags",
       "issues",
+      "suggestions",
       "inReview",
       "codePins",
       "field_12",

@@ -800,6 +800,77 @@ test.describe("Issue tracker webhook actions", () => {
     });
   });
 
+  test("an Update Test Cases with AI rule saves which test cases it checks", async ({
+    page,
+    api,
+  }) => {
+    const { projectId, configId } = await seedTrackerWebhook(
+      api,
+      `Update ${uid()}`
+    );
+    const section = actionsSection(page, configId);
+    const dialog = page.getByTestId("webhook-action-dialog");
+
+    await test.step("A change to an issue's text offers only the Update action", async () => {
+      await openWebhooksPage(page, projectId);
+      await section.getByTestId("webhook-action-add").click();
+      await expect(dialog).toBeVisible();
+      await dialog.getByTestId("webhook-action-trigger").click();
+      await page.getByRole("option", { name: "Issue text changes" }).click();
+      await expect(dialog.getByTestId("webhook-action-type")).toContainText(
+        "Update Test Cases with AI"
+      );
+      await expect(dialog.getByTestId("webhook-action-type")).toBeDisabled();
+      await expect(
+        dialog.getByTestId("webhook-action-update-scope")
+      ).toBeVisible();
+      await expect(
+        dialog.getByTestId("webhook-action-draft-template")
+      ).toHaveCount(0);
+      await expect(
+        dialog.getByTestId("webhook-action-draft-quantity")
+      ).toHaveCount(0);
+    });
+
+    await test.step("The rule saves its scope and shows it in the list", async () => {
+      await api.createLlmIntegration(`E2E Update Model ${uid()}`);
+      await dialog.getByTestId("webhook-action-update-scope").click();
+      await page
+        .getByRole("option", { name: "Only AI drafted test cases" })
+        .click();
+      await dialog.getByTestId("webhook-action-save").click();
+      await expect(dialog).toBeHidden();
+
+      const added = section
+        .locator(ROW_SELECTOR)
+        .filter({ hasText: "Update Test Cases with AI" });
+      await expect(added).toContainText("Issue text changes");
+      await expect(added).toContainText("Only AI drafted test cases");
+
+      const saved = await db.webhookAction.findFirst({
+        where: { webhookConfigId: configId, action: "UPDATE_CASES" },
+        select: { trigger: true, options: true },
+      });
+      expect(saved).toEqual({
+        trigger: "ISSUE_CONTENT_CHANGED",
+        options: { scope: "ai_drafted", autoGenerateTags: false },
+      });
+    });
+
+    await test.step("Editing the rule starts from what it saved", async () => {
+      await page.reload();
+      const rule = await db.webhookAction.findFirst({
+        where: { webhookConfigId: configId, action: "UPDATE_CASES" },
+        select: { id: true },
+      });
+      await page.getByTestId(`webhook-action-edit-${rule!.id}`).click();
+      await expect(dialog).toBeVisible();
+      await expect(
+        dialog.getByTestId("webhook-action-update-scope")
+      ).toContainText("Only AI drafted test cases");
+    });
+  });
+
   test("a delivery the rules ignored counts as succeeded, not failed", async ({
     page,
     api,

@@ -330,6 +330,20 @@ describe("WebhookActionsSection", () => {
     ["has_cases", "projects.settings.webhooks.actions.outcome.has_cases"],
     ["no_llm", "projects.settings.webhooks.actions.outcome.no_llm"],
     ["draft_failed", "projects.settings.webhooks.actions.outcome.draft_failed"],
+    [
+      "update_queued",
+      "projects.settings.webhooks.actions.outcome.update_queued",
+    ],
+    [
+      "cases_updated",
+      "projects.settings.webhooks.actions.outcome.cases_updated",
+    ],
+    ["no_changes", "projects.settings.webhooks.actions.outcome.no_changes"],
+    ["up_to_date", "projects.settings.webhooks.actions.outcome.up_to_date"],
+    [
+      "update_failed",
+      "projects.settings.webhooks.actions.outcome.update_failed",
+    ],
     ["something_new", "something_new"],
   ])("labels a %s outcome", (outcome, label) => {
     mockLogs.mockReturnValue({
@@ -407,6 +421,21 @@ describe("WebhookActionsSection", () => {
       },
     };
 
+    const updateRule = {
+      id: "trk-4",
+      order: 3,
+      isEnabled: true,
+      trigger: "ISSUE_CONTENT_CHANGED",
+      action: "UPDATE_CASES",
+      filter: {},
+      options: {
+        scope: "ai_drafted",
+        stateId: 8,
+        notifyUserIds: ["u1"],
+        notifyGroupIds: [3, 4],
+      },
+    };
+
     function renderTracker() {
       return render(
         <WebhookActionsSection
@@ -421,7 +450,7 @@ describe("WebhookActionsSection", () => {
 
     beforeEach(() => {
       mockRules.mockReturnValue({
-        data: [statusRule, importRule, draftRule],
+        data: [statusRule, importRule, draftRule, updateRule],
         refetch: mockRefetch,
       });
       mockLogs.mockReturnValue({ data: [] });
@@ -443,6 +472,41 @@ describe("WebhookActionsSection", () => {
       );
       expect(row).toHaveTextContent("common.fields.users: 2");
       expect(row).toHaveTextContent("common.fields.groups: 1");
+    });
+
+    it("shows an update rule's trigger, action, narrowed scope, state and recipients", () => {
+      renderTracker();
+
+      const row = screen.getByTestId("webhook-action-row-trk-4");
+      expect(row).toHaveTextContent(
+        "projects.settings.webhooks.actions.trigger.ISSUE_CONTENT_CHANGED"
+      );
+      expect(row).toHaveTextContent(
+        "projects.settings.webhooks.actions.updateCases"
+      );
+      expect(row).toHaveTextContent(
+        "projects.settings.webhooks.actions.updateScopeOptions.ai_drafted"
+      );
+      expect(within(row).getByTestId("state-display")).toHaveTextContent(
+        "Review"
+      );
+      expect(within(row).queryByTestId("template-display")).toBeNull();
+      expect(row).toHaveTextContent("common.fields.users: 1");
+      expect(row).toHaveTextContent("common.fields.groups: 2");
+      expect(row).not.toHaveTextContent(
+        "repository.generateTestCases.addNotes.quantity"
+      );
+    });
+
+    it("says nothing about the scope of an update rule that checks every linked case", () => {
+      mockRules.mockReturnValue({
+        data: [{ ...updateRule, options: {} }],
+        refetch: mockRefetch,
+      });
+      renderTracker();
+      const row = screen.getByTestId("webhook-action-row-trk-4");
+      expect(row).not.toHaveTextContent("updateScopeOptions");
+      expect(within(row).queryByTestId("state-display")).toBeNull();
     });
 
     it("shows the filter and child-issue badges, naming issue types where it can", () => {

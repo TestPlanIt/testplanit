@@ -165,6 +165,62 @@ describe("trackerRuleFires", () => {
     }
   });
 
+  it("a text rule fires only for an issue TestPlanIt already had whose text changed", () => {
+    const rule = { trigger: "ISSUE_CONTENT_CHANGED" as const, filter: {} };
+    const edited: IssueChange = {
+      created: false,
+      statusChanged: false,
+      contentChanged: true,
+    };
+    expect(trackerRuleFires(rule, edited, issue())).toBe(true);
+    expect(trackerRuleFires(rule, moved, issue())).toBe(false);
+    expect(trackerRuleFires(rule, created, issue())).toBe(false);
+    expect(trackerRuleFires(rule, { ...edited, created: true }, issue())).toBe(
+      false
+    );
+  });
+
+  it("a text rule still honours its filter", () => {
+    const rule = {
+      trigger: "ISSUE_CONTENT_CHANGED" as const,
+      filter: { requirementsOnly: true },
+    };
+    const edited: IssueChange = {
+      created: false,
+      statusChanged: false,
+      contentChanged: true,
+    };
+    expect(trackerRuleFires(rule, edited, issue())).toBe(false);
+    expect(trackerRuleFires(rule, edited, issue({ isRequirement: true }))).toBe(
+      true
+    );
+  });
+
+  it("the other triggers ignore a text change", () => {
+    const edited: IssueChange = {
+      created: false,
+      statusChanged: false,
+      contentChanged: true,
+    };
+    expect(
+      trackerRuleFires(
+        { trigger: "ISSUE_CREATED", filter: {} },
+        edited,
+        issue()
+      )
+    ).toBe(false);
+    expect(
+      trackerRuleFires(
+        {
+          trigger: "ISSUE_STATUS_ENTERED",
+          filter: { statuses: ["Ready for QA"] },
+        },
+        edited,
+        issue()
+      )
+    ).toBe(false);
+  });
+
   it("a repository trigger never fires for a tracker event", () => {
     expect(
       trackerRuleFires({ trigger: "CODE_PUSH", filter: {} }, created, issue())

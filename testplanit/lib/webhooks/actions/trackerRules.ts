@@ -26,6 +26,8 @@ export interface IssueChange {
   created: boolean;
   /** The tracker status differs from the one TestPlanIt last stored. */
   statusChanged: boolean;
+  /** The title, description or note differs from what TestPlanIt last stored. */
+  contentChanged?: boolean;
 }
 
 const same = (a: string, b: string) =>
@@ -66,8 +68,8 @@ export function issueMatchesFilter(
 /**
  * Whether a tracker rule fires for this event: any event; an issue new to
  * TestPlanIt; or an issue arriving in one of the rule's statuses, which an
- * issue created directly in that status also does. A status rule without
- * statuses never fires.
+ * issue created directly in that status also does; or an issue TestPlanIt
+ * already had whose text changed. A status rule without statuses never fires.
  */
 export function trackerRuleFires(
   rule: Pick<TrackerRule, "trigger" | "filter">,
@@ -85,6 +87,9 @@ export function trackerRuleFires(
       if (!readWebhookActionFilter(rule.filter).statuses?.length) return false;
       break;
     }
+    case "ISSUE_CONTENT_CHANGED":
+      if (change.created || !change.contentChanged) return false;
+      break;
     default:
       return false;
   }

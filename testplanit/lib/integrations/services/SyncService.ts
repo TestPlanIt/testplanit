@@ -89,6 +89,8 @@ export interface IssueRefreshOutcome {
   addedToProject: boolean;
   /** The tracker status before this refresh (null for a created row). */
   previousStatus: string | null;
+  /** This refresh changed the issue's title, description or note. */
+  contentChanged: boolean;
   status: string | null;
   issueTypeId: string | null;
   labels: string[];
@@ -2069,6 +2071,7 @@ export class SyncService {
           created: created.created,
           addedToProject: true,
           previousStatus: null,
+          contentChanged: false,
           isRequirement: created.isRequirement,
         },
       };
@@ -2465,6 +2468,14 @@ export class SyncService {
       where: { id: existingIssue.id },
       data: updateData,
     });
+    // The database stamps contentUpdatedAt only when the text really changed.
+    const stamped = await db.issue.findUnique({
+      where: { id: existingIssue.id },
+      select: { contentUpdatedAt: true },
+    });
+    const contentChanged =
+      (stamped?.contentUpdatedAt?.getTime() ?? null) !==
+      (existingIssue.contentUpdatedAt?.getTime() ?? null);
 
     // Manually sync to Elasticsearch since enhanced Prisma client bypasses extensions
     await syncIssueToElasticsearch(existingIssue.id).catch((error: any) => {
@@ -2527,6 +2538,7 @@ export class SyncService {
       addedToProject: false,
       previousStatus:
         existingIssue.externalStatus ?? existingIssue.status ?? null,
+      contentChanged,
       isRequirement:
         typeof resolvedIsRequirement === "boolean"
           ? resolvedIsRequirement

@@ -275,6 +275,8 @@ interface FakeCase {
    * survive duplicates.
    */
   duplicateFieldRows?: Array<{ fieldId: number; value: unknown }>;
+  /** Statuses of the case's change suggestions (absent = none). */
+  suggestionStatuses?: string[];
 }
 
 interface FakeField {
@@ -399,6 +401,12 @@ function matchesWhere(item: FakeCase, where: any): boolean {
       case "attachments":
       case "codePins":
         return matchesRelation([], value, () => true);
+      case "changeSuggestions":
+        return matchesRelation(
+          item.suggestionStatuses ?? [],
+          value,
+          (status, inner) => status === inner.status
+        );
       default:
         throw new Error(`fake db: unsupported where key ${key}`);
     }
@@ -703,6 +711,7 @@ describe("computeRepositoryCaseFacetCounts — option fields and dimensionTotals
       automated: 2,
       parameterized: 2,
       attachments: 2,
+      suggestions: 2,
       tags: 2,
       issues: 2,
     });
@@ -829,6 +838,76 @@ describe("computeRepositoryCaseFacetCounts — inReview", () => {
     });
 
     expect(result.totalCount).toBe(3);
+  });
+});
+
+describe("computeRepositoryCaseFacetCounts — suggestions", () => {
+  // Cases 1 and 3 have a suggestion waiting; case 2's was already decided.
+  const withSuggestions = FIXTURE_CASES.map((item) => ({
+    ...item,
+    suggestionStatuses:
+      item.id === 1 || item.id === 3
+        ? ["DISMISSED", "PENDING"]
+        : item.id === 2
+          ? ["APPLIED"]
+          : undefined,
+  }));
+
+  it("splits the base by whether a suggestion is waiting, in every project", async () => {
+    const { db } = createFakeDb(withSuggestions, [SEVERITY]);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [],
+    });
+
+    expect(result.suggestions).toEqual([
+      { value: true, count: 2 },
+      { value: false, count: FIXTURE_CASES.length - 2 },
+    ]);
+    expect(result.dimensionTotals.suggestions).toBe(FIXTURE_CASES.length);
+  });
+
+  it("counts none waiting when no case has a suggestion", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [SEVERITY]);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [],
+    });
+
+    expect(result.suggestions).toEqual([
+      { value: true, count: 0 },
+      { value: false, count: FIXTURE_CASES.length },
+    ]);
+  });
+
+  it("filters by the predicate and still self-excludes its own facet", async () => {
+    const { db } = createFakeDb(withSuggestions, [SEVERITY]);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [{ dimension: "suggestions", operator: "is", values: [1] }],
+    });
+
+    expect(result.totalCount).toBe(2);
+    expect(result.dimensionTotals.templates).toBe(2);
+    expect(result.dimensionTotals.suggestions).toBe(FIXTURE_CASES.length);
+    expect(result.suggestions).toEqual([
+      { value: true, count: 2 },
+      { value: false, count: FIXTURE_CASES.length - 2 },
+    ]);
+  });
+
+  it("counts the complement for is [0]", async () => {
+    const { db } = createFakeDb(withSuggestions, [SEVERITY]);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [{ dimension: "suggestions", operator: "is", values: [0] }],
+    });
+
+    expect(result.totalCount).toBe(FIXTURE_CASES.length - 2);
   });
 });
 

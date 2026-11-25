@@ -16,6 +16,7 @@ export const DIMENSION_LABEL_KEYS: Readonly<Record<string, string>> = {
   inReview: "repository.views.byReview",
   tags: "repository.views.byTag",
   issues: "repository.views.byIssue",
+  suggestions: "repository.views.bySuggestion",
   status: "common.actions.status",
   assignedTo: "common.fields.assignedTo",
 };
@@ -43,6 +44,10 @@ export const BOOLEAN_VALUE_LABEL_KEYS: Readonly<
   codePins: {
     true: "common.fields.hasCodePins",
     false: "common.fields.noCodePins",
+  },
+  suggestions: {
+    true: "common.fields.hasSuggestion",
+    false: "common.fields.noSuggestion",
   },
 };
 

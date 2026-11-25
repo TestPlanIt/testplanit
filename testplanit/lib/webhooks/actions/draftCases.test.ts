@@ -64,6 +64,7 @@ function makeDb(
     linked?: number;
     issue?: Record<string, unknown> | null;
     state?: { id: number; name: string } | null;
+    aiDraftState?: { id: number; name: string } | null;
     folderDocs?: unknown;
   } = {}
 ) {
@@ -100,12 +101,26 @@ function makeDb(
     },
     repositoryCaseIssue: {
       count: vi.fn().mockResolvedValue(opts.linked ?? 0),
+      updateMany: vi.fn().mockResolvedValue({ count: 2 }),
+    },
+    repositoryCases: {
+      findMany: vi.fn().mockResolvedValue([
+        { id: 501, currentVersion: 1 },
+        { id: 502, currentVersion: 1 },
+      ]),
+      update: vi.fn().mockResolvedValue({}),
     },
     projects: {
       findUnique: vi.fn().mockResolvedValue({ createdBy: "creator" }),
     },
     user: { findUnique: vi.fn().mockResolvedValue({ name: "System" }) },
-    workflows: { findFirst: vi.fn().mockResolvedValue(opts.state ?? null) },
+    workflows: {
+      findFirst: vi.fn(async (args: any) =>
+        args?.where?.isAiDraft
+          ? (opts.aiDraftState ?? null)
+          : (opts.state ?? null)
+      ),
+    },
     groupAssignment: {
       findMany: vi.fn().mockResolvedValue([{ userId: "g-member" }]),
     },
@@ -299,6 +314,80 @@ describe("runDraftCases", () => {
       stateId: 8,
       stateName: "Active",
     });
+  });
+
+  it("puts the drafts in the project's AI-draft state when the rule chose no state", async () => {
+    const db = makeDb({ aiDraftState: { id: 21, name: "AI-Generated" } });
+    await runDraftCases(db, job);
+    expect(db.workflows.findFirst).toHaveBeenCalledWith({
+      where: {
+        scope: "CASES",
+        isAiDraft: true,
+        isEnabled: true,
+        isDeleted: false,
+        projects: { some: { projectId: 7 } },
+      },
+      orderBy: { order: "asc" },
+      select: { id: true, name: true },
+    });
+    expect(mocks.persist.mock.calls[0][0]).toMatchObject({
+      stateId: 21,
+      stateName: "AI-Generated",
+    });
+  });
+
+  it("keeps the rule's own state over the project's AI-draft state", async () => {
+    const db = makeDb({
+      options: { stateId: 9 },
+      state: { id: 9, name: "Review" },
+      aiDraftState: { id: 21, name: "AI-Generated" },
+    });
+    await runDraftCases(db, job);
+    expect(mocks.persist.mock.calls[0][0]).toMatchObject({
+      stateId: 9,
+      stateName: "Review",
+    });
+  });
+
+  it("keeps the default state when the project has no AI-draft state", async () => {
+    const db = makeDb();
+    await runDraftCases(db, job);
+    expect(mocks.persist.mock.calls[0][0]).toMatchObject({
+      stateId: 8,
+      stateName: "Active",
+    });
+  });
+
+  it("records the drafts as written by the AI from the issue as it reads now", async () => {
+    const db = makeDb();
+    await runDraftCases(db, job);
+    expect(db.repositoryCases.findMany).toHaveBeenCalledWith({
+      where: { id: { in: [501, 502] } },
+      select: { id: true, currentVersion: true },
+    });
+    expect(db.repositoryCases.update.mock.calls.map((c) => c[0])).toEqual([
+      { where: { id: 501 }, data: { aiWrittenVersion: 1 } },
+      { where: { id: 502 }, data: { aiWrittenVersion: 1 } },
+    ]);
+    expect(db.repositoryCaseIssue.updateMany).toHaveBeenCalledWith({
+      where: { issueId: 100, caseId: { in: [501, 502] } },
+      data: { alignedAt: expect.any(Date) },
+    });
+  });
+
+  it("records nothing as AI-written when drafting failed", async () => {
+    mocks.persist.mockResolvedValue({
+      status: "error",
+      message: "boom",
+      importedCount: 0,
+      importedIds: [],
+      errors: ["boom"],
+      results: [],
+    });
+    const db = makeDb();
+    await runDraftCases(db, job);
+    expect(db.repositoryCases.update).not.toHaveBeenCalled();
+    expect(db.repositoryCaseIssue.updateMany).not.toHaveBeenCalled();
   });
 
   it("leaves an issue that already has test cases alone, not counting deleted ones", async () => {

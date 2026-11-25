@@ -25,6 +25,7 @@ import {
   Paperclip,
   Pin,
   PinOff,
+  Sparkles,
   Square,
   SquareStack,
   User,
@@ -121,6 +122,7 @@ interface ViewSelectorProps {
     inReview?: Array<{ value: boolean; count: number }>;
     /** Only present while the project has Impact Analysis enabled. */
     codePins?: Array<{ value: boolean; count: number }>;
+    suggestions?: Array<{ value: boolean; count: number }>;
     dynamicFields: Record<string, any>;
     tags?: Array<{
       id: number | string;
@@ -694,6 +696,39 @@ export function ViewSelector({
                     {item.value
                       ? tCommon("fields.hasCodePins")
                       : tCommon("fields.noCodePins")}
+                  </span>
+                </FilterRow>
+              )
+            )}
+          </>
+        )}
+
+        {selectedItem === "suggestions" && (
+          <>
+            <FilterRow
+              selected={isValueSelected(null)}
+              onClick={() => handleFilterClick(null)}
+              count={renderCount(dimensionTotal("suggestions", totalCount))}
+            >
+              <span className="truncate">{t("views.allCases")}</span>
+            </FilterRow>
+            {viewOptions?.suggestions?.map(
+              (item: { value: boolean; count: number }) => (
+                <FilterRow
+                  key={item.value.toString()}
+                  selected={isValueSelected(item.value ? 1 : 0)}
+                  onClick={() => handleFilterClick(item.value ? 1 : 0)}
+                  count={renderCount(item.count)}
+                >
+                  {item.value ? (
+                    <Sparkles className="h-4 w-4 shrink-0 text-primary" />
+                  ) : (
+                    <CircleDashed className="h-4 w-4 shrink-0 opacity-60" />
+                  )}
+                  <span className="truncate">
+                    {item.value
+                      ? tCommon("fields.hasSuggestion")
+                      : tCommon("fields.noSuggestion")}
                   </span>
                 </FilterRow>
               )

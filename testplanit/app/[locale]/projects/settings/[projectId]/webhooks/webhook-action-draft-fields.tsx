@@ -20,9 +20,13 @@ import { useCallback } from "react";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import {
   DRAFT_QUANTITIES,
+  UPDATE_CASES_SCOPES,
   readDraftCasesOptions,
+  readUpdateCasesOptions,
   type DraftCasesOptions,
   type DraftQuantity,
+  type UpdateCasesOptions,
+  type UpdateCasesScope,
 } from "~/lib/webhooks/actions/schemas";
 import { resolveDefaultTemplate } from "~/lib/defaultTemplate";
 import { schema } from "~/zenstack/schema";
@@ -47,6 +51,8 @@ export interface DraftCasesDraft {
   autoGenerateTags: boolean;
   notifyUsers: DraftRecipient[];
   notifyGroups: DraftGroup[];
+  /** Update test cases rules only: which linked cases are checked. */
+  scope: UpdateCasesScope;
 }
 
 export function draftCasesDraftFrom(saved: unknown): DraftCasesDraft {
@@ -62,6 +68,41 @@ export function draftCasesDraftFrom(saved: unknown): DraftCasesDraft {
       id,
       name: String(id),
     })),
+    scope: "all_linked",
+  };
+}
+
+/** The same form state for an Update test cases rule's saved options. */
+export function updateCasesDraftFrom(saved: unknown): DraftCasesDraft {
+  const options = readUpdateCasesOptions(saved);
+  return {
+    ...draftCasesDraftFrom(null),
+    stateId: options.stateId ?? null,
+    // Off unless switched on: an update adds cases only now and then.
+    autoGenerateTags: options.autoGenerateTags ?? false,
+    notifyUsers: (options.notifyUserIds ?? []).map((id) => ({ id, name: id })),
+    notifyGroups: (options.notifyGroupIds ?? []).map((id) => ({
+      id,
+      name: String(id),
+    })),
+    scope: options.scope ?? "all_linked",
+  };
+}
+
+/** An Update test cases rule's options to save, without defaults. */
+export function updateCasesOptionsFromDraft(
+  draft: DraftCasesDraft
+): UpdateCasesOptions {
+  return {
+    ...(draft.scope === "ai_drafted" ? { scope: draft.scope } : {}),
+    ...(draft.stateId ? { stateId: draft.stateId } : {}),
+    autoGenerateTags: draft.autoGenerateTags,
+    ...(draft.notifyUsers.length
+      ? { notifyUserIds: draft.notifyUsers.map((u) => u.id) }
+      : {}),
+    ...(draft.notifyGroups.length
+      ? { notifyGroupIds: draft.notifyGroups.map((g) => g.id) }
+      : {}),
   };
 }
 
@@ -87,18 +128,24 @@ interface Props {
   projectId: number;
   value: DraftCasesDraft;
   onChange: (next: DraftCasesDraft) => void;
+  /** "update" for an Update test cases rule. */
+  mode?: "draft" | "update";
 }
 
 /**
  * How a rule drafts test cases: which template and state they take, how
  * many, whether to tag them, and who reviews them. The folder is the
- * rule's own, named after it.
+ * rule's own, named after it. An Update test cases rule shares the state,
+ * tag and recipient choices, and picks which linked cases it checks in
+ * place of a template and a count.
  */
 export function WebhookActionDraftFields({
   projectId,
   value,
   onChange,
+  mode = "draft",
 }: Props) {
+  const isUpdate = mode === "update";
   const t = useTranslations("projects.settings.webhooks.actions");
   const tFields = useTranslations("common.fields");
   const tGenerate = useTranslations("repository.generateTestCases");
@@ -125,6 +172,7 @@ export function WebhookActionDraftFields({
       id: true,
       name: true,
       isDefault: true,
+      isAiDraft: true,
       icon: { select: { name: true } },
       color: { select: { value: true } },
     },
@@ -145,7 +193,10 @@ export function WebhookActionDraftFields({
     templates,
     project?.defaultTemplateId
   );
-  const defaultState = states?.find((state) => state.isDefault);
+  // Drafts go to the project's AI-draft state when it has one.
+  const defaultState =
+    states?.find((state) => state.isAiDraft) ??
+    states?.find((state) => state.isDefault);
 
   const fetchMembers = useCallback(
     async (query: string, page: number, pageSize: number) => {
@@ -179,44 +230,76 @@ export function WebhookActionDraftFields({
 
   return (
     <div className="space-y-3" data-testid="webhook-action-draft-fields">
+      {isUpdate && (
+        <p className="text-xs text-muted-foreground">{t("updateHelp")}</p>
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>{tFields("template")}</Label>
-          <Select
-            value={value.templateId ? String(value.templateId) : DEFAULT_CHOICE}
-            onValueChange={(next) =>
-              update({
-                templateId: next === DEFAULT_CHOICE ? null : Number(next),
-              })
-            }
-          >
-            <SelectTrigger data-testid="webhook-action-draft-template">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={DEFAULT_CHOICE}>
-                <span className="inline-flex items-center gap-1">
-                  {tFields("default")}
-                  {defaultTemplate && (
-                    <>
-                      {" · "}
-                      <TemplateNameDisplay
-                        name={defaultTemplate.templateName}
-                        size="sm"
-                      />
-                    </>
-                  )}
-                </span>
-              </SelectItem>
-              {(templates ?? []).map((template) => (
-                <SelectItem key={template.id} value={String(template.id)}>
-                  <TemplateNameDisplay name={template.templateName} size="sm" />
+        {isUpdate && (
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>{t("updateScope")}</Label>
+            <Select
+              value={value.scope}
+              onValueChange={(next) =>
+                update({ scope: next as UpdateCasesScope })
+              }
+            >
+              <SelectTrigger data-testid="webhook-action-update-scope">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {UPDATE_CASES_SCOPES.map((scope) => (
+                  <SelectItem key={scope} value={scope}>
+                    {t(`updateScopeOptions.${scope}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {!isUpdate && (
+          <div className="space-y-1.5">
+            <Label>{tFields("template")}</Label>
+            <Select
+              value={
+                value.templateId ? String(value.templateId) : DEFAULT_CHOICE
+              }
+              onValueChange={(next) =>
+                update({
+                  templateId: next === DEFAULT_CHOICE ? null : Number(next),
+                })
+              }
+            >
+              <SelectTrigger data-testid="webhook-action-draft-template">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={DEFAULT_CHOICE}>
+                  <span className="inline-flex items-center gap-1">
+                    {tFields("default")}
+                    {defaultTemplate && (
+                      <>
+                        {" · "}
+                        <TemplateNameDisplay
+                          name={defaultTemplate.templateName}
+                          size="sm"
+                        />
+                      </>
+                    )}
+                  </span>
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
+                {(templates ?? []).map((template) => (
+                  <SelectItem key={template.id} value={String(template.id)}>
+                    <TemplateNameDisplay
+                      name={template.templateName}
+                      size="sm"
+                    />
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <div className={isUpdate ? "space-y-1.5 sm:col-span-2" : "space-y-1.5"}>
           <Label>{tFields("state")}</Label>
           <Select
             value={value.stateId ? String(value.stateId) : DEFAULT_CHOICE}
@@ -260,29 +343,36 @@ export function WebhookActionDraftFields({
               ))}
             </SelectContent>
           </Select>
+          {isUpdate && (
+            <p className="text-xs text-muted-foreground">
+              {t("updateStateHelp")}
+            </p>
+          )}
         </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>{tGenerate("addNotes.quantity")}</Label>
-          <Select
-            value={value.quantity}
-            onValueChange={(next) =>
-              update({ quantity: next as DraftQuantity })
-            }
-          >
-            <SelectTrigger data-testid="webhook-action-draft-quantity">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DRAFT_QUANTITIES.map((quantity) => (
-                <SelectItem key={quantity} value={quantity}>
-                  {tGenerate(
-                    `addNotes.quantityOptions.${QUANTITY_LABEL_KEYS[quantity]}`
-                  )}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!isUpdate && (
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>{tGenerate("addNotes.quantity")}</Label>
+            <Select
+              value={value.quantity}
+              onValueChange={(next) =>
+                update({ quantity: next as DraftQuantity })
+              }
+            >
+              <SelectTrigger data-testid="webhook-action-draft-quantity">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DRAFT_QUANTITIES.map((quantity) => (
+                  <SelectItem key={quantity} value={quantity}>
+                    {tGenerate(
+                      `addNotes.quantityOptions.${QUANTITY_LABEL_KEYS[quantity]}`
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       <Label className="flex items-center gap-3">
@@ -331,7 +421,9 @@ export function WebhookActionDraftFields({
           ariaLabel={tFields("groups")}
           hideSelectAll
         />
-        <p className="text-xs text-muted-foreground">{t("notifyHelp")}</p>
+        <p className="text-xs text-muted-foreground">
+          {isUpdate ? t("updateNotifyHelp") : t("notifyHelp")}
+        </p>
       </div>
     </div>
   );

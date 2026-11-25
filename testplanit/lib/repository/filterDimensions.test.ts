@@ -42,6 +42,7 @@ describe("buildFilterDimensions", () => {
       "attachments",
       "tags",
       "issues",
+      "suggestions",
     ]);
     expect(registry.has("status")).toBe(false);
     expect(registry.has("assignedTo")).toBe(false);

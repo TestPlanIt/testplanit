@@ -236,6 +236,7 @@ The application uses the following background processes:
 - Runs the [actions](./user-guide/webhooks.md#issue-tracker-actions) of an issue-tracker inbound webhook, one job per delivery: refreshes the issue from the tracker, imports it when an **Import Issues** action takes it, and creates a test run for each **Create Test Run** action the event triggers
 - Each **Generate Test Cases with AI** action the event triggers gets a job of its own on the same queue (retried three times with backoff), so the model call never holds up the delivery's other actions; the drafts are persisted, linked to the issue, and the action's reviewers notified
 - A job whose issue is being synced by another process retries with backoff
+- Each **Update Test Cases with AI** action the event triggers also gets a job of its own, delayed five minutes (`WEBHOOK_UPDATE_CASES_DELAY_MS`); a later change to the same issue replaces the waiting job and restarts the delay
 - Default concurrency: 2 (`WEBHOOK_ACTIONS_CONCURRENCY`)
 - Location: `workers/webhookActionsWorker.ts`
 

@@ -460,7 +460,9 @@
       },
       "worker": "Worker",
       "hasCodePins": "Has Code Pins",
-      "noCodePins": "No Code Pins"
+      "noCodePins": "No Code Pins",
+      "hasSuggestion": "Waiting",
+      "noSuggestion": "None"
     },
     "filter": {
       "placeholder": "Filter {item}..."
@@ -1808,12 +1810,14 @@
           "dialogDescription": "Choose the event that triggers this action and what it does.",
           "trigger": {
             "ISSUE_EVENT": "Any issue event",
-            "ISSUE_STATUS_ENTERED": "Issue status changes"
+            "ISSUE_STATUS_ENTERED": "Issue status changes",
+            "ISSUE_CONTENT_CHANGED": "Issue text changes"
           },
           "triggerHelp": {
             "ISSUE_EVENT": "Any event the tracker sends about an issue.",
             "ISSUE_CREATED": "An issue TestPlanIt hasn't seen before.",
-            "ISSUE_STATUS_ENTERED": "An issue moves into one of the chosen statuses."
+            "ISSUE_STATUS_ENTERED": "An issue moves into one of the chosen statuses.",
+            "ISSUE_CONTENT_CHANGED": "The title or description of an issue TestPlanIt already has changes."
           },
           "outcome": {
             "cases_drafted": "Test cases drafted",
@@ -1824,8 +1828,22 @@
             "no_target": "No repository or default state",
             "draft_failed": "Drafting failed",
             "already_composed": "Run already created for this change",
-            "execute_failed": "Execution not requested"
+            "execute_failed": "Execution not requested",
+            "update_queued": "Checking test cases",
+            "cases_updated": "Test cases updated",
+            "no_changes": "No changes needed",
+            "up_to_date": "Test cases already up to date",
+            "update_failed": "Checking test cases failed"
           },
+          "updateCases": "Update Test Cases with AI",
+          "updateHelp": "Once the issue's edits settle, AI compares each linked test case with the new text. Drafts nobody has confirmed are rewritten. Every other test case gets a suggested change for a person to apply or dismiss.",
+          "updateScope": "Test cases to check",
+          "updateScopeOptions": {
+            "all_linked": "Every test case linked to the issue",
+            "ai_drafted": "Only AI drafted test cases"
+          },
+          "updateStateHelp": "The state of test cases the update adds.",
+          "updateNotifyHelp": "Who is told what changed. When nobody is chosen, the people the Draft action for this issue notifies are told, or the project's administrators when there are none. Each person's notification preferences still apply.",
           "dragToReorder": "Drag to reorder",
           "requirementsOnly": "Requirements only",
           "requirementsOnlyHelp": "Only issues the project classifies as requirements.",
@@ -2978,6 +2996,10 @@
             "label": "AI-drafted test cases",
             "description": "A webhook action drafted test cases for an issue and named you as a reviewer."
           },
+          "CASES_UPDATED": {
+            "label": "Test cases updated after an issue change",
+            "description": "An issue's text changed and a webhook action rewrote drafts or suggested changes to test cases you review or are named on."
+          },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Integration needs re-authorization",
             "description": "Your connection to an integration expired or was revoked and must be reconnected."
@@ -3500,6 +3522,41 @@
       "reload": "Discard my changes and reload",
       "overwrite": "Overwrite"
     },
+    "suggestions": {
+      "updateTitle": "AI suggests changing this test case",
+      "retireTitle": "AI suggests deleting this test case",
+      "unreviewedDraft": "AI wrote this test case and nobody has confirmed it yet",
+      "issueChanged": "{issue} changed after this test case was written.",
+      "issueChangedList": "A linked issue changed and this test case has not been checked against the new text",
+      "issueChangedUnchecked": "{issue} changed after this test case was last checked against it. The test case has not been checked against the new text.",
+      "retireDescription": "The issue no longer asks for what this test case tests.",
+      "stale": "This test case has been edited since the change was suggested, so the suggestion cannot be applied as it stands.",
+      "name": "Name",
+      "steps": "Steps",
+      "step": "Step {number}",
+      "expectedResult": "Expected result: {text}",
+      "review": "Review change",
+      "hide": "Hide change",
+      "apply": "Apply",
+      "dismiss": "Dismiss",
+      "regenerate": "Suggest again",
+      "applied": "The suggested change was applied.",
+      "retired": "The test case was deleted.",
+      "dismissed": "The suggestion was dismissed.",
+      "regenerated": "A new suggestion is ready.",
+      "nothingToChange": "The test case no longer needs changing.",
+      "markAligned": "Mark as up to date",
+      "markedAligned": "The test case is marked as up to date with the issue.",
+      "markAlignedFailed": "The test case could not be marked as up to date.",
+      "errors": {
+        "not_found": "The suggestion no longer exists.",
+        "gone": "The test case or its issue no longer exists.",
+        "not_pending": "The suggestion was already decided.",
+        "stale": "The test case has changed since the change was suggested.",
+        "no_llm": "This project has no active AI model.",
+        "failed": "The suggestion could not be processed. Try again."
+      }
+    },
     "templateSwitch": {
       "title": "Switch template?",
       "description": "\"{templateName}\" doesn't include {count, plural, =1 {this field} other {these fields}}, so your changes to {count, plural, =1 {it} other {them}} will be discarded:",
@@ -3541,6 +3598,7 @@
       "byAutomation": "Automation",
       "byParameterized": "Parameterization",
       "byReview": "Review",
+      "bySuggestion": "Suggested Change",
       "allTemplates": "All Templates",
       "allStates": "All States",
       "allCreators": "All Creators",
@@ -6056,7 +6114,10 @@
       "editWorkflow": {
         "requiresReviewFeatureDisabled": "The review workflow feature is disabled at the system level. Toggle a project's Advanced settings or set TESTPLANIT_REVIEW_FEATURE_ENABLED to re-enable.",
         "requiresReviewDefaultDisabled": "The default workflow state cannot require review — new entities land here and have no prior state to gate.",
-        "requiresReviewLabel": "Requires review"
+        "requiresReviewLabel": "Requires review",
+        "aiDraftLabel": "Holds AI drafts nobody has confirmed",
+        "aiDraftDefaultDisabled": "The default state cannot hold AI drafts: new test cases people write land in it.",
+        "aiDraftBadge": "AI drafts"
       },
       "add": {
         "button": "Add Workflow",
@@ -6986,7 +7047,8 @@
         "automation_candidates": "Automation Candidates Report",
         "derive_case_steps": "AI Step Derivation",
         "impact_analysis": "Impact: Affected Test Selection",
-        "failure_triage": "Failure Patterns: Root Cause"
+        "failure_triage": "Failure Patterns: Root Cause",
+        "case_upkeep": "Test Case Updates from Issue Changes"
       }
     },
     "elasticsearch": {
@@ -7299,6 +7361,19 @@
         "casesDraftedTitle": "AI-Drafted Test Cases Ready",
         "casesDraftedMessage": "{count, plural, one {# test case was} other {# test cases were}} drafted for {issueKey} — review for accuracy.",
         "casesDraftedReviewLink": "Review in {folderName}",
+        "casesUpdatedTitle": "Test Cases Updated After an Issue Change",
+        "casesUpdatedIssueChanged": "The text of {issueKey} changed.",
+        "casesUpdatedRewritten": "{count, plural, one {# AI draft was rewritten.} other {# AI drafts were rewritten.}}",
+        "casesUpdatedAdded": "{count, plural, one {# test case was added as a draft.} other {# test cases were added as drafts.}}",
+        "casesUpdatedDeleted": "{count, plural, one {# AI draft was deleted. A system administrator can restore it from Admin > Trash.} other {# AI drafts were deleted. A system administrator can restore them from Admin > Trash.}}",
+        "casesUpdatedSuggested": "{count, plural, one {# suggested change is waiting for a decision.} other {# suggested changes are waiting for a decision.}}",
+        "casesUpdatedFailedTitle": "Test Cases Could Not Be Updated",
+        "casesUpdatedFailedMessage": "The test cases for {issueKey} could not be checked against its new text.",
+        "casesUpdatedFailedReason": "Reason: {detail}",
+        "casesUpdatedFailedLink": "View the project's webhooks",
+        "casesUpdatedReminderTitle": "Suggested Changes Are Waiting",
+        "casesUpdatedReminderMessage": "{count, plural, one {# suggested change for {issueKey} is still waiting for a decision.} other {# suggested changes for {issueKey} are still waiting for a decision.}}",
+        "casesUpdatedLink": "View the test cases",
         "integrationAuthExpiredTitle": "Integration Connection Expired",
         "integrationAuthExpiredMessage": "Your connection to \"{integrationName}\" has expired. Reconnect to resume issue syncing.",
         "integrationAuthExpiredReconnect": "Reconnect",
@@ -8276,6 +8351,7 @@
       "isEnabled": "## Enabled\nIndicates whether this workflow is enabled.",
       "isActive": "## Active\nIndicates whether this workflow state is active and available for use.\n\n- Active workflows can be selected when updating test runs, sessions, or automation\n- Inactive workflows are hidden from selection but preserved in existing items",
       "requiresReview": "## Requires review\nWhen ON, transitioning a case, test run, or session INTO this state is gated by an approved review request. Without an approved request, the transition is blocked.\n\n- Approving a request performs the transition. The reviewer's approval moves the case, run, or session into the requested state; the requester does not repeat the state change by hand.\n- Existing pending reviews are preserved silently when the system-level feature is OFF and reappear when re-enabled.\n- Reviewer is picked when a tester clicks Request Review from the entity detail page.\n\nIf the system-level feature is disabled, this switch is locked. Re-enable it from the Review Workflow section above to toggle this on.",
+      "isAiDraft": "## Holds AI drafts nobody has confirmed\nTest cases a webhook action drafts with AI start in this state, and moving a test case out of it confirms the draft.\n\n- While a draft stays here and nobody has saved it, an Update Test Cases action may rewrite it when its issue changes.\n- Once a person moves it out, or saves it, AI only suggests changes for a person to apply or dismiss.\n- The person who moves a test case out is recorded as its reviewer.\n\nOnly test case states can be marked, and never the default state.",
       "projects": "## Projects\nIndicates the projects that can use this workflow."
     },
     "testResult": {

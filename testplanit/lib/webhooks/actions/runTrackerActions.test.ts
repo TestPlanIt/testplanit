@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   getIssueSubtreeIds: vi.fn(),
   webhookActorId: vi.fn(),
   enqueueDraftCases: vi.fn(),
+  enqueueUpdateCases: vi.fn(),
   describeCaseFilter: vi.fn(),
 }));
 
@@ -22,6 +23,9 @@ vi.mock("~/lib/services/requirementHierarchy", () => ({
   getIssueSubtreeIds: mocks.getIssueSubtreeIds,
 }));
 vi.mock("./actor", () => ({ webhookActorId: mocks.webhookActorId }));
+vi.mock("./enqueueUpdateCases", () => ({
+  enqueueUpdateCases: mocks.enqueueUpdateCases,
+}));
 vi.mock("./enqueueDraftCases", () => ({
   enqueueDraftCases: mocks.enqueueDraftCases,
 }));
@@ -139,9 +143,16 @@ describe("runTrackerActions", () => {
           webhookConfigId: "whc-1",
           isEnabled: true,
           trigger: {
-            in: ["ISSUE_EVENT", "ISSUE_CREATED", "ISSUE_STATUS_ENTERED"],
+            in: [
+              "ISSUE_EVENT",
+              "ISSUE_CREATED",
+              "ISSUE_STATUS_ENTERED",
+              "ISSUE_CONTENT_CHANGED",
+            ],
           },
-          action: { in: ["IMPORT_ISSUE", "CREATE_RUN", "DRAFT_CASES"] },
+          action: {
+            in: ["IMPORT_ISSUE", "CREATE_RUN", "DRAFT_CASES", "UPDATE_CASES"],
+          },
         },
         orderBy: [{ order: "asc" }, { createdAt: "asc" }],
       })
@@ -678,6 +689,97 @@ describe("runTrackerActions", () => {
     });
   });
 
+  it("hands an Update test cases rule to its own job when the issue's text changed", async () => {
+    mocks.enqueueUpdateCases.mockResolvedValue(undefined);
+    mocks.performIssueRefreshSystem.mockResolvedValue({
+      success: true,
+      issue: outcome({ contentChanged: true }),
+    });
+    const db = makeDb([
+      rule({
+        id: "update-1",
+        trigger: "ISSUE_CONTENT_CHANGED",
+        action: "UPDATE_CASES",
+      }),
+    ]);
+
+    expect(await runTrackerActions(db, job)).toEqual({
+      outcome: "done",
+      issueId: 100,
+      runIds: [],
+    });
+    expect(logged(db)).toEqual([
+      expect.objectContaining({
+        webhookActionId: "update-1",
+        outcome: "update_queued",
+        issueId: 100,
+      }),
+    ]);
+    expect(mocks.enqueueUpdateCases).toHaveBeenCalledWith({
+      deliveryId: "del-1",
+      webhookConfigId: "whc-1",
+      webhookActionId: "update-1",
+      projectId: 7,
+      issueId: 100,
+      tenantId: "tenant-a",
+    });
+    // Cases the issue already has do not stop an update, as they do a draft.
+    expect(db.repositoryCaseIssue.count).not.toHaveBeenCalled();
+    expect(mocks.enqueueDraftCases).not.toHaveBeenCalled();
+  });
+
+  it("leaves an Update rule alone when the text did not change, the issue is new, or its filter does not match", async () => {
+    const updateRule = rule({
+      id: "update-1",
+      trigger: "ISSUE_CONTENT_CHANGED",
+      action: "UPDATE_CASES",
+    });
+    for (const issue of [
+      outcome({ contentChanged: false }),
+      outcome({ contentChanged: true, created: true }),
+      outcome({ contentChanged: true, addedToProject: true }),
+    ]) {
+      mocks.performIssueRefreshSystem.mockResolvedValue({
+        success: true,
+        issue,
+      });
+      await runTrackerActions(makeDb([updateRule]), job);
+    }
+    mocks.performIssueRefreshSystem.mockResolvedValue({
+      success: true,
+      issue: outcome({ contentChanged: true }),
+    });
+    await runTrackerActions(
+      makeDb([{ ...updateRule, filter: { requirementsOnly: true } }]),
+      job
+    );
+    expect(mocks.enqueueUpdateCases).not.toHaveBeenCalled();
+  });
+
+  it("queues each Update rule that fires", async () => {
+    mocks.enqueueUpdateCases.mockResolvedValue(undefined);
+    mocks.performIssueRefreshSystem.mockResolvedValue({
+      success: true,
+      issue: outcome({ contentChanged: true }),
+    });
+    const db = makeDb([
+      rule({
+        id: "u1",
+        trigger: "ISSUE_CONTENT_CHANGED",
+        action: "UPDATE_CASES",
+      }),
+      rule({
+        id: "u2",
+        trigger: "ISSUE_CONTENT_CHANGED",
+        action: "UPDATE_CASES",
+      }),
+    ]);
+    await runTrackerActions(db, job);
+    expect(
+      mocks.enqueueUpdateCases.mock.calls.map((c) => c[0].webhookActionId)
+    ).toEqual(["u1", "u2"]);
+  });
+
   it("executes the run when the rule says so, and logs a refused execution", async () => {
     mocks.executeAutoRun.mockResolvedValue({
       requested: false,
@@ -806,9 +908,16 @@ describe("hasTrackerRules", () => {
         webhookConfigId: "whc-1",
         isEnabled: true,
         trigger: {
-          in: ["ISSUE_EVENT", "ISSUE_CREATED", "ISSUE_STATUS_ENTERED"],
+          in: [
+            "ISSUE_EVENT",
+            "ISSUE_CREATED",
+            "ISSUE_STATUS_ENTERED",
+            "ISSUE_CONTENT_CHANGED",
+          ],
         },
-        action: { in: ["IMPORT_ISSUE", "CREATE_RUN", "DRAFT_CASES"] },
+        action: {
+          in: ["IMPORT_ISSUE", "CREATE_RUN", "DRAFT_CASES", "UPDATE_CASES"],
+        },
       },
     });
   });

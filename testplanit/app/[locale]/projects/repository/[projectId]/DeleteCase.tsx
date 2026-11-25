@@ -17,7 +17,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 // Define a more specific type for the testcase prop
-interface DeleteModalTestCase {
+export interface DeleteModalTestCase {
   id: number;
   name: string;
   testRunCases?: Array<{
@@ -39,6 +39,8 @@ interface DeleteCaseProps {
   open: boolean;
   onClose: () => void;
   onDeleteSuccess?: () => void;
+  /** Deletes the case in place of the dialog's own update. */
+  onConfirm?: () => Promise<void>;
 }
 
 export function DeleteCaseModal({
@@ -46,6 +48,7 @@ export function DeleteCaseModal({
   open,
   onClose,
   onDeleteSuccess,
+  onConfirm,
 }: DeleteCaseProps) {
   const t = useTranslations();
   const queryClient = useQueryClient();
@@ -90,10 +93,14 @@ export function DeleteCaseModal({
   const handleDelete = async () => {
     setIsSubmitting(true);
     try {
-      await updateRepositoryCases({
-        data: { isDeleted: true },
-        where: { id: testcase.id },
-      });
+      if (onConfirm) {
+        await onConfirm();
+      } else {
+        await updateRepositoryCases({
+          data: { isDeleted: true },
+          where: { id: testcase.id },
+        });
+      }
       void queryClient.invalidateQueries({ queryKey: ["folderStats"] });
       onClose();
       onDeleteSuccess?.();

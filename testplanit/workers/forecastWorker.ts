@@ -33,6 +33,7 @@ import { NotificationService } from "../lib/services/notificationService";
 import { runReleaseCheck } from "../lib/services/releaseCheck";
 import { sweepReportBuilderStates } from "../lib/services/reportBuilderState";
 import { getReviewReminderThresholdDays } from "../lib/services/reviewReminderConfig";
+import { remindAboutWaitingSuggestions } from "../lib/services/caseUpkeep/reminders";
 import { withTenantContext } from "../lib/tenantContext";
 import { emitReviewReminderEvent } from "../lib/webhooks/event-emitters/reviewEvents";
 import { emitTestRunUpdateEvents } from "../lib/webhooks/event-emitters/testRunEvents";
@@ -675,6 +676,26 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
             now.getTime() - thresholdDays * 24 * 60 * 60 * 1000
           );
           let staleCount = 0;
+
+          // Suggested test case changes nobody has decided share this scan
+          // and its threshold. A failure here must not stop the review
+          // reminders below, or the other way round.
+          try {
+            const suggestionReminders = await remindAboutWaitingSuggestions(
+              db,
+              { cutoff, now, tenantId: job.data.tenantId }
+            );
+            if (suggestionReminders.suggestions > 0) {
+              console.log(
+                `Job ${job.id}: ${suggestionReminders.reminders} reminder(s) sent for ${suggestionReminders.suggestions} suggested test case change(s).`
+              );
+            }
+          } catch (err) {
+            console.error(
+              `Job ${job.id}: suggestion-reminder scan failed`,
+              err
+            );
+          }
 
           const pendingReviews = await db.reviewRequest.findMany({
             where: {

@@ -67,16 +67,60 @@ Every action has a **Trigger**:
 - **Any issue event** — any event the tracker sends about an issue.
 - **Issue created** — an issue TestPlanIt hasn't seen before.
 - **Issue status changes** — an issue moves into one of the action's statuses. Choose at least one status; an issue created directly in one of them counts too.
+- **Issue text changes** — the title or description of an issue TestPlanIt already has changes. A change of status, priority or labels alone does not count.
 
 and an **Action**:
 
 - **Import Issues** — add the issue to the project, so issues filed in the tracker appear in TestPlanIt's Issues list (and on Requirements, when the project classifies them as requirements) without a manual import. An issue TestPlanIt already has is always kept up to date, with or without an import action.
 - **Create Test Run** — create a test run of the test cases linked to the issue, named after it (`DEMO-42: Checkout with saved card`) and linked to it, with the issue and the action in its description. Turn on **Include child issues** to also take the cases linked to the issue's child issues. **Test case filters** narrow which of those cases go in: the same filters the repository offers (template, state, automation, tags, custom fields and so on), and only cases matching every one are taken. A run is only created when there are cases to take; drafts are left out when the project excludes them. The run can also be [executed automatically](#executing-automated-cases).
-- **Generate Test Cases with AI** — draft test cases for the issue with the project's [AI model](./llm-integrations.md), the way the repository's Generate wizard does, from the issue's title, description, status and priority. Choose the **Template** and **State** the drafts take (the project's [default template](./projects/settings/advanced.md#default-template) and default state when unset), how many to draft (the Generate wizard's ranges), whether to auto-generate tags (on unless switched off), and the **Users** and **Groups** to tell when the drafts are ready; each person's notification preferences still apply. The drafts go in a top-level folder named after the action (`Issue status changes → Generate Test Cases with AI · To Do`), one folder per action, whose note records the webhook, trigger, filters, template and state that fill it. Drafting runs as its own background job, so a slow model never holds up the other actions. An issue that already has linked test cases is left alone, so a status action never drafts twice for the same issue, and the action can't be saved for a project without an active AI model.
+- **Generate Test Cases with AI** — draft test cases for the issue with the project's [AI model](./llm-integrations.md), the way the repository's Generate wizard does, from the issue's title, description, status and priority. Choose the **Template** and **State** the drafts take (when unset, the project's [default template](./projects/settings/advanced.md#default-template), and the project's [AI-draft state](./workflows.md#states-that-hold-unconfirmed-ai-drafts) or, without one, its default state), how many to draft (the Generate wizard's ranges), whether to auto-generate tags (on unless switched off), and the **Users** and **Groups** to tell when the drafts are ready; each person's notification preferences still apply. The drafts go in a top-level folder named after the action (`Issue status changes → Generate Test Cases with AI · To Do`), one folder per action, whose note records the webhook, trigger, filters, template and state that fill it. Drafting runs as its own background job, so a slow model never holds up the other actions. An issue that already has linked test cases is left alone, so a status action never drafts twice for the same issue, and the action can't be saved for a project without an active AI model.
+- **Update Test Cases with AI** — when an issue's text changes, bring the test cases linked to it in line with the new text. Offered for the **Issue text changes** trigger only. See [Keeping test cases current](#keeping-test-cases-current).
 
 **Filters** narrow which issues an action takes: **Statuses** (the tracker's own status names, suggested from the issues the project already holds; type a name to add one it doesn't), **Issue types**, **Labels** (an issue with any of them matches), and **Requirements only**. An empty filter matches every issue.
 
-New issue-tracker webhooks start with an **Any issue event → Import Issues** action, so issues the tracker reports are imported as before; delete it, or add filters, to import fewer. Imported issues, created runs and drafted test cases are recorded as made by the built-in **System** user; drafts link to the issue they came from, and each reviewer named on the action gets an **AI-drafted test cases** notification linking to the folder.
+New issue-tracker webhooks start with an **Any issue event → Import Issues** action, so issues the tracker reports are imported as before; delete it, or add filters, to import fewer. Imported issues, created runs and drafted test cases are recorded as made by the built-in **System** user; drafts link to the issue they came from, and each reviewer named on the action gets an **AI-drafted test cases** notification linking to the folder. Test cases an Update action rewrites, adds or deletes are recorded the same way.
+
+### Keeping test cases current
+
+An **Issue text changes → Update Test Cases with AI** action compares each test case linked to the issue with the issue's new text, using the project's [AI model](./llm-integrations.md) and the **Test Case Updates from Issue Changes** [prompt](./prompt-configurations.md).
+
+The check starts five minutes after the issue's last change. Further changes in that time restart the wait, so a series of edits is checked once, against the text they end on.
+
+What happens to a test case depends on whether a person has confirmed it:
+
+| Test case | When the issue's change affects it |
+| --- | --- |
+| In an [AI-draft state](./workflows.md#states-that-hold-unconfirmed-ai-drafts), and not saved by anyone since AI wrote it | Rewritten in place as a new version. Deleted when the issue no longer asks for what it tests; a system administrator can restore it from **Admin → Trash**. |
+| Any other test case | Left as it is, with a **suggested change** for a person to decide. |
+
+Something the issue now asks for that no linked test case covers is added as a new draft, in the folder most of the issue's test cases are in. A test case the change does not affect is left alone. Steps a test case shares with others through a shared step group are never changed.
+
+The action's options:
+
+- **Test cases to check** — every test case linked to the issue, or only those AI drafted.
+- **State** — the state of test cases the action adds: the project's AI-draft state when unset, or its default state without one.
+- **Auto-generate tags** for added test cases (off unless switched on).
+- **Users** and **Groups** to tell.
+
+Each person is told once per check, with the number of drafts rewritten, added and deleted and of changes suggested, through the **Test cases updated after an issue change** notification. It goes to:
+
+- the users and groups the action names; when it names nobody, those named on the **Generate Test Cases with AI** action that drafted the issue's test cases; when there are none of those either, the project's creator and its project administrators; and when none of them is an active user, the system administrators
+- for a suggested change, the test case's reviewer, and the person who requested the review that reviewer approved
+
+Nobody is told when the check finds nothing to change. A check that fails is reported to the same people, with the reason.
+
+#### Suggested changes
+
+A test case with a suggested change shows it at the top of its page: the issue that changed, the reason, and the change itself against the test case as it reads. Anyone who can edit test cases in the project can decide it:
+
+- **Apply** saves the change as a normal edit, creating a new version. Applying a suggestion to delete a test case deletes it, and an administrator can restore it. The person who applies a change becomes the test case's reviewer.
+- **Dismiss** leaves the test case as it is.
+
+Either way the suggestion is not raised again until the issue's text changes again. A later change to the issue replaces a suggestion that is still waiting. When the test case has been edited since the change was suggested, **Suggest again** takes the place of **Apply** and works the suggestion out against the test case as it reads now.
+
+The repository's **Suggested Change** filter lists the test cases with a suggestion waiting. Suggestions nobody decides are covered by the [review reminders](./review-approvals.md#review-reminders).
+
+A test case also shows a notice for each linked issue whose text has changed since the test case was last brought in line with it and that has no suggestion waiting, for example in a project without an Update action. **Mark as up to date** clears the notice until the issue changes again.
 
 ### Milestone sync events (version/sprint)
 

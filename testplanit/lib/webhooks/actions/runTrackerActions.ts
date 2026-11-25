@@ -10,6 +10,7 @@ import { inboundProviderForAdapter } from "~/lib/webhooks/inboundProviders";
 import { webhookActorId } from "./actor";
 import { composeRunFromCases } from "./composeRun";
 import { enqueueDraftCases } from "./enqueueDraftCases";
+import { enqueueUpdateCases } from "./enqueueUpdateCases";
 import { logWebhookAction } from "./log";
 import { describeCreateRunRule } from "./ruleSummary";
 import { TRACKER_TRIGGERS, readCreateRunOptions } from "./schemas";
@@ -20,6 +21,13 @@ import {
   type IssueFacts,
   type TrackerRule,
 } from "./trackerRules";
+
+const TRACKER_ACTIONS = [
+  "IMPORT_ISSUE",
+  "CREATE_RUN",
+  "DRAFT_CASES",
+  "UPDATE_CASES",
+] as const;
 
 export interface TrackerActionsJob {
   deliveryId: string;
@@ -55,7 +63,8 @@ export type TrackerActionsResult =
  * an issue new to TestPlanIt, or one that moved into a chosen status —
  * from the cases linked to the issue (and its child issues when the rule
  * says so) that match the rule's test case filters, created by the System
- * user and linked to the issue.
+ * user and linked to the issue. Draft test cases and Update test cases
+ * rules that fire are handed to jobs of their own.
  */
 export async function runTrackerActions(
   db: any,
@@ -75,7 +84,7 @@ export async function runTrackerActions(
       webhookConfigId: job.webhookConfigId,
       isEnabled: true,
       trigger: { in: [...TRACKER_TRIGGERS] },
-      action: { in: ["IMPORT_ISSUE", "CREATE_RUN", "DRAFT_CASES"] },
+      action: { in: [...TRACKER_ACTIONS] },
     },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     select: {
@@ -89,6 +98,7 @@ export async function runTrackerActions(
   const importRules = rules.filter((rule) => rule.action === "IMPORT_ISSUE");
   const runRules = rules.filter((rule) => rule.action === "CREATE_RUN");
   const draftRules = rules.filter((rule) => rule.action === "DRAFT_CASES");
+  const updateRules = rules.filter((rule) => rule.action === "UPDATE_CASES");
 
   const provider = inboundProviderForAdapter(job.adapterType);
   const projectIntegration = provider
@@ -170,6 +180,7 @@ export async function runTrackerActions(
   const change: IssueChange = {
     created: newHere,
     statusChanged: statusChanged(issue.previousStatus, issue.status),
+    contentChanged: issue.contentChanged,
   };
   const facts: IssueFacts = {
     status: issue.status,
@@ -322,6 +333,21 @@ export async function runTrackerActions(
     }
   }
 
+  // Updating also calls the AI model, and waits for the issue's edits to
+  // settle, so each firing rule gets its own delayed job.
+  for (const rule of updateRules) {
+    if (!trackerRuleFires(rule, change, facts)) continue;
+    await log(rule, { outcome: "update_queued" });
+    await enqueueUpdateCases({
+      deliveryId: job.deliveryId,
+      webhookConfigId: job.webhookConfigId,
+      webhookActionId: rule.id,
+      projectId: job.projectId,
+      issueId: issue.issueId,
+      tenantId: job.tenantId,
+    });
+  }
+
   const note = deliveryError ?? deliveryNote;
   if (runIds.length > 0 || note) {
     await annotate({
@@ -342,7 +368,7 @@ export async function hasTrackerRules(
       webhookConfigId,
       isEnabled: true,
       trigger: { in: [...TRACKER_TRIGGERS] },
-      action: { in: ["IMPORT_ISSUE", "CREATE_RUN", "DRAFT_CASES"] },
+      action: { in: [...TRACKER_ACTIONS] },
     },
   });
   return count > 0;

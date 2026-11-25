@@ -4,7 +4,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { ChevronDown, ChevronRight, History } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { DateFormatter } from "@/components/DateFormatter";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
-import { diffWords } from "~/utils/wordDiff";
+import { WordDiffText } from "@/components/WordDiffText";
 import { schema } from "~/zenstack/schema";
 
 /**
@@ -54,29 +54,6 @@ function noteText(note: unknown): string {
   }
 }
 
-function DiffText({ before, after }: { before: string; after: string }) {
-  const parts = useMemo(() => diffWords(before, after), [before, after]);
-  return (
-    <div className="rounded-md bg-muted/30 p-2 text-sm break-words whitespace-pre-wrap">
-      {parts.map((part, index) => (
-        <Fragment key={index}>
-          {part.added ? (
-            <ins className="rounded-sm bg-green-100 px-0.5 no-underline dark:bg-green-950">
-              {part.value}
-            </ins>
-          ) : part.removed ? (
-            <del className="rounded-sm bg-red-100 px-0.5 dark:bg-red-950">
-              {part.value}
-            </del>
-          ) : (
-            part.value
-          )}
-        </Fragment>
-      ))}
-    </div>
-  );
-}
-
 function FieldDiff({
   label,
   before,
@@ -90,7 +67,7 @@ function FieldDiff({
   return (
     <div className="space-y-1">
       <div className="text-xs font-medium text-muted-foreground">{label}</div>
-      <DiffText before={before} after={after} />
+      <WordDiffText before={before} after={after} />
     </div>
   );
 }

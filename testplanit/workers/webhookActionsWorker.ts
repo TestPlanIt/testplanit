@@ -5,7 +5,11 @@ import {
   isMultiTenantMode,
   validateMultiTenantJobData,
 } from "../lib/multiTenantDb";
-import { JOB_DRAFT_CASES, WEBHOOK_ACTIONS_QUEUE_NAME } from "../lib/queueNames";
+import {
+  JOB_DRAFT_CASES,
+  JOB_UPDATE_CASES,
+  WEBHOOK_ACTIONS_QUEUE_NAME,
+} from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -13,6 +17,11 @@ import {
   runDraftCases,
   type DraftCasesJob,
 } from "../lib/webhooks/actions/draftCases";
+import {
+  reportUpdateCasesFailure,
+  runUpdateCases,
+  type UpdateCasesJob,
+} from "../lib/webhooks/actions/updateCases";
 import {
   IssueSyncBusyError,
   runTrackerActions,
@@ -39,7 +48,7 @@ export const BUSY_DELAY_SPREAD_MS = 8000;
  * without spending a retry.
  */
 const processor = async (
-  job: Job<TrackerActionsJob | DraftCasesJob>,
+  job: Job<TrackerActionsJob | DraftCasesJob | UpdateCasesJob>,
   token?: string
 ) => {
   validateMultiTenantJobData(job.data);
@@ -52,6 +61,33 @@ const processor = async (
       );
     }
     return drafted;
+  }
+  if (job.name === JOB_UPDATE_CASES) {
+    let updated;
+    try {
+      updated = await runUpdateCases(db, job.data as UpdateCasesJob);
+    } catch (error) {
+      // Out of retries: say so before the job is given up on.
+      if (job.attemptsMade + 1 >= (job.opts?.attempts ?? 1)) {
+        await reportUpdateCasesFailure(
+          db,
+          job.data as UpdateCasesJob,
+          error instanceof Error ? error.message : "failed"
+        ).catch((reportError) =>
+          console.error(
+            "[WebhookActionsWorker] could not report an update failure:",
+            reportError
+          )
+        );
+      }
+      throw error;
+    }
+    if (updated.outcome === "cases_updated") {
+      console.log(
+        `[WebhookActionsWorker] delivery ${job.data.deliveryId}: ${updated.rewritten} case(s) rewritten, ${updated.added} added, ${updated.deleted} deleted, ${updated.suggested} suggested`
+      );
+    }
+    return updated;
   }
   const data = job.data as TrackerActionsJob;
   let result;

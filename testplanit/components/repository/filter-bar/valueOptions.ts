@@ -39,6 +39,7 @@ export interface FilterBarViewOptions {
   /** Only present while the project runs the review workflow. */
   inReview?: Array<{ value: boolean; count: number }>;
   codePins?: Array<{ value: boolean; count: number }>;
+  suggestions?: Array<{ value: boolean; count: number }>;
   dynamicFields?: Record<
     string,
     {
@@ -125,6 +126,12 @@ export function getDimensionValueOptions(
         viewOptions?.inReview,
         t,
         BOOLEAN_VALUE_LABEL_KEYS.inReview
+      );
+    case "suggestions":
+      return booleanOptions(
+        viewOptions?.suggestions,
+        t,
+        BOOLEAN_VALUE_LABEL_KEYS.suggestions
       );
     case "codePins":
       return booleanOptions(

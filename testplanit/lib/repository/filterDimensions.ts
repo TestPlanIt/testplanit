@@ -221,6 +221,12 @@ export const REPO_STATIC_DIMENSIONS: readonly FilterDimension[] = [
     valueType: "idList",
     operators: ["any", "all", "none"],
   },
+  {
+    key: "suggestions",
+    scope: "repo",
+    valueType: "boolean",
+    operators: BOOLEAN_OPERATORS,
+  },
 ];
 
 /**
@@ -234,6 +240,9 @@ export const IN_REVIEW_DIMENSION_DEF: FilterDimension = {
   valueType: "boolean",
   operators: BOOLEAN_OPERATORS,
 };
+
+/** Cases with a suggested change waiting for a decision. */
+export const SUGGESTIONS_DIMENSION = "suggestions";
 
 /**
  * Impact-only repo dimension: cases with at least one live Code Pin. Exists

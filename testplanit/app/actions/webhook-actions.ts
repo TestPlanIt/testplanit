@@ -111,18 +111,20 @@ async function checkCaseFilter(
 }
 
 /**
- * A Draft test cases rule needs an AI model to call, and its template,
- * state, users and groups must be the project's own.
+ * A Draft or Update test cases rule needs an AI model to call, and its
+ * template, state, users and groups must be the project's own.
  */
 async function checkDraftCases(
   projectId: number,
   action: WebhookActionType,
   options: DraftCasesOptions
 ): Promise<string | null> {
-  if (action !== "DRAFT_CASES") return null;
+  if (action !== "DRAFT_CASES" && action !== "UPDATE_CASES") return null;
   const readiness = await getProjectReadiness(projectId);
   if (!readiness.hasActiveLlm) {
-    return "This project has no active AI model to draft test cases with";
+    return action === "UPDATE_CASES"
+      ? "This project has no active AI model to update test cases with"
+      : "This project has no active AI model to draft test cases with";
   }
   if (!readiness.hasRepository || !readiness.hasDefaultWorkflow) {
     return "This project needs a repository and a default case state";

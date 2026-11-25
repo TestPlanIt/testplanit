@@ -118,6 +118,7 @@ import {
   CaseChangedDialog,
   hasCaseChangedSinceLoad,
 } from "@/components/cases/CaseChangedDialog";
+import { CaseChangeSuggestions } from "@/components/cases/CaseChangeSuggestions";
 import { LoadFromVersionMenu } from "@/components/cases/LoadFromVersionMenu";
 import {
   ConfirmTemplateSwitchDialog,
@@ -3195,6 +3196,18 @@ export function TestCaseDetailsView({
                 </AlertDescription>
               </Alert>
             </div>
+          )}
+          {!isEditMode && testcase && (
+            <CaseChangeSuggestions
+              caseId={testcase.id}
+              testcase={testcase}
+              currentVersion={testcase.currentVersion}
+              canDecide={canAddEdit}
+              onCaseChanged={() => void refetch()}
+              onCaseDeleted={() =>
+                router.push(`/projects/repository/${projectId}`)
+              }
+            />
           )}
           {/* Template not assigned to project warning */}
           {testcase?.template &&

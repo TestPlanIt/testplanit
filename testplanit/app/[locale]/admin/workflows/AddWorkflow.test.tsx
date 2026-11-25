@@ -34,6 +34,10 @@ vi.mock("next-intl", () => ({
 vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
   useReviewFeatureEnabled: () => ({ systemEnabled: false }),
 }));
+const aiModel = vi.hoisted(() => ({ active: true }));
+vi.mock("~/hooks/useHasActiveAiModel", () => ({
+  useHasActiveAiModel: () => aiModel.active,
+}));
 
 vi.mock("@/components/FieldIconPicker", () => ({
   FieldIconPicker: () => null,
@@ -131,5 +135,97 @@ describe("AddWorkflows — enabled flag", () => {
 
     await waitFor(() => expect(mockCreateWorkflow).toHaveBeenCalledTimes(1));
     expect(mockCreateWorkflow.mock.calls[0][0].data.isEnabled).toBe(true);
+  });
+});
+
+describe("AddWorkflows — AI drafts flag", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockCreateWorkflow.mockResolvedValue({ id: 7 });
+    mockCreateManyAssignment.mockResolvedValue({ count: 0 });
+  });
+
+  const aiSwitch = () => screen.queryByTestId("add-ai-draft-switch");
+  const submit = () =>
+    fireEvent.click(screen.getByRole("button", { name: "actions.submit" }));
+
+  it("creates a case state that holds AI drafts when the switch is on", async () => {
+    render(
+      <AddWorkflows open={true} onClose={() => {}} defaultScope="CASES" />
+    );
+    await fillRequiredFields("AI-Generated");
+    fireEvent.click(aiSwitch()!);
+    submit();
+
+    await waitFor(() => expect(mockCreateWorkflow).toHaveBeenCalledTimes(1));
+    expect(mockCreateWorkflow.mock.calls[0][0].data).toMatchObject({
+      name: "AI-Generated",
+      scope: "CASES",
+      isAiDraft: true,
+      isDefault: false,
+      order: 0,
+    });
+  });
+
+  it("leaves the flag off unless it is switched on", async () => {
+    render(
+      <AddWorkflows open={true} onClose={() => {}} defaultScope="CASES" />
+    );
+    await fillRequiredFields("Ready");
+    submit();
+
+    await waitFor(() => expect(mockCreateWorkflow).toHaveBeenCalledTimes(1));
+    expect(mockCreateWorkflow.mock.calls[0][0].data.isAiDraft).toBe(false);
+    expect(mockCreateWorkflow.mock.calls[0][0].data).not.toHaveProperty(
+      "order"
+    );
+  });
+
+  it("hides the switch until an AI model is active", () => {
+    aiModel.active = false;
+    try {
+      render(
+        <AddWorkflows open={true} onClose={() => {}} defaultScope="CASES" />
+      );
+      expect(aiSwitch()).toBeNull();
+    } finally {
+      aiModel.active = true;
+    }
+  });
+
+  it("offers the switch for test case states only", () => {
+    const { unmount } = render(
+      <AddWorkflows open={true} onClose={() => {}} defaultScope="RUNS" />
+    );
+    expect(aiSwitch()).toBeNull();
+    unmount();
+    render(
+      <AddWorkflows open={true} onClose={() => {}} defaultScope="SESSIONS" />
+    );
+    expect(aiSwitch()).toBeNull();
+  });
+
+  it("switches the flag off and locks it when the state is made the default", async () => {
+    render(
+      <AddWorkflows open={true} onClose={() => {}} defaultScope="CASES" />
+    );
+    await fillRequiredFields("Draft");
+    fireEvent.click(aiSwitch()!);
+    expect(aiSwitch()!.getAttribute("aria-checked")).toBe("true");
+
+    // Default is the first switch in the form.
+    fireEvent.click(screen.getAllByRole("switch")[0]);
+    expect(aiSwitch()!.getAttribute("aria-checked")).toBe("false");
+    expect(aiSwitch()).toBeDisabled();
+    expect(
+      screen.getByText("editWorkflow.aiDraftDefaultDisabled")
+    ).toBeInTheDocument();
+    submit();
+
+    await waitFor(() => expect(mockCreateWorkflow).toHaveBeenCalledTimes(1));
+    expect(mockCreateWorkflow.mock.calls[0][0].data).toMatchObject({
+      isDefault: true,
+      isAiDraft: false,
+    });
   });
 });

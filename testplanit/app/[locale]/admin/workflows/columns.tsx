@@ -1,6 +1,7 @@
 import DynamicIcon from "@/components/DynamicIcon";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { WorkflowScope } from "~/zenstack/models";
 import { ColumnDef } from "@/components/tables/tableFeatures";
@@ -59,6 +60,14 @@ export const useColumns = (
               color={row.original.color?.value}
             />
             <span>{row.original.name}</span>
+            {row.original.isAiDraft && (
+              <Badge
+                variant="secondary"
+                data-testid={`ai-draft-badge-${row.original.id}`}
+              >
+                {tAdminWorkflows("editWorkflow.aiDraftBadge")}
+              </Badge>
+            )}
           </div>
         ),
       },

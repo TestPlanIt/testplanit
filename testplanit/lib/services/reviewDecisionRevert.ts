@@ -323,6 +323,15 @@ export async function revertReviewDecision(
           req.fromStateId
         );
 
+        // The approval made its decider the case's reviewer; taking the
+        // approval back takes that back too.
+        if (req.entityType === "CASE" && req.decidedByUserId) {
+          await tx.repositoryCases.updateMany({
+            where: { id: req.entityId, reviewedById: req.decidedByUserId },
+            data: { reviewedById: null, reviewedAt: null },
+          });
+        }
+
         // Every approval the same crossing spent shares one exact `consumedAt`
         // instant, because `applyApprovedReviewTransition` stamps them in a
         // single updateMany. Releasing the whole group keeps a multi-gate

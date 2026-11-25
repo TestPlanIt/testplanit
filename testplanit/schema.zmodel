@@ -565,6 +565,7 @@ enum NotificationType {
     ALERT_TRIGGERED
     CASES_DRAFTED
     NEW_RELEASE_AVAILABLE
+    CASES_UPDATED
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -1448,6 +1449,8 @@ model Workflows {
     workflowType            WorkflowType                @default(NOT_STARTED)
     scope                   WorkflowScope
     requiresReview          Boolean                     @default(false)
+    // Case states only: holds cases the AI drafted that nobody has reviewed.
+    isAiDraft               Boolean                     @default(false)
     projects                ProjectWorkflowAssignment[]
     repositoryCases         RepositoryCases[]
     sessions                Sessions[]
@@ -1463,6 +1466,10 @@ model Workflows {
     @@validate(
         isDefault != true || requiresReview != true,
         "The default workflow state cannot require review — new entities land here and the schema gate only fires on transitions."
+    )
+    @@validate(
+        isAiDraft != true || isDefault != true,
+        "The default workflow state cannot hold unreviewed AI drafts — hand-written cases land here."
     )
 
     @@deny('all', auth() == null)
@@ -1843,6 +1850,9 @@ model RepositoryCaseIssue {
     // (TestCaseRepository canAddEdit -- the same people who can link and
     // unlink), so no policy clause changes and no new route are needed.
     suspectDismissedAt DateTime?       @db.Timestamptz(6)
+    // When the case text was last aligned with the issue text. Null for links
+    // that predate the column, which are never flagged.
+    alignedAt          DateTime?       @db.Timestamptz(6)
 
     @@id([caseId, issueId])
     @@index([issueId])
@@ -2201,6 +2211,13 @@ model RepositoryCases {
     deletedAt               DateTime?                    @db.Timestamptz(6)
     deletedById             String?
     currentVersion          Int                          @default(1)
+    // The version number the AI last wrote. The AI may rewrite the case only
+    // while currentVersion still equals it.
+    aiWrittenVersion        Int?
+    // The last person who reviewed the case: whoever moved it out of an
+    // AI-draft state, approved its review, or applied a suggested change.
+    reviewedById            String?
+    reviewedAt              DateTime?                    @db.Timestamptz(6)
     hasParameters           Boolean                      @default(false)
     // Number of LIVE (isDeleted = false) rows in `steps`, maintained by the
     // tpl_case_step_count_steps trigger (scripts/apply-triggers.ts). Exists purely
@@ -2233,6 +2250,7 @@ model RepositoryCases {
     ownedDataSets           DataSet[]                    @relation("DataSetOwnerCase")
     sharedDataSetAssignment CaseSharedDataSetAssignment? @relation("CaseSharedDataSetAssignmentCase")
     drafts                  CaseDraft[]
+    changeSuggestions       CaseChangeSuggestion[]
 
     @@unique([projectId, name, className, source])
     @@index([projectId, isDeleted, isArchived])
@@ -3803,6 +3821,7 @@ model Issue {
     createdById           String                      @deny('update', true)
     createdBy             User                        @relation("IssueCreator", fields: [createdById], references: [id])
     caseIssues            RepositoryCaseIssue[]
+    caseChangeSuggestions CaseChangeSuggestion[]
     // LINK-03 manual traceability references. Never routed through parentId
     // and never set alongside isRequirement (D-09).
     outgoingReferences    RequirementIssueReference[] @relation("RequirementIssueReferenceSource")
@@ -6095,6 +6114,7 @@ enum WebhookActionTrigger {
     ISSUE_EVENT
     ISSUE_CREATED
     ISSUE_STATUS_ENTERED
+    ISSUE_CONTENT_CHANGED
     CODE_PULL_REQUEST
     CODE_PUSH
     CODE_BRANCH_PUSH
@@ -6107,6 +6127,7 @@ enum WebhookActionType {
     IMPORT_ISSUE
     CREATE_RUN
     DRAFT_CASES
+    UPDATE_CASES
 
     @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
@@ -6145,6 +6166,61 @@ model WebhookAction {
 }
 
 // What one webhook action did for one delivery.
+enum CaseChangeSuggestionKind {
+    UPDATE
+    RETIRE
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum CaseChangeSuggestionStatus {
+    PENDING
+    APPLIED
+    DISMISSED
+    SUPERSEDED
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+// A change the AI proposes to a test case after a linked issue's text
+// changed. Written by the webhook worker and decided through the app's
+// routes, never through the policy client.
+model CaseChangeSuggestion {
+    id                    Int                        @id @default(autoincrement())
+    projectId             Int
+    caseId                Int
+    case                  RepositoryCases            @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    issueId               Int
+    issue                 Issue                      @relation(fields: [issueId], references: [id], onDelete: Cascade)
+    // Issue.contentUpdatedAt when the suggestion was computed.
+    issueContentUpdatedAt DateTime?                  @db.Timestamptz(6)
+    // RepositoryCases.currentVersion when the suggestion was computed.
+    baseCaseVersion       Int
+    kind                  CaseChangeSuggestionKind
+    // The proposed case in form-value shape: name, field values, steps.
+    proposed              Json?
+    rationale             String?
+    status                CaseChangeSuggestionStatus @default(PENDING)
+    webhookActionId       String?
+    deliveryId            String?
+    decidedById           String?
+    decidedAt             DateTime?                  @db.Timestamptz(6)
+    lastRemindedAt        DateTime?                  @db.Timestamptz(6)
+    createdAt             DateTime                   @default(now()) @db.Timestamptz(6)
+
+    @@index([caseId, status])
+    @@index([issueId, status])
+    @@index([projectId, status])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@deny('create, update, delete', true)
+    @@allow('read', projectId in auth().accessibleProjectIds)
+    @@allow('read', auth().access == 'ADMIN')
+}
+
 model WebhookActionLog {
     id              String           @id @default(cuid())
     webhookActionId String?

@@ -115,6 +115,11 @@ vi.mock("../lib/services/releaseCheck", () => ({
   runReleaseCheck: (...args: unknown[]) => mockRunReleaseCheck(...args),
 }));
 
+const mockRemindAboutWaitingSuggestions = vi.hoisted(() => vi.fn());
+vi.mock("../lib/services/caseUpkeep/reminders", () => ({
+  remindAboutWaitingSuggestions: mockRemindAboutWaitingSuggestions,
+}));
+
 vi.mock("../lib/services/reviewReminderConfig", () => ({
   getReviewReminderThresholdDays: (...args: any[]) =>
     mockGetReviewReminderThresholdDays(...args),
@@ -295,6 +300,10 @@ describe("JOB_REVIEW_REMINDERS", () => {
     vi.useFakeTimers();
     vi.setSystemTime(FIXED_NOW);
     mockGetReviewReminderThresholdDays.mockResolvedValue(1);
+    mockRemindAboutWaitingSuggestions.mockResolvedValue({
+      reminders: 0,
+      suggestions: 0,
+    });
     seedContextHappyPath();
   });
 
@@ -311,6 +320,45 @@ describe("JOB_REVIEW_REMINDERS", () => {
     } as unknown as Job;
     await processor(job);
   };
+
+  it("reminds about suggested test case changes with the same threshold and clock", async () => {
+    mockDb.reviewRequest.findMany.mockResolvedValue([]);
+    mockRemindAboutWaitingSuggestions.mockResolvedValue({
+      reminders: 2,
+      suggestions: 3,
+    });
+
+    await runProcessor();
+
+    expect(mockRemindAboutWaitingSuggestions).toHaveBeenCalledTimes(1);
+    expect(mockRemindAboutWaitingSuggestions).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        cutoff: new Date(FIXED_NOW.getTime() - 24 * 60 * 60 * 1000),
+        now: FIXED_NOW,
+        tenantId: undefined,
+      }
+    );
+  });
+
+  it("sends no suggestion reminders when reminders are turned off", async () => {
+    mockGetReviewReminderThresholdDays.mockResolvedValue(0);
+
+    await runProcessor();
+
+    expect(mockRemindAboutWaitingSuggestions).not.toHaveBeenCalled();
+    expect(mockDb.reviewRequest.findMany).not.toHaveBeenCalled();
+  });
+
+  it("still scans review requests when the suggestion reminders fail", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mockRemindAboutWaitingSuggestions.mockRejectedValue(new Error("boom"));
+    mockDb.reviewRequest.findMany.mockResolvedValue([]);
+
+    await expect(runProcessor()).resolves.toBeUndefined();
+
+    expect(mockDb.reviewRequest.findMany).toHaveBeenCalledTimes(1);
+  });
 
   it("Test 1: scan predicate filters by status / isDeleted / createdAt / lastRemindedAt", async () => {
     mockDb.reviewRequest.findMany.mockResolvedValue([]);

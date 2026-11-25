@@ -35,6 +35,7 @@ const notifySpy = vi.fn();
 const webhookSpy = vi.fn();
 const auditSpy = vi.fn();
 const entityUpdateSpy = vi.fn();
+const reviewerClearSpy = vi.fn();
 const unconsumeSpy = vi.fn();
 
 vi.mock("~/lib/services/reviewFeatureFlag", () => ({
@@ -70,6 +71,10 @@ vi.mock("~/lib/audit/auditedTransaction", () => ({
         update: async (args: unknown) => {
           entityUpdateSpy(args);
           return {};
+        },
+        updateMany: async (args: unknown) => {
+          reviewerClearSpy(args);
+          return { count: 1 };
         },
       },
       testRuns: {
@@ -491,10 +496,40 @@ describe("revertReviewDecision — undoing an approval's transition", () => {
     });
   });
 
+  it("stops the approver being the case's reviewer", async () => {
+    loadedRequest = buildRequest({
+      status: "APPROVED",
+      consumedAt: new Date("2026-10-27T11:30:00Z"),
+    });
+    entityStateId = 2;
+
+    await revertReviewDecision(sessionFor(DECIDER_ID), REVIEW_ID);
+
+    expect(reviewerClearSpy).toHaveBeenCalledTimes(1);
+    expect(reviewerClearSpy.mock.calls[0][0]).toEqual({
+      where: { id: 42, reviewedById: DECIDER_ID },
+      data: { reviewedById: null, reviewedAt: null },
+    });
+  });
+
+  it("leaves the reviewer alone when the reverted review is on a run", async () => {
+    loadedRequest = buildRequest({
+      status: "APPROVED",
+      entityType: "RUN",
+      consumedAt: new Date("2026-10-27T11:30:00Z"),
+    });
+    entityStateId = 2;
+
+    await revertReviewDecision(sessionFor(DECIDER_ID), REVIEW_ID);
+
+    expect(reviewerClearSpy).not.toHaveBeenCalled();
+  });
+
   it("does not touch the entity when the approval was never consumed", async () => {
     loadedRequest = buildRequest({ status: "APPROVED", consumedAt: null });
     await revertReviewDecision(sessionFor(DECIDER_ID), REVIEW_ID);
     expect(entityUpdateSpy).not.toHaveBeenCalled();
+    expect(reviewerClearSpy).not.toHaveBeenCalled();
     expect(unconsumeSpy).not.toHaveBeenCalled();
   });
 

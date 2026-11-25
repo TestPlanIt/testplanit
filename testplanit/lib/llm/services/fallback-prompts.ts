@@ -1,4 +1,8 @@
 import { LLM_FEATURES, type LlmFeature } from "../constants";
+import {
+  CASE_UPKEEP_SYSTEM_PROMPT,
+  CASE_UPKEEP_USER_PROMPT,
+} from "./case-upkeep-prompt";
 
 export interface FallbackPrompt {
   systemPrompt: string;
@@ -498,6 +502,13 @@ STDERR (one sample, may be empty):
 Classify this failure cluster. Return ONLY the JSON object.`,
     temperature: 0.2,
     maxOutputTokens: 1000,
+    source: "fallback",
+  },
+  [LLM_FEATURES.CASE_UPKEEP]: {
+    systemPrompt: CASE_UPKEEP_SYSTEM_PROMPT,
+    userPrompt: CASE_UPKEEP_USER_PROMPT,
+    temperature: 0.2,
+    maxOutputTokens: 8000,
     source: "fallback",
   },
 };

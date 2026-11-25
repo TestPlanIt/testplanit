@@ -64,6 +64,8 @@ export function useWebhookActionLabels(baseBranch: string | null) {
         return tCases("createTestRun");
       case "DRAFT_CASES":
         return tGenerate("title");
+      case "UPDATE_CASES":
+        return t("updateCases");
       case "IMPORT_ISSUE":
         return tIntegration("importIssues");
     }

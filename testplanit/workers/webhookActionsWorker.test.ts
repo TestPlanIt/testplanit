@@ -4,10 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   runTrackerActions,
   runDraftCases,
+  runUpdateCases,
+  reportUpdateCasesFailure,
   getDbClientForJob,
   validateMultiTenantJobData,
   IssueSyncBusyError,
 } = vi.hoisted(() => ({
+  runUpdateCases: vi.fn(),
+  reportUpdateCasesFailure: vi.fn(),
   IssueSyncBusyError: class IssueSyncBusyError extends Error {},
   runTrackerActions: vi.fn(),
   runDraftCases: vi.fn(),
@@ -30,8 +34,16 @@ vi.mock("../lib/webhooks/actions/runTrackerActions", () => ({
   runTrackerActions,
 }));
 vi.mock("../lib/webhooks/actions/draftCases", () => ({ runDraftCases }));
+vi.mock("../lib/webhooks/actions/updateCases", () => ({
+  runUpdateCases,
+  reportUpdateCasesFailure,
+}));
 
-import { JOB_DRAFT_CASES, JOB_RUN_TRACKER_ACTIONS } from "../lib/queueNames";
+import {
+  JOB_DRAFT_CASES,
+  JOB_RUN_TRACKER_ACTIONS,
+  JOB_UPDATE_CASES,
+} from "../lib/queueNames";
 import {
   BUSY_DELAY_MIN_MS,
   BUSY_DELAY_SPREAD_MS,
@@ -100,6 +112,83 @@ describe("webhookActionsWorker processor", () => {
     expect(validateMultiTenantJobData).toHaveBeenCalledWith(data);
     expect(runDraftCases).toHaveBeenCalledWith({ tag: "db" }, data);
     expect(runTrackerActions).not.toHaveBeenCalled();
+  });
+
+  it("updates cases for an update-cases job on the job's tenant database", async () => {
+    const data = {
+      deliveryId: "del-1",
+      webhookConfigId: "whc-1",
+      webhookActionId: "update-1",
+      projectId: 7,
+      issueId: 100,
+      tenantId: "t",
+    };
+    for (const updated of [
+      {
+        outcome: "cases_updated",
+        checked: 3,
+        rewritten: 1,
+        added: 0,
+        deleted: 0,
+        suggested: 2,
+      },
+      { outcome: "no_cases" },
+    ]) {
+      runUpdateCases.mockResolvedValue(updated);
+      await expect(
+        processor({ id: "j3", name: JOB_UPDATE_CASES, data } as unknown as Job)
+      ).resolves.toBe(updated);
+    }
+    expect(validateMultiTenantJobData).toHaveBeenCalledWith(data);
+    expect(runUpdateCases).toHaveBeenCalledWith({ tag: "db" }, data);
+    expect(runTrackerActions).not.toHaveBeenCalled();
+    expect(runDraftCases).not.toHaveBeenCalled();
+  });
+
+  it("lets an update-cases failure throw so BullMQ retries, reporting only the last attempt", async () => {
+    runUpdateCases.mockRejectedValue(new Error("database is down"));
+    reportUpdateCasesFailure.mockResolvedValue(undefined);
+    const data = { webhookActionId: "update-1" };
+    const attempt = (attemptsMade: number, attempts?: number) =>
+      processor({
+        id: "j4",
+        name: JOB_UPDATE_CASES,
+        data,
+        attemptsMade,
+        opts: attempts === undefined ? {} : { attempts },
+      } as unknown as Job);
+
+    await expect(attempt(0, 3)).rejects.toThrow("database is down");
+    await expect(attempt(1, 3)).rejects.toThrow("database is down");
+    expect(reportUpdateCasesFailure).not.toHaveBeenCalled();
+
+    await expect(attempt(2, 3)).rejects.toThrow("database is down");
+    expect(reportUpdateCasesFailure).toHaveBeenCalledTimes(1);
+    expect(reportUpdateCasesFailure).toHaveBeenCalledWith(
+      { tag: "db" },
+      data,
+      "database is down"
+    );
+
+    // A job with no retries configured reports its only attempt.
+    await expect(attempt(0)).rejects.toThrow("database is down");
+    expect(reportUpdateCasesFailure).toHaveBeenCalledTimes(2);
+  });
+
+  it("still throws the job's own error when reporting it fails, or the error is not an Error", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    runUpdateCases.mockRejectedValue("boom");
+    reportUpdateCasesFailure.mockRejectedValue(new Error("queue is down"));
+    await expect(
+      processor({
+        id: "j5",
+        name: JOB_UPDATE_CASES,
+        data: {},
+        attemptsMade: 0,
+        opts: { attempts: 1 },
+      } as unknown as Job)
+    ).rejects.toBe("boom");
+    expect(reportUpdateCasesFailure.mock.calls.at(-1)![2]).toBe("failed");
   });
 
   it("lets a failure throw so BullMQ retries", async () => {

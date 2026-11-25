@@ -64,6 +64,8 @@ import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
 import {
   readCreateRunOptions,
   readDraftCasesOptions,
+  readUpdateCasesOptions,
+  type DraftCasesOptions,
   readWebhookActionFilter,
   type WebhookActionSource,
 } from "~/lib/webhooks/actions/schemas";
@@ -325,8 +327,16 @@ export function WebhookActionsSection({
       });
     }
     if (filter.requirementsOnly) out.push({ label: t("requirementsOnly") });
-    if (rule.action === "DRAFT_CASES") {
-      const draft = readDraftCasesOptions(rule.options);
+    if (rule.action === "DRAFT_CASES" || rule.action === "UPDATE_CASES") {
+      const update =
+        rule.action === "UPDATE_CASES"
+          ? readUpdateCasesOptions(rule.options)
+          : null;
+      const draft: DraftCasesOptions =
+        update ?? readDraftCasesOptions(rule.options);
+      if (update?.scope === "ai_drafted") {
+        out.push({ label: t("updateScopeOptions.ai_drafted") });
+      }
       if (draft.templateId !== undefined) {
         const template = draftTemplates?.find((x) => x.id === draft.templateId);
         out.push({
@@ -434,6 +444,11 @@ export function WebhookActionsSection({
       case "no_template":
       case "no_target":
       case "draft_failed":
+      case "update_queued":
+      case "cases_updated":
+      case "no_changes":
+      case "up_to_date":
+      case "update_failed":
         return t(`outcome.${outcome}`);
       default:
         return outcome;

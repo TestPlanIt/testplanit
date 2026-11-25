@@ -1425,6 +1425,19 @@ async function seedWorkflows() {
       scope: "RUNS",
       workflowType: "DONE",
     },
+    // Holds test cases AI drafted that nobody has reviewed. Added switched
+    // off, to new and existing installs alike, for an admin to switch on.
+    {
+      order: 0,
+      name: "AI-Generated",
+      icon: "bot",
+      color: "Blue",
+      isEnabled: false,
+      isDefault: false,
+      isAiDraft: true,
+      scope: "CASES",
+      workflowType: "NOT_STARTED",
+    },
     {
       order: 1,
       name: "Draft",
@@ -1502,7 +1515,14 @@ async function seedWorkflows() {
     ).map((w) => w.scope)
   );
 
+  // An install where a state has ever been marked for AI drafts keeps its
+  // own choice, renamed or deleted as it may be.
+  const hadAiDraftState =
+    (await db.workflows.count({ where: { isAiDraft: true } })) > 0;
+
   for (const workflow of workflowsData) {
+    const isAiDraft = "isAiDraft" in workflow && workflow.isAiDraft === true;
+    if (isAiDraft && hadAiDraftState) continue;
     const icon = await db.fieldIcon.findUnique({
       where: { name: workflow.icon },
     });
@@ -1539,9 +1559,24 @@ async function seedWorkflows() {
             isDefault:
               workflow.isDefault && !existingDefaultScopes.has(workflow.scope),
             requiresReview: false,
+            isAiDraft,
             scope: workflow.scope as WorkflowScope,
             workflowType: workflow.workflowType as
               "NOT_STARTED" | "IN_PROGRESS" | "DONE",
+            // A state added switched off is skipped by the assignment pass
+            // below, so it is given to every project here.
+            ...(workflow.isEnabled
+              ? {}
+              : {
+                  projects: {
+                    create: (
+                      await db.projects.findMany({
+                        where: { isDeleted: false },
+                        select: { id: true },
+                      })
+                    ).map((project) => ({ projectId: project.id })),
+                  },
+                }),
           },
         });
       }

@@ -17,6 +17,7 @@ export const LLM_FEATURES = {
   DERIVE_CASE_STEPS: "derive_case_steps",
   IMPACT_ANALYSIS: "impact_analysis",
   FAILURE_TRIAGE: "failure_triage",
+  CASE_UPKEEP: "case_upkeep",
 } as const;
 
 export type LlmFeature = (typeof LLM_FEATURES)[keyof typeof LLM_FEATURES];
@@ -271,6 +272,32 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
         "Up to 10 affected case names with their recent pass/fail verdicts",
     },
   ],
+  [LLM_FEATURES.CASE_UPKEEP]: [
+    {
+      name: "FIELDS",
+      description:
+        "The template's fields the model may set, one per line with type, options and any generation guidance",
+    },
+    {
+      name: "ISSUE",
+      description: "The issue's key, title and description as they read now",
+    },
+    {
+      name: "ISSUE_CHANGES",
+      description:
+        "For a requirement, the title and description before the change; otherwise a note that the earlier text is not available",
+    },
+    {
+      name: "OTHER_ISSUES",
+      description:
+        "Keys and titles of the other issues the test cases are linked to",
+    },
+    {
+      name: "CASES",
+      description:
+        "The linked test cases as JSON: id, name, field values by field name, and steps",
+    },
+  ],
 };
 
 /**
@@ -293,6 +320,7 @@ export const LLM_FEATURE_LABELS: Record<LlmFeature, string> = {
   [LLM_FEATURES.DERIVE_CASE_STEPS]: "AI Step Derivation",
   [LLM_FEATURES.IMPACT_ANALYSIS]: "Impact: Affected Test Selection",
   [LLM_FEATURES.FAILURE_TRIAGE]: "Failure Patterns: Root Cause",
+  [LLM_FEATURES.CASE_UPKEEP]: "Test Case Updates from Issue Changes",
 };
 
 /**

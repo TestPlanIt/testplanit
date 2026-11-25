@@ -196,7 +196,8 @@ function WorkflowComponent() {
         // the previous default for this scope atomically.
         await updateWorkflows({
           where: { id: selectedWorkflowId },
-          data: { isDefault: true, isEnabled: true },
+          // The default state cannot hold unreviewed AI drafts.
+          data: { isDefault: true, isEnabled: true, isAiDraft: false },
         });
 
         await deleteManyProjectWorkflowAssignment({

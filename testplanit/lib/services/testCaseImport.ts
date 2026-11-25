@@ -204,7 +204,7 @@ export interface ImportAuthor {
   access?: string | null;
 }
 
-function convertStepToTipTap(value: any) {
+export function convertStepToTipTap(value: any) {
   if (typeof value === "string") {
     return ensureTipTapJSON(value);
   }

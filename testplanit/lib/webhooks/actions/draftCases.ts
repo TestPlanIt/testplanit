@@ -14,6 +14,7 @@ import {
   type ImportInput,
 } from "~/lib/services/testCaseImport";
 import { webhookActorId } from "./actor";
+import { aiDraftState, markAiWritten } from "./aiDrafts";
 import { logWebhookAction } from "./log";
 import { describeDraftCasesRule, draftFolderNote } from "./ruleSummary";
 import { readDraftCasesOptions, readWebhookActionFilter } from "./schemas";
@@ -44,7 +45,8 @@ export type DraftCasesResult =
  * Draft test cases for one issue with the project's AI model, the way the
  * Repository's Generate wizard does, into a top-level folder named after
  * the rule (one folder per rule, its note saying which webhook and rule
- * fill it), in the state the rule chose, linked to the issue and created
+ * fill it), in the state the rule chose (the project's AI-draft state when
+ * it chose none and the project has one), linked to the issue and created
  * by the System user. An issue that already has linked cases is left
  * alone, which also keeps a retried job from drafting twice. Recipients
  * the rule names are notified.
@@ -173,7 +175,7 @@ export async function runDraftCases(
         },
         select: { id: true, name: true },
       })
-    : null;
+    : await aiDraftState(db, job.projectId);
   if (state) {
     target.stateId = state.id;
     target.stateName = state.name;
@@ -245,6 +247,8 @@ export async function runDraftCases(
     await annotate(`draft:${detail.slice(0, 200)}`);
     return { outcome: "draft_failed", detail };
   }
+
+  await markAiWritten(db, result.importedIds, issue.id);
 
   await log({
     outcome: "cases_drafted",

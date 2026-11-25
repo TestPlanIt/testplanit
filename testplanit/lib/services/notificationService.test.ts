@@ -245,6 +245,130 @@ describe("NotificationService", () => {
     });
   });
 
+  describe("createCasesUpdatedNotification", () => {
+    const base = {
+      userId: "rev",
+      projectId: 3,
+      projectName: "Telco",
+      issueId: 100,
+      issueKey: "DEMO-42",
+      issueTitle: "Checkout totals",
+    };
+    const queued = () => mockQueue.add.mock.calls.at(-1)![1] as any;
+
+    it("queues a summary with every count and the deleted drafts' names", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-updated" } as any);
+
+      await NotificationService.createCasesUpdatedNotification({
+        ...base,
+        kind: "summary",
+        rewritten: 2,
+        added: 1,
+        deleted: 1,
+        suggested: 3,
+        deletedNames: ["Remember me keeps the session"],
+      });
+
+      expect(queued()).toMatchObject({
+        userId: "rev",
+        type: NotificationType.CASES_UPDATED,
+        title: "Test cases updated after an issue change",
+        message:
+          'DEMO-42 "Checkout totals" in project "Telco" changed: 2 rewritten, 1 added, 1 deleted, 3 suggested.',
+        relatedEntityId: "100",
+        relatedEntityType: "Issue",
+        data: {
+          kind: "summary",
+          projectId: 3,
+          projectName: "Telco",
+          issueId: 100,
+          issueKey: "DEMO-42",
+          issueTitle: "Checkout totals",
+          rewritten: 2,
+          added: 1,
+          deleted: 1,
+          suggested: 3,
+          deletedNames: ["Remember me keeps the session"],
+        },
+      });
+      expect(queued().data).not.toHaveProperty("detail");
+    });
+
+    it("counts what is left out as zero and keeps at most 20 deleted names", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-updated" } as any);
+
+      await NotificationService.createCasesUpdatedNotification({
+        ...base,
+        kind: "summary",
+        deletedNames: Array.from({ length: 25 }, (_, i) => `Case ${i}`),
+      });
+
+      expect(queued().data).toMatchObject({
+        rewritten: 0,
+        added: 0,
+        deleted: 0,
+        suggested: 0,
+      });
+      expect(queued().data.deletedNames).toHaveLength(20);
+    });
+
+    it("queues a failure with its reason, shortened", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-updated" } as any);
+
+      await NotificationService.createCasesUpdatedNotification({
+        ...base,
+        kind: "failed",
+        detail: "rate limited",
+      });
+      expect(queued()).toMatchObject({
+        title: "Test cases could not be updated",
+        message:
+          'Test cases for DEMO-42 "Checkout totals" in project "Telco" could not be checked against its new text: rate limited',
+        data: { kind: "failed", detail: "rate limited" },
+      });
+
+      await NotificationService.createCasesUpdatedNotification({
+        ...base,
+        kind: "failed",
+        detail: "x".repeat(400),
+      });
+      expect(queued().data.detail).toHaveLength(300);
+
+      await NotificationService.createCasesUpdatedNotification({
+        ...base,
+        kind: "failed",
+      });
+      expect(queued().message).toBe(
+        'Test cases for DEMO-42 "Checkout totals" in project "Telco" could not be checked against its new text.'
+      );
+    });
+
+    it("queues a reminder that reads right for one suggestion and for several", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-updated" } as any);
+
+      await NotificationService.createCasesUpdatedNotification({
+        ...base,
+        kind: "reminder",
+        suggested: 1,
+      });
+      expect(queued()).toMatchObject({
+        title: "Suggested test case changes are waiting",
+        message:
+          '1 suggested change is waiting for a decision for DEMO-42 "Checkout totals" in project "Telco".',
+        data: { kind: "reminder", suggested: 1 },
+      });
+
+      await NotificationService.createCasesUpdatedNotification({
+        ...base,
+        kind: "reminder",
+        suggested: 4,
+      });
+      expect(queued().message).toBe(
+        '4 suggested changes are waiting for a decision for DEMO-42 "Checkout totals" in project "Telco".'
+      );
+    });
+  });
+
   describe("createRunCaseUnblockedNotification", () => {
     it("queues a RUN_CASE_UNBLOCKED notification pointing at the case in its run", async () => {
       mockQueue.add.mockResolvedValue({ id: "job-unblocked" } as any);

@@ -148,6 +148,12 @@ The check is one `GET` request to the URL below, with the running version in the
 | `RELEASE_CHECK_ENABLED` | `true`                                                                     | Set to `false` to stop the instance looking for new releases. No request is made and no notice is shown.                                                                                   |
 | `RELEASE_CHECK_URL`     | `https://api.github.com/repos/TestPlanIt/testplanit/releases?per_page=100` | An HTTPS URL that returns the same JSON as GitHub's "list releases" API. Point it at an internal copy when the instance cannot reach GitHub, and add that host to `ALLOWED_PRIVATE_HOSTS`. |
 
+## Webhook Actions
+
+| Variable                        | Default  | Description                                                                                                                                                                                         |
+| ------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WEBHOOK_UPDATE_CASES_DELAY_MS` | `300000` | How long, in milliseconds, an issue's text must stay unchanged before an [Update Test Cases with AI](./user-guide/webhooks.md#keeping-test-cases-current) action checks the test cases linked to it. |
+
 ## Content Security Policy
 
 Every page is served with a `Content-Security-Policy` header that lets the browser run only the scripts the server emitted for that response. The policy is built per request, so no configuration is needed for the default install: the app's own origin, the storage endpoint the browser uploads to and downloads from (`AWS_PUBLIC_ENDPOINT_URL`, `AWS_ENDPOINT_URL`, or the bucket's own AWS hostname), the feedback survey in `FEEDBACK_SURVEY_URL`, and images and media from any web host are allowed.

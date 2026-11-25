@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { LayoutTemplate } from "lucide-react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -139,5 +140,27 @@ describe("ViewSelector counts", () => {
     renderViewSelector({ selectedItem: "templates" });
 
     expect(rowCount("repository.views.allTemplates")).toBe(150);
+  });
+
+  it("lists the waiting and none rows for the suggested change view, and toggles them", async () => {
+    const onToggleFilterValue = vi.fn();
+    renderViewSelector({
+      selectedItem: "suggestions",
+      onToggleFilterValue,
+      dimensionTotals: { suggestions: 12 },
+      viewOptions: baseViewOptions({
+        suggestions: [
+          { value: true, count: 3 },
+          { value: false, count: 9 },
+        ],
+      }),
+    });
+
+    expect(rowCount("repository.views.allCases")).toBe(12);
+    expect(rowCount("common.fields.hasSuggestion")).toBe(3);
+    expect(rowCount("common.fields.noSuggestion")).toBe(9);
+
+    await userEvent.click(screen.getByText("common.fields.hasSuggestion"));
+    expect(onToggleFilterValue).toHaveBeenCalled();
   });
 });

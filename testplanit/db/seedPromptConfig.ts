@@ -1,6 +1,10 @@
 import type { JsonValue } from "@zenstackhq/orm";
 import type { DbClient } from "~/lib/zenstack";
 import { LLM_FEATURES, PROMPT_FEATURE_VARIABLES } from "../lib/llm/constants";
+import {
+  CASE_UPKEEP_SYSTEM_PROMPT,
+  CASE_UPKEEP_USER_PROMPT,
+} from "../lib/llm/services/case-upkeep-prompt";
 
 /**
  * Seeds the default prompt configuration with prompts for all AI features.
@@ -475,6 +479,14 @@ Classify this failure cluster. Return ONLY the JSON object.`,
       temperature: 0.2,
       maxOutputTokens: 1000,
       variables: PROMPT_FEATURE_VARIABLES[LLM_FEATURES.FAILURE_TRIAGE],
+    },
+    {
+      feature: LLM_FEATURES.CASE_UPKEEP,
+      systemPrompt: CASE_UPKEEP_SYSTEM_PROMPT,
+      userPrompt: CASE_UPKEEP_USER_PROMPT,
+      temperature: 0.2,
+      maxOutputTokens: 8000,
+      variables: PROMPT_FEATURE_VARIABLES[LLM_FEATURES.CASE_UPKEEP],
     },
   ];
 

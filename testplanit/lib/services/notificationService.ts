@@ -305,6 +305,73 @@ export class NotificationService {
   }
 
   /**
+   * An Update test cases rule finished with an issue whose text changed. One
+   * per recipient: `summary` for what was rewritten, added, deleted and
+   * suggested; `failed` when the work could not be done; `reminder` for
+   * suggestions still waiting on a decision. The stored title and message are
+   * the English fallback; the bell and the email render from `data`.
+   */
+  static async createCasesUpdatedNotification(params: {
+    userId: string;
+    kind: "summary" | "failed" | "reminder";
+    projectId: number;
+    projectName: string;
+    issueId: number;
+    issueKey: string;
+    issueTitle: string;
+    rewritten?: number;
+    added?: number;
+    deleted?: number;
+    suggested?: number;
+    /** Names of the drafts the update deleted, for restoring them. */
+    deletedNames?: string[];
+    /** Why the work failed. */
+    detail?: string;
+    tenantId?: string;
+  }) {
+    const counts = {
+      rewritten: params.rewritten ?? 0,
+      added: params.added ?? 0,
+      deleted: params.deleted ?? 0,
+      suggested: params.suggested ?? 0,
+    };
+    const subject = `${params.issueKey} "${params.issueTitle}" in project "${params.projectName}"`;
+    const title =
+      params.kind === "failed"
+        ? "Test cases could not be updated"
+        : params.kind === "reminder"
+          ? "Suggested test case changes are waiting"
+          : "Test cases updated after an issue change";
+    const message =
+      params.kind === "failed"
+        ? `Test cases for ${subject} could not be checked against its new text${params.detail ? `: ${params.detail}` : "."}`
+        : params.kind === "reminder"
+          ? `${counts.suggested} suggested change${counts.suggested === 1 ? " is" : "s are"} waiting for a decision for ${subject}.`
+          : `${subject} changed: ${counts.rewritten} rewritten, ${counts.added} added, ${counts.deleted} deleted, ${counts.suggested} suggested.`;
+
+    return this.createNotification({
+      userId: params.userId,
+      type: NotificationType.CASES_UPDATED,
+      title,
+      message,
+      relatedEntityId: params.issueId.toString(),
+      relatedEntityType: "Issue",
+      tenantId: params.tenantId,
+      data: {
+        kind: params.kind,
+        projectId: params.projectId,
+        projectName: params.projectName,
+        issueId: params.issueId,
+        issueKey: params.issueKey,
+        issueTitle: params.issueTitle,
+        ...counts,
+        deletedNames: (params.deletedNames ?? []).slice(0, 20),
+        ...(params.detail ? { detail: params.detail.slice(0, 300) } : {}),
+      },
+    });
+  }
+
+  /**
    * Alert fired (#651): one notification per subscriber. The
    * stored `title`/`message` are the English fallback; the bell and the
    * email worker render localized copy from `data`, which carries every

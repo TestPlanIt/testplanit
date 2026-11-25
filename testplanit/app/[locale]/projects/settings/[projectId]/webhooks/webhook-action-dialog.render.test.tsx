@@ -42,8 +42,18 @@ vi.mock("@/components/automation/ExecutionParamFields", () => ({
 // its presence and the draft it starts from matter.
 vi.mock("./webhook-action-draft-fields", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./webhook-action-draft-fields")>()),
-  WebhookActionDraftFields: () => (
-    <div data-testid="webhook-action-draft-fields" />
+  WebhookActionDraftFields: ({ mode, value, onChange }: any) => (
+    <div
+      data-testid="webhook-action-draft-fields"
+      data-mode={mode ?? "draft"}
+      data-scope={value.scope}
+    >
+      <button
+        type="button"
+        data-testid="draft-fields-pick-ai-drafted"
+        onClick={() => onChange({ ...value, scope: "ai_drafted" })}
+      />
+    </div>
   ),
 }));
 vi.mock("./webhook-action-tracker-filter", async (importOriginal) => ({
@@ -214,6 +224,7 @@ describe("WebhookActionDialog", () => {
       "ISSUE_EVENT",
       "ISSUE_CREATED",
       "ISSUE_STATUS_ENTERED",
+      "ISSUE_CONTENT_CHANGED",
     ]);
     expect(optionValues("webhook-action-type")).toEqual(["IMPORT_ISSUE"]);
     expect(screen.queryByTestId("webhook-action-min-score")).toBeNull();
@@ -532,6 +543,87 @@ describe("WebhookActionDialog", () => {
       },
     });
     expect(screen.getByTestId("webhook-action-save")).toBeEnabled();
+  });
+
+  it("offers only Update test cases when the issue's text changes, with the update fields", () => {
+    renderDialog({ source: "tracker" });
+    fireEvent.change(screen.getByTestId("webhook-action-trigger"), {
+      target: { value: "ISSUE_CONTENT_CHANGED" },
+    });
+    expect(optionValues("webhook-action-type")).toEqual(["UPDATE_CASES"]);
+    expect(
+      (screen.getByTestId("webhook-action-type") as HTMLSelectElement).value
+    ).toBe("UPDATE_CASES");
+    expect(screen.getByTestId("webhook-action-draft-fields")).toHaveAttribute(
+      "data-mode",
+      "update"
+    );
+    expect(
+      screen.getByTestId("webhook-action-tracker-filter")
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("webhook-action-case-filter")).toBeNull();
+    expect(screen.queryByTestId("webhook-action-include-children")).toBeNull();
+  });
+
+  it("saves a new Update test cases rule with what its fields chose", async () => {
+    renderDialog({ source: "tracker" });
+    fireEvent.change(screen.getByTestId("webhook-action-trigger"), {
+      target: { value: "ISSUE_CONTENT_CHANGED" },
+    });
+    fireEvent.click(screen.getByTestId("draft-fields-pick-ai-drafted"));
+    fireEvent.click(screen.getByTestId("webhook-action-save"));
+
+    await waitFor(() =>
+      expect(mockSave).toHaveBeenCalledWith({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        id: undefined,
+        trigger: "ISSUE_CONTENT_CHANGED",
+        action: "UPDATE_CASES",
+        filter: expect.objectContaining({ statuses: [] }),
+        options: { scope: "ai_drafted", autoGenerateTags: false },
+      })
+    );
+  });
+
+  it("starts an Update test cases rule from its saved options and drops what it no longer stores", async () => {
+    renderDialog({
+      source: "tracker",
+      rule: {
+        id: "act-9",
+        order: 0,
+        isEnabled: true,
+        trigger: "ISSUE_CONTENT_CHANGED",
+        action: "UPDATE_CASES",
+        filter: {},
+        options: {
+          scope: "ai_drafted",
+          stateId: 9,
+          notifyUserIds: ["u1"],
+          stale: "dropped",
+        },
+      },
+    });
+    expect(screen.getByTestId("webhook-action-draft-fields")).toHaveAttribute(
+      "data-scope",
+      "ai_drafted"
+    );
+    fireEvent.click(screen.getByTestId("webhook-action-save"));
+
+    await waitFor(() =>
+      expect(mockSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "act-9",
+          action: "UPDATE_CASES",
+          options: {
+            scope: "ai_drafted",
+            stateId: 9,
+            autoGenerateTags: false,
+            notifyUserIds: ["u1"],
+          },
+        })
+      )
+    );
   });
 
   it("keeps the dialog open and toasts the server's error", async () => {

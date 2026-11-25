@@ -131,6 +131,12 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     reviewRequest: {
       useFindMany: vi.fn(() => ({ data: [], isLoading: false })),
     },
+    caseChangeSuggestion: {
+      useFindMany: vi.fn(() => ({ data: [], isLoading: false })),
+    },
+    repositoryCaseIssue: {
+      useFindMany: vi.fn(() => ({ data: [], isLoading: false })),
+    },
   }),
 }));
 

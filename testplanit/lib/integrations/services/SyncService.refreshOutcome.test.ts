@@ -134,6 +134,13 @@ beforeEach(() => {
   mocks.membershipUpsert.mockResolvedValue({});
 });
 
+/** Answer only the content-stamp read; the post-update refetch still finds nothing. */
+function stampAfterUpdate(contentUpdatedAt: Date | null) {
+  mocks.issueFindUnique.mockImplementation(async (args: any) =>
+    args?.select?.contentUpdatedAt ? { contentUpdatedAt } : null
+  );
+}
+
 describe("performIssueRefreshSystem — refresh outcome", () => {
   it("reports an existing issue it updated, with the tracker status it had before", async () => {
     mocks.issueFindFirst.mockResolvedValue({
@@ -157,6 +164,7 @@ describe("performIssueRefreshSystem — refresh outcome", () => {
         created: false,
         addedToProject: false,
         previousStatus: "In Progress",
+        contentChanged: false,
         status: "Ready for QA",
         issueTypeId: "10001",
         labels: ["qa", "backend"],
@@ -169,6 +177,44 @@ describe("performIssueRefreshSystem — refresh outcome", () => {
     });
     expect(mocks.issueUpdate).toHaveBeenCalledTimes(1);
     expect(mocks.issueUpsert).not.toHaveBeenCalled();
+  });
+
+  it("reports a text change when the update moved the issue's content stamp", async () => {
+    const before = new Date("2026-11-20T10:00:00Z");
+    const existing = {
+      id: 100,
+      projectId: 7,
+      externalStatus: "Open",
+      data: {},
+      contentUpdatedAt: before,
+    };
+    mocks.issueFindFirst.mockResolvedValue(existing);
+
+    stampAfterUpdate(new Date("2026-11-24T09:00:00Z"));
+    const changed = await syncService.performIssueRefreshSystem(3, "DEMO-42");
+    expect(changed.issue?.contentChanged).toBe(true);
+
+    // The same stamp afterwards: status or label churn, the text is as it was.
+    stampAfterUpdate(new Date(before.getTime()));
+    const same = await syncService.performIssueRefreshSystem(3, "DEMO-42");
+    expect(same.issue?.contentChanged).toBe(false);
+  });
+
+  it("reports a first text stamp as a change and no stamp at all as none", async () => {
+    mocks.issueFindFirst.mockResolvedValue({
+      id: 100,
+      projectId: 7,
+      data: {},
+      contentUpdatedAt: null,
+    });
+
+    stampAfterUpdate(new Date("2026-11-24T09:00:00Z"));
+    const first = await syncService.performIssueRefreshSystem(3, "DEMO-42");
+    expect(first.issue?.contentChanged).toBe(true);
+
+    stampAfterUpdate(null);
+    const none = await syncService.performIssueRefreshSystem(3, "DEMO-42");
+    expect(none.issue?.contentChanged).toBe(false);
   });
 
   it("falls back to the stored status when no tracker status was recorded", async () => {
@@ -224,6 +270,7 @@ describe("performIssueRefreshSystem — refresh outcome", () => {
         created: true,
         addedToProject: true,
         previousStatus: null,
+        contentChanged: false,
         status: "Ready for QA",
         issueTypeId: "10001",
         labels: ["qa", "backend"],

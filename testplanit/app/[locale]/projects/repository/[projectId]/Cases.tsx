@@ -10,6 +10,11 @@ import {
   PendingReviewBadge,
   type PendingReviewSummary,
 } from "@/components/reviews/PendingReviewBadge";
+import {
+  CaseAttentionBadge,
+  type CaseAttentionKind,
+} from "@/components/cases/CaseAttentionBadge";
+import { isIssueTextNewerThanCase } from "~/lib/services/caseUpkeep/alignment";
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
 import {
   ColumnMetadata,
@@ -2077,11 +2082,95 @@ export default function Cases({
     });
     return map;
   }, [pendingReviewsForVisibleCases]);
+  // AI-suggested changes waiting on the visible page, loaded the same way.
+  const { data: pendingSuggestionsForVisibleCases } = useClientQueries(
+    schema
+  ).caseChangeSuggestion.useFindMany(
+    {
+      where: { caseId: { in: visibleCaseIds }, status: "PENDING" },
+      select: { caseId: true, issueId: true, kind: true },
+      orderBy: { createdAt: "asc" },
+    },
+    { enabled: visibleCaseIds.length > 0 }
+  );
+  // Drafts AI wrote that still sit in a state for unreviewed AI drafts.
+  const { data: unreviewedDraftsForVisibleCases } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
+    {
+      where: {
+        id: { in: visibleCaseIds },
+        aiWrittenVersion: { not: null },
+        state: { isAiDraft: true },
+      },
+      select: { id: true },
+    },
+    { enabled: visibleCaseIds.length > 0 }
+  );
+  const suggestionKindByCaseId = useMemo(() => {
+    const map = new Map<number, CaseAttentionKind>();
+    unreviewedDraftsForVisibleCases?.forEach((row) => {
+      map.set(row.id, "DRAFT");
+    });
+    const suggested = new Set<number>();
+    pendingSuggestionsForVisibleCases?.forEach((row) => {
+      if (suggested.has(row.caseId)) return;
+      suggested.add(row.caseId);
+      map.set(row.caseId, row.kind);
+    });
+    return map;
+  }, [pendingSuggestionsForVisibleCases, unreviewedDraftsForVisibleCases]);
+  // Links whose issue changed since the case was last checked against it
+  // and that have no suggestion waiting, which already says as much.
+  const { data: checkedLinksForVisibleCases } = useClientQueries(
+    schema
+  ).repositoryCaseIssue.useFindMany(
+    {
+      where: {
+        caseId: { in: visibleCaseIds },
+        alignedAt: { not: null },
+        issue: { isDeleted: false },
+      },
+      select: {
+        caseId: true,
+        issueId: true,
+        alignedAt: true,
+        issue: { select: { contentUpdatedAt: true } },
+      },
+    },
+    { enabled: visibleCaseIds.length > 0 }
+  );
+  const behindCaseIds = useMemo(() => {
+    const suggested = new Set(
+      (pendingSuggestionsForVisibleCases ?? []).map(
+        (row) => `${row.caseId}:${row.issueId}`
+      )
+    );
+    const ids = new Set<number>();
+    checkedLinksForVisibleCases?.forEach((link) => {
+      if (
+        !suggested.has(`${link.caseId}:${link.issueId}`) &&
+        isIssueTextNewerThanCase({
+          contentUpdatedAt: link.issue.contentUpdatedAt,
+          alignedAt: link.alignedAt,
+        })
+      ) {
+        ids.add(link.caseId);
+      }
+    });
+    return ids;
+  }, [checkedLinksForVisibleCases, pendingSuggestionsForVisibleCases]);
   const renderPendingBadge = useCallback(
     (caseId: number) => (
-      <PendingReviewBadge pendingRequest={pendingByCaseId.get(caseId)} />
+      <span className="inline-flex items-center gap-1">
+        <PendingReviewBadge pendingRequest={pendingByCaseId.get(caseId)} />
+        <CaseAttentionBadge kind={suggestionKindByCaseId.get(caseId)} />
+        <CaseAttentionBadge
+          kind={behindCaseIds.has(caseId) ? "BEHIND" : undefined}
+        />
+      </span>
     ),
-    [pendingByCaseId]
+    [pendingByCaseId, suggestionKindByCaseId, behindCaseIds]
   );
 
   // Recent executions for the visible page, one round trip per render like the

@@ -42,6 +42,7 @@ import { RepositoryFilterBar } from "@/components/repository/filter-bar/Reposito
 import {
   buildFilterDimensions,
   IN_REVIEW_DIMENSION,
+  SUGGESTIONS_DIMENSION,
   type DynamicFieldDescriptor,
   type FilterDimension,
   CODE_PINS_DIMENSION,
@@ -326,6 +327,7 @@ interface ViewOptions {
   }>;
   /** Only present while the project has Impact Analysis enabled. */
   codePins?: Array<{ value: boolean; count: number }>;
+  suggestions?: Array<{ value: boolean; count: number }>;
   dynamicFields: Record<string, DynamicField>;
   tags: Array<{
     id: number | string;
@@ -1215,6 +1217,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       attachments: viewOptionsData.attachments || [],
       inReview: viewOptionsData.inReview,
       codePins: viewOptionsData.codePins,
+      suggestions: viewOptionsData.suggestions,
       dynamicFields,
       tags: tagOptions,
       issues: issueOptions,
@@ -1284,6 +1287,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
             },
           ]
         : []),
+      {
+        id: SUGGESTIONS_DIMENSION,
+        name: t("repository.views.bySuggestion"),
+        icon: Sparkles,
+      },
       // Always include Tags view
       {
         id: "tags",
@@ -1426,6 +1434,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       "attachments",
       "inReview",
       "codePins",
+      "suggestions",
       "status",
       "assignedTo",
       "tags",
@@ -1482,6 +1491,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         "attachments",
         "inReview",
         "codePins",
+        "suggestions",
         "status",
         "assignedTo",
         "tags",

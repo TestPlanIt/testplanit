@@ -257,6 +257,24 @@ describe("webhook-actions server actions", () => {
         success: false,
         error: "This project has no active AI model to draft test cases with",
       });
+      // So does updating them.
+      mockReadiness.mockResolvedValueOnce({
+        hasRepository: true,
+        hasDefaultWorkflow: true,
+        hasActiveLlm: false,
+      });
+      expect(
+        await saveWebhookAction({
+          ...base,
+          webhookConfigId: "whc-2",
+          trigger: "ISSUE_CONTENT_CHANGED",
+          action: "UPDATE_CASES",
+          options: {},
+        })
+      ).toEqual({
+        success: false,
+        error: "This project has no active AI model to update test cases with",
+      });
       // And its template must be the project's.
       mockReadiness.mockResolvedValueOnce({
         hasRepository: true,

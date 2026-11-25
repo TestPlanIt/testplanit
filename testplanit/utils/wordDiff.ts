@@ -99,3 +99,53 @@ export function diffWords(before: string, after: string): WordDiffPart[] {
   }
   return parts;
 }
+
+/** Unchanged words between two changes that are few enough to join them. */
+const MAX_BRIDGE_WORDS = 2;
+
+function wordCount(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length;
+}
+
+/**
+ * The same diff with neighbouring changes joined: changes separated by no
+ * more than a couple of unchanged words become one removed run followed by
+ * one added run, so a reworded phrase reads as old phrase, new phrase rather
+ * than alternating word by word.
+ */
+export function groupDiffParts(parts: WordDiffPart[]): WordDiffPart[] {
+  const grouped: WordDiffPart[] = [];
+  const same = (value: string) => {
+    if (value !== "") pushPart(grouped, value, "same");
+  };
+  let index = 0;
+  while (index < parts.length) {
+    const part = parts[index];
+    if (!part.added && !part.removed) {
+      same(part.value);
+      index++;
+      continue;
+    }
+    let removed = "";
+    let added = "";
+    while (index < parts.length) {
+      const current = parts[index];
+      if (current.removed) removed += current.value;
+      else if (current.added) added += current.value;
+      else {
+        const next = parts[index + 1];
+        const joins =
+          next !== undefined &&
+          (next.added || next.removed) &&
+          wordCount(current.value) <= MAX_BRIDGE_WORDS;
+        if (!joins) break;
+        removed += current.value;
+        added += current.value;
+      }
+      index++;
+    }
+    if (removed !== "") pushPart(grouped, removed, "removed");
+    if (added !== "") pushPart(grouped, added, "added");
+  }
+  return grouped;
+}

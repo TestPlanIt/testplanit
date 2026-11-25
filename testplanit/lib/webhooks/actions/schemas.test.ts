@@ -10,6 +10,7 @@ import {
   parseWebhookAction,
   readCreateRunOptions,
   readDraftCasesOptions,
+  readUpdateCasesOptions,
   readWebhookActionFilter,
   triggersFor,
 } from "./schemas";
@@ -43,6 +44,10 @@ describe("availableActionsFor", () => {
       "IMPORT_ISSUE",
       "CREATE_RUN",
       "DRAFT_CASES",
+      "UPDATE_CASES",
+    ]);
+    expect(availableActionsFor("ISSUE_CONTENT_CHANGED")).toEqual([
+      "UPDATE_CASES",
     ]);
     expect(availableActionsFor("ISSUE_EVENT")).toEqual(["IMPORT_ISSUE"]);
     expect(availableActionsFor("ISSUE_CREATED")).toEqual([
@@ -341,6 +346,83 @@ describe("parseWebhookAction", () => {
       },
     });
   });
+
+  it("accepts Update cases options, keeping the tracker filter and stripping unknown keys", () => {
+    expect(
+      parseWebhookAction("tracker", {
+        trigger: "ISSUE_CONTENT_CHANGED",
+        action: "UPDATE_CASES",
+        filter: { requirementsOnly: true },
+        options: {
+          scope: "ai_drafted",
+          stateId: 9,
+          autoGenerateTags: true,
+          notifyUserIds: ["u1"],
+          notifyGroupIds: [3],
+          templateId: 2,
+          quantity: "few",
+        },
+      })
+    ).toEqual({
+      ok: true,
+      filter: { requirementsOnly: true },
+      options: {
+        scope: "ai_drafted",
+        stateId: 9,
+        autoGenerateTags: true,
+        notifyUserIds: ["u1"],
+        notifyGroupIds: [3],
+      },
+    });
+    expect(
+      parseWebhookAction("tracker", {
+        trigger: "ISSUE_CONTENT_CHANGED",
+        action: "UPDATE_CASES",
+      })
+    ).toEqual({ ok: true, filter: {}, options: {} });
+  });
+
+  it("refuses Update cases options it cannot read", () => {
+    for (const options of [
+      { scope: "everything" },
+      { stateId: 0 },
+      { notifyGroupIds: ["qa"] },
+    ]) {
+      expect(
+        parseWebhookAction("tracker", {
+          trigger: "ISSUE_CONTENT_CHANGED",
+          action: "UPDATE_CASES",
+          options,
+        })
+      ).toEqual({ ok: false, error: "invalid_options" });
+    }
+  });
+
+  it("pairs Update cases only with a text change, and a text change only with Update cases", () => {
+    for (const trigger of ["ISSUE_CREATED", "ISSUE_STATUS_ENTERED"] as const) {
+      expect(
+        parseWebhookAction("tracker", { trigger, action: "UPDATE_CASES" })
+      ).toEqual({ ok: false, error: "action_not_allowed" });
+    }
+    for (const action of [
+      "IMPORT_ISSUE",
+      "CREATE_RUN",
+      "DRAFT_CASES",
+    ] as const) {
+      expect(
+        parseWebhookAction("tracker", {
+          trigger: "ISSUE_CONTENT_CHANGED",
+          action,
+        })
+      ).toEqual({ ok: false, error: "action_not_allowed" });
+    }
+    expect(
+      parseWebhookAction("repository", {
+        trigger: "ISSUE_CONTENT_CHANGED",
+        action: "UPDATE_CASES",
+      })
+    ).toEqual({ ok: false, error: "trigger_not_allowed" });
+  });
 });
 
 describe("read* helpers", () => {
@@ -355,6 +437,12 @@ describe("read* helpers", () => {
     });
     expect(readDraftCasesOptions({ quantity: 99 })).toEqual({});
     expect(readDraftCasesOptions(undefined)).toEqual({});
+
+    expect(readUpdateCasesOptions({ scope: "ai_drafted" })).toEqual({
+      scope: "ai_drafted",
+    });
+    expect(readUpdateCasesOptions({ scope: "everything" })).toEqual({});
+    expect(readUpdateCasesOptions(null)).toEqual({});
 
     expect(readWebhookActionFilter({ labels: ["qa"] })).toEqual({
       labels: ["qa"],

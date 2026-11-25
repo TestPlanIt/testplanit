@@ -747,6 +747,49 @@ CREATE TRIGGER tpl_issue_content_updated_at_upd BEFORE UPDATE OF "title", "descr
 `;
 
 /**
+ * Reviewer stamp. A person who moves a test case out of a workflow state that
+ * holds unreviewed AI drafts (Workflows.isAiDraft) has reviewed it: record who
+ * and when on the case. The actor comes from the audit GUC, as in
+ * tpl_stamp_deleted_at, so every write path is covered in one place. Worker
+ * and System-user writes carry no person and stamp nothing, and a write that
+ * sets reviewedById itself is left as written.
+ *
+ * The distinct tpl_case_reviewed_stamp prefix keeps this out of every drift
+ * self-check below.
+ */
+export const CASE_REVIEWED_STAMP_TRIGGER_SQL = `
+CREATE OR REPLACE FUNCTION tpl_case_reviewed_stamp() RETURNS TRIGGER AS $$
+DECLARE
+  actor text;
+BEGIN
+  IF NEW."reviewedById" IS DISTINCT FROM OLD."reviewedById" THEN
+    RETURN NEW;
+  END IF;
+  IF EXISTS (SELECT 1 FROM "Workflows" w WHERE w."id" = OLD."stateId" AND w."isAiDraft")
+     AND NOT EXISTS (SELECT 1 FROM "Workflows" w WHERE w."id" = NEW."stateId" AND w."isAiDraft") THEN
+    BEGIN
+      actor := NULLIF(current_setting('app.audit_context', true), '')::jsonb->>'userId';
+    EXCEPTION WHEN others THEN
+      actor := NULL;
+    END;
+    IF actor IS NOT NULL
+       AND actor <> 'system-automation-user'
+       AND EXISTS (SELECT 1 FROM "User" u WHERE u."id" = actor) THEN
+      NEW."reviewedById" := actor;
+      NEW."reviewedAt" := now();
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tpl_case_reviewed_stamp_upd ON "RepositoryCases";
+CREATE TRIGGER tpl_case_reviewed_stamp_upd BEFORE UPDATE OF "stateId" ON "RepositoryCases"
+  FOR EACH ROW WHEN (NEW."stateId" IS DISTINCT FROM OLD."stateId")
+  EXECUTE FUNCTION tpl_case_reviewed_stamp();
+`;
+
+/**
  * Requirement content versioning (v1.1) — every content change to a requirement
  * (title/description/note, the same three columns the content stamp above
  * watches) captures a row in "IssueVersions" and bumps Issue.currentVersion.
@@ -1092,6 +1135,9 @@ async function applyAuditTriggersOnce(
     //     re-run. Distinct tpl_issue_content_updated_at prefix keeps it out of every
     //     drift self-check below, exactly like tpl_issue_hierarchy_* above.
     await client.query(ISSUE_CONTENT_UPDATED_AT_TRIGGER_SQL);
+
+    // Reviewer stamp for cases leaving an AI-draft state. Idempotent.
+    await client.query(CASE_REVIEWED_STAMP_TRIGGER_SQL);
 
     // 3e. Seeded-status guard — the `untested` Status row keeps its systemName and
     //     keeps existing, because seven queries identify the run default by that

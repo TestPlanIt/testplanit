@@ -25,6 +25,7 @@ import type {
 } from "~/zenstack/input";
 import { attachmentsWhereClause } from "~/lib/repositoryCaseAttachmentsFilter";
 import { codePinsWhereClause } from "~/lib/repositoryCaseCodePinsFilter";
+import { suggestionsWhereClause } from "~/lib/repositoryCaseSuggestionsFilter";
 import type { PostFetchFilter } from "~/lib/repositoryCaseFieldMatchers";
 import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import {
@@ -34,6 +35,7 @@ import {
   type FilterDimension,
   type FilterDimensionRegistry,
   CODE_PINS_DIMENSION,
+  SUGGESTIONS_DIMENSION,
   RISK_SCORE_DIMENSION,
 } from "./filterDimensions";
 
@@ -694,6 +696,11 @@ export function compileRepoPredicates(
       case CODE_PINS_DIMENSION: {
         const value = booleanFromIsValue(predicate.values);
         fragment = value === null ? null : codePinsWhereClause(value);
+        break;
+      }
+      case SUGGESTIONS_DIMENSION: {
+        const value = booleanFromIsValue(predicate.values);
+        fragment = value === null ? null : suggestionsWhereClause(value);
         break;
       }
       case RISK_SCORE_DIMENSION:

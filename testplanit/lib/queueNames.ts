@@ -50,6 +50,7 @@ export const JOB_TRIAGE_RUN = "triage-run";
 export const JOB_TRIAGE_BACKFILL = "triage-backfill";
 export const JOB_CLASSIFY_SIGNATURES = "classify-signatures";
 export const JOB_DRAFT_CASES = "draft-cases";
+export const JOB_UPDATE_CASES = "update-cases";
 export const JOB_EVALUATE_ALERT_RESULT = "evaluate-alert-result";
 export const JOB_EVALUATE_ALERT_JUNIT_RESULT = "evaluate-alert-junit-result";
 export const JOB_EVALUATE_ALERT_RUN = "evaluate-alert-run";

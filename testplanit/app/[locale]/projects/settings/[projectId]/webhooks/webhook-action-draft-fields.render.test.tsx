@@ -98,6 +98,8 @@ import {
   WebhookActionDraftFields,
   draftCasesDraftFrom,
   draftCasesOptionsFromDraft,
+  updateCasesDraftFrom,
+  updateCasesOptionsFromDraft,
   type DraftCasesDraft,
 } from "./webhook-action-draft-fields";
 
@@ -111,9 +113,16 @@ const emptyDraft: DraftCasesDraft = {
   autoGenerateTags: true,
   notifyUsers: [],
   notifyGroups: [],
+  scope: "all_linked",
 };
 
-function Harness({ initial }: { initial: DraftCasesDraft }) {
+function Harness({
+  initial,
+  mode,
+}: {
+  initial: DraftCasesDraft;
+  mode?: "draft" | "update";
+}) {
   const [value, setValue] = useState(initial);
   return (
     <>
@@ -121,9 +130,14 @@ function Harness({ initial }: { initial: DraftCasesDraft }) {
         projectId={7}
         value={value}
         onChange={setValue}
+        mode={mode}
       />
       <pre data-testid="draft">
-        {JSON.stringify(draftCasesOptionsFromDraft(value))}
+        {JSON.stringify(
+          mode === "update"
+            ? updateCasesOptionsFromDraft(value)
+            : draftCasesOptionsFromDraft(value)
+        )}
       </pre>
     </>
   );
@@ -146,6 +160,7 @@ describe("draft fields helpers", () => {
       autoGenerateTags: false,
       notifyUsers: [{ id: "u1", name: "u1" }],
       notifyGroups: [{ id: 2, name: "2" }],
+      scope: "all_linked",
     });
     expect(draftCasesOptionsFromDraft(draft)).toEqual({
       templateId: 4,
@@ -160,6 +175,43 @@ describe("draft fields helpers", () => {
     expect(draftCasesOptionsFromDraft(emptyDraft)).toEqual({
       quantity: "several",
       autoGenerateTags: true,
+    });
+  });
+});
+
+describe("update fields helpers", () => {
+  it("reads an Update rule's saved options and writes them back compactly", () => {
+    const draft = updateCasesDraftFrom({
+      scope: "ai_drafted",
+      stateId: 9,
+      autoGenerateTags: true,
+      notifyUserIds: ["u1"],
+      notifyGroupIds: [2],
+    });
+    expect(draft).toEqual({
+      templateId: null,
+      stateId: 9,
+      quantity: "several",
+      autoGenerateTags: true,
+      notifyUsers: [{ id: "u1", name: "u1" }],
+      notifyGroups: [{ id: 2, name: "2" }],
+      scope: "ai_drafted",
+    });
+    expect(updateCasesOptionsFromDraft(draft)).toEqual({
+      scope: "ai_drafted",
+      stateId: 9,
+      autoGenerateTags: true,
+      notifyUserIds: ["u1"],
+      notifyGroupIds: [2],
+    });
+  });
+
+  it("starts from every linked case, tags off and nobody named", () => {
+    const draft = updateCasesDraftFrom(undefined);
+    expect(draft).toEqual({ ...emptyDraft, autoGenerateTags: false });
+    // The default scope is not stored, and neither is anything a Draft rule alone uses.
+    expect(updateCasesOptionsFromDraft(draft)).toEqual({
+      autoGenerateTags: false,
     });
   });
 });
@@ -265,6 +317,92 @@ describe("WebhookActionDraftFields", () => {
       quantity: "few",
       autoGenerateTags: false,
     });
+  });
+
+  it("names the project's AI-draft state on the Default choice when it has one", () => {
+    mockStates.mockReturnValue({
+      data: [
+        {
+          id: 8,
+          name: "Draft",
+          isDefault: true,
+          isAiDraft: false,
+          icon: { name: "Pencil" },
+          color: { value: "#654321" },
+        },
+        {
+          id: 21,
+          name: "AI-Generated",
+          isDefault: false,
+          isAiDraft: true,
+          icon: { name: "Bot" },
+          color: { value: "#123456" },
+        },
+      ],
+    });
+    render(<Harness initial={emptyDraft} />);
+    const state = screen.getByTestId(
+      "webhook-action-draft-state"
+    ) as HTMLSelectElement;
+    expect(state.options[0].textContent).toBe(
+      "common.fields.default · AI-Generated"
+    );
+    expect(mockStates.mock.calls[0][0].select.isAiDraft).toBe(true);
+  });
+
+  it("gives an Update rule a scope in place of the template and the count", () => {
+    render(
+      <Harness
+        initial={{ ...emptyDraft, autoGenerateTags: false }}
+        mode="update"
+      />
+    );
+    expect(screen.queryByTestId("webhook-action-draft-template")).toBeNull();
+    expect(screen.queryByTestId("webhook-action-draft-quantity")).toBeNull();
+    const scope = screen.getByTestId(
+      "webhook-action-update-scope"
+    ) as HTMLSelectElement;
+    expect([...scope.options].map((o) => [o.value, o.textContent])).toEqual([
+      [
+        "all_linked",
+        "projects.settings.webhooks.actions.updateScopeOptions.all_linked",
+      ],
+      [
+        "ai_drafted",
+        "projects.settings.webhooks.actions.updateScopeOptions.ai_drafted",
+      ],
+    ]);
+    expect(scope.value).toBe("all_linked");
+    for (const key of ["updateHelp", "updateStateHelp", "updateNotifyHelp"]) {
+      expect(
+        screen.getByText(`projects.settings.webhooks.actions.${key}`)
+      ).toBeInTheDocument();
+    }
+    expect(
+      screen.queryByText("projects.settings.webhooks.actions.notifyHelp")
+    ).toBeNull();
+
+    fireEvent.change(scope, { target: { value: "ai_drafted" } });
+    fireEvent.change(screen.getByTestId("webhook-action-draft-state"), {
+      target: { value: "9" },
+    });
+    fireEvent.click(screen.getByTestId("webhook-action-draft-tags"));
+    expect(JSON.parse(screen.getByTestId("draft").textContent!)).toEqual({
+      scope: "ai_drafted",
+      stateId: 9,
+      autoGenerateTags: true,
+    });
+  });
+
+  it("shows a Draft rule none of the Update rule's fields", () => {
+    render(<Harness initial={emptyDraft} />);
+    expect(screen.queryByTestId("webhook-action-update-scope")).toBeNull();
+    expect(
+      screen.queryByText("projects.settings.webhooks.actions.updateHelp")
+    ).toBeNull();
+    expect(
+      screen.getByText("projects.settings.webhooks.actions.notifyHelp")
+    ).toBeInTheDocument();
   });
 
   it("shows recipients through the user and group cells and searches members and groups", async () => {

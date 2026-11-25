@@ -254,6 +254,8 @@ If a project uses **Lock Test Run composition when execution starts**, a run tha
 
 If a review request sits in `PENDING` for too long, TestPlanIt nudges the reviewer so the request doesn't get lost. A scheduled job runs hourly and scans for `PENDING` requests older than a configurable threshold; for each one it sends the reviewer a **Review still pending** notification — in-app, and via email if their preferences allow it.
 
+The same scan and threshold remind about [suggested test case changes](./webhooks.md#suggested-changes) nobody has decided, with one reminder per person and issue.
+
 The default threshold is **1 day**. Reminders are recurring: once a reminder fires, TestPlanIt stamps the request and waits another full threshold before re-pinging, so reviewers aren't spammed but stale requests do continue to surface.
 
 ### Who gets reminded

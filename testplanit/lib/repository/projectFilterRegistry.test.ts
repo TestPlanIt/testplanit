@@ -76,6 +76,7 @@ describe("loadProjectFilterRegistry", () => {
       "attachments",
       "tags",
       "issues",
+      "suggestions",
       "inReview",
       "codePins",
       "field_12",

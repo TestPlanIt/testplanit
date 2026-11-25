@@ -50,6 +50,8 @@ interface MockTxOptions {
    * spent one of the approvals.
    */
   stampCount?: number;
+  /** Who decided the approval being applied. Defaults to nobody recorded. */
+  decidedByUserId?: string | null;
 }
 
 function createMockTx(opts: MockTxOptions) {
@@ -77,6 +79,9 @@ function createMockTx(opts: MockTxOptions) {
         const toStateId = args?.where?.toStateId;
         return approvalsByGateId[toStateId] ?? null;
       }),
+      findUnique: vi
+        .fn()
+        .mockResolvedValue({ decidedByUserId: opts.decidedByUserId ?? null }),
       update: vi.fn(),
       updateMany: vi.fn(async (args: any) => ({
         count: opts.stampCount ?? args?.where?.id?.in?.length ?? 0,
@@ -934,6 +939,64 @@ describe("applyApprovedReviewTransition", () => {
       where: { id: { in: [APPROVAL_ID] }, consumedAt: null },
       data: { consumedAt: expect.any(Date) },
     });
+  });
+
+  it("records the approver as the case's reviewer", async () => {
+    const tx = createMockTx({
+      currentStateOrder: 3,
+      targetState: { order: 4 },
+      gatedStates: [{ id: 40, order: 4 }],
+      approvalsByGateId: { 40: { id: APPROVAL_ID } },
+      decidedByUserId: "approver-1",
+    });
+
+    await applyApprovedReviewTransition(tx, {
+      reviewRequestId: APPROVAL_ID,
+      entityType: ReviewEntityType.CASE,
+      entityId: 1,
+      toStateId: 40,
+    });
+
+    expect(tx.reviewRequest.findUnique).toHaveBeenCalledWith({
+      where: { id: APPROVAL_ID },
+      select: { decidedByUserId: true },
+    });
+    expect(tx.repositoryCases.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: {
+        stateId: 40,
+        reviewedById: "approver-1",
+        reviewedAt: expect.any(Date),
+      },
+    });
+  });
+
+  it("records no reviewer on a run or a session", async () => {
+    for (const [entityType, model] of [
+      [ReviewEntityType.RUN, "testRuns"],
+      [ReviewEntityType.SESSION, "sessions"],
+    ] as const) {
+      const tx = createMockTx({
+        currentStateOrder: 3,
+        targetState: { order: 4 },
+        gatedStates: [{ id: 40, order: 4 }],
+        approvalsByGateId: { 40: { id: APPROVAL_ID } },
+        decidedByUserId: "approver-1",
+      });
+
+      await applyApprovedReviewTransition(tx, {
+        reviewRequestId: APPROVAL_ID,
+        entityType,
+        entityId: 1,
+        toStateId: 40,
+      });
+
+      expect(tx[model].update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { stateId: 40 },
+      });
+      expect(tx.reviewRequest.findUnique).not.toHaveBeenCalled();
+    }
   });
 
   it("consumes every approval the crossing spends when one transition clears several gates", async () => {

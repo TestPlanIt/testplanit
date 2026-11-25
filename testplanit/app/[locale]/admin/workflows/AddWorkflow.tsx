@@ -51,6 +51,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
 import { scopeDisplayData } from "~/app/constants";
+import { useHasActiveAiModel } from "~/hooks/useHasActiveAiModel";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { Asterisk } from "lucide-react";
@@ -85,6 +86,7 @@ function buildFormSchema(t: (key: any) => string): any {
     isDefault: z.boolean().prefault(false).optional(),
     isEnabled: z.boolean().prefault(true).optional(),
     requiresReview: z.boolean().prefault(false).optional(),
+    isAiDraft: z.boolean().prefault(false).optional(),
     projects: z.array(z.number()).optional(),
   });
 }
@@ -112,6 +114,7 @@ export function AddWorkflows({
   const { systemEnabled: reviewFeatureSystemEnabled } =
     useReviewFeatureEnabled();
   const reviewFeatureDisabled = reviewFeatureSystemEnabled === false;
+  const hasActiveAiModel = useHasActiveAiModel();
 
   const { data: defaultIconData } = useClientQueries(
     schema
@@ -174,6 +177,7 @@ export function AddWorkflows({
       isDefault: false,
       isEnabled: true,
       requiresReview: false,
+      isAiDraft: false,
       projects: [],
     },
   });
@@ -206,6 +210,12 @@ export function AddWorkflows({
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
+      // Only a case state can hold AI drafts, and never the default one. It
+      // is listed first: drafts start there.
+      const holdsAiDrafts =
+        data.scope === "CASES" &&
+        !(data.isDefault || mustBeDefault) &&
+        data.isAiDraft === true;
       // The single-default DB trigger (tpl_single_default_workflows) clears the
       // previous default for this scope atomically.
       const newWorkflow = await createWorkflows({
@@ -216,6 +226,8 @@ export function AddWorkflows({
           isEnabled: data.isEnabled ?? true,
           isDefault: data.isDefault || mustBeDefault,
           requiresReview: data.requiresReview || false,
+          isAiDraft: holdsAiDrafts,
+          ...(holdsAiDrafts ? { order: 0 } : {}),
           scope: data.scope || "",
           workflowType: data.workflowType,
         },
@@ -389,92 +401,131 @@ export function AddWorkflows({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="isDefault"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center space-x-2">
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={(newValue) => {
-                          field.onChange(newValue);
-                          if (newValue) {
-                            form.setValue("isEnabled", true);
-                          }
-                        }}
-                        disabled={mustBeDefault}
-                      />
-                    </FormControl>
-                    <FormLabel className="flex items-center">
-                      {tCommon("fields.default")}
-                      <HelpPopover helpKey="workflow.isDefault" />
-                    </FormLabel>
-                    <FormMessage />
-                  </div>
-                  {mustBeDefault && <FirstDefaultNotice />}
-                  {form.watch("isDefault") && (
-                    <FormMessage>{t("add.defaultHelp")}</FormMessage>
-                  )}
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="isEnabled"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center space-x-2">
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={form.watch("isDefault")}
-                      />
-                    </FormControl>
-                    <FormLabel className="flex items-center">
-                      {tCommon("fields.enabled")}
-                      <HelpPopover helpKey="workflow.isActive" />
-                    </FormLabel>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            {!reviewFeatureDisabled && (
-              <FormField
-                control={form.control}
-                name="requiresReview"
-                render={({ field }) => {
-                  const isDefault = form.watch("isDefault");
-                  return (
+            <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="isDefault"
+                  render={({ field }) => (
                     <FormItem>
                       <div className="flex items-center space-x-2">
                         <FormControl>
                           <Switch
-                            data-testid="add-requires-review-switch"
-                            checked={field.value && !isDefault}
-                            onCheckedChange={field.onChange}
-                            disabled={isDefault}
+                            checked={field.value}
+                            onCheckedChange={(newValue) => {
+                              field.onChange(newValue);
+                              if (newValue) {
+                                form.setValue("isEnabled", true);
+                              }
+                            }}
+                            disabled={mustBeDefault}
                           />
                         </FormControl>
                         <FormLabel className="flex items-center">
-                          {tCommon("aria.requiresReview")}
-                          <HelpPopover helpKey="workflow.requiresReview" />
+                          {tCommon("fields.default")}
+                          <HelpPopover helpKey="workflow.isDefault" />
                         </FormLabel>
                         <FormMessage />
                       </div>
-                      {isDefault && (
-                        <FormDescription>
-                          {t("editWorkflow.requiresReviewDefaultDisabled")}
-                        </FormDescription>
+                      {mustBeDefault && <FirstDefaultNotice />}
+                      {form.watch("isDefault") && (
+                        <FormMessage>{t("add.defaultHelp")}</FormMessage>
                       )}
                     </FormItem>
-                  );
-                }}
-              />
-            )}
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="isEnabled"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center space-x-2">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={form.watch("isDefault")}
+                          />
+                        </FormControl>
+                        <FormLabel className="flex items-center">
+                          {tCommon("fields.enabled")}
+                          <HelpPopover helpKey="workflow.isActive" />
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="space-y-4">
+                {!reviewFeatureDisabled && (
+                  <FormField
+                    control={form.control}
+                    name="requiresReview"
+                    render={({ field }) => {
+                      const isDefault = form.watch("isDefault");
+                      return (
+                        <FormItem>
+                          <div className="flex items-center space-x-2">
+                            <FormControl>
+                              <Switch
+                                data-testid="add-requires-review-switch"
+                                checked={field.value && !isDefault}
+                                onCheckedChange={field.onChange}
+                                disabled={isDefault}
+                              />
+                            </FormControl>
+                            <FormLabel className="flex items-center">
+                              {tCommon("aria.requiresReview")}
+                              <HelpPopover helpKey="workflow.requiresReview" />
+                            </FormLabel>
+                            <FormMessage />
+                          </div>
+                          {isDefault && (
+                            <FormDescription>
+                              {t("editWorkflow.requiresReviewDefaultDisabled")}
+                            </FormDescription>
+                          )}
+                        </FormItem>
+                      );
+                    }}
+                  />
+                )}
+                {watchedScope === "CASES" && hasActiveAiModel && (
+                  <FormField
+                    control={form.control}
+                    name="isAiDraft"
+                    render={({ field }) => {
+                      const isDefault = form.watch("isDefault");
+                      return (
+                        <FormItem>
+                          <div className="flex items-center space-x-2">
+                            <FormControl>
+                              <Switch
+                                data-testid="add-ai-draft-switch"
+                                checked={field.value && !isDefault}
+                                onCheckedChange={field.onChange}
+                                disabled={isDefault}
+                              />
+                            </FormControl>
+                            <FormLabel className="flex items-center">
+                              {t("editWorkflow.aiDraftLabel")}
+                              <HelpPopover helpKey="workflow.isAiDraft" />
+                            </FormLabel>
+                            <FormMessage />
+                          </div>
+                          {isDefault && (
+                            <FormDescription>
+                              {t("editWorkflow.aiDraftDefaultDisabled")}
+                            </FormDescription>
+                          )}
+                        </FormItem>
+                      );
+                    }}
+                  />
+                )}
+              </div>
+            </div>
 
             <FormField
               control={form.control}

@@ -17,6 +17,7 @@ export const TRACKER_TRIGGERS = [
   "ISSUE_EVENT",
   "ISSUE_CREATED",
   "ISSUE_STATUS_ENTERED",
+  "ISSUE_CONTENT_CHANGED",
 ] as const satisfies readonly WebhookActionTrigger[];
 
 export const REPOSITORY_TRIGGERS = [
@@ -35,6 +36,7 @@ export const WEBHOOK_ACTION_TYPES = [
   "IMPORT_ISSUE",
   "CREATE_RUN",
   "DRAFT_CASES",
+  "UPDATE_CASES",
 ] as const satisfies readonly WebhookActionType[];
 
 export function triggersFor(
@@ -51,6 +53,7 @@ export const ACTIONS_BY_TRIGGER: Record<
   ISSUE_EVENT: ["IMPORT_ISSUE"],
   ISSUE_CREATED: ["IMPORT_ISSUE", "CREATE_RUN", "DRAFT_CASES"],
   ISSUE_STATUS_ENTERED: ["IMPORT_ISSUE", "CREATE_RUN", "DRAFT_CASES"],
+  ISSUE_CONTENT_CHANGED: ["UPDATE_CASES"],
   CODE_PULL_REQUEST: ["CREATE_RUN"],
   CODE_PUSH: ["CREATE_RUN"],
   CODE_BRANCH_PUSH: ["CREATE_RUN"],
@@ -61,6 +64,7 @@ export const AVAILABLE_ACTIONS: readonly WebhookActionType[] = [
   "IMPORT_ISSUE",
   "CREATE_RUN",
   "DRAFT_CASES",
+  "UPDATE_CASES",
 ];
 
 /** The actions a trigger offers that this version can perform. */
@@ -149,12 +153,28 @@ export const draftCasesOptionsSchema = z.object({
 });
 export type DraftCasesOptions = z.infer<typeof draftCasesOptionsSchema>;
 
+/** Which of an issue's linked cases an Update test cases rule looks at. */
+export const UPDATE_CASES_SCOPES = ["all_linked", "ai_drafted"] as const;
+export type UpdateCasesScope = (typeof UPDATE_CASES_SCOPES)[number];
+
+export const updateCasesOptionsSchema = z.object({
+  /** Every linked case when unset. */
+  scope: z.enum(UPDATE_CASES_SCOPES).optional(),
+  /** The state for cases the update adds; the AI-draft state when unset. */
+  stateId: z.number().int().positive().optional(),
+  autoGenerateTags: z.boolean().optional(),
+  notifyUserIds: z.array(z.string().min(1)).max(100).optional(),
+  notifyGroupIds: z.array(z.number().int().positive()).max(100).optional(),
+});
+export type UpdateCasesOptions = z.infer<typeof updateCasesOptionsSchema>;
+
 export const importIssueOptionsSchema = z.object({});
 
 export const OPTIONS_SCHEMAS = {
   IMPORT_ISSUE: importIssueOptionsSchema,
   CREATE_RUN: createRunOptionsSchema,
   DRAFT_CASES: draftCasesOptionsSchema,
+  UPDATE_CASES: updateCasesOptionsSchema,
 } as const satisfies Record<WebhookActionType, z.ZodType>;
 
 export interface WebhookActionInput {
@@ -237,6 +257,11 @@ export function readCreateRunOptions(raw: unknown): CreateRunOptions {
 
 export function readDraftCasesOptions(raw: unknown): DraftCasesOptions {
   const parsed = draftCasesOptionsSchema.safeParse(raw ?? {});
+  return parsed.success ? parsed.data : {};
+}
+
+export function readUpdateCasesOptions(raw: unknown): UpdateCasesOptions {
+  const parsed = updateCasesOptionsSchema.safeParse(raw ?? {});
   return parsed.success ? parsed.data : {};
 }
 

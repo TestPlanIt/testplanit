@@ -715,12 +715,26 @@ export async function applyApprovedReviewTransition(
   );
 
   switch (entityType) {
-    case ReviewEntityType.CASE:
+    case ReviewEntityType.CASE: {
+      // The approver is the case's reviewer from here on.
+      const approval = await tx.reviewRequest.findUnique({
+        where: { id: reviewRequestId },
+        select: { decidedByUserId: true },
+      });
       await tx.repositoryCases.update({
         where: { id: entityId },
-        data: { stateId: toStateId },
+        data: {
+          stateId: toStateId,
+          ...(approval?.decidedByUserId
+            ? {
+                reviewedById: approval.decidedByUserId,
+                reviewedAt: new Date(),
+              }
+            : {}),
+        },
       });
       break;
+    }
     case ReviewEntityType.RUN:
       await tx.testRuns.update({
         where: { id: entityId },

@@ -47,6 +47,7 @@ The states within each table can be reordered using **drag-and-drop** to define 
     - **Type:** Select the fundamental type (Not Started, In Progress, Done) from the dropdown.
     - **Default:** Toggle if this should be the default state for this scope. Setting a new default automatically applies it to all projects and unsets the previous default for this scope. When the selected scope has no default state yet, the switch is locked on and the new state becomes the default.
     - **Enabled:** Toggle whether this state is active. (Default states must be enabled).
+    - **Holds AI drafts nobody has confirmed:** (Test Cases scope only) Mark the state as the one [AI-drafted test cases start in](#states-that-hold-unconfirmed-ai-drafts). Not available for the default state.
     - **Projects:** (Only relevant if _not_ setting as Default) Use the multi-select dropdown to assign this state to specific projects. You can use the "Select All" link for convenience.
 4. Click "Submit".
 
@@ -60,6 +61,7 @@ The states within each table can be reordered using **drag-and-drop** to define 
     - **Type:** (Cannot be changed if this is the _only_ state of its type within its scope, e.g., you cannot change the last "Done" state to "In Progress").
     - **Default:** (Cannot be unset directly; set another state as default instead).
     - **Enabled:** (Cannot be disabled if it's the default state).
+    - **Holds AI drafts nobody has confirmed:** (Test Cases scope only; not available for the default state).
     - **Project Assignments:** (Only relevant if not the Default state).
     - _(Note: The **Scope** cannot be changed after creation)._
 4. Click "Submit".
@@ -77,6 +79,17 @@ Deleting a state marks it as inactive.
 :::warning Important
 You can neither delete nor disable a Workflow State if it is the last of its type in the scope (Test Cases, Test Runs, Sessions)
 :::
+
+## States that hold unconfirmed AI drafts
+
+A test case state marked **Holds AI drafts nobody has confirmed** is where test cases drafted by a [webhook action](./webhooks.md#issue-tracker-actions) start, unless the action names another state. The state shows an **AI drafts** badge in the list. Every installation comes with one, **AI-Generated**, ordered before **Draft** and switched off: turn on **Enabled** to use it, or mark another state. While no marked state is enabled, drafted test cases start in the default state.
+
+Moving a test case out of the state confirms the draft:
+
+- The person who moves it is recorded as the test case's reviewer. When the move goes through a [review request](./review-approvals.md), the reviewer is the person who approved it.
+- While a draft stays in the state and nobody has saved it, an [Update Test Cases with AI](./webhooks.md#keeping-test-cases-current) action may rewrite it when its issue changes. Once it has been moved out or saved, the action suggests changes for a person to apply or dismiss.
+
+Running a draft in a test run does not confirm it. A test case a person wrote can be moved into the state; AI still only suggests changes to it.
 
 ## Review & Approval gates
 

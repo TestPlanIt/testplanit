@@ -68,6 +68,7 @@ export const REPOSITORY_VIEW_STATIC_AXES = [
   // view survives the flags still resolving; ProjectRepository degrades it to
   // the default axis once the review workflow is known to be off.
   "inReview",
+  "suggestions",
   "status",
   "assignedTo",
   "tags",

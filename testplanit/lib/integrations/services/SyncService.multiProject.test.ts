@@ -31,6 +31,8 @@ vi.mock("@/lib/rawDb", () => ({
     issue: {
       count: (...args: any[]) => mockIssueCount(...args),
       findMany: (...args: any[]) => mockIssueFindMany(...args),
+      // The read-back of the content stamp after an update.
+      findUnique: async () => ({ contentUpdatedAt: null }),
     },
   },
 }));

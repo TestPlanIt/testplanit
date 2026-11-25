@@ -85,7 +85,12 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
       await page.goto("/en-US/admin/workflows");
       await page.waitForLoadState("networkidle");
 
-      const row = page.locator("tr").filter({ hasText: workflowName! }).first();
+      // By exact name: the seeded AI-draft state's "AI drafts" badge also
+      // contains "Draft".
+      const row = page
+        .locator("tr")
+        .filter({ has: page.getByText(workflowName!, { exact: true }) })
+        .first();
       await expect(row).toBeVisible({ timeout: 10000 });
 
       // The action column renders an icon-only SquarePen button (no

@@ -91,6 +91,16 @@ describe("compileRepoPredicates — boolean dimensions", () => {
     ]);
   });
 
+  it("suggestions is [1]/[0] → cases with / without a suggestion waiting", () => {
+    expect(compileOne(predicate("suggestions", "is", [1]))).toEqual([
+      { changeSuggestions: { some: { status: "PENDING" } } },
+    ]);
+    expect(compileOne(predicate("suggestions", "is", [0]))).toEqual([
+      { changeSuggestions: { none: { status: "PENDING" } } },
+    ]);
+    expect(compileOne(predicate("suggestions", "is", [2]))).toEqual([]);
+  });
+
   it("codePins is [1]/[0] → codePinsWhereClause with isDeleted guard", () => {
     const registry = buildFilterDimensions({ includeCodePins: true });
     const compile = (values: number[]) =>

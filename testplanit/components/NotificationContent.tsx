@@ -777,6 +777,106 @@ export function NotificationContent({
     );
   }
 
+  if (notification.type === "CASES_UPDATED") {
+    const kind: string = data.kind ?? "summary";
+    const suggested = Number(data.suggested ?? 0);
+    // The issue's test cases in every folder. A reminder narrows them to the
+    // ones with a change waiting.
+    const casesLink =
+      data.projectId && data.issueId
+        ? `/projects/repository/${data.projectId}?view=issues&f=issues:any:${data.issueId}${
+            kind === "reminder" ? "&f=suggestions:is:1" : ""
+          }`
+        : null;
+    const webhooksLink = data.projectId
+      ? `/projects/settings/${data.projectId}/webhooks`
+      : null;
+    const counts = (
+      [
+        ["rewritten", "casesUpdatedRewritten"],
+        ["added", "casesUpdatedAdded"],
+        ["deleted", "casesUpdatedDeleted"],
+        ["suggested", "casesUpdatedSuggested"],
+      ] as const
+    ).filter(([field]) => Number(data[field] ?? 0) > 0);
+    const deletedNames: string[] = Array.isArray(data.deletedNames)
+      ? data.deletedNames
+      : [];
+    return (
+      <div className="space-y-2">
+        <h4 className="text-sm font-medium">
+          {t(
+            kind === "failed"
+              ? "casesUpdatedFailedTitle"
+              : kind === "reminder"
+                ? "casesUpdatedReminderTitle"
+                : "casesUpdatedTitle"
+          )}
+        </h4>
+        <div className="space-y-1 text-sm text-muted-foreground">
+          {kind === "failed" ? (
+            <>
+              <p>
+                {t("casesUpdatedFailedMessage", {
+                  issueKey: data.issueKey ?? "",
+                })}
+              </p>
+              {data.detail && (
+                <p>{t("casesUpdatedFailedReason", { detail: data.detail })}</p>
+              )}
+            </>
+          ) : kind === "reminder" ? (
+            <p>
+              {t("casesUpdatedReminderMessage", {
+                count: suggested,
+                issueKey: data.issueKey ?? "",
+              })}
+            </p>
+          ) : (
+            <>
+              <p>
+                {t("casesUpdatedIssueChanged", {
+                  issueKey: data.issueKey ?? "",
+                })}
+              </p>
+              {counts.map(([field, key]) => (
+                <p key={field}>{t(key, { count: Number(data[field]) })}</p>
+              ))}
+              {deletedNames.length > 0 && (
+                <p className="truncate text-xs">{deletedNames.join(", ")}</p>
+              )}
+            </>
+          )}
+          {casesLink && kind !== "failed" && (
+            <div className="flex items-center gap-1">
+              <Link
+                href={casesLink}
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+              >
+                {t("casesUpdatedLink")}
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
+          {webhooksLink && kind === "failed" && (
+            <div className="flex items-center gap-1">
+              <Link
+                href={webhooksLink}
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+              >
+                {t("casesUpdatedFailedLink")}
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
+          {data.issueTitle && (
+            <p className="truncate text-xs">{data.issueTitle}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (notification.type === "AI_STEPS_DERIVED") {
     if (data.projectId && data.testRunId) {
       const runLink = `/projects/runs/${data.projectId}/${data.testRunId}`;

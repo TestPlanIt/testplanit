@@ -96,6 +96,19 @@ describe("NotificationContent", () => {
         casesDraftedMessage:
           "{count} test cases were drafted for {issueKey} — review for accuracy.",
         casesDraftedReviewLink: "Review in {folderName}",
+        casesUpdatedTitle: "Test Cases Updated After an Issue Change",
+        casesUpdatedIssueChanged: "The text of {issueKey} changed.",
+        casesUpdatedRewritten: "{count} rewritten",
+        casesUpdatedAdded: "{count} added",
+        casesUpdatedDeleted: "{count} deleted",
+        casesUpdatedSuggested: "{count} suggested",
+        casesUpdatedFailedTitle: "Test Cases Could Not Be Updated",
+        casesUpdatedFailedMessage: "Could not check {issueKey}",
+        casesUpdatedFailedReason: "Reason: {detail}",
+        casesUpdatedFailedLink: "View the project's webhooks",
+        casesUpdatedReminderTitle: "Suggested Changes Are Waiting",
+        casesUpdatedReminderMessage: "{count} still waiting for {issueKey}",
+        casesUpdatedLink: "View the test cases",
         aiStepsDerivedTitle: "AI-Derived Test Steps Ready",
         aiStepsDerivedMessage:
           "{count} test cases were given AI-derived steps — review for accuracy.",
@@ -407,6 +420,138 @@ describe("NotificationContent", () => {
         screen.getByText("Review in Drafted from issues")
       ).toBeInTheDocument();
       expect(screen.getByText("Checkout totals")).toBeInTheDocument();
+    });
+  });
+
+  describe("Updated Cases", () => {
+    const updated = (data: Record<string, unknown>) => ({
+      id: "cu-1",
+      type: "CASES_UPDATED",
+      title: "stored title",
+      message: "stored message",
+      data: {
+        projectId: 456,
+        issueId: 100,
+        issueKey: "DEMO-42",
+        issueTitle: "Checkout totals",
+        ...data,
+      },
+    });
+
+    it("summarizes what changed, leaving out what did not, and links to all of the issue's cases", () => {
+      render(
+        <NotificationContent
+          notification={updated({
+            kind: "summary",
+            rewritten: 2,
+            added: 0,
+            deleted: 1,
+            suggested: 3,
+            deletedNames: ["Remember me keeps the session"],
+          })}
+        />
+      );
+
+      expect(
+        screen.getByText("Test Cases Updated After an Issue Change")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("The text of DEMO-42 changed.")
+      ).toBeInTheDocument();
+      expect(screen.getByText("2 rewritten")).toBeInTheDocument();
+      expect(screen.getByText("1 deleted")).toBeInTheDocument();
+      expect(screen.getByText("3 suggested")).toBeInTheDocument();
+      expect(screen.queryByText(/added/)).toBeNull();
+      expect(
+        screen.getByText("Remember me keeps the session")
+      ).toBeInTheDocument();
+      expect(screen.getByRole("link")).toHaveAttribute(
+        "href",
+        "/projects/repository/456?view=issues&f=issues:any:100"
+      );
+      expect(screen.getByText("Checkout totals")).toBeInTheDocument();
+    });
+
+    it("reads an old notification without a kind as a summary", () => {
+      render(
+        <NotificationContent
+          notification={updated({ rewritten: 1, added: 2 })}
+        />
+      );
+      expect(screen.getByText("1 rewritten")).toBeInTheDocument();
+      expect(screen.getByText("2 added")).toBeInTheDocument();
+      expect(screen.queryByText(/suggested/)).toBeNull();
+      expect(screen.getByRole("link")).toHaveAttribute(
+        "href",
+        "/projects/repository/456?view=issues&f=issues:any:100"
+      );
+    });
+
+    it("says the check failed, with the reason and a link to the project's webhooks", () => {
+      render(
+        <NotificationContent
+          notification={updated({ kind: "failed", detail: "rate limited" })}
+        />
+      );
+      expect(
+        screen.getByText("Test Cases Could Not Be Updated")
+      ).toBeInTheDocument();
+      expect(screen.getByText("Could not check DEMO-42")).toBeInTheDocument();
+      expect(screen.getByText("Reason: rate limited")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "View the project's webhooks" })
+      ).toHaveAttribute("href", "/projects/settings/456/webhooks");
+    });
+
+    it("leaves out the reason and the link when a failure carries neither", () => {
+      render(
+        <NotificationContent
+          notification={{
+            id: "cu-3",
+            type: "CASES_UPDATED",
+            title: "stored title",
+            message: "stored message",
+            data: { kind: "failed", issueKey: "DEMO-42" },
+          }}
+        />
+      );
+      expect(screen.getByText("Could not check DEMO-42")).toBeInTheDocument();
+      expect(screen.queryByText(/Reason/)).toBeNull();
+      expect(screen.queryByRole("link")).toBeNull();
+    });
+
+    it("reminds about suggestions still waiting, with the link", () => {
+      render(
+        <NotificationContent
+          notification={updated({ kind: "reminder", suggested: 2 })}
+        />
+      );
+      expect(
+        screen.getByText("Suggested Changes Are Waiting")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("2 still waiting for DEMO-42")
+      ).toBeInTheDocument();
+      expect(screen.getByRole("link")).toHaveAttribute(
+        "href",
+        "/projects/repository/456?view=issues&f=issues:any:100&f=suggestions:is:1"
+      );
+    });
+
+    it("shows no link and no issue line when the notification lacks them", () => {
+      render(
+        <NotificationContent
+          notification={{
+            id: "cu-2",
+            type: "CASES_UPDATED",
+            title: "stored title",
+            message: "stored message",
+            data: { kind: "summary", suggested: 1 },
+          }}
+        />
+      );
+      expect(screen.getByText("1 suggested")).toBeInTheDocument();
+      expect(screen.queryByRole("link")).toBeNull();
     });
   });
 

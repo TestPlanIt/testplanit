@@ -57,6 +57,8 @@ import {
   draftCasesDraftFrom,
   draftCasesOptionsFromDraft,
   type DraftCasesDraft,
+  updateCasesDraftFrom,
+  updateCasesOptionsFromDraft,
 } from "./webhook-action-draft-fields";
 import { Switch } from "@/components/ui/switch";
 
@@ -138,6 +140,9 @@ function WebhookActionDialogBody({
   const [draft, setDraft] = useState<DraftCasesDraft>(
     draftCasesDraftFrom(rule?.action === "DRAFT_CASES" ? rule.options : null)
   );
+  const [updateDraft, setUpdateDraft] = useState<DraftCasesDraft>(
+    updateCasesDraftFrom(rule?.action === "UPDATE_CASES" ? rule.options : null)
+  );
   const [saving, setSaving] = useState(false);
 
   const actions = availableActionsFor(trigger);
@@ -188,6 +193,10 @@ function WebhookActionDialogBody({
     if (action === "DRAFT_CASES") {
       for (const key of Object.keys(options)) delete options[key];
       Object.assign(options, draftCasesOptionsFromDraft(draft));
+    }
+    if (action === "UPDATE_CASES") {
+      for (const key of Object.keys(options)) delete options[key];
+      Object.assign(options, updateCasesOptionsFromDraft(updateDraft));
     }
     setSaving(true);
     try {
@@ -316,6 +325,15 @@ function WebhookActionDialogBody({
               projectId={projectId}
               value={draft}
               onChange={setDraft}
+            />
+          )}
+
+          {action === "UPDATE_CASES" && !isRepository && (
+            <WebhookActionDraftFields
+              projectId={projectId}
+              value={updateDraft}
+              onChange={setUpdateDraft}
+              mode="update"
             />
           )}
 

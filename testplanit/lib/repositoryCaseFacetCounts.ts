@@ -40,6 +40,10 @@ import {
   shapeCodePinsFacet,
 } from "~/lib/repositoryCaseCodePinsFilter";
 import {
+  shapeSuggestionsFacet,
+  suggestionsWhereClause,
+} from "~/lib/repositoryCaseSuggestionsFilter";
+import {
   matchesPostFetchFilters,
   type PostFetchFilter,
 } from "~/lib/repositoryCaseFieldMatchers";
@@ -51,6 +55,7 @@ import {
   dynamicFieldDimensionKey,
   type FilterDimensionRegistry,
   CODE_PINS_DIMENSION,
+  SUGGESTIONS_DIMENSION,
 } from "~/lib/repository/filterDimensions";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 import {
@@ -380,6 +385,8 @@ export interface RepositoryCaseFacetCounts {
   inReview?: Array<{ value: boolean; count: number }>;
   /** Present only while the project has Impact Analysis enabled. */
   codePins?: Array<{ value: boolean; count: number }>;
+  /** Cases with, and without, a suggested change waiting for a decision. */
+  suggestions: Array<{ value: boolean; count: number }>;
   tags: Array<{ id: number | "any" | "none"; name: string; count: number }>;
   issues: Array<{
     id: number | "any" | "none";
@@ -1156,6 +1163,37 @@ export async function computeRepositoryCaseFacetCounts(
     return shapeCodePinsFacet(totalExcept, withPins);
   })();
 
+  const suggestionsTask = (async (): Promise<
+    Array<{ value: boolean; count: number }>
+  > => {
+    if (multiConfig) {
+      const rows = await weightedRowsExcept(SUGGESTIONS_DIMENSION);
+      const uniqueIds = [...new Set(rows.map((row) => row.repositoryCaseId))];
+      const withSet = new Set(
+        (
+          await db.repositoryCases.findMany({
+            where: { id: { in: uniqueIds }, ...suggestionsWhereClause(true) },
+            select: { id: true },
+          })
+        ).map((c) => c.id)
+      );
+      const withSuggestion = rows.filter((row) =>
+        withSet.has(row.repositoryCaseId)
+      ).length;
+      return shapeSuggestionsFacet(rows.length, withSuggestion);
+    }
+    const [withSuggestion, totalExcept] = await Promise.all([
+      db.repositoryCases.count({
+        where: andWhere(
+          composer.whereExcept(SUGGESTIONS_DIMENSION),
+          suggestionsWhereClause(true)
+        ),
+      }),
+      idsExcept(SUGGESTIONS_DIMENSION).then((ids) => ids.length),
+    ]);
+    return shapeSuggestionsFacet(totalExcept, withSuggestion);
+  })();
+
   // Both buckets come from ONE materialization of `whereExcept(inReview)` —
   // the id list is already in memory, so the split is a Set membership test
   // rather than a second COUNT. Unchipped, that id list is the same promise
@@ -1200,6 +1238,7 @@ export async function computeRepositoryCaseFacetCounts(
     attachmentsWithCounts,
     inReviewWithCounts,
     codePinsWithCounts,
+    suggestionsWithCounts,
     totalCount,
   ] = await Promise.all([
     scalarCounts<number>("templates", "templateId", (p) => p.templateId),
@@ -1212,6 +1251,7 @@ export async function computeRepositoryCaseFacetCounts(
     attachmentsTask,
     inReviewTask,
     codePinsTask,
+    suggestionsTask,
     totalCountTask,
   ]);
 
@@ -1621,6 +1661,9 @@ export async function computeRepositoryCaseFacetCounts(
       parameterizedWithCounts.map((entry) => entry.count)
     ),
     attachments: sumValues(attachmentsWithCounts.map((entry) => entry.count)),
+    [SUGGESTIONS_DIMENSION]: sumValues(
+      suggestionsWithCounts.map((entry) => entry.count)
+    ),
     ...(codePinsWithCounts
       ? {
           [CODE_PINS_DIMENSION]: sumValues(
@@ -1674,6 +1717,7 @@ export async function computeRepositoryCaseFacetCounts(
     attachments: attachmentsWithCounts,
     ...(inReviewWithCounts ? { inReview: inReviewWithCounts } : {}),
     ...(codePinsWithCounts ? { codePins: codePinsWithCounts } : {}),
+    suggestions: suggestionsWithCounts,
     tags: [
       { id: "any" as const, name: "Any Tag", count: tagCounts.withTags },
       {
