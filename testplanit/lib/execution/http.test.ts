@@ -17,9 +17,10 @@ vi.mock("~/utils/ssrf", async (orig) => {
 import { assertSsrfSafeResolved } from "~/utils/ssrf";
 import {
   assertOutboundUrlAllowed,
+  ciHttpTimeoutMs,
   ciRequest,
-  CI_HTTP_TIMEOUT_MS,
   CI_MAX_BODY_BYTES,
+  DEFAULT_CI_HTTP_TIMEOUT_MS,
   CiRequestError,
 } from "./http";
 
@@ -266,8 +267,23 @@ describe("ciRequest — request shape", () => {
   });
 
   it("exposes the default timeout and body cap as constants", () => {
-    expect(CI_HTTP_TIMEOUT_MS).toBe(15_000);
+    expect(DEFAULT_CI_HTTP_TIMEOUT_MS).toBe(30_000);
     expect(CI_MAX_BODY_BYTES).toBe(64 * 1024);
+  });
+
+  it("reads the timeout from EXECUTION_PROVIDER_TIMEOUT_MS and ignores bad values", () => {
+    expect(ciHttpTimeoutMs({})).toBe(DEFAULT_CI_HTTP_TIMEOUT_MS);
+    expect(ciHttpTimeoutMs({ EXECUTION_PROVIDER_TIMEOUT_MS: "60000" })).toBe(
+      60_000
+    );
+    expect(ciHttpTimeoutMs({ EXECUTION_PROVIDER_TIMEOUT_MS: "2500.9" })).toBe(
+      2_500
+    );
+    for (const bad of ["", "abc", "0", "500", "-1", "Infinity"]) {
+      expect(ciHttpTimeoutMs({ EXECUTION_PROVIDER_TIMEOUT_MS: bad })).toBe(
+        DEFAULT_CI_HTTP_TIMEOUT_MS
+      );
+    }
   });
 });
 
