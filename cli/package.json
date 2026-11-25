@@ -30,7 +30,7 @@
     "commander": "^15.1.0",
     "conf": "^16.0.0",
     "form-data": "^4.0.6",
-    "glob": "^14.0.4",
+    "glob": "^14.0.6",
     "ora": "^10.0.0"
   },
   "devDependencies": {
