@@ -1,3 +1,13 @@
+## [1.3.0-beta.12](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.11...v1.3.0-beta.12) (2026-11-25)
+
+### Features
+
+* **webhooks:** update test cases with AI when an issue's text changes ([8c58878](https://github.com/TestPlanIt/testplanit/commit/8c588782c4d4ebc9ad7a9b93d07755a963d3d555))
+
+### Bug Fixes
+
+* **integrations:** stop one dead OAuth refresh token from breaking an integration for every user ([7b930de](https://github.com/TestPlanIt/testplanit/commit/7b930dec2c74cb04aa150569e595b8386d811e1b))
+
 ## [1.3.0-beta.11](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.10...v1.3.0-beta.11) (2026-11-24)
 
 ### Bug Fixes
