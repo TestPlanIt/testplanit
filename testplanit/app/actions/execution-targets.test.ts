@@ -287,6 +287,65 @@ describe("execution-targets actions", () => {
       expect(JSON.stringify(data)).not.toContain("ghp_supersecret");
     });
 
+    it("creates a GitLab target on a registered repository that no QuickScript or Impact config links to the project", async () => {
+      asManager();
+      findRepo.mockResolvedValue({ id: REPO_ID, provider: "GITLAB" });
+      createTarget.mockImplementation(async (args: any) =>
+        targetRow({
+          provider: args.data.provider,
+          url: null,
+          credentials: null,
+          codeRepository: {
+            id: REPO_ID,
+            name: "group/app",
+            provider: "GITLAB",
+          },
+        })
+      );
+
+      const result = await createExecutionTarget(PROJECT_ID, {
+        name: "Gitlab Pipeline Runner",
+        provider: "GITLAB_CI",
+        codeRepositoryId: REPO_ID,
+        workflowRef: null,
+        defaultRef: "main",
+        url: null,
+        staticInputs: {},
+        paramSchema: [],
+        timeoutMinutes: 120,
+        rotateSecret: false,
+      });
+
+      expect(result.success).toBe(true);
+      expect(findRepo.mock.calls[0][0].where).toEqual({
+        id: REPO_ID,
+        isDeleted: false,
+      });
+      expect(createTarget.mock.calls[0][0].data).toMatchObject({
+        projectId: PROJECT_ID,
+        provider: "GITLAB_CI",
+        codeRepositoryId: REPO_ID,
+        defaultRef: "main",
+      });
+    });
+
+    it("refuses a deleted repository before writing", async () => {
+      asManager();
+      findRepo.mockResolvedValue(null);
+
+      const result = await createExecutionTarget(PROJECT_ID, {
+        name: "CI",
+        provider: "GITLAB_CI",
+        codeRepositoryId: REPO_ID,
+      });
+
+      expect(result).toMatchObject({
+        success: false,
+        errorCode: "automation.settings.errors.repositoryNotFound",
+      });
+      expect(createTarget).not.toHaveBeenCalled();
+    });
+
     it("rejects a duplicate name before writing", async () => {
       asManager();
       mockTargetLookup(targetRow(), true);
@@ -764,7 +823,7 @@ describe("execution-targets actions", () => {
   });
 
   describe("getRepositoryDispatchOptions", () => {
-    it("scopes the repository lookup to the project's linked configs", async () => {
+    it("offers branches and workflows for any registered repository, linked to the project or not", async () => {
       asManager();
       findRepo.mockResolvedValue({
         id: REPO_ID,
@@ -784,15 +843,10 @@ describe("execution-targets actions", () => {
 
       const result = await getRepositoryDispatchOptions(PROJECT_ID, REPO_ID);
 
-      expect(findRepo).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            id: REPO_ID,
-            isDeleted: false,
-            projectConfigs: { some: { projectId: PROJECT_ID } },
-          }),
-        })
-      );
+      expect(findRepo.mock.calls[0][0].where).toEqual({
+        id: REPO_ID,
+        isDeleted: false,
+      });
       expect(result).toMatchObject({
         success: true,
         branches: ["main", "dev"],
@@ -801,10 +855,8 @@ describe("execution-targets actions", () => {
       });
     });
 
-    it("refuses a repository that is not linked to this project and never reaches an adapter", async () => {
+    it("refuses a deleted repository and never reaches an adapter", async () => {
       asManager();
-      // The scoped where-clause is what makes a cross-project repository
-      // invisible here; the lookup simply returns nothing.
       findRepo.mockResolvedValue(null);
 
       const result = await getRepositoryDispatchOptions(PROJECT_ID, REPO_ID);
@@ -812,9 +864,6 @@ describe("execution-targets actions", () => {
       expect(result).toEqual({
         success: false,
         error: "Code repository not found",
-      });
-      expect(findRepo.mock.calls[0][0].where.projectConfigs).toEqual({
-        some: { projectId: PROJECT_ID },
       });
       expect(mockedCreateGitAdapter).not.toHaveBeenCalled();
       expect(mockedCreateDispatchAdapter).not.toHaveBeenCalled();
