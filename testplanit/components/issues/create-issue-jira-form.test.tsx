@@ -19,6 +19,8 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key.split(".").pop() ?? key,
 }));
 
+vi.mock("sonner", () => ({ toast: { warning: vi.fn() } }));
+
 // Mock Dialog as open-conditional div (standard jsdom pattern)
 vi.mock("@/components/ui/dialog", () => ({
   Dialog: ({ open, children, onOpenChange }: any) =>
@@ -131,6 +133,7 @@ vi.mock("./dynamic-jira-field", () => ({
   ),
 }));
 
+import { toast } from "sonner";
 import { CreateIssueJiraForm } from "./create-issue-jira-form";
 
 const defaultProps = {
@@ -538,6 +541,64 @@ describe("CreateIssueJiraForm", () => {
       expect(JSON.parse(createCall[1].body).customFields).toEqual({
         customfield_10300: [{ accountId: "alice" }, { accountId: "bob" }],
       });
+    });
+  });
+
+  describe("reporter refused by Jira", () => {
+    const submitWithCreateResponse = async (created: Record<string, any>) => {
+      const baseFetch = global.fetch as any;
+      global.fetch = vi.fn().mockImplementation((url: string, init?: any) => {
+        if (url.includes("issue-type-fields")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              fields: [
+                {
+                  key: "customfield_10300",
+                  name: "Reviewers",
+                  required: false,
+                  schema: { type: "array", items: "user" },
+                },
+              ],
+            }),
+          });
+        }
+        if (url.includes("create-issue")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => created,
+          });
+        }
+        return baseFetch(url, init);
+      });
+      const onIssueCreated = vi.fn();
+
+      render(
+        <CreateIssueJiraForm
+          {...defaultProps}
+          onIssueCreated={onIssueCreated}
+        />
+      );
+      await screen.findByTestId("dynamic-field-customfield_10300");
+      fireEvent.click(screen.getByRole("button", { name: "create" }));
+      await waitFor(() => expect(onIssueCreated).toHaveBeenCalledWith(created));
+    };
+
+    it("warns the creator that the issue is reported by the API token owner", async () => {
+      await submitWithCreateResponse({ key: "ABT-1", reporterRejected: true });
+
+      expect(toast.warning).toHaveBeenCalledWith(
+        "created",
+        expect.objectContaining({ description: "createdReporterRejected" })
+      );
+    });
+
+    it("shows no warning when the reporter was accepted", async () => {
+      await submitWithCreateResponse({ key: "ABT-1" });
+
+      expect(toast.warning).not.toHaveBeenCalled();
     });
   });
 

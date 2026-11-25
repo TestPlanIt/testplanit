@@ -81,6 +81,33 @@ function sanitizeUpstreamErrorBody(body: string): string {
 }
 
 /**
+ * `message` carries only a truncated excerpt of the response body, so Jira's
+ * per-field `errors` map travels separately.
+ */
+class JiraFieldValidationError extends Error {
+  constructor(
+    message: string,
+    readonly fieldErrors: Record<string, unknown>
+  ) {
+    super(message);
+  }
+}
+
+function parseJiraFieldErrors(body: string): Record<string, unknown> | null {
+  try {
+    const errors = JSON.parse(body)?.errors;
+    return errors &&
+      typeof errors === "object" &&
+      !Array.isArray(errors) &&
+      Object.keys(errors).length > 0
+      ? errors
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * JQL has no parameter binding, so a stored issue-type id that reaches this
  * point unsanitized could break out of the `issuetype in (...)` clause it's
  * interpolated into. Drop any id containing a double quote, backslash, or
@@ -681,9 +708,11 @@ export class JiraAdapter extends BaseAdapter {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(
-          `HTTP ${response.status}: ${sanitizeUpstreamErrorBody(errorText)}`
-        );
+        const message = `HTTP ${response.status}: ${sanitizeUpstreamErrorBody(errorText)}`;
+        const fieldErrors = parseJiraFieldErrors(errorText);
+        throw fieldErrors
+          ? new JiraFieldValidationError(message, fieldErrors)
+          : new Error(message);
       }
 
       // Jira returns 204 No Content for several write endpoints (issue
@@ -750,14 +779,40 @@ export class JiraAdapter extends BaseAdapter {
     // console.log("[JiraAdapter] Creating issue with payload:", JSON.stringify(jiraPayload, null, 2));
     // console.log("[JiraAdapter] Reporter field in payload:", jiraPayload.fields.reporter);
 
-    try {
-      const response = await this.makeRequest<any>(
+    const postIssue = (fields: Record<string, unknown>) =>
+      this.makeRequest<any>(
         this.buildUrl(`/rest/api/${this.apiVersion}/issue`),
         {
           method: "POST",
-          body: JSON.stringify(jiraPayload),
+          body: JSON.stringify({ fields }),
         }
       );
+
+    try {
+      let response: any;
+      let reporterRejected = false;
+      try {
+        response = await postIssue(jiraPayload.fields);
+      } catch (error) {
+        // Jira fails the whole create when it won't accept a reporter; sent
+        // without one, it records the authenticated account.
+        if (
+          !jiraPayload.fields.reporter ||
+          !(error instanceof JiraFieldValidationError) ||
+          !("reporter" in error.fieldErrors)
+        ) {
+          throw error;
+        }
+        console.warn(
+          "[JiraAdapter] Jira rejected the reporter field; creating the issue without it:",
+          error.fieldErrors.reporter
+        );
+        response = await postIssue({
+          ...jiraPayload.fields,
+          reporter: undefined,
+        });
+        reporterRejected = true;
+      }
 
       // console.log("[JiraAdapter] Create issue response:", JSON.stringify(response, null, 2));
 
@@ -766,7 +821,13 @@ export class JiraAdapter extends BaseAdapter {
       if (response.key) {
         const fullIssue = await this.getIssue(response.key);
         // console.log("[JiraAdapter] Created issue reporter:", fullIssue.reporter);
-        return fullIssue;
+        // Not flagged when the refused reporter is the account Jira recorded
+        // anyway (the API token owner).
+        return reporterRejected &&
+          fullIssue.reporter?.id !==
+            pickUserId(reporter as any, this.deployment)
+          ? { ...fullIssue, reporterRejected: true }
+          : fullIssue;
       }
 
       throw new Error("Failed to create issue - no key returned");

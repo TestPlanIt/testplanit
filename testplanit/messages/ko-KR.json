@@ -91,9 +91,9 @@
       "actionsLabel": "행위",
       "actionsWithAlerts": "작업 ({count, number}개 읽지 않음)",
       "assign": "양수인",
-      "assignSelected": "할당 {count, plural, one {# 경우} other {# 경우}}",
+      "assignSelected": "할당 {count, plural, one {# 케이스} other {# 케이스}}",
       "refresh": "새로 고치다",
-      "addResultSelected": "결과를 {count, plural, one {에 추가합니다. # 경우} other {# 경우}}",
+      "addResultSelected": "결과를 {count, plural, one {에 추가합니다. # 케이스} other {# 케이스}}",
       "resultsAdded": "{count, plural, one {# 결과} other {# 결과}} 추가됨",
       "resultsAddedDescription": "{count, plural, one {테스트 케이스 #개에 결과가 성공적으로 추가되었습니다.} other {테스트 케이스 #개에 결과가 성공적으로 추가되었습니다.}}",
       "addingResultsToMultiple": "{count, plural, one {에 결과를 추가합니다. # 테스트 케이스} other {# 테스트 케이스}}",
@@ -280,7 +280,7 @@
       "state": "상태",
       "configuration": "구성",
       "configurations": "구성",
-      "milestone": "중요한 단계",
+      "milestone": "마일스톤",
       "tags": "태그",
       "createdBy": "제작자:",
       "description": "설명",
@@ -392,7 +392,7 @@
       "forecastManual": "예측 매뉴얼",
       "forecastAutomated": "예측 자동화",
       "executedAt": "실행됨",
-      "className": "수업",
+      "className": "클래스",
       "suiteName": "모음곡",
       "duration": "지속",
       "session": "세션",
@@ -409,7 +409,7 @@
       "JUNIT": "JUnit 가져오기",
       "API": "API",
       "folder": "접는 사람",
-      "parentFolder": "새 사건용 상위 폴더",
+      "parentFolder": "새 케이스용 상위 폴더",
       "multipleValues": "다중 값",
       "multipleValuesCount": "여러 값 ({count, number})",
       "provider": "공급자",
@@ -597,12 +597,12 @@
       "filterByValue": "값으로 필터링...",
       "selectOperator": "연산자를 선택하세요",
       "searchIcons": "검색 아이콘...",
-      "stepCount": "걸음 수",
+      "stepCount": "단계 수",
       "enterText": "텍스트를 입력하세요...",
       "enterUrl": "URL을 입력하세요",
       "enterUrlPattern": "URL 패턴 입력...",
       "domainExample": "example.com",
-      "issueIdExample": "제123호",
+      "issueIdExample": "ISSUE-123",
       "selectPriorityValuesOrEmpty": "우선순위 값을 선택하세요 (모두 선택하려면 비워 두세요)."
     },
     "errors": {
@@ -661,7 +661,7 @@
       "projectCreationFailed": "프로젝트 생성에 실패했습니다. ID가 반환되지 않았습니다.",
       "invalidRoleId": "잘못된 역할 ID",
       "workflowStateExists": "워크플로 상태가 이미 존재합니다. 새 이름을 선택하세요.",
-      "failedToLoadCaseData": "사건 데이터를 불러오는 데 실패했습니다. 저장할 수 없습니다.",
+      "failedToLoadCaseData": "케이스 데이터를 불러오는 데 실패했습니다. 저장할 수 없습니다.",
       "atLeastOneTagRequired": "최소 하나의 태그가 필요합니다.",
       "atLeastOneIssueRequired": "최소 한 가지 이슈가 필요합니다.",
       "atLeastOneOptionRequired": "최소한 하나의 옵션을 선택해야 합니다.",
@@ -870,7 +870,7 @@
     "empty": {
       "description": "설명 없음",
       "documentation": "문서 없음",
-      "childMilestones": "아이의 발달 단계는 없습니다.",
+      "childMilestones": "하위 마일스톤은 없습니다.",
       "sessions": "세션 없음",
       "activeSessions": "현재 진행 중인 세션이 없습니다.",
       "completedSessions": "완료된 세션 없음",
@@ -1137,7 +1137,7 @@
       "time": "시간"
     },
     "plural": {
-      "case": "{count, plural, =1 {경우} other {경우}}",
+      "case": "{count, plural, =1 {케이스} other {케이스}}",
       "result": "{count, plural, =1 {결과} other {결과}}",
       "run": "{count, plural, =1 {실행} other {실행}}",
       "comment": "{count, plural, =1 {# 댓글} other {# 댓글}}"
@@ -1380,7 +1380,7 @@
     },
     "overview": {
       "title": "개요",
-      "currentMilestones": "현재 주요 성과",
+      "currentMilestones": "현재 마일스톤",
       "seeAllMilestones": "{count, plural, =1 {마일스톤 #개 보기} =2 {마일스톤 #개 모두 보기} other {마일스톤 #개 모두 보기}}",
       "seeAllTestCases": "{count, plural, =1 {테스트 케이스 #개 보기} =2 {테스트 케이스 #개 모두 보기} other {테스트 케이스 #개 모두 보기}}",
       "latestTestCases": "최신 테스트 사례",
@@ -1693,8 +1693,8 @@
           "issueUpdated": "이슈가 업데이트되었습니다.",
           "issueDeleted": "문제가 삭제되었습니다.",
           "caseCreated": "케이스 생성됨",
-          "caseUpdated": "사건 업데이트됨",
-          "caseDeleted": "사건 삭제됨",
+          "caseUpdated": "케이스 업데이트됨",
+          "caseDeleted": "케이스 삭제됨",
           "jiraIssueCreated": "Jira 이슈가 생성되었습니다.",
           "jiraIssueUpdated": "Jira 이슈가 업데이트되었습니다.",
           "jiraIssueDeleted": "Jira 이슈가 삭제되었습니다.",
@@ -1779,7 +1779,7 @@
         "setupStepsAdoStep5": "구독을 저장하세요. 아래의 \"테스트 웹훅 보내기\"를 사용하여 파이프라인을 확인하세요.",
         "setupStepsGitlabStep1": "GitLab에서 프로젝트 → 설정 → 웹훅으로 이동하세요.",
         "setupStepsGitlabStep2": "아래 URL을 URL 필드에 붙여넣으세요. 아래 비밀 키를 비밀 토큰 필드에 붙여넣으세요.",
-        "setupStepsGitlabStep3": "트리거 항목에서 \"이벤트 발생\"을 선택하세요.",
+        "setupStepsGitlabStep3": "트리거 항목에서 \"이슈 이벤트\"를 선택하세요.",
         "setupStepsGitlabStep4": "\"웹훅 추가\"를 클릭하세요. 아래의 \"테스트 웹훅 보내기\"를 사용하여 파이프라인을 확인하세요.",
         "setupStepsGiteaStep1": "Gitea에서 저장소 → 설정 → 웹훅으로 이동하세요.",
         "setupStepsGiteaStep2": "\"웹훅 추가\"를 클릭하고 \"Gitea\"를 선택하세요.",
@@ -2053,7 +2053,7 @@
           "descriptionStage1": "이 데이터 세트는 프로젝트에서 제거될 예정입니다. 이미 해당 값을 스냅샷한 기존 테스트 실행에는 영향을 미치지 않습니다.",
           "descriptionStage2": "이 데이터셋은 {count, plural, =1 {# 케이스} other {# 케이스}}에서 사용됩니다. 이 데이터셋을 삭제하면 해당 케이스에서 공유 데이터셋 할당이 제거됩니다. 기존 테스트 실행에는 영향을 미치지 않습니다(스냅샷은 변경 불가능합니다).",
           "confirm": "데이터셋 삭제",
-          "confirmAnyway": "어쨌든 삭제합니다 ({count, plural, =1 {# 경우} other {# 경우}})",
+          "confirmAnyway": "어쨌든 삭제합니다 ({count, plural, =1 {# 케이스} other {# 케이스}})",
           "error": "데이터셋을 삭제할 수 없습니다."
         },
         "deleteSuccess": "삭제됨 \"{name}\"",
@@ -2511,17 +2511,17 @@
       "cellCapSuggestionFilterDates": "날짜 범위를 좁혀 보세요. 매개변수 반복 횟수가 셀 개수의 대부분을 차지합니다.",
       "cellCapAxisCases": "테스트 케이스: {count, number}",
       "cellCapAxisConfigs": "구성: {count, number}",
-      "cellCapAxisMaxIters": "어떤 경우든 매개변수 행 수가 가장 많은 경우: {count, number}",
+      "cellCapAxisMaxIters": "어떤 케이스든 매개변수 행 수가 가장 많은 케이스: {count, number}",
       "cellCapResetFilters": "필터를 초기화하고 다시 시도하세요."
     }
   },
   "milestones": {
-    "title": "주요 단계 세부 정보",
+    "title": "마일스톤 세부 정보",
     "auditLog": {
       "description": "이 마일스톤에 대해 기록된 모든 변경 사항입니다."
     },
     "fields": {
-      "parent": "부모의 중요한 순간",
+      "parent": "상위 마일스톤",
       "dueDate": "마감일",
       "automaticCompletion": "마감일 자동 완성",
       "notifyDaysBefore": "마감일 며칠 전에 알려주세요",
@@ -2529,13 +2529,13 @@
       "dueDateNotifications": "마감일 알림"
     },
     "labels": {
-      "childMilestones": "아동 발달 단계"
+      "childMilestones": "하위 마일스톤"
     },
     "placeholders": {
-      "description": "주요 단계 설명을 입력하세요...",
-      "documentation": "주요 단계별 문서를 입력하세요...",
+      "description": "마일스톤 설명을 입력하세요...",
+      "documentation": "마일스톤별 문서를 입력하세요...",
       "selectType": "마일스톤 유형을 선택하세요...",
-      "selectParent": "상위 단계 선택..."
+      "selectParent": "상위 마일스톤 선택..."
     },
     "noTypes": {
       "title": "사용 가능한 마일스톤 유형이 없습니다",
@@ -2581,7 +2581,7 @@
       "pickStartDate": "시작 날짜를 선택하세요",
       "pickCompletionDate": "선택 완료일",
       "selectDate": "날짜를 선택하세요...",
-      "completionWarning": "경고: 이렇게 하면 해당 단계가 완료된 것으로 표시됩니다."
+      "completionWarning": "경고: 이렇게 하면 해당 마일스톤이 완료된 것으로 표시됩니다."
     },
     "toast": {
       "deleted": "마일스톤 {name} 삭제됨",
@@ -2615,10 +2615,10 @@
     },
     "completeDialog": {
       "confirmTitle": "마일스톤 완료 확인",
-      "confirmDescription": "이 단계를 완료하면 다음과 같은 관련 항목도 함께 완료됩니다.",
+      "confirmDescription": "이 마일스톤을 완료하면 다음과 같은 관련 항목도 함께 완료됩니다.",
       "impactActiveTestRuns": "{count, plural, one {# 활성 테스트 실행} other {# 활성 테스트 실행}}",
       "impactActiveSessions": "{count, plural, one {# 활성 세션} other {# 활성 세션}}",
-      "impactDescendantMilestones": "{count, plural, one {# 후손 마일스톤} other {# 후손 마일스톤}}",
+      "impactDescendantMilestones": "{count, plural, one {# 하위 마일스톤} other {# 하위 마일스톤}}",
       "completeTestRunsLabel": "관련 테스트 실행 완료 ({count, plural, one {# 활성} other {# 활성}})",
       "completeSessionsLabel": "관련 세션 완료 ({count, plural, one {# 활성} other {# 활성}})",
       "testRunStateLabel": "테스트 실행 완료 상태",
@@ -3333,7 +3333,7 @@
     "orphanedFieldsWarning": "이 테스트 케이스에는 {count, plural, =1 {# 필드 값} other {# 필드 값}} 이 있으며, {count, plural, =1 {은} other {이고}} 은 현재 템플릿 \"{templateName}\"에 포함되어 있지 않습니다. {count, plural, =1 {이 필드는} other {입니다. 이 필드들은}} 아래에 표시되지만 템플릿에 추가될 때까지 편집할 수 없을 수 있습니다.",
     "title": "테스트 케이스 저장소",
     "folders": "폴더",
-    "showDescendants": "모든 후손을 표시합니다",
+    "showDescendants": "모든 하위 항목 표시",
     "addFolder": "폴더 추가",
     "emptyFolders": "위의 '폴더 추가' 버튼을 클릭하여 첫 번째 폴더를 추가하세요.",
     "selectedAllCases": "{count, plural, =0 {모든 케이스 선택됨} one {모든 페이지에서 #개의 케이스 선택됨} other {모든 페이지에서 #개의 케이스 선택됨}}",
@@ -3364,7 +3364,7 @@
       "moveError": "{count, plural, =1 {1개의 케이스를 {folder}} other {로 이동하는 데 실패했습니다. #개의 케이스를 {folder}}}{dest, select, samename {} crossProject { 로 이동하는 데 실패했습니다. {projectName}} other {}}",
       "copyAlreadyRunning": "다른 복사본 제작이 이미 진행 중입니다. 완료될 때까지 잠시 기다려 주십시오.",
       "currentSuffix": "(현재의)",
-      "moveDisabledSameFolder": "사건들은 이미 이 폴더에 있습니다.",
+      "moveDisabledSameFolder": "케이스들은 이미 이 폴더에 있습니다.",
       "dragPreviewCase": "테스트 케이스",
       "dragPreviewCount": "{count, plural, =1 {# 테스트 케이스} other {# 테스트 케이스}}",
       "modifierHintMac": "드래그하는 동안 ⇧ 키를 누른 상태로 이동하거나 ⌥ 키를 누른 상태로 복사하면 이 메뉴를 건너뛸 수 있습니다.",
@@ -3479,7 +3479,7 @@
           "selectFolder": "폴더를 선택하세요",
           "selectFolderPlaceholder": "폴더를 선택하세요...",
           "delimiters": {
-            "tab": "꼬리표"
+            "tab": "탭"
           },
           "hasHeaders": "첫 번째 행에는 열 이름이 포함되어 있습니다.",
           "template": "저장소 사례 템플릿",
@@ -3592,7 +3592,7 @@
       "allTemplates": "모든 템플릿",
       "allStates": "모든 주",
       "allCreators": "모든 크리에이터",
-      "allCases": "모든 사건",
+      "allCases": "모든 케이스",
       "allAssignees": "모든 양수인",
       "anyTag": "모든 태그",
       "noTags": "태그 없음",
@@ -3706,7 +3706,7 @@
       "outputModeLabel": "출력 모드",
       "outputModeSingle": "단일 파일 ({count, plural, =2 {두 케이스 모두} other {모든 #개 케이스}})",
       "outputModeIndividual": "{count, plural, one {개별 파일(.zip)} other {개별 파일(.zip)}}",
-      "casesToExport": "{count, plural, one {# 경우} other {# 경우}} 내보내기",
+      "casesToExport": "{count, plural, one {# 케이스} other {# 케이스}} 내보내기",
       "exportSuccess": "내보내기가 성공적으로 완료되었습니다.",
       "noAvailableTemplates": "사용 가능한 템플릿이 없습니다. 관리자에게 문의하세요."
     },
@@ -3751,7 +3751,7 @@
       "columnMatchedFields": "일치하는 필드",
       "columnScore": "점수",
       "compareButton": "비교하다",
-      "viewCaseDetails": "사건 상세 정보를 확인하세요",
+      "viewCaseDetails": "케이스 상세 정보를 확인하세요",
       "selectAll": "모두 선택하세요",
       "selected": "{count, plural, one {# 선택됨} other {# 선택됨}}",
       "bulkDismiss": "중복되지 않음 ({count, number})",
@@ -3771,16 +3771,16 @@
       "linking": "연결 중...",
       "dismissing": "해고합니다...",
       "mergeSuccess": "케이스가 성공적으로 병합되었습니다. {runsTransferred, plural, =0 {전송된 테스트 실행 없음} one {전송된 테스트 실행 #} other {전송된 테스트 실행 #}}.",
-      "linkSuccess": "관련 사건으로 연결되었습니다.",
+      "linkSuccess": "관련 케이스로 연결되었습니다.",
       "dismissSuccess": "해당 쌍은 삭제되었습니다. 향후 스캔에서 나타나지 않습니다.",
       "resolveError": "중복된 항목을 찾지 못했습니다. 다시 시도해 주세요.",
-      "loadingDetails": "사건 상세 정보를 불러오는 중...",
-      "caseDetailsError": "사건 세부 정보를 불러오는 데 실패했습니다.",
+      "loadingDetails": "케이스 상세 정보를 불러오는 중...",
+      "caseDetailsError": "케이스 세부 정보를 불러오는 데 실패했습니다.",
       "sourceLabel": "원천",
       "fieldValuesLabel": "필드 값",
-      "lastRunLabel": "마지막 달리기",
+      "lastRunLabel": "마지막 실행",
       "noFieldValues": "필드 값이 없습니다",
-      "noLastRun": "절대 뛰지 마세요",
+      "noLastRun": "실행된 적 없음",
       "stepExpectedResult": "{step} → {result}",
       "runStatusDate": "{status} — {date}",
       "noFolder": "폴더 없음",
@@ -3788,7 +3788,7 @@
       "duplicateWarningDescription": "{count, plural, one {# 기존 사례} other {# 기존 사례}} 는 유사한 기능을 포함할 수 있습니다.",
       "duplicateWarningReview": "검토",
       "importWarning": "중복일 가능성이 있습니다.",
-      "importWarningTooltip": "이 사건명은 {count, plural, one {# 기존 사건} other {# 기존 사건}}: {names}와 유사합니다.",
+      "importWarningTooltip": "이 케이스명은 {count, plural, one {# 기존 케이스} other {# 기존 케이스}}: {names}와 유사합니다.",
       "importIntraWarning": "가져오기 내 중복",
       "importIntraWarningTooltip": "이 가져오기의 행 {rows} 은 이름이 같거나 매우 유사합니다.",
       "checkingDuplicates": "중복 항목을 확인하는 중..."
@@ -4476,8 +4476,8 @@
         "maxResultsTitle": "최대 테스트 케이스 일치 수",
         "maxResultsDescription": "검색 조건이 많은 테스트 케이스와 일치했습니다. 보다 구체적인 결과를 얻으려면 이전 단계로 돌아가 테스트 실행에 더 구체적인 세부 정보를 추가하십시오.",
         "batchSize": "배치 크기",
-        "batchSizeAll": "모든 경우 (단일 요청)",
-        "batchSizePercent": "{percent}% ({count} 경우)",
+        "batchSizeAll": "모든 케이스 (단일 요청)",
+        "batchSizePercent": "{percent}% ({count} 케이스)",
         "requestsNeeded": "{count, plural, =1 {# AI 요청이 이루어집니다} other {# AI 요청이 이루어집니다}}",
         "batchNote": "모든 배치의 결과가 합산됩니다."
       },
@@ -4493,7 +4493,7 @@
       "success": {
         "title": "제안된 테스트 사례",
         "description": "{count, plural, =1 {# 테스트 실행 컨텍스트에 따라 선택된 테스트 케이스} other {# 테스트 케이스}}",
-        "linkedCasesAdded": "{count, plural, =1 {# 연결된 경우 자동으로 포함됨} other {# 연결된 경우 자동으로 포함됨}}",
+        "linkedCasesAdded": "{count, plural, =1 {# 연결된 케이스 자동으로 포함됨} other {# 연결된 케이스 자동으로 포함됨}}",
         "truncationWarningTitle": "부분 결과",
         "truncationWarning": "{count, plural, =1 {# 배치가 잘렸습니다} other {# 배치가 잘렸습니다}} AI 모델에 의해 일부 테스트 케이스가 평가되지 않았을 수 있습니다."
       },
@@ -4533,7 +4533,7 @@
     "summary": {
       "title": "테스트 실행 요약",
       "description": "테스트 실행 요약을 확인하세요",
-      "activeRunsAndEstTime": "진행 중인 달리기 및 예상 시간",
+      "activeRunsAndEstTime": "진행 중인 실행 및 예상 시간",
       "activeRunsLabel": "실행",
       "totalEstTime": "총 예상 소요 시간",
       "responsibleUsers": "책임감 있는 사용자",
@@ -4921,7 +4921,7 @@
           "run_links": "테스트 실행 링크",
           "run_tags": "테스트 실행 태그",
           "issues": "문제점",
-          "milestone_issues": "주요 이슈",
+          "milestone_issues": "마일스톤 이슈",
           "repository_case_issues": "저장소 사례 문제",
           "run_issues": "테스트 실행 문제",
           "run_result_issues": "테스트 실행 결과 문제",
@@ -5646,7 +5646,7 @@
           "fileExtension": "예: .spec.ts",
           "language": "예: 타입스크립트",
           "headerBody": "선택 사항입니다. 콘텐츠는 상단에 한 번만 표시됩니다(예: 가져오기 문).",
-          "templateBody": "콧수염 템플릿 입력...\n\n사용 가능한 변수:\n'{{name}}', '{{id}}', '{{folder}}', '{{state}}', '{{estimate}}', '{{automated}}', '{{tags}}', '{{createdBy}}', '{{createdAt}}'\n\n단계 섹션:\n'{{#steps}}{{order}}', '{{step}}', '{{expectedResult}}{{/steps}}'\n\n사용자 정의 필드:\n'{{fields.fieldSystemName}}'",
+          "templateBody": "Mustache 템플릿 입력...\n\n사용 가능한 변수:\n'{{name}}', '{{id}}', '{{folder}}', '{{state}}', '{{estimate}}', '{{automated}}', '{{tags}}', '{{createdBy}}', '{{createdAt}}'\n\n단계 섹션:\n'{{#steps}}{{order}}', '{{step}}', '{{expectedResult}}{{/steps}}'\n\n사용자 정의 필드:\n'{{fields.fieldSystemName}}'",
           "footerBody": "선택 사항입니다. 콘텐츠는 하단에 한 번만 렌더링됩니다(예: 종료 코드)."
         },
         "combobox": {
@@ -6401,7 +6401,7 @@
     "trash": {
       "itemTypes": {
         "projectLinks": "프로젝트 링크",
-        "milestoneLinks": "주요 링크",
+        "milestoneLinks": "마일스톤 링크",
         "icons": "아이콘",
         "fieldOptions": "필드 옵션",
         "configCategories": "구성 카테고리",
@@ -6670,12 +6670,12 @@
         "encrypted": "암호화됨",
         "encryptedHelp": "이 필드는 암호화되어 안전하게 저장됩니다.",
         "leaveBlankToKeep": "기존 값을 유지하려면 비워 두세요",
-        "apiKeyWarningTitle": "API 키 인증 알림",
-        "apiKeyWarningDescription": "API 키 인증을 사용하는 경우, 이메일 주소가 일치하더라도 생성된 이슈의 보고자가 해당 이슈를 생성한 TestPlanIt 사용자와 일치하지 않을 수 있습니다.",
-        "apiKeyWarningPoint1": "Jira 리포터를 설정하려면 API 토큰 계정에 Jira 관리자 권한(\"리포터 수정\")이 있어야 합니다. 이 권한이 없으면 Jira는 리포터를 무시하고 API 토큰 소유자를 생성자로 기록합니다.",
-        "apiKeyWarningPoint2": "허용된 경우 TestPlanIt은 TestPlanIt 이메일 주소와 Jira 사용자 이메일을 대조하여 보고자를 설정하고, 그래도 문제가 해결되지 않으면 표시 이름을 대조합니다.",
-        "apiKeyWarningPoint3": "일치하는 항목이 없거나 계정에 권한이 없는 경우 API 토큰 소유자가 보고자가 됩니다.",
-        "apiKeyWarningPoint4": "관리자 권한 없이 사용자별 정확한 보고자 식별을 위해서는 OAuth 2.0을 사용하십시오.",
+        "apiKeyWarningTitle": "모든 문제는 API 토큰 소유자에 의해 보고될 수 있습니다",
+        "apiKeyWarningDescription": "API 키 인증을 사용하면 TestPlanIt에서 생성된 모든 문제는 API 토큰을 소유한 계정에 의해 Jira에서 보고됩니다. 단, Jira가 해당 계정에서 다른 보고자를 설정하도록 허용하는 경우는 예외입니다:",
+        "apiKeyWarningPoint1": "Jira는 계정에 프로젝트의 \"보고자 수정\" 권한이 있고(보통 Jira 관리자만 보유) 보고자 필드가 프로젝트의 생성 화면에 있는 경우에만 이를 허용합니다. 그렇지 않으면 이메일이 일치하더라도 API 토큰 소유자가 보고자입니다.",
+        "apiKeyWarningPoint2": "Jira가 허용하면 TestPlanIt은 보고자를 문제를 생성한 TestPlanIt 사용자의 이메일과 일치하는 Jira 사용자로 설정한 다음 표시 이름 일치로 돌아갑니다.",
+        "apiKeyWarningPoint3": "일치하는 Jira 사용자가 없으면 API 토큰 소유자가 보고자입니다.",
+        "apiKeyWarningPoint4": "Jira Cloud에서는 각 문제가 생성자에 의해 보고되도록 OAuth 2.0을 대신 사용하십시오. OAuth 2.0은 Jira Server 또는 Data Center에서 사용할 수 없습니다.",
         "tokenCreatorNoticeTitle": "문제 제기자 정보",
         "tokenCreatorNoticeDescription": "이 연동을 통해 생성된 이슈는 항상 해당 액세스 토큰을 소유한 계정으로 기록되며, 이슈를 생성한 TestPlanIt 사용자 계정으로는 기록되지 않습니다. 이 공급자의 API는 다른 사용자를 대신하여 생성자를 설정하는 것을 허용하지 않습니다.",
         "callbackUrlLabel": "콜백 URL(리디렉션 URI)",
@@ -7198,12 +7198,12 @@
         "testRun": "테스트 실행:",
         "casesInProject": "{count, plural, =1 {# 경우} other {# 경우}}",
         "sentBy": "{name}님이 보냈습니다.",
-        "milestoneDueSoonTitle": "곧 중요한 일정이 예정되어 있습니다.",
-        "milestoneOverdueTitle": "주요 일정 기한 초과",
+        "milestoneDueSoonTitle": "곧 마일스톤이 예정되어 있습니다.",
+        "milestoneOverdueTitle": "마일스톤 기한 초과",
         "milestoneDueSoon": "프로젝트 \"{projectName}\"의 마일스톤 \"{milestoneName}\"은 {dueDate} 에 완료될 예정입니다.",
         "milestoneOverdue": "프로젝트 \"{projectName}\"의 마일스톤 \"{milestoneName}\"은 {dueDate} 에 완료 예정이었으나 현재 기한이 지났습니다.",
         "milestoneNotificationReason": "이 알림은 귀하께서 해당 마일스톤과 관련된 작업(테스트 실행, 세션 참여 또는 마일스톤 생성)에 참여하셨기 때문에 발송되었습니다.",
-        "milestoneNotificationContinue": "이 단계가 완료로 표시될 때까지 매일 알림을 계속 받게 됩니다.",
+        "milestoneNotificationContinue": "이 마일스톤이 완료로 표시될 때까지 매일 알림을 계속 받게 됩니다.",
         "shareLinkAccessedTitle": "공유 링크 접속됨",
         "shareLinkAccessedAnonymousViewer": "누구",
         "shareLinkAccessedMessage": "{viewer} 님이 공유하신 보고서를 확인했습니다: \"{shareTitle}\"",
@@ -7386,7 +7386,7 @@
       "templateMismatch": "템플릿 불일치",
       "autoAssignTemplates": "누락된 템플릿을 대상 프로젝트에 자동 할당",
       "templatesMayNotDisplay": "누락된 템플릿은 대상 프로젝트에서 사용할 수 없습니다. 케이스는 복사되지만 해당 템플릿의 필드가 올바르게 표시되지 않을 수 있습니다.",
-      "workflowFallback": "대상 프로젝트에서 일부 워크플로 상태를 사용할 수 없습니다. 이러한 경우에는 대상 프로젝트의 기본 상태가 사용됩니다.",
+      "workflowFallback": "대상 프로젝트에서 일부 워크플로 상태를 사용할 수 없습니다. 이러한 케이스에는 대상 프로젝트의 기본 상태가 사용됩니다.",
       "default": "(기본)",
       "conflicts": "모든 분쟁에 적용:",
       "conflictSkip": "건너뛰다",
@@ -7405,7 +7405,7 @@
       "errorCount": "{count, number} 케이스(들)가 실패했습니다",
       "viewInTargetProject": "대상 프로젝트에서 보기",
       "failed": "실패한",
-      "folderMode": "폴더 \"{folderName}\" — {caseCount, plural, one {# 경우} other {# 경우}}"
+      "folderMode": "폴더 \"{folderName}\" — {caseCount, plural, one {# 케이스} other {# 케이스}}"
     }
   },
   "issues": {
@@ -7456,6 +7456,7 @@
     "authenticatedAndReady": "인증 완료, 문제 생성 준비 완료",
     "created": "문제 발생",
     "createdInExternal": "이슈가 {provider}에 생성되었습니다.",
+    "createdReporterRejected": "Jira가 귀하를 보고자로 허용하지 않았으므로 이 문제는 통합의 API 토큰을 소유한 계정에 의해 보고됩니다. TestPlanIt 관리자는 Jira 통합 설정에서 이유를 확인할 수 있습니다.",
     "createdInternal": "로컬에서 생성된 문제",
     "createdInternalSimpleUrl": "내부적으로 생성된 이슈이며, 간단한 URL을 통해 연결할 수 있습니다.",
     "createError": "이슈 생성에 실패했습니다",
@@ -7487,7 +7488,7 @@
     "addLabel": "레이블을 추가하고 Enter 키를 누르세요.",
     "labelHint": "공백은 하이픈으로 대체됩니다.",
     "labelFormatNote": "레이블에는 공백을 포함할 수 없습니다. 공백은 자동으로 하이픈으로 대체됩니다.",
-    "enterIssueKey": "발급 코드를 입력하십시오(예: PROJ-123).",
+    "enterIssueKey": "이슈 코드를 입력하십시오(예: PROJ-123).",
     "issueLinkHelp": "기존 이슈의 키를 입력하여 연결하세요.",
     "searchForIssue": "연결할 문제를 검색하세요",
     "searchUsers": "사용자 검색",
@@ -7931,8 +7932,8 @@
     "noLinkedCases": "연결된 테스트 케이스가 없습니다.",
     "linkedBy": "연결됨",
     "on": "링크드인",
-    "alreadyLinked": "이 사건은 이미 연관되어 있습니다.",
-    "cannotLinkSelf": "사건 자체를 연결할 수 없습니다.",
+    "alreadyLinked": "이 케이스는 이미 연관되어 있습니다.",
+    "cannotLinkSelf": "케이스 자체를 연결할 수 없습니다.",
     "circularLink": "순환 링크가 감지되었습니다.",
     "dependsOn": "의존",
     "blocks": "차단",
@@ -8645,7 +8646,7 @@
           "content": "스프린트, 릴리스 및 기타 목표에 맞춰 테스트 진행 상황을 추적하세요. 테스트 실행 및 세션을 마일스톤에 연결하여 진행 상황을 관리할 수 있습니다."
         },
         "milestonesPage": {
-          "title": "주요 단계별 일정",
+          "title": "마일스톤별 일정",
           "content": "이 프로젝트의 모든 마일스톤을 확인하세요. 각 마일스톤은 진행 상황과 완료를 향한 진척도를 보여줍니다."
         },
         "repository": {
@@ -8845,7 +8846,7 @@
         },
         "projectHealth": {
           "label": "프로젝트 헬스",
-          "description": "프로젝트 진행 상황, 주요 일정 및 완료 현황"
+          "description": "프로젝트 진행 상황, 마일스톤 및 완료 현황"
         },
         "milestoneReadiness": {
           "label": "마일스톤 준비 상태",
@@ -8853,7 +8854,7 @@
         },
         "sessionAnalysis": {
           "label": "세션 분석",
-          "description": "수업 완료율, 소요 시간 및 과제 관련 지표"
+          "description": "세션 완료율, 소요 시간 및 과제 관련 지표"
         },
         "issueTracking": {
           "label": "이슈 추적",
@@ -9029,14 +9030,14 @@
             "flakiest_first": "테스트 케이스는 대략적인 불안정성(합격/불합격 여부 반전)에 따라 정렬됩니다. 불안정한 수동 테스트는 결정론적 자동화 오라클의 주요 대상입니다.",
             "longest_first": "테스트 케이스는 수동 실행 예상 시간(가장 오래 걸리는 케이스부터)에 따라 정렬됩니다. 예측 수동 기능이 있는 경우 수동 실행이 불가능하며, 그렇지 않은 경우 추정치로 대체됩니다. 자동화를 통해 이러한 케이스에서 테스터 시간을 가장 많이 절약할 수 있습니다.",
             "oldest_first": "케이스는 생성 날짜순(가장 오래된 것부터)으로 정렬됩니다. 오래 지속된 수동 케이스는 일반적으로 성숙하고 안정적인 동작을 나타내므로 재작업 없이 자동화해도 안전합니다.",
-            "newest_first": "사건들은 생성 날짜순(최신순)으로 정렬됩니다. 새로 작성된 사건일수록 현재 실행 보장이 필요할 가능성이 가장 높습니다.",
+            "newest_first": "케이스들은 생성 날짜순(최신순)으로 정렬됩니다. 새로 작성된 케이스일수록 현재 실행 보장이 필요할 가능성이 가장 높습니다.",
             "random": "사례는 적격 대상 집단에서 편향되지 않은 무작위 표본 추출 방식으로 선정됩니다."
           },
           "rationale": {
             "mostExecutedWithCount": "이 프로젝트의 테스트 실행 전반에 걸쳐 수동으로 실행된 횟수는 {count, plural, =1 {1회,} other {#회,}} 입니다. 이를 자동화하면 향후 모든 실행에서 테스터의 시간을 절약할 수 있습니다.",
             "mostExecutedNone": "아직 실행 기록이 없습니다. 가장 많이 실행된 사례에 대한 휴리스틱 지표에서 이 사례를 다른 사례와 비교하여 평가할 만한 정보가 없습니다.",
             "flakiestWithScore": "불안정성 {percent}% (실행 횟수 {description} 회마다 합격/불합격 결과가 바뀜) — 불안정한 수동 테스트는 매번 실행할 때마다 테스터의 시간을 낭비하며, 결정론적 자동화 오라클을 사용할 때 가장 큰 이점을 얻습니다.",
-            "flakiestNone": "아직 다양한 결과가 나오지 않았습니다. Flakiest First 휴리스틱은 이 경우에 대한 합격/불합격 여부의 변화를 아직 측정할 수 없습니다.",
+            "flakiestNone": "아직 다양한 결과가 나오지 않았습니다. Flakiest First 휴리스틱은 이 케이스에 대한 합격/불합격 여부의 변화를 아직 측정할 수 없습니다.",
             "longestWithDuration": "수동 실행 예측 {duration} — 장시간 실행되는 수동 테스트를 자동화하면 실행할 때마다 테스터의 시간을 비례적으로 더 많이 절약할 수 있습니다.",
             "longestNone": "예측 또는 추정치가 설정되지 않았습니다. 최장 실행 시간 휴리스틱에는 이 사례에 대한 기간 데이터가 없습니다.",
             "oldest": "작성자 {age} — 오랜 기간 수동으로 처리해 온 사례는 일반적으로 성숙하고 안정적인 동작이므로 재작업 없이 자동화해도 안전합니다.",
@@ -9072,7 +9073,7 @@
           "regenerate": "재생"
         },
         "status": {
-          "running": "달리기",
+          "running": "실행 중",
           "complete": "완벽한",
           "failed": "실패한"
         },
@@ -9102,7 +9103,7 @@
       },
       "issueTestCoverage": {
         "viewMode": "보기 모드",
-        "summaryView": "요약 (쟁점별)",
+        "summaryView": "요약 (이슈별)",
         "detailView": "상세 정보 (테스트 케이스별)",
         "issue": "문제",
         "testCase": "테스트 케이스",
@@ -9117,7 +9118,7 @@
         "noData": "연결된 테스트 케이스에서 문제가 발견되지 않았습니다.",
         "noIssuesNeedingAttention": "모든 문제가 테스트를 통과했습니다. 훌륭합니다!",
         "stats": {
-          "totalIssues": "총 발행 건수",
+          "totalIssues": "총 이슈 건수",
           "issuesWithFailures": "실패와 함께",
           "issuesWithFailuresTooltip": "하나 이상의 테스트 케이스가 실패하는 문제가 있습니다.",
           "issuesWithUntested": "검증되지 않은 것과 함께",
@@ -9468,8 +9469,8 @@
       "averageSteps": "사례당 평균 단계 수",
       "automatedCount": "자동화된 사례",
       "manualCount": "수동 케이스",
-      "totalCount": "총 확진자 수",
-      "totalSteps": "총 걸음 수",
+      "totalCount": "총 케이스 수",
+      "totalSteps": "총 단계 수",
       "executionCount": "테스트 실행",
       "createdCaseCount": "생성된 테스트 케이스 수",
       "sessionResultCount": "세션 결과 개수",
@@ -9487,11 +9488,11 @@
       "activeSessions": "활성 세션",
       "averageTimeSpent": "평균 소요 시간(분)",
       "milestoneCount": "마일스톤 개수",
-      "milestoneCompletionRate": "주요 단계 완료율(%)",
+      "milestoneCompletionRate": "마일스톤 완료율(%)",
       "averageMilestoneDuration": "평균 마일스톤 소요 기간(일)",
       "totalMilestones": "총 마일스톤 수",
       "activeMilestones": "활성 마일스톤",
-      "milestoneCompletion": "주요 단계 완료율(%)",
+      "milestoneCompletion": "마일스톤 완료율(%)",
       "averageDuration": "평균 소요 시간",
       "totalDuration": "총 소요 시간",
       "llmCallCount": "LLM 호출 수",
@@ -9835,7 +9836,7 @@
       "pageTitle": "단계 순서 중복",
       "noResultsFound": "단계 순서 중복이 발견되지 않았습니다.",
       "noResultsDescription": "테스트 케이스 전체에서 반복되는 단계 순서를 감지하기 위해 스캔을 실행하세요.",
-      "filterPlaceholder": "사건명으로 필터링...",
+      "filterPlaceholder": "케이스명으로 필터링...",
       "minCasesLabel": "최소 케이스",
       "minStepsLabel": "최소 단계",
       "minThresholdOption": "{count, number}개 이상",
@@ -9864,7 +9865,7 @@
         "title": "공유 단계로 변환",
         "previewTitle": "일치하는 단계 순서",
         "casesTitle": "영향을 받는 테스트 케이스",
-        "casesDescription": "변환에서 제외할 경우는 체크를 해제하세요.",
+        "casesDescription": "변환에서 제외할 케이스는 체크를 해제하세요.",
         "nameLabel": "공유 단계 그룹 이름",
         "namePlaceholder": "공유 스텝 그룹의 이름을 입력하세요...",
         "converting": "변환 중...",
@@ -10098,7 +10099,7 @@
     }
   },
   "Trial": {
-    "daysRemaining": "재판 종료까지 남은 시간: {count, plural, =1 {1일} other {#일}}",
+    "daysRemaining": "평가판 종료까지 남은 시간: {count, plural, =1 {1일} other {#일}}",
     "expiresT oday": "오늘부로 무료 체험 기간이 만료됩니다.",
     "expired": "{count, plural, =1 {체험 기간이 1일 전에 만료되었습니다} other {체험 기간이 #일 전에 만료되었습니다}}",
     "contactSales": "업그레이드"
@@ -10106,7 +10107,7 @@
   "feedback": {
     "sheetTitle": "여러분의 의견을 공유해주세요",
     "sheetDescription": "TestPlanIt 개선에 도움을 주시려면 여러분의 경험을 공유해 주세요.",
-    "bannerMessage": "재판은 어떻게 진행되고 있나요? 여러분의 생각을 듣고 싶습니다.",
+    "bannerMessage": "평가판 사용은 어떻게 진행되고 있나요? 여러분의 생각을 듣고 싶습니다.",
     "menuItem": "피드백을 공유해 주세요"
   },
   "autoTag": {
@@ -10263,10 +10264,10 @@
     "datasetAddColumnDuplicate": "이미 동일한 이름의 열이 존재합니다.",
     "datasetColumnMenuLabel": "컬럼 {name} 액션",
     "datasetColumnDeleteTitle": "\"{name} \" 열을 삭제하시겠습니까?",
-    "datasetColumnDeleteChecking": "이 열을 참조하는 경우를 확인합니다…",
+    "datasetColumnDeleteChecking": "이 열을 참조하는 케이스를 확인합니다…",
     "datasetColumnDeleteDescription": "해당 열과 각 행의 값이 삭제됩니다. 이미 이러한 값을 스냅샷한 기존 테스트 실행에는 영향을 미치지 않습니다.",
     "datasetColumnDeleteBlocked": "{count, plural, =1 {# case는 매개변수를 이 열에 매핑합니다.} other {# case는 매개변수를 이 열에 매핑합니다.}}. 먼저 이러한 매핑을 업데이트한 다음 열을 삭제합니다.",
-    "datasetColumnDeleteAndMore": "그리고 {count, plural, =1 {# 더 많은 경우} other {# 더 많은 경우}}",
+    "datasetColumnDeleteAndMore": "그리고 {count, plural, =1 {# 더 많은 케이스} other {# 더 많은 케이스}}",
     "datasetColumnDeleteCheckError": "이 열을 참조하는 사례를 확인할 수 없습니다. 다시 시도해 주세요.",
     "datasetRowDefaultLabel": "행 {number}",
     "datasetPasteCsv": "CSV 붙여넣기",
@@ -10348,8 +10349,8 @@
     "runPreflightAsync": "{n, plural, =1 {#회} other {#회}} (백그라운드 작업)을 생성합니다.",
     "runPreflightSoftConfirm": "{n, plural, =1 {#회} other {#회}} 를 생성합니다. — 확인이 필요합니다.",
     "runPreflightHardRefuse": "생성할 수 없습니다. {n} 가 {cap} 제한을 초과했습니다.",
-    "runPreflightTooltip": "{iterations, plural, =1 {# 반복 횟수} other {# 반복 횟수}} = {cases, plural, =1 {# 경우} other {# 경우}} × {configs, plural, =1 {# 구성} other {# 구성 횟수}} × 데이터셋 행",
-    "runPreflightTooltipHeader": "{iterations, plural, =1 {# 반복 횟수} other {# 반복 횟수}} {cases, plural, =1 {# 매개변수화된 경우} other {# 매개변수화된 경우}} × {configs, plural, =1 {# 설정} other {# 설정들}}",
+    "runPreflightTooltip": "{iterations, plural, =1 {# 반복 횟수} other {# 반복 횟수}} = {cases, plural, =1 {# 케이스} other {# 케이스}} × {configs, plural, =1 {# 구성} other {# 구성 횟수}} × 데이터셋 행",
+    "runPreflightTooltipHeader": "{iterations, plural, =1 {# 반복 횟수} other {# 반복 횟수}} {cases, plural, =1 {# 매개변수화된 케이스} other {# 매개변수화된 케이스}} × {configs, plural, =1 {# 설정} other {# 설정들}}",
     "runPreflightTooltipCaseRow": "{title} — {rows, plural, =1 {# 행} other {# 행}}",
     "chipClickToReveal": "클릭하면 공개됩니다",
     "chipCopyValue": "값을 복사합니다",
@@ -10371,13 +10372,13 @@
     "hardRefuseSuggestion2": "하나 이상의 구성을 선택 해제하세요.",
     "hardRefuseSuggestion3": "작업을 여러 번의 테스트 실행으로 나누세요.",
     "softConfirmTitle": "{n, plural, =1 {반복 #} other {반복 #}} 를 생성하시겠습니까?",
-    "softConfirmDescription": "{n, plural, =1 {# 반복} other {# 반복}} {cases, plural, =1 {# 경우} other {# 경우}} × {configs, plural, =1 {# 구성} other {# 구성}}.",
+    "softConfirmDescription": "{n, plural, =1 {# 반복} other {# 반복}} {cases, plural, =1 {# 케이스} other {# 케이스}} × {configs, plural, =1 {# 구성} other {# 구성}}.",
     "softConfirmGo": "반복 생성",
     "runProgressCounter": "{done} / {total}",
     "runProgressDismissAria": "진행 상황 무시",
     "runProgressComplete": "\"{runName} \"에 대해 {total, plural, =1 {# 반복} other {# 반복}} 생성됨",
     "runProgressFailedToast": "\"{runName}\"에 대한 반복 생성에 실패했습니다. {reason}",
-    "runProgressNavAway": "나머지 주행 영상을 보여주세요",
+    "runProgressNavAway": "나머지 실행을 보여주세요",
     "runGeneratingHeading": "반복 생성 중…",
     "runGeneratingHelper": "이 과정은 몇 분 정도 소요될 수 있습니다.",
     "iterationsHeaderCount": "{complete}/{total}",
@@ -10448,16 +10449,16 @@
     "datasetSharedVersionFollowLatest": "v{version} (최신 팔로우)",
     "datasetSharedEditAssignment": "과제 편집",
     "datasetSharedReadOnly": "공유 보기에서는 편집이 비활성화되어 있습니다. 변경하려면 원본 데이터 세트를 사용하십시오.",
-    "datasetOwnerWinsLocal": "이 경우는 로컬 데이터셋과 공유 데이터셋 참조를 모두 포함합니다. 반복 작업에서는 로컬 행을 사용합니다. 공유 할당은 참조용으로 유지되며 로컬 데이터셋이 제거되면 활성화됩니다.",
-    "datasetOwnerWinsShared": "이 보기에는 참조용으로 공유 데이터셋 행이 표시됩니다. 이 경우 반복 작업에는 로컬 데이터셋(로컬 항목 아래에 표시됨)이 사용됩니다. 이 공유 할당을 반복 작업 소스로 사용하려면 로컬 데이터셋을 제거하십시오.",
+    "datasetOwnerWinsLocal": "이 케이스는 로컬 데이터셋과 공유 데이터셋 참조를 모두 포함합니다. 반복 작업에서는 로컬 행을 사용합니다. 공유 할당은 참조용으로 유지되며 로컬 데이터셋이 제거되면 활성화됩니다.",
+    "datasetOwnerWinsShared": "이 보기에는 참조용으로 공유 데이터셋 행이 표시됩니다. 이 케이스의 반복 작업에는 로컬 데이터셋(로컬 항목 아래에 표시됨)이 사용됩니다. 이 공유 할당을 반복 작업 소스로 사용하려면 로컬 데이터셋을 제거하십시오.",
     "datasetViewSharedRef": "공유 참조 보기",
     "datasetSwitchToLocal": "로컬로 전환",
     "datasetSwitchToLocalTitle": "로컬 환경으로 전환하시겠습니까?",
-    "datasetSwitchToLocalDescription": "로컬로 전환하면 이 경우에서 공유 데이터셋 할당이 제거됩니다(데이터셋 자체는 영향을 받지 않습니다). 계속하시겠습니까?",
+    "datasetSwitchToLocalDescription": "로컬로 전환하면 이 케이스에서 공유 데이터셋 할당이 제거됩니다(데이터셋 자체는 영향을 받지 않습니다). 계속하시겠습니까?",
     "datasetSwitchToLocalConfirm": "공유 과제를 제거합니다",
     "assignSharedTitle": "공유 데이터셋 할당",
     "assignSharedDescription": "공유 데이터 세트를 선택하고, 버전 추적 방법을 정하고, 열을 이 사례의 매개변수에 매핑합니다.",
-    "assignSharedHasOwnerInfo": "이 경우는 로컬 데이터셋을 사용합니다. 저장하면 공유 데이터셋 참조가 생성되지만, 로컬 데이터셋을 삭제하기 전까지는 반복 작업에서 로컬 행을 계속 사용합니다.",
+    "assignSharedHasOwnerInfo": "이 케이스는 로컬 데이터셋을 사용합니다. 저장하면 공유 데이터셋 참조가 생성되지만, 로컬 데이터셋을 삭제하기 전까지는 반복 작업에서 로컬 행을 계속 사용합니다.",
     "assignSharedSection1": "1. 데이터셋 선택",
     "assignSharedSection2": "2. 핀 버전",
     "assignSharedSection3": "3. 열을 매개변수에 매핑합니다.",

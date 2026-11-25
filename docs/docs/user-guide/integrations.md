@@ -228,9 +228,9 @@ Jira URL: https://your-domain.atlassian.net
 
 Setting the **reporter** on a created issue calls Jira's `reporter` field, which is only honored when the API token account holds the Jira administrator (**Modify Reporter**) permission. Most accounts with create-issue access do **not** have this permission.
 
-When the account lacks it, Jira silently ignores the supplied reporter and records the **API token owner** as the creator — **even when the TestPlanIt user's email matches a Jira user's email.** This is the most common cause of "all issues are created by the same user" reports.
+When the account lacks it, or the Reporter field is not on the project's create screen, Jira refuses the supplied reporter. TestPlanIt then creates the issue without it, and Jira records the **API token owner** as the reporter — **even when the TestPlanIt user's email matches a Jira user's email.** The person creating the issue sees a notice when this happens. This is the most common cause of "all issues are created by the same user" reports.
 
-To get accurate per-user reporter attribution, either grant the API token account the Modify Reporter permission, or use [OAuth 2.0](#jira-with-oauth-20) instead.
+To get accurate per-user reporter attribution, either grant the API token account the Modify Reporter permission and make sure the Reporter field is on the project's create screen, or use [OAuth 2.0](#jira-with-oauth-20) (Jira Cloud only) instead.
 
 :::
 

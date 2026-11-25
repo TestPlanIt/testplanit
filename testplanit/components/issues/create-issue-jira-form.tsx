@@ -25,6 +25,7 @@ import { AlertCircle, Asterisk, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { DynamicJiraField } from "./dynamic-jira-field";
 import {
   buildJiraFieldsSchema,
@@ -447,6 +448,13 @@ export function CreateIssueJiraForm({
       }
 
       const createdIssue = await response.json();
+
+      if (createdIssue.reporterRejected) {
+        toast.warning(t("issues.created"), {
+          description: t("issues.createdReporterRejected"),
+          duration: 15000,
+        });
+      }
 
       onIssueCreated?.(createdIssue);
       onOpenChange(false);
