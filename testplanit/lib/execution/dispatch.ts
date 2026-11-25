@@ -64,7 +64,14 @@ type ExecutionWithTarget = {
 };
 
 const withTarget = {
-  target: { include: { codeRepository: true } },
+  target: {
+    include: {
+      // credentials is @omit on CodeRepository; a plain include drops it.
+      codeRepository: {
+        select: { provider: true, credentials: true, settings: true },
+      },
+    },
+  },
 } as const;
 
 export type DispatchOutcome =
