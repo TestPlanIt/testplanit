@@ -128,6 +128,10 @@ const issueRows: Record<number, IssueRow> = {
  */
 let caseIssueRows: Set<number>;
 
+/** The rows a save deleted and the rows it created, in order. */
+let deletedRows: number[];
+let createdRows: number[];
+
 const survivingLinks = () => [...caseIssueRows].sort((a, b) => a - b);
 
 const caseIssuesFromDb = () =>
@@ -163,16 +167,24 @@ function CaseDetailHarness({
   };
 
   const saveCase = () => {
-    const { preservedIssueIds, linkedIssueIds } = planCaseIssueLinkWrite(
+    const { keptIssueIds, linkedIssueIds } = planCaseIssueLinkWrite(
       staleCaseQuery ? linksAtLoad : caseIssuesFromDb(),
       issueIds
     );
-    // deleteMany({ caseId, issueId: { notIn: preservedIssueIds } })
+    // deleteMany({ caseId, issueId: { notIn: keptIssueIds } })
     for (const id of survivingLinks()) {
-      if (!preservedIssueIds.includes(id)) caseIssueRows.delete(id);
+      if (!keptIssueIds.includes(id)) {
+        caseIssueRows.delete(id);
+        deletedRows.push(id);
+      }
     }
     // createMany({ data: linkedIssueIds, skipDuplicates: true })
-    for (const id of linkedIssueIds) caseIssueRows.add(id);
+    for (const id of linkedIssueIds) {
+      if (!caseIssueRows.has(id)) {
+        caseIssueRows.add(id);
+        createdRows.push(id);
+      }
+    }
   };
 
   return (
@@ -225,6 +237,8 @@ function useProjectWithoutIssueTracking() {
 beforeEach(() => {
   vi.clearAllMocks();
   caseIssueRows = new Set([REQUIREMENT_ID, FIELD_ISSUE_ID]);
+  deletedRows = [];
+  createdRows = [];
   // ManageSimpleUrlIssues renders whatever the form value names, so this
   // follows the value rather than returning a fixed list.
   mockUseFindManyIssue.mockImplementation((args: any) => ({
@@ -248,6 +262,18 @@ describe("a case save in a project whose tracker is a simple-url integration", (
     await user.click(screen.getByText("save-case"));
 
     expect(survivingLinks()).toEqual([REQUIREMENT_ID, FIELD_ISSUE_ID]);
+  });
+
+  it("does not delete and re-create a link that stays in the Issues field", async () => {
+    const user = userEvent.setup();
+    render(<CaseDetailHarness />);
+
+    await screen.findByTestId(`issue-${FIELD_ISSUE_ID}`);
+
+    await user.click(screen.getByText("save-case"));
+
+    expect(deletedRows).toEqual([]);
+    expect(createdRows).toEqual([]);
   });
 
   it("leaves a requirement unlinked from the requirements panel unlinked", async () => {

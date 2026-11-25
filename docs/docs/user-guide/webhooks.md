@@ -95,6 +95,8 @@ What happens to a test case depends on whether a person has confirmed it:
 
 Something the issue now asks for that no linked test case covers is added as a new draft, in the folder most of the issue's test cases are in. A test case the change does not affect is left alone. Steps a test case shares with others through a shared step group are never changed.
 
+Automated test cases are not checked, and AI makes no suggestion for them. They show the [notice for a changed issue](#suggested-changes) instead.
+
 The action's options:
 
 - **Test cases to check** — every test case linked to the issue, or only those AI drafted.
@@ -120,7 +122,7 @@ Either way the suggestion is not raised again until the issue's text changes aga
 
 The repository's **Suggested Change** filter lists the test cases with a suggestion waiting. Suggestions nobody decides are covered by the [review reminders](./review-approvals.md#review-reminders).
 
-A test case also shows a notice for each linked issue whose text has changed since the test case was last brought in line with it and that has no suggestion waiting, for example in a project without an Update action. **Mark as up to date** clears the notice until the issue changes again.
+A test case also shows a notice for each linked issue whose text has changed since the test case was last brought in line with it and that has no suggestion waiting, for example in a project without an Update action, or on an automated test case. A test case is in line with an issue from the moment the two are linked, whoever or whatever linked them. Links made before the upgrade to 1.3 count from the upgrade. **Mark as up to date** clears the notice until the issue changes again.
 
 ### Milestone sync events (version/sprint)
 

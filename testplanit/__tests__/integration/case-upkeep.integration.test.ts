@@ -12,6 +12,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { SYSTEM_AUTOMATION_USER_ID } from "~/lib/automationUser";
+import { isIssueTextNewerThanCase } from "~/lib/services/caseUpkeep/alignment";
 
 const mocks = vi.hoisted(() => ({ generate: vi.fn(), review: vi.fn() }));
 vi.mock("~/app/api/llm/generate-test-cases/core", () => ({
@@ -607,5 +608,81 @@ describeIntegration("Keeping AI-drafted cases current (live DB)", () => {
     );
     expect(stale).toEqual({ ok: false, code: "stale" });
     expect((await readCase(ids.c)).isDeleted).toBe(false);
+  });
+
+  it("starts a link made by hand aligned, flags it when the issue changes, and never asks the model about an automated case", async () => {
+    const placed = await db.repositoryCases.findUnique({
+      where: { id: ids.a },
+      select: { repositoryId: true, folderId: true },
+    });
+    const automated = await db.repositoryCases.create({
+      data: {
+        projectId: fx.projectId,
+        repositoryId: placed.repositoryId,
+        folderId: placed.folderId,
+        templateId: fx.templateId,
+        stateId: fx.activeStateId,
+        creatorId: fx.personId,
+        name: `Checkout smoke ${STAMP}`,
+        className: "checkout.spec",
+        source: "JUNIT",
+        automated: true,
+      },
+      select: { id: true },
+    });
+    // The other way round: this process's clock must have passed the issue's
+    // last change, which the database timed.
+    while (Date.now() <= (await issueChangedAt()).getTime()) await pause(25);
+    await db.repositoryCaseIssue.create({
+      data: { caseId: automated.id, issueId: fx.issueId },
+    });
+    const made = await link(automated.id);
+    expect(made.alignedAt).toBeInstanceOf(Date);
+    expect(
+      isIssueTextNewerThanCase({
+        contentUpdatedAt: await issueChangedAt(),
+        alignedAt: made.alignedAt,
+      })
+    ).toBe(false);
+
+    // The link is timed by this process's clock and the change by the
+    // database's: let the database's clock pass the link first.
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const rows: { later: boolean }[] = await db.$queryRaw`
+        select now() > "alignedAt" as later from "RepositoryCaseIssue"
+        where "caseId" = ${automated.id} and "issueId" = ${fx.issueId}`;
+      if (rows[0]?.later) break;
+      await pause(25);
+    }
+    await changeIssue(
+      "Totals must include every charge, in the buyer's currency."
+    );
+    expect(
+      isIssueTextNewerThanCase({
+        contentUpdatedAt: await issueChangedAt(),
+        alignedAt: made.alignedAt,
+      })
+    ).toBe(true);
+
+    mocks.review.mockClear();
+    answer([
+      { caseId: ids.a, action: "unchanged" },
+      { caseId: ids.c, action: "unchanged" },
+      { caseId: ids.d, action: "unchanged" },
+    ]);
+    await runUpdateCases(db, job(fx.updateRuleId));
+
+    const asked: number[] = mocks.review.mock.calls.flatMap((call: any[]) =>
+      call[1].cases.map((sent: { id: number }) => sent.id)
+    );
+    expect(asked).toContain(ids.a);
+    expect(asked).not.toContain(automated.id);
+    expect(
+      await db.caseChangeSuggestion.count({ where: { caseId: automated.id } })
+    ).toBe(0);
+    // Still behind the issue: a person marks an automated case as up to date.
+    expect((await link(automated.id)).alignedAt.getTime()).toBe(
+      made.alignedAt.getTime()
+    );
   });
 });

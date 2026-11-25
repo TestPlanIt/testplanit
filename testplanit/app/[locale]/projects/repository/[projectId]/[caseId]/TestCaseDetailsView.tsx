@@ -1866,10 +1866,11 @@ export function TestCaseDetailsView({
         });
       }
 
-      // Replace the case's issue links on the explicit join model, covering
+      // Write the case's issue links on the explicit join model, covering
       // only the links the Issues picker owns — see planCaseIssueLinkWrite for
-      // why the rest are held out of the replace rather than resubmitted.
-      const { preservedIssueIds, linkedIssueIds } = planCaseIssueLinkWrite(
+      // why the rest are held out rather than resubmitted. A link that stays
+      // keeps its row.
+      const { keptIssueIds, linkedIssueIds } = planCaseIssueLinkWrite(
         currentCase.caseIssues,
         issuesArray
       );
@@ -1877,8 +1878,8 @@ export function TestCaseDetailsView({
       await deleteManyRepositoryCaseIssue({
         where: {
           caseId: Number(caseId),
-          ...(preservedIssueIds.length > 0
-            ? { issueId: { notIn: preservedIssueIds } }
+          ...(keptIssueIds.length > 0
+            ? { issueId: { notIn: keptIssueIds } }
             : {}),
         },
       });

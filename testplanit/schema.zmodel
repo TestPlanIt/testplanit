@@ -1850,9 +1850,9 @@ model RepositoryCaseIssue {
     // (TestCaseRepository canAddEdit -- the same people who can link and
     // unlink), so no policy clause changes and no new route are needed.
     suspectDismissedAt DateTime?       @db.Timestamptz(6)
-    // When the case text was last aligned with the issue text. Null for links
-    // that predate the column, which are never flagged.
-    alignedAt          DateTime?       @db.Timestamptz(6)
+    // When the case text was last aligned with the issue text. A new link
+    // starts aligned.
+    alignedAt          DateTime?       @default(now()) @db.Timestamptz(6)
 
     @@id([caseId, issueId])
     @@index([issueId])

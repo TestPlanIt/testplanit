@@ -266,6 +266,120 @@ test.describe("Project Creation Wizard", () => {
     });
   });
 
+  test("gives the new project an AI-draft state that is switched off", async ({
+    page,
+    request,
+    baseURL,
+  }) => {
+    const ts = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const projectName = `E2E Wizard AI State ${ts}`;
+    const stateName = `Switched-off AI drafts ${ts}`;
+    const findFirst = async (model: string, args: Record<string, unknown>) => {
+      const response = await request.get(
+        `${baseURL}/api/model/${model}/findFirst`,
+        { params: { q: JSON.stringify(args) } }
+      );
+      expect(response.ok()).toBe(true);
+      return (await response.json()).data;
+    };
+    const created = await request.post(
+      `${baseURL}/api/model/workflows/create`,
+      {
+        data: {
+          data: {
+            name: stateName,
+            scope: "CASES",
+            workflowType: "NOT_STARTED",
+            isEnabled: false,
+            isDefault: false,
+            isAiDraft: true,
+            iconId: (
+              await findFirst("fieldIcon", {
+                where: { name: "layout-list" },
+                select: { id: true },
+              })
+            ).id,
+            colorId: (await findFirst("color", { select: { id: true } })).id,
+          },
+        },
+      }
+    );
+    expect(created.ok()).toBe(true);
+    const workflowId = (await created.json()).data.id as number;
+
+    const dialog = page.getByRole("dialog");
+    const nextButton = dialog.getByRole("button", { name: /next/i });
+
+    try {
+      await test.step("Open the wizard and enter the project name", async () => {
+        await page.goto("/en-US/admin/projects");
+        await page.waitForLoadState("networkidle");
+        await page.getByRole("button", { name: /add/i }).first().click();
+        await expect(dialog).toBeVisible({ timeout: 10000 });
+
+        // Async data loads can reset the form; re-fill until the name sticks.
+        const nameInput = dialog.getByRole("textbox").first();
+        await expect(async () => {
+          if ((await nameInput.inputValue()) !== projectName) {
+            await nameInput.fill(projectName);
+          }
+          await expect(nameInput).toHaveValue(projectName);
+          await expect(nextButton).toBeEnabled();
+          await nextButton.click({ timeout: 3000 });
+        }).toPass({ timeout: 30000 });
+      });
+
+      await test.step("The Workflows step does not offer the switched-off state", async () => {
+        await expect(
+          dialog.getByTestId("wizard-default-template-select")
+        ).toBeVisible({ timeout: 15000 });
+        await nextButton.click();
+        await expect(dialog.getByText(/workflows/i).first()).toBeVisible({
+          timeout: 15000,
+        });
+        await expect(
+          dialog.getByText("Draft", { exact: true }).first()
+        ).toBeVisible();
+        await expect(dialog.getByText(stateName)).toHaveCount(0);
+      });
+
+      await test.step("Finish the wizard", async () => {
+        await nextButton.click();
+        await expect(dialog.getByText(/integrations/i).first()).toBeVisible({
+          timeout: 15000,
+        });
+        await nextButton.click();
+        const createButton = dialog.getByRole("button", {
+          name: /create project/i,
+        });
+        await expect(createButton).toBeEnabled({ timeout: 15000 });
+        await createButton.click();
+        await expect(dialog).not.toBeVisible({ timeout: 30000 });
+      });
+
+      await test.step("The new project has the switched-off state assigned", async () => {
+        const project = await findFirst("projects", {
+          where: { name: projectName },
+          select: {
+            id: true,
+            assignedWorkflows: { select: { workflowId: true } },
+          },
+        });
+        const assigned: number[] = project.assignedWorkflows.map(
+          (assignment: { workflowId: number }) => assignment.workflowId
+        );
+        expect(assigned).toContain(workflowId);
+        expect(assigned.length).toBeGreaterThan(1);
+      });
+    } finally {
+      await request
+        .patch(`${baseURL}/api/model/workflows/update`, {
+          data: { where: { id: workflowId }, data: { isDeleted: true } },
+        })
+        .catch(() => {});
+    }
+  });
+
   test("can navigate back through wizard steps using Previous button", async ({
     page,
   }) => {

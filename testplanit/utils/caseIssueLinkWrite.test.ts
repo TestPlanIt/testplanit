@@ -60,19 +60,19 @@ describe("the seed and the save read the same links", () => {
     expect(carried.filter((id) => preservedIssueIds.includes(id))).toEqual([]);
   });
 
-  it("replaces exactly the links it carried and leaves the rest standing", () => {
+  it("writes exactly the links it carried and leaves the rest standing", () => {
     const carried = pickerOwnedIssueIds(allLinks);
-    const { preservedIssueIds, linkedIssueIds } = planCaseIssueLinkWrite(
+    const { keptIssueIds, linkedIssueIds } = planCaseIssueLinkWrite(
       allLinks,
       carried
     );
 
-    // deleteMany({ caseId, issueId: { notIn: preservedIssueIds } }) then
+    // deleteMany({ caseId, issueId: { notIn: keptIssueIds } }) then
     // createMany(linkedIssueIds) — the case's links must come out unchanged.
     const survivors = new Set(
       allLinks
         .map((link) => link.issue.id)
-        .filter((id) => preservedIssueIds.includes(id))
+        .filter((id) => keptIssueIds.includes(id))
     );
     for (const id of linkedIssueIds) survivors.add(id);
 
@@ -82,6 +82,54 @@ describe("the seed and the save read the same links", () => {
       TRACKER_DEFECT.id,
       INTEGRATIONLESS_DEFECT.id,
     ]);
+  });
+
+  it("keeps every link that stays out of the delete, so its row survives the save", () => {
+    const carried = pickerOwnedIssueIds(allLinks);
+    const { keptIssueIds } = planCaseIssueLinkWrite(allLinks, carried);
+
+    expect([...keptIssueIds].sort((a, b) => a - b)).toEqual(
+      allLinks.map((link) => link.issue.id).sort((a, b) => a - b)
+    );
+  });
+
+  it("leaves a link the user removed from the value out of the kept set", () => {
+    const { keptIssueIds, linkedIssueIds } = planCaseIssueLinkWrite(allLinks, [
+      SYNCED_REQUIREMENT.id,
+    ]);
+
+    expect(linkedIssueIds).toEqual([SYNCED_REQUIREMENT.id]);
+    expect(keptIssueIds).not.toContain(TRACKER_DEFECT.id);
+    expect([...keptIssueIds].sort((a, b) => a - b)).toEqual([
+      NATIVE_REQUIREMENT.id,
+      SYNCED_REQUIREMENT.id,
+      INTEGRATIONLESS_DEFECT.id,
+    ]);
+  });
+
+  it("names a link once when it is both preserved and submitted, and skips empty ids", () => {
+    const { keptIssueIds, linkedIssueIds } = planCaseIssueLinkWrite(allLinks, [
+      NATIVE_REQUIREMENT.id,
+      TRACKER_DEFECT.id,
+      TRACKER_DEFECT.id,
+      null,
+      undefined,
+    ]);
+
+    expect(linkedIssueIds).toEqual([NATIVE_REQUIREMENT.id, TRACKER_DEFECT.id]);
+    expect(keptIssueIds).toEqual([
+      NATIVE_REQUIREMENT.id,
+      INTEGRATIONLESS_DEFECT.id,
+      TRACKER_DEFECT.id,
+    ]);
+  });
+
+  it("keeps nothing for a case with no links and an empty value", () => {
+    expect(planCaseIssueLinkWrite(undefined, null)).toEqual({
+      preservedIssueIds: [],
+      linkedIssueIds: [],
+      keptIssueIds: [],
+    });
   });
 });
 
@@ -122,6 +170,21 @@ describe("the case detail page wires both halves", () => {
       );
     }
     expect(source).toContain("planCaseIssueLinkWrite(");
+  });
+
+  it("deletes only the links that do not stay", () => {
+    const source = readFileSync(PAGE, "utf8");
+
+    if (!source.includes("issueId: { notIn: keptIssueIds }")) {
+      throw new Error(
+        `${PAGE} no longer holds the links that stay out of its issue-link ` +
+          "delete (`issueId: { notIn: keptIssueIds }`). Deleting a link the " +
+          "Issues field still names and creating it again resets when the " +
+          "case was last aligned with the issue and whether its suspect flag " +
+          "was dismissed."
+      );
+    }
+    expect(source).toContain("issueId: { notIn: keptIssueIds }");
   });
 });
 

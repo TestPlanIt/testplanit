@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 import { optionalImageUrlSchema } from "~/lib/schemas/imageUrl";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
+import { workflowIdsForNewProject } from "~/utils/newProjectWorkflows";
 
 import { DefaultTemplateBadge } from "@/components/DefaultTemplateBadge";
 import DynamicIcon from "@/components/DynamicIcon";
@@ -316,6 +317,21 @@ export function CreateProjectWizard({
         icon: true,
         color: true,
       },
+    },
+    { enabled: isOpen }
+  );
+
+  const { data: switchedOffAiDraftStates } = useClientQueries(
+    schema
+  ).workflows.useFindMany(
+    {
+      where: {
+        isDeleted: false,
+        isEnabled: false,
+        isAiDraft: true,
+        scope: WorkflowScope.CASES,
+      },
+      select: { id: true },
     },
     { enabled: isOpen }
   );
@@ -869,10 +885,14 @@ export function CreateProjectWizard({
       }
 
       // Assign workflows
-      if (data.selectedWorkflows.length > 0) {
+      const workflowIds = workflowIdsForNewProject(
+        data.selectedWorkflows,
+        switchedOffAiDraftStates
+      );
+      if (workflowIds.length > 0) {
         setupPromises.push(
           createManyProjectWorkflowAssignment({
-            data: data.selectedWorkflows.map((workflowId) => ({
+            data: workflowIds.map((workflowId) => ({
               workflowId,
               projectId: newProjectId!,
             })),

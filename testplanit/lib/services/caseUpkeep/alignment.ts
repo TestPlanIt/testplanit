@@ -3,9 +3,8 @@
  * brought in line with it. Computed, never stored: aligning the case again
  * clears it, and a later change to the issue raises it again.
  *
- * A link that was never aligned (`alignedAt` absent) is never flagged: it
- * predates the tracking, and nothing says the case was ever written from
- * that issue's text.
+ * A link starts aligned when it is made, so only a change to the issue after
+ * that flags it. A link with no alignment time is never flagged.
  *
  * Pure, with no imports, so it is safe in a client component.
  */

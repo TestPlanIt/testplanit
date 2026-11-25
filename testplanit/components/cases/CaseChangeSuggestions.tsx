@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/collapsible";
 import { WarningAlert } from "@/components/ui/warning-alert";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { ChevronRight, FileClock, Sparkles } from "lucide-react";
+import { ChevronRight, ClockAlert, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
@@ -235,7 +235,7 @@ export function CaseChangeSuggestions({
           data-testid={`case-issue-changed-${link.issueId}`}
           className="[&>svg]:top-1/2 [&>svg]:-translate-y-1/2"
         >
-          <FileClock className="h-4 w-4" />
+          <ClockAlert className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between gap-4 text-sm">
             <span className="min-w-0">
               {t("issueChangedUnchecked", {

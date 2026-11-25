@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { FileClock, Sparkles } from "lucide-react";
+import { ClockAlert, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export type CaseAttentionKind = "UPDATE" | "RETIRE" | "DRAFT" | "BEHIND";
@@ -33,7 +33,7 @@ export function CaseAttentionBadge({
   const t = useTranslations("repository.suggestions");
   if (!kind) return null;
   const label = t(LABELS[kind]);
-  const Icon = kind === "BEHIND" ? FileClock : Sparkles;
+  const Icon = kind === "BEHIND" ? ClockAlert : Sparkles;
   return (
     <TooltipProvider>
       <Tooltip>

@@ -82,7 +82,7 @@ You can neither delete nor disable a Workflow State if it is the last of its typ
 
 ## States that hold unconfirmed AI drafts
 
-A test case state marked **Holds AI drafts nobody has confirmed** is where test cases drafted by a [webhook action](./webhooks.md#issue-tracker-actions) start, unless the action names another state. The state shows an **AI drafts** badge in the list. Every installation comes with one, **AI-Generated**, ordered before **Draft** and switched off: turn on **Enabled** to use it, or mark another state. While no marked state is enabled, drafted test cases start in the default state.
+A test case state marked **Holds AI drafts nobody has confirmed** is where test cases drafted by a [webhook action](./webhooks.md#issue-tracker-actions) start, unless the action names another state. The state shows an **AI drafts** badge in the list. Every installation comes with one, **AI-Generated**, ordered before **Draft** and switched off: turn on **Enabled** to use it, or mark another state. While no marked state is enabled, drafted test cases start in the default state. A project created in the project wizard is given every marked state that is switched off, along with the states picked in the wizard.
 
 Moving a test case out of the state confirms the draft:
 

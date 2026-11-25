@@ -118,13 +118,20 @@ export function mergeRequirementLinksIntoVersionIssues(
 }
 
 export interface CaseIssueLinkWrite {
-  /**
-   * Held out of the delete: existing links the picker cannot express. The
-   * delete runs as `issueId: { notIn: preservedIssueIds }`.
-   */
+  /** Existing links the picker cannot express. They are never deleted. */
   preservedIssueIds: number[];
-  /** Link rows to (re)create from the submitted value. */
+  /**
+   * The links the submitted value names. The create skips the ones that
+   * already exist.
+   */
   linkedIssueIds: number[];
+  /**
+   * Every link that stays: the preserved ones and the submitted ones. The
+   * delete runs as `issueId: { notIn: keptIssueIds }`, so a link that stays
+   * keeps its row, and with it when the case was last aligned with the issue
+   * and whether its suspect flag was dismissed.
+   */
+  keptIssueIds: number[];
 }
 
 export function planCaseIssueLinkWrite(
@@ -147,5 +154,7 @@ export function planCaseIssueLinkWrite(
     linkedIssueIds.push(issueId);
   }
 
-  return { preservedIssueIds, linkedIssueIds };
+  const keptIssueIds = [...new Set([...preservedIssueIds, ...linkedIssueIds])];
+
+  return { preservedIssueIds, linkedIssueIds, keptIssueIds };
 }

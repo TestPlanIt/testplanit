@@ -114,6 +114,8 @@ function mostCommon<T>(values: T[]): T | undefined {
  * gets a suggestion for a person to apply or dismiss. Something the issue now
  * asks for that no case covers becomes a new draft. A case already aligned
  * with the issue's current text is skipped, so a retried job repeats nothing.
+ * Automated cases are left out: their text follows the test code, and results
+ * are matched to them by name.
  */
 export async function runUpdateCases(
   db: any,
@@ -164,6 +166,7 @@ export async function runUpdateCases(
           projectId: job.projectId,
           isDeleted: false,
           isArchived: false,
+          automated: false,
           ...(options.scope === "ai_drafted"
             ? { aiWrittenVersion: { not: null } }
             : {}),

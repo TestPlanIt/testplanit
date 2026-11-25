@@ -419,12 +419,17 @@ describe("runUpdateCases: nothing to do", () => {
     expect(mocks.review).not.toHaveBeenCalled();
   });
 
-  it("reads live, unarchived cases of this project, every one by default", async () => {
+  it("reads live, unarchived, manual cases of this project, every one by default", async () => {
     const db = makeDb();
     await runUpdateCases(db, job);
     expect(db.repositoryCaseIssue.findMany.mock.calls[0][0].where).toEqual({
       issueId: 100,
-      case: { projectId: 7, isDeleted: false, isArchived: false },
+      case: {
+        projectId: 7,
+        isDeleted: false,
+        isArchived: false,
+        automated: false,
+      },
     });
   });
 
@@ -438,6 +443,7 @@ describe("runUpdateCases: nothing to do", () => {
         projectId: 7,
         isDeleted: false,
         isArchived: false,
+        automated: false,
         aiWrittenVersion: { not: null },
       }
     );
