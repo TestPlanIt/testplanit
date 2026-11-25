@@ -1,3 +1,18 @@
+## [1.3.0-beta.14](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.13...v1.3.0-beta.14) (2026-11-25)
+
+### Features
+
+* **webhooks:** tell a project's administrators when an endpoint is disabled after repeated failures ([6bedd55](https://github.com/TestPlanIt/testplanit/commit/6bedd552781efe685f9f75b3905a83168d76495b))
+
+### Bug Fixes
+
+* **automation:** dispatch and poll with the repository's stored credential ([86a2ffc](https://github.com/TestPlanIt/testplanit/commit/86a2ffc9d44de29f8a16741cc54b0f2f5124720a))
+* **trash:** purge users who created content ([d9a46e0](https://github.com/TestPlanIt/testplanit/commit/d9a46e0a7649c7e7b5632c4db176f5b914ba2491))
+
+### Enhancements
+
+* **automation:** make the CI provider timeout configurable ([330d7af](https://github.com/TestPlanIt/testplanit/commit/330d7aff4a37f759f5d1c67e3c1f4b7aacc3d7a4))
+
 ## [1.3.0-beta.13](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.12...v1.3.0-beta.13) (2026-11-25)
 
 ### Bug Fixes
