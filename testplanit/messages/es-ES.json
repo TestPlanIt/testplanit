@@ -6438,7 +6438,10 @@
         "noItems": "No se encontró {itemType} eliminado.",
         "noResults": "No se ha encontrado ningún {itemType} borrado que coincida con su búsqueda de \"{query}\".",
         "restoreConfirmationMessage": "¿Está seguro de que desea restaurar esta fila desde la tabla {itemType} ? Los datos asociados también podrían ser restaurados.",
-        "purgeConfirmationMessage": "¿Está seguro de que desea eliminar permanentemente esta fila de la tabla {itemType} ? Esta acción no se puede deshacer y podría eliminar los datos asociados."
+        "purgeConfirmationMessage": "¿Está seguro de que desea eliminar permanentemente esta fila de la tabla {itemType} ? Esta acción no se puede deshacer y podría eliminar los datos asociados.",
+        "purgeUserConfirmationMessage": "¿Está seguro de que desea eliminar permanentemente este usuario? Esta acción no se puede deshacer. Todo lo que creó se conserva y se muestra como creado por un usuario eliminado. Sus membresías, tokens de API, preferencias y enlaces compartidos se eliminan.",
+        "restoreFailed": "No se pudo restaurar esta fila de la tabla {itemType}: {message}",
+        "purgeFailed": "No se pudo eliminar esta fila de la tabla {itemType}: {message}"
       },
       "filterTypesPlaceholder": "Filtrar tipos de elementos...",
       "summary": "{count, plural, =0 {La papelera está vacía} one {# elemento en la papelera} other {# elementos en la papelera}}",
