@@ -493,7 +493,7 @@ export function AddLlmIntegration({
         const errorMsg = data.error || t("failedToConnect");
         const endpointVal = values.endpoint?.replace(/\/+$/, "");
         const hint =
-          endpointVal && !endpointVal.endsWith("/v1")
+          endpointVal && !/\/(v\d+|chat\/completions)$/.test(endpointVal)
             ? " " + t("endpointV1Hint")
             : "";
         toast.error(tIntegrations("testFailed"), {
@@ -505,7 +505,7 @@ export function AddLlmIntegration({
         error instanceof Error ? error.message : t("failedToConnect");
       const endpointVal = values.endpoint?.replace(/\/+$/, "");
       const hint =
-        endpointVal && !endpointVal.endsWith("/v1")
+        endpointVal && !/\/(v\d+|chat\/completions)$/.test(endpointVal)
           ? " " + t("endpointV1Hint")
           : "";
       toast.error(tIntegrations("testFailed"), {
