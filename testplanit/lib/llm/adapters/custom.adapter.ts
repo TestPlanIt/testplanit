@@ -67,6 +67,26 @@ interface CustomApiResponse {
   [key: string]: any;
 }
 
+/**
+ * A base URL ending in a version segment (`https://host/v1`) resolves to its
+ * OpenAI-compatible `/chat/completions` route. Any other URL is the chat URL
+ * as entered.
+ */
+export function resolveCustomChatUrl(endpoint: string): string {
+  let url: URL;
+  try {
+    url = new URL(endpoint);
+  } catch {
+    return endpoint;
+  }
+  const path = url.pathname.replace(/\/+$/, "");
+  if (!/\/v\d+$/.test(path)) {
+    return endpoint;
+  }
+  url.pathname = `${path}/chat/completions`;
+  return url.href;
+}
+
 export class CustomLlmAdapter extends BaseLlmAdapter {
   private endpoint: string;
   private apiKey?: string;
@@ -78,7 +98,9 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
     super(config);
 
     const settings = config.integration.settings as CustomLlmSettings | null;
-    this.endpoint = config.baseUrl || settings?.endpoint || "";
+    this.endpoint = resolveCustomChatUrl(
+      config.baseUrl || settings?.endpoint || ""
+    );
     this.apiKey = config.apiKey;
     this.requestTemplate = settings?.requestTemplate || {};
     this.responseMapping = settings?.responseMapping || {};
