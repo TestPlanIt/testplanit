@@ -152,6 +152,8 @@ Max Tokens: 4096
 Temperature: 0.7
 ```
 
+Enter the API's base URL, ending in its version segment (for example `/v1`). TestPlanIt sends chat requests to `/chat/completions` under it. A full URL that already ends in `/chat/completions` also works.
+
 **Note**: Custom LLM endpoints must be compatible with the OpenAI API format. When the endpoint is OpenAI-compatible, the model dropdown is populated automatically from its `/models` listing and [model pricing](#model-pricing) is applied when available; endpoints that don't serve `/models` fall back to manual model entry.
 
 ### API key storage

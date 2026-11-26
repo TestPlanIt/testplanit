@@ -1,7 +1,7 @@
 import { Decimal } from "decimal.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LlmAdapterConfig, LlmRequest } from "../types";
-import { CustomLlmAdapter } from "./custom.adapter";
+import { CustomLlmAdapter, resolveCustomChatUrl } from "./custom.adapter";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -53,9 +53,141 @@ const createTestConfig = (
   ...overrides,
 });
 
+describe("resolveCustomChatUrl", () => {
+  it("appends /chat/completions to a base URL ending in /v1", () => {
+    expect(resolveCustomChatUrl("http://localhost:1234/v1")).toBe(
+      "http://localhost:1234/v1/chat/completions"
+    );
+  });
+
+  it("ignores trailing slashes on the base URL", () => {
+    expect(resolveCustomChatUrl("https://proxy.example.com/v1/")).toBe(
+      "https://proxy.example.com/v1/chat/completions"
+    );
+  });
+
+  it("handles a version segment below a path prefix", () => {
+    expect(resolveCustomChatUrl("https://openrouter.ai/api/v1")).toBe(
+      "https://openrouter.ai/api/v1/chat/completions"
+    );
+  });
+
+  it("keeps the query string", () => {
+    expect(resolveCustomChatUrl("https://gw.example.com/v2?team=qa")).toBe(
+      "https://gw.example.com/v2/chat/completions?team=qa"
+    );
+  });
+
+  it("leaves a full chat completions URL unchanged", () => {
+    expect(
+      resolveCustomChatUrl("http://localhost:8000/v1/chat/completions")
+    ).toBe("http://localhost:8000/v1/chat/completions");
+  });
+
+  it("leaves a non-OpenAI chat path unchanged", () => {
+    expect(resolveCustomChatUrl("https://llm.example.com/v1/chat")).toBe(
+      "https://llm.example.com/v1/chat"
+    );
+    expect(resolveCustomChatUrl("https://llm.example.com/generate")).toBe(
+      "https://llm.example.com/generate"
+    );
+  });
+
+  it("does not treat a version-like word as a version segment", () => {
+    expect(resolveCustomChatUrl("https://llm.example.com/dev1")).toBe(
+      "https://llm.example.com/dev1"
+    );
+  });
+
+  it("returns an unparseable value as given", () => {
+    expect(resolveCustomChatUrl("")).toBe("");
+    expect(resolveCustomChatUrl("not a url")).toBe("not a url");
+  });
+});
+
 describe("CustomLlmAdapter", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe("base URL endpoint", () => {
+    const baseUrlConfig = () =>
+      createTestConfig(
+        { baseUrl: "http://localhost:1234/v1" },
+        { endpoint: "http://localhost:1234/v1" }
+      );
+    const request: LlmRequest = {
+      messages: [{ role: "user", content: "Hello" }],
+      userId: "user-123",
+      feature: "test",
+    };
+
+    it("sends chat requests to /chat/completions under the base URL", async () => {
+      const adapter = new CustomLlmAdapter(baseUrlConfig());
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: "Hi" } }] }),
+      });
+
+      await adapter.chat(request);
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "http://localhost:1234/v1/chat/completions"
+      );
+    });
+
+    it("sends streaming requests to /chat/completions under the base URL", async () => {
+      const adapter = new CustomLlmAdapter(baseUrlConfig());
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ "content-type": "text/event-stream" }),
+        body: {
+          getReader: () => ({
+            read: vi
+              .fn()
+              .mockResolvedValueOnce({
+                done: false,
+                value: new TextEncoder().encode("data: [DONE]\n\n"),
+              })
+              .mockResolvedValueOnce({ done: true, value: undefined }),
+            releaseLock: vi.fn(),
+          }),
+        },
+      });
+
+      for await (const _chunk of adapter.chatStream(request)) {
+        // drain
+      }
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "http://localhost:1234/v1/chat/completions"
+      );
+    });
+
+    it("tests the connection against /chat/completions under the base URL", async () => {
+      const adapter = new CustomLlmAdapter(baseUrlConfig());
+      mockFetch.mockResolvedValueOnce({ status: 200 });
+
+      await expect(adapter.testConnection()).resolves.toBe(true);
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "http://localhost:1234/v1/chat/completions"
+      );
+    });
+
+    it("sends chat requests to a full chat URL as entered", async () => {
+      const adapter = new CustomLlmAdapter(createTestConfig());
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: "Hi" } }] }),
+      });
+
+      await adapter.chat(request);
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "https://custom-llm.example.com/v1/chat"
+      );
+    });
   });
 
   afterEach(() => {

@@ -38,8 +38,8 @@ export function assertAllowedUrl(url: string): URL {
 }
 
 /**
- * CUSTOM_LLM integrations store the full chat URL (e.g. ".../v1/chat/completions")
- * as their endpoint. Strip that suffix to recover the API base URL.
+ * A CUSTOM_LLM endpoint is either the API base URL or the full chat URL
+ * (e.g. ".../v1/chat/completions"). Strip that suffix to recover the base URL.
  */
 export function stripChatCompletionsSuffix(endpoint: string): string {
   return stripTrailingSlashes(endpoint.trim()).replace(
