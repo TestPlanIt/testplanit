@@ -1,3 +1,9 @@
+## [1.2.15](https://github.com/TestPlanIt/testplanit/compare/v1.2.14...v1.2.15) (2026-11-26)
+
+### Bug Fixes
+
+* **llm:** send Custom LLM chat requests to /chat/completions under a base URL ([#772](https://github.com/TestPlanIt/testplanit/issues/772)) ([4cc9f8f](https://github.com/TestPlanIt/testplanit/commit/4cc9f8fb0237f11d9180527b39cd5dbd460e4d30))
+
 ## [1.2.14](https://github.com/TestPlanIt/testplanit/compare/v1.2.13...v1.2.14) (2026-11-25)
 
 ### Bug Fixes
