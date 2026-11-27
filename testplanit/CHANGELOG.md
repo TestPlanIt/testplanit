@@ -1,3 +1,9 @@
+## [1.2.17](https://github.com/TestPlanIt/testplanit/compare/v1.2.16...v1.2.17) (2026-11-27)
+
+### Bug Fixes
+
+* **reporters:** respect test.fail() and stop depending on status names ([#777](https://github.com/TestPlanIt/testplanit/issues/777)) ([4cf27f7](https://github.com/TestPlanIt/testplanit/commit/4cf27f74d7732e6516223dd3e557889a18f6dc67)), closes [#774](https://github.com/TestPlanIt/testplanit/issues/774)
+
 ## [1.2.16](https://github.com/TestPlanIt/testplanit/compare/v1.2.15...v1.2.16) (2026-11-27)
 
 ### Bug Fixes
