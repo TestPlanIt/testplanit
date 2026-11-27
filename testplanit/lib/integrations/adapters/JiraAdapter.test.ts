@@ -552,6 +552,35 @@ describe("JiraAdapter", () => {
 
       vi.unstubAllEnvs();
     });
+
+    it.each([
+      [401, "auth", /Reconnect your Jira account/],
+      [503, "upstream", /server error \(503\)/],
+    ])(
+      "types a %i from accessible-resources as %s",
+      async (status, kind, message) => {
+        const oauthAdapter = new JiraAdapter({
+          provider: "JIRA",
+          baseUrl: "https://test.atlassian.net",
+          clientId: "test-client-id",
+          clientSecret: "test-client-secret",
+          redirectUri: "https://app.com/callback",
+        });
+        mockFetch.mockReset();
+        mockFetch.mockResolvedValueOnce({ ok: false, status });
+
+        const error = await oauthAdapter
+          .authenticate({ type: "oauth", accessToken: "expired-token" })
+          .then(
+            () => null,
+            (e) => e
+          );
+
+        expect(error).toBeInstanceOf(IntegrationApiError);
+        expect(error.kind).toBe(kind);
+        expect(error.userMessage).toMatch(message);
+      }
+    );
   });
 
   describe("createIssue", () => {

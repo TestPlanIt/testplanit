@@ -54,7 +54,6 @@ const mockSession = {
 const mockAdapter = {
   searchIssues: vi.fn(),
   getAuthorizationUrl: vi.fn(),
-  setAccessToken: vi.fn(),
 };
 
 const mockDb = {
@@ -172,6 +171,38 @@ describe("GET /api/integrations/[id]/search", () => {
       expect(data.authUrl).toBe(
         "/api/integrations/oauth/jira/auth?integrationId=1&returnUrl=%2Fintegrations%2Fauth-complete"
       );
+    });
+  });
+
+  describe("Flagged OAuth authorization", () => {
+    it("returns the reconnect prompt without building the adapter when the caller's row is flagged for re-authorization", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      mockDb.integration.findUnique.mockResolvedValue({
+        id: 1,
+        provider: "JIRA",
+        authType: "OAUTH2",
+        credentials: null,
+        userIntegrationAuths: [
+          {
+            userId: "user-1",
+            accessToken: "oauth-token",
+            isActive: true,
+            needsReauthAt: new Date(),
+          },
+        ],
+      });
+      const getAdapter = vi.fn();
+      (IntegrationManager.getInstance as any).mockReturnValue({ getAdapter });
+
+      const response = await GET(createRequest("test"), params);
+      const data = await response.json();
+
+      expect(response.status).toBe(401);
+      expect(data.requiresAuth).toBe(true);
+      expect(data.authUrl).toBe(
+        "/api/integrations/oauth/jira/auth?integrationId=1&returnUrl=%2Fintegrations%2Fauth-complete"
+      );
+      expect(getAdapter).not.toHaveBeenCalled();
     });
   });
 

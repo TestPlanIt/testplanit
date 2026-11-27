@@ -26,6 +26,7 @@ vi.mock("@/lib/integrations/IntegrationManager", () => ({
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
+import { RefreshTokenRevokedError } from "~/lib/integrations/errors";
 
 import { GET } from "./route";
 
@@ -53,6 +54,7 @@ describe("GET /api/integrations/[id]/create-metadata", () => {
     } as any);
     vi.mocked(baseDb.integration.findUnique).mockResolvedValue({
       id: 7,
+      provider: "GITHUB",
       authType: "API_KEY",
     } as any);
     vi.mocked(IntegrationManager.getInstance).mockReturnValue({
@@ -118,6 +120,7 @@ describe("GET /api/integrations/[id]/create-metadata", () => {
   it("requires the user's own token on an OAuth integration", async () => {
     vi.mocked(baseDb.integration.findUnique).mockResolvedValue({
       id: 7,
+      provider: "GITHUB",
       authType: "OAUTH2",
     } as any);
     vi.mocked(baseDb.userIntegrationAuth.findFirst).mockResolvedValue(null);
@@ -131,6 +134,7 @@ describe("GET /api/integrations/[id]/create-metadata", () => {
   it("builds the adapter with the user's token on an OAuth integration", async () => {
     vi.mocked(baseDb.integration.findUnique).mockResolvedValue({
       id: 7,
+      provider: "GITHUB",
       authType: "OAUTH2",
     } as any);
     vi.mocked(baseDb.userIntegrationAuth.findFirst).mockResolvedValue({
@@ -143,5 +147,28 @@ describe("GET /api/integrations/[id]/create-metadata", () => {
     await call("7", "?projectKey=o/r");
 
     expect(getAdapter).toHaveBeenCalledWith("7", undefined, "user-1");
+  });
+
+  it("prompts the user to reconnect when their OAuth authorization is dead", async () => {
+    vi.mocked(baseDb.integration.findUnique).mockResolvedValue({
+      id: 7,
+      provider: "GITHUB",
+      authType: "OAUTH2",
+    } as any);
+    vi.mocked(baseDb.userIntegrationAuth.findFirst).mockResolvedValue({
+      id: "auth-1",
+    } as any);
+    getAdapter.mockRejectedValue(
+      new RefreshTokenRevokedError("GITHUB", "bad_refresh_token")
+    );
+
+    const response = await call("7", "?projectKey=o/r");
+    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(data.requiresAuth).toBe(true);
+    expect(data.authUrl).toBe(
+      "/api/integrations/oauth/github/auth?integrationId=7&returnUrl=%2Fintegrations%2Fauth-complete"
+    );
   });
 });

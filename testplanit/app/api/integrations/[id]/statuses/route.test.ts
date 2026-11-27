@@ -25,6 +25,7 @@ vi.mock("@/lib/integrations/IntegrationManager", () => ({
 import { baseDb } from "@/lib/db";
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { getServerSession } from "next-auth/next";
+import { RefreshTokenRevokedError } from "~/lib/integrations/errors";
 
 import { GET } from "./route";
 
@@ -156,12 +157,34 @@ describe("GET /api/integrations/[id]/statuses", () => {
     });
     const response = await GET(createRequest(), paramsFor("7"));
     expect(response.status).toBe(200);
-    expect(getAdapter).toHaveBeenCalledWith("7");
+    expect(getAdapter).toHaveBeenCalledWith("7", undefined, "user-1");
+  });
+
+  it("prompts the user to reconnect when their OAuth authorization is dead", async () => {
+    findUnique.mockResolvedValue({
+      id: 7,
+      provider: "JIRA",
+      authType: "OAUTH2",
+      status: "ACTIVE",
+    });
+    getAdapter.mockRejectedValue(
+      new RefreshTokenRevokedError("JIRA", "refresh_token is invalid")
+    );
+
+    const response = await GET(createRequest(), paramsFor("7"));
+    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(data.requiresAuth).toBe(true);
+    expect(data.authUrl).toBe(
+      "/api/integrations/oauth/jira/auth?integrationId=7&returnUrl=%2Fintegrations%2Fauth-complete"
+    );
   });
 
   it("does not check user auth for non-OAUTH2 integrations", async () => {
     await GET(createRequest(), paramsFor("7"));
     expect(findFirst).not.toHaveBeenCalled();
+    expect(getAdapter).toHaveBeenCalledWith("7", undefined, undefined);
   });
 
   it("returns 500 when the adapter cannot be initialized", async () => {

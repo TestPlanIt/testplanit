@@ -6,6 +6,14 @@ import {
   userHasAreaPermission,
 } from "~/lib/services/areaPermission";
 import { resolveEditorMediaAttachments } from "@/lib/integrations/editorMediaAttachments";
+import {
+  integrationErrorBody,
+  isIntegrationApiError,
+  oauthReauthorizeUrl,
+  reauthorizationBody,
+  responseStatusForIntegrationError,
+  toIntegrationError,
+} from "~/lib/integrations/errors";
 import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth/next";
@@ -50,6 +58,7 @@ async function handlePOST(
   // Re-authorization URL for OAuth integrations, resolved once the provider is
   // known. Surfaced on 401s so the client can prompt the user to re-authorize.
   let authUrl: string | undefined;
+  let provider = "";
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -82,7 +91,20 @@ async function handlePOST(
     });
 
     if (userIntegrationAuth) {
-      authUrl = `/api/integrations/oauth/${userIntegrationAuth.integration.provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
+      provider = userIntegrationAuth.integration.provider;
+      authUrl = oauthReauthorizeUrl(provider, integrationId);
+
+      if (userIntegrationAuth.needsReauthAt) {
+        return NextResponse.json(
+          {
+            error:
+              "Integration authentication expired. Please re-authenticate.",
+            authUrl,
+            requiresAuth: true,
+          },
+          { status: 401 }
+        );
+      }
     }
 
     // If no user auth, check if the integration supports API key auth
@@ -101,6 +123,8 @@ async function handlePOST(
         );
       }
 
+      provider = integration.provider;
+
       // For OAuth2 integrations, we need user-specific auth
       if (integration.authType === "OAUTH2") {
         return NextResponse.json(
@@ -109,7 +133,7 @@ async function handlePOST(
             message:
               "This integration requires individual user authentication. Please authorize it in the integration settings.",
             authType: integration.authType,
-            authUrl: `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`,
+            authUrl: oauthReauthorizeUrl(integration.provider, integrationId),
           },
           { status: 401 }
         );
@@ -570,23 +594,41 @@ async function handlePOST(
       );
     }
 
-    if (error instanceof Error && error.message.includes("401")) {
+    const reauthorization = reauthorizationBody(error, provider, authUrl);
+    if (reauthorization) {
+      return NextResponse.json(reauthorization, { status: 401 });
+    }
+
+    const integrationError = toIntegrationError(error, provider);
+    const { kind, status } = integrationError;
+    const ownFailure = kind === "upstream" && status === 0;
+    // The tracker answered the request by refusing this issue: a required
+    // field, a missing permission, an unknown project. Its own message says
+    // what to fix, where the typed message could only guess.
+    const refusedByTracker =
+      !isIntegrationApiError(error) &&
+      status >= 400 &&
+      status < 500 &&
+      kind !== "auth" &&
+      kind !== "rate_limited";
+
+    if (ownFailure || refusedByTracker) {
       return NextResponse.json(
         {
-          error: "Integration authentication expired. Please re-authenticate.",
-          authUrl,
+          error: "Failed to create issue",
+          details: error instanceof Error ? error.message : String(error),
         },
-        { status: 401 }
+        {
+          status: ownFailure
+            ? 500
+            : responseStatusForIntegrationError(integrationError),
+        }
       );
     }
 
-    return NextResponse.json(
-      {
-        error: "Failed to create issue",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return NextResponse.json(integrationErrorBody(integrationError), {
+      status: responseStatusForIntegrationError(integrationError),
+    });
   }
 }
 

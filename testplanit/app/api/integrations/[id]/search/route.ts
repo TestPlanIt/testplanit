@@ -3,6 +3,8 @@ import { baseDb } from "@/lib/db";
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import {
   integrationErrorBody,
+  oauthReauthorizeUrl,
+  reauthorizationBody,
   responseStatusForIntegrationError,
   toIntegrationError,
 } from "~/lib/integrations/errors";
@@ -10,12 +12,6 @@ import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authOptions } from "~/server/auth";
 import { withRequestRouting } from "~/lib/db/requestRouting";
-
-// The search dialog opens this URL in a popup, so the callback should land on
-// the neutral auth-complete page (accessible to every signed-in user), not an
-// admin-only settings page.
-const buildOAuthKickoffUrl = (provider: string, integrationId: number) =>
-  `/api/integrations/oauth/${provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
 
 async function handleGET(
   request: NextRequest,
@@ -79,7 +75,7 @@ async function handleGET(
     // Only OAuth integrations can be repaired by the user re-authorizing;
     // expired API keys/PATs are fixed by an admin on the integration.
     if (!usesStoredCredentials) {
-      oauthKickoffUrl = buildOAuthKickoffUrl(
+      oauthKickoffUrl = oauthReauthorizeUrl(
         integration.provider,
         integrationId
       );
@@ -104,7 +100,7 @@ async function handleGET(
     } else {
       // For OAuth integrations, check user-specific auth
       const userAuth = integration.userIntegrationAuths[0];
-      if (!userAuth || !userAuth.accessToken) {
+      if (!userAuth || !userAuth.accessToken || userAuth.needsReauthAt) {
         // Point the client at the internal OAuth kickoff route: it generates
         // AND stores the state parameter the callback verifies. Handing out
         // the provider's raw authorize URL here skipped that step, so every
@@ -134,22 +130,6 @@ async function handleGET(
       return Response.json({ error: "Adapter not found" }, { status: 404 });
     }
 
-    // Set authentication based on integration type
-    if (usesStoredCredentials) {
-      // For API key/PAT auth, the adapter is already authenticated via IntegrationManager
-      // No need to set access token
-    } else if (integration.userIntegrationAuths[0]) {
-      // Set the user's access token if the adapter supports it
-      const userAuth = integration.userIntegrationAuths[0];
-      if (
-        "setAccessToken" in adapter &&
-        typeof adapter.setAccessToken === "function" &&
-        userAuth.accessToken
-      ) {
-        adapter.setAccessToken(userAuth.accessToken);
-      }
-    }
-
     // If projectId is provided, use it to filter the search
     const searchOptions: any = {
       query,
@@ -177,23 +157,21 @@ async function handleGET(
   } catch (error: any) {
     console.error("Search error:", error);
 
+    // Rejected OAuth credentials — whether building the adapter (dead refresh
+    // token) or running the search — are fixed by the user reconnecting.
+    const reauthorization = reauthorizationBody(
+      error,
+      provider,
+      oauthKickoffUrl
+    );
+    if (reauthorization) {
+      return Response.json(reauthorization, { status: 401 });
+    }
+
     // Responding with the typed error's `userMessage` rather than
     // `error.message` keeps adapter internals and upstream response bodies
     // out of the client.
     const integrationError = toIntegrationError(error, provider);
-
-    // Rejected OAuth credentials — whether building the adapter (dead refresh
-    // token) or running the search — are fixed by the user reconnecting.
-    if (integrationError.kind === "auth" && oauthKickoffUrl) {
-      return Response.json(
-        {
-          ...integrationErrorBody(integrationError),
-          authUrl: oauthKickoffUrl,
-          requiresAuth: true,
-        },
-        { status: 401 }
-      );
-    }
     return Response.json(integrationErrorBody(integrationError), {
       status: responseStatusForIntegrationError(integrationError),
     });
