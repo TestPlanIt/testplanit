@@ -76,6 +76,10 @@ import {
   userHasAreaPermission,
 } from "~/lib/services/areaPermission";
 import { getServerSession } from "next-auth/next";
+import {
+  integrationErrorFromStatus,
+  RefreshTokenRevokedError,
+} from "~/lib/integrations/errors";
 
 import { POST } from "./route";
 
@@ -725,48 +729,202 @@ describe("POST /api/integrations/[id]/create-issue", () => {
   });
 
   describe("Error handling", () => {
-    it("returns 500 when adapter createIssue throws", async () => {
+    const REAUTH_URL =
+      "/api/integrations/oauth/jira/auth?integrationId=1&returnUrl=%2Fintegrations%2Fauth-complete";
+
+    const useApiKeyIntegration = () => {
       (getServerSession as any).mockResolvedValue(mockSession);
       (baseDb.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
       (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 1,
+        provider: "JIRA",
         authType: "API_KEY",
         status: "ACTIVE",
       });
+    };
+
+    const useOAuthIntegration = (needsReauthAt: Date | null = null) => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (baseDb.userIntegrationAuth.findFirst as any).mockResolvedValue({
+        id: 10,
+        userId: "user-1",
+        integrationId: 1,
+        isActive: true,
+        accessToken: "oauth-token",
+        needsReauthAt,
+        integration: {
+          id: 1,
+          provider: "JIRA",
+          authType: "OAUTH2",
+          status: "ACTIVE",
+        },
+      });
+    };
+
+    const post = () =>
+      POST(
+        createRequest({ title: "Failing Issue", projectId: "PROJ" }),
+        params
+      );
+
+    beforeEach(() => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    it("returns 500 when adapter createIssue throws", async () => {
+      useApiKeyIntegration();
       mockAdapter.createIssue.mockRejectedValue(
         new Error("External service error")
       );
 
-      const response = await POST(
-        createRequest({ title: "Failing Issue", projectId: "PROJ" }),
-        params
-      );
+      const response = await post();
       const data = await response.json();
 
       expect(response.status).toBe(500);
       expect(data.error).toContain("Failed to create issue");
+      expect(data.details).toBe("External service error");
     });
 
     it("returns 500 when adapter cannot be initialized", async () => {
-      (getServerSession as any).mockResolvedValue(mockSession);
-      (baseDb.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
-      (baseDb.integration.findUnique as any).mockResolvedValue({
-        id: 1,
-        authType: "API_KEY",
-        status: "ACTIVE",
-      });
+      useApiKeyIntegration();
       (IntegrationManager.getInstance as any).mockReturnValue({
         getAdapter: vi.fn().mockResolvedValue(null),
       });
 
-      const response = await POST(
-        createRequest({ title: "No Adapter Issue", projectId: "PROJ" }),
-        params
-      );
+      const response = await post();
       const data = await response.json();
 
       expect(response.status).toBe(500);
       expect(data.error).toContain("adapter");
+    });
+
+    it("prompts the caller to reconnect when their refresh token is dead", async () => {
+      useOAuthIntegration();
+      (IntegrationManager.getInstance as any).mockReturnValue({
+        getAdapter: vi
+          .fn()
+          .mockRejectedValue(
+            new RefreshTokenRevokedError(
+              "JIRA",
+              '{"error":"unauthorized_client","error_description":"refresh_token is invalid"}'
+            )
+          ),
+      });
+
+      const response = await post();
+      const data = await response.json();
+
+      expect(response.status).toBe(401);
+      expect(data.requiresAuth).toBe(true);
+      expect(data.authUrl).toBe(REAUTH_URL);
+      expect(data.kind).toBe("auth");
+      expect(data.error).not.toContain("refresh_token is invalid");
+    });
+
+    it("prompts the caller to reconnect when the tracker rejects their OAuth token", async () => {
+      useOAuthIntegration();
+      mockAdapter.createIssue.mockRejectedValue(
+        new Error('HTTP 401: {"message":"Unauthorized"}')
+      );
+
+      const response = await post();
+      const data = await response.json();
+
+      expect(response.status).toBe(401);
+      expect(data.requiresAuth).toBe(true);
+      expect(data.authUrl).toBe(REAUTH_URL);
+    });
+
+    it("prompts a caller flagged for re-authorization without building the adapter", async () => {
+      useOAuthIntegration(new Date());
+      const getAdapter = vi.fn();
+      (IntegrationManager.getInstance as any).mockReturnValue({ getAdapter });
+
+      const response = await post();
+      const data = await response.json();
+
+      expect(response.status).toBe(401);
+      expect(data.requiresAuth).toBe(true);
+      expect(data.authUrl).toBe(REAUTH_URL);
+      expect(getAdapter).not.toHaveBeenCalled();
+    });
+
+    it("does not offer re-authorization when an API-key credential is rejected", async () => {
+      useApiKeyIntegration();
+      mockAdapter.createIssue.mockRejectedValue(
+        new Error('HTTP 401: {"message":"Unauthorized"}')
+      );
+
+      const response = await post();
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.kind).toBe("auth");
+      expect(data.error).toContain("Jira rejected the credentials");
+      expect(data.authUrl).toBeUndefined();
+      expect(data.requiresAuth).toBeUndefined();
+    });
+
+    it.each([
+      [
+        400,
+        'HTTP 400: {"errors":{"customfield_10020":"Sprint is required."}}',
+        "Sprint is required.",
+      ],
+      [
+        403,
+        'HTTP 403: {"errorMessages":["You do not have permission to create issues in this project."]}',
+        "permission to create issues",
+      ],
+      [
+        400,
+        'HTTP 404: {"errorMessages":["No project could be found with key \'PROJ\'."]}',
+        "No project could be found",
+      ],
+    ])(
+      "keeps the tracker's own message when it refuses the issue (%i)",
+      async (expectedStatus, message, detail) => {
+        useApiKeyIntegration();
+        mockAdapter.createIssue.mockRejectedValue(new Error(message));
+
+        const response = await post();
+        const data = await response.json();
+
+        expect(response.status).toBe(expectedStatus);
+        expect(data.error).toBe("Failed to create issue");
+        expect(data.details).toContain(detail);
+      }
+    );
+
+    it("answers with the adapter's own typed message when building it fails", async () => {
+      useApiKeyIntegration();
+      (IntegrationManager.getInstance as any).mockReturnValue({
+        getAdapter: vi
+          .fn()
+          .mockRejectedValue(integrationErrorFromStatus("JIRA", 404)),
+      });
+
+      const response = await post();
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.kind).toBe("not_found");
+      expect(data.error).toContain("Check the site URL");
+    });
+
+    it("reports a failing tracker as a 4xx that names it", async () => {
+      useApiKeyIntegration();
+      mockAdapter.createIssue.mockRejectedValue(
+        new Error("HTTP 503: upstream connect error")
+      );
+
+      const response = await post();
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.kind).toBe("upstream");
+      expect(data.error).toContain("Jira returned a server error (503)");
+      expect(data.details).toBeUndefined();
     });
   });
 });

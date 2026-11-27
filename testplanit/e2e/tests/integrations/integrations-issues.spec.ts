@@ -311,8 +311,9 @@ test.describe("Issue Operations - External Provider Error Handling", () => {
         }
       );
 
-      // Adapter will fail to reach GitHub (fake token) — expect error response
-      expect([401, 404, 500].includes(response.status())).toBe(true);
+      // Adapter will fail to reach GitHub (fake token) — expect error response.
+      // Rejected PAT credentials surface as a typed 400, as on search.
+      expect([400, 401, 404, 500].includes(response.status())).toBe(true);
       const body = await response.json();
       expect(body).toHaveProperty("error");
     });

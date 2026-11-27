@@ -7,6 +7,8 @@ import {
   integrationErrorFromStatus,
   isDeadRefreshTokenResponse,
   isIntegrationApiError,
+  oauthReauthorizeUrl,
+  reauthorizationBody,
   responseStatusForIntegrationError,
   toIntegrationError,
 } from "./errors";
@@ -208,5 +210,50 @@ describe("toIntegrationError with a dead refresh token", () => {
     expect(error.kind).toBe("auth");
     expect(error.userMessage).toMatch(/reconnect your jira account/i);
     expect(error.userMessage).not.toContain("refresh_token");
+  });
+});
+
+describe("reauthorizationBody", () => {
+  const authUrl = oauthReauthorizeUrl("JIRA", 3);
+
+  it("builds the kickoff URL that returns to the auth-complete page", () => {
+    expect(authUrl).toBe(
+      "/api/integrations/oauth/jira/auth?integrationId=3&returnUrl=%2Fintegrations%2Fauth-complete"
+    );
+  });
+
+  it.each([
+    [
+      "a dead refresh token",
+      new RefreshTokenRevokedError("JIRA", "refresh_token is invalid"),
+    ],
+    ["an upstream 401", new Error('HTTP 401: {"message":"Unauthorized"}')],
+    ["a typed 401", integrationErrorFromStatus("JIRA", 401)],
+  ])("is the reconnect prompt for %s", (_name, error) => {
+    expect(reauthorizationBody(error, "JIRA", authUrl)).toMatchObject({
+      kind: "auth",
+      provider: "JIRA",
+      authUrl,
+      requiresAuth: true,
+    });
+  });
+
+  it.each([
+    ["a permission failure", new Error("HTTP 403: Forbidden")],
+    ["a failing tracker", new Error("HTTP 503: upstream connect error")],
+    ["a timeout", new Error("Request timeout after 30000ms: https://x")],
+    ["an unrecognised failure", new Error("boom")],
+  ])("is null for %s", (_name, error) => {
+    expect(reauthorizationBody(error, "JIRA", authUrl)).toBeNull();
+  });
+
+  it("is null without an authUrl, as for API-key and PAT integrations", () => {
+    expect(
+      reauthorizationBody(
+        new Error('HTTP 401: {"message":"Unauthorized"}'),
+        "JIRA",
+        undefined
+      )
+    ).toBeNull();
   });
 });
