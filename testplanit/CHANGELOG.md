@@ -1,3 +1,9 @@
+## [1.2.18](https://github.com/TestPlanIt/testplanit/compare/v1.2.17...v1.2.18) (2026-11-27)
+
+### Bug Fixes
+
+* **integrations:** prompt to reconnect when creating an issue with a dead OAuth authorization ([#778](https://github.com/TestPlanIt/testplanit/issues/778)) ([ffeeaf0](https://github.com/TestPlanIt/testplanit/commit/ffeeaf09a976849ceb27d424a47291c4d5cfc525))
+
 ## [1.2.17](https://github.com/TestPlanIt/testplanit/compare/v1.2.16...v1.2.17) (2026-11-27)
 
 ### Bug Fixes
