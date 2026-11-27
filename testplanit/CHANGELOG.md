@@ -1,3 +1,9 @@
+## [1.2.16](https://github.com/TestPlanIt/testplanit/compare/v1.2.15...v1.2.16) (2026-11-27)
+
+### Bug Fixes
+
+* **import:** create CSV rows with an unmatched ID under a new case ID ([#776](https://github.com/TestPlanIt/testplanit/issues/776)) ([8287106](https://github.com/TestPlanIt/testplanit/commit/82871068165bc87b9c6cfe68d04c15e07c147b9a)), closes [#773](https://github.com/TestPlanIt/testplanit/issues/773)
+
 ## [1.2.15](https://github.com/TestPlanIt/testplanit/compare/v1.2.14...v1.2.15) (2026-11-26)
 
 ### Bug Fixes
