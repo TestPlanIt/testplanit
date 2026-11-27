@@ -3493,7 +3493,7 @@
           "description": "Her CSV sütununu şablondaki bir alana eşleştirin veya yok saymayı seçin.",
           "ignoreColumn": "Sütunu Yok Say",
           "requiredFieldsWarning": "{count, plural, one {# gerekli alan} other {# gerekli alan}} eşleştirilmemiş",
-          "caseIdHint": "Bu, sayısal Test Durumu ID'si olmalıdır — eşleşen durumların üzerine yazılır."
+          "caseIdHint": "Bu, sayısal Olay Kimliği olmalıdır — bu projede eşleşen olaylar üzerine yazılır. Diğer satırlar yeni bir kimlikle oluşturulur."
         },
         "page3": {
           "title": "Alan Eşleme Özeti",

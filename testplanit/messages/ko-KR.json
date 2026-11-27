@@ -3493,7 +3493,7 @@
           "description": "CSV 파일의 각 열을 템플릿의 필드에 매핑하거나 무시하도록 선택할 수 있습니다.",
           "ignoreColumn": "무시할 열",
           "requiredFieldsWarning": "{count, plural, one {# 필수 입력 필드는} other {# 필수 입력 필드는}} 매핑되지 않았습니다",
-          "caseIdHint": "이는 숫자로 된 케이스 ID여야 하며, 일치하는 케이스는 덮어씌워집니다."
+          "caseIdHint": "이것은 반드시 숫자 케이스 ID여야 합니다 — 이 프로젝트에서 일치하는 케이스는 덮어씌워집니다. 다른 행들은 새로운 ID로 생성됩니다."
         },
         "page3": {
           "title": "현장 지도 작성 요약",

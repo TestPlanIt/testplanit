@@ -3493,7 +3493,7 @@
           "description": "Associez chaque colonne CSV à un champ du modèle ou choisissez de l'ignorer.",
           "ignoreColumn": "Ignorer la colonne",
           "requiredFieldsWarning": "{count, plural, one {# champ obligatoire est non mappé} other {# champs obligatoires sont non mappés}}",
-          "caseIdHint": "Il doit s'agir de l'ID de cas numérique — les cas correspondants seront écrasés."
+          "caseIdHint": "Cet ID de cas numérique doit correspondre — les cas correspondants dans ce projet sont remplacés. Les autres lignes sont créées avec un nouvel ID."
         },
         "page3": {
           "title": "Résumé de la cartographie des champs",

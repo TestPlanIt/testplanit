@@ -3493,7 +3493,7 @@
           "description": "Associa ogni colonna CSV a un campo nel modello oppure scegli di ignorarla.",
           "ignoreColumn": "Ignora colonna",
           "requiredFieldsWarning": "{count, plural, one {# campo obbligatorio non è mappato} other {# campi obbligatori non sono mappati}}",
-          "caseIdHint": "Deve essere l'ID caso numerico — i casi corrispondenti vengono sovrascritti."
+          "caseIdHint": "Deve essere l'ID di caso numerico — i casi corrispondenti in questo progetto vengono sovrascritti. Le altre righe vengono create con un nuovo ID."
         },
         "page3": {
           "title": "Riepilogo della mappatura del campo",

@@ -3493,7 +3493,7 @@
           "description": "将 CSV 文件中的每一列映射到模板中的一个字段，或者选择忽略它。",
           "ignoreColumn": "忽略列",
           "requiredFieldsWarning": "{count, plural, one {# 必填字段为} other {# 必填字段为}} 未映射",
-          "caseIdHint": "此项必须为数字用例 ID — 匹配的用例将被覆盖。"
+          "caseIdHint": "这必须是数字案例ID — 此项目中的匹配案例将被覆盖。其他行将以新ID创建。"
         },
         "page3": {
           "title": "田间测绘概要",

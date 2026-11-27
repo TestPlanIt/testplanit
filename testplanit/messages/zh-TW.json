@@ -3493,7 +3493,7 @@
           "description": "將 CSV 檔案中的每一列對應到範本中的一個字段，或選擇忽略它。",
           "ignoreColumn": "忽略列",
           "requiredFieldsWarning": "{count, plural, one {# 必填欄位為} other {# 必填欄位為}} 未對映",
-          "caseIdHint": "這必須是數字案例 ID — 相符的案例將被覆寫。"
+          "caseIdHint": "此ID必須是數字案例ID — 此專案中的相符案例將被覆寫。其他列將以新ID建立。"
         },
         "page3": {
           "title": "田間測繪概要",

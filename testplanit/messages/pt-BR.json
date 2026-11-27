@@ -3493,7 +3493,7 @@
           "description": "Mapeie cada coluna do arquivo CSV para um campo no modelo ou opte por ignorá-la.",
           "ignoreColumn": "Ignorar coluna",
           "requiredFieldsWarning": "{count, plural, one {# campo obrigatório não está mapeado} other {# campos obrigatórios não estão mapeados}}",
-          "caseIdHint": "Este deve ser o ID numérico do caso — os casos correspondentes serão substituídos."
+          "caseIdHint": "Este deve ser o ID de Caso numérico — casos correspondentes neste projeto são sobrescritos. Outras linhas são criadas com um novo ID."
         },
         "page3": {
           "title": "Resumo do Mapeamento de Campo",

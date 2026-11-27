@@ -3493,7 +3493,7 @@
           "description": "Ordnen Sie jede CSV-Spalte einem Feld in der Vorlage zu oder wählen Sie, ob sie ignoriert werden soll.",
           "ignoreColumn": "Spalte ignorieren",
           "requiredFieldsWarning": "{count, plural, one {# Pflichtfeld ist} other {# Pflichtfelder sind}} nicht zugeordnet",
-          "caseIdHint": "Dies muss die numerische Fall-ID sein — übereinstimmende Fälle werden überschrieben."
+          "caseIdHint": "Dies muss die numerische Case-ID sein — übereinstimmende Fälle in diesem Projekt werden überschrieben. Andere Zeilen werden mit einer neuen ID erstellt."
         },
         "page3": {
           "title": "Zusammenfassung der Feldzuordnung",

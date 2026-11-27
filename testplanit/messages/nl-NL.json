@@ -3493,7 +3493,7 @@
           "description": "U kunt elke CSV-kolom toewijzen aan een veld in de sjabloon, of ervoor kiezen deze te negeren.",
           "ignoreColumn": "Kolom negeren",
           "requiredFieldsWarning": "{count, plural, one {# verplicht veld is} other {# verplichte velden zijn}} niet toegewezen",
-          "caseIdHint": "Dit moet het numerieke Testgeval-ID zijn — overeenkomende testgevallen worden overschreven."
+          "caseIdHint": "Dit moet de numerieke Case-ID zijn — overeenkomende cases in dit project worden overschreven. Andere rijen worden aangemaakt met een nieuwe ID."
         },
         "page3": {
           "title": "Samenvatting van veldtoewijzing",

@@ -3493,7 +3493,7 @@
           "description": "Bạn có thể ánh xạ từng cột trong tệp CSV đến một trường trong mẫu hoặc chọn bỏ qua bước này.",
           "ignoreColumn": "Bỏ qua cột",
           "requiredFieldsWarning": "{count, plural, one {# Trường bắt buộc là} other {# Các trường bắt buộc là}} không được ánh xạ",
-          "caseIdHint": "Đây phải là ID trường hợp dạng số — các trường hợp trùng khớp sẽ bị ghi đè."
+          "caseIdHint": "Đây phải là Case ID số — các trường hợp phù hợp trong dự án này sẽ bị ghi đè. Các hàng khác được tạo với một ID mới."
         },
         "page3": {
           "title": "Tóm tắt lập bản đồ hiện trường",

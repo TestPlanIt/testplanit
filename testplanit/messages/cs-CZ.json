@@ -3493,7 +3493,7 @@
           "description": "Namapujte jednotlivé sloupce CSV na pole v šabloně, nebo je vynechte.",
           "ignoreColumn": "Ignorovat sloupec",
           "requiredFieldsWarning": "{count, plural, one {# povinné pole není namapováno} few {# povinná pole nejsou namapována} other {# povinných polí není namapováno}}",
-          "caseIdHint": "Musí se jednat o číselné ID případu — shodující se případy budou přepsány."
+          "caseIdHint": "Toto musí být číselné ID případu — odpovídající případy v tomto projektu budou přepsány. Ostatní řádky jsou vytvořeny s novým ID."
         },
         "page3": {
           "title": "Souhrn mapování polí",

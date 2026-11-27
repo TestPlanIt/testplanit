@@ -3493,7 +3493,7 @@
           "description": "Przypisz każdą kolumnę CSV do pola w szablonie lub zignoruj ją.",
           "ignoreColumn": "Ignoruj kolumnę",
           "requiredFieldsWarning": "{count, plural, one {# wymagane pole nie jest mapowane} few {# wymagane pola nie są mapowane} many {# wymaganych pól nie jest mapowanych} other {# wymaganych pól nie jest mapowanych}}",
-          "caseIdHint": "To musi być numeryczne ID przypadku — pasujące przypadki zostaną nadpisane."
+          "caseIdHint": "To musi być numeryczny identyfikator sprawy — dopasowane sprawy w tym projekcie zostaną zastąpione. Pozostałe wiersze są tworzone z nowym identyfikatorem."
         },
         "page3": {
           "title": "Podsumowanie mapowania terenu",

@@ -3493,7 +3493,7 @@
           "description": "Mapear cada columna CSV a un campo en la plantilla o elegir ignorarlo.",
           "ignoreColumn": "Ignorar Columna",
           "requiredFieldsWarning": "{count, plural, one {# campo requerido no está mapeado} other {# campos requeridos no están mapeados}}",
-          "caseIdHint": "Debe ser el ID numérico del caso; los casos coincidentes se sobrescriben."
+          "caseIdHint": "Este debe ser el ID de caso numérico — los casos coincidentes en este proyecto se sobrescriben. Otras filas se crean con un nuevo ID."
         },
         "page3": {
           "title": "Resumen de mapeo de campos",
