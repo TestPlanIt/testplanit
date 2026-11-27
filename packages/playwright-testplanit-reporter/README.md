@@ -109,6 +109,7 @@ caseIdPattern: /TEST-(\d+)/g  // JIRA-style:         "TEST-12345 should work"
 | `runMetadata` | `Record<string, string \| number \| boolean>` | No | - | Key/value metadata rendered into the run's documentation. Supports `{env:VAR}` |
 | `includeStackTrace` | `boolean` | No | `true` | Include stack traces in results |
 | `excludeSkipped` | `boolean` | No | `false` | Don't report skipped tests to TestPlanIt |
+| `expectedFailureStatus` | `number \| string` | No | failed status | Status (ID or name) recorded for a `test.fail()` test that fails as expected. See [Expected Failures](#expected-failures-testfail) |
 | `completeRunOnFinish` | `boolean` | No | `true` | Mark the test run as completed when the run finishes |
 | `timeout` | `number` | No | `30000` | API request timeout in ms |
 | `maxRetries` | `number` | No | `3` | Number of retries for failed API requests |
@@ -297,6 +298,46 @@ unchanged: the run is created and completed as before.
 ## Retries
 
 Playwright calls the reporter once per retry attempt. **Each attempt is reported as its own result**, so a test that fails and then passes on retry produces both a `FAILURE` and a `PASSED` result against the same case — giving you the full attempt history. The case is added to the run only once.
+
+## Result Statuses
+
+The reporter records each result under one of the project's statuses. It only uses statuses that are enabled, assigned to the project, and have the Automation scope.
+
+| Result | Status used |
+|:-------|:------------|
+| Passed | A status whose system name, name, or alias is `passed`, `pass`, or `success`. Otherwise the first status with **Success** turned on |
+| Failed | A status whose system name, name, or alias is `failed`, `fail`, `failure`, or `error`. Otherwise the first status with **Failure** turned on |
+| Skipped | A status whose system name, name, or alias is `skipped`, `skip`, or `ignored`. Otherwise the first status with **Completed** turned on and both **Success** and **Failure** turned off |
+
+"First" follows the order of the statuses on the Statuses administration page. To send results to a particular status, add the matching word to its **Aliases**. An alias that only contains one of these words also matches when no status matches it exactly.
+
+If no status fits, the reporter logs a warning and records the result without a status. TestPlanIt then counts it as passed, failed, or skipped from the result itself.
+
+## Expected Failures (`test.fail()`)
+
+Playwright treats a test marked with `test.fail()` as passing when it fails and as failing when it passes. The reporter records each attempt as follows:
+
+| Test marked `test.fail()` | Playwright | Recorded in TestPlanIt |
+|:--------------------------|:-----------|:-----------------------|
+| Fails as expected | Passes the run | The failed status, or the status set by `expectedFailureStatus` |
+| Passes | Fails the run | Failed, with the message `Expected to fail, but passed.` |
+| Times out | Fails the run | Failed |
+
+Set `expectedFailureStatus` to record expected failures under another status of the project, by name or ID:
+
+```typescript
+['@testplanit/playwright-reporter', {
+  domain: 'https://testplanit.example.com',
+  apiToken: process.env.TESTPLANIT_API_TOKEN,
+  projectId: 1,
+  expectedFailureStatus: 'Blocked',   // by name
+  // expectedFailureStatus: 12,       // …or by ID
+}]
+```
+
+A name is matched against the name or system name of the project's statuses, ignoring case. The status must be enabled, assigned to the project, and have the Automation scope. The result counts as passed, failed, or neither according to that status's own settings.
+
+If no status matches, the reporter logs a warning and records expected failures as failed.
 
 ## Examples
 

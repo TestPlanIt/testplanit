@@ -7,6 +7,7 @@ import type { FullResult, Suite, TestCase, TestResult, TestStep } from '@playwri
 // ---------------------------------------------------------------------------
 const clientMock = vi.hoisted(() => ({
   getStatusId: vi.fn(),
+  getStatuses: vi.fn(),
   createTestRun: vi.fn(),
   getTestRun: vi.fn(),
   completeTestRun: vi.fn(),
@@ -52,8 +53,19 @@ import TestPlanItReporter from './reporter.js';
 
 const STATUS_IDS: Record<string, number> = { passed: 1, failed: 2, skipped: 3, blocked: 4 };
 
+// The project's statuses as the API returns them. "Known Issue" is a status an
+// admin added; nothing about its name says how its results count.
+const PROJECT_STATUSES = [
+  { id: 1, name: 'Passed', systemName: 'passed', isSuccess: true, isFailure: false, isCompleted: true },
+  { id: 2, name: 'Failed', systemName: 'failed', isSuccess: false, isFailure: true, isCompleted: true },
+  { id: 3, name: 'Skipped', systemName: 'skipped', isSuccess: false, isFailure: false, isCompleted: true },
+  { id: 4, name: 'Blocked', systemName: 'blocked', isSuccess: false, isFailure: false, isCompleted: false },
+  { id: 5, name: 'Known Issue', systemName: 'known_issue', isSuccess: false, isFailure: false, isCompleted: true },
+];
+
 function applyBaseImpls() {
   clientMock.getStatusId.mockImplementation(async (_p: number, s: string) => STATUS_IDS[s]);
+  clientMock.getStatuses.mockImplementation(async () => PROJECT_STATUSES);
   clientMock.createTestRun.mockImplementation(async () => ({ id: 123, name: 'Test Run' }));
   clientMock.getTestRun.mockImplementation(async () => ({ id: 999, name: 'Existing Run', isCompleted: false, isDeleted: false }));
   clientMock.completeTestRun.mockImplementation(async () => ({ id: 123, isCompleted: true }));
@@ -339,6 +351,156 @@ describe('TestPlanItReporter (Playwright)', () => {
     it('maps normalized statuses to JUnit types', () => {
       const m = (reporter as any).mapStatusToJUnitType.bind(reporter);
       expect([m('passed'), m('failed'), m('skipped')]).toEqual(['PASSED', 'FAILURE', 'SKIPPED']);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  describe('tests marked test.fail()', () => {
+    // Playwright sets expectedStatus to 'failed' on a test marked test.fail().
+    const markedFail = (title: string): TestCase =>
+      ({
+        ...(makeTest(title, buildParent({ project: 'chromium' })) as any),
+        expectedStatus: 'failed',
+      }) as unknown as TestCase;
+    const failedAttempt = () =>
+      makeResult({ status: 'failed', error: { message: 'known bug', stack: 'at foo' } as any });
+    const reported = () => calls(clientMock.createJUnitTestResult).map(([a]) => a);
+
+    it('records an expected failure as failed by default', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      await run(reporter, markedFail('[100] known bug'), failedAttempt());
+      const arg = lastArg(clientMock.createJUnitTestResult);
+      expect(arg.statusId).toBe(STATUS_IDS.failed);
+      expect(arg.type).toBe('FAILURE');
+      expect(arg.message).toBe('known bug');
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      // option value, status it resolves to, JUnit type from that status's flags
+      ['Blocked', 4, 'SKIPPED'],
+      ['blocked', 4, 'SKIPPED'],
+      ['  SKIPPED ', 3, 'SKIPPED'],
+      ['passed', 1, 'PASSED'],
+      ['failed', 2, 'FAILURE'],
+      ['Known Issue', 5, 'SKIPPED'],
+      ['known_issue', 5, 'SKIPPED'],
+      [5, 5, 'SKIPPED'],
+      [1, 1, 'PASSED'],
+    ] as const)('records an expected failure under expectedFailureStatus %j', async (option, statusId, type) => {
+      const r = new TestPlanItReporter({ ...defaultOptions, expectedFailureStatus: option });
+      await run(r, markedFail('[100] known bug'), failedAttempt());
+      const arg = lastArg(clientMock.createJUnitTestResult);
+      expect(arg.statusId).toBe(statusId);
+      expect(arg.type).toBe(type);
+      // The failure that was expected stays on the result.
+      expect(arg.message).toBe('known bug');
+      expect(arg.content).toBe('at foo');
+    });
+
+    it('takes the result type from the status flags, not from its name', async () => {
+      // An admin renamed the statuses: "Blocked" now counts as a failure and
+      // "Won't Fix" counts as a success.
+      clientMock.getStatuses.mockImplementation(async () => [
+        ...PROJECT_STATUSES.filter((s) => s.id !== 4),
+        { id: 4, name: 'Blocked', systemName: 'blocked', isSuccess: false, isFailure: true, isCompleted: true },
+        { id: 6, name: "Won't Fix", systemName: 'wont_fix', isSuccess: true, isFailure: false, isCompleted: true },
+      ]);
+      const blocked = new TestPlanItReporter({ ...defaultOptions, expectedFailureStatus: 'Blocked' });
+      await run(blocked, markedFail('[1] known bug'), failedAttempt());
+      const wontFix = new TestPlanItReporter({ ...defaultOptions, expectedFailureStatus: "Won't Fix" });
+      await run(wontFix, markedFail('[2] known bug'), failedAttempt());
+
+      const [first, second] = reported();
+      expect([first.statusId, first.type]).toEqual([4, 'FAILURE']);
+      expect([second.statusId, second.type]).toEqual([6, 'PASSED']);
+      expect(blocked.getState().stats.resultsFailed).toBe(1);
+      expect(wontFix.getState().stats.resultsPassed).toBe(1);
+    });
+
+    it('matches "blocked" to a status the project names differently', async () => {
+      // No status is named "blocked"; the client's lookup found one by alias.
+      clientMock.getStatuses.mockImplementation(async () => [
+        ...PROJECT_STATUSES.filter((s) => s.id !== 4),
+        { id: 4, name: 'On Hold', systemName: 'on_hold', aliases: 'blocked', isSuccess: false, isFailure: false, isCompleted: false },
+      ]);
+      const r = new TestPlanItReporter({ ...defaultOptions, expectedFailureStatus: 'blocked' });
+      await run(r, markedFail('[100] known bug'), failedAttempt());
+      expect(lastArg(clientMock.createJUnitTestResult).statusId).toBe(4);
+    });
+
+    it.each([
+      ['a name no status has', 'Quarantined'],
+      ['an ID that is not one of the project statuses', 999],
+      ['"blocked" when the project has no such status', 'blocked'],
+    ])('falls back to failed, with one warning, for %s', async (_label, option) => {
+      clientMock.getStatusId.mockImplementation(async (_p: number, s: string) =>
+        s === 'blocked' ? undefined : STATUS_IDS[s],
+      );
+      clientMock.getStatuses.mockImplementation(async () => PROJECT_STATUSES.filter((s) => s.id !== 4));
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const r = new TestPlanItReporter({ ...defaultOptions, expectedFailureStatus: option });
+      r.onTestEnd(markedFail('[1] known bug'), failedAttempt());
+      r.onTestEnd(markedFail('[2] another known bug'), failedAttempt());
+      await r.onEnd(FULL_RESULT);
+
+      expect(reported()).toHaveLength(2);
+      for (const arg of reported()) {
+        expect(arg.statusId).toBe(STATUS_IDS.failed);
+        expect(arg.type).toBe('FAILURE');
+      }
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).toContain(`expectedFailureStatus ${JSON.stringify(option)}`);
+      expect(r.getState().stats.resultsFailed).toBe(2);
+      expect(r.getState().stats.expectedFailures).toBe(0);
+    });
+
+    it('records a test.fail() test that passes as failed', async () => {
+      await run(reporter, markedFail('[100] bug got fixed'), makeResult({ status: 'passed' }));
+      const arg = lastArg(clientMock.createJUnitTestResult);
+      expect(arg.statusId).toBe(STATUS_IDS.failed);
+      expect(arg.type).toBe('FAILURE');
+      expect(arg.message).toBe('Expected to fail, but passed.');
+      expect(reporter.getState().stats.resultsFailed).toBe(1);
+      expect(reporter.getState().stats.resultsPassed).toBe(0);
+    });
+
+    it('does not apply expectedFailureStatus to an unexpected pass, a timeout or a plain failure', async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions, expectedFailureStatus: 'Blocked' });
+      r.onTestEnd(markedFail('[1] passes'), makeResult({ status: 'passed' }));
+      r.onTestEnd(markedFail('[2] times out'), makeResult({ status: 'timedOut' }));
+      r.onTestEnd(makeTest('[3] plain failure', buildParent({ project: 'chromium' })), makeResult({ status: 'failed' }));
+      await r.onEnd(FULL_RESULT);
+      expect(reported()).toHaveLength(3);
+      for (const arg of reported()) {
+        expect(arg.statusId).toBe(STATUS_IDS.failed);
+        expect(arg.type).toBe('FAILURE');
+      }
+    });
+
+    it('still reports an expected failure recorded as skipped when excludeSkipped is enabled', async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions, expectedFailureStatus: 'skipped', excludeSkipped: true });
+      await run(r, markedFail('[100] known bug'), failedAttempt());
+      expect(lastArg(clientMock.createJUnitTestResult).statusId).toBe(STATUS_IDS.skipped);
+    });
+
+    it('names the status in the summary and counts the result by its flags', async () => {
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const r = new TestPlanItReporter({ ...defaultOptions, expectedFailureStatus: 'Known Issue' });
+      r.onTestEnd(markedFail('[1] known bug'), failedAttempt());
+      r.onTestEnd(makeTest('[2] passes', buildParent({ project: 'chromium' })), makeResult());
+      await r.onEnd(FULL_RESULT);
+
+      const { stats } = r.getState();
+      expect([stats.resultsPassed, stats.resultsFailed, stats.resultsSkipped]).toEqual([1, 0, 1]);
+      const lines = log.mock.calls.map(([line]) => String(line));
+      expect(lines.some((l) => l.endsWith('Expected failures recorded as "Known Issue": 1'))).toBe(true);
+    });
+
+    it('leaves the expected-failure line out of the summary when the option is unset', async () => {
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      await run(reporter, markedFail('[1] known bug'), failedAttempt());
+      expect(log.mock.calls.some(([line]) => String(line).includes('Expected failures'))).toBe(false);
     });
   });
 
@@ -995,13 +1157,38 @@ describe('TestPlanItReporter (Playwright)', () => {
       expect(clientMock.completeTestRun).not.toHaveBeenCalled();
     });
 
-    it('prints FAILED and skips the run when status mappings are missing', async () => {
-      const err = vi.spyOn(console, 'error').mockImplementation(() => {});
-      clientMock.getStatusId.mockImplementation(async (_p: number, s: string) => (s === 'passed' ? undefined : 2));
-      await run(reporter, makeTest('[1] x', buildParent({ project: 'chromium' })), makeResult());
-      expect(clientMock.createTestRun).not.toHaveBeenCalled();
-      expect(clientMock.completeTestRun).not.toHaveBeenCalled();
-      expect(err.mock.calls.flat().join(' ')).toContain('FAILED');
+    it('still reports the run when the project has no passed status', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      clientMock.getStatusId.mockImplementation(async (_p: number, s: string) =>
+        s === 'passed' ? undefined : STATUS_IDS[s],
+      );
+      reporter.onTestEnd(makeTest('[1] passes', buildParent({ project: 'chromium' })), makeResult());
+      reporter.onTestEnd(makeTest('[2] passes too', buildParent({ project: 'chromium' })), makeResult());
+      reporter.onTestEnd(makeTest('[3] fails', buildParent({ project: 'chromium' })), makeResult({ status: 'failed' }));
+      await reporter.onEnd(FULL_RESULT);
+
+      const sent = calls(clientMock.createJUnitTestResult).map(([a]) => a);
+      expect(sent.map((a) => [a.repositoryCaseId, a.type, a.statusId])).toEqual([
+        [1, 'PASSED', undefined],
+        [2, 'PASSED', undefined],
+        [3, 'FAILURE', STATUS_IDS.failed],
+      ]);
+      expect(clientMock.completeTestRun).toHaveBeenCalled();
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).toContain('no status for passed results');
+    });
+
+    it('records a skipped result without a status, not as failed, when the project has no skipped status', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      clientMock.getStatusId.mockImplementation(async (_p: number, s: string) =>
+        s === 'skipped' ? undefined : STATUS_IDS[s],
+      );
+      await run(reporter, makeTest('[1] x', buildParent({ project: 'chromium' })), makeResult({ status: 'skipped' }));
+
+      const arg = lastArg(clientMock.createJUnitTestResult);
+      expect(arg.type).toBe('SKIPPED');
+      expect(arg.statusId).toBeUndefined();
+      expect(warn.mock.calls[0][0]).toContain('no status for skipped results');
     });
 
     it('reports an API error but skips completion when the only result fails', async () => {

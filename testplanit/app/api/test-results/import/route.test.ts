@@ -79,7 +79,6 @@ vi.mock("@/lib/db", () => {
       updateMany: vi.fn().mockResolvedValue({ count: 3 }),
     },
     status: {
-      findFirst: vi.fn(),
       findMany: vi.fn(),
     },
     projects: {
@@ -198,7 +197,21 @@ describe("Test Results Import API Route", () => {
   const mockRepositoryCase = { id: 100, name: "test case" };
   const mockTestRunCase = { id: 200, testRunId: 42, repositoryCaseId: 100 };
   const mockSuite = { id: 300, testRunId: 42 };
-  const mockStatus = { id: 1, isSuccess: true, color: null };
+  const mockStatus = {
+    id: 1,
+    name: "Passed",
+    systemName: "passed",
+    aliases: null,
+    isSuccess: true,
+    isFailure: false,
+    isCompleted: true,
+  };
+  // The route reads statuses twice: every status for the iteration rollup
+  // map, and the project's Automation statuses to record results under.
+  const mockImportStatuses = (statuses: unknown[]) =>
+    (baseDb.status.findMany as any).mockImplementation(async (args: any) =>
+      args?.where?.projects ? statuses : []
+    );
 
   const createMockFile = (
     name: string,
@@ -242,14 +255,13 @@ describe("Test Results Import API Route", () => {
     (baseDb.testRunCases.update as any).mockResolvedValue(mockTestRunCase);
     (baseDb.jUnitTestSuite.create as any).mockResolvedValue(mockSuite);
     (baseDb.jUnitTestResult.create as any).mockResolvedValue({ id: 400 });
-    (baseDb.status.findFirst as any).mockResolvedValue(mockStatus);
     // INT-02: project iteration-property config + status map are loaded
     // ONCE per import (before the per-case loop). Default mocks reflect
     // the legacy (non-parameterized) path so existing tests keep passing.
     (baseDb.projects.findUnique as any).mockResolvedValue({
       junitIterationPropertyNames: [],
     });
-    (baseDb.status.findMany as any).mockResolvedValue([]);
+    mockImportStatuses([mockStatus]);
     (baseDb.testRunCaseIteration.findFirst as any).mockResolvedValue(null);
     (baseDb.testRunCaseIteration.upsert as any).mockResolvedValue({ id: 999 });
     (baseDb.testRunCaseIteration.findMany as any).mockResolvedValue([]);
@@ -460,6 +472,129 @@ describe("Test Results Import API Route", () => {
 
       expect(baseDb.steps.updateMany).not.toHaveBeenCalled();
       expect(baseDb.steps.createMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("status of imported results", () => {
+    const customStatuses = [
+      { ...mockStatus, id: 14, name: "On Hold", systemName: "on_hold", isSuccess: false, isCompleted: false },
+      { ...mockStatus, id: 11, name: "Green", systemName: "green" },
+      { ...mockStatus, id: 12, name: "Red", systemName: "red", isSuccess: false, isFailure: true },
+      { ...mockStatus, id: 13, name: "Not Applicable", systemName: "not_applicable", isSuccess: false },
+    ];
+
+    const importOneCase = async (
+      status: string,
+      steps: { name: string; status: string }[] = []
+    ) => {
+      (normalizeStatus as any).mockImplementation((value: string) => value);
+      (parseTestResults as any).mockResolvedValueOnce({
+        result: {
+          total: 1,
+          passed: 0,
+          failed: 0,
+          errors: 0,
+          skipped: 0,
+          duration: 1.5,
+          suites: [
+            {
+              name: "com.example.TestSuite",
+              total: 1,
+              passed: 0,
+              failed: 0,
+              errors: 0,
+              skipped: 0,
+              duration: 1.5,
+              cases: [
+                {
+                  name: "test_login",
+                  status,
+                  duration: 1.5,
+                  failure: null,
+                  stack_trace: null,
+                  attachments: [],
+                  steps,
+                },
+              ],
+            },
+          ],
+        },
+        errors: [],
+      });
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+      await readSseResponse(await POST(createFormDataRequest(formData)));
+
+      return (baseDb.jUnitTestResult.create as any).mock.calls[0][0].data;
+    };
+
+    it("loads the project's enabled Automation statuses in the admin's order", async () => {
+      await importOneCase("passed");
+
+      const scoped = (baseDb.status.findMany as any).mock.calls
+        .map(([args]: any[]) => args)
+        .find((args: any) => args?.where?.projects);
+      expect(scoped.where).toEqual({
+        isEnabled: true,
+        isDeleted: false,
+        projects: { some: { projectId: 1 } },
+        scope: { some: { scope: { name: "Automation" } } },
+      });
+      expect(scoped.orderBy).toEqual([{ order: "asc" }, { id: "asc" }]);
+    });
+
+    it.each([
+      ["passed", "PASSED", 11],
+      ["failed", "FAILURE", 12],
+      ["error", "ERROR", 12],
+      ["skipped", "SKIPPED", 13],
+    ])(
+      "records a %s result under the status with matching flags when none is named for it",
+      async (status, type, statusId) => {
+        mockImportStatuses(customStatuses);
+
+        const data = await importOneCase(status);
+
+        expect(data.type).toBe(type);
+        expect(data.status).toEqual({ connect: { id: statusId } });
+        expect(baseDb.testRunCases.update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({ statusId }),
+          })
+        );
+      }
+    );
+
+    it("stores a result without a status, and leaves the run case alone, when no status fits", async () => {
+      mockImportStatuses([customStatuses[0]]);
+
+      const data = await importOneCase("failed");
+
+      expect(data.type).toBe("FAILURE");
+      expect(data.status).toBeUndefined();
+      expect(baseDb.testRunCases.update).not.toHaveBeenCalled();
+    });
+
+    it("resolves step statuses by the same rules and leaves passed steps without one", async () => {
+      mockImportStatuses(customStatuses);
+
+      await importOneCase("failed", [
+        { name: "Given a user", status: "passed" },
+        { name: "When they log in", status: "failed" },
+        { name: "Then they see the dashboard", status: "skipped" },
+      ]);
+
+      const steps = (baseDb.jUnitTestStep.create as any).mock.calls.map(
+        ([args]: any[]) => [args.data.name, args.data.statusId]
+      );
+      expect(steps).toEqual([
+        ["Given a user", undefined],
+        ["When they log in", 12],
+        ["Then they see the dashboard", 13],
+      ]);
     });
   });
 

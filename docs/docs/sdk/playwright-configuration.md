@@ -45,6 +45,7 @@ reporter: [
 | `attachmentTypes` | `string[]` | all | Restrict which attachments upload, by attachment name or content-type prefix (e.g. `['image/']`) |
 | `includeStackTrace` | `boolean` | `true` | Include stack traces for failures |
 | `excludeSkipped` | `boolean` | `false` | Don't report skipped tests — they won't appear on the run or count toward its totals |
+| `expectedFailureStatus` | `number \| string` | failed status | Status (ID or name) recorded for a `test.fail()` test that fails as expected. See [Expected Failures](#expected-failures-testfail) |
 | `completeRunOnFinish` | `boolean` | `true` | Mark run as complete when tests finish. Always off for a run given by `testRunId` or `TESTPLANIT_RUN_ID` |
 | `timeout` | `number` | `30000` | API request timeout in ms |
 | `maxRetries` | `number` | `3` | Retry attempts for failed requests |
@@ -131,3 +132,48 @@ export default defineConfig({
   ],
 });
 ```
+
+## Result Statuses
+
+The reporter records each result under one of the project's [statuses](../user-guide/statuses.md). It only uses statuses that are enabled, assigned to the project, and have the Automation scope.
+
+| Result | Status used |
+|:-------|:------------|
+| Passed | A status whose system name, name, or alias is `passed`, `pass`, or `success`. Otherwise the first status with **Success** turned on |
+| Failed | A status whose system name, name, or alias is `failed`, `fail`, `failure`, or `error`. Otherwise the first status with **Failure** turned on |
+| Skipped | A status whose system name, name, or alias is `skipped`, `skip`, or `ignored`. Otherwise the first status with **Completed** turned on and both **Success** and **Failure** turned off |
+
+"First" follows the order of the statuses on the Statuses administration page. To send results to a particular status, add the matching word to its **Aliases**. An alias that only contains one of these words also matches when no status matches it exactly.
+
+If no status fits, the reporter logs a warning and records the result without a status. TestPlanIt then counts it as passed, failed, or skipped from the result itself.
+
+## Expected Failures (`test.fail()`)
+
+Playwright treats a test marked with `test.fail()` as passing when it fails and as failing when it passes. The reporter records each attempt as follows:
+
+| Test marked `test.fail()` | Playwright | Recorded in TestPlanIt |
+|:--------------------------|:-----------|:-----------------------|
+| Fails as expected | Passes the run | The failed status, or the status set by `expectedFailureStatus` |
+| Passes | Fails the run | Failed, with the message `Expected to fail, but passed.` |
+| Times out | Fails the run | Failed |
+
+Set `expectedFailureStatus` to record expected failures under another status of the project, by name or ID:
+
+```typescript
+// playwright.config.ts
+export default defineConfig({
+  reporter: [
+    ['@testplanit/playwright-reporter', {
+      domain: 'https://testplanit.example.com',
+      apiToken: process.env.TESTPLANIT_API_TOKEN,
+      projectId: 1,
+      expectedFailureStatus: 'Blocked',   // by name
+      // expectedFailureStatus: 12,       // …or by ID
+    }],
+  ],
+});
+```
+
+A name is matched against the name or system name of the project's [statuses](../user-guide/statuses.md), ignoring case. The status must be enabled, assigned to the project, and have the Automation scope. The result counts as passed, failed, or neither according to that status's own settings.
+
+If no status matches, the reporter logs a warning and records expected failures as failed.

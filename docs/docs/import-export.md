@@ -516,14 +516,27 @@ There are two ways to start a test results import:
 
 ### Status Mapping
 
-Test result statuses are automatically mapped to TestPlanIt statuses:
+Each test result in the file is read as one of four results:
 
-| Source Status | TestPlanIt Status | Description |
+| Source Status | Result | Description |
 | -------------- | ------------------- | ------------- |
 | pass, passed, success, ok | Passed | Test executed successfully |
 | fail, failed, failure | Failed | Test assertion failed |
 | error, errored, broken | Error | Test execution error |
 | skip, skipped, pending, ignored, disabled | Skipped | Test was not executed |
+
+The result is then recorded under one of the project's [statuses](./user-guide/statuses.md). Only statuses that are enabled, assigned to the project, and have the Automation scope are used.
+
+| Result | Status used |
+|:-------|:------------|
+| Passed | A status whose system name, name, or alias is `passed`, `pass`, or `success`. Otherwise the first status with **Success** turned on |
+| Failed | A status whose system name, name, or alias is `failed`, `fail`, `failure`, or `error`. Otherwise the first status with **Failure** turned on |
+| Error | A status whose system name, name, or alias is `error`. Otherwise the status used for Failed |
+| Skipped | A status whose system name, name, or alias is `skipped`, `skip`, or `ignored`. Otherwise the first status with **Completed** turned on and both **Success** and **Failure** turned off |
+
+"First" follows the order of the statuses on the Statuses administration page. To send results to a particular status, add the matching word to its **Aliases**. An alias that only contains one of these words also matches when no status matches it exactly.
+
+If no status fits, the result is stored without a status and counted as passed, failed, or skipped from the result itself.
 
 ### Folder Structure
 

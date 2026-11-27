@@ -568,6 +568,20 @@ This will log:
 - Screenshot captures and uploads
 - API errors and retries
 
+## Result Statuses
+
+The reporter records each result under one of the project's statuses. It only uses statuses that are enabled, assigned to the project, and have the Automation scope.
+
+| Result | Status used |
+|:-------|:------------|
+| Passed | A status whose system name, name, or alias is `passed`, `pass`, or `success`. Otherwise the first status with **Success** turned on |
+| Failed | A status whose system name, name, or alias is `failed`, `fail`, `failure`, or `error`. Otherwise the first status with **Failure** turned on |
+| Skipped | A status whose system name, name, or alias is `skipped`, `skip`, or `ignored`. Otherwise the first status with **Completed** turned on and both **Success** and **Failure** turned off |
+
+"First" follows the order of the statuses on the Statuses administration page. To send results to a particular status, add the matching word to its **Aliases**. An alias that only contains one of these words also matches when no status matches it exactly.
+
+If no status fits, the reporter logs a warning and records the result without a status. TestPlanIt then counts it as passed, failed, or skipped from the result itself.
+
 ## Error Handling
 
 - **Service errors** in `onPrepare` will throw and stop the test suite

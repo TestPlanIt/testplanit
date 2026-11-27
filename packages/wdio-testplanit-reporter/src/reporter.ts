@@ -79,6 +79,8 @@ export default class TestPlanItReporter extends WDIOReporter {
     startedAt: Date;
   } | null = null;
   private cucumberStepNoticeLogged = false;
+  /** Result kinds already warned about for having no status in the project. */
+  private warnedNoStatus = new Set<string>();
   /** When true, the TestPlanItService manages the test run lifecycle */
   private managedByService = false;
   /**
@@ -633,10 +635,15 @@ export default class TestPlanItReporter extends WDIOReporter {
         this.log(`Status mapping: ${status} -> ${statusId}`);
       }
     }
+  }
 
-    if (!this.state.statusIds.passed || !this.state.statusIds.failed) {
-      throw new Error('Could not find required status mappings (passed/failed) in TestPlanIt');
-    }
+  private warnNoStatus(kind: TrackedTestResult['status']): void {
+    if (this.warnedNoStatus.has(kind)) return;
+    this.warnedNoStatus.add(kind);
+    console.warn(
+      `[TestPlanIt] WARNING: project ${this.reporterOptions.projectId} has no status for ${kind} results that is enabled ` +
+        `and has the Automation scope. They are recorded without a status.`
+    );
   }
 
   /**
@@ -1535,8 +1542,9 @@ export default class TestPlanItReporter extends WDIOReporter {
         }
       }
 
-      // Get status ID for the JUnit result
-      const statusId = this.state.statusIds[result.status] || this.state.statusIds.failed!;
+      // Without a status, TestPlanIt classifies the result by its JUnit type.
+      const statusId = this.state.statusIds[result.status];
+      if (!statusId) this.warnNoStatus(result.status);
 
       // Map status to JUnit result type
       const junitType = this.mapStatusToJUnitType(result.status);

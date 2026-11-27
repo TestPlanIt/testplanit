@@ -26,6 +26,15 @@ const rawTemplate = process.env.TPI_TEMPLATE;
 const templateId =
   rawTemplate === undefined ? undefined : Number.isNaN(Number(rawTemplate)) ? rawTemplate : Number(rawTemplate);
 
+// expectedFailureStatus may be a numeric ID or a status name.
+const rawExpectedFailureStatus = process.env.TPI_EXPECTED_FAILURE_STATUS;
+const expectedFailureStatus =
+  rawExpectedFailureStatus === undefined
+    ? undefined
+    : Number.isNaN(Number(rawExpectedFailureStatus))
+      ? rawExpectedFailureStatus
+      : Number(rawExpectedFailureStatus);
+
 export default defineConfig({
   testDir: './tests',
   // Report every attempt: bump TPI_RETRIES to see retries produce multiple results.
@@ -42,6 +51,7 @@ export default defineConfig({
         verbose: true,
         // Make existing cases' tags match the tests' tags on this run.
         overwriteTags: process.env.TPI_OVERWRITE_TAGS === '1',
+        expectedFailureStatus,
         ...(autoCreate
           ? {
               autoCreateTestCases: true,

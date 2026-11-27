@@ -407,11 +407,15 @@ const skippedId = await client.getStatusId(projectId, 'skipped');
 client.clearStatusCache();
 ```
 
-The `getStatusId` method automatically matches:
+The `getStatusId` method matches a status by, in order:
 
 - System names (e.g., `passed`, `failed`)
 - Display names (e.g., `Passed`, `Failed`)
 - Aliases configured in TestPlanIt
+- An alias that contains the name (e.g., `passed_tests`), when no status matches it exactly
+- The status's **Success**, **Failure**, and **Completed** settings, for `passed`, `failed`, and `skipped`: the first status marked as a success, the first marked as a failure, and the first completed status that is neither
+
+It returns `undefined` when no status matches. `blocked` and `pending` are matched by name and alias only. `getStatuses` returns statuses in the order set on the Statuses administration page.
 
 ### Attachments
 

@@ -58,6 +58,7 @@ import {
   TEST_RESULT_FORMATS,
   type ExtendedTestCaseDataMap,
 } from "~/lib/services/testResultsParser";
+import { resolveImportedResultStatus } from "~/lib/services/importedResultStatus";
 import { getServerAuthSession } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { adaptTestSteps } from "~/lib/services/automationStepAdapter";
@@ -73,65 +74,6 @@ import {
 import type { DeriveCaseStepsJobData } from "~/workers/deriveCaseStepsWorker";
 import { progressMessages } from "./progress-messages";
 import { withRequestRouting } from "~/lib/db/requestRouting";
-
-// Helper function to find matching status
-async function findMatchingStatus(junitStatus: string, projectId: number) {
-  const statusToFind = junitStatus.toLowerCase();
-
-  const status = await baseDb.status.findFirst({
-    where: {
-      isEnabled: true,
-      isDeleted: false,
-      projects: {
-        some: {
-          projectId: projectId,
-        },
-      },
-      scope: {
-        some: {
-          scope: {
-            name: "Automation",
-          },
-        },
-      },
-      OR: [
-        { systemName: { equals: statusToFind, mode: "insensitive" } },
-        { aliases: { contains: statusToFind } },
-      ],
-    },
-    include: { color: true },
-  });
-
-  return status;
-}
-
-// Helper to get the PASSED status for the project
-async function getPassedStatus(projectId: number) {
-  return baseDb.status.findFirst({
-    where: {
-      isEnabled: true,
-      isDeleted: false,
-      isSuccess: true,
-      projects: { some: { projectId } },
-      scope: { some: { scope: { name: "Automation" } } },
-    },
-    include: { color: true },
-  });
-}
-
-// Helper to get the UNTESTED status for the project
-async function getUntestedStatus(projectId: number) {
-  return baseDb.status.findFirst({
-    where: {
-      isEnabled: true,
-      isDeleted: false,
-      systemName: { equals: "untested", mode: "insensitive" },
-      projects: { some: { projectId } },
-      scope: { some: { scope: { name: "Automation" } } },
-    },
-    include: { color: true },
-  });
-}
 
 // Helper to safely parse duration values to numbers
 // The test-results-parser library sometimes returns duration as a string
@@ -638,6 +580,24 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
         const statusMap = new Map<number, RollupStatus>(
           allStatuses.map((s) => [s.id, s])
         );
+        const importStatuses = await baseDb.status.findMany({
+          where: {
+            isEnabled: true,
+            isDeleted: false,
+            projects: { some: { projectId } },
+            scope: { some: { scope: { name: "Automation" } } },
+          },
+          select: {
+            id: true,
+            name: true,
+            systemName: true,
+            aliases: true,
+            isSuccess: true,
+            isFailure: true,
+            isCompleted: true,
+          },
+          orderBy: [{ order: "asc" }, { id: "asc" }],
+        });
 
         // Count total test cases for progress
         const totalTestCases = countTotalTestCases(result);
@@ -1069,38 +1029,25 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
                 try {
                 // Map status to result type and find matching project status
                 let resultType: JUnitResultType;
-                let matchingStatus = null;
 
                 switch (normalizedStatus) {
                   case "failed":
                     resultType = JUnitResultType.FAILURE;
-                    matchingStatus = await findMatchingStatus(
-                      "failure",
-                      projectId
-                    );
                     break;
                   case "error":
                     resultType = JUnitResultType.ERROR;
-                    matchingStatus = await findMatchingStatus(
-                      "error",
-                      projectId
-                    );
                     break;
                   case "skipped":
                     resultType = JUnitResultType.SKIPPED;
-                    matchingStatus = await findMatchingStatus(
-                      "skipped",
-                      projectId
-                    );
                     break;
                   default:
                     resultType = JUnitResultType.PASSED;
-                    matchingStatus = await getPassedStatus(projectId);
                 }
 
-                if (!matchingStatus) {
-                  matchingStatus = await getUntestedStatus(projectId);
-                }
+                const matchingStatus = resolveImportedResultStatus(
+                  importStatuses,
+                  normalizedStatus
+                );
 
                 // Create the test result (using JUnitTestResult for all formats)
                 const junitTestResult = await baseDb.jUnitTestResult.create({
@@ -1250,11 +1197,10 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
                     let stepStatusId: number | undefined = undefined;
 
                     if (stepStatus !== "passed") {
-                      const matchingStepStatus = await findMatchingStatus(
-                        stepStatus,
-                        projectId
-                      );
-                      stepStatusId = matchingStepStatus?.id;
+                      stepStatusId = resolveImportedResultStatus(
+                        importStatuses,
+                        stepStatus
+                      )?.id;
                     }
 
                     const stepData: any = {

@@ -52,6 +52,10 @@ const apiMocks = vi.hoisted(() => ({
   })),
   softDeleteCaseSteps: vi.fn(async () => 3),
   requestStepDerivation: vi.fn(async (_opts: unknown) => ({ enqueued: true })),
+  getStatusId: vi.fn(
+    async (_projectId: number, status: string) =>
+      ({ passed: 1, failed: 2, skipped: 3 } as Record<string, number | undefined>)[status],
+  ),
   automationStepsToCaseSteps: vi.fn((steps: { title: string; kind: string }[]) =>
     steps.map((s, i) => ({
       step: s.title,
@@ -99,14 +103,7 @@ vi.mock("@testplanit/api", () => {
           },
         ];
       }
-      async getStatusId(_projectId: number, status: string) {
-        const map: Record<string, number> = {
-          passed: 1,
-          failed: 2,
-          skipped: 3,
-        };
-        return map[status];
-      }
+      getStatusId = apiMocks.getStatusId;
       async createTestRun() {
         return { id: 123, name: "Test Run" };
       }
@@ -561,6 +558,51 @@ describe("TestPlanItReporter", () => {
       expect(apiMocks.createJUnitTestResult).toHaveBeenCalledWith(
         expect.objectContaining({ type: "SKIPPED", statusId: 3 })
       );
+    });
+
+    describe("when the project has no status for a result", () => {
+      const defaultStatusId = apiMocks.getStatusId.getMockImplementation()!;
+      const withoutStatus = (missing: string) =>
+        apiMocks.getStatusId.mockImplementation(async (projectId: number, status: string) =>
+          status === missing ? undefined : defaultStatusId(projectId, status)
+        );
+
+      afterEach(() => {
+        apiMocks.getStatusId.mockImplementation(defaultStatusId);
+      });
+
+      it("records a skipped result without a status instead of as failed", async () => {
+        withoutStatus("skipped");
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        reporter.onTestSkip(testStats({ title: "[789] is skipped", state: "skipped" }));
+        reporter.onTestSkip(testStats({ title: "[790] is skipped too", state: "skipped", uid: "test-uid-2" }));
+        await flush(reporter);
+
+        expect(apiMocks.createJUnitTestResult).toHaveBeenCalledTimes(2);
+        for (const [sent] of apiMocks.createJUnitTestResult.mock.calls as unknown as [Record<string, unknown>][]) {
+          expect(sent.type).toBe("SKIPPED");
+          expect(sent.statusId).toBeUndefined();
+        }
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(warn.mock.calls[0][0]).toContain("no status for skipped results");
+      });
+
+      it("still reports the run when there is no passed status", async () => {
+        withoutStatus("passed");
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        reporter.onTestPass(testStats({ title: "[789] passes" }));
+        reporter.onTestFail(testStats({ title: "[790] fails", state: "failed", uid: "test-uid-2" }));
+        await flush(reporter);
+
+        expect(apiMocks.createJUnitTestResult).toHaveBeenCalledWith(
+          expect.objectContaining({ repositoryCaseId: 789, type: "PASSED", statusId: undefined })
+        );
+        expect(apiMocks.createJUnitTestResult).toHaveBeenCalledWith(
+          expect.objectContaining({ repositoryCaseId: 790, type: "FAILURE", statusId: 2 })
+        );
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(warn.mock.calls[0][0]).toContain("no status for passed results");
+      });
     });
 
     it("sends the runner cid as the worker id", async () => {
