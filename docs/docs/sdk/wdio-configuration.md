@@ -169,3 +169,17 @@ the reporter extracts `89434` with `idPattern`, looks up the case whose **Extern
 - **Graceful fallthrough.** On no match — or if the named field doesn't exist on the project — the reporter falls through to the standard flow (name/create) without error. When `autoCreateTestCases` is off and nothing matches, the result is skipped, exactly as today.
 - **Value matching.** The value is compared against the stored field value in both its number and string forms, so it works whether the field is an Integer/Number (stored as a number) or Text (stored as a string).
 - **Marks the case automated.** A matched case that isn't already automated is flipped to `automated: true` (skipped when already automated, so there's no redundant write per run). This failing never aborts result reporting. The same flip now also applies when `autoCreateTestCases` *finds* an existing non-automated case by name.
+
+## Result Statuses
+
+The reporter records each result under one of the project's [statuses](../user-guide/statuses.md). It only uses statuses that are enabled, assigned to the project, and have the Automation scope.
+
+| Result | Status used |
+|:-------|:------------|
+| Passed | A status whose system name, name, or alias is `passed`, `pass`, or `success`. Otherwise the first status with **Success** turned on |
+| Failed | A status whose system name, name, or alias is `failed`, `fail`, `failure`, or `error`. Otherwise the first status with **Failure** turned on |
+| Skipped | A status whose system name, name, or alias is `skipped`, `skip`, or `ignored`. Otherwise the first status with **Completed** turned on and both **Success** and **Failure** turned off |
+
+"First" follows the order of the statuses on the Statuses administration page. To send results to a particular status, add the matching word to its **Aliases**. An alias that only contains one of these words also matches when no status matches it exactly.
+
+If no status fits, the reporter logs a warning and records the result without a status. TestPlanIt then counts it as passed, failed, or skipped from the result itself.

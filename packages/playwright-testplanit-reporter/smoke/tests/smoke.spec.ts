@@ -4,7 +4,8 @@ import { test, expect } from '@playwright/test';
  * Smoke spec for @testplanit/playwright-reporter.
  *
  * Case-ID tags are injected from env so the SAME spec works in both modes:
- *  - Tag mode: set TPI_CASE_PASS / TPI_CASE_FAIL / TPI_CASE_SKIP to real case IDs.
+ *  - Tag mode: set TPI_CASE_PASS / TPI_CASE_FAIL / TPI_CASE_SKIP / TPI_CASE_XFAIL
+ *    to real case IDs.
  *  - Auto-create mode (TPI_AUTOCREATE=1): leave them unset; the reporter creates
  *    cases by title under the configured folder hierarchy.
  */
@@ -59,5 +60,11 @@ test.describe(process.env.TPI_SUITE || 'Playwright Smoke', () => {
 
   test(`${tag('TPI_CASE_SKIP')}is skipped`, async () => {
     test.skip(true, 'deliberately skipped to exercise SKIPPED reporting');
+  });
+
+  // Recorded as failed, or under TPI_EXPECTED_FAILURE_STATUS when it is set.
+  test(`${tag('TPI_CASE_XFAIL')}fails as expected`, async () => {
+    test.fail(true, 'known bug, to exercise expectedFailureStatus');
+    expect(1 + 1).toBe(3);
   });
 });

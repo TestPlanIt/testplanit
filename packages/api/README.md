@@ -208,6 +208,8 @@ const blockedId = await client.getStatusId(1, 'blocked');
 client.clearStatusCache();
 ```
 
+`getStatusId` matches a status by system name, display name, or alias. For `passed`, `failed`, and `skipped` it then falls back to the status's Success, Failure, and Completed settings. It returns `undefined` when no status matches.
+
 ### Attachments
 
 ```typescript

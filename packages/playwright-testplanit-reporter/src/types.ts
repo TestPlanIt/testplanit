@@ -294,6 +294,28 @@ export interface TestPlanItReporterOptions {
   excludeSkipped?: boolean;
 
   /**
+   * Status recorded for a test marked with `test.fail()` that fails as
+   * expected (ID or name). Playwright counts such a test as passing and the
+   * run stays green; set this to record it under a status of your choice,
+   * for example `'Blocked'`, instead of as a failure.
+   *
+   * A string is matched against the name or system name of the project's
+   * statuses, ignoring case. `'passed'`, `'failed'`, `'skipped'` and
+   * `'blocked'` also match the status the reporter uses for those results.
+   * The status must be enabled, assigned to the project and have the
+   * Automation scope. Whether the result counts as passed, failed or neither
+   * follows that status's own settings.
+   *
+   * If no status matches, expected failures are recorded as failed and a
+   * warning is logged.
+   *
+   * A `test.fail()` test that passes is always recorded as failed, because
+   * Playwright fails the run for it.
+   * @default the project's failed status
+   */
+  expectedFailureStatus?: number | string;
+
+  /**
    * Links to attach to the test run right after the reporter creates it
    * (e.g. a CI build URL). Rendered as clickable link attachments on the run
    * detail page.
@@ -386,6 +408,11 @@ export interface TrackedTestResult {
   originalTitle: string;
   /** Test status */
   status: 'passed' | 'failed' | 'skipped';
+  /**
+   * True when the test is marked `test.fail()` and this attempt failed as
+   * expected. It is recorded under `expectedFailureStatus` when that resolves.
+   */
+  expectedFailure?: boolean;
   /** Test duration in milliseconds */
   duration: number;
   /** Error message if test failed */
@@ -475,6 +502,8 @@ export interface ReporterStats {
   resultsFailed: number;
   /** Number of test results reported (skipped) */
   resultsSkipped: number;
+  /** Number of expected failures recorded under `expectedFailureStatus` */
+  expectedFailures: number;
   /** Number of attachments uploaded */
   attachmentsUploaded: number;
   /** Number of attachment upload failures */
@@ -517,6 +546,15 @@ export interface ReporterState {
     failed?: number;
     skipped?: number;
     blocked?: number;
+  };
+  /**
+   * The project status `expectedFailureStatus` resolved to. `category` is how
+   * that status's own flags classify a result.
+   */
+  expectedFailureStatus?: {
+    id: number;
+    name: string;
+    category: 'passed' | 'failed' | 'skipped';
   };
   /** Whether initialization is complete */
   initialized: boolean;
