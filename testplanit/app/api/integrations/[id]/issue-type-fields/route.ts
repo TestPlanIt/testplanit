@@ -1,5 +1,9 @@
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { baseDb } from "@/lib/db";
+import {
+  oauthReauthorizeUrl,
+  reauthorizationBody,
+} from "~/lib/integrations/errors";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -8,6 +12,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let provider = "";
+  let authUrl: string | undefined;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -43,8 +49,11 @@ export async function GET(
       );
     }
 
+    provider = integration.provider;
+
     // For OAuth2 integrations, check user auth
     if (integration.authType === "OAUTH2") {
+      authUrl = oauthReauthorizeUrl(provider, integrationId);
       const userAuth = await baseDb.userIntegrationAuth.findFirst({
         where: {
           userId: session.user.id,
@@ -94,7 +103,11 @@ export async function GET(
 
     // Initialize adapter through IntegrationManager
     const manager = IntegrationManager.getInstance();
-    const adapter = await manager.getAdapter(integrationId);
+    const adapter = await manager.getAdapter(
+      integrationId,
+      undefined,
+      integration.authType === "OAUTH2" ? session.user.id : undefined
+    );
 
     if (!adapter) {
       return NextResponse.json(
@@ -117,6 +130,10 @@ export async function GET(
     return NextResponse.json({ fields });
   } catch (error) {
     console.error("Error fetching issue type fields:", error);
+    const reauthorization = reauthorizationBody(error, provider, authUrl);
+    if (reauthorization) {
+      return NextResponse.json(reauthorization, { status: 401 });
+    }
     return NextResponse.json(
       { error: "Failed to fetch issue type fields" },
       { status: 500 }

@@ -1,5 +1,9 @@
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { baseDb } from "@/lib/db";
+import {
+  oauthReauthorizeUrl,
+  reauthorizationBody,
+} from "~/lib/integrations/errors";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -8,6 +12,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let provider = "";
+  let authUrl: string | undefined;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -40,9 +46,29 @@ export async function GET(
       );
     }
 
+    provider = integration.provider;
+
+    // An OAuth caller searches with their own authorization when they have
+    // one; a caller without one borrows the integration's newest.
+    let adapterUserId: string | undefined;
+    if (integration.authType === "OAUTH2") {
+      const ownAuth = await baseDb.userIntegrationAuth.findFirst({
+        where: { userId: session.user.id, integrationId, isActive: true },
+        select: { id: true },
+      });
+      if (ownAuth) {
+        adapterUserId = session.user.id;
+        authUrl = oauthReauthorizeUrl(provider, integrationId);
+      }
+    }
+
     // Initialize adapter through IntegrationManager
     const manager = IntegrationManager.getInstance();
-    const adapter = await manager.getAdapter(integrationId.toString());
+    const adapter = await manager.getAdapter(
+      integrationId.toString(),
+      undefined,
+      adapterUserId
+    );
 
     if (!adapter) {
       return NextResponse.json(
@@ -70,6 +96,10 @@ export async function GET(
     return NextResponse.json({ users: [] });
   } catch (error) {
     console.error("Error searching users:", error);
+    const reauthorization = reauthorizationBody(error, provider, authUrl);
+    if (reauthorization) {
+      return NextResponse.json(reauthorization, { status: 401 });
+    }
     return NextResponse.json(
       {
         error:

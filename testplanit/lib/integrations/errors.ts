@@ -316,3 +316,40 @@ export const integrationErrorBody = (
   provider: error.provider,
   upstreamStatus: error.status,
 });
+
+/**
+ * Where a signed-in user starts (re)authorizing an OAuth integration. The
+ * kickoff route stores the state the callback verifies, and returns to a page
+ * every signed-in user can view.
+ */
+export const oauthReauthorizeUrl = (
+  provider: string,
+  integrationId: number | string
+): string =>
+  `/api/integrations/oauth/${provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
+
+export interface ReauthorizationBody extends IntegrationErrorBody {
+  authUrl: string;
+  requiresAuth: true;
+}
+
+/**
+ * The reconnect prompt for a failure that means the caller's stored OAuth
+ * authorization was rejected; null for any other failure. Routes send it with
+ * a 401. Pass no `authUrl` for API-key and PAT integrations, whose credentials
+ * are fixed by an admin rather than by the user re-authorizing.
+ */
+export const reauthorizationBody = (
+  error: unknown,
+  provider: string,
+  authUrl: string | undefined
+): ReauthorizationBody | null => {
+  if (!authUrl) return null;
+  const integrationError = toIntegrationError(error, provider);
+  if (integrationError.kind !== "auth") return null;
+  return {
+    ...integrationErrorBody(integrationError),
+    authUrl,
+    requiresAuth: true,
+  };
+};
