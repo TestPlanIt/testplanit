@@ -91,6 +91,12 @@ describe("toExternalIssueDetails", () => {
       toExternalIssueDetails({ ...githubIssue, status: "closed" }, "GITHUB")
         .status.color
     ).toBe("green");
+    for (const status of ["not_planned", "duplicate"]) {
+      expect(
+        toExternalIssueDetails({ ...githubIssue, status }, "GITHUB").status
+          .color
+      ).toBe("green");
+    }
   });
 
   it("falls back to the id when the tracker has no key and nulls what it lacks", () => {

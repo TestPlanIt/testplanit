@@ -99,7 +99,7 @@ Issues that belong to this milestone: those synced automatically from the linked
 
 - **Test Cases** — the number of test cases linked to that issue **in this project**, as a badge that expands into a searchable case list. When the same issue also has test cases in other projects, a separate outlined **+N** badge totals those — see [Test cases from other projects](#test-cases-from-other-projects).
 - **Coverage** — a chip summarizing the latest completed outcome of every test case linked to that issue, as one colored pip per status plus an Untested pip, or an **Uncovered** chip when none of the linked cases has a completed result yet. This project's cases are judged by their results from test runs on this milestone and its descendants; cases from other projects contribute the latest result from their own project's test runs.
-- **Source** — **Synced** or **Manual**.
+- **Source** — **Synced** or **Manual**. A manually linked issue that the tracker also lists in the sprint, version or milestone becomes **Synced** at the next sync, and from then on leaves the milestone when it leaves it in the tracker.
 
 #### Test cases from other projects
 
@@ -120,7 +120,7 @@ Select one or more issues and click **Create test run** to open the Add Test Run
 
 Use **Link Issue** to attach an issue manually. Each row's overflow menu (⋮) offers **Generate Test Cases** — which opens the seeded generation wizard for that issue, for viewers with test-case create permission — and, for manually-linked rows only, **Unlink**. A synced link can't be unlinked here: its **Source** reads **Synced** and its menu offers no Unlink action — remove it from the version/sprint in Jira instead.
 
-The **Link Issue** dialog can also create an issue in the connected tracker. On a synced milestone that is not completed, the new-issue form starts in the artifact the milestone is synced from: **Fix versions** or **Sprint** on Jira, and **Milestone** on GitHub, GitLab, or Gitea. Change or clear the field before creating the issue to put it somewhere else.
+The **Link Issue** dialog can also create an issue in the connected tracker. On a synced milestone that is not completed, the new-issue form starts in the artifact the milestone is synced from: **Fix versions** or **Sprint** on Jira, and **Milestone** on GitHub, GitLab, or Gitea. Change or clear the field before creating the issue to put it somewhere else. An issue created this way reaches the milestone as a **Synced** issue, at the next sync or at once when the tracker's webhook is connected.
 
 When the linked Jira sprint or version has more issues than are linked here — because an automatic sync hit its import cap, or membership has simply drifted since the last sync — a **More issues in Jira** panel appears below the table listing the missing issues, with an **Import & link** action to pull them in.
 

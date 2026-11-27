@@ -265,6 +265,20 @@ describe("useIssueColors", () => {
       expect(style.backgroundColor).toContain("black");
     });
 
+    it.each(["not_planned", "Not planned", "duplicate"])(
+      "should style '%s' like a closed issue",
+      (status) => {
+        const { result } = renderHook(() => useIssueColors());
+
+        expect(result.current.getStatusStyle(status)).toEqual(
+          result.current.getStatusStyle("closed")
+        );
+        expect(result.current.getStatusDotColor(status)).toEqual(
+          result.current.getStatusDotColor("closed")
+        );
+      }
+    );
+
     it("should return Red-based colors for 'blocked' status", () => {
       const { result } = renderHook(() => useIssueColors());
 

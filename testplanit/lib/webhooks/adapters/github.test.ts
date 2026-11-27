@@ -201,25 +201,28 @@ describe("githubAdapter", () => {
     }
   });
 
-  it("verify() reports 'not_planned' as the external status of an issue closed as not planned", () => {
-    const body = bodyOf({
-      ...CANONICAL_PAYLOAD,
-      issue: { ...CANONICAL_PAYLOAD.issue, state_reason: "not_planned" },
-    });
-    const sig = signBody(body, SECRET);
-    const result = githubAdapter.verify(
-      body,
-      headersOf({
-        "x-hub-signature-256": sig,
-        "x-github-event": "issues",
-      }),
-      SECRET
-    );
-    expect(result.valid).toBe(true);
-    if (result.valid) {
-      expect(result.payload.externalStatus).toBe("not_planned");
+  it.each(["not_planned", "duplicate"])(
+    "verify() reports '%s' as the external status of an issue closed for that reason",
+    (reason) => {
+      const body = bodyOf({
+        ...CANONICAL_PAYLOAD,
+        issue: { ...CANONICAL_PAYLOAD.issue, state_reason: reason },
+      });
+      const sig = signBody(body, SECRET);
+      const result = githubAdapter.verify(
+        body,
+        headersOf({
+          "x-hub-signature-256": sig,
+          "x-github-event": "issues",
+        }),
+        SECRET
+      );
+      expect(result.valid).toBe(true);
+      if (result.valid) {
+        expect(result.payload.externalStatus).toBe(reason);
+      }
     }
-  });
+  );
 
   it("Test 8 (case-insensitive header reads): mixed-case headers accepted by Headers normalization", () => {
     const body = bodyOf(CANONICAL_PAYLOAD);
@@ -373,19 +376,22 @@ describe("githubAdapter — extractExternalStatus", () => {
     ).toBeNull();
   });
 
-  it("returns 'not_planned' for an issue closed as not planned", () => {
-    const notPlanned = {
-      action: "closed",
-      issue: { number: 44, state: "closed", state_reason: "not_planned" },
-      repository: { full_name: "octocat/Hello-World" },
-    };
-    expect(githubAdapter.extractExternalStatus(notPlanned, "issues")).toBe(
-      "not_planned"
-    );
-    expect(
-      githubAdapter.extractExternalStatus(notPlanned, "issue_comment")
-    ).toBe("not_planned");
-  });
+  it.each(["not_planned", "duplicate"])(
+    "returns '%s' for an issue closed for that reason",
+    (reason) => {
+      const closed = {
+        action: "closed",
+        issue: { number: 44, state: "closed", state_reason: reason },
+        repository: { full_name: "octocat/Hello-World" },
+      };
+      expect(githubAdapter.extractExternalStatus(closed, "issues")).toBe(
+        reason
+      );
+      expect(githubAdapter.extractExternalStatus(closed, "issue_comment")).toBe(
+        reason
+      );
+    }
+  );
 
   it("keeps 'closed' for an issue closed as completed", () => {
     expect(

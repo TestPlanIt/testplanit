@@ -81,7 +81,7 @@ Three pre-built reports on the project's [Reports](./reports/index.md) page cove
 
 The traceability report's visualization panel summarizes the same rows per requirement: a donut of the four coverage states with the requirement total in the center, compact counts beside it, and a **Coverage by top-level requirement** breakdown — one bar per hierarchy (the ten largest; the rest are totalled in an **Other** line) whose length reflects the hierarchy's size and whose segments show its coverage mix. Each bar's label links to that requirement's details.
 
-The gaps report has its own visualization: totals for the two tiers plus an **On Closed Requirements** count (debt on requirements whose status reads as closed/done/resolved — usually a cleanup list rather than a testing backlog), a **Debt by top-level requirement** breakdown with the same linked bars, and **Debt aging** — how long each item has been uncovered, bucketed as under 30 days, 30–90, 90–180, 180–365, and over a year.
+The gaps report has its own visualization: totals for the two tiers plus an **On Closed Requirements** count (debt on requirements whose status reads as closed/done/resolved, including GitHub's *not planned* and *duplicate* — usually a cleanup list rather than a testing backlog), a **Debt by top-level requirement** breakdown with the same linked bars, and **Debt aging** — how long each item has been uncovered, bucketed as under 30 days, 30–90, 90–180, 180–365, and over a year.
 
 ### Generating test cases for a gap
 

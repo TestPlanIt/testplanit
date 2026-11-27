@@ -32,7 +32,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import UploadAttachments from "@/components/UploadAttachments";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
+import {
+  issueFormAttachmentPrefix,
+  MAX_ISSUE_FORM_ATTACHMENTS,
+  takesIssueAttachments,
+} from "~/lib/integrations/issueAttachmentProviders";
 import { isIntegrationAuthCompleteMessage } from "~/lib/integrations/oauthPopup";
 import { trackerLabelStyle } from "~/lib/integrations/trackerLabelStyle";
 import { isDarkTheme } from "~/utils/theme";
@@ -47,6 +53,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { apiFetch } from "~/lib/basePath";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import type { TrackerMilestoneRef } from "./tracker-milestone";
 
 // INT-05: description accepts either a plain string (manual issue create
@@ -84,6 +91,9 @@ const METADATA_PROVIDERS = new Set(["GITHUB", "GITLAB", "GITEA"]);
 
 /** Trackers with no priority field; they are not sent one. */
 const PRIORITY_LESS_PROVIDERS = new Set(["GITHUB", "GITEA", "GITLAB"]);
+
+/** Trackers that refuse an issue without a description. */
+const DESCRIPTION_REQUIRED_PROVIDERS = new Set(["MANTISBT"]);
 
 /** The most assignees a tracker takes on one issue, where it sets a limit. */
 const MAX_ASSIGNEES_BY_PROVIDER: Record<string, number> = { GITHUB: 10 };
@@ -242,6 +252,9 @@ export function CreateIssueDialog({
   const [selectedTrackerType, setSelectedTrackerType] = useState<string | null>(
     null
   );
+  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
+  // Remounts the upload control, which keeps its own list of chosen files.
+  const [attachmentsResetKey, setAttachmentsResetKey] = useState(0);
 
   // INT-05: when defaultValues.description is a TipTap doc we hold the
   // doc in a ref + compute its markdown preview to seed the textarea.
@@ -397,6 +410,9 @@ export function CreateIssueDialog({
   const { resolvedTheme } = useTheme();
   const darkTheme = isDarkTheme(resolvedTheme);
   const offersMetadata = useIntegration && METADATA_PROVIDERS.has(provider);
+  const offersAttachments = useIntegration && takesIssueAttachments(provider);
+  const requiresDescription =
+    useIntegration && DESCRIPTION_REQUIRED_PROVIDERS.has(provider);
   const sendsPriority = !PRIORITY_LESS_PROVIDERS.has(provider);
   const maxAssignees = MAX_ASSIGNEES_BY_PROVIDER[provider];
 
@@ -599,6 +615,8 @@ export function CreateIssueDialog({
       setSelectedAssignees([]);
       setMilestoneChoice(undefined);
       setSelectedTrackerType(null);
+      setAttachmentFiles([]);
+      setAttachmentsResetKey((key) => key + 1);
     }
   }, [open]);
 
@@ -691,6 +709,7 @@ export function CreateIssueDialog({
 
     try {
       let issue;
+      let filesNotAttached: string[] = [];
 
       if (isSimpleUrlIntegration && activeIntegration) {
         // Ensure we have a valid session
@@ -861,6 +880,13 @@ export function CreateIssueDialog({
         // Use existing external integration logic for other providers (JIRA, GitHub, etc.)
         const endpoint = `/api/integrations/${activeIntegration.integrationId}/create-issue`;
 
+        if (requiresDescription && !(values.description ?? "").trim()) {
+          form.setError("description", {
+            message: t("common.errors.fieldRequired"),
+          });
+          return;
+        }
+
         // INT-05: if the dialog was opened with a TipTap doc and the user
         // did NOT edit the textarea (its current value still equals the
         // markdown preview produced from that doc), send the ORIGINAL doc
@@ -943,6 +969,38 @@ export function CreateIssueDialog({
           }
         }
 
+        if (offersAttachments && attachmentFiles.length > 0) {
+          if (attachmentFiles.length > MAX_ISSUE_FORM_ATTACHMENTS) {
+            throw new Error(
+              t("issues.tooManyAttachments", {
+                max: MAX_ISSUE_FORM_ATTACHMENTS,
+              })
+            );
+          }
+          if (!session?.user?.id) {
+            throw new Error("Authentication required");
+          }
+          const uploadPrefix = issueFormAttachmentPrefix(
+            projectId,
+            session.user.id
+          );
+          try {
+            payload.attachments = await Promise.all(
+              attachmentFiles.map(async (file) => ({
+                url: await fetchSignedUrl(
+                  file,
+                  "/api/get-attachment-url/",
+                  uploadPrefix
+                ),
+                name: file.name,
+              }))
+            );
+          } catch (error) {
+            console.error("Failed to upload issue attachments:", error);
+            throw new Error(t("requirements.attachments.uploadFailed"));
+          }
+        }
+
         const response = await apiFetch(endpoint, {
           method: "POST",
           headers: {
@@ -977,18 +1035,31 @@ export function CreateIssueDialog({
         }
 
         issue = await response.json();
+        if (Array.isArray(issue?.attachmentFailures)) {
+          filesNotAttached = issue.attachmentFailures;
+        }
       }
 
-      toast.success(t("issues.created"), {
-        description:
-          useIntegration && activeIntegration
-            ? t("issues.createdInExternal", {
-                provider: activeIntegration.integration.provider,
-              })
-            : isSimpleUrlIntegration
-              ? t("issues.createdInternalSimpleUrl")
-              : t("issues.createdInternal"),
-      });
+      if (filesNotAttached.length > 0) {
+        toast.warning(t("issues.created"), {
+          description: t("issues.createdAttachmentsFailed", {
+            count: filesNotAttached.length,
+            names: filesNotAttached.join(", "),
+          }),
+          duration: 15000,
+        });
+      } else {
+        toast.success(t("issues.created"), {
+          description:
+            useIntegration && activeIntegration
+              ? t("issues.createdInExternal", {
+                  provider: activeIntegration.integration.provider,
+                })
+              : isSimpleUrlIntegration
+                ? t("issues.createdInternalSimpleUrl")
+                : t("issues.createdInternal"),
+        });
+      }
 
       onIssueCreated?.(issue);
       onOpenChange(false);
@@ -1300,7 +1371,14 @@ export function CreateIssueDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("common.fields.description")}</FormLabel>
+                  <FormLabel className="flex items-center">
+                    {t("common.fields.description")}
+                    {requiresDescription && (
+                      <sup>
+                        <Asterisk className="h-3 w-3 text-destructive" />
+                      </sup>
+                    )}
+                  </FormLabel>
                   {isInitialDescriptionDoc && (
                     <p
                       data-testid="iteration-context-hint"
@@ -1316,6 +1394,17 @@ export function CreateIssueDialog({
                 </FormItem>
               )}
             />
+
+            {offersAttachments && !authError && isIntegrationConfigured && (
+              <div className="space-y-2" data-testid="issue-attachments-field">
+                <Label>{t("common.fields.attachments")}</Label>
+                <UploadAttachments
+                  key={attachmentsResetKey}
+                  onFileSelect={setAttachmentFiles}
+                  disabled={isCreating}
+                />
+              </div>
+            )}
 
             {offersMetadata && !authError && isIntegrationConfigured && (
               <div className="space-y-4" data-testid="tracker-create-fields">
@@ -1550,7 +1639,9 @@ export function CreateIssueDialog({
               </Button>
               <Button
                 type="submit"
-                disabled={isCreating || !isIntegrationConfigured}
+                disabled={
+                  isCreating || !isIntegrationConfigured || loadingMetadata
+                }
               >
                 {isCreating && <Loader2 className=" h-4 w-4 animate-spin" />}
                 {t("common.actions.create")}

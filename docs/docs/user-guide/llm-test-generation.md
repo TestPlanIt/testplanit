@@ -33,12 +33,13 @@ Choose your test generation source:
 - Image attachments on the selected issue — screenshots pasted into Jira or GitLab descriptions and comments, files attached to Azure DevOps work items, ClickUp tasks, and Gitea, Redmine or MantisBT issues — are offered as visual context; see [Images as Generation Context](#images-as-generation-context).
 - "Linked" means whatever the tracker reports as a linked relationship:
   - **Jira**: `issuelinks` (blocks/blocked-by, relates-to, duplicates, custom Jira link types), parent/subtask hierarchy, and the Epic-Link custom field
-  - **GitHub**: native sub-issues and timeline cross-references (mentions in other issues or pull requests that link both ways)
+  - **GitHub**: native sub-issues, dependencies ("blocked by" and "blocking"), "relates to" links, and timeline cross-references (mentions in other issues or pull requests that link both ways). An issue linked more than one way is listed once
   - **Azure DevOps**: every `System.LinkTypes.*` relationship the work item reports — Related, Hierarchy-Forward/Reverse (parent/child), Successor, Predecessor, Affects-Forward/Reverse, Tested-By/Tests, Duplicate-Forward/Reverse
   - **Redmine**: every relation the issue reports, in either direction
   - **MantisBT**: the issue's relationships
   - **ClickUp**: task links ("relates to") and dependencies ("waiting on" / "blocking")
-  - **GitLab** and **Gitea / Forgejo / Gogs**: linked issues are not followed; only the selected issue and its comments are included
+  - **GitLab**: related issues, and "blocks" / "is blocked by" links on the GitLab tiers that have them
+  - **Gitea / Forgejo**: issue dependencies, in both directions (the issues it depends on and the issues it blocks). Gogs has no dependencies, so only the selected issue and its comments are included
 
 **From Document:**
 

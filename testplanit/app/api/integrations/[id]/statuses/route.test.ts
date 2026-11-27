@@ -100,7 +100,14 @@ describe("GET /api/integrations/[id]/statuses", () => {
   });
 
   it.each([
-    ["GITHUB", "open", [{ id: "not_planned", name: "not_planned" }]],
+    [
+      "GITHUB",
+      "open",
+      [
+        { id: "not_planned", name: "not_planned" },
+        { id: "duplicate", name: "duplicate" },
+      ],
+    ],
     ["GITEA", "open", []],
     ["GITLAB", "opened", []],
   ] as const)(

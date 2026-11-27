@@ -12,8 +12,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  *    source: "SYNCED"); the underlying Issue row is NOT deleted.
  *  - MANUAL links for departed issues are never deleted (deleteMany
  *    where-clause carries source: "SYNCED", excluding MANUAL).
- *  - an existing MANUAL row for a current Jira member stays MANUAL
- *    (upsert update: {} never downgrades/overwrites source — D-11).
+ *  - an existing MANUAL row for a current tracker member becomes SYNCED
+ *    (the upsert's update sets the source), and from then on leaves the
+ *    milestone when the issue leaves it in the tracker.
  *  - membership is capped at IMPORT_MAX_CAP (1000); when the external
  *    member count exceeds the cap, only cap members are processed and the
  *    pass records an internal "reached cap" signal on its result.
@@ -250,11 +251,10 @@ describe("MilestoneSyncService reconciliation — departed members", () => {
   });
 });
 
-describe("MilestoneSyncService reconciliation — MANUAL stickiness (D-11)", () => {
-  it("leaves an existing MANUAL row untouched (still MANUAL) for an issue that IS a current Jira member", async () => {
+describe("MilestoneSyncService reconciliation — links made by hand", () => {
+  it("makes an existing MANUAL row SYNCED for an issue that IS a current tracker member", async () => {
     // issue 900 (ext-1) already has a MANUAL link locally; it's also a
-    // current Jira member per the fetch. Sync must not downgrade/overwrite
-    // its source.
+    // current tracker member per the fetch.
     mockMilestoneIssueFindMany.mockResolvedValue([
       { issueId: 900, source: "MANUAL", issue: { externalId: "ext-1" } },
     ]);
@@ -265,13 +265,33 @@ describe("MilestoneSyncService reconciliation — MANUAL stickiness (D-11)", () 
 
     await milestoneSyncService.performMilestoneRefresh("user-1", 1, "v1");
 
-    // The upsert's `update` must be an empty object — it never sets
-    // source: "SYNCED" over an existing MANUAL row.
     const upsertCallForMember = mockMilestoneIssueUpsert.mock.calls.find(
       (c) => c[0]?.where?.milestoneId_issueId?.issueId === 900
     );
     expect(upsertCallForMember).toBeTruthy();
-    expect(upsertCallForMember![0].update).toEqual({});
+    expect(upsertCallForMember![0].update).toEqual({ source: "SYNCED" });
+  });
+
+  it("writes nothing for a MANUAL row whose issue the tracker does not list", async () => {
+    mockMilestoneIssueFindMany.mockResolvedValue([
+      {
+        issueId: 778,
+        source: "MANUAL",
+        issue: { externalId: "ext-manual-only" },
+      },
+    ]);
+    mockGetMilestoneIssues.mockResolvedValue({
+      issues: [makeExtIssue({ id: "ext-1" })],
+      hasMore: false,
+    });
+
+    await milestoneSyncService.performMilestoneRefresh("user-1", 1, "v1");
+
+    const upsertedIssueIds = mockMilestoneIssueUpsert.mock.calls.map(
+      (c) => c[0]?.where?.milestoneId_issueId?.issueId
+    );
+    expect(upsertedIssueIds).not.toContain(778);
+    expect(mockMilestoneIssueDeleteMany).not.toHaveBeenCalled();
   });
 });
 

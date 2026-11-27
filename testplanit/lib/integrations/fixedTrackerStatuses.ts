@@ -10,6 +10,7 @@ export const FIXED_TRACKER_STATUSES: Record<
     { id: "open", name: "open" },
     { id: "closed", name: "closed" },
     { id: "not_planned", name: "not_planned" },
+    { id: "duplicate", name: "duplicate" },
   ],
   GITEA: [
     { id: "open", name: "open" },

@@ -1,7 +1,7 @@
 import { RefreshTokenRevokedError } from "../errors";
 import { FIXED_TRACKER_STATUSES } from "../fixedTrackerStatuses";
 import {
-  GITHUB_NOT_PLANNED_STATUS,
+  GITHUB_CLOSE_REASON_STATUSES,
   githubIssueStatus,
 } from "../githubIssueStatus";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
@@ -55,6 +55,12 @@ const PAGE_SIZE = 100;
 
 /** Repository listings are read up to this many pages (3,000 entries). */
 const MAX_PAGES = 30;
+
+/** Sent where a request names its media type and REST API version. */
+const GITHUB_REST_HEADERS = {
+  Accept: "application/vnd.github+json",
+  "X-GitHub-Api-Version": "2022-11-28",
+};
 
 function resolveAssignees(data: {
   assigneeIds?: string[];
@@ -424,6 +430,11 @@ export class GitHubAdapter extends BaseAdapter {
     return this.mapGitHubIssue(response);
   }
 
+  /**
+   * Sub-issues, dependencies, "relates to" links and the issues that mention
+   * this one. Each lookup fails on its own, and an issue linked more than one
+   * way is reported once, under the first relationship in that order.
+   */
   async getLinkedIssues(issueId: string): Promise<LinkedIssueRef[]> {
     let owner: string;
     let repo: string;
@@ -439,38 +450,75 @@ export class GitHubAdapter extends BaseAdapter {
       return [];
     }
 
-    const [subIssuesResult, timelineResult] = await Promise.allSettled([
-      this.fetchSubIssues(owner, repo, issueNumber),
-      this.fetchCrossReferences(owner, repo, issueNumber),
-    ]);
+    const repository = `${owner}/${repo}`;
+    const issueUrl = `${this.baseUrl}/repos/${repository}/issues/${issueNumber}`;
+    const linkList = (
+      path: string,
+      linkType: string,
+      direction: LinkedIssueRef["direction"]
+    ) =>
+      this.fetchIssueLinks(
+        `${issueUrl}/${path}`,
+        repository,
+        linkType,
+        direction
+      );
+    const lookups: Array<{
+      name: string;
+      /** Missing on GitHub Enterprise Server releases older than the feature. */
+      optional?: boolean;
+      load: () => Promise<LinkedIssueRef[]>;
+    }> = [
+      {
+        name: "sub_issues",
+        load: () => linkList("sub_issues", "sub_issue", "outward"),
+      },
+      {
+        name: "blocked_by",
+        optional: true,
+        load: () => linkList("dependencies/blocked_by", "blocked_by", "inward"),
+      },
+      {
+        name: "blocking",
+        optional: true,
+        load: () => linkList("dependencies/blocking", "blocking", "outward"),
+      },
+      {
+        name: "relates_to",
+        optional: true,
+        load: () => linkList("relates_to", "relates_to", "outward"),
+      },
+      {
+        name: "timeline",
+        load: () => this.fetchCrossReferences(issueUrl, repository),
+      },
+    ];
 
-    const refs: LinkedIssueRef[] = [];
+    const results = await Promise.allSettled(
+      lookups.map((lookup) => lookup.load())
+    );
 
-    if (subIssuesResult.status === "fulfilled") {
-      refs.push(...subIssuesResult.value);
-    } else {
-      const status = this.parseStatusFromError(subIssuesResult.reason);
+    const refs = new Map<string, LinkedIssueRef>();
+    results.forEach((result, index) => {
+      const lookup = lookups[index];
+      if (result.status === "fulfilled") {
+        for (const ref of result.value) {
+          const identity = ref.id.toLowerCase();
+          if (!refs.has(identity)) refs.set(identity, ref);
+        }
+        return;
+      }
+      const status = this.parseStatusFromError(result.reason);
+      if (lookup.optional && (status === 404 || status === 410)) return;
       const level = status === null || status >= 500 ? "error" : "warn";
       console[level](
-        `[GitHubAdapter] sub_issues failed for %s:`,
+        `[GitHubAdapter] ${lookup.name} failed for %s:`,
         issueId,
-        subIssuesResult.reason
+        result.reason
       );
-    }
+    });
 
-    if (timelineResult.status === "fulfilled") {
-      refs.push(...timelineResult.value);
-    } else {
-      const status = this.parseStatusFromError(timelineResult.reason);
-      const level = status === null || status >= 500 ? "error" : "warn";
-      console[level](
-        `[GitHubAdapter] timeline failed for %s:`,
-        issueId,
-        timelineResult.reason
-      );
-    }
-
-    return refs;
+    return [...refs.values()];
   }
 
   async getIssueComments(issueId: string): Promise<IssueComment[]> {
@@ -740,7 +788,8 @@ export class GitHubAdapter extends BaseAdapter {
    */
   private async listAllPages<T = any>(
     url: string,
-    query: Record<string, string> = {}
+    query: Record<string, string> = {},
+    init?: RequestInit
   ): Promise<T[]> {
     const items: T[] = [];
     for (let page = 1; page <= MAX_PAGES; page++) {
@@ -749,7 +798,7 @@ export class GitHubAdapter extends BaseAdapter {
         per_page: String(PAGE_SIZE),
         page: String(page),
       });
-      const pageItems = await this.makeRequest<T[]>(`${url}?${params}`);
+      const pageItems = await this.makeRequest<T[]>(`${url}?${params}`, init);
       items.push(...pageItems);
       if (pageItems.length < PAGE_SIZE) {
         break;
@@ -1015,7 +1064,7 @@ export class GitHubAdapter extends BaseAdapter {
     const lowerStatus = status.toLowerCase();
     if (
       lowerStatus === "closed" ||
-      lowerStatus === GITHUB_NOT_PLANNED_STATUS ||
+      GITHUB_CLOSE_REASON_STATUSES.has(lowerStatus) ||
       lowerStatus === "done" ||
       lowerStatus === "resolved"
     ) {
@@ -1055,60 +1104,73 @@ export class GitHubAdapter extends BaseAdapter {
     return { owner, repo, issueNumber };
   }
 
-  private async fetchSubIssues(
-    owner: string,
-    repo: string,
-    issueNumber: string
+  /**
+   * The ref for an issue GitHub returned as linked to one in `repository`.
+   * The id names the issue's own repository, so `getIssue` reaches it even
+   * when it lives somewhere else; the key stays short inside one repository.
+   */
+  private linkedIssueRef(
+    linked: any,
+    repository: string,
+    linkType: string,
+    direction: LinkedIssueRef["direction"]
+  ): LinkedIssueRef | null {
+    if (linked?.number == null) return null;
+    const linkedRepository =
+      (typeof linked.repository?.full_name === "string" &&
+        linked.repository.full_name) ||
+      (typeof linked.repository_url === "string" &&
+        linked.repository_url.match(/\/repos\/([^/]+\/[^/]+)$/)?.[1]) ||
+      repository;
+    const id = `${linkedRepository}#${linked.number}`;
+    return {
+      id,
+      key:
+        linkedRepository.toLowerCase() === repository.toLowerCase()
+          ? `#${linked.number}`
+          : id,
+      linkType,
+      direction,
+    };
+  }
+
+  /** One of an issue's link lists, each of which is an array of issues. */
+  private async fetchIssueLinks(
+    url: string,
+    repository: string,
+    linkType: string,
+    direction: LinkedIssueRef["direction"]
   ): Promise<LinkedIssueRef[]> {
-    const response = await this.makeRequest<any[]>(
-      `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/sub_issues`,
-      {
-        headers: {
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      }
+    const linked = await this.listAllPages<any>(
+      url,
+      {},
+      { headers: GITHUB_REST_HEADERS }
     );
-    if (!Array.isArray(response)) return [];
-    const refs: LinkedIssueRef[] = [];
-    for (const sub of response) {
-      if (!sub || sub.id == null) continue;
-      refs.push({
-        id: String(sub.id),
-        key: sub.number != null ? `#${sub.number}` : undefined,
-        linkType: "sub_issue",
-        direction: "outward",
-      });
-    }
-    return refs;
+    return linked
+      .map((issue) =>
+        this.linkedIssueRef(issue, repository, linkType, direction)
+      )
+      .filter((ref): ref is LinkedIssueRef => ref !== null);
   }
 
   private async fetchCrossReferences(
-    owner: string,
-    repo: string,
-    issueNumber: string
+    issueUrl: string,
+    repository: string
   ): Promise<LinkedIssueRef[]> {
-    const response = await this.makeRequest<any[]>(
-      `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/timeline`,
-      {
-        headers: {
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      }
-    );
+    const response = await this.makeRequest<any[]>(`${issueUrl}/timeline`, {
+      headers: GITHUB_REST_HEADERS,
+    });
     if (!Array.isArray(response)) return [];
     const refs: LinkedIssueRef[] = [];
     for (const event of response) {
       if (event?.event !== "cross-referenced") continue;
-      const ref = event?.source?.issue;
-      if (!ref || ref.id == null) continue;
-      refs.push({
-        id: String(ref.id),
-        key: ref.number != null ? `#${ref.number}` : undefined,
-        linkType: "cross_referenced",
-        direction: "inward",
-      });
+      const ref = this.linkedIssueRef(
+        event?.source?.issue,
+        repository,
+        "cross_referenced",
+        "inward"
+      );
+      if (ref) refs.push(ref);
     }
     return refs;
   }

@@ -183,6 +183,9 @@ export const CLOSED_STATUS_HEURISTIC = new Set([
   "won't do",
   "wont do",
   "wontfix",
+  "not_planned",
+  "not planned",
+  "duplicate",
 ]);
 
 const DAY_MS = 24 * 60 * 60 * 1000;

@@ -33,7 +33,7 @@ import type { TrackerMilestoneRef } from "./tracker-milestone";
  * `/api/integrations/jira/link-issue`, designed for the implicit m2m
  * relations on TestCase/TestRun/Session), `MilestoneIssue` is an explicit
  * join table with a `source` discriminator. This component writes directly
- * through `useClientQueries(schema).milestoneIssue.useCreate()`/`.useDelete()`
+ * through `useClientQueries(schema).milestoneIssue.useUpsert()`/`.useDelete()`
  * — the same explicit-join-table idiom `EditGroup.tsx` uses for
  * `groupAssignment` (see `app/[locale]/admin/groups/EditGroup.tsx:107-214`).
  *
@@ -91,8 +91,8 @@ export function MilestoneIssueManager({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
 
-  const { mutateAsync: createMilestoneIssue } =
-    useClientQueries(schema).milestoneIssue.useCreate();
+  const { mutateAsync: upsertMilestoneIssue } =
+    useClientQueries(schema).milestoneIssue.useUpsert();
   const { mutateAsync: upsertIssue } =
     useClientQueries(schema).issue.useUpsert();
 
@@ -143,13 +143,18 @@ export function MilestoneIssueManager({
     [milestoneSource]
   );
 
+  // An upsert, because sync or a webhook may have linked the issue since the
+  // dialog opened (an issue just created in the tracker milestone arrives that
+  // way): that link is left as it is and the selection still succeeds.
   const linkExistingIssue = async (issueId: number) => {
-    await createMilestoneIssue({
-      data: {
+    await upsertMilestoneIssue({
+      where: { milestoneId_issueId: { milestoneId, issueId } },
+      create: {
         milestoneId,
         issueId,
         source: "MANUAL",
       },
+      update: {},
     });
   };
 

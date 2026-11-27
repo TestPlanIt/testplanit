@@ -7577,6 +7577,8 @@
     "created": "Issue Created",
     "createdInExternal": "Issue created in {provider}",
     "createdReporterRejected": "Jira would not accept you as the reporter, so this issue is reported by the account that owns the integration's API token. Your TestPlanIt administrator can see why in the Jira integration settings.",
+    "createdAttachmentsFailed": "{count, plural, one {The issue was created, but # file could not be attached: {names}} other {The issue was created, but # files could not be attached: {names}}}",
+    "tooManyAttachments": "Attach at most {max, number} files to one issue.",
     "createdInternal": "Issue created locally",
     "createdInternalSimpleUrl": "Issue created internally and can be linked via Simple URL",
     "createError": "Failed to create issue",

@@ -1145,6 +1145,23 @@ describe("RedmineAdapter", () => {
       await expect(adapter.searchUsers("bob")).resolves.toEqual([]);
     });
 
+    it("searchUsers lists users without a name filter when the query is blank", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValue(
+        okJson({ users: [{ id: 7, firstname: "Ada", lastname: "Lovelace" }] })
+      );
+
+      const listed = await adapter.searchUsers("");
+      const blankUrl = String(mockFetch.mock.calls.at(-1)?.[0]);
+      await adapter.searchUsers("ada");
+      const namedUrl = String(mockFetch.mock.calls.at(-1)?.[0]);
+
+      expect(listed).toHaveLength(1);
+      expect(blankUrl).toContain("/users.json?limit=20");
+      expect(blankUrl).not.toContain("name=");
+      expect(namedUrl).toContain("name=ada");
+    });
+
     it("getCurrentUser returns the authenticated user", async () => {
       await authenticate();
       mockFetch.mockResolvedValueOnce(

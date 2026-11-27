@@ -1122,6 +1122,33 @@ describe("webhook-config server actions", () => {
       });
     });
 
+    it.each(["not_planned", "duplicate"])(
+      "posts a synthetic issue closed as %s to a GitHub issue webhook when asked for that event",
+      async (reason) => {
+        mockWebhookConfigFindUnique.mockResolvedValue({
+          token: FIXTURE_TOKEN,
+          secret: FIXTURE_SECRET_ENC,
+          projectId: 42,
+          adapterType: "GITHUB",
+        });
+        fetchSpy.mockResolvedValue({
+          ok: true,
+          status: 200,
+          json: async () => ({ outcome: "synthetic" }),
+        });
+
+        await sendTestWebhook("cfg-gh", `issues:${reason}`);
+
+        const [, init] = fetchSpy.mock.calls[0];
+        expect(JSON.parse(init.body as string)).toMatchObject({
+          action: "closed",
+          issue: { number: 0, state: "closed", state_reason: reason },
+          repository: { full_name: "__synthetic__/__synthetic__" },
+        });
+        expect(init.headers).toMatchObject({ "x-github-event": "issues" });
+      }
+    );
+
     it("falls back to the issues payload for an unknown event name", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({
         token: FIXTURE_TOKEN,

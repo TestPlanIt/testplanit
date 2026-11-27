@@ -7,13 +7,16 @@ vi.mock("@aws-sdk/client-s3", () => ({
     send = mockS3Send;
   },
   GetObjectCommand: vi.fn(),
+  DeleteObjectCommand: vi.fn(),
 }));
 
-import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import {
+  discardFormUploads,
   extractEditorMediaSrcs,
   filenameForEditorMediaSrc,
   resolveEditorMediaAttachments,
+  resolveFormAttachments,
 } from "./editorMediaAttachments";
 
 describe("editorMediaAttachments", () => {
@@ -226,6 +229,171 @@ describe("editorMediaAttachments", () => {
     it("returns an empty list for plain-string descriptions", async () => {
       expect(await resolveEditorMediaAttachments("just text")).toEqual([]);
       expect(await resolveEditorMediaAttachments(undefined)).toEqual([]);
+    });
+  });
+
+  describe("resolveFormAttachments", () => {
+    const ownPrefix = "uploads/attachments/issue-form7user-1_";
+    const s3Response = (bytes: string, contentType?: string) => ({
+      Body: Readable.from([Buffer.from(bytes)]),
+      ContentType: contentType,
+    });
+
+    it("reads the caller's uploads and keeps the names the files had", async () => {
+      mockS3Send.mockResolvedValueOnce(s3Response("log-bytes", "text/plain"));
+
+      const result = await resolveFormAttachments(
+        [
+          {
+            url: "/api/storage/uploads/attachments/issue-form7user-1_1753651200000_run.log",
+            name: "run output.log",
+          },
+        ],
+        ownPrefix
+      );
+
+      expect(GetObjectCommand).toHaveBeenCalledWith({
+        Bucket: "test-bucket",
+        Key: "uploads/attachments/issue-form7user-1_1753651200000_run.log",
+      });
+      expect(result).toEqual({
+        attachments: [
+          {
+            filename: "run output.log",
+            buffer: Buffer.from("log-bytes"),
+            mimeType: "text/plain",
+            src: "/api/storage/uploads/attachments/issue-form7user-1_1753651200000_run.log",
+          },
+        ],
+        unreadable: [],
+      });
+    });
+
+    it("refuses files outside the caller's own uploads without reading them", async () => {
+      const result = await resolveFormAttachments(
+        [
+          {
+            url: "/api/storage/uploads/attachments/issue-form7user-2_1753651200000_secret.pdf",
+            name: "secret.pdf",
+          },
+          {
+            url: "/api/storage/uploads/document-images/issue-form7user-1_1753651200000",
+            name: "other-folder.png",
+          },
+          { url: "https://evil.example.com/file.txt", name: "remote.txt" },
+        ],
+        ownPrefix
+      );
+
+      expect(mockS3Send).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        attachments: [],
+        unreadable: ["secret.pdf", "other-folder.png", "remote.txt"],
+      });
+    });
+
+    it("reports a file that fails to load and keeps the rest", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      mockS3Send
+        .mockRejectedValueOnce(new Error("NoSuchKey"))
+        .mockResolvedValueOnce(s3Response("ok"));
+
+      const result = await resolveFormAttachments(
+        [
+          {
+            url: "/api/storage/uploads/attachments/issue-form7user-1_1_gone.txt",
+            name: "gone.txt",
+          },
+          {
+            url: "/api/storage/uploads/attachments/issue-form7user-1_2_ok.txt",
+            name: "ok.txt",
+          },
+        ],
+        ownPrefix
+      );
+
+      expect(result.unreadable).toEqual(["gone.txt"]);
+      expect(result.attachments.map((file) => file.filename)).toEqual([
+        "ok.txt",
+      ]);
+      consoleError.mockRestore();
+    });
+
+    it("reduces a name with a path to its last segment", async () => {
+      mockS3Send.mockResolvedValueOnce(s3Response("x"));
+
+      const result = await resolveFormAttachments(
+        [
+          {
+            url: "/api/storage/uploads/attachments/issue-form7user-1_3_a.txt",
+            name: "../../etc/passwd",
+          },
+        ],
+        ownPrefix
+      );
+
+      expect(result.attachments[0].filename).toBe("passwd");
+    });
+  });
+
+  describe("discardFormUploads", () => {
+    const ownPrefix = "uploads/attachments/issue-form7user-1_";
+
+    it("removes each of the caller's files and carries on past one that fails", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      mockS3Send
+        .mockRejectedValueOnce(new Error("AccessDenied"))
+        .mockResolvedValueOnce({});
+
+      await discardFormUploads(
+        [
+          {
+            url: "/api/storage/uploads/attachments/issue-form7user-1_1_a.txt",
+            name: "a.txt",
+          },
+          {
+            url: "/api/storage/uploads/attachments/issue-form7user-1_2_b.txt",
+            name: "b.txt",
+          },
+        ],
+        ownPrefix
+      );
+
+      expect(DeleteObjectCommand).toHaveBeenCalledTimes(2);
+      expect(DeleteObjectCommand).toHaveBeenLastCalledWith({
+        Bucket: "test-bucket",
+        Key: "uploads/attachments/issue-form7user-1_2_b.txt",
+      });
+      consoleError.mockRestore();
+    });
+
+    it("never removes a file outside the caller's own uploads", async () => {
+      await discardFormUploads(
+        [
+          {
+            url: "/api/storage/uploads/attachments/issue-form7user-2_1_theirs.txt",
+            name: "theirs.txt",
+          },
+          {
+            url: "/api/storage/uploads/attachments/7user-1_1_result.png",
+            name: "result.png",
+          },
+          { url: "https://evil.example.com/file.txt", name: "remote.txt" },
+        ],
+        ownPrefix
+      );
+
+      expect(DeleteObjectCommand).not.toHaveBeenCalled();
+      expect(mockS3Send).not.toHaveBeenCalled();
+    });
+
+    it("does nothing without files", async () => {
+      await discardFormUploads([], ownPrefix);
+      expect(mockS3Send).not.toHaveBeenCalled();
     });
   });
 });

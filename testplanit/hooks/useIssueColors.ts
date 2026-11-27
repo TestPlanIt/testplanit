@@ -242,6 +242,9 @@ export function useIssueColors() {
       case "resolved":
       case "completed":
       case "fixed":
+      case "not_planned":
+      case "not planned":
+      case "duplicate":
         // 5 is the lightest shade there is: db/seed.ts seeds six per family,
         // orders 0-5. The border is a step darker than the unrecognised chip
         // below, so a closed issue is not identical to it.
@@ -345,6 +348,9 @@ export function useIssueColors() {
       case "resolved":
       case "completed":
       case "fixed":
+      case "not_planned":
+      case "not planned":
+      case "duplicate":
         // Gray - matches getStatusStyle
         return getColor("Black", 4);
       case "blocked":

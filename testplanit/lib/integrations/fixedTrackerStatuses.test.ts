@@ -5,11 +5,12 @@ import { GiteaAdapter } from "./adapters/GiteaAdapter";
 import { FIXED_TRACKER_STATUSES } from "./fixedTrackerStatuses";
 
 describe("FIXED_TRACKER_STATUSES", () => {
-  it("lists open/closed (plus not_planned for GitHub) and opened/closed for GitLab", () => {
+  it("lists open/closed (plus the close reasons for GitHub) and opened/closed for GitLab", () => {
     expect(FIXED_TRACKER_STATUSES.GITHUB).toEqual([
       { id: "open", name: "open" },
       { id: "closed", name: "closed" },
       { id: "not_planned", name: "not_planned" },
+      { id: "duplicate", name: "duplicate" },
     ]);
     expect(FIXED_TRACKER_STATUSES.GITEA).toEqual([
       { id: "open", name: "open" },

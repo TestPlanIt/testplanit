@@ -89,7 +89,8 @@ Connect to GitHub for issue tracking and repository integration.
 - Link test cases to GitHub issues
 - Labels, assignees, a milestone and an issue type can be chosen on the create form; the issue types are those of the repository's owner, whether an organization or a personal account
 - Search issues by text or by exact number format (e.g., `#42`)
-- Track issue status across both platforms
+- Track issue status across both platforms: `open`, `closed`, and `not_planned` or `duplicate` for an issue closed for that reason
+- Sub-issues, "blocked by" and "blocking" dependencies, "relates to" links and mentions from other issues surfaced as linked issues
 - Personal Access Token or OAuth 2.0 authentication (OAuth attributes issues to the individual user)
 - Inbound webhook support for real-time status sync
 - Works with both github.com and **GitHub Enterprise Server** — set the integration's optional **API Base URL** to your GHES API root (typically `https://<your-host>/api/v3`) to point the adapter, scope probes, and repository sync at your enterprise instance instead of github.com
@@ -103,6 +104,7 @@ Connect to GitLab for issue tracking across GitLab.com and self-managed GitLab i
 - Create GitLab issues directly from TestPlanIt
 - Support for issue types: Issue and Incident
 - Labels, assignees and a milestone can be chosen on the create form
+- Files added on the create form are uploaded to the GitLab project and linked from the created issue's description
 - Search issues by text or by exact key format (e.g., `group/project#42`)
 - Track issue status across both platforms
 - Linked-issue support (related issues on every tier; blocking links where the GitLab tier has them)
@@ -120,6 +122,7 @@ Connect to self-hosted Gitea, Forgejo, or Gogs instances for lightweight issue t
 
 - Create issues in any repository on your instance
 - Labels, assignees and a milestone can be chosen on the create form
+- Files added on the create form are uploaded to the created issue as attachments
 - Search issues by text or by exact key format (e.g., `owner/repo#7`)
 - Issue dependencies surfaced as linked issues
 - Images attached to an issue or its comments are offered as context for [AI test case generation](./llm-test-generation.md#images-as-generation-context)
@@ -139,7 +142,7 @@ Connect to Azure DevOps Boards for work item tracking.
 - Search work items by text or by exact ID (e.g., `42`)
 - Priority field supported (maps to work item priority)
 - Custom fields of the selected work item type are offered on the create form (text, rich text, number, date, boolean, and picklist fields)
-- Images and videos embedded in the description are uploaded to the created work item as attachments
+- Files added on the create form are uploaded to the created work item as attachments
 - Iterations (sprints) sync as sprint [Milestones](./projects/milestones.md)
 - Personal Access Token authentication
 - Inbound webhook support for real-time status sync
@@ -155,6 +158,7 @@ Connect to a self-hosted Redmine instance for issue tracking.
 - Search issues by text (subject) or by exact reference (e.g., `#42`)
 - Maps Redmine **trackers** to issue types; statuses and priorities are discovered from your instance
 - Custom fields of the selected tracker and project are offered on the create form (text, long text, integer, float, date, boolean, list, key/value list, version, and user fields) and read back on every synced issue
+- Files added on the create form are uploaded to the created issue as attachments
 - Linked-issue (relations) support
 - Images attached to an issue are offered as context for [AI test case generation](./llm-test-generation.md#images-as-generation-context)
 - Versions, including those other projects share with the project, sync as release [Milestones](./projects/milestones.md)
@@ -172,6 +176,7 @@ Connect to a self-hosted MantisBT instance for issue tracking.
 - Search issues by text (summary) or by exact reference (e.g., `#42`)
 - Maps MantisBT **categories** to issue types; statuses and priorities are discovered from your instance
 - Custom fields of the linked project are offered on the create form (string, email, textarea, numeric, float, date, enumeration, list, radio, checkbox, and multi-selection list fields) and read back on every synced issue
+- Files added on the create form are uploaded to the created issue as attachments
 - Linked-issue (relationships) support
 - Images attached to an issue or its notes are offered as context for [AI test case generation](./llm-test-generation.md#images-as-generation-context)
 - Versions sync as release [Milestones](./projects/milestones.md); an issue belongs to a version it targets or was fixed in. MantisBT cannot list a version's issues, so TestPlanIt reads the whole project to find them: a project of 20,000 or more issues syncs its versions without their issues
@@ -188,7 +193,7 @@ Connect to ClickUp for task tracking.
 - Create ClickUp tasks directly from TestPlanIt, choosing the task type (ClickUp custom task types) and priority
 - Search tasks by name or by exact task ID or custom task ID (e.g., `PROJ-42`)
 - Custom fields of the linked List are offered on the create form (text, number, currency, URL, email, phone, date, dropdown, labels, and checkbox fields) and read back on every synced task
-- Images and videos embedded in the description are uploaded to the created task as attachments
+- Files added on the create form are uploaded to the created task as attachments
 - Task links and dependencies surfaced as linked issues
 - Rich text converted to Markdown for the task description
 - OAuth 2.0 authentication (per user; ClickUp tokens never expire)
@@ -642,6 +647,7 @@ Every user who has authorized the integration must re-authorize before the new s
    - The form dynamically loads fields from the external system
    - Required fields are marked with asterisks
    - Rich text descriptions are automatically converted to the target format
+   - On Azure DevOps, ClickUp, GitLab, Gitea, Redmine and MantisBT, add up to 10 files under **Attachments**. They are uploaded to the created issue. If a file cannot be attached, the issue is still created and a message names the file. The Jira form attaches the images and videos embedded in its description instead, and GitHub offers no way to attach files
 4. Submit to create the issue in the external system
 
 ### From Test Cases

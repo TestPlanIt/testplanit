@@ -478,7 +478,10 @@ export function CreateIssueJiraForm({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create issue");
+        const summary = errorData.error || "Failed to create issue";
+        throw new Error(
+          errorData.details ? `${summary}: ${errorData.details}` : summary
+        );
       }
 
       const createdIssue = await response.json();

@@ -15,9 +15,12 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
-vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string) => key.split(".").pop() ?? key,
-}));
+// One translator for every render, as next-intl gives: the form reloads its
+// fields when the translator changes, which also clears the error it shows.
+vi.mock("next-intl", () => {
+  const t = (key: string) => key.split(".").pop() ?? key;
+  return { useTranslations: () => t };
+});
 
 vi.mock("sonner", () => ({ toast: { warning: vi.fn() } }));
 
@@ -118,19 +121,24 @@ vi.mock("@hookform/resolvers/standard-schema", () => ({
 
 // What the stubbed field's pick button writes into the form.
 let pickedValue: unknown = "42";
+// The form the stub was last rendered with, so a test can read its values.
+let renderedForm: any;
 
 // Stub DynamicJiraField — it depends on TipTap and other heavy editors
 vi.mock("./dynamic-jira-field", () => ({
-  DynamicJiraField: ({ field, form }: any) => (
-    <div data-testid={`dynamic-field-${field.key}`}>
-      {field.name}
-      <button
-        type="button"
-        data-testid={`pick-${field.key}`}
-        onClick={() => form.setValue(field.key, pickedValue)}
-      />
-    </div>
-  ),
+  DynamicJiraField: ({ field, form }: any) => {
+    renderedForm = form;
+    return (
+      <div data-testid={`dynamic-field-${field.key}`}>
+        {field.name}
+        <button
+          type="button"
+          data-testid={`pick-${field.key}`}
+          onClick={() => form.setValue(field.key, pickedValue)}
+        />
+      </div>
+    );
+  },
 }));
 
 import { toast } from "sonner";
@@ -527,6 +535,14 @@ describe("CreateIssueJiraForm", () => {
             custom: "com.pyxis.greenhopper.jira:gh-sprint",
           },
         },
+        {
+          key: "customfield_10200",
+          name: "Environment",
+          required: false,
+          schema: { type: "string" },
+          hasDefaultValue: true,
+          defaultValue: "staging",
+        },
       ],
     };
 
@@ -557,10 +573,15 @@ describe("CreateIssueJiraForm", () => {
         />
       );
 
+      // The form fills its starting values in an effect that runs after the
+      // fields render; a click that lands first submits an empty form.
       await screen.findByTestId("dynamic-field-fixVersions");
+      await waitFor(() => {
+        expect(renderedForm.getValues("customfield_10200")).toBe("staging");
+      });
       fireEvent.click(screen.getByRole("button", { name: "create" }));
 
-      let customFields: unknown;
+      let customFields: Record<string, unknown> = {};
       await waitFor(() => {
         const createCall = (global.fetch as any).mock.calls.find(
           (args: any[]) => (args[0] as string).includes("create-issue")
@@ -568,7 +589,10 @@ describe("CreateIssueJiraForm", () => {
         expect(createCall).toBeTruthy();
         customFields = JSON.parse(createCall[1].body).customFields;
       });
-      return customFields;
+      const { customfield_10200: environment, ...milestoneFields } =
+        customFields;
+      expect(environment).toBe("staging");
+      return milestoneFields;
     };
 
     it("starts a release milestone's issue in that Fix version", async () => {
@@ -660,6 +684,53 @@ describe("CreateIssueJiraForm", () => {
         customfield_10300: [{ accountId: "alice" }, { accountId: "bob" }],
       });
     });
+  });
+
+  it("shows why Jira refused the issue", async () => {
+    const baseFetch = global.fetch as any;
+    global.fetch = vi.fn().mockImplementation((url: string, init?: any) => {
+      if (url.includes("issue-type-fields")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            fields: [
+              {
+                key: "customfield_10300",
+                name: "Reviewers",
+                required: false,
+                schema: { type: "array", items: "user" },
+              },
+            ],
+          }),
+        });
+      }
+      if (url.includes("create-issue")) {
+        return Promise.resolve({
+          ok: false,
+          status: 400,
+          json: async () => ({
+            error: "Failed to create issue",
+            details: "customfield_10020: Sprint is required.",
+          }),
+        });
+      }
+      return baseFetch(url, init);
+    });
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    render(<CreateIssueJiraForm {...defaultProps} />);
+    await screen.findByTestId("dynamic-field-customfield_10300");
+    fireEvent.click(screen.getByRole("button", { name: "create" }));
+
+    expect(
+      await screen.findByText(
+        "Failed to create issue: customfield_10020: Sprint is required."
+      )
+    ).toBeTruthy();
+    consoleError.mockRestore();
   });
 
   describe("reporter refused by Jira", () => {

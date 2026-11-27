@@ -98,6 +98,17 @@ const SYNTHETIC_GITHUB_NOT_PLANNED_PAYLOAD = JSON.stringify({
   repository: { full_name: "__synthetic__/__synthetic__" },
 });
 
+const SYNTHETIC_GITHUB_DUPLICATE_PAYLOAD = JSON.stringify({
+  action: "closed",
+  issue: {
+    number: 0,
+    state: "closed",
+    state_reason: "duplicate",
+    title: "Synthetic test",
+  },
+  repository: { full_name: "__synthetic__/__synthetic__" },
+});
+
 const SYNTHETIC_ADO_PAYLOAD = JSON.stringify({
   eventType: "workitem.updated",
   resource: { id: 0, fields: { "System.State": "Synthetic" } },
@@ -216,6 +227,10 @@ const ISSUE_SYNTHETIC_EVENT_REQUESTS: Partial<
     },
     "issues:not_planned": {
       body: SYNTHETIC_GITHUB_NOT_PLANNED_PAYLOAD,
+      event: "issues",
+    },
+    "issues:duplicate": {
+      body: SYNTHETIC_GITHUB_DUPLICATE_PAYLOAD,
       event: "issues",
     },
   },

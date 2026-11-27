@@ -44,7 +44,17 @@ function statusColor(
     if (name === "to do" || name === "todo") return "yellow";
     return "gray";
   }
-  if (["closed", "done", "resolved", "completed"].includes(name)) {
+  if (
+    [
+      "closed",
+      "done",
+      "resolved",
+      "completed",
+      "not_planned",
+      "not planned",
+      "duplicate",
+    ].includes(name)
+  ) {
     return "green";
   }
   if (["open", "reopened", "in progress"].includes(name)) return "blue";

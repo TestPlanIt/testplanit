@@ -165,13 +165,13 @@ describe("MilestoneSyncService membership import — MilestoneIssue SYNCED link 
     );
   });
 
-  it("uses update: {} on the MilestoneIssue upsert so an existing row's source is never overwritten (D-11)", async () => {
+  it("marks an existing link SYNCED, so a link made by hand follows the tracker once the tracker lists the issue", async () => {
     await milestoneSyncService.performMilestoneRefresh("user-1", 1, "v1");
 
     const calls = mockMilestoneIssueUpsert.mock.calls;
     expect(calls.length).toBeGreaterThan(0);
     for (const call of calls) {
-      expect(call[0].update).toEqual({});
+      expect(call[0].update).toEqual({ source: "SYNCED" });
     }
   });
 

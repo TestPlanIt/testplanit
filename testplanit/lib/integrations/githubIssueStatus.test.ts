@@ -16,15 +16,30 @@ describe("githubIssueStatus", () => {
       githubIssueStatus({ state: "closed", state_reason: "completed" })
     ).toBe("closed");
     expect(githubIssueStatus({ state: "closed" })).toBe("closed");
-    expect(
-      githubIssueStatus({ state: "closed", state_reason: "duplicate" })
-    ).toBe("closed");
+    expect(githubIssueStatus({ state: "closed", state_reason: null })).toBe(
+      "closed"
+    );
   });
 
   it("distinguishes issues closed as not planned", () => {
     expect(
       githubIssueStatus({ state: "closed", state_reason: "not_planned" })
     ).toBe("not_planned");
+  });
+
+  it("distinguishes issues closed as a duplicate", () => {
+    expect(
+      githubIssueStatus({ state: "closed", state_reason: "duplicate" })
+    ).toBe("duplicate");
+  });
+
+  it("ignores a close reason left on a reopened issue or one it does not know", () => {
+    expect(
+      githubIssueStatus({ state: "open", state_reason: "duplicate" })
+    ).toBe("open");
+    expect(
+      githubIssueStatus({ state: "closed", state_reason: "something_new" })
+    ).toBe("closed");
   });
 
   it("returns null without a string state", () => {

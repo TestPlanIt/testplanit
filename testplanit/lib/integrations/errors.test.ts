@@ -11,6 +11,7 @@ import {
   reauthorizationBody,
   responseStatusForIntegrationError,
   toIntegrationError,
+  trackerRefusalMessage,
 } from "./errors";
 
 describe("integrationErrorFromStatus", () => {
@@ -255,5 +256,108 @@ describe("reauthorizationBody", () => {
         undefined
       )
     ).toBeNull();
+  });
+});
+
+describe("trackerRefusalMessage", () => {
+  const refusal = (status: number, body: unknown) =>
+    new Error(
+      `HTTP ${status}: ${typeof body === "string" ? body : JSON.stringify(body)}`
+    );
+
+  it.each([
+    [
+      "MantisBT",
+      refusal(400, {
+        message: "Description not specified",
+        code: 11,
+        localized:
+          'A necessary field "description" was empty. Please recheck your inputs.',
+      }),
+      'A necessary field "description" was empty. Please recheck your inputs.',
+    ],
+    [
+      "Redmine",
+      refusal(422, {
+        errors: ["Subject cannot be blank", "Tracker cannot be blank"],
+      }),
+      "Subject cannot be blank; Tracker cannot be blank",
+    ],
+    [
+      "Jira",
+      refusal(400, {
+        errorMessages: ["The issue type selected is invalid."],
+        errors: { customfield_10020: "Sprint is required." },
+      }),
+      "The issue type selected is invalid.; customfield_10020: Sprint is required.",
+    ],
+    [
+      "GitHub",
+      refusal(422, {
+        message: "Validation Failed",
+        errors: [{ resource: "Issue", field: "title", code: "missing_field" }],
+      }),
+      "Validation Failed; title: missing_field",
+    ],
+    [
+      "GitLab field messages",
+      refusal(400, { message: { title: ["can't be blank", "is too long"] } }),
+      "title: can't be blank, is too long",
+    ],
+    [
+      "GitLab error string",
+      refusal(400, { error: "title is missing" }),
+      "title is missing",
+    ],
+    [
+      "Gitea",
+      refusal(422, { message: "[Title]: Required", url: "x" }),
+      "[Title]: Required",
+    ],
+    [
+      "Azure DevOps",
+      refusal(400, {
+        message: "TF401320: Rule Error for field Title.",
+        typeKey: "RuleValidationException",
+      }),
+      "TF401320: Rule Error for field Title.",
+    ],
+    [
+      "ClickUp",
+      refusal(400, { err: "Task name invalid", ECODE: "INPUT_005" }),
+      "Task name invalid",
+    ],
+    [
+      "a nested error object",
+      refusal(400, { error: { message: "Bad field" } }),
+      "Bad field",
+    ],
+    ["plain text", refusal(400, "Project is archived"), "Project is archived"],
+  ])("reads what %s said", (_tracker, error, expected) => {
+    expect(trackerRefusalMessage(error)).toBe(expected);
+  });
+
+  it("says only the status when the reply carries no message", () => {
+    expect(trackerRefusalMessage(refusal(400, { code: 11 }))).toBe(
+      "The tracker answered with HTTP 400."
+    );
+    expect(
+      trackerRefusalMessage(refusal(404, "<html><body>Not Found</body></html>"))
+    ).toBe("The tracker answered with HTTP 404.");
+  });
+
+  it("keeps an error that is not an HTTP reply as it is", () => {
+    expect(trackerRefusalMessage(new Error("No transition available"))).toBe(
+      "No transition available"
+    );
+    expect(trackerRefusalMessage("boom")).toBe("boom");
+  });
+
+  it("cuts a very long reply short", () => {
+    const message = trackerRefusalMessage(
+      refusal(400, { message: "x".repeat(900) })
+    );
+    expect(message.length).toBe(401);
+    expect(message.endsWith("…")).toBe(true);
   });
 });

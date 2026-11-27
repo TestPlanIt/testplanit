@@ -353,3 +353,95 @@ export const reauthorizationBody = (
     requiresAuth: true,
   };
 };
+
+const REFUSAL_MESSAGE_LIMIT = 400;
+
+const asText = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const text = value.trim();
+  return text ? text : null;
+};
+
+/**
+ * The human-readable parts of a tracker's JSON error body. Covers the shapes
+ * the supported trackers answer with: a `message`/`error`/`err` string, a list
+ * of messages, messages keyed by field, and a list of per-field error objects.
+ */
+const refusalParts = (body: Record<string, unknown>): string[] => {
+  const parts: string[] = [];
+  const add = (value: unknown, field?: string) => {
+    const text = asText(value);
+    if (text) parts.push(field ? `${field}: ${text}` : text);
+  };
+  const addFieldMap = (value: unknown) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return;
+    for (const [field, messages] of Object.entries(value)) {
+      if (Array.isArray(messages))
+        add(messages.filter(asText).join(", "), field);
+      else add(messages, field);
+    }
+  };
+
+  // MantisBT's `localized` is its full sentence; `message` is the short form.
+  add(body.localized ?? body.message);
+  if (typeof body.message === "object") {
+    if (Array.isArray(body.message))
+      add(body.message.filter(asText).join("; "));
+    else addFieldMap(body.message);
+  }
+  add(body.err);
+  if (typeof body.error === "object" && body.error) {
+    add((body.error as Record<string, unknown>).message);
+  } else {
+    add(body.error);
+  }
+  add(body.error_description);
+  add(body.detail);
+
+  if (Array.isArray(body.errorMessages)) {
+    for (const message of body.errorMessages) add(message);
+  }
+  if (Array.isArray(body.errors)) {
+    for (const entry of body.errors) {
+      if (entry && typeof entry === "object") {
+        const { field, message, code } = entry as Record<string, unknown>;
+        add(message ?? code, asText(field) ?? undefined);
+      } else {
+        add(entry);
+      }
+    }
+  } else {
+    addFieldMap(body.errors);
+  }
+  return [...new Set(parts)];
+};
+
+/**
+ * What a tracker said when it refused a request, without the HTTP status and
+ * JSON it arrived in. Falls back to the text as thrown when the reply has no
+ * recognisable message.
+ */
+export const trackerRefusalMessage = (error: unknown): string => {
+  const thrown = error instanceof Error ? error.message : String(error);
+  const http = thrown.match(/^HTTP (\d{3}):\s*([\s\S]*)$/);
+  if (!http) return thrown;
+
+  const [, status, body] = http;
+  let message = "";
+  try {
+    const parsed: unknown = JSON.parse(body);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      message = refusalParts(parsed as Record<string, unknown>).join("; ");
+    } else if (Array.isArray(parsed)) {
+      message = parsed.filter(asText).join("; ");
+    }
+  } catch {
+    // An HTML error page says nothing a user can act on.
+    message = /^\s*</.test(body) ? "" : body.trim();
+  }
+
+  if (!message) return `The tracker answered with HTTP ${status}.`;
+  return message.length > REFUSAL_MESSAGE_LIMIT
+    ? `${message.slice(0, REFUSAL_MESSAGE_LIMIT)}…`
+    : message;
+};

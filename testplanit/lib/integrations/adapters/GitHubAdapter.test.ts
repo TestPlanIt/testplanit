@@ -741,6 +741,25 @@ describe("GitHubAdapter", () => {
       );
     });
 
+    it.each(["not_planned", "duplicate"])(
+      "should map the close reason '%s' to closed",
+      async (status) => {
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ ...mockGitHubIssue, state: "closed" }),
+        });
+
+        await adapter.updateIssue("42", { status });
+
+        expect(mockFetch).toHaveBeenLastCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            body: JSON.stringify({ state: "closed" }),
+          })
+        );
+      }
+    );
+
     it("should map 'done' status to closed", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -806,6 +825,27 @@ describe("GitHubAdapter", () => {
       expect(result.id).toBe("42");
       expect(result.title).toBe("Test Issue");
     });
+
+    it.each([
+      ["completed", "closed"],
+      ["not_planned", "not_planned"],
+      ["duplicate", "duplicate"],
+    ])(
+      "should store an issue closed as %s under the status '%s'",
+      async (reason, status) => {
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              ...mockGitHubIssue,
+              state: "closed",
+              state_reason: reason,
+            }),
+        });
+
+        expect((await adapter.getIssue("42")).status).toBe(status);
+      }
+    );
 
     it("should get issue with # prefix", async () => {
       mockFetch.mockResolvedValueOnce({
@@ -907,98 +947,226 @@ describe("GitHubAdapter", () => {
       mockFetch.mockReset();
     });
 
-    it("should return refs from both sub_issues and cross-referenced timeline events on the happy path", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockSubIssuesResponse),
+    /**
+     * Answers each of an issue's link lookups by the end of its path. A
+     * number is an HTTP error status, an Error a network failure, anything
+     * else the JSON body; a lookup left out answers with an empty list.
+     */
+    const answerLinkLookups = (routes: Record<string, unknown>) => {
+      mockFetch.mockImplementation((url: string) => {
+        const path = url.split("?")[0];
+        const suffix = Object.keys(routes).find((key) =>
+          path.endsWith(`/${key}`)
+        );
+        const answer = suffix ? routes[suffix] : [];
+        if (answer instanceof Error) return Promise.reject(answer);
+        if (typeof answer === "number") {
+          return Promise.resolve({
+            ok: false,
+            status: answer,
+            statusText: "Error",
+            text: () => Promise.resolve("Error"),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(answer),
+        });
       });
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockTimelineResponse),
+    };
+
+    const calledPaths = () =>
+      mockFetch.mock.calls.map((c) => (c[0] as string).split("?")[0]);
+
+    it("should return refs from both sub_issues and cross-referenced timeline events on the happy path", async () => {
+      answerLinkLookups({
+        sub_issues: mockSubIssuesResponse,
+        timeline: mockTimelineResponse,
       });
 
       const result = await adapter.getLinkedIssues!("42");
 
-      expect(result).toHaveLength(3);
-      expect(result).toEqual(
+      expect(result).toEqual([
+        {
+          id: "testowner/testrepo#42",
+          key: "#42",
+          linkType: "sub_issue",
+          direction: "outward",
+        },
+        {
+          id: "testowner/testrepo#43",
+          key: "#43",
+          linkType: "sub_issue",
+          direction: "outward",
+        },
+        {
+          id: "acme/other-repo#99",
+          key: "acme/other-repo#99",
+          linkType: "cross_referenced",
+          direction: "inward",
+        },
+      ]);
+
+      expect(calledPaths()).toEqual(
         expect.arrayContaining([
-          {
-            id: "1234567",
-            key: "#42",
-            linkType: "sub_issue",
-            direction: "outward",
-          },
-          {
-            id: "1234568",
-            key: "#43",
-            linkType: "sub_issue",
-            direction: "outward",
-          },
-          {
-            id: "9876543",
-            key: "#99",
-            linkType: "cross_referenced",
-            direction: "inward",
-          },
+          "https://api.github.com/repos/testowner/testrepo/issues/42/sub_issues",
+          "https://api.github.com/repos/testowner/testrepo/issues/42/timeline",
         ])
       );
-
-      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
-      expect(
-        calledUrls.some((u) =>
-          u.includes("/repos/testowner/testrepo/issues/42/sub_issues")
-        )
-      ).toBe(true);
-      expect(
-        calledUrls.some((u) =>
-          u.includes("/repos/testowner/testrepo/issues/42/timeline")
-        )
-      ).toBe(true);
     });
 
-    it("should send GitHub Accept and X-GitHub-Api-Version headers on both sub_issues and timeline fetches", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockSubIssuesResponse),
+    it("should return blocked-by, blocking and relates-to links", async () => {
+      const linked = (number: number, repository = "testowner/testrepo") => ({
+        id: 5000 + number,
+        number,
+        title: `Issue ${number}`,
+        repository_url: `https://api.github.com/repos/${repository}`,
       });
+      answerLinkLookups({
+        "dependencies/blocked_by": [linked(7)],
+        "dependencies/blocking": [linked(8), linked(3, "acme/platform")],
+        relates_to: [linked(9)],
+      });
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toEqual([
+        {
+          id: "testowner/testrepo#7",
+          key: "#7",
+          linkType: "blocked_by",
+          direction: "inward",
+        },
+        {
+          id: "testowner/testrepo#8",
+          key: "#8",
+          linkType: "blocking",
+          direction: "outward",
+        },
+        {
+          id: "acme/platform#3",
+          key: "acme/platform#3",
+          linkType: "blocking",
+          direction: "outward",
+        },
+        {
+          id: "testowner/testrepo#9",
+          key: "#9",
+          linkType: "relates_to",
+          direction: "outward",
+        },
+      ]);
+      expect(calledPaths()).toEqual(
+        expect.arrayContaining([
+          "https://api.github.com/repos/testowner/testrepo/issues/42/dependencies/blocked_by",
+          "https://api.github.com/repos/testowner/testrepo/issues/42/dependencies/blocking",
+          "https://api.github.com/repos/testowner/testrepo/issues/42/relates_to",
+        ])
+      );
+    });
+
+    it("should give every ref an id getIssue resolves, whichever repository holds the issue", async () => {
+      answerLinkLookups({
+        "dependencies/blocked_by": [
+          {
+            number: 3,
+            repository_url: "https://api.github.com/repos/acme/platform",
+          },
+        ],
+      });
+      const [ref] = await adapter.getLinkedIssues!("42");
+
+      mockFetch.mockReset();
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockTimelineResponse),
+        json: () => Promise.resolve(mockGitHubIssue),
+      });
+      await adapter.getIssue(ref.id);
+
+      expect(mockFetch).toHaveBeenLastCalledWith(
+        "https://api.github.com/repos/acme/platform/issues/3",
+        expect.any(Object)
+      );
+    });
+
+    it("should report an issue linked more than one way once, under the most specific relationship", async () => {
+      answerLinkLookups({
+        "dependencies/blocked_by": [{ number: 7 }],
+        relates_to: [{ number: 7 }, { number: 9 }],
+        timeline: [
+          {
+            event: "cross-referenced",
+            source: {
+              issue: {
+                number: 7,
+                repository: { full_name: "TestOwner/TestRepo" },
+              },
+            },
+          },
+          {
+            event: "cross-referenced",
+            source: { issue: { number: 11 } },
+          },
+        ],
+      });
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result.map((ref) => `${ref.key} ${ref.linkType}`)).toEqual([
+        "#7 blocked_by",
+        "#9 relates_to",
+        "#11 cross_referenced",
+      ]);
+    });
+
+    it("should read every page of a link list", async () => {
+      const fullPage = Array.from({ length: 100 }, (_, index) => ({
+        number: index + 1,
+      }));
+      mockFetch.mockImplementation((url: string) => {
+        const isSubIssues = url.split("?")[0].endsWith("/sub_issues");
+        const page = new URL(url).searchParams.get("page");
+        const body = !isSubIssues
+          ? []
+          : page === "1"
+            ? fullPage
+            : [{ number: 101 }];
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(body),
+        });
+      });
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toHaveLength(101);
+      expect(result[100].key).toBe("#101");
+    });
+
+    it("should send GitHub Accept and X-GitHub-Api-Version headers on every link lookup", async () => {
+      answerLinkLookups({
+        sub_issues: mockSubIssuesResponse,
+        timeline: mockTimelineResponse,
       });
 
       await adapter.getLinkedIssues!("42");
 
-      const subIssuesCall = mockFetch.mock.calls.find((c) =>
-        (c[0] as string).includes("/sub_issues")
+      const lookupCalls = mockFetch.mock.calls.filter((c) =>
+        (c[0] as string).includes("/issues/42/")
       );
-      const timelineCall = mockFetch.mock.calls.find((c) =>
-        (c[0] as string).includes("/timeline")
-      );
-      expect(subIssuesCall).toBeDefined();
-      expect(timelineCall).toBeDefined();
-      const subHeaders = (subIssuesCall![1] as RequestInit).headers as Record<
-        string,
-        string
-      >;
-      const timelineHeaders = (timelineCall![1] as RequestInit)
-        .headers as Record<string, string>;
-      expect(subHeaders["Accept"]).toBe("application/vnd.github+json");
-      expect(subHeaders["X-GitHub-Api-Version"]).toBe("2022-11-28");
-      expect(timelineHeaders["Accept"]).toBe("application/vnd.github+json");
-      expect(timelineHeaders["X-GitHub-Api-Version"]).toBe("2022-11-28");
+      expect(lookupCalls).toHaveLength(5);
+      for (const call of lookupCalls) {
+        const headers = (call[1] as RequestInit).headers as Record<
+          string,
+          string
+        >;
+        expect(headers["Accept"]).toBe("application/vnd.github+json");
+        expect(headers["X-GitHub-Api-Version"]).toBe("2022-11-28");
+      }
     });
 
     it("should return only sub_issues entries when timeline call fails with 503 and log at error level", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockSubIssuesResponse),
-      });
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 503,
-        statusText: "Service Unavailable",
-        text: () => Promise.resolve("Service Unavailable"),
-      });
+      answerLinkLookups({ sub_issues: mockSubIssuesResponse, timeline: 503 });
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const result = await adapter.getLinkedIssues!("42");
@@ -1013,16 +1181,7 @@ describe("GitHubAdapter", () => {
     });
 
     it("should return only cross-referenced entries when sub_issues call fails with 403 and log at warn level", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 403,
-        statusText: "Forbidden",
-        text: () => Promise.resolve("Forbidden"),
-      });
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockTimelineResponse),
-      });
+      answerLinkLookups({ sub_issues: 403, timeline: mockTimelineResponse });
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       const result = await adapter.getLinkedIssues!("42");
@@ -1038,18 +1197,7 @@ describe("GitHubAdapter", () => {
     });
 
     it("should return [] and log error twice when both sub_issues and timeline fail with 5xx", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 502,
-        statusText: "Bad Gateway",
-        text: () => Promise.resolve("Bad Gateway"),
-      });
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 502,
-        statusText: "Bad Gateway",
-        text: () => Promise.resolve("Bad Gateway"),
-      });
+      answerLinkLookups({ sub_issues: 502, timeline: 502 });
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const result = await adapter.getLinkedIssues!("42");
@@ -1060,10 +1208,9 @@ describe("GitHubAdapter", () => {
     });
 
     it("should return only cross-referenced entries when sub_issues raises a network error", async () => {
-      mockFetch.mockRejectedValueOnce(new Error("network ECONNRESET"));
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockTimelineResponse),
+      answerLinkLookups({
+        sub_issues: new Error("network ECONNRESET"),
+        timeline: mockTimelineResponse,
       });
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -1078,33 +1225,75 @@ describe("GitHubAdapter", () => {
       errorSpy.mockRestore();
     });
 
-    it("should filter timeline events to only cross-referenced ones", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve([]),
+    it.each([404, 410])(
+      "should keep the other links, without logging, when the dependency and relates-to lookups answer %s",
+      async (status) => {
+        answerLinkLookups({
+          sub_issues: mockSubIssuesResponse,
+          "dependencies/blocked_by": status,
+          "dependencies/blocking": status,
+          relates_to: status,
+          timeline: mockTimelineResponse,
+        });
+        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const errorSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
+
+        const result = await adapter.getLinkedIssues!("42");
+
+        expect(result.map((ref) => ref.linkType)).toEqual([
+          "sub_issue",
+          "sub_issue",
+          "cross_referenced",
+        ]);
+        expect(warnSpy).not.toHaveBeenCalled();
+        expect(errorSpy).not.toHaveBeenCalled();
+        warnSpy.mockRestore();
+        errorSpy.mockRestore();
+      }
+    );
+
+    it("should keep the other links and warn when one dependency lookup is forbidden", async () => {
+      answerLinkLookups({
+        "dependencies/blocked_by": 403,
+        "dependencies/blocking": [{ number: 8 }],
+        relates_to: [{ number: 9 }],
       });
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve([
-            { event: "labeled", actor: { login: "u" } },
-            {
-              event: "cross-referenced",
-              actor: { login: "u" },
-              source: {
-                type: "issue",
-                issue: { id: 1, number: 1 },
-              },
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result.map((ref) => `${ref.key} ${ref.linkType}`)).toEqual([
+        "#8 blocking",
+        "#9 relates_to",
+      ]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.mock.calls[0].join(" ")).toContain("blocked_by");
+      warnSpy.mockRestore();
+    });
+
+    it("should filter timeline events to only cross-referenced ones", async () => {
+      answerLinkLookups({
+        timeline: [
+          { event: "labeled", actor: { login: "u" } },
+          {
+            event: "cross-referenced",
+            actor: { login: "u" },
+            source: {
+              type: "issue",
+              issue: { id: 1, number: 1 },
             },
-            { event: "closed", actor: { login: "u" } },
-          ]),
+          },
+          { event: "closed", actor: { login: "u" } },
+        ],
       });
 
       const result = await adapter.getLinkedIssues!("42");
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
-        id: "1",
+        id: "testowner/testrepo#1",
         key: "#1",
         linkType: "cross_referenced",
         direction: "inward",
@@ -1112,64 +1301,33 @@ describe("GitHubAdapter", () => {
     });
 
     it("should parse owner/repo#number form for both sub_issues and timeline URLs", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve([]),
-      });
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve([]),
-      });
+      answerLinkLookups({});
 
       await adapter.getLinkedIssues!("acme/widgets#42");
 
-      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
-      expect(
-        calledUrls.some((u) =>
-          u.includes("/repos/acme/widgets/issues/42/sub_issues")
-        )
-      ).toBe(true);
-      expect(
-        calledUrls.some((u) =>
-          u.includes("/repos/acme/widgets/issues/42/timeline")
-        )
-      ).toBe(true);
+      expect(calledPaths()).toEqual(
+        expect.arrayContaining([
+          "https://api.github.com/repos/acme/widgets/issues/42/sub_issues",
+          "https://api.github.com/repos/acme/widgets/issues/42/timeline",
+        ])
+      );
     });
 
     it("should use configured owner/repo and the issue number when issueId starts with #", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve([]),
-      });
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve([]),
-      });
+      answerLinkLookups({});
 
       await adapter.getLinkedIssues!("#42");
 
-      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
-      expect(
-        calledUrls.some((u) =>
-          u.includes("/repos/testowner/testrepo/issues/42/sub_issues")
-        )
-      ).toBe(true);
-      expect(
-        calledUrls.some((u) =>
-          u.includes("/repos/testowner/testrepo/issues/42/timeline")
-        )
-      ).toBe(true);
+      expect(calledPaths()).toEqual(
+        expect.arrayContaining([
+          "https://api.github.com/repos/testowner/testrepo/issues/42/sub_issues",
+          "https://api.github.com/repos/testowner/testrepo/issues/42/timeline",
+        ])
+      );
     });
 
     it("should reject owner/repo/sub#number forms with slashes in the repo segment", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve([]),
-      });
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve([]),
-      });
+      answerLinkLookups({});
 
       await adapter.getLinkedIssues!("acme/foo/bar#42");
 
@@ -1612,6 +1770,20 @@ describe("GitHubAdapter", () => {
 
       const url = mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0];
       expect(url).toContain("is%3Aopen"); // URL encoded "is:open"
+    });
+
+    it("should search closed issues for a close-reason status", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockSearchResponse),
+      });
+
+      await adapter.searchIssues({
+        status: ["duplicate"],
+      });
+
+      const url = mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0];
+      expect(url).toContain("is%3Aclosed");
     });
 
     it("should search with assignee filter", async () => {

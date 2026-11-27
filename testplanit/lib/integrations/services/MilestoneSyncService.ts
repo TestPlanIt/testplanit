@@ -478,8 +478,8 @@ export class MilestoneSyncService {
    *      badge for manual_unlink (D-11). manual_unlink must NEVER collapse
    *      into "deleted".
    *   3. `MilestoneIssue` rows for this milestone with `source: "SYNCED"`
-   *      flip to `source: "MANUAL"` (D-05) — MANUAL-is-sticky semantics
-   *      (Phase 18 D-11) now govern every link.
+   *      flip to `source: "MANUAL"` (D-05): with no tracker to follow, every
+   *      link is the user's to keep or remove.
    *
    * Idempotent: calling this on an already-detached milestone is a clean
    * no-op success, mirroring the existing `isDeleted` tombstone
@@ -615,9 +615,10 @@ export class MilestoneSyncService {
    * milestone-private issue writer) and SYNCED-linking it via the raw db
    * client (D-10 — the enhanced client's `@deny('create,delete', source ==
    * SYNCED)` would block this write, which is the point). Departed SYNCED
-   * members lose their link (Issue row kept); MANUAL links are never
-   * created, deleted, or downgraded (D-11 — the upsert's `update: {}` and
-   * the deleteMany's `source: "SYNCED"` scope both enforce this).
+   * members lose their link (Issue row kept). A MANUAL link whose issue the
+   * tracker lists becomes SYNCED and follows the tracker from then on; a
+   * MANUAL link whose issue the tracker does not list is never created,
+   * changed or deleted here (the deleteMany's `source: "SYNCED"` scope).
    *
    * Callers guard on `adapter.getMilestoneIssues` before calling this — a
    * missing method (non-membership / DC no-op) is a clean skip, not an
@@ -685,9 +686,9 @@ export class MilestoneSyncService {
             milestoneId_issueId: { milestoneId, issueId },
           },
           create: { milestoneId, issueId, source: "SYNCED" },
-          // Never touches an existing row's source — a pre-existing MANUAL
-          // link stays MANUAL (D-11).
-          update: {},
+          // A link made by hand becomes the tracker's once the tracker
+          // lists the issue, so it also leaves with the issue.
+          update: { source: "SYNCED" },
         });
       }
 
@@ -699,8 +700,9 @@ export class MilestoneSyncService {
 
     // 2. Reconcile departures: any currently-SYNCED link whose issue is no
     //    longer among the tracker's current members gets its link removed
-    //    (the Issue row itself is untouched). MANUAL links are structurally
-    //    excluded by the `source: "SYNCED"` filter below (D-11). Guarded
+    //    (the Issue row itself is untouched). MANUAL links, which by now are
+    //    only those of issues the tracker does not list, are structurally
+    //    excluded by the `source: "SYNCED"` filter below. Guarded
     //    the same way as the `findUnique` pre-checks above — some test
     //    doubles omit `findMany` on this model when a test only exercises
     //    the import/link-creation half of the contract, not departures.
@@ -721,9 +723,9 @@ export class MilestoneSyncService {
         : [];
     const departedIds = syncedLinks
       // Defensive re-filter on `source === "SYNCED"` in application code,
-      // not just the query's `where` clause — belt-and-suspenders for
-      // D-11 (MANUAL links must never enter the deleted set even if a
-      // caller-supplied db client's findMany doesn't honor `where`).
+      // not just the query's `where` clause: MANUAL links must never enter
+      // the deleted set even if a caller-supplied db client's findMany
+      // doesn't honor `where`.
       .filter(
         (link: any) =>
           link.source === "SYNCED" &&

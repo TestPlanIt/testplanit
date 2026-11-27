@@ -49,7 +49,9 @@ vi.mock("@/lib/integrations/IntegrationManager", () => ({
 }));
 
 vi.mock("@/lib/integrations/editorMediaAttachments", () => ({
+  discardFormUploads: vi.fn(),
   resolveEditorMediaAttachments: vi.fn(),
+  resolveFormAttachments: vi.fn(),
 }));
 
 const mocks = vi.hoisted(() => ({
@@ -67,7 +69,11 @@ vi.mock("~/lib/services/areaPermission", () => ({
   userHasAreaPermission: vi.fn(),
 }));
 
-import { resolveEditorMediaAttachments } from "@/lib/integrations/editorMediaAttachments";
+import {
+  discardFormUploads,
+  resolveEditorMediaAttachments,
+  resolveFormAttachments,
+} from "@/lib/integrations/editorMediaAttachments";
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { baseDb } from "@/lib/db";
 import { getEnhancedDb } from "~/lib/auth/utils";
@@ -424,6 +430,192 @@ describe("POST /api/integrations/[id]/create-issue", () => {
       expect(response.status).toBe(200);
       expect(resolveEditorMediaAttachments).not.toHaveBeenCalled();
       expect(attachmentAdapter.uploadAttachment).not.toHaveBeenCalled();
+    });
+
+    describe("files added on the create form", () => {
+      const formFiles = [
+        {
+          url: "/api/storage/uploads/attachments/issue-form7user-1_1753651200000_log.txt",
+          name: "log.txt",
+        },
+        {
+          url: "/api/storage/uploads/attachments/issue-form7user-1_1753651200001_shot.png",
+          name: "shot.png",
+        },
+      ];
+
+      it("uploads the caller's own files to the created issue", async () => {
+        (resolveFormAttachments as any).mockResolvedValue({
+          attachments: [
+            { filename: "log.txt", buffer: Buffer.from("log") },
+            { filename: "shot.png", buffer: Buffer.from("png") },
+          ],
+          unreadable: [],
+        });
+
+        const response = await POST(
+          createRequest({
+            title: "With files",
+            projectId: "PROJ",
+            testplanitProjectId: 7,
+            attachments: formFiles,
+          }),
+          params
+        );
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(resolveFormAttachments).toHaveBeenCalledWith(
+          formFiles,
+          "uploads/attachments/issue-form7user-1_"
+        );
+        expect(attachmentAdapter.uploadAttachment).toHaveBeenCalledWith(
+          "PROJ-1",
+          expect.any(Buffer),
+          "log.txt"
+        );
+        expect(attachmentAdapter.uploadAttachment).toHaveBeenCalledWith(
+          "PROJ-1",
+          expect.any(Buffer),
+          "shot.png"
+        );
+        expect(data.attachmentFailures).toBeUndefined();
+        expect(discardFormUploads).toHaveBeenCalledWith(
+          formFiles,
+          "uploads/attachments/issue-form7user-1_"
+        );
+      });
+
+      it("removes the uploaded files from storage when the tracker refuses the issue", async () => {
+        const consoleError = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
+        attachmentAdapter.createIssue.mockRejectedValueOnce(
+          new Error('HTTP 400: {"message":"Description not specified"}')
+        );
+
+        const response = await POST(
+          createRequest({
+            title: "Refused",
+            projectId: "PROJ",
+            testplanitProjectId: 7,
+            attachments: formFiles,
+          }),
+          params
+        );
+
+        expect(response.status).toBeGreaterThanOrEqual(400);
+        expect(resolveFormAttachments).not.toHaveBeenCalled();
+        expect(attachmentAdapter.uploadAttachment).not.toHaveBeenCalled();
+        expect(discardFormUploads).toHaveBeenCalledWith(
+          formFiles,
+          "uploads/attachments/issue-form7user-1_"
+        );
+        consoleError.mockRestore();
+      });
+
+      it("still answers with the refusal when removing the uploads fails", async () => {
+        const consoleError = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
+        attachmentAdapter.createIssue.mockRejectedValueOnce(
+          new Error('HTTP 400: {"message":{"title":["is too long"]}}')
+        );
+        (discardFormUploads as any).mockRejectedValueOnce(
+          new Error("storage unreachable")
+        );
+
+        const response = await POST(
+          createRequest({
+            title: "Refused",
+            projectId: "PROJ",
+            testplanitProjectId: 7,
+            attachments: formFiles,
+          }),
+          params
+        );
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.details).toBe("title: is too long");
+        consoleError.mockRestore();
+      });
+
+      it("leaves storage alone when the form sent no files", async () => {
+        await POST(
+          createRequest({ title: "No files", projectId: "PROJ" }),
+          params
+        );
+
+        expect(discardFormUploads).not.toHaveBeenCalled();
+      });
+
+      it("creates the issue and names the files that did not reach the tracker", async () => {
+        const consoleError = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
+        (resolveFormAttachments as any).mockResolvedValue({
+          attachments: [{ filename: "shot.png", buffer: Buffer.from("png") }],
+          unreadable: ["log.txt"],
+        });
+        attachmentAdapter.uploadAttachment.mockRejectedValueOnce(
+          new Error("HTTP 413: attachment too large")
+        );
+
+        const response = await POST(
+          createRequest({
+            title: "With files",
+            projectId: "PROJ",
+            testplanitProjectId: 7,
+            attachments: formFiles,
+          }),
+          params
+        );
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.key).toBe("PROJ-1");
+        expect(data.attachmentFailures).toEqual(["log.txt", "shot.png"]);
+        consoleError.mockRestore();
+      });
+
+      it("reports every file when the tracker takes no attachments", async () => {
+        attachmentAdapter.getCapabilities.mockReturnValue({
+          attachments: false,
+        });
+
+        const response = await POST(
+          createRequest({
+            title: "No attachments",
+            projectId: "PROJ",
+            testplanitProjectId: 7,
+            attachments: formFiles,
+          }),
+          params
+        );
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(resolveFormAttachments).not.toHaveBeenCalled();
+        expect(data.attachmentFailures).toEqual(["log.txt", "shot.png"]);
+      });
+
+      it("rejects more files than one request may carry", async () => {
+        const response = await POST(
+          createRequest({
+            title: "Too many",
+            projectId: "PROJ",
+            attachments: Array.from({ length: 11 }, (_, index) => ({
+              url: `/api/storage/uploads/attachments/issue-form7user-1_${index}`,
+              name: `file-${index}.txt`,
+            })),
+          }),
+          params
+        );
+
+        expect(response.status).toBe(400);
+        expect(attachmentAdapter.createIssue).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -895,6 +1087,23 @@ describe("POST /api/integrations/[id]/create-issue", () => {
         expect(data.details).toContain(detail);
       }
     );
+
+    it("gives the tracker's reason without the HTTP status and JSON around it", async () => {
+      useApiKeyIntegration();
+      mockAdapter.createIssue.mockRejectedValue(
+        new Error(
+          'HTTP 400: {"message":"Description not specified","code":11,"localized":"A necessary field \\"description\\" was empty. Please recheck your inputs."}'
+        )
+      );
+
+      const response = await post();
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.details).toBe(
+        'A necessary field "description" was empty. Please recheck your inputs.'
+      );
+    });
 
     it("answers with the adapter's own typed message when building it fails", async () => {
       useApiKeyIntegration();

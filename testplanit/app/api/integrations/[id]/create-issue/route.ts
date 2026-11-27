@@ -5,7 +5,17 @@ import {
   isProjectAdminFor,
   userHasAreaPermission,
 } from "~/lib/services/areaPermission";
-import { resolveEditorMediaAttachments } from "@/lib/integrations/editorMediaAttachments";
+import {
+  discardFormUploads,
+  type FormAttachmentRef,
+  resolveEditorMediaAttachments,
+  resolveFormAttachments,
+} from "@/lib/integrations/editorMediaAttachments";
+import {
+  issueFormAttachmentPrefix,
+  MAX_ISSUE_FORM_ATTACHMENTS,
+} from "@/lib/integrations/issueAttachmentProviders";
+import { sanitizeKeyPrefix, UPLOAD_CONFIGS } from "~/lib/storageUploads";
 import {
   integrationErrorBody,
   isIntegrationApiError,
@@ -13,6 +23,7 @@ import {
   reauthorizationBody,
   responseStatusForIntegrationError,
   toIntegrationError,
+  trackerRefusalMessage,
 } from "~/lib/integrations/errors";
 import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import type { JsonValue } from "@zenstackhq/orm";
@@ -43,6 +54,12 @@ const createIssueSchema = z.object({
   labels: z.array(z.string()).optional(),
   milestone: z.string().optional(),
   customFields: z.record(z.string(), z.any()).optional(),
+  // Files the create form uploaded to TestPlanIt storage, to attach to the
+  // created issue.
+  attachments: z
+    .array(z.object({ url: z.string(), name: z.string() }))
+    .max(MAX_ISSUE_FORM_ATTACHMENTS)
+    .optional(),
   testCaseId: z.string().optional(),
   testRunId: z.string().optional(),
   sessionId: z.string().optional(),
@@ -59,6 +76,11 @@ async function handlePOST(
   // known. Surfaced on 401s so the client can prompt the user to re-authorize.
   let authUrl: string | undefined;
   let provider = "";
+  // Files the form uploaded to storage for this request. They are only in
+  // storage on their way to the tracker, so every way out of this handler
+  // removes them.
+  let formUploads: { files: FormAttachmentRef[]; keyPrefix: string } | null =
+    null;
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -74,6 +96,17 @@ async function handlePOST(
     // Parse and validate request body
     const body = await request.json();
     const validatedData = createIssueSchema.parse(body);
+    if (validatedData.attachments?.length) {
+      formUploads = {
+        files: validatedData.attachments,
+        keyPrefix: `${UPLOAD_CONFIGS.attachment.folder}/${sanitizeKeyPrefix(
+          issueFormAttachmentPrefix(
+            validatedData.testplanitProjectId ?? 0,
+            session.user.id
+          )
+        )}_`,
+      };
+    }
 
     // First try to get user's integration auth
     const userIntegrationAuth = await baseDb.userIntegrationAuth.findFirst({
@@ -448,6 +481,9 @@ async function handlePOST(
     // TestPlanIt storage — the tracker only receives the converted description
     // text. Transfer it as attachments on the created issue. Failures are
     // non-fatal: the issue itself was created and linked.
+    // Names of the form's files that did not reach the tracker, so the form
+    // can say so.
+    const attachmentFailures: string[] = [];
     if (adapter.uploadAttachment && adapter.getCapabilities().attachments) {
       const externalIssueId = createdIssue.key || createdIssue.id;
       const embeddedMedia = await resolveEditorMediaAttachments(
@@ -463,7 +499,30 @@ async function handlePOST(
           );
         }
       }
+
+      if (formUploads) {
+        const { attachments, unreadable } = await resolveFormAttachments(
+          formUploads.files,
+          formUploads.keyPrefix
+        );
+        attachmentFailures.push(...unreadable);
+        for (const { filename, buffer } of attachments) {
+          try {
+            await adapter.uploadAttachment(externalIssueId, buffer, filename);
+          } catch (error) {
+            console.error(
+              `[CREATE-ISSUE] Failed to attach "${filename}" to ${externalIssueId}:`,
+              error
+            );
+            attachmentFailures.push(filename);
+          }
+        }
+      }
+    } else if (formUploads) {
+      attachmentFailures.push(...formUploads.files.map((file) => file.name));
     }
+    const attachmentReport =
+      attachmentFailures.length > 0 ? { attachmentFailures } : {};
 
     // If linked to TestPlanit entities, create the link in our database
     if (
@@ -579,11 +638,12 @@ async function handlePOST(
 
       return NextResponse.json({
         ...createdIssue,
+        ...attachmentReport,
         internalId: issue.id,
       });
     }
 
-    return NextResponse.json(createdIssue);
+    return NextResponse.json({ ...createdIssue, ...attachmentReport });
   } catch (error) {
     console.error("Error creating issue:", error);
 
@@ -616,7 +676,11 @@ async function handlePOST(
       return NextResponse.json(
         {
           error: "Failed to create issue",
-          details: error instanceof Error ? error.message : String(error),
+          details: refusedByTracker
+            ? trackerRefusalMessage(error)
+            : error instanceof Error
+              ? error.message
+              : String(error),
         },
         {
           status: ownFailure
@@ -629,6 +693,15 @@ async function handlePOST(
     return NextResponse.json(integrationErrorBody(integrationError), {
       status: responseStatusForIntegrationError(integrationError),
     });
+  } finally {
+    if (formUploads) {
+      // Cleanup must never replace the answer already chosen above.
+      try {
+        await discardFormUploads(formUploads.files, formUploads.keyPrefix);
+      } catch (error) {
+        console.error("[CREATE-ISSUE] Failed to remove form uploads:", error);
+      }
+    }
   }
 }
 

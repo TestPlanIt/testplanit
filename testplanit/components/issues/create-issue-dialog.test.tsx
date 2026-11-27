@@ -8,6 +8,7 @@ const {
   mockUseCreateIssue,
   mockMutateAsync,
   mockUseFindManyIntegrationProject,
+  mockFetchSignedUrl,
 } = vi.hoisted(() => {
   const mockMutateAsync = vi.fn();
   return {
@@ -15,6 +16,7 @@ const {
     mockUseCreateIssue: vi.fn(),
     mockMutateAsync,
     mockUseFindManyIntegrationProject: vi.fn(),
+    mockFetchSignedUrl: vi.fn(),
   };
 });
 
@@ -45,6 +47,7 @@ vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
+    warning: vi.fn(),
   },
 }));
 
@@ -149,6 +152,25 @@ vi.mock("@/components/ui/async-combobox", () => ({
   AsyncCombobox: ({ placeholder }: any) => (
     <div data-testid="async-combobox">{placeholder}</div>
   ),
+}));
+
+vi.mock("@/components/UploadAttachments", () => ({
+  default: ({ onFileSelect, disabled }: any) => (
+    <button
+      type="button"
+      data-testid="upload-attachments"
+      disabled={disabled}
+      onClick={() =>
+        onFileSelect([new File(["log"], "run.log", { type: "text/plain" })])
+      }
+    >
+      {"choose file"}
+    </button>
+  ),
+}));
+
+vi.mock("~/utils/fetchSignedUrl", () => ({
+  fetchSignedUrl: mockFetchSignedUrl,
 }));
 
 vi.mock("@hookform/resolvers/standard-schema", () => ({
@@ -884,6 +906,41 @@ describe("CreateIssueDialog", () => {
           );
         }
       );
+
+      it("keeps Create disabled until the tracker's choices have loaded", async () => {
+        mockGitHubIntegration(79, "GITEA");
+        let releaseMetadata: (() => void) | undefined;
+        global.fetch = vi.fn((url: string) => {
+          if (url.includes("/create-metadata")) {
+            return new Promise((resolve) => {
+              releaseMetadata = () =>
+                resolve({
+                  ok: true,
+                  status: 200,
+                  json: async () => syncedMetadata,
+                });
+            });
+          }
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({ authenticated: true }),
+          });
+        }) as any;
+
+        render(<CreateIssueDialog {...defaultProps} />);
+
+        const create = screen.getByRole("button", { name: "create" });
+        await waitFor(() => {
+          expect(releaseMetadata).toBeDefined();
+        });
+        expect((create as HTMLButtonElement).disabled).toBe(true);
+
+        releaseMetadata!();
+        await waitFor(() => {
+          expect((create as HTMLButtonElement).disabled).toBe(false);
+        });
+      });
     });
   });
 
@@ -974,7 +1031,12 @@ describe("CreateIssueDialog", () => {
     });
 
     it("shows the project's custom fields with their defaults and sends the values", async () => {
-      render(<CreateIssueDialog {...defaultProps} />);
+      render(
+        <CreateIssueDialog
+          {...defaultProps}
+          defaultValues={{ description: "Steps to reproduce" }}
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByLabelText(/Build/)).toBeTruthy();
@@ -1010,6 +1072,187 @@ describe("CreateIssueDialog", () => {
         "3": "Open the page",
         "4": ["Safari"],
       });
+    });
+  });
+
+  describe("Attachments", () => {
+    let createBody: Record<string, any> | undefined;
+    let createResponse: Record<string, unknown>;
+
+    const useTracker = (provider: string) => {
+      mockUseFindManyProjectIntegration.mockReturnValue({
+        data: [
+          {
+            id: "pi-70",
+            integrationId: 70,
+            isActive: true,
+            config: { externalProjectKey: "web" },
+            integration: { id: 70, name: "Tracker", provider },
+          },
+        ],
+      });
+    };
+
+    const submit = () => {
+      const form = document.querySelector("form");
+      if (form) {
+        fireEvent.submit(form);
+      }
+    };
+
+    beforeEach(() => {
+      createBody = undefined;
+      createResponse = { id: 1, key: "#1" };
+      mockFetchSignedUrl.mockResolvedValue(
+        "/api/storage/uploads/attachments/issue-form1user-1_1_run.log"
+      );
+      global.fetch = vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes("/create-issue")) {
+          createBody = JSON.parse(String(init?.body));
+          return { ok: true, status: 200, json: async () => createResponse };
+        }
+        if (url.includes("/auth")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ authenticated: true }),
+          };
+        }
+        return { ok: true, status: 200, json: async () => ({}) };
+      }) as any;
+    });
+
+    it("uploads the chosen files and sends them with the issue", async () => {
+      const { toast } = await import("sonner");
+      useTracker("REDMINE");
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      fireEvent.click(await screen.findByTestId("upload-attachments"));
+      submit();
+
+      await waitFor(() => {
+        expect(createBody).toBeDefined();
+      });
+      expect(mockFetchSignedUrl).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "run.log" }),
+        "/api/get-attachment-url/",
+        "issue-form/1/user-1"
+      );
+      expect(createBody?.attachments).toEqual([
+        {
+          url: "/api/storage/uploads/attachments/issue-form1user-1_1_run.log",
+          name: "run.log",
+        },
+      ]);
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalled();
+      });
+      expect(toast.warning).not.toHaveBeenCalled();
+    });
+
+    it("sends no attachments when none were chosen", async () => {
+      useTracker("GITLAB");
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      await screen.findByTestId("upload-attachments");
+      submit();
+
+      await waitFor(() => {
+        expect(createBody).toBeDefined();
+      });
+      expect(createBody).not.toHaveProperty("attachments");
+      expect(mockFetchSignedUrl).not.toHaveBeenCalled();
+    });
+
+    it("says which files did not reach the tracker", async () => {
+      const { toast } = await import("sonner");
+      useTracker("GITEA");
+      createResponse = { id: 1, key: "#1", attachmentFailures: ["run.log"] };
+      const onIssueCreated = vi.fn();
+      render(
+        <CreateIssueDialog {...defaultProps} onIssueCreated={onIssueCreated} />
+      );
+
+      fireEvent.click(await screen.findByTestId("upload-attachments"));
+      submit();
+
+      await waitFor(() => {
+        expect(toast.warning).toHaveBeenCalled();
+      });
+      expect(toast.success).not.toHaveBeenCalled();
+      expect(onIssueCreated).toHaveBeenCalled();
+    });
+
+    it("does not create the issue when a file cannot be uploaded", async () => {
+      const { toast } = await import("sonner");
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      useTracker("REDMINE");
+      mockFetchSignedUrl.mockRejectedValue(new Error("storage down"));
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      fireEvent.click(await screen.findByTestId("upload-attachments"));
+      submit();
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalled();
+      });
+      expect(createBody).toBeUndefined();
+      consoleError.mockRestore();
+    });
+
+    it("asks for the description MantisBT requires before uploading or creating anything", async () => {
+      useTracker("MANTISBT");
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      fireEvent.click(await screen.findByTestId("upload-attachments"));
+      submit();
+
+      await waitFor(() => {
+        expect(
+          (screen.getByRole("button", { name: "create" }) as HTMLButtonElement)
+            .disabled
+        ).toBe(false);
+      });
+      expect(mockFetchSignedUrl).not.toHaveBeenCalled();
+      expect(createBody).toBeUndefined();
+    });
+
+    it("creates a MantisBT issue once it has a description", async () => {
+      useTracker("MANTISBT");
+      render(
+        <CreateIssueDialog
+          {...defaultProps}
+          defaultValues={{ description: "Steps to reproduce" }}
+        />
+      );
+
+      fireEvent.click(await screen.findByTestId("upload-attachments"));
+      submit();
+
+      await waitFor(() => {
+        expect(createBody).toBeDefined();
+      });
+      expect(createBody?.description).toBe("Steps to reproduce");
+      expect(createBody?.attachments).toHaveLength(1);
+    });
+
+    it.each(["GITHUB", "SIMPLE_URL"])(
+      "offers no attachments on %s",
+      async (provider) => {
+        useTracker(provider);
+        render(<CreateIssueDialog {...defaultProps} />);
+
+        await screen.findByRole("dialog");
+        expect(screen.queryByTestId("issue-attachments-field")).toBeNull();
+      }
+    );
+
+    it("offers no attachments on an issue kept in TestPlanIt", () => {
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      expect(screen.queryByTestId("issue-attachments-field")).toBeNull();
     });
   });
 });

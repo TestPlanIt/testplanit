@@ -795,7 +795,9 @@ export class RedmineAdapter extends BaseAdapter {
     }>
   > {
     try {
-      const params = new URLSearchParams({ name: query, limit: "20" });
+      // Redmine 7 answers a blank `name` with 422; leaving it out lists users.
+      const params = new URLSearchParams({ limit: "20" });
+      if (query.trim()) params.set("name", query);
       const resp = await this.makeRequest<{ users?: RedmineUser[] }>(
         `${this.baseUrl}/users.json?${params.toString()}`
       );

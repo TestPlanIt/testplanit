@@ -48,7 +48,7 @@ const {
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     milestoneIssue: {
-      useCreate: () => ({ mutateAsync: mockCreateMilestoneIssue }),
+      useUpsert: () => ({ mutateAsync: mockCreateMilestoneIssue }),
       useDelete: () => ({ mutateAsync: mockDeleteMilestoneIssue }),
     },
     issue: {
@@ -259,7 +259,7 @@ describe("MilestoneIssueManager", () => {
     expect(openSearch().trackerMilestone).toBeUndefined();
   });
 
-  it("creates a MANUAL MilestoneIssue row via milestoneIssue.useCreate when linking an existing internal issue", async () => {
+  it("upserts a MANUAL MilestoneIssue row, leaving a link sync already made untouched, when linking an existing internal issue", async () => {
     renderWithQueryClient(
       <MilestoneIssueManager
         milestoneId={42}
@@ -274,7 +274,9 @@ describe("MilestoneIssueManager", () => {
 
     await waitFor(() => {
       expect(mockCreateMilestoneIssue).toHaveBeenCalledWith({
-        data: { milestoneId: 42, issueId: 55, source: "MANUAL" },
+        where: { milestoneId_issueId: { milestoneId: 42, issueId: 55 } },
+        create: { milestoneId: 42, issueId: 55, source: "MANUAL" },
+        update: {},
       });
     });
     // Internal issue already has an Issue row — no upsert call needed.
@@ -314,7 +316,9 @@ describe("MilestoneIssueManager", () => {
       );
     });
     expect(mockCreateMilestoneIssue).toHaveBeenCalledWith({
-      data: { milestoneId: 348, issueId: 77, source: "MANUAL" },
+      where: { milestoneId_issueId: { milestoneId: 348, issueId: 77 } },
+      create: { milestoneId: 348, issueId: 77, source: "MANUAL" },
+      update: {},
     });
   });
 
@@ -345,7 +349,9 @@ describe("MilestoneIssueManager", () => {
     });
     await waitFor(() => {
       expect(mockCreateMilestoneIssue).toHaveBeenCalledWith({
-        data: { milestoneId: 42, issueId: 999, source: "MANUAL" },
+        where: { milestoneId_issueId: { milestoneId: 42, issueId: 999 } },
+        create: { milestoneId: 42, issueId: 999, source: "MANUAL" },
+        update: {},
       });
     });
   });

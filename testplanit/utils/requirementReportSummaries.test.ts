@@ -141,6 +141,24 @@ describe("summarizeRequirementDebt", () => {
     });
   });
 
+  it("counts a requirement closed as not planned or as a duplicate as closed", () => {
+    const closedForAReason = ["not_planned", "Not planned", "duplicate"].map(
+      (requirementStatus, index) => ({
+        requirementId: 10 + index,
+        requirementKey: `N${index}`,
+        requirementTitle: null,
+        requirementParentPath: "",
+        coverageStatus: "UNCOVERED",
+        requirementStatus,
+        requirementCreatedAt: null,
+      })
+    );
+
+    expect(
+      summarizeRequirementDebt(closedForAReason, now).counts.onClosed
+    ).toBe(3);
+  });
+
   it("groups debt by root and buckets it by age with boundaries landing in the higher bucket", () => {
     const s = summarizeRequirementDebt(rows, now);
     expect(s.hierarchyGroups[0]).toEqual({
