@@ -11,7 +11,7 @@ import type {
   TestStep,
 } from '@playwright/test/reporter';
 import { TestPlanItClient } from '@testplanit/api';
-import type { JUnitResultType } from '@testplanit/api';
+import type { JUnitResultType, Status } from '@testplanit/api';
 import type {
   TestPlanItReporterOptions,
   TrackedTestResult,
@@ -48,6 +48,9 @@ function stripAnsi(input: string | undefined): string | undefined {
  * single run.
  */
 export const RUN_ID_ENV_VAR = 'TESTPLANIT_RUN_ID';
+
+/** Playwright attaches no error to a `test.fail()` test that passed, so the reporter supplies one. */
+const UNEXPECTED_PASS_MESSAGE = 'Expected to fail, but passed.';
 
 /** Suite name used per execution when the run is pinned by the pipeline. */
 const EXTERNALLY_MANAGED_SUITE_NAME = '{suite} - {browser}/{platform} - {spec}';
@@ -127,6 +130,8 @@ export default class TestPlanItReporter implements Reporter {
    * duplicate run attachments.
    */
   private appliedRunOps = new Set<string>();
+  /** Result kinds already warned about for having no status in the project. */
+  private warnedNoStatus = new Set<string>();
 
   constructor(options: TestPlanItReporterOptions) {
     this.options = {
@@ -201,6 +206,7 @@ export default class TestPlanItReporter implements Reporter {
         resultsPassed: 0,
         resultsFailed: 0,
         resultsSkipped: 0,
+        expectedFailures: 0,
         attachmentsUploaded: 0,
         attachmentsFailed: 0,
         apiErrors: 0,
@@ -268,7 +274,10 @@ export default class TestPlanItReporter implements Reporter {
   }
 
   onTestEnd(test: TestCase, result: TestResult): void {
-    const status = this.normalizeStatus(result.status);
+    // test.fail() sets expectedStatus to 'failed': failing is expected, passing is a failure.
+    const expectedFailure = result.status === 'failed' && test.expectedStatus === 'failed';
+    const unexpectedPass = result.status === 'passed' && test.expectedStatus === 'failed';
+    const status = unexpectedPass ? 'failed' : this.normalizeStatus(result.status);
     const { caseIds: titleIds, cleanTitle } = this.parseCaseIds(test.title);
     // Link via annotations (recommended), tags, or the title — combined + deduped.
     const caseIds = [
@@ -318,8 +327,9 @@ export default class TestPlanItReporter implements Reporter {
       fullTitle,
       originalTitle: test.title,
       status,
+      expectedFailure,
       duration: durationMs,
-      errorMessage: stripAnsi(result.error?.message),
+      errorMessage: unexpectedPass ? UNEXPECTED_PASS_MESSAGE : stripAnsi(result.error?.message),
       stackTrace: this.options.includeStackTrace ? stripAnsi(result.error?.stack) : undefined,
       startedAt,
       finishedAt,
@@ -509,7 +519,11 @@ export default class TestPlanItReporter implements Reporter {
       const runCaseKey = `${this.state.testRunId}_${repositoryCaseId}`;
       await this.getTestRunCaseId(runCaseKey, repositoryCaseId);
 
-      const statusId = this.state.statusIds[result.status] ?? this.state.statusIds.failed!;
+      const expectedFailureStatus = result.expectedFailure ? this.state.expectedFailureStatus : undefined;
+      if (expectedFailureStatus) result.status = expectedFailureStatus.category;
+      // Without a status, TestPlanIt classifies the result by its JUnit type.
+      const statusId = expectedFailureStatus?.id ?? this.state.statusIds[result.status];
+      if (!statusId) this.warnNoStatus(result.status);
       const junitType = this.mapStatusToJUnitType(result.status);
 
       const junitResult = await this.client.createJUnitTestResult({
@@ -531,6 +545,7 @@ export default class TestPlanItReporter implements Reporter {
       this.reportedResultCount++;
       this.log('Created JUnit test result:', junitResult.id, '(type:', junitType + ')');
 
+      if (expectedFailureStatus) this.state.stats.expectedFailures++;
       if (result.status === 'failed') {
         this.state.stats.resultsFailed++;
       } else if (result.status === 'skipped') {
@@ -1224,9 +1239,54 @@ export default class TestPlanItReporter implements Reporter {
         this.log(`Status mapping: ${status} -> ${statusId}`);
       }
     }
-    if (!this.state.statusIds.passed || !this.state.statusIds.failed) {
-      throw new Error('Could not find required status mappings (passed/failed) in TestPlanIt');
+    await this.resolveExpectedFailureStatus();
+  }
+
+  private warnNoStatus(kind: TrackedTestResult['status']): void {
+    if (this.warnedNoStatus.has(kind)) return;
+    this.warnedNoStatus.add(kind);
+    console.warn(
+      `[TestPlanIt] WARNING: project ${this.options.projectId} has no status for ${kind} results that is enabled ` +
+        `and has the Automation scope. They are recorded without a status.`,
+    );
+  }
+
+  /**
+   * Resolve `expectedFailureStatus` to one of the project's statuses. Statuses
+   * are admin-defined, so how a result counts comes from the status's flags,
+   * never from its name.
+   */
+  private async resolveExpectedFailureStatus(): Promise<void> {
+    const wanted = this.options.expectedFailureStatus;
+    if (wanted === undefined || wanted === null || wanted === '') return;
+
+    const statuses = await this.client.getStatuses(this.options.projectId);
+    let match: Status | undefined;
+    if (typeof wanted === 'number') {
+      match = statuses.find((s) => s.id === wanted);
+    } else {
+      const name = wanted.trim().toLowerCase();
+      match = statuses.find((s) => s.name.toLowerCase() === name || s.systemName.toLowerCase() === name);
+      if (!match && (name === 'passed' || name === 'failed' || name === 'skipped' || name === 'blocked')) {
+        const statusId = this.state.statusIds[name];
+        match = statuses.find((s) => s.id === statusId);
+      }
     }
+
+    if (!match) {
+      console.warn(
+        `[TestPlanIt] WARNING: expectedFailureStatus ${JSON.stringify(wanted)} does not match a status of project ` +
+          `${this.options.projectId} that is enabled and has the Automation scope. ` +
+          `Expected failures will be recorded as failed.`,
+      );
+      return;
+    }
+
+    let category: 'passed' | 'failed' | 'skipped' = 'skipped';
+    if (match.isSuccess) category = 'passed';
+    else if (match.isFailure) category = 'failed';
+    this.state.expectedFailureStatus = { id: match.id, name: match.name, category };
+    this.log(`Expected failures will be recorded as "${match.name}" (${match.id})`);
   }
 
   private async createTestRun(): Promise<void> {
@@ -1518,6 +1578,11 @@ export default class TestPlanItReporter implements Reporter {
     console.log(`[TestPlanIt]     ✗ Failed:  ${stats.resultsFailed}`);
     console.log(`[TestPlanIt]     ○ Skipped: ${stats.resultsSkipped}`);
     console.log(`[TestPlanIt]     Total:     ${totalResults}`);
+    if (stats.expectedFailures > 0 && this.state.expectedFailureStatus) {
+      console.log(
+        `[TestPlanIt]     Expected failures recorded as "${this.state.expectedFailureStatus.name}": ${stats.expectedFailures}`,
+      );
+    }
 
     if (this.options.autoCreateTestCases && totalCases > 0) {
       console.log('[TestPlanIt]');

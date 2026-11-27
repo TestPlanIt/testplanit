@@ -218,6 +218,16 @@ describe('TestPlanItClient', () => {
       expect(mockFetch).toHaveBeenCalledTimes(1); // Still 1, not 2
     });
 
+    it('should request statuses in the admin-defined order', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse([]));
+
+      await client.getStatuses(1);
+
+      const url: string = mockFetch.mock.calls[0][0];
+      const query = JSON.parse(decodeURIComponent(url.split('q=')[1]));
+      expect(query.orderBy).toEqual([{ order: 'asc' }, { id: 'asc' }]);
+    });
+
     it('should clear cache when requested', async () => {
       const mockStatuses = [
         { id: 1, name: 'Passed', systemName: 'passed', isSuccess: true, isFailure: false, isCompleted: true },
@@ -275,6 +285,86 @@ describe('TestPlanItClient', () => {
 
       const statusId = await client.getStatusId(1, 'blocked');
       expect(statusId).toBeUndefined();
+    });
+
+    it('should prefer an alias that is the word over one that only contains it', async () => {
+      const mockStatuses = [
+        { id: 1, name: 'Known Bypass', systemName: 'known_bypass', aliases: 'bypass,not_passed', isSuccess: false, isFailure: true, isCompleted: true },
+        { id: 2, name: 'Green', systemName: 'green', aliases: 'ok, Passed', isSuccess: true, isFailure: false, isCompleted: true },
+      ];
+
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockStatuses));
+
+      expect(await client.getStatusId(1, 'passed')).toBe(2);
+    });
+
+    it('should still match an alias that only contains the word when no status carries it', async () => {
+      const mockStatuses = [
+        { id: 5, name: 'Green', systemName: 'green', isSuccess: true, isFailure: false, isCompleted: true },
+        { id: 6, name: 'Accepted', systemName: 'accepted', aliases: 'ci,passed_tests', isSuccess: true, isFailure: false, isCompleted: true },
+      ];
+
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockStatuses));
+
+      // Before the flags are consulted, which would pick the first success status.
+      expect(await client.getStatusId(1, 'passed')).toBe(6);
+    });
+
+    describe('when no status carries the word', () => {
+      // A project whose admin replaced every seeded status with their own.
+      const customStatuses = [
+        { id: 4, name: 'On Hold', systemName: 'on_hold', isSuccess: false, isFailure: false, isCompleted: false },
+        { id: 5, name: 'Green', systemName: 'green', isSuccess: true, isFailure: false, isCompleted: true },
+        { id: 6, name: 'Red', systemName: 'red', isSuccess: false, isFailure: true, isCompleted: true },
+        { id: 7, name: 'Not Applicable', systemName: 'not_applicable', isSuccess: false, isFailure: false, isCompleted: true },
+      ];
+
+      it('should fall back to the status flags', async () => {
+        mockFetch.mockResolvedValueOnce(zenStackResponse(customStatuses));
+
+        expect(await client.getStatusId(1, 'passed')).toBe(5);
+        expect(await client.getStatusId(1, 'failed')).toBe(6);
+        expect(await client.getStatusId(1, 'skipped')).toBe(7);
+      });
+
+      it('should not guess a blocked or pending status from flags', async () => {
+        mockFetch.mockResolvedValueOnce(zenStackResponse(customStatuses));
+
+        expect(await client.getStatusId(1, 'blocked')).toBeUndefined();
+        expect(await client.getStatusId(1, 'pending')).toBeUndefined();
+      });
+
+      it('should take the first matching status and skip one flagged both success and failure', async () => {
+        mockFetch.mockResolvedValueOnce(
+          zenStackResponse([
+            { id: 9, name: 'Mixed', systemName: 'mixed', isSuccess: true, isFailure: true, isCompleted: true },
+            ...customStatuses,
+            { id: 8, name: 'Also Green', systemName: 'also_green', isSuccess: true, isFailure: false, isCompleted: true },
+          ])
+        );
+
+        expect(await client.getStatusId(1, 'passed')).toBe(5);
+        expect(await client.getStatusId(1, 'failed')).toBe(6);
+      });
+
+      it('should return undefined when no status has the flags either', async () => {
+        mockFetch.mockResolvedValueOnce(zenStackResponse([customStatuses[0]]));
+
+        expect(await client.getStatusId(1, 'passed')).toBeUndefined();
+        expect(await client.getStatusId(1, 'failed')).toBeUndefined();
+        expect(await client.getStatusId(1, 'skipped')).toBeUndefined();
+      });
+    });
+
+    it('should prefer a status that carries the word over one that only has the flags', async () => {
+      const mockStatuses = [
+        { id: 5, name: 'Green', systemName: 'green', isSuccess: true, isFailure: false, isCompleted: true },
+        { id: 1, name: 'Passed', systemName: 'passed', isSuccess: true, isFailure: false, isCompleted: true },
+      ];
+
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockStatuses));
+
+      expect(await client.getStatusId(1, 'passed')).toBe(1);
     });
   });
 

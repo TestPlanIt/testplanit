@@ -577,6 +577,7 @@ export class TestPlanItClient {
       include: {
         color: true,
       },
+      orderBy: [{ order: "asc" }, { id: "asc" }],
     });
 
     this.statusCache.set(projectId, statuses);
@@ -584,7 +585,15 @@ export class TestPlanItClient {
   }
 
   /**
-   * Get status ID for a normalized status name
+   * Get the ID of the status a normalized result maps to in a project.
+   *
+   * A status that carries the word, as its system name, its name or one of
+   * its aliases, wins; after those, one with an alias that contains the word.
+   * Statuses are admin-defined, so when none does, the status is chosen by its
+   * flags: the first success status for `passed`, the first failure status for
+   * `failed`, and the first completed status that is neither for `skipped`.
+   * `blocked` and `pending` have no flags of their own and are matched by word
+   * only.
    */
   async getStatusId(
     projectId: number,
@@ -604,18 +613,32 @@ export class TestPlanItClient {
     const systemNames = systemNameMap[status];
 
     for (const systemName of systemNames) {
-      const found = statuses.find(
-        (s) =>
-          s.systemName.toLowerCase() === systemName ||
-          s.name.toLowerCase() === systemName ||
-          s.aliases?.toLowerCase().includes(systemName)
-      );
+      const found =
+        statuses.find(
+          (s) =>
+            s.systemName.toLowerCase() === systemName ||
+            s.name.toLowerCase() === systemName ||
+            (s.aliases ?? "")
+              .toLowerCase()
+              .split(",")
+              .some((alias) => alias.trim() === systemName)
+        ) ??
+        statuses.find((s) => s.aliases?.toLowerCase().includes(systemName));
       if (found) {
         return found.id;
       }
     }
 
-    return undefined;
+    const matchesFlags: Partial<
+      Record<NormalizedStatus, (s: Status) => boolean>
+    > = {
+      passed: (s) => s.isSuccess && !s.isFailure,
+      failed: (s) => s.isFailure && !s.isSuccess,
+      skipped: (s) => !s.isSuccess && !s.isFailure && s.isCompleted,
+    };
+    const byFlags = matchesFlags[status];
+
+    return byFlags ? statuses.find(byFlags)?.id : undefined;
   }
 
   /**
