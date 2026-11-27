@@ -1,14 +1,23 @@
+import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
+import { parseUpstreamDate } from "~/utils/calendarDate";
 import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
   CreateIssueData,
+  ExternalMilestone,
   IssueAdapterCapabilities,
+  IssueAttachmentMeta,
   IssueComment,
   IssueData,
   IssueSearchOptions,
   LinkedIssueRef,
   UpdateIssueData,
 } from "./IssueAdapter";
+
+const MAX_ATTACHMENT_DOWNLOAD_BYTES = 10 * 1024 * 1024;
+
+/** Redmine caps `limit` at 100 on list endpoints. */
+const MAX_PAGE_SIZE = 100;
 
 interface RedmineNamed {
   id: number;
@@ -43,6 +52,23 @@ interface RedmineRelation {
   relation_type: string;
 }
 
+interface RedmineAttachment {
+  id: number;
+  filename?: string;
+  filesize?: number;
+  content_type?: string;
+  created_on?: string;
+}
+
+interface RedmineVersion {
+  id: number;
+  name?: string;
+  description?: string;
+  /** open, locked or closed. */
+  status?: string;
+  due_date?: string | null;
+}
+
 interface RedmineIssue {
   id: number;
   subject?: string;
@@ -58,6 +84,7 @@ interface RedmineIssue {
   updated_on?: string;
   journals?: RedmineJournal[];
   relations?: RedmineRelation[];
+  attachments?: RedmineAttachment[];
 }
 
 interface RedmineProject {
@@ -85,6 +112,23 @@ interface RedmineCustomFieldDef {
 
 type FieldOption = { id: string; name: string };
 
+function isTiptapDoc(value: unknown): value is { type: "doc"; content: any[] } {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "type" in value &&
+    (value as { type: unknown }).type === "doc"
+  );
+}
+
+/** A TipTap doc becomes markdown; a string passes through unchanged. */
+function renderRedmineDescription(description: unknown): string {
+  if (description === undefined || description === null) return "";
+  if (isTiptapDoc(description)) return tiptapToMarkdown(description);
+  if (typeof description === "string") return description;
+  return String(description);
+}
+
 /**
  * Adapter for Redmine (https://www.redmine.org) via its REST API.
  *
@@ -95,7 +139,7 @@ type FieldOption = { id: string; name: string };
  *
  * Redmine concepts map onto the IssueAdapter contract as: trackers → issue types,
  * issue_statuses → statuses, issue_priorities → priorities, journals → comments,
- * relations → linked issues.
+ * relations → linked issues, versions → release milestones.
  */
 export class RedmineAdapter extends BaseAdapter {
   private baseUrl: string = "";
@@ -117,10 +161,10 @@ export class RedmineAdapter extends BaseAdapter {
       searchIssues: true,
       webhooks: true,
       customFields: true,
-      attachments: false,
+      attachments: true,
       linkedIssues: true,
       comments: true,
-      milestones: false,
+      milestones: { kinds: ["RELEASE"], webhooks: true },
     };
   }
 
@@ -219,8 +263,7 @@ export class RedmineAdapter extends BaseAdapter {
       subject: data.title,
     };
     if (data.description !== undefined) {
-      issue.description =
-        typeof data.description === "string" ? data.description : "";
+      issue.description = renderRedmineDescription(data.description);
     }
     const trackerId = Number(data.issueType);
     if (data.issueType && !Number.isNaN(trackerId))
@@ -267,8 +310,7 @@ export class RedmineAdapter extends BaseAdapter {
     const issue: Record<string, unknown> = {};
     if (data.title !== undefined) issue.subject = data.title;
     if (data.description !== undefined) {
-      issue.description =
-        typeof data.description === "string" ? data.description : "";
+      issue.description = renderRedmineDescription(data.description);
     }
     if (data.status !== undefined) {
       const statusId = await this.resolveStatusId(data.status);
@@ -340,6 +382,155 @@ export class RedmineAdapter extends BaseAdapter {
       console.warn("[RedmineAdapter] getLinkedIssues failed:", error);
       return [];
     }
+  }
+
+  /**
+   * Uploads the file, then attaches the returned token to the issue. Redmine
+   * refuses a file larger than its "Maximum attachment size" setting (422).
+   */
+  async uploadAttachment(
+    issueId: string,
+    file: Buffer,
+    filename: string
+  ): Promise<{ id: string; url: string }> {
+    const id = this.parseId(issueId);
+    const uploaded = await this.makeRequest<{
+      upload?: { id?: number; token?: string };
+    }>(
+      `${this.baseUrl}/uploads.json?filename=${encodeURIComponent(filename)}`,
+      {
+        method: "POST",
+        body: new Uint8Array(file),
+        headers: { "Content-Type": "application/octet-stream" },
+      }
+    );
+    const token = uploaded?.upload?.token;
+    if (!token) {
+      throw new Error("Redmine did not return an upload token");
+    }
+
+    await this.makeRequest(`${this.baseUrl}/issues/${id}.json`, {
+      method: "PUT",
+      body: JSON.stringify({ issue: { uploads: [{ token, filename }] } }),
+    });
+
+    // The token is "<attachment id>.<digest>"; older releases return no id.
+    const attachmentId = String(uploaded.upload?.id ?? token.split(".")[0]);
+    return {
+      id: attachmentId,
+      url: `${this.baseUrl}/attachments/${attachmentId}`,
+    };
+  }
+
+  async listAttachments(issueId: string): Promise<IssueAttachmentMeta[]> {
+    const id = this.parseId(issueId);
+    const resp = await this.makeRequest<{ issue: RedmineIssue }>(
+      `${this.baseUrl}/issues/${id}.json?include=attachments`
+    );
+    return (resp.issue?.attachments ?? []).map((a) => ({
+      id: String(a.id),
+      filename: a.filename || `attachment-${a.id}`,
+      mimeType: a.content_type || undefined,
+      byteSize: typeof a.filesize === "number" ? a.filesize : undefined,
+      createdAt: a.created_on ? new Date(a.created_on) : undefined,
+      contentUrl: this.attachmentDownloadUrl(String(a.id)),
+    }));
+  }
+
+  /**
+   * The download address is rebuilt from the configured instance URL, so the
+   * API key is only ever sent to that host.
+   */
+  async downloadAttachment(
+    meta: IssueAttachmentMeta
+  ): Promise<{ buffer: Buffer; mimeType?: string }> {
+    const { buffer, contentType } = await this.makeBinaryRequest(
+      this.attachmentDownloadUrl(meta.id),
+      MAX_ATTACHMENT_DOWNLOAD_BYTES
+    );
+    const mimeType =
+      contentType && contentType !== "application/octet-stream"
+        ? contentType
+        : meta.mimeType;
+    return { buffer, mimeType };
+  }
+
+  private attachmentDownloadUrl(attachmentId: string): string {
+    return `${this.baseUrl}/attachments/download/${encodeURIComponent(attachmentId)}`;
+  }
+
+  /**
+   * A project's versions as RELEASE milestones, including versions other
+   * projects share with it. A version has a due date but no start date; open
+   * and locked versions are ACTIVE, closed ones CLOSED.
+   */
+  async getExternalMilestones(options: {
+    projectKey: string;
+    kind?: "RELEASE" | "ITERATION";
+    includeClosed?: boolean;
+    pageToken?: string;
+  }): Promise<{
+    items: ExternalMilestone[];
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    if (options.kind === "ITERATION") {
+      return { items: [], hasMore: false };
+    }
+    const resp = await this.makeRequest<{ versions?: RedmineVersion[] }>(
+      `${this.baseUrl}/projects/${encodeURIComponent(options.projectKey)}/versions.json`
+    );
+    const versions = (resp.versions ?? []).filter(
+      (version) => options.includeClosed || version.status !== "closed"
+    );
+    return {
+      items: versions.map((version) => this.mapVersion(version)),
+      hasMore: false,
+    };
+  }
+
+  /** The issues targeting a version, open and closed, a page at a time. */
+  async getMilestoneIssues(
+    ref: { id: string; kind: "RELEASE" | "ITERATION" },
+    options?: { pageToken?: string; limit?: number }
+  ): Promise<{
+    issues: IssueData[];
+    total?: number;
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    if (ref.kind !== "RELEASE" || !/^\d+$/.test(ref.id)) {
+      return { issues: [], hasMore: false };
+    }
+    const offset = Math.max(0, Number(options?.pageToken) || 0);
+    const limit = Math.min(
+      MAX_PAGE_SIZE,
+      Math.max(1, options?.limit ?? MAX_PAGE_SIZE)
+    );
+    const params = new URLSearchParams({
+      fixed_version_id: ref.id,
+      status_id: "*",
+      limit: String(limit),
+      offset: String(offset),
+    });
+    const resp = await this.makeRequest<{
+      issues?: RedmineIssue[];
+      total_count?: number;
+    }>(`${this.baseUrl}/issues.json?${params.toString()}`);
+
+    const raw = resp.issues ?? [];
+    const next = offset + raw.length;
+    const hasMore =
+      raw.length > 0 &&
+      (resp.total_count != null
+        ? next < resp.total_count
+        : raw.length === limit);
+    return {
+      issues: raw.map((issue) => this.mapIssue(issue)),
+      total: resp.total_count,
+      hasMore,
+      nextPageToken: hasMore ? String(next) : undefined,
+    };
   }
 
   async getProjects(): Promise<
@@ -691,6 +882,22 @@ export class RedmineAdapter extends BaseAdapter {
     } catch {
       return null;
     }
+  }
+
+  private mapVersion(version: RedmineVersion): ExternalMilestone {
+    const status = version.status ?? "open";
+    return {
+      id: String(version.id),
+      kind: "RELEASE",
+      name: version.name ?? String(version.id),
+      description: version.description || undefined,
+      endDate: version.due_date
+        ? parseUpstreamDate(version.due_date).date
+        : undefined,
+      state: status === "closed" ? "CLOSED" : "ACTIVE",
+      rawState: status,
+      url: `${this.baseUrl}/versions/${version.id}`,
+    };
   }
 
   private mapIssue(issue: RedmineIssue): IssueData {

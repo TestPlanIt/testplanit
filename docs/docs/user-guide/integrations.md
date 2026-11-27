@@ -87,6 +87,7 @@ Connect to GitHub for issue tracking and repository integration.
 
 - Create GitHub issues from test failures
 - Link test cases to GitHub issues
+- Labels, assignees, a milestone and an issue type can be chosen on the create form; the issue types are those of the repository's owner, whether an organization or a personal account
 - Search issues by text or by exact number format (e.g., `#42`)
 - Track issue status across both platforms
 - Personal Access Token or OAuth 2.0 authentication (OAuth attributes issues to the individual user)
@@ -101,9 +102,14 @@ Connect to GitLab for issue tracking across GitLab.com and self-managed GitLab i
 
 - Create GitLab issues directly from TestPlanIt
 - Support for issue types: Issue and Incident
+- Labels, assignees and a milestone can be chosen on the create form
 - Search issues by text or by exact key format (e.g., `group/project#42`)
 - Track issue status across both platforms
+- Linked-issue support (related issues on every tier; blocking links where the GitLab tier has them)
+- Images uploaded into an issue's description or comments are offered as context for [AI test case generation](./llm-test-generation.md#images-as-generation-context)
+- Milestones, including those of the project's parent groups, sync as release [Milestones](./projects/milestones.md)
 - Personal Access Token or OAuth 2.0 authentication (OAuth attributes issues to the individual user)
+- Inbound webhook support for real-time status and milestone sync
 - Works with both GitLab.com and self-managed instances
 
 ### 4. **Gitea / Forgejo / Gogs Integration**
@@ -113,8 +119,13 @@ Connect to self-hosted Gitea, Forgejo, or Gogs instances for lightweight issue t
 **Features:**
 
 - Create issues in any repository on your instance
+- Labels, assignees and a milestone can be chosen on the create form
 - Search issues by text or by exact key format (e.g., `owner/repo#7`)
-- Personal Access Token authentication, or OAuth 2.0 on Gitea/Forgejo (OAuth attributes issues to the individual user)
+- Issue dependencies surfaced as linked issues
+- Images attached to an issue or its comments are offered as context for [AI test case generation](./llm-test-generation.md#images-as-generation-context)
+- Repository milestones sync as release [Milestones](./projects/milestones.md)
+- Personal Access Token authentication, or OAuth 2.0 on Gitea/Forgejo (OAuth attributes issues to the individual user). Creating issues needs a token with the `write:issue` scope
+- Inbound webhook support for real-time status sync
 - Configurable instance URL — works with any self-hosted deployment
 
 ### 5. **Azure DevOps Integration**
@@ -129,6 +140,7 @@ Connect to Azure DevOps Boards for work item tracking.
 - Priority field supported (maps to work item priority)
 - Custom fields of the selected work item type are offered on the create form (text, rich text, number, date, boolean, and picklist fields)
 - Images and videos embedded in the description are uploaded to the created work item as attachments
+- Iterations (sprints) sync as sprint [Milestones](./projects/milestones.md)
 - Personal Access Token authentication
 - Inbound webhook support for real-time status sync
 - Works with both Azure DevOps Services (cloud) and Azure DevOps Server (on-premises)
@@ -144,8 +156,10 @@ Connect to a self-hosted Redmine instance for issue tracking.
 - Maps Redmine **trackers** to issue types; statuses and priorities are discovered from your instance
 - Custom fields of the selected tracker and project are offered on the create form (text, long text, integer, float, date, boolean, list, key/value list, version, and user fields) and read back on every synced issue
 - Linked-issue (relations) support
+- Images attached to an issue are offered as context for [AI test case generation](./llm-test-generation.md#images-as-generation-context)
+- Versions, including those other projects share with the project, sync as release [Milestones](./projects/milestones.md)
 - API key authentication (Redmine has no OAuth)
-- Inbound webhook support for status sync via the `redmine_webhook` plugin
+- Inbound webhook support for status and version sync: Redmine's own signed webhooks on 7.0 and later, the `redmine_webhook` plugin on 6 and older
 - Configurable instance URL — works with any self-hosted Redmine deployment
 
 ### 7. **MantisBT Integration**
@@ -159,6 +173,8 @@ Connect to a self-hosted MantisBT instance for issue tracking.
 - Maps MantisBT **categories** to issue types; statuses and priorities are discovered from your instance
 - Custom fields of the linked project are offered on the create form (string, email, textarea, numeric, float, date, enumeration, list, radio, checkbox, and multi-selection list fields) and read back on every synced issue
 - Linked-issue (relationships) support
+- Images attached to an issue or its notes are offered as context for [AI test case generation](./llm-test-generation.md#images-as-generation-context)
+- Versions sync as release [Milestones](./projects/milestones.md); an issue belongs to a version it targets or was fixed in. MantisBT cannot list a version's issues, so TestPlanIt reads the whole project to find them: a project of 20,000 or more issues syncs its versions without their issues
 - API token authentication (MantisBT has no OAuth)
 - Inbound webhook support for status sync via a MantisBT webhook plugin
 - Configurable instance URL — works with any self-hosted MantisBT deployment

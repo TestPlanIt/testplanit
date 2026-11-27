@@ -84,10 +84,22 @@ Only system administrators and project administrators can import issues — the 
 
 ## Milestone Sync
 
-For milestone-capable providers (Jira and GitHub), a **Milestone Sync** card appears below **Linked External Projects** once the active integration supports it:
+For milestone-capable providers (Jira, GitHub, GitLab, Gitea/Forgejo, Redmine, MantisBT and Azure DevOps), a **Milestone Sync** card appears below **Linked External Projects** once the active integration supports it:
 
-- **Enable milestone sync** — turns sync on. Once enabled, the project's [Milestones](../milestones.md) page gains an **Import from Jira** or **Import from GitHub** button that previews the tracker's artifacts (Jira Fix Versions and Sprints, or GitHub milestones) across all of this integration's linked external projects.
-- **Kinds to sync** — choose which of the tracker's time-based artifacts to sync as Milestones: **Releases** (Jira Fix Versions, GitHub milestones) and/or **Sprints** (Jira only).
+- **Enable milestone sync** — turns sync on. Once enabled, the project's [Milestones](../milestones.md) page gains an **Import from** button named after the tracker, such as **Import from Jira**, that previews the tracker's artifacts across all of this integration's linked external projects.
+- **Kinds to sync** — choose which of the tracker's time-based artifacts to sync as Milestones: **Releases** and/or **Sprints**. The card offers only the kinds the tracker has:
+
+  | Tracker | Releases | Sprints |
+  | --- | --- | --- |
+  | Jira | Fix Versions | Sprints |
+  | GitHub | Repository milestones | |
+  | GitLab | Project milestones, and those of the project's parent groups | |
+  | Gitea / Forgejo | Repository milestones | |
+  | Redmine | Versions, including those other projects share with the project | |
+  | MantisBT | Versions | |
+  | Azure DevOps | | Iterations |
+
+  A GitLab milestone has a start and a due date; GitHub, Gitea, Redmine and MantisBT artifacts carry a single date, which becomes the milestone's due date. An Azure DevOps iteration has no state of its own: it is shown as started from its start date and completed once its finish date has passed.
 - **Automatically add new ones** (auto-track) — when on, newly created unreleased versions and active/future sprints are imported automatically as they appear, without anyone opening the Import dialog. Only artifacts created **after** auto-track is enabled are imported — anything that already existed at that moment is left alone (use the Import dialog to pick those explicitly). When auto-track is on, a checkbox list of the project's connected tracker projects appears — all are scanned by default, and unchecking one stops new milestones from being created from it (explicit imports and already-synced milestones are unaffected; changing the selection re-baselines so re-included projects don't backfill). Auto-tracked imports are attributed to the admin who enabled sync (or auto-track), not to whoever's page load happens to trigger the pass.
 
 Enabling milestone sync also provisions the **Release** and **Sprint** [milestone types](../../milestone-types.md) for the project.

@@ -19,14 +19,85 @@ const SYNTHETIC_IID = 0;
 
 interface GitLabIssuePayload {
   object_kind?: string;
+  /** On milestone events: create, close, reopen or delete. */
+  action?: string;
   object_attributes?: {
+    /** The milestone's id on a milestone event; the issue's on an issue event. */
+    id?: number;
     iid?: number;
     state?: string;
     title?: string;
+    action?: string;
   };
+  changes?: Record<string, { previous?: unknown; current?: unknown }>;
   project?: {
     path_with_namespace?: string;
   };
+}
+
+const MILESTONE_EVENT = "Milestone Hook";
+const ISSUE_EVENT = "Issue Hook";
+
+const MILESTONE_ACTIONS: Record<string, string> = {
+  create: "milestone_created",
+  close: "milestone_closed",
+  reopen: "milestone_opened",
+  delete: "milestone_deleted",
+};
+
+/** Fields GitLab stamps on every issue update, whatever was edited. */
+const BOOKKEEPING_CHANGES = new Set(["updated_at", "updated_by_id"]);
+
+/**
+ * The milestone an issue update moved the issue into or out of, when that
+ * is all the update did, and the one it left when it moved between two. An
+ * update that also edits the issue stays an issue event so the edit is
+ * applied.
+ */
+function milestoneMembershipChange(
+  parsed: GitLabIssuePayload
+): { eventType: string; milestoneId: number; leftMilestoneId?: number } | null {
+  const change = parsed.changes?.milestone_id;
+  if (!change) return null;
+  const edited = Object.keys(parsed.changes ?? {}).filter(
+    (key) => key !== "milestone_id" && !BOOKKEEPING_CHANGES.has(key)
+  );
+  if (edited.length > 0) return null;
+  if (typeof change.current === "number") {
+    return {
+      eventType: "milestone_milestoned",
+      milestoneId: change.current,
+      ...(typeof change.previous === "number"
+        ? { leftMilestoneId: change.previous }
+        : {}),
+    };
+  }
+  if (typeof change.previous === "number") {
+    return {
+      eventType: "milestone_demilestoned",
+      milestoneId: change.previous,
+    };
+  }
+  return null;
+}
+
+/**
+ * GitLab's milestone event (create, close, reopen, delete) and an issue
+ * update that only changes the issue's milestone become a
+ * `milestone_<action>` event type, the shape the receiver route dispatches
+ * to milestone sync. Everything else keeps the raw header value.
+ */
+function milestoneEventType(
+  headerEvent: string,
+  parsed: GitLabIssuePayload
+): string | null {
+  if (headerEvent === MILESTONE_EVENT) {
+    return MILESTONE_ACTIONS[parsed.action ?? ""] ?? null;
+  }
+  if (headerEvent === ISSUE_EVENT) {
+    return milestoneMembershipChange(parsed)?.eventType ?? null;
+  }
+  return null;
 }
 
 function safeEqualUtf8(a: string, b: string): boolean {
@@ -47,8 +118,8 @@ export const gitlabAdapter: WebhookAdapter = {
       return { valid: false, reason: "signature-mismatch" };
     }
 
-    const eventType = headers.get(EVENT_HEADER);
-    if (!eventType) return { valid: false, reason: "missing-required-field" };
+    const headerEvent = headers.get(EVENT_HEADER);
+    if (!headerEvent) return { valid: false, reason: "missing-required-field" };
 
     let parsed: GitLabIssuePayload;
     try {
@@ -57,8 +128,13 @@ export const gitlabAdapter: WebhookAdapter = {
       return { valid: false, reason: "unparseable-body" };
     }
 
+    const eventType = milestoneEventType(headerEvent, parsed) ?? headerEvent;
+
     const namespace = parsed.project?.path_with_namespace;
-    const iid = parsed.object_attributes?.iid;
+    const iid =
+      headerEvent === MILESTONE_EVENT
+        ? undefined
+        : parsed.object_attributes?.iid;
     const issueKey =
       typeof namespace === "string" && typeof iid === "number"
         ? `${namespace}#${iid}`
@@ -94,10 +170,35 @@ export const gitlabAdapter: WebhookAdapter = {
   },
 
   extractExternalStatus(payload, eventType) {
-    if (eventType !== "Issue Hook") return null;
+    if (eventType !== ISSUE_EVENT) return null;
     const raw = (payload as ParsedWebhookPayload).data ?? payload;
     const p = raw as GitLabIssuePayload;
     const state = p.object_attributes?.state;
     return typeof state === "string" ? state : null;
+  },
+
+  extractMilestoneEventRef(payload, eventType) {
+    if (!eventType.startsWith("milestone_")) return null;
+    const raw = (payload as ParsedWebhookPayload).data ?? payload;
+    const p = raw as GitLabIssuePayload;
+    const namespace = p.project?.path_with_namespace;
+    const membership =
+      p.object_kind === "milestone" ? null : milestoneMembershipChange(p);
+    const milestoneId =
+      p.object_kind === "milestone"
+        ? p.object_attributes?.id
+        : membership?.milestoneId;
+    if (typeof namespace !== "string" || typeof milestoneId !== "number") {
+      return null;
+    }
+    return {
+      kind: "RELEASE",
+      externalId: `${namespace}#${milestoneId}`,
+      externalProjectId: namespace,
+      merge: false,
+      ...(membership?.leftMilestoneId !== undefined
+        ? { movedFromExternalId: `${namespace}#${membership.leftMilestoneId}` }
+        : {}),
+    };
   },
 };

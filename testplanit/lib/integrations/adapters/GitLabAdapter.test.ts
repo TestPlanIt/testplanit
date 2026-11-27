@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GitLabAdapter } from "./GitLabAdapter";
 
 const mockFetch = vi.fn();
@@ -49,10 +49,10 @@ describe("GitLabAdapter", () => {
         searchIssues: true,
         webhooks: true,
         customFields: false,
-        attachments: false,
-        linkedIssues: false,
+        attachments: true,
+        linkedIssues: true,
         comments: true,
-        milestones: false,
+        milestones: { kinds: ["RELEASE"], webhooks: true },
       });
     });
   });
@@ -761,6 +761,652 @@ describe("GitLabAdapter", () => {
         "https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/issues/5/notes?sort=asc&order_by=created_at&per_page=100&page=1",
         "https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/issues/5/notes?sort=asc&order_by=created_at&per_page=100&page=2",
       ]);
+    });
+  });
+
+  describe("create and update fields", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, username: "testuser" }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "glpat-test" });
+      (adapter as any).rateLimitDelay = 0;
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGitLabIssue),
+      });
+    });
+
+    const sentBody = () =>
+      JSON.parse(mockFetch.mock.calls[mockFetch.mock.calls.length - 1][1].body);
+
+    it("renders a TipTap document description as markdown", async () => {
+      await adapter.createIssue({
+        title: "From a failed iteration",
+        projectId: "testgroup/testrepo",
+        description: {
+          type: "doc",
+          content: [
+            {
+              type: "heading",
+              attrs: { level: 2 },
+              content: [{ type: "text", text: "Steps" }],
+            },
+            {
+              type: "paragraph",
+              content: [
+                { type: "text", text: "Apply " },
+                { type: "text", marks: [{ type: "bold" }], text: "SAVE10" },
+              ],
+            },
+          ],
+        },
+      });
+
+      expect(sentBody().description).toBe("## Steps\n\nApply **SAVE10**");
+    });
+
+    it("sends labels, every assignee and the milestone on create", async () => {
+      await adapter.createIssue({
+        title: "With metadata",
+        projectId: "testgroup/testrepo",
+        labels: ["bug", "needs tests"],
+        assigneeIds: ["7", "9"],
+        milestone: "12",
+      });
+
+      expect(sentBody()).toMatchObject({
+        labels: "bug,needs tests",
+        assignee_ids: [7, 9],
+        milestone_id: 12,
+      });
+    });
+
+    it("sends a single assignee given as assigneeId", async () => {
+      await adapter.createIssue({
+        title: "One assignee",
+        projectId: "testgroup/testrepo",
+        assigneeId: "7",
+      });
+
+      const body = sentBody();
+      expect(body.assignee_ids).toEqual([7]);
+      expect(body).not.toHaveProperty("milestone_id");
+    });
+
+    it("renders a TipTap document description on update", async () => {
+      await adapter.updateIssue("testgroup/testrepo#42", {
+        description: {
+          type: "doc",
+          content: [
+            { type: "paragraph", content: [{ type: "text", text: "Edited" }] },
+          ],
+        },
+      });
+
+      expect(sentBody().description).toBe("Edited");
+    });
+
+    it("clears assignees and the milestone on update", async () => {
+      await adapter.updateIssue("testgroup/testrepo#42", {
+        assigneeIds: [],
+        milestone: "",
+      });
+
+      expect(sentBody()).toEqual({ assignee_ids: [], milestone_id: 0 });
+    });
+  });
+
+  describe("getLinkedIssues", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, username: "testuser" }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "glpat-test" });
+      (adapter as any).rateLimitDelay = 0;
+    });
+
+    it("maps each link with its type and direction", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            {
+              iid: 2,
+              link_type: "relates_to",
+              references: { full: "testgroup/testrepo#2" },
+            },
+            {
+              iid: 9,
+              link_type: "blocks",
+              references: { full: "othergroup/other#9" },
+            },
+            { iid: 4, link_type: "is_blocked_by" },
+          ]),
+      });
+
+      const result = await adapter.getLinkedIssues("testgroup/testrepo#1");
+
+      expect(mockFetch.mock.calls[1][0]).toBe(
+        "https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/issues/1/links?per_page=100&page=1"
+      );
+      expect(result).toEqual([
+        {
+          id: "2",
+          key: "testgroup/testrepo#2",
+          linkType: "relates_to",
+          direction: "outward",
+        },
+        {
+          id: "9",
+          key: "othergroup/other#9",
+          linkType: "blocks",
+          direction: "outward",
+        },
+        {
+          id: "4",
+          key: "testgroup/testrepo#4",
+          linkType: "is_blocked_by",
+          direction: "inward",
+        },
+      ]);
+    });
+
+    it("returns an empty list when the request fails", async () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve("404 Not found"),
+      });
+
+      await expect(
+        adapter.getLinkedIssues("testgroup/testrepo#1")
+      ).resolves.toEqual([]);
+      warn.mockRestore();
+    });
+  });
+
+  describe("attachments", () => {
+    const SECRET_A = "eafe48384cf5bf2b46bf661d0184fa9c";
+    const SECRET_B = "53ddf527121bba9a0db79810e3a6c4b9";
+
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, username: "testuser" }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "glpat-test" });
+      (adapter as any).rateLimitDelay = 0;
+    });
+
+    it("uploads the file to the project and appends its link to the description", async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              id: 3,
+              full_path: `/-/project/1/uploads/${SECRET_A}/shot.png`,
+              markdown: `![shot](/uploads/${SECRET_A}/shot.png)`,
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({ ...mockGitLabIssue, description: "Body" }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockGitLabIssue),
+        });
+
+      const result = await adapter.uploadAttachment(
+        "testgroup/testrepo#42",
+        Buffer.from("png-bytes"),
+        "shot.png"
+      );
+
+      const [uploadUrl, uploadInit] = mockFetch.mock.calls[1];
+      expect(uploadUrl).toBe(
+        "https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/uploads"
+      );
+      expect(uploadInit.method).toBe("POST");
+      expect(uploadInit.body).toBeInstanceOf(FormData);
+      expect(uploadInit.headers).not.toHaveProperty("Content-Type");
+
+      const [updateUrl, updateInit] = mockFetch.mock.calls[3];
+      expect(updateUrl).toBe(
+        "https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/issues/42"
+      );
+      expect(updateInit.method).toBe("PUT");
+      expect(JSON.parse(updateInit.body)).toEqual({
+        description: `Body\n\n![shot](/uploads/${SECRET_A}/shot.png)`,
+      });
+      expect(result).toEqual({
+        id: "3",
+        url: `https://gitlab.com/-/project/1/uploads/${SECRET_A}/shot.png`,
+      });
+    });
+
+    it("makes the link the whole description when the issue has none", async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              id: 4,
+              markdown: `[run.log](/uploads/${SECRET_B}/run.log)`,
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({ ...mockGitLabIssue, description: null }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockGitLabIssue),
+        });
+
+      await adapter.uploadAttachment(
+        "testgroup/testrepo#42",
+        Buffer.from("log"),
+        "run.log"
+      );
+
+      expect(JSON.parse(mockFetch.mock.calls[3][1].body)).toEqual({
+        description: `[run.log](/uploads/${SECRET_B}/run.log)`,
+      });
+    });
+
+    it("lists the uploads linked from the description and comments, once each", async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              ...mockGitLabIssue,
+              description: `Seen on checkout\n\n![shot](/uploads/${SECRET_A}/failure_screenshot.png){width=400}`,
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve([
+              {
+                id: 1,
+                system: false,
+                body: `Log attached: [run.log](/uploads/${SECRET_B}/run.log) and again ![shot](/uploads/${SECRET_A}/failure_screenshot.png)`,
+              },
+              {
+                id: 2,
+                system: true,
+                body: "changed the description /uploads/00000000000000000000000000000000/ignored.png",
+              },
+            ]),
+        });
+
+      const result = await adapter.listAttachments("testgroup/testrepo#42");
+
+      expect(result).toEqual([
+        {
+          id: `${SECRET_A}/failure_screenshot.png`,
+          filename: "failure_screenshot.png",
+          contentUrl: `https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/uploads/${SECRET_A}/failure_screenshot.png`,
+        },
+        {
+          id: `${SECRET_B}/run.log`,
+          filename: "run.log",
+          contentUrl: `https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/uploads/${SECRET_B}/run.log`,
+        },
+      ]);
+    });
+
+    it("still lists the description's uploads when comments cannot be read", async () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              ...mockGitLabIssue,
+              description: `![shot](/uploads/${SECRET_A}/shot.png)`,
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 403,
+          text: () => Promise.resolve("403 Forbidden"),
+        });
+
+      const result = await adapter.listAttachments("testgroup/testrepo#42");
+
+      expect(result.map((meta) => meta.filename)).toEqual(["shot.png"]);
+      warn.mockRestore();
+    });
+
+    it("downloads through the API route with the adapter's credentials", async () => {
+      const bytes = Buffer.from("png-bytes");
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ "content-type": "application/octet-stream" }),
+        arrayBuffer: () =>
+          Promise.resolve(
+            bytes.buffer.slice(
+              bytes.byteOffset,
+              bytes.byteOffset + bytes.byteLength
+            )
+          ),
+      });
+
+      const result = await adapter.downloadAttachment({
+        id: `${SECRET_A}/shot.png`,
+        filename: "shot.png",
+        contentUrl: `https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/uploads/${SECRET_A}/shot.png`,
+      });
+
+      const [url, init] = mockFetch.mock.calls[1];
+      expect(url).toBe(
+        `https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/uploads/${SECRET_A}/shot.png`
+      );
+      expect(init.headers).toEqual({ "PRIVATE-TOKEN": "glpat-test" });
+      expect(result.buffer.equals(bytes)).toBe(true);
+      expect(result.mimeType).toBeUndefined();
+    });
+  });
+
+  describe("milestone sync", () => {
+    const projectMilestone = {
+      id: 1,
+      iid: 1,
+      project_id: 1,
+      title: "1.0",
+      description: "First release",
+      state: "active",
+      start_date: "2020-11-01",
+      due_date: "2020-12-15",
+      web_url: "https://gitlab.com/testgroup/testrepo/-/milestones/1",
+    };
+    const groupMilestone = {
+      id: 3,
+      iid: 1,
+      group_id: 2,
+      title: "Group 2027-Q1",
+      description: null,
+      state: "active",
+      start_date: "2999-01-01",
+      due_date: "2999-03-31",
+      web_url: "https://gitlab.com/groups/testgroup/-/milestones/1",
+    };
+    const closedMilestone = {
+      id: 5,
+      iid: 2,
+      project_id: 1,
+      title: "0.9",
+      state: "closed",
+      start_date: null,
+      due_date: null,
+    };
+
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, username: "testuser" }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "glpat-test" });
+      (adapter as any).rateLimitDelay = 0;
+    });
+
+    it("maps project and group milestones, with an unstarted one as upcoming", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([projectMilestone, groupMilestone, closedMilestone]),
+      });
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "testgroup/testrepo",
+        includeClosed: true,
+      });
+
+      expect(mockFetch.mock.calls[1][0]).toBe(
+        "https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/milestones?include_ancestors=true&per_page=100&page=1"
+      );
+      expect(result).toEqual({
+        hasMore: false,
+        items: [
+          {
+            id: "testgroup/testrepo#1",
+            kind: "RELEASE",
+            name: "1.0",
+            description: "First release",
+            startDate: new Date("2020-11-01T00:00:00.000Z"),
+            endDate: new Date("2020-12-15T00:00:00.000Z"),
+            state: "ACTIVE",
+            rawState: "active",
+            url: "https://gitlab.com/testgroup/testrepo/-/milestones/1",
+          },
+          {
+            id: "testgroup/testrepo#3",
+            kind: "RELEASE",
+            name: "Group 2027-Q1",
+            description: undefined,
+            startDate: new Date("2999-01-01T00:00:00.000Z"),
+            endDate: new Date("2999-03-31T00:00:00.000Z"),
+            state: "FUTURE",
+            rawState: "upcoming",
+            url: "https://gitlab.com/groups/testgroup/-/milestones/1",
+          },
+          {
+            id: "testgroup/testrepo#5",
+            kind: "RELEASE",
+            name: "0.9",
+            description: undefined,
+            startDate: undefined,
+            endDate: undefined,
+            state: "CLOSED",
+            rawState: "closed",
+            url: undefined,
+          },
+        ],
+      });
+    });
+
+    it("asks for active milestones only unless closed ones are wanted", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([projectMilestone]),
+      });
+
+      await adapter.getExternalMilestones({ projectKey: "testgroup/testrepo" });
+
+      expect(mockFetch.mock.calls[1][0]).toContain("state=active");
+    });
+
+    it("has no iteration milestones", async () => {
+      const result = await adapter.getExternalMilestones({
+        projectKey: "testgroup/testrepo",
+        kind: "ITERATION",
+      });
+
+      expect(result).toEqual({ items: [], hasMore: false });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("pages the project's issues in a milestone by its title", async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve([projectMilestone, groupMilestone]),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve([
+              { ...mockGitLabIssue, iid: 4, state: "closed" },
+              { ...mockGitLabIssue, iid: 2 },
+            ]),
+        });
+
+      const result = await adapter.getMilestoneIssues(
+        { id: "testgroup/testrepo#3", kind: "RELEASE" },
+        { limit: 2, pageToken: "2" }
+      );
+
+      expect(mockFetch.mock.calls[2][0]).toBe(
+        "https://gitlab.com/api/v4/projects/testgroup%2Ftestrepo/issues?milestone=Group+2027-Q1&state=all&scope=all&per_page=2&page=2"
+      );
+      expect(result.issues.map((issue) => [issue.id, issue.status])).toEqual([
+        ["4", "closed"],
+        ["2", "opened"],
+      ]);
+      expect(result.hasMore).toBe(true);
+      expect(result.nextPageToken).toBe("3");
+    });
+
+    it("looks the title up once for milestones already listed", async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve([projectMilestone]),
+        })
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) });
+
+      await adapter.getExternalMilestones({
+        projectKey: "testgroup/testrepo",
+        includeClosed: true,
+      });
+      const result = await adapter.getMilestoneIssues({
+        id: "testgroup/testrepo#1",
+        kind: "RELEASE",
+      });
+
+      expect(result).toEqual({
+        issues: [],
+        hasMore: false,
+        nextPageToken: undefined,
+      });
+      const urls = mockFetch.mock.calls.map((call: any[]) => call[0] as string);
+      expect(urls.filter((url) => url.includes("/milestones?"))).toHaveLength(
+        1
+      );
+    });
+
+    it("fails for a milestone that no longer exists, so its members are not taken to have left", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([projectMilestone]),
+      });
+
+      await expect(
+        adapter.getMilestoneIssues({
+          id: "testgroup/testrepo#999",
+          kind: "RELEASE",
+        })
+      ).rejects.toThrow(
+        "GitLab milestone testgroup/testrepo#999 was not found"
+      );
+    });
+
+    it("returns no members for another kind or a reference it cannot read", async () => {
+      await expect(
+        adapter.getMilestoneIssues({
+          id: "testgroup/testrepo#1",
+          kind: "ITERATION",
+        })
+      ).resolves.toEqual({ issues: [], hasMore: false });
+      await expect(
+        adapter.getMilestoneIssues({ id: "not-a-ref", kind: "RELEASE" })
+      ).resolves.toEqual({ issues: [], hasMore: false });
+    });
+  });
+
+  describe("getCreateIssueMetadata", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, username: "testuser" }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "glpat-test" });
+      (adapter as any).rateLimitDelay = 0;
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    const respondByUrl = (responses: Record<string, unknown[] | "fail">) =>
+      mockFetch.mockImplementation((url: string) => {
+        const match = Object.keys(responses).find((part) => url.includes(part));
+        const body = match ? responses[match] : [];
+        if (body === "fail") {
+          return Promise.resolve({
+            ok: false,
+            status: 403,
+            text: () => Promise.resolve("403 Forbidden"),
+          });
+        }
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(body) });
+      });
+
+    it("returns labels by name, open milestones and active members", async () => {
+      respondByUrl({
+        "/labels?": [{ id: 1, name: "bug", color: "#d9534f" }],
+        "/milestones?": [
+          { id: 2, title: "1.1", state: "active", due_date: "2027-01-31" },
+        ],
+        "/members/all?": [
+          { id: 7, name: "Ada Lovelace", username: "ada", avatar_url: "a.png" },
+          { id: 9, username: "bot" },
+        ],
+      });
+
+      const result = await adapter.getCreateIssueMetadata("testgroup/testrepo");
+
+      expect(result).toEqual({
+        labels: [{ id: "bug", name: "bug", color: "#d9534f" }],
+        milestones: [
+          {
+            id: "2",
+            title: "1.1",
+            state: "active",
+            dueOn: "2027-01-31",
+            externalId: "testgroup/testrepo#2",
+          },
+        ],
+        assignees: [
+          { id: "7", name: "Ada Lovelace", avatarUrl: "a.png" },
+          { id: "9", name: "bot", avatarUrl: undefined },
+        ],
+        issueTypes: [],
+      });
+      const urls = mockFetch.mock.calls.map((call: any[]) => call[0] as string);
+      expect(urls.find((url) => url.includes("/milestones?"))).toContain(
+        "state=active"
+      );
+      expect(urls.find((url) => url.includes("/members/all?"))).toContain(
+        "state=active"
+      );
+    });
+
+    it("returns the lists that loaded when one fails", async () => {
+      const error = vi.spyOn(console, "error").mockImplementation(() => {});
+      respondByUrl({
+        "/labels?": "fail",
+        "/milestones?": [],
+        "/members/all?": [{ id: 7, name: "Ada Lovelace" }],
+      });
+
+      const result = await adapter.getCreateIssueMetadata("testgroup/testrepo");
+
+      expect(result.labels).toEqual([]);
+      expect(result.assignees).toEqual([
+        { id: "7", name: "Ada Lovelace", avatarUrl: undefined },
+      ]);
+      error.mockRestore();
     });
   });
 });

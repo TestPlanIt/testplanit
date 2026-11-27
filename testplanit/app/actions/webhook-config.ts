@@ -115,7 +115,7 @@ const SYNTHETIC_GITLAB_PAYLOAD = JSON.stringify({
   project: { path_with_namespace: "__synthetic__/__synthetic__" },
 });
 
-// Gitea: X-Gitea-Signature HMAC-SHA256 (same scheme as GitHub).
+// Gitea: X-Gitea-Signature HMAC-SHA256, as a bare hex digest.
 // issue.number === 0 is the non-forgeable synthetic sentinel.
 const SYNTHETIC_GITEA_PAYLOAD = JSON.stringify({
   action: "opened",
@@ -123,9 +123,10 @@ const SYNTHETIC_GITEA_PAYLOAD = JSON.stringify({
   repository: { full_name: "__synthetic__/__synthetic__" },
 });
 
-// Redmine: the redmine_webhook plugin sends no signature, so the synthetic
-// self-test posts unsigned (the URL token is the credential). issue.id === 0
-// is the non-forgeable synthetic sentinel — real Redmine issue ids are >= 1.
+// Redmine: signed the way Redmine 7.0 and later sign their own webhooks, so
+// the self-test passes whether or not the config accepts unsigned deliveries.
+// issue.id === 0 is the non-forgeable synthetic sentinel — real Redmine issue
+// ids are >= 1.
 const SYNTHETIC_REDMINE_PAYLOAD = JSON.stringify({
   payload: {
     action: "updated",
@@ -270,7 +271,10 @@ function signSyntheticRequest(
       headers["x-gitlab-event"] = request.event ?? "";
       break;
     case "GITEA":
-      headers["x-gitea-signature"] = hmacSha256(plainSecret, request.body);
+      // Gitea sends the bare hex digest, without a `sha256=` prefix.
+      headers["x-gitea-signature"] = createHmac("sha256", plainSecret)
+        .update(request.body)
+        .digest("hex");
       headers["x-gitea-event"] = request.event ?? "";
       break;
     case "BITBUCKET":
@@ -305,8 +309,13 @@ function signSyntheticRequest(
       break;
     }
     case "REDMINE":
+      headers["x-redmine-signature-256"] = hmacSha256(
+        plainSecret,
+        request.body
+      );
+      break;
     case "MANTISBT":
-      // Their webhook plugins send no signature; the URL token is the
+      // Its webhook plugins send no signature; the URL token is the
       // credential, so the synthetic request is posted unsigned.
       break;
     case "CLICKUP":
@@ -342,7 +351,8 @@ export interface CreateOrRotateResult {
 /**
  * Adapter-specific secret input for inbound webhook create/rotate.
  *
- * - JIRA / GITHUB: server mints a random HMAC secret. `secretInput` is unused.
+ * - JIRA / GITHUB / REDMINE: server mints a random HMAC secret. `secretInput`
+ *   is unused.
  * - AZURE_DEVOPS: admin types a Basic-Auth credential pair. The action
  *   JSON-encodes `{ username, password }` and stores the JSON string as the
  *   encrypted secret (overloads `secret` semantics, mirroring the Slack-URL-
@@ -366,8 +376,9 @@ export type AdapterSecretInput =
 /**
  * The plaintext an inbound adapter stores as its `secret`, and whether the
  * admin gets to see it once. HMAC providers get a minted secret they must
- * paste into the tracker; unsigned providers get an unused one (the URL is
- * the credential); Azure DevOps stores the Basic-auth pair the admin typed.
+ * paste into the tracker (for Redmine, only version 7.0 and later can use
+ * it); unsigned providers get an unused one (the URL is the credential);
+ * Azure DevOps stores the Basic-auth pair the admin typed.
  * Null means the input was unusable and the caller answers with a failure.
  */
 function mintInboundSecret(
@@ -380,12 +391,13 @@ function mintInboundSecret(
     adapterType === "GITHUB" ||
     adapterType === "GITLAB" ||
     adapterType === "GITEA" ||
-    adapterType === "BITBUCKET"
+    adapterType === "BITBUCKET" ||
+    adapterType === "REDMINE"
   ) {
     return { plaintext: generateSecret(), reveal: true };
   }
-  if (adapterType === "REDMINE" || adapterType === "MANTISBT") {
-    // These webhook plugins cannot sign payloads or send a secret; the
+  if (adapterType === "MANTISBT") {
+    // MantisBT webhook plugins cannot sign payloads or send a secret; the
     // unguessable URL token is the credential. Mint and store an (unused)
     // secret to satisfy the schema, and reveal only the URL.
     return { plaintext: generateSecret(), reveal: false };
@@ -1033,8 +1045,9 @@ export async function setWebhookActive(
 }
 
 /**
- * Lets a Jira webhook accept deliveries with no signature — for a Jira
- * Server that cannot sign. Other trackers either always sign or never do.
+ * Lets a webhook accept deliveries with no signature: for a Jira Server that
+ * cannot sign, or a Redmine 6 or older that sends through the redmine_webhook
+ * plugin. Other trackers either always sign or never do.
  */
 export async function setWebhookAllowUnsigned(
   configId: string,
@@ -1067,10 +1080,14 @@ export async function setWebhookAllowUnsigned(
         if (!(await canManageWebhookConfig(session, config.projectId))) {
           return { success: false, error: "Forbidden" };
         }
-        if (config.adapterType !== "JIRA" || config.direction !== "INBOUND") {
+        if (
+          (config.adapterType !== "JIRA" && config.adapterType !== "REDMINE") ||
+          config.direction !== "INBOUND"
+        ) {
           return {
             success: false,
-            error: "Only inbound Jira webhooks can accept unsigned deliveries",
+            error:
+              "Only inbound Jira and Redmine webhooks can accept unsigned deliveries",
           };
         }
         await baseDb.webhookConfig.update({
@@ -1122,12 +1139,12 @@ export interface SendTestWebhookResult {
  *   - GITHUB: HMAC-SHA256 over SYNTHETIC_GITHUB_PAYLOAD; `x-hub-signature-256`
  *     + `x-github-event: issues` headers.
  *   - GITLAB: raw token in `x-gitlab-token` + `x-gitlab-event: Issue Hook`.
- *   - GITEA: HMAC-SHA256 over SYNTHETIC_GITEA_PAYLOAD; `x-gitea-signature`
- *     + `x-gitea-event: issues` headers.
+ *   - GITEA: HMAC-SHA256 over SYNTHETIC_GITEA_PAYLOAD as a bare hex digest
+ *     in `x-gitea-signature`; `x-gitea-event: issues` header.
  *   - AZURE_DEVOPS: Basic Auth from JSON-decoded {username, password};
  *     `authorization: Basic <base64>` header; SYNTHETIC_ADO_PAYLOAD body.
- *   - REDMINE: unsigned (the redmine_webhook plugin cannot sign); the URL token
- *     is the credential. SYNTHETIC_REDMINE_PAYLOAD body.
+ *   - REDMINE: HMAC-SHA256 over SYNTHETIC_REDMINE_PAYLOAD;
+ *     `x-redmine-signature-256` header.
  *   - MANTISBT: unsigned (a Mantis webhook plugin cannot sign); the URL token
  *     is the credential. SYNTHETIC_MANTISBT_PAYLOAD body.
  *   - CLICKUP: HMAC-SHA256 over SYNTHETIC_CLICKUP_PAYLOAD as a bare hex

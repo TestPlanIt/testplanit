@@ -651,6 +651,47 @@ describe("ImportMilestonesDialog — multi-project picker", () => {
         expect(screen.queryByText(/confirmSelectionCount/)).toBeNull()
       );
     });
+
+    it("offers both kind chips and a combined search prompt on a tracker with releases and sprints", async () => {
+      mockFetch.mockResolvedValue(makePreviewResponse(mixedItems));
+      render(<ImportMilestonesDialog {...baseProps} />);
+
+      await screen.findByText("v1.0");
+      expect(screen.getByTestId("import-milestones-kind-all")).toBeTruthy();
+      expect(screen.getByTestId("import-milestones-kind-release")).toBeTruthy();
+      expect(screen.getByTestId("import-milestones-kind-sprint")).toBeTruthy();
+      expect(
+        screen
+          .getByTestId("import-milestones-search")
+          .getAttribute("placeholder")
+      ).toBe("searchPlaceholder");
+    });
+
+    it.each([
+      { provider: "GITLAB", placeholder: "searchPlaceholderReleases" },
+      { provider: "AZURE_DEVOPS", placeholder: "searchPlaceholderSprints" },
+    ])(
+      "shows a $provider project no kind chips and asks for its one kind in the search box",
+      async ({ provider, placeholder }) => {
+        mockFetch.mockResolvedValue(makePreviewResponse(mixedItems));
+        render(<ImportMilestonesDialog {...baseProps} provider={provider} />);
+
+        await screen.findByText("v1.0");
+        expect(screen.queryByTestId("import-milestones-kind-all")).toBeNull();
+        expect(
+          screen.queryByTestId("import-milestones-kind-release")
+        ).toBeNull();
+        expect(
+          screen.queryByTestId("import-milestones-kind-sprint")
+        ).toBeNull();
+        expect(
+          screen
+            .getByTestId("import-milestones-search")
+            .getAttribute("placeholder")
+        ).toBe(placeholder);
+        expect(mockFetch.mock.calls[0][0]).not.toContain("kind=");
+      }
+    );
   });
 
   it("labels the import button with the selected count", async () => {

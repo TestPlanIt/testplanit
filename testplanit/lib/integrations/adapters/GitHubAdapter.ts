@@ -783,7 +783,13 @@ export class GitHubAdapter extends BaseAdapter {
     projectKey: string,
     state: "open" | "closed" | "all" = "open"
   ): Promise<
-    Array<{ id: string; title: string; state: string; dueOn: string | null }>
+    Array<{
+      id: string;
+      title: string;
+      state: string;
+      dueOn: string | null;
+      externalId: string;
+    }>
   > {
     const { owner, repo } = await this.resolveRepository(projectKey);
     const milestones = await this.listAllPages<any>(
@@ -795,6 +801,7 @@ export class GitHubAdapter extends BaseAdapter {
       title: milestone.title,
       state: milestone.state,
       dueOn: milestone.due_on ?? null,
+      externalId: milestoneExternalId(owner, repo, milestone.number),
     }));
   }
 
@@ -896,11 +903,12 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   /**
-   * The issue types the repository owner's organization defines, by name
-   * — the key GitHub takes on create. A repository owned by a user, or a
-   * GitHub Enterprise Server without the feature, has none: the endpoint
-   * answers 404 and this returns an empty list. Disabled types are left
-   * out because GitHub refuses them on create.
+   * The issue types the repository's owner defines, by name — the key
+   * GitHub takes on create. The repository endpoint answers for
+   * organizations and personal accounts alike; a GitHub Enterprise Server
+   * that predates it is asked through the organization endpoint. An owner
+   * without the feature has none: both answer 404 and this returns an empty
+   * list. Disabled types are left out because GitHub refuses them on create.
    */
   async getOrgIssueTypes(projectKey: string): Promise<
     Array<{
@@ -910,17 +918,21 @@ export class GitHubAdapter extends BaseAdapter {
       color: string | null;
     }>
   > {
-    const { owner } = await this.resolveRepository(projectKey);
-    let types: any[];
-    try {
-      types = await this.makeRequest<any[]>(
-        `${this.baseUrl}/orgs/${encodeURIComponent(owner)}/issue-types`
-      );
-    } catch (error: any) {
-      if (error?.status === 404) {
-        return [];
+    const { owner, repo } = await this.resolveRepository(projectKey);
+    const endpoints = [
+      `${this.baseUrl}/repos/${owner}/${repo}/issue-types`,
+      `${this.baseUrl}/orgs/${encodeURIComponent(owner)}/issue-types`,
+    ];
+    let types: any[] = [];
+    for (const endpoint of endpoints) {
+      try {
+        types = await this.makeRequest<any[]>(endpoint);
+        break;
+      } catch (error: any) {
+        if (error?.status !== 404) {
+          throw error;
+        }
       }
-      throw error;
     }
     return (Array.isArray(types) ? types : [])
       .filter((type) => type.is_enabled !== false)

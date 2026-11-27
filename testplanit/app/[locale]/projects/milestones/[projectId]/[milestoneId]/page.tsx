@@ -95,6 +95,7 @@ import { Link, useRouter } from "~/lib/navigation";
 import {
   ColorMap,
   createColorMap,
+  isTrackerManaged,
   MilestonesWithTypes,
   sortMilestones,
 } from "~/utils/milestoneUtils";
@@ -695,7 +696,7 @@ export default function MilestoneDetailsPage() {
       // in the payload would reject the whole update.
       const updateData = buildMilestoneUpdatePayload(
         data,
-        milestone.integrationId != null
+        isTrackerManaged(milestone)
       );
 
       await updateMilestone({
@@ -928,7 +929,7 @@ export default function MilestoneDetailsPage() {
                           <FormControl>
                             <Textarea
                               {...field}
-                              disabled={milestone?.integrationId != null}
+                              disabled={isTrackerManaged(milestone)}
                               className="w-full text-xl md:text-2xl"
                             />
                           </FormControl>

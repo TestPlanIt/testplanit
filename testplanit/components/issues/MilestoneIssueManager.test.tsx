@@ -28,9 +28,13 @@ const {
   mockDeleteMilestoneIssue,
   mockUpsertIssue,
   mockFindFirstProjectIntegration,
+  mockFindFirstMilestone,
   mockSearchIssuesDialog,
 } = vi.hoisted(() => {
   return {
+    mockFindFirstMilestone: vi.fn(
+      (..._args: any[]) => ({ data: undefined }) as any
+    ),
     mockCreateMilestoneIssue: vi.fn(),
     mockDeleteMilestoneIssue: vi.fn(),
     mockUpsertIssue: vi.fn(),
@@ -53,6 +57,9 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     projectIntegration: {
       useFindFirst: (...args: any[]) =>
         mockFindFirstProjectIntegration(...args),
+    },
+    milestones: {
+      useFindFirst: (...args: any[]) => mockFindFirstMilestone(...args),
     },
   }),
 }));
@@ -152,6 +159,7 @@ vi.mock("./search-issues-dialog", () => ({
 describe("MilestoneIssueManager", () => {
   beforeEach(() => {
     mockFindFirstProjectIntegration.mockReturnValue({ data: undefined });
+    mockFindFirstMilestone.mockReturnValue({ data: undefined });
     mockCreateMilestoneIssue.mockReset();
     mockDeleteMilestoneIssue.mockReset();
     mockUpsertIssue.mockReset();
@@ -175,6 +183,80 @@ describe("MilestoneIssueManager", () => {
 
     const lastCall = mockSearchIssuesDialog.mock.calls.at(-1)?.[0];
     expect(lastCall?.includeRequirements).toBe(true);
+  });
+
+  const openSearch = () => {
+    renderWithQueryClient(
+      <MilestoneIssueManager
+        milestoneId={42}
+        projectId={7}
+        integrationId={3}
+        linkedIssueIds={[]}
+      />
+    );
+    fireEvent.click(screen.getByTestId("member-issues-add-button"));
+    return mockSearchIssuesDialog.mock.calls.at(-1)![0];
+  };
+
+  it("hands the search dialog the tracker milestone a synced milestone came from", () => {
+    mockFindFirstMilestone.mockReturnValue({
+      data: {
+        name: "1.0",
+        integrationId: 3,
+        externalId: "group/app#1",
+        externalKind: "RELEASE",
+        detachedAt: null,
+        isCompleted: false,
+      },
+    });
+
+    expect(openSearch().trackerMilestone).toEqual({
+      integrationId: 3,
+      externalId: "group/app#1",
+      kind: "RELEASE",
+      name: "1.0",
+    });
+    expect(mockFindFirstMilestone.mock.calls[0][0].where).toEqual({ id: 42 });
+  });
+
+  it.each([
+    {
+      name: "a milestone created in TestPlanIt",
+      data: {
+        name: "Local",
+        integrationId: null,
+        externalId: null,
+        externalKind: null,
+        detachedAt: null,
+        isCompleted: false,
+      },
+    },
+    {
+      name: "a milestone converted to local",
+      data: {
+        name: "1.0",
+        integrationId: 3,
+        externalId: "group/app#1",
+        externalKind: "RELEASE",
+        detachedAt: new Date("2026-11-01T00:00:00.000Z"),
+        isCompleted: false,
+      },
+    },
+    {
+      name: "a completed milestone",
+      data: {
+        name: "1.0",
+        integrationId: 3,
+        externalId: "group/app#1",
+        externalKind: "RELEASE",
+        detachedAt: null,
+        isCompleted: true,
+      },
+    },
+  ])("hands the search dialog no tracker milestone for $name", ({ data }) => {
+    mockFindFirstMilestone.mockReturnValue({ data });
+
+    expect(openSearch().trackerMilestone).toBeUndefined();
   });
 
   it("creates a MANUAL MilestoneIssue row via milestoneIssue.useCreate when linking an existing internal issue", async () => {

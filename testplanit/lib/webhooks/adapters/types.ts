@@ -59,6 +59,9 @@ export type MilestoneEventRef =
       merge: boolean;
       /** The merge target's external version id, when `merge` is true. */
       mergedToExternalId?: string;
+      /** The milestone an issue left, when one event moved it from that
+       *  milestone into `externalId`. */
+      movedFromExternalId?: string;
     }
   | {
       kind: "ITERATION";

@@ -18,11 +18,11 @@ The page shows milestones as cards, grouped under two tabs:
 * **Active:** Milestones that haven't been marked complete.
 * **Completed:** Milestones that have been marked complete.
 
-A **kind filter** dropdown above the tabs narrows both tabs to a single milestone kind. It lists **All milestones**, then an entry for each kind actually present: **Synced releases** and **Synced sprints** for milestones synced from a tracker (Jira Fix Versions and Sprints, GitHub milestones), plus one entry per local milestone type in use — each labeled with the type's name and shown with its own type icon, rather than grouped into a single "Local" bucket. The dropdown appears only when the project has more than one kind to choose between.
+A **kind filter** dropdown above the tabs narrows both tabs to a single milestone kind. It lists **All milestones**, then an entry for each kind actually present: **Synced releases** and **Synced sprints** for milestones synced from a tracker (such as Jira Fix Versions and Sprints, or GitHub milestones), plus one entry per local milestone type in use — each labeled with the type's name and shown with its own type icon, rather than grouped into a single "Local" bucket. The dropdown appears only when the project has more than one kind to choose between.
 
 Within each tab, child milestones are nested and indented beneath their parent. Each card shows the milestone's name, type icon, status badge and date range, its note where one is set, and a [summary bar](./milestone-details.md#summary) of its test run and session results. The summary bar carries the totals, including the total estimate and elapsed time.
 
-A milestone synced from an external tracker (Jira or GitHub) shows a [source badge](./milestone-details.md#source-badge) next to its name — for example **Jira · Sprint · active · Website**.
+A milestone synced from an external tracker shows a [source badge](./milestone-details.md#source-badge) next to its name — for example **Jira · Sprint · active · Website**.
 
 When a milestone has related issues, its summary bar carries the same paired count chips documented on the [Milestone Details](./milestone-details.md#summary) page — a **Target** icon for issues in scope and a **Bug** icon for issues found in testing. On this page, clicking a chip opens a popover listing its issues instead of navigating to the details page.
 
@@ -38,9 +38,9 @@ Adding milestones requires the `Add/Edit` permission for the `Milestones` applic
 
 ## Import from the tracker
 
-When a milestone-capable integration (Jira or GitHub) has milestone sync enabled for at least one of the project's linked external projects, an **Import from Jira** or **Import from GitHub** button appears next to **Add Milestone**.
+When a [milestone-capable integration](./settings/integrations.md#milestone-sync) has milestone sync enabled for at least one of the project's linked external projects, an **Import from** button named after the tracker, such as **Import from Jira**, appears next to **Add Milestone**.
 
-The dialog previews the tracker's artifacts — Jira Fix Versions and Sprints, or GitHub milestones — across **all** of the project's mappings on that integration, with:
+The dialog previews the tracker's artifacts — its versions, milestones or sprints — across **all** of the project's mappings on that integration, with:
 
 * **Show closed:** A toggle (off by default) that includes closed or released artifacts in the preview.
 * **Search and per-Jira-project filter chips:** Narrow the preview when the project has more than one Jira mapping.

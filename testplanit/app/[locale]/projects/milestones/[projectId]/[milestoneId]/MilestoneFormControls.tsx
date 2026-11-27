@@ -44,6 +44,7 @@ import {
   createColorMap,
   getStatus,
   hasCalendarDates,
+  isTrackerManaged,
   getStatusStyle,
 } from "~/utils/milestoneUtils";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
@@ -175,7 +176,7 @@ export default function MilestoneFormControls({
   // locked once a milestone is synced from Jira; automaticCompletion is
   // force-disabled since the tracker — not the local auto-complete worker —
   // owns isCompleted for a synced milestone (see forecastWorker LOCK-04).
-  const isSynced = milestone?.integrationId != null;
+  const isSynced = isTrackerManaged(milestone);
 
   // Tracker-provided deep link to the source version/sprint.
   const jiraUrl = safeExternalUrl(milestone?.externalUrl);

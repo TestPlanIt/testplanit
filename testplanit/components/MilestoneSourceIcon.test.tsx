@@ -21,7 +21,25 @@ describe("MilestoneSourceIcon", () => {
     );
 
     const icon = screen.getByTestId("milestone-source-icon");
-    expect(icon).toHaveAttribute("title", "providerJira · kindSprint");
+    expect(icon).toHaveAttribute("title", "Jira · kindSprint");
+  });
+
+  it("names the tracker the milestone is synced from", () => {
+    render(
+      <MilestoneSourceIcon
+        milestone={{
+          integrationId: 42,
+          externalKind: "RELEASE",
+          detachedAt: null,
+          integration: { provider: "GITLAB" },
+        }}
+      />
+    );
+
+    expect(screen.getByTestId("milestone-source-icon")).toHaveAttribute(
+      "title",
+      "GitLab · kindRelease"
+    );
   });
 
   it("renders nothing for a local milestone (no integrationId)", () => {

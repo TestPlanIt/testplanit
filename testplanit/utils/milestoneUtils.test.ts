@@ -14,6 +14,7 @@ import {
   getStatus,
   getStatusStyle,
   hasCalendarDates,
+  isTrackerManaged,
   MilestonesWithTypes,
   sortMilestones,
   sortMilestoneTree,
@@ -572,6 +573,37 @@ describe("Date-Dependent Milestone Utils", () => {
         completedAt: endedThisMorning,
       };
       expect(getCondition(release)).toBe("started");
+    });
+  });
+
+  describe("isTrackerManaged", () => {
+    it("holds for a milestone that is still synced from a tracker", () => {
+      expect(isTrackerManaged({ integrationId: 5, detachedAt: null })).toBe(
+        true
+      );
+      expect(isTrackerManaged({ integrationId: 5 })).toBe(true);
+    });
+
+    it("lapses once the milestone is converted to local", () => {
+      expect(
+        isTrackerManaged({
+          integrationId: 5,
+          detachedAt: new Date("2026-11-27T17:20:21.000Z"),
+        })
+      ).toBe(false);
+      expect(
+        isTrackerManaged({
+          integrationId: 5,
+          detachedAt: "2026-11-27T17:20:21.000Z",
+        })
+      ).toBe(false);
+    });
+
+    it("never holds for a milestone created in TestPlanIt, or none at all", () => {
+      expect(isTrackerManaged({ integrationId: null })).toBe(false);
+      expect(isTrackerManaged({})).toBe(false);
+      expect(isTrackerManaged(null)).toBe(false);
+      expect(isTrackerManaged(undefined)).toBe(false);
     });
   });
 

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useEffect } from "react";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import {
@@ -49,7 +49,13 @@ beforeAll(() => {
 
 const formRef: { current: UseFormReturn<any> | null } = { current: null };
 
-function Harness({ field }: { field: any }) {
+function Harness({
+  field,
+  knownSprint,
+}: {
+  field: any;
+  knownSprint?: { id: string; name: string };
+}) {
   const form = useForm<any>({ defaultValues: {} });
   useEffect(() => {
     formRef.current = form;
@@ -61,18 +67,19 @@ function Harness({ field }: { field: any }) {
         form={form}
         integrationId={7}
         projectKey="PROJ"
+        knownSprint={knownSprint}
       />
     </Form>
   );
 }
 
-function renderField(field: any) {
+function renderField(field: any, knownSprint?: { id: string; name: string }) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <Harness field={field} />
+      <Harness field={field} knownSprint={knownSprint} />
     </QueryClientProvider>
   );
 }
@@ -120,6 +127,34 @@ describe("DynamicJiraField", () => {
       "/api/integrations/7/sprints?projectKey=PROJ"
     );
     expect(formRef.current!.getValues("customfield_10101")).toBe("12");
+  });
+
+  it("shows a sprint set from outside the picker by the name the form knows it by", async () => {
+    renderField(
+      {
+        key: "customfield_10101",
+        name: "Sprint",
+        required: false,
+        schema: {
+          type: "array",
+          items: "string",
+          custom: "com.pyxis.greenhopper.jira:gh-sprint",
+        },
+      },
+      { id: "42", name: "Sprint 42" }
+    );
+    expect(
+      screen.getByRole("combobox", { name: "Sprint" }).textContent
+    ).not.toContain("Sprint 42");
+
+    act(() => {
+      formRef.current!.reset({ customfield_10101: "42" });
+    });
+
+    expect(
+      screen.getByRole("combobox", { name: "Sprint" }).textContent
+    ).toContain("Sprint 42");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("offers a user search for a multi-user field and stores the chosen user ids", async () => {

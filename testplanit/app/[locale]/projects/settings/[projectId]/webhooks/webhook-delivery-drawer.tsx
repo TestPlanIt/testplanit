@@ -29,41 +29,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { replayWebhookDelivery } from "~/app/actions/webhook-config";
-
-const EVENT_LABEL_KEYS: Record<string, string> = {
-  "test_run.created": "events.testRunCreated",
-  "test_run.state_changed": "events.testRunStateChanged",
-  "test_run.completed": "events.testRunCompleted",
-  "test_run.duplicated": "events.testRunDuplicated",
-  "test_run.result_added": "events.testRunResultAdded",
-  "session.created": "events.sessionCreated",
-  "session.state_changed": "events.sessionStateChanged",
-  "session.completed": "events.sessionCompleted",
-  "session.duplicated": "events.sessionDuplicated",
-  "session.result_added": "events.sessionResultAdded",
-  "issue.created": "events.issueCreated",
-  "issue.updated": "events.issueUpdated",
-  "issue.deleted": "events.issueDeleted",
-  "case.created": "events.caseCreated",
-  "case.updated": "events.caseUpdated",
-  "case.deleted": "events.caseDeleted",
-  "jira:issue_created": "events.jiraIssueCreated",
-  "jira:issue_updated": "events.jiraIssueUpdated",
-  "jira:issue_deleted": "events.jiraIssueDeleted",
-  issues: "events.githubIssues",
-  pull_request: "events.githubPullRequest",
-  push: "events.githubPush",
-  issue_comment: "events.githubIssueComment",
-  "workitem.created": "events.adoWorkitemCreated",
-  "workitem.updated": "events.adoWorkitemUpdated",
-  "workitem.deleted": "events.adoWorkitemDeleted",
-  "webhook.test": "events.webhookTest",
-};
-
-function eventLabelKey(eventType: string | null | undefined): string | null {
-  if (!eventType) return null;
-  return EVENT_LABEL_KEYS[eventType] ?? null;
-}
+import { eventLabelKey } from "./webhook-event-labels";
 
 interface WebhookDeliveryDrawerProps {
   deliveryId: string | null;
@@ -186,7 +152,10 @@ export function WebhookDeliveryDrawer({
                       data-testid="webhook-drawer-event-type"
                     >
                       {(() => {
-                        const k = eventLabelKey(delivery.eventType);
+                        const k = eventLabelKey(
+                          delivery.eventType,
+                          delivery.adapterType
+                        );
                         return k
                           ? (t as unknown as (key: string) => string)(k)
                           : (delivery.eventType ?? "—");

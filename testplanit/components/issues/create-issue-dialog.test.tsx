@@ -601,7 +601,10 @@ describe("CreateIssueDialog", () => {
 
     // The dialog keeps what a repository offers in a module-level cache keyed
     // by integration and project, so each test gets its own integration id.
-    const mockGitHubIntegration = (integrationId: number) => {
+    const mockGitHubIntegration = (
+      integrationId: number,
+      provider = "GITHUB"
+    ) => {
       mockUseFindManyProjectIntegration.mockReturnValue({
         data: [
           {
@@ -611,8 +614,8 @@ describe("CreateIssueDialog", () => {
             config: {},
             integration: {
               id: integrationId,
-              name: "My GitHub",
-              provider: "GITHUB",
+              name: "My tracker",
+              provider,
             },
           },
         ],
@@ -715,6 +718,172 @@ describe("CreateIssueDialog", () => {
       expect(createBody).not.toHaveProperty("labels");
       expect(createBody).not.toHaveProperty("assigneeIds");
       expect(createBody).not.toHaveProperty("milestone");
+    });
+
+    it("states GitHub's limit on assignees", async () => {
+      mockGitHubIntegration(55);
+      mockGitHubFetch(metadata);
+
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("tracker-assignees")).toBeTruthy();
+      });
+      expect(screen.getByTestId("tracker-assignees").textContent).toContain(
+        "assigneesLimit"
+      );
+    });
+
+    it.each(["GITLAB", "GITEA"])(
+      "loads labels, assignees and milestones for %s, with no assignee limit",
+      async (provider) => {
+        const integrationId = provider === "GITLAB" ? 56 : 57;
+        mockGitHubIntegration(integrationId, provider);
+        mockGitHubFetch({ ...metadata, issueTypes: [] });
+
+        render(<CreateIssueDialog {...defaultProps} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId("tracker-labels")).toBeTruthy();
+        });
+        expect(metadataRequests[0]).toContain(
+          `/api/integrations/${integrationId}/create-metadata?projectKey=testrepo`
+        );
+        expect(screen.getByTestId("select-item-4")).toBeTruthy();
+        expect(
+          screen.getByTestId("tracker-assignees").textContent
+        ).not.toContain("assigneesLimit");
+      }
+    );
+
+    describe("opened from a synced milestone", () => {
+      const syncedMetadata = {
+        ...metadata,
+        milestones: [
+          {
+            id: "4",
+            title: "v1.2",
+            state: "open",
+            dueOn: null,
+            externalId: "testowner/testrepo#4",
+          },
+          {
+            id: "5",
+            title: "v1.3",
+            state: "open",
+            dueOn: null,
+            externalId: "testowner/testrepo#5",
+          },
+        ],
+        issueTypes: [],
+      };
+
+      const submitWithTitle = async () => {
+        fireEvent.change(screen.getAllByRole("textbox")[0], {
+          target: { value: "Broken login" },
+        });
+        fireEvent.submit(document.querySelector("form")!);
+        await waitFor(() => {
+          expect(createBody).toBeDefined();
+        });
+      };
+
+      it("starts with that milestone chosen and sends it", async () => {
+        mockGitHubIntegration(71, "GITLAB");
+        mockGitHubFetch(syncedMetadata);
+
+        render(
+          <CreateIssueDialog
+            {...defaultProps}
+            trackerMilestone={{
+              integrationId: 71,
+              externalId: "testowner/testrepo#5",
+              kind: "RELEASE",
+              name: "v1.3",
+            }}
+          />
+        );
+
+        await waitFor(() => {
+          expect(screen.getByTestId("select").getAttribute("data-value")).toBe(
+            "5"
+          );
+        });
+        await submitWithTitle();
+        expect(createBody).toHaveProperty("milestone", "5");
+      });
+
+      it("lets the user clear the milestone it started with", async () => {
+        mockGitHubIntegration(72, "GITLAB");
+        mockGitHubFetch(syncedMetadata);
+
+        render(
+          <CreateIssueDialog
+            {...defaultProps}
+            trackerMilestone={{
+              integrationId: 72,
+              externalId: "testowner/testrepo#5",
+              kind: "RELEASE",
+              name: "v1.3",
+            }}
+          />
+        );
+
+        await waitFor(() => {
+          expect(screen.getByTestId("select").getAttribute("data-value")).toBe(
+            "5"
+          );
+        });
+        fireEvent.click(screen.getByTestId("select-item-__none__"));
+        expect(screen.getByTestId("select").getAttribute("data-value")).toBe(
+          "__none__"
+        );
+        await submitWithTitle();
+        expect(createBody).not.toHaveProperty("milestone");
+      });
+
+      it.each([
+        {
+          name: "the tracker no longer offers it",
+          integrationId: 73,
+          trackerMilestone: {
+            integrationId: 73,
+            externalId: "testowner/testrepo#9",
+            kind: "RELEASE" as const,
+            name: "v0.9",
+          },
+        },
+        {
+          name: "it was synced from another integration",
+          integrationId: 74,
+          trackerMilestone: {
+            integrationId: 9,
+            externalId: "testowner/testrepo#5",
+            kind: "RELEASE" as const,
+            name: "v1.3",
+          },
+        },
+      ])(
+        "starts with no milestone when $name",
+        async ({ integrationId, trackerMilestone }) => {
+          mockGitHubIntegration(integrationId, "GITLAB");
+          mockGitHubFetch(syncedMetadata);
+
+          render(
+            <CreateIssueDialog
+              {...defaultProps}
+              trackerMilestone={trackerMilestone}
+            />
+          );
+
+          await waitFor(() => {
+            expect(screen.getByTestId("select-item-5")).toBeTruthy();
+          });
+          expect(screen.getByTestId("select").getAttribute("data-value")).toBe(
+            "__none__"
+          );
+        }
+      );
     });
   });
 

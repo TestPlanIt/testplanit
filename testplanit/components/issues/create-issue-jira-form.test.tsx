@@ -498,6 +498,124 @@ describe("CreateIssueJiraForm", () => {
     });
   });
 
+  describe("opened from a synced milestone", () => {
+    const fieldsResponse = {
+      fields: [
+        {
+          key: "summary",
+          name: "Summary",
+          required: true,
+          schema: { type: "string" },
+        },
+        {
+          key: "fixVersions",
+          name: "Fix versions",
+          required: false,
+          schema: { type: "array", items: "version", system: "fixVersions" },
+          allowedValues: [
+            { id: "10000", name: "1.0" },
+            { id: "10001", name: "1.1" },
+          ],
+        },
+        {
+          key: "customfield_10101",
+          name: "Sprint",
+          required: false,
+          schema: {
+            type: "array",
+            items: "string",
+            custom: "com.pyxis.greenhopper.jira:gh-sprint",
+          },
+        },
+      ],
+    };
+
+    const createdCustomFields = async (trackerMilestone: any) => {
+      const baseFetch = global.fetch as any;
+      global.fetch = vi.fn().mockImplementation((url: string, init?: any) => {
+        if (url.includes("issue-type-fields")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => fieldsResponse,
+          });
+        }
+        if (url.includes("create-issue")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({ key: "ABT-1" }),
+          });
+        }
+        return baseFetch(url, init);
+      });
+
+      render(
+        <CreateIssueJiraForm
+          {...defaultProps}
+          trackerMilestone={trackerMilestone}
+        />
+      );
+
+      await screen.findByTestId("dynamic-field-fixVersions");
+      fireEvent.click(screen.getByRole("button", { name: "create" }));
+
+      let customFields: unknown;
+      await waitFor(() => {
+        const createCall = (global.fetch as any).mock.calls.find(
+          (args: any[]) => (args[0] as string).includes("create-issue")
+        );
+        expect(createCall).toBeTruthy();
+        customFields = JSON.parse(createCall[1].body).customFields;
+      });
+      return customFields;
+    };
+
+    it("starts a release milestone's issue in that Fix version", async () => {
+      expect(
+        await createdCustomFields({
+          integrationId: 1,
+          externalId: "10001",
+          kind: "RELEASE",
+          name: "1.1",
+        })
+      ).toEqual({ fixVersions: [{ id: "10001" }] });
+    });
+
+    it("starts a sprint milestone's issue in that sprint", async () => {
+      expect(
+        await createdCustomFields({
+          integrationId: 1,
+          externalId: "42",
+          kind: "ITERATION",
+          name: "Sprint 42",
+        })
+      ).toEqual({ customfield_10101: 42 });
+    });
+
+    it("fills nothing for a release the project does not offer", async () => {
+      expect(
+        await createdCustomFields({
+          integrationId: 1,
+          externalId: "99999",
+          kind: "RELEASE",
+          name: "Elsewhere",
+        })
+      ).toEqual({});
+    });
+
+    it("fills nothing for a milestone synced from another integration", async () => {
+      expect(
+        await createdCustomFields({
+          integrationId: 2,
+          externalId: "10001",
+          kind: "RELEASE",
+          name: "1.1",
+        })
+      ).toEqual({});
+    });
+  });
+
   it("sends a multi-user field as a list of user references", async () => {
     const baseFetch = global.fetch as any;
     global.fetch = vi.fn().mockImplementation((url: string, init?: any) => {

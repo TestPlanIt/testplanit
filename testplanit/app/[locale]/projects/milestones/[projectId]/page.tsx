@@ -114,8 +114,10 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   const isImportPolling = pendingImportIds !== null;
   const isMilestonePolling = isImportPolling;
   const importPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const importQueuedCountRef = useRef(0);
   const startImportPolling = React.useCallback(
     (externalIds: string[]) => {
+      importQueuedCountRef.current = externalIds.length;
       setPendingImportIds(new Set(externalIds));
       if (importPollTimerRef.current) clearTimeout(importPollTimerRef.current);
       importPollTimerRef.current = setTimeout(() => {
@@ -282,7 +284,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
       setPendingImportIds(null);
       toast.success(
         t("milestones.import.completed", {
-          count: pendingImportIds.size,
+          count: importQueuedCountRef.current,
           provider: importProviderName,
         })
       );

@@ -2,6 +2,7 @@ import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
   CreateIssueData,
+  ExternalMilestone,
   IssueAdapterCapabilities,
   IssueAttachmentMeta,
   IssueComment,
@@ -24,6 +25,60 @@ const MAX_ATTACHMENT_DOWNLOAD_BYTES = 10 * 1024 * 1024;
  * one page hydrates via the follow-up workitems fetch below.
  */
 const WIQL_MAX_IDS = 20000;
+
+/** How deep the project's iteration tree is read (release > sprint > ...). */
+const ITERATION_TREE_DEPTH = 10;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** An iteration found in a project's tree, with the path work items carry. */
+interface IterationNode {
+  id: number;
+  name: string;
+  iterationPath: string;
+  startDate?: Date;
+  finishDate?: Date;
+}
+
+/** `project#id`, the external id milestone sync stores for an iteration. */
+function iterationExternalId(project: string, id: number | string) {
+  return `${project}#${id}`;
+}
+
+function parseIterationRef(
+  id: string
+): { project: string; nodeId: number } | null {
+  const match = id.match(/^(.+)#(\d+)$/);
+  return match ? { project: match[1], nodeId: Number(match[2]) } : null;
+}
+
+function parseIterationDate(value: unknown): Date | undefined {
+  if (typeof value !== "string" || value === "") return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+/**
+ * Azure DevOps gives an iteration dates, not a state. As on its own sprint
+ * pages, it is past once its last day is over, current between its dates
+ * and future otherwise, including while it has no dates.
+ */
+function iterationState(node: IterationNode): ExternalMilestone["state"] {
+  const now = Date.now();
+  if (node.finishDate && now >= node.finishDate.getTime() + DAY_MS) {
+    return "CLOSED";
+  }
+  if (node.startDate && now >= node.startDate.getTime()) {
+    return "ACTIVE";
+  }
+  return "FUTURE";
+}
+
+const ITERATION_RAW_STATE: Record<ExternalMilestone["state"], string> = {
+  CLOSED: "past",
+  ACTIVE: "current",
+  FUTURE: "future",
+};
 
 /**
  * Give a form value the JSON type its field takes: the create form sends
@@ -76,7 +131,7 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       attachments: true,
       linkedIssues: true,
       comments: true,
-      milestones: false,
+      milestones: { kinds: ["ITERATION"], webhooks: false },
     };
   }
 
@@ -807,6 +862,146 @@ export class AzureDevOpsAdapter extends BaseAdapter {
         ? contentType
         : meta.mimeType;
     return { buffer, mimeType };
+  }
+
+  private iterationNodes = new Map<string, IterationNode>();
+
+  /**
+   * Every iteration in the project's tree, flattened. A work item's
+   * iteration path is the project name followed by the node names below the
+   * tree's root.
+   */
+  private async loadIterations(project: string): Promise<IterationNode[]> {
+    const root = await this.makeRequest<any>(
+      `${this.organizationUrl}/${encodeURIComponent(project)}/_apis/wit/classificationnodes/Iterations?$depth=${ITERATION_TREE_DEPTH}&api-version=${this.apiVersion}`
+    );
+    const nodes: IterationNode[] = [];
+    const walk = (children: unknown, ancestors: string[]) => {
+      if (!Array.isArray(children)) return;
+      for (const child of children) {
+        if (typeof child?.id !== "number" || typeof child?.name !== "string") {
+          continue;
+        }
+        const names = [...ancestors, child.name];
+        nodes.push({
+          id: child.id,
+          name: names.join("\\"),
+          iterationPath: [project, ...names].join("\\"),
+          startDate: parseIterationDate(child.attributes?.startDate),
+          finishDate: parseIterationDate(child.attributes?.finishDate),
+        });
+        walk(child.children, names);
+      }
+    };
+    walk(root?.children, []);
+    for (const node of nodes) {
+      this.iterationNodes.set(iterationExternalId(project, node.id), node);
+    }
+    return nodes;
+  }
+
+  /**
+   * The project's iterations (sprints) in the shape milestone sync
+   * consumes. The external id is `project#<node id>`: enough for
+   * `getMilestoneIssues` to find the project again, and unique across the
+   * integration. Azure Boards has no release artifact.
+   */
+  async getExternalMilestones(options: {
+    projectKey: string;
+    kind?: "RELEASE" | "ITERATION";
+    includeClosed?: boolean;
+    pageToken?: string;
+  }): Promise<{
+    items: ExternalMilestone[];
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    if (options.kind === "RELEASE") {
+      return { items: [], hasMore: false };
+    }
+    const project = options.projectKey || this.project;
+    if (!project) {
+      throw new Error("Azure DevOps project not configured");
+    }
+    const nodes = await this.loadIterations(project);
+    const items = nodes.map((node): ExternalMilestone => {
+      const state = iterationState(node);
+      return {
+        id: iterationExternalId(project, node.id),
+        kind: "ITERATION",
+        name: node.name,
+        startDate: node.startDate,
+        endDate: node.finishDate,
+        state,
+        rawState: ITERATION_RAW_STATE[state],
+      };
+    });
+    return {
+      items: options.includeClosed
+        ? items
+        : items.filter((item) => item.state !== "CLOSED"),
+      hasMore: false,
+    };
+  }
+
+  /**
+   * The work items assigned to an iteration itself, a page at a time; items
+   * in an iteration nested under it belong to that one. An iteration that
+   * no longer exists is an error, never an empty list, which would read as
+   * every member having left.
+   */
+  async getMilestoneIssues(
+    ref: { id: string; kind: "RELEASE" | "ITERATION" },
+    options?: { pageToken?: string; limit?: number }
+  ): Promise<{
+    issues: IssueData[];
+    total?: number;
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    const parsed = parseIterationRef(ref.id);
+    if (!parsed || ref.kind !== "ITERATION") {
+      return { issues: [], hasMore: false };
+    }
+    const { project, nodeId } = parsed;
+    const key = iterationExternalId(project, nodeId);
+    if (!this.iterationNodes.has(key)) {
+      await this.loadIterations(project);
+    }
+    const node = this.iterationNodes.get(key);
+    if (!node) {
+      throw new Error(`Azure DevOps iteration ${ref.id} was not found`);
+    }
+
+    const quote = (value: string) => `'${value.replace(/'/g, "''")}'`;
+    const wiql = `SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = ${quote(project)} AND [System.IterationPath] = ${quote(node.iterationPath)} ORDER BY [System.Id]`;
+    const wiqlResponse = await this.makeRequest<any>(
+      `${this.organizationUrl}/_apis/wit/wiql?api-version=${this.apiVersion}&$top=${WIQL_MAX_IDS}`,
+      { method: "POST", body: JSON.stringify({ query: wiql }) }
+    );
+    const allIds: number[] = Array.isArray(wiqlResponse?.workItems)
+      ? wiqlResponse.workItems.map((item: any) => item.id)
+      : [];
+
+    const offset = Math.max(0, Number(options?.pageToken) || 0);
+    const limit = Math.min(200, Math.max(1, options?.limit ?? 100));
+    const ids = allIds.slice(offset, offset + limit);
+    if (ids.length === 0) {
+      return { issues: [], total: allIds.length, hasMore: false };
+    }
+
+    const response = await this.makeRequest<any>(
+      `${this.organizationUrl}/_apis/wit/workitems?ids=${ids.join(",")}&api-version=${this.apiVersion}&$expand=all`
+    );
+    const hasMore = offset + ids.length < allIds.length;
+    return {
+      issues: (Array.isArray(response?.value) ? response.value : []).map(
+        (item: any) => this.mapAzureDevOpsWorkItem(item)
+      ),
+      total: allIds.length,
+      hasMore,
+      nextPageToken: hasMore ? String(offset + ids.length) : undefined,
+    };
   }
 
   private mapAzureDevOpsComments(response: any): IssueComment[] {

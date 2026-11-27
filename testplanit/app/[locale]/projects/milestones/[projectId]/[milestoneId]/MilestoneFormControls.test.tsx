@@ -233,6 +233,32 @@ describe("MilestoneFormControls", () => {
     });
   });
 
+  describe("milestone converted to local (integrationId kept, detachedAt set)", () => {
+    const convertedMilestone = {
+      ...syncedMilestone,
+      externalState: "deleted",
+      detachedAt: new Date("2026-11-27T17:20:21.000Z"),
+    };
+
+    it("is editable again and no longer says a tracker manages it", () => {
+      render(<Harness milestone={convertedMilestone} isEditMode />);
+
+      expect(
+        screen.queryByTestId("milestone-sync-locked-alert")
+      ).not.toBeInTheDocument();
+      expect(screen.getAllByRole("switch")[0]).not.toBeDisabled();
+      expect(screen.getByTestId("datepicker-startedAt")).not.toBeDisabled();
+      expect(screen.getByTestId("datepicker-completedAt")).not.toBeDisabled();
+      expect(screen.getByTestId("tiptap-note")).toHaveAttribute(
+        "data-readonly",
+        "false"
+      );
+      expect(
+        screen.getByText("milestones.fields.automaticCompletion")
+      ).toBeInTheDocument();
+    });
+  });
+
   describe("local milestone (integrationId null)", () => {
     it("all fields editable, no alert", () => {
       render(<Harness milestone={localMilestone} isEditMode />);

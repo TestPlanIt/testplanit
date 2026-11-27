@@ -31,8 +31,10 @@ const {
   mockFindManyIntegrationProject,
   mockFindManyProjectIntegration,
   mockFetch,
+  mockToastSuccess,
 } = vi.hoisted(() => {
   return {
+    mockToastSuccess: vi.fn(),
     mockFindManyMilestones: vi.fn(),
     mockFindFirstProjects: vi.fn(),
     mockFindManyIntegrationProject: vi.fn(),
@@ -85,7 +87,12 @@ vi.mock("~/lib/navigation", () => ({
 }));
 
 vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string) => key,
+  useTranslations: () => (key: string, params?: Record<string, unknown>) =>
+    params ? `${key} ${JSON.stringify(params)}` : key,
+}));
+
+vi.mock("sonner", () => ({
+  toast: { success: mockToastSuccess, info: vi.fn(), error: vi.fn() },
 }));
 
 vi.mock("@/components/Loading", () => ({
@@ -105,10 +112,16 @@ vi.mock("@/projects/milestones/[projectId]/MilestoneDisplay", () => ({
 }));
 
 vi.mock("@/projects/milestones/[projectId]/ImportMilestonesDialog", () => ({
-  ImportMilestonesDialog: ({ open, onOpenChange }: any) =>
+  ImportMilestonesDialog: ({ open, onOpenChange, onStarted }: any) =>
     open ? (
       <div data-testid="import-milestones-dialog">
         <button onClick={() => onOpenChange(false)}>close</button>
+        <button
+          data-testid="import-milestones-start"
+          onClick={() => onStarted?.(["m-1", "m-2", "m-3"])}
+        >
+          start
+        </button>
       </div>
     ) : null,
 }));
@@ -188,6 +201,61 @@ describe("Milestones page — Import from Jira trigger", () => {
     await waitFor(() =>
       expect(screen.getByTestId("import-milestones-dialog")).toBeInTheDocument()
     );
+  });
+
+  it("reports every queued milestone in the completion toast when they land in separate refreshes", async () => {
+    mockFindManyProjectIntegration.mockReturnValue({
+      data: [
+        {
+          id: "pi-1",
+          integrationId: 9,
+          config: { milestoneSync: { enabled: true } },
+          integration: { provider: "GITLAB" },
+        },
+      ],
+    });
+    mockFindManyIntegrationProject.mockReturnValue({
+      data: [{ id: "mapping-9" }],
+    });
+
+    const queryClient = createTestQueryClient();
+    const params = Promise.resolve({ projectId: "42" });
+    const page = () => (
+      <QueryClientProvider client={queryClient}>
+        <ProjectMilestones params={params} />
+      </QueryClientProvider>
+    );
+    let rerender!: (ui: React.ReactElement) => void;
+    await act(async () => {
+      ({ rerender } = render(page()));
+    });
+
+    fireEvent.click(await screen.findByTestId("import-milestones-button"));
+    fireEvent.click(await screen.findByTestId("import-milestones-start"));
+    await screen.findByTestId("import-milestones-progress");
+
+    mockFindManyMilestones.mockReturnValue({
+      data: [{ id: 1, externalId: "m-1" }],
+    });
+    await act(async () => {
+      rerender(page());
+    });
+    expect(mockToastSuccess).not.toHaveBeenCalled();
+
+    mockFindManyMilestones.mockReturnValue({
+      data: [
+        { id: 1, externalId: "m-1" },
+        { id: 2, externalId: "m-2" },
+        { id: 3, externalId: "m-3" },
+      ],
+    });
+    await act(async () => {
+      rerender(page());
+    });
+
+    await waitFor(() => expect(mockToastSuccess).toHaveBeenCalledTimes(1));
+    expect(mockToastSuccess.mock.calls[0][0]).toContain('"count":3');
+    expect(mockToastSuccess.mock.calls[0][0]).toContain('"provider":"GitLab"');
   });
 
   it("does not render the button when milestoneSync is not enabled", async () => {

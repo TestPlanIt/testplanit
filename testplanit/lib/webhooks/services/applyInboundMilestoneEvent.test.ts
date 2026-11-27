@@ -1056,6 +1056,94 @@ describe("applyInboundMilestoneEvent", () => {
     );
   });
 
+  describe("an issue moved between two milestones in one event", () => {
+    const moveInput = () =>
+      baseInput({ adapterType: "GITLAB", eventType: "milestone_milestoned" });
+    const moveRef = {
+      kind: "RELEASE" as const,
+      externalId: "group/app#5",
+      externalProjectId: "group/app",
+      merge: false,
+      movedFromExternalId: "group/app#1",
+    };
+    const trackedBy = (rows: Record<string, any[]>) =>
+      mocks.milestonesFindMany.mockImplementation(async (args: any) =>
+        (rows[args.where.externalId] ?? []).map((row) => ({ ...row }))
+      );
+
+    beforeEach(() => {
+      (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue(moveRef);
+      mocks.integrationProjectFindMany.mockResolvedValue([
+        activeIntegrationProject({ externalProjectId: "group/app" }),
+      ]);
+    });
+
+    it("refreshes the milestone the issue joined and the one it left", async () => {
+      const applyInboundMilestoneEvent = await importSut();
+      trackedBy({
+        "group/app#5": [{ id: 599, projectId: 7, integrationId: 42 }],
+        "group/app#1": [{ id: 596, projectId: 7, integrationId: 42 }],
+      });
+
+      const result = await applyInboundMilestoneEvent(moveInput());
+
+      expect(result).toMatchObject({ outcome: "refreshed", milestoneId: 599 });
+      expect(
+        mocks.performMilestoneRefresh.mock.calls.map((call: any[]) => call[2])
+      ).toEqual(["group/app#5", "group/app#1"]);
+      expect(mocks.performMilestoneRefresh).toHaveBeenLastCalledWith(
+        "__system__",
+        42,
+        "group/app#1",
+        { minFreshnessSeconds: 0, projectId: 7 }
+      );
+    });
+
+    it("refreshes the milestone the issue left when the one it joined is not tracked", async () => {
+      const applyInboundMilestoneEvent = await importSut();
+      trackedBy({
+        "group/app#1": [{ id: 596, projectId: 7, integrationId: 42 }],
+      });
+
+      const result = await applyInboundMilestoneEvent(moveInput());
+
+      expect(result).toMatchObject({ outcome: "refreshed", milestoneId: 596 });
+      expect(
+        mocks.performMilestoneRefresh.mock.calls.map((call: any[]) => call[2])
+      ).toEqual(["group/app#1"]);
+    });
+
+    it("stays unmatched when neither milestone is tracked", async () => {
+      const applyInboundMilestoneEvent = await importSut();
+      trackedBy({});
+
+      const result = await applyInboundMilestoneEvent(moveInput());
+
+      expect(result.outcome).toBe("unmatched");
+      expect(mocks.performMilestoneRefresh).not.toHaveBeenCalled();
+    });
+
+    it("still reports the joined milestone refreshed when refreshing the one it left throws", async () => {
+      const applyInboundMilestoneEvent = await importSut();
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      trackedBy({
+        "group/app#5": [{ id: 599, projectId: 7, integrationId: 42 }],
+        "group/app#1": [{ id: 596, projectId: 7, integrationId: 42 }],
+      });
+      mocks.performMilestoneRefresh
+        .mockResolvedValueOnce({ success: true })
+        .mockRejectedValueOnce(new Error("tracker unreachable"));
+
+      const result = await applyInboundMilestoneEvent(moveInput());
+
+      expect(result).toMatchObject({ outcome: "refreshed", milestoneId: 599 });
+      expect(mocks.performMilestoneRefresh).toHaveBeenCalledTimes(2);
+      consoleError.mockRestore();
+    });
+  });
+
   it("PER-PROJECT FAN-OUT: an upstream deletion converts EVERY project's tracking row, not just the first", async () => {
     const applyInboundMilestoneEvent = await importSut();
     (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({

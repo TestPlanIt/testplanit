@@ -21,9 +21,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Plus, Sparkles, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { SearchIssuesDialog } from "./search-issues-dialog";
+import type { TrackerMilestoneRef } from "./tracker-milestone";
 
 /**
  * Manual link/unlink manager for `MilestoneIssue` rows (MLINK-03, D-09/D-10).
@@ -112,6 +113,35 @@ export function MilestoneIssueManager({
   );
   const resolvedIntegrationId =
     integrationId ?? activeProjectIntegration?.integrationId;
+
+  const { data: milestoneSource } = useClientQueries(
+    schema
+  ).milestones.useFindFirst({
+    where: { id: milestoneId },
+    select: {
+      name: true,
+      integrationId: true,
+      externalId: true,
+      externalKind: true,
+      detachedAt: true,
+      isCompleted: true,
+    },
+  });
+  const trackerMilestone = useMemo<TrackerMilestoneRef | undefined>(
+    () =>
+      milestoneSource?.integrationId != null &&
+      milestoneSource.externalId &&
+      !milestoneSource.detachedAt &&
+      !milestoneSource.isCompleted
+        ? {
+            integrationId: milestoneSource.integrationId,
+            externalId: milestoneSource.externalId,
+            kind: milestoneSource.externalKind ?? null,
+            name: milestoneSource.name,
+          }
+        : undefined,
+    [milestoneSource]
+  );
 
   const linkExistingIssue = async (issueId: number) => {
     await createMilestoneIssue({
@@ -205,6 +235,7 @@ export function MilestoneIssueManager({
           // milestone, which is a functional regression, not a hygiene
           // fix — do not "fix" this into matching the other callers.
           includeRequirements
+          trackerMilestone={trackerMilestone}
           onIssueSelected={(issue) =>
             void handleIssueSelected(issue as unknown as IssueSelection)
           }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { siGithub, siJira } from "simple-icons";
+import { TrackerGlyph } from "@/components/MilestoneSourceBadge";
+import { providerDisplayName } from "~/lib/integrations/providerDisplayName";
 
 /**
  * Milestone fields the icon needs — all optional so any caller can pass its
@@ -46,10 +47,7 @@ export function MilestoneSourceIcon({
   }
 
   const providerKey = milestone.integration?.provider ?? "JIRA";
-  const provider =
-    providerKey === "GITHUB"
-      ? t("sync.providerGitHub")
-      : t("sync.providerJira");
+  const provider = providerDisplayName(providerKey);
   const kind =
     milestone.externalKind === "RELEASE"
       ? t("import.kindRelease")
@@ -65,25 +63,7 @@ export function MilestoneSourceIcon({
       aria-label={label}
       data-testid="milestone-source-icon"
     >
-      {providerKey === "GITHUB" ? (
-        <svg
-          role="img"
-          viewBox="0 0 24 24"
-          className="h-3.5 w-3.5 fill-foreground"
-          aria-hidden="true"
-        >
-          <path d={siGithub.path} />
-        </svg>
-      ) : (
-        <svg
-          role="img"
-          viewBox="0 0 24 24"
-          className="h-3.5 w-3.5 fill-[#2684FF]"
-          aria-hidden="true"
-        >
-          <path d={siJira.path} />
-        </svg>
-      )}
+      <TrackerGlyph provider={providerKey} className="h-3.5 w-3.5" />
     </span>
   );
 }

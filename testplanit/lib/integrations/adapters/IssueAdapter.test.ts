@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { MILESTONE_KINDS_BY_PROVIDER } from "../milestoneSyncProviders";
 import { AzureDevOpsAdapter } from "./AzureDevOpsAdapter";
+import { ClickUpAdapter } from "./ClickUpAdapter";
 import { GiteaAdapter } from "./GiteaAdapter";
 import { GitHubAdapter } from "./GitHubAdapter";
 import { GitLabAdapter } from "./GitLabAdapter";
@@ -25,14 +27,7 @@ describe("IssueAdapter contract: milestones capability", () => {
     name: string;
     instance: { getCapabilities(): IssueAdapterCapabilities };
   }> = [
-    {
-      name: "AzureDevOpsAdapter",
-      instance: new AzureDevOpsAdapter(baseConfig),
-    },
-    { name: "GitLabAdapter", instance: new GitLabAdapter(baseConfig) },
-    { name: "GiteaAdapter", instance: new GiteaAdapter(baseConfig) },
-    { name: "MantisBTAdapter", instance: new MantisBTAdapter(baseConfig) },
-    { name: "RedmineAdapter", instance: new RedmineAdapter(baseConfig) },
+    { name: "ClickUpAdapter", instance: new ClickUpAdapter(baseConfig) },
     { name: "SimpleUrlAdapter", instance: new SimpleUrlAdapter(baseConfig) },
   ];
 
@@ -47,15 +42,58 @@ describe("IssueAdapter contract: milestones capability", () => {
     }
   );
 
-  it("GitHubAdapter declares release milestones with webhooks and implements both methods", () => {
-    const adapter = new GitHubAdapter(baseConfig);
-    expect(adapter.getCapabilities().milestones).toEqual({
-      kinds: ["RELEASE"],
+  const milestoneAdapters: Array<{
+    provider: string;
+    webhooks: boolean;
+    instance: {
+      getCapabilities(): IssueAdapterCapabilities;
+      getExternalMilestones?: unknown;
+      getMilestoneIssues?: unknown;
+    };
+  }> = [
+    {
+      provider: "GITHUB",
       webhooks: true,
-    });
-    expect(typeof adapter.getExternalMilestones).toBe("function");
-    expect(typeof adapter.getMilestoneIssues).toBe("function");
-  });
+      instance: new GitHubAdapter(baseConfig),
+    },
+    {
+      provider: "GITLAB",
+      webhooks: true,
+      instance: new GitLabAdapter(baseConfig),
+    },
+    {
+      provider: "GITEA",
+      webhooks: false,
+      instance: new GiteaAdapter(baseConfig),
+    },
+    {
+      provider: "REDMINE",
+      webhooks: true,
+      instance: new RedmineAdapter(baseConfig),
+    },
+    {
+      provider: "MANTISBT",
+      webhooks: false,
+      instance: new MantisBTAdapter(baseConfig),
+    },
+    {
+      provider: "AZURE_DEVOPS",
+      webhooks: false,
+      instance: new AzureDevOpsAdapter(baseConfig),
+    },
+  ];
+
+  it.each(milestoneAdapters)(
+    "the $provider adapter declares the kinds the provider list offers and implements both methods",
+    ({ provider, webhooks, instance }) => {
+      expect(instance.getCapabilities().milestones).toEqual({
+        kinds: MILESTONE_KINDS_BY_PROVIDER[provider],
+        webhooks,
+      });
+      expect(typeof instance.getExternalMilestones).toBe("function");
+      expect(typeof instance.getMilestoneIssues).toBe("function");
+    }
+  );
 
   it("JiraAdapter declares the milestones capability with both kinds", () => {
     const adapter = new JiraAdapter(baseConfig);
@@ -90,11 +128,10 @@ describe("IssueAdapter contract: milestones capability", () => {
     expect(milestone.state).toBe("CLOSED");
   });
 
-  it("covers exactly the 8 concrete adapters known to implement getCapabilities", () => {
-    // Guards against a new adapter landing without declaring `milestones`
-    // (research warns this list can silently grow). If this fails, a new
-    // adapter file exists — add it to nonMilestoneAdapters (or the Jira /
-    // GitHub assertions above) and update this count.
-    expect(nonMilestoneAdapters.length + 2).toBe(8);
+  it("covers exactly the 9 concrete adapters known to implement getCapabilities", () => {
+    // Guards against a new adapter landing without declaring `milestones`.
+    // If this fails, a new adapter file exists: add it to
+    // nonMilestoneAdapters or milestoneAdapters and update this count.
+    expect(nonMilestoneAdapters.length + milestoneAdapters.length + 1).toBe(9);
   });
 });

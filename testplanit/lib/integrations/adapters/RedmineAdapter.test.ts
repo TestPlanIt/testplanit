@@ -18,6 +18,47 @@ function httpError(status: number, body = "error") {
   return { ok: false, status, text: () => Promise.resolve(body) };
 }
 
+function binary(bytes: number[], contentType: string) {
+  return {
+    ok: true,
+    status: 200,
+    headers: new Headers({
+      "content-type": contentType,
+      "content-length": String(bytes.length),
+    }),
+    arrayBuffer: () => Promise.resolve(new Uint8Array(bytes).buffer),
+  };
+}
+
+const TIPTAP_DOC = {
+  type: "doc" as const,
+  content: [
+    {
+      type: "paragraph",
+      content: [
+        { type: "text", text: "Iteration 2 failed for " },
+        { type: "text", text: "Checkout", marks: [{ type: "bold" }] },
+      ],
+    },
+    {
+      type: "bulletList",
+      content: [
+        {
+          type: "listItem",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "browser: Firefox" }],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+const TIPTAP_DOC_MARKDOWN =
+  "Iteration 2 failed for **Checkout**\n\n- browser: Firefox";
+
 describe("RedmineAdapter", () => {
   let adapter: RedmineAdapter;
 
@@ -50,10 +91,10 @@ describe("RedmineAdapter", () => {
         searchIssues: true,
         webhooks: true,
         customFields: true,
-        attachments: false,
+        attachments: true,
         linkedIssues: true,
         comments: true,
-        milestones: false,
+        milestones: { kinds: ["RELEASE"], webhooks: true },
       });
     });
   });
@@ -293,6 +334,20 @@ describe("RedmineAdapter", () => {
       expect(result.id).toBe("100");
     });
 
+    it("sends a TipTap doc description as markdown", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issue: { id: 102 } }));
+
+      await adapter.createIssue({
+        title: "Iteration failed",
+        projectId: "5",
+        description: TIPTAP_DOC,
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.issue.description).toBe(TIPTAP_DOC_MARKDOWN);
+    });
+
     it("sends custom field values and leaves out empty ones and other keys", async () => {
       await authenticate();
       mockFetch.mockResolvedValueOnce(okJson({ issue: { id: 101 } }));
@@ -527,6 +582,18 @@ describe("RedmineAdapter", () => {
       expect(result.title).toBe("Updated");
     });
 
+    it("sends a TipTap doc description as markdown", async () => {
+      await authenticate();
+      mockFetch
+        .mockResolvedValueOnce(noContent())
+        .mockResolvedValueOnce(okJson({ issue: { id: 42 } }));
+
+      await adapter.updateIssue("#42", { description: TIPTAP_DOC });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.issue.description).toBe(TIPTAP_DOC_MARKDOWN);
+    });
+
     it("resolves a status name to a status id", async () => {
       await authenticate();
       mockFetch.mockResolvedValueOnce(
@@ -612,6 +679,383 @@ describe("RedmineAdapter", () => {
         { id: "20", key: "#20", linkType: "relates", direction: "outward" },
         { id: "5", key: "#5", linkType: "blocks", direction: "inward" },
       ]);
+    });
+  });
+
+  describe("attachments", () => {
+    it("uploadAttachment sends the bytes, then attaches the token to the issue", async () => {
+      await authenticate();
+      mockFetch
+        .mockResolvedValueOnce(
+          okJson({
+            upload: { id: 7, token: "7.ed1ccdb093229ca1bd0b043618d88743" },
+          })
+        )
+        .mockResolvedValueOnce(noContent());
+
+      const result = await adapter.uploadAttachment(
+        "#42",
+        Buffer.from([1, 2, 3]),
+        "screen shot.png"
+      );
+
+      const [uploadUrl, uploadOpts] = mockFetch.mock.calls[0];
+      expect(uploadUrl).toBe(
+        `${BASE_URL}/uploads.json?filename=screen%20shot.png`
+      );
+      expect(uploadOpts.method).toBe("POST");
+      expect(uploadOpts.headers["Content-Type"]).toBe(
+        "application/octet-stream"
+      );
+      expect(uploadOpts.headers["X-Redmine-API-Key"]).toBe("test-key");
+      expect([...uploadOpts.body]).toEqual([1, 2, 3]);
+
+      const [attachUrl, attachOpts] = mockFetch.mock.calls[1];
+      expect(attachUrl).toBe(`${BASE_URL}/issues/42.json`);
+      expect(attachOpts.method).toBe("PUT");
+      expect(JSON.parse(attachOpts.body)).toEqual({
+        issue: {
+          uploads: [
+            {
+              token: "7.ed1ccdb093229ca1bd0b043618d88743",
+              filename: "screen shot.png",
+            },
+          ],
+        },
+      });
+      expect(result).toEqual({ id: "7", url: `${BASE_URL}/attachments/7` });
+    });
+
+    it("uploadAttachment reads the attachment id from the token when none is returned", async () => {
+      await authenticate();
+      mockFetch
+        .mockResolvedValueOnce(okJson({ upload: { token: "9.abcdef" } }))
+        .mockResolvedValueOnce(noContent());
+
+      const result = await adapter.uploadAttachment(
+        "42",
+        Buffer.from([1]),
+        "a.txt"
+      );
+
+      expect(result.id).toBe("9");
+    });
+
+    it("uploadAttachment surfaces Redmine's refusal of an oversized file", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(
+        httpError(
+          422,
+          '{"errors":["This file cannot be uploaded because it exceeds the maximum allowed file size (5242880)"]}'
+        )
+      );
+
+      await expect(
+        adapter.uploadAttachment("42", Buffer.from([1]), "big.mp4")
+      ).rejects.toThrow("exceeds the maximum allowed file size");
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("uploadAttachment fails when no token comes back", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({}));
+
+      await expect(
+        adapter.uploadAttachment("42", Buffer.from([1]), "a.txt")
+      ).rejects.toThrow("upload token");
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("listAttachments maps the issue's attachments", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          issue: {
+            id: 42,
+            attachments: [
+              {
+                id: 1,
+                filename: "screenshot one.png",
+                filesize: 97,
+                content_type: "image/png",
+                content_url:
+                  "http://localhost:3000/attachments/download/1/screenshot%20one.png",
+                created_on: "2026-11-27T14:26:00Z",
+              },
+              { id: 2, filename: "notes.txt", filesize: 51 },
+            ],
+          },
+        })
+      );
+
+      const result = await adapter.listAttachments("#42");
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        `${BASE_URL}/issues/42.json?include=attachments`
+      );
+      expect(result).toEqual([
+        {
+          id: "1",
+          filename: "screenshot one.png",
+          mimeType: "image/png",
+          byteSize: 97,
+          createdAt: new Date("2026-11-27T14:26:00Z"),
+          contentUrl: `${BASE_URL}/attachments/download/1`,
+        },
+        {
+          id: "2",
+          filename: "notes.txt",
+          mimeType: undefined,
+          byteSize: 51,
+          createdAt: undefined,
+          contentUrl: `${BASE_URL}/attachments/download/2`,
+        },
+      ]);
+    });
+
+    it("listAttachments returns an empty list for an issue without any", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issue: { id: 42 } }));
+
+      await expect(adapter.listAttachments("42")).resolves.toEqual([]);
+    });
+
+    it("downloadAttachment fetches from the configured instance with the API key", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(binary([1, 2, 3], "image/png"));
+
+      const result = await adapter.downloadAttachment({
+        id: "1",
+        filename: "screenshot one.png",
+        contentUrl: "https://elsewhere.example.com/attachments/download/1",
+      });
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toBe(`${BASE_URL}/attachments/download/1`);
+      expect(opts.headers["X-Redmine-API-Key"]).toBe("test-key");
+      expect(result.mimeType).toBe("image/png");
+      expect([...result.buffer]).toEqual([1, 2, 3]);
+    });
+
+    it("downloadAttachment falls back to the listed type for a generic content type", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(binary([1], "application/octet-stream"));
+
+      const result = await adapter.downloadAttachment({
+        id: "1",
+        filename: "shot.png",
+        mimeType: "image/png",
+      });
+
+      expect(result.mimeType).toBe("image/png");
+    });
+
+    it("downloadAttachment refuses a file over the size cap", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-length": String(11 * 1024 * 1024) }),
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+      });
+
+      await expect(
+        adapter.downloadAttachment({ id: "1", filename: "big.bin" })
+      ).rejects.toThrow("Binary response too large");
+    });
+  });
+
+  describe("milestones", () => {
+    const VERSIONS = {
+      versions: [
+        {
+          id: 3,
+          project: { id: 2, name: "Sample" },
+          name: "1.0",
+          description: "Open version",
+          status: "open",
+          due_date: "2026-12-31",
+          sharing: "none",
+        },
+        {
+          id: 4,
+          project: { id: 2, name: "Sample" },
+          name: "0.9",
+          description: "",
+          status: "closed",
+          due_date: "2026-10-01",
+        },
+        {
+          id: 5,
+          project: { id: 9, name: "Shared from another project" },
+          name: "1.1",
+          status: "locked",
+          due_date: null,
+        },
+      ],
+      total_count: 3,
+    };
+
+    it("getExternalMilestones maps open and locked versions as active releases", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson(VERSIONS));
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "sample-project",
+      });
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        `${BASE_URL}/projects/sample-project/versions.json`
+      );
+      expect(result).toEqual({
+        items: [
+          {
+            id: "3",
+            kind: "RELEASE",
+            name: "1.0",
+            description: "Open version",
+            endDate: new Date("2026-12-31T00:00:00.000Z"),
+            state: "ACTIVE",
+            rawState: "open",
+            url: `${BASE_URL}/versions/3`,
+          },
+          {
+            id: "5",
+            kind: "RELEASE",
+            name: "1.1",
+            description: undefined,
+            endDate: undefined,
+            state: "ACTIVE",
+            rawState: "locked",
+            url: `${BASE_URL}/versions/5`,
+          },
+        ],
+        hasMore: false,
+      });
+    });
+
+    it("getExternalMilestones includes closed versions when asked", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson(VERSIONS));
+
+      const { items } = await adapter.getExternalMilestones({
+        projectKey: "sample-project",
+        kind: "RELEASE",
+        includeClosed: true,
+      });
+
+      expect(items.map((item) => [item.id, item.state, item.rawState])).toEqual(
+        [
+          ["3", "ACTIVE", "open"],
+          ["4", "CLOSED", "closed"],
+          ["5", "ACTIVE", "locked"],
+        ]
+      );
+      expect(items[1].description).toBeUndefined();
+      expect(items[1].endDate).toEqual(new Date("2026-10-01T00:00:00.000Z"));
+    });
+
+    it("getExternalMilestones has no iterations and makes no request for them", async () => {
+      await authenticate();
+
+      await expect(
+        adapter.getExternalMilestones({
+          projectKey: "sample-project",
+          kind: "ITERATION",
+        })
+      ).resolves.toEqual({ items: [], hasMore: false });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("getMilestoneIssues asks for open and closed issues of the version and pages by offset", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          issues: [
+            {
+              id: 11,
+              subject: "Closed one",
+              status: { id: 5, name: "Closed" },
+            },
+            { id: 10, subject: "Open one", status: { id: 1, name: "New" } },
+          ],
+          total_count: 3,
+          offset: 0,
+          limit: 2,
+        })
+      );
+
+      const first = await adapter.getMilestoneIssues(
+        { id: "3", kind: "RELEASE" },
+        { limit: 2 }
+      );
+
+      const url = new URL(mockFetch.mock.calls[0][0]);
+      expect(url.origin + url.pathname).toBe(`${BASE_URL}/issues.json`);
+      expect(Object.fromEntries(url.searchParams)).toEqual({
+        fixed_version_id: "3",
+        status_id: "*",
+        limit: "2",
+        offset: "0",
+      });
+      expect(first.issues.map((issue) => [issue.id, issue.key])).toEqual([
+        ["11", "#11"],
+        ["10", "#10"],
+      ]);
+      expect(first.total).toBe(3);
+      expect(first.hasMore).toBe(true);
+      expect(first.nextPageToken).toBe("2");
+
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          issues: [{ id: 9, subject: "Last", status: { id: 1, name: "New" } }],
+          total_count: 3,
+        })
+      );
+
+      const second = await adapter.getMilestoneIssues(
+        { id: "3", kind: "RELEASE" },
+        { limit: 2, pageToken: first.nextPageToken }
+      );
+
+      expect(
+        new URL(mockFetch.mock.calls[1][0]).searchParams.get("offset")
+      ).toBe("2");
+      expect(second.issues.map((issue) => issue.id)).toEqual(["9"]);
+      expect(second.hasMore).toBe(false);
+      expect(second.nextPageToken).toBeUndefined();
+    });
+
+    it("getMilestoneIssues never asks for more than Redmine's page maximum", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issues: [], total_count: 0 }));
+
+      const result = await adapter.getMilestoneIssues(
+        { id: "3", kind: "RELEASE" },
+        { limit: 500 }
+      );
+
+      expect(
+        new URL(mockFetch.mock.calls[0][0]).searchParams.get("limit")
+      ).toBe("100");
+      expect(result).toEqual({
+        issues: [],
+        total: 0,
+        hasMore: false,
+        nextPageToken: undefined,
+      });
+    });
+
+    it("getMilestoneIssues returns nothing for an iteration or a foreign id", async () => {
+      await authenticate();
+
+      await expect(
+        adapter.getMilestoneIssues({ id: "3", kind: "ITERATION" })
+      ).resolves.toEqual({ issues: [], hasMore: false });
+      await expect(
+        adapter.getMilestoneIssues({ id: "owner/repo#3", kind: "RELEASE" })
+      ).resolves.toEqual({ issues: [], hasMore: false });
+      expect(mockFetch).not.toHaveBeenCalled();
     });
   });
 

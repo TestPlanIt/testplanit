@@ -30,7 +30,7 @@ Choose your test generation source:
 - Issues directly linked to your selected issue (one hop) are also included automatically — for example, the Stories under an Epic, or the issues an issue blocks / is-blocked-by. Each linked issue contributes its own title, description, and comments to the context.
 - A "Linked issues that will be included" section appears in the issue preview after selection, listing each linked issue's key and link type so you can preview what context the AI will see before generating.
 - Linked-issue traversal is capped at one hop. Issues linked to your linked issues are not followed.
-- Image attachments on the selected issue — screenshots pasted into Jira descriptions and comments, files attached to Azure DevOps work items — are offered as visual context; see [Images as Generation Context](#images-as-generation-context).
+- Image attachments on the selected issue — screenshots pasted into Jira or GitLab descriptions and comments, files attached to Azure DevOps work items, ClickUp tasks, and Gitea, Redmine or MantisBT issues — are offered as visual context; see [Images as Generation Context](#images-as-generation-context).
 - "Linked" means whatever the tracker reports as a linked relationship:
   - **Jira**: `issuelinks` (blocks/blocked-by, relates-to, duplicates, custom Jira link types), parent/subtask hierarchy, and the Epic-Link custom field
   - **GitHub**: native sub-issues and timeline cross-references (mentions in other issues or pull requests that link both ways)
@@ -202,7 +202,7 @@ Screenshots and other images from your source material can be sent to the AI alo
 
 ### Where images come from
 
-- **From Issue**: image attachments on the selected issue — Jira attachments (including screenshots pasted into the description or comments) and files attached to Azure DevOps work items. Images referenced inline in a Jira description render as `[image: filename]` placeholders in the issue preview so you can see where they sit in the text.
+- **From Issue**: image attachments on the selected issue — Jira attachments (including screenshots pasted into the description or comments), files attached to Azure DevOps work items and ClickUp tasks, images uploaded into a GitLab issue's description or comments, files attached to a Gitea issue or its comments, to a Redmine issue, and to a MantisBT issue or its notes. GitHub has no API for an issue's attachments. Images referenced inline in a Jira description render as `[image: filename]` placeholders in the issue preview so you can see where they sit in the text.
 - **From Document**: images embedded in the requirements editor. The saved preview marks each one as `[image N: filename]` at its position in the text.
 - **From URL**: when screenshot capture is enabled for your installation, the crawler captures a screenshot of each page and offers it as context. Deployments using the official workers image (Docker Compose and Helm) have this on by default — an administrator turns it off with the `CRAWL_SCREENSHOTS=false` environment variable (`workers.crawlScreenshots: false` in Helm). Installations running workers outside the official image enable it with `CRAWL_SCREENSHOTS=true` plus a Chromium executable (see `.env.example`).
 

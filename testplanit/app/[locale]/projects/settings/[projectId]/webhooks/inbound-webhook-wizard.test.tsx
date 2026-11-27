@@ -268,6 +268,40 @@ describe("InboundWebhookWizard", () => {
     expect(props.onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("shows a Redmine webhook's secret with the steps for both Redmine setups", async () => {
+    mockCreateInbound.mockResolvedValue({
+      success: true,
+      configId: "cfg-redmine",
+      url: "https://tpi.example/api/webhooks/whk_redmine",
+      secret: "redmine-secret",
+    });
+    renderWizard({ issueAdapter: "REDMINE", repositories: [] });
+
+    fireEvent.click(screen.getByTestId("webhook-wizard-next"));
+    expect(
+      screen.getByTestId("webhook-wizard-issue-details")
+    ).toHaveTextContent("inboundRedmineScopeHint");
+    fireEvent.click(screen.getByTestId("webhook-create-button"));
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("webhook-inbound-revealed-box")
+      ).toBeInTheDocument()
+    );
+    expect(mockCreateInbound).toHaveBeenCalledWith({
+      projectId: 42,
+      adapterType: "REDMINE",
+    });
+    expect(screen.getByTestId("webhook-secret")).toHaveTextContent(
+      "redmine-secret"
+    );
+    for (const step of [1, 2, 3, 4, 5]) {
+      expect(
+        screen.getByText(`setupStepsRedmineStep${step}`)
+      ).toBeInTheDocument();
+    }
+  });
+
   it("creates a repository webhook with only the events left switched on", async () => {
     mockCreateRepository.mockResolvedValue({
       success: true,

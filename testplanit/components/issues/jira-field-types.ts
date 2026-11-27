@@ -74,6 +74,31 @@ export function jiraDefaultFormValue(
   return defaultValue;
 }
 
+/**
+ * The form value that puts a new issue in the Jira release or sprint a
+ * milestone is synced from: the Fix Version list when the field offers that
+ * release, the Sprint field's sprint id for a sprint. `undefined` for every
+ * other field.
+ */
+export function jiraMilestoneFormValue(
+  field: JiraFieldSchemaInfo & { allowedValues?: Array<{ id?: string }> },
+  milestone: { externalId: string; kind: "RELEASE" | "ITERATION" | null }
+): string | string[] | undefined {
+  if (milestone.kind === "ITERATION") {
+    return isJiraSprintField(field) ? milestone.externalId : undefined;
+  }
+  if (
+    milestone.kind === "RELEASE" &&
+    (field.key === "fixVersions" || field.schema?.system === "fixVersions") &&
+    field.allowedValues?.some(
+      (version) => String(version.id) === milestone.externalId
+    )
+  ) {
+    return [milestone.externalId];
+  }
+  return undefined;
+}
+
 /** A picked id, or an option object, as the `{ id }` reference Jira takes. */
 export function jiraIdRef(value: unknown): { id: string } {
   return {

@@ -5,6 +5,7 @@ import {
   isJiraTeamField,
   jiraDefaultFormValue,
   jiraIdRef,
+  jiraMilestoneFormValue,
 } from "./jira-field-types";
 
 const sprintField = {
@@ -104,6 +105,79 @@ describe("jiraDefaultFormValue", () => {
     expect(jiraDefaultFormValue(field({ type: "string" }), "text")).toBe(
       "text"
     );
+  });
+});
+
+describe("jiraMilestoneFormValue", () => {
+  const fixVersionsField = {
+    key: "fixVersions",
+    name: "Fix versions",
+    required: false,
+    schema: { type: "array", items: "version", system: "fixVersions" },
+    allowedValues: [
+      { id: "10000", name: "1.0" },
+      { id: "10001", name: "1.1" },
+    ],
+  };
+  const affectsVersionsField = {
+    ...fixVersionsField,
+    key: "versions",
+    name: "Affects versions",
+    schema: { type: "array", items: "version", system: "versions" },
+  };
+
+  it("puts a release in Fix versions when the field offers it", () => {
+    expect(
+      jiraMilestoneFormValue(fixVersionsField, {
+        externalId: "10001",
+        kind: "RELEASE",
+      })
+    ).toEqual(["10001"]);
+  });
+
+  it("leaves Fix versions alone for a release the field does not offer", () => {
+    expect(
+      jiraMilestoneFormValue(fixVersionsField, {
+        externalId: "20000",
+        kind: "RELEASE",
+      })
+    ).toBeUndefined();
+  });
+
+  it("puts a sprint in the Sprint field as its id", () => {
+    expect(
+      jiraMilestoneFormValue(sprintField, {
+        externalId: "42",
+        kind: "ITERATION",
+      })
+    ).toBe("42");
+  });
+
+  it("never fills a field of the other kind, or any other field", () => {
+    expect(
+      jiraMilestoneFormValue(sprintField, {
+        externalId: "10001",
+        kind: "RELEASE",
+      })
+    ).toBeUndefined();
+    expect(
+      jiraMilestoneFormValue(fixVersionsField, {
+        externalId: "10001",
+        kind: "ITERATION",
+      })
+    ).toBeUndefined();
+    expect(
+      jiraMilestoneFormValue(affectsVersionsField, {
+        externalId: "10001",
+        kind: "RELEASE",
+      })
+    ).toBeUndefined();
+    expect(
+      jiraMilestoneFormValue(fixVersionsField, {
+        externalId: "10001",
+        kind: null,
+      })
+    ).toBeUndefined();
   });
 });
 

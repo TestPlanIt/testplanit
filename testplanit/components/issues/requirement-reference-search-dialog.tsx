@@ -606,7 +606,7 @@ export function RequirementReferenceSearchDialog({
                 <DialogDescription>
                   {activeIntegration && searchExternal
                     ? t("issues.searchExternalDescription", {
-                        provider: activeIntegration.integration.provider,
+                        provider: activeIntegration.integration.name,
                       })
                     : t("issues.searchIssuesDescription")}
                 </DialogDescription>

@@ -68,7 +68,7 @@ describe("AzureDevOpsAdapter", () => {
         attachments: true,
         linkedIssues: true,
         comments: true,
-        milestones: false,
+        milestones: { kinds: ["ITERATION"], webhooks: false },
       });
     });
   });
@@ -2078,6 +2078,283 @@ describe("AzureDevOpsAdapter", () => {
 
       expect(result.id).toBe("123");
       expect(result.title).toBe("Test Work Item");
+    });
+  });
+
+  describe("milestone sync", () => {
+    const iterationTree = {
+      id: 10,
+      name: "Web Shop",
+      structureType: "iteration",
+      hasChildren: true,
+      children: [
+        {
+          id: 11,
+          name: "Release 1",
+          structureType: "iteration",
+          hasChildren: true,
+          children: [
+            {
+              id: 12,
+              name: "Sprint 1",
+              attributes: {
+                startDate: "2020-01-06T00:00:00Z",
+                finishDate: "2020-01-17T00:00:00Z",
+              },
+            },
+            {
+              id: 13,
+              name: "Sprint 2",
+              attributes: {
+                startDate: "2020-01-20T00:00:00Z",
+                finishDate: "2999-01-31T00:00:00Z",
+              },
+            },
+          ],
+        },
+        {
+          id: 14,
+          name: "Sprint O'Brien",
+          attributes: {
+            startDate: "2999-02-03T00:00:00Z",
+            finishDate: "2999-02-14T00:00:00Z",
+          },
+        },
+      ],
+    };
+
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ value: [] }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "test-token" });
+      (adapter as any).rateLimitDelay = 0;
+    });
+
+    const treeResponse = () =>
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(iterationTree),
+      });
+
+    it("flattens the project's iteration tree and reads each state off its dates", async () => {
+      treeResponse();
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "Web Shop",
+        includeClosed: true,
+      });
+
+      expect(mockFetch.mock.calls[1][0]).toBe(
+        "https://dev.azure.com/testorg/Web%20Shop/_apis/wit/classificationnodes/Iterations?$depth=10&api-version=7.0"
+      );
+      expect(result).toEqual({
+        hasMore: false,
+        items: [
+          {
+            id: "Web Shop#11",
+            kind: "ITERATION",
+            name: "Release 1",
+            startDate: undefined,
+            endDate: undefined,
+            state: "FUTURE",
+            rawState: "future",
+          },
+          {
+            id: "Web Shop#12",
+            kind: "ITERATION",
+            name: "Release 1\\Sprint 1",
+            startDate: new Date("2020-01-06T00:00:00Z"),
+            endDate: new Date("2020-01-17T00:00:00Z"),
+            state: "CLOSED",
+            rawState: "past",
+          },
+          {
+            id: "Web Shop#13",
+            kind: "ITERATION",
+            name: "Release 1\\Sprint 2",
+            startDate: new Date("2020-01-20T00:00:00Z"),
+            endDate: new Date("2999-01-31T00:00:00Z"),
+            state: "ACTIVE",
+            rawState: "current",
+          },
+          {
+            id: "Web Shop#14",
+            kind: "ITERATION",
+            name: "Sprint O'Brien",
+            startDate: new Date("2999-02-03T00:00:00Z"),
+            endDate: new Date("2999-02-14T00:00:00Z"),
+            state: "FUTURE",
+            rawState: "future",
+          },
+        ],
+      });
+    });
+
+    it("leaves past iterations out unless closed ones are wanted", async () => {
+      treeResponse();
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "Web Shop",
+      });
+
+      expect(result.items.map((item) => item.id)).toEqual([
+        "Web Shop#11",
+        "Web Shop#13",
+        "Web Shop#14",
+      ]);
+    });
+
+    it("keeps an iteration current through its last day", async () => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2020-01-17T18:00:00Z"));
+      (adapter as any).lastRequestTime = 0;
+      treeResponse();
+
+      const lastDay = await adapter.getExternalMilestones({
+        projectKey: "Web Shop",
+        includeClosed: true,
+      });
+
+      vi.setSystemTime(new Date("2020-01-18T00:00:00Z"));
+      treeResponse();
+      const dayAfter = await adapter.getExternalMilestones({
+        projectKey: "Web Shop",
+        includeClosed: true,
+      });
+      vi.useRealTimers();
+
+      const sprintOne = (result: typeof lastDay) =>
+        result.items.find((item) => item.id === "Web Shop#12")?.state;
+      expect(sprintOne(lastDay)).toBe("ACTIVE");
+      expect(sprintOne(dayAfter)).toBe("CLOSED");
+    });
+
+    it("has no release milestones", async () => {
+      const result = await adapter.getExternalMilestones({
+        projectKey: "Web Shop",
+        kind: "RELEASE",
+      });
+
+      expect(result).toEqual({ items: [], hasMore: false });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("pages the work items assigned to the iteration's own path", async () => {
+      treeResponse();
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({ workItems: [{ id: 5 }, { id: 6 }, { id: 7 }] }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              value: [
+                { ...mockWorkItem, id: 6 },
+                { ...mockWorkItem, id: 7 },
+              ],
+            }),
+        });
+
+      const result = await adapter.getMilestoneIssues(
+        { id: "Web Shop#13", kind: "ITERATION" },
+        { pageToken: "1", limit: 2 }
+      );
+
+      const [wiqlUrl, wiqlInit] = mockFetch.mock.calls[2];
+      expect(wiqlUrl).toBe(
+        "https://dev.azure.com/testorg/_apis/wit/wiql?api-version=7.0&$top=20000"
+      );
+      expect(JSON.parse(wiqlInit.body).query).toBe(
+        "SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'Web Shop' AND [System.IterationPath] = 'Web Shop\\Release 1\\Sprint 2' ORDER BY [System.Id]"
+      );
+      expect(mockFetch.mock.calls[3][0]).toBe(
+        "https://dev.azure.com/testorg/_apis/wit/workitems?ids=6,7&api-version=7.0&$expand=all"
+      );
+      expect(result.issues.map((issue) => issue.id)).toEqual(["6", "7"]);
+      expect(result.total).toBe(3);
+      expect(result.hasMore).toBe(false);
+      expect(result.nextPageToken).toBeUndefined();
+    });
+
+    it("reports more pages while work items remain", async () => {
+      treeResponse();
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({ workItems: [{ id: 5 }, { id: 6 }, { id: 7 }] }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ value: [{ ...mockWorkItem, id: 5 }] }),
+        });
+
+      const result = await adapter.getMilestoneIssues(
+        { id: "Web Shop#13", kind: "ITERATION" },
+        { limit: 1 }
+      );
+
+      expect(result.hasMore).toBe(true);
+      expect(result.nextPageToken).toBe("1");
+    });
+
+    it("escapes a quote in the iteration path", async () => {
+      treeResponse();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+
+      const result = await adapter.getMilestoneIssues({
+        id: "Web Shop#14",
+        kind: "ITERATION",
+      });
+
+      expect(JSON.parse(mockFetch.mock.calls[2][1].body).query).toContain(
+        "[System.IterationPath] = 'Web Shop\\Sprint O''Brien'"
+      );
+      expect(result).toEqual({ issues: [], total: 0, hasMore: false });
+    });
+
+    it("reads the tree once for iterations it has already listed", async () => {
+      treeResponse();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+
+      await adapter.getExternalMilestones({ projectKey: "Web Shop" });
+      await adapter.getMilestoneIssues({
+        id: "Web Shop#12",
+        kind: "ITERATION",
+      });
+
+      const urls = mockFetch.mock.calls.map((call: any[]) => call[0] as string);
+      expect(
+        urls.filter((url) => url.includes("classificationnodes"))
+      ).toHaveLength(1);
+    });
+
+    it("fails for an iteration that is gone, so its members are not taken to have left", async () => {
+      treeResponse();
+
+      await expect(
+        adapter.getMilestoneIssues({ id: "Web Shop#99", kind: "ITERATION" })
+      ).rejects.toThrow("Azure DevOps iteration Web Shop#99 was not found");
+    });
+
+    it("returns no members for another kind or a reference it cannot read", async () => {
+      await expect(
+        adapter.getMilestoneIssues({ id: "Web Shop#12", kind: "RELEASE" })
+      ).resolves.toEqual({ issues: [], hasMore: false });
+      await expect(
+        adapter.getMilestoneIssues({ id: "no-ref", kind: "ITERATION" })
+      ).resolves.toEqual({ issues: [], hasMore: false });
     });
   });
 });

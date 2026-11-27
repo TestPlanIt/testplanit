@@ -65,6 +65,7 @@ import {
   hasRotatableSecret,
   healthBadgeVariant,
   inboundAdapterForProvider,
+  unsignedDeliveriesHelpKey,
   type EndpointHealth,
   type IssueInboundAdapterType,
 } from "./inbound-adapters";
@@ -538,6 +539,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
       typeof window !== "undefined" ? window.location.origin : ""
     }${withBasePath(`/api/webhooks/${config.token}`)}`;
     const healthLabelKey: `healthBadge.${EndpointHealth}` = `healthBadge.${config.endpointHealth}`;
+    const unsignedHelpKey = unsignedDeliveriesHelpKey(config.adapterType);
     return (
       <Card
         key={config.id}
@@ -649,7 +651,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             </div>
           )}
 
-          {config.adapterType === "JIRA" && (
+          {unsignedHelpKey && (
             <div className="flex items-center gap-2">
               <Switch
                 data-testid="webhook-allow-unsigned-switch"
@@ -660,7 +662,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 aria-label={t("allowUnsigned")}
               />
               <span className="text-sm font-medium">{t("allowUnsigned")}</span>
-              <HelpPopover helpKey="webhookAllowUnsigned" />
+              <HelpPopover helpKey={unsignedHelpKey} />
             </div>
           )}
 

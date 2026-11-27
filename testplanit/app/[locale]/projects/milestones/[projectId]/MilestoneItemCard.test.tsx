@@ -61,8 +61,10 @@ vi.mock("@/components/ForecastDisplay", () => ({
 }));
 
 vi.mock("@/components/DateCalendarDisplay", () => ({
-  CalendarDisplay: ({ date }: any) => (
-    <div data-testid="calendar-display">{String(date)}</div>
+  CalendarDisplay: ({ date, dateOnly }: any) => (
+    <div data-testid="calendar-display" data-date-only={String(dateOnly)}>
+      {String(date)}
+    </div>
   ),
 }));
 
@@ -336,6 +338,38 @@ describe("MilestoneItemCard", () => {
       );
       const forecast = screen.getByTestId("milestone-forecast");
       expect(forecast.getAttribute("data-milestone")).toBe("99");
+    });
+  });
+
+  describe("calendar blocks", () => {
+    const renderWithDates = (externalKind: "RELEASE" | "ITERATION" | null) => {
+      render(
+        <MilestoneItemCard
+          milestone={createMilestone({
+            startedAt: new Date("2026-11-01T00:00:00.000Z"),
+            completedAt: new Date("2026-12-15T00:00:00.000Z"),
+            externalKind,
+          } as any)}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...mockCallbacks()}
+        />
+      );
+      return screen
+        .getAllByTestId("calendar-display")
+        .map((block) => block.getAttribute("data-date-only"));
+    };
+
+    it.each([{ externalKind: null }, { externalKind: "RELEASE" as const }])(
+      "reads both the start and the due block as calendar days when externalKind is $externalKind",
+      ({ externalKind }) => {
+        expect(renderWithDates(externalKind)).toEqual(["true", "true"]);
+      }
+    );
+
+    it("keeps both blocks of a sprint on the reader's clock", () => {
+      expect(renderWithDates("ITERATION")).toEqual(["false", "false"]);
     });
   });
 
@@ -660,6 +694,30 @@ describe("MilestoneItemCard", () => {
   });
 
   describe("synced milestone (integrationId != null) action gating", () => {
+    it("offers Start again once the milestone is converted to local", () => {
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        detachedAt: new Date("2026-11-27T17:20:21.000Z"),
+        isStarted: false,
+        isCompleted: false,
+      } as any);
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...mockCallbacks()}
+        />
+      );
+
+      const itemTexts = screen
+        .getAllByTestId("dropdown-item")
+        .map((el) => el.textContent);
+      expect(itemTexts.some((t) => t?.includes("start"))).toBe(true);
+    });
+
     it("hides Start for a synced not-started milestone but keeps Edit and Delete", () => {
       const milestone = createMilestone({
         integrationId: 5,

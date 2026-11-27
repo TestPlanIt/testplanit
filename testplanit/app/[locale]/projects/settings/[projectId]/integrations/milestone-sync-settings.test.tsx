@@ -107,14 +107,32 @@ describe("MilestoneSyncSettings", () => {
     expect(screen.getByText("title")).toBeInTheDocument();
   });
 
-  it("hides for a non-milestones-capable integration (GITLAB)", () => {
+  it("hides for a non-milestones-capable integration (CLICKUP)", () => {
     const { container } = render(
       <MilestoneSyncSettings
         projectIntegration={makeProjectIntegration()}
-        integration={{ ...githubIntegration, provider: "GITLAB" }}
+        integration={{ ...githubIntegration, provider: "CLICKUP" }}
       />
     );
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("offers Azure DevOps only the kind it has: sprints, no releases", () => {
+    render(
+      <MilestoneSyncSettings
+        projectIntegration={makeProjectIntegration()}
+        integration={{ ...githubIntegration, provider: "AZURE_DEVOPS" }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("switch", { name: /enableLabel/i }));
+
+    expect(
+      screen.getByRole("checkbox", { name: /sprintsLabel/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: /releasesLabel/i })
+    ).toBeNull();
   });
 
   it("offers GitHub only the kinds it has: releases, no sprints", () => {

@@ -120,6 +120,8 @@ Select one or more issues and click **Create test run** to open the Add Test Run
 
 Use **Link Issue** to attach an issue manually. Each row's overflow menu (⋮) offers **Generate Test Cases** — which opens the seeded generation wizard for that issue, for viewers with test-case create permission — and, for manually-linked rows only, **Unlink**. A synced link can't be unlinked here: its **Source** reads **Synced** and its menu offers no Unlink action — remove it from the version/sprint in Jira instead.
 
+The **Link Issue** dialog can also create an issue in the connected tracker. On a synced milestone that is not completed, the new-issue form starts in the artifact the milestone is synced from: **Fix versions** or **Sprint** on Jira, and **Milestone** on GitHub, GitLab, or Gitea. Change or clear the field before creating the issue to put it somewhere else.
+
 When the linked Jira sprint or version has more issues than are linked here — because an automatic sync hit its import cap, or membership has simply drifted since the last sync — a **More issues in Jira** panel appears below the table listing the missing issues, with an **Import & link** action to pull them in.
 
 :::info Permissions Required

@@ -399,6 +399,40 @@ describe("webhook-config server actions", () => {
       });
     });
 
+    it("creates a REDMINE config and returns the secret Redmine 7 signs with", async () => {
+      mockWebhookConfigFindFirst.mockResolvedValue(null);
+      mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-rm-1" });
+
+      const result = await createOrRotateInboundWebhook({
+        projectId: 42,
+        adapterType: "REDMINE",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.secret).toBeTruthy();
+      expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          adapterType: "REDMINE",
+          secret: `enc:${result.secret}`,
+        }),
+        select: { id: true },
+      });
+    });
+
+    it("creates a MANTISBT config without revealing its unused secret", async () => {
+      mockWebhookConfigFindFirst.mockResolvedValue(null);
+      mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-mantis-1" });
+
+      const result = await createOrRotateInboundWebhook({
+        projectId: 42,
+        adapterType: "MANTISBT",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.url).toBeTruthy();
+      expect(result.secret).toBeUndefined();
+    });
+
     it("creates an AZURE_DEVOPS config with JSON-encoded {username, password} secret", async () => {
       mockWebhookConfigFindFirst.mockResolvedValue(null);
       mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-ado-1" });
@@ -852,6 +886,24 @@ describe("webhook-config server actions", () => {
       mockWebhookConfigFindUnique.mockResolvedValue({
         projectId: 42,
         adapterType: "JIRA",
+        direction: "INBOUND",
+      });
+      mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-1" });
+      const { setWebhookAllowUnsigned } = await import("./webhook-config");
+
+      const result = await setWebhookAllowUnsigned("cfg-1", true);
+
+      expect(result).toEqual({ success: true });
+      expect(mockWebhookConfigUpdate).toHaveBeenCalledWith({
+        where: { id: "cfg-1" },
+        data: { allowUnsigned: true },
+      });
+    });
+
+    it("lets an inbound Redmine webhook accept unsigned deliveries", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        adapterType: "REDMINE",
         direction: "INBOUND",
       });
       mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-1" });
@@ -1360,6 +1412,38 @@ describe("webhook-config server actions", () => {
       expect(sig1).toBe(sig2);
     });
 
+    it("GITEA: posts a bare hex HMAC-SHA256 in x-gitea-signature, the form Gitea sends and its adapter verifies", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: "enc:gitea-secret",
+        projectId: 42,
+        adapterType: "GITEA",
+      });
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ outcome: "synthetic" }),
+      });
+
+      await sendTestWebhook("cfg-gitea");
+
+      const [, init] = fetchSpy.mock.calls[0];
+      const expected = createHmac("sha256", "gitea-secret")
+        .update(init.body)
+        .digest("hex");
+      expect(init.headers["x-gitea-signature"]).toBe(expected);
+      expect(init.headers["x-gitea-event"]).toBe("issues");
+      const { giteaAdapter } = await vi.importActual<
+        typeof import("~/lib/webhooks/adapters/gitea")
+      >("~/lib/webhooks/adapters/gitea");
+      const verified = giteaAdapter.verify(
+        Buffer.from(init.body, "utf8"),
+        new Headers(init.headers),
+        "gitea-secret"
+      );
+      expect(verified.valid && verified.payload.synthetic).toBe(true);
+    });
+
     it("CLICKUP: posts a bare hex HMAC-SHA256 in x-signature over the synthetic taskStatusUpdated payload", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({
         token: FIXTURE_TOKEN,
@@ -1390,6 +1474,55 @@ describe("webhook-config server actions", () => {
       expect(parsed.event).toBe("taskStatusUpdated");
       expect(parsed.task_id).toBe("__synthetic__");
       expect(parsed.history_items[0].after.status).toBe("Synthetic");
+    });
+
+    it("REDMINE: signs the synthetic issue the way Redmine 7 signs its webhooks", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: FIXTURE_SECRET_ENC,
+        projectId: 42,
+        adapterType: "REDMINE",
+      });
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ outcome: "synthetic" }),
+      });
+
+      const result = await sendTestWebhook("cfg-rm");
+
+      expect(result).toEqual({
+        ok: true,
+        statusCode: 200,
+        outcome: "synthetic",
+      });
+      const [, init] = fetchSpy.mock.calls[0];
+      expect(init.headers["x-redmine-signature-256"]).toBe(
+        "sha256=" +
+          createHmac("sha256", FIXTURE_SECRET_PLAIN)
+            .update(init.body)
+            .digest("hex")
+      );
+      expect(JSON.parse(init.body).payload.issue.id).toBe(0);
+    });
+
+    it("MANTISBT: posts the synthetic issue unsigned", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: FIXTURE_SECRET_ENC,
+        projectId: 42,
+        adapterType: "MANTISBT",
+      });
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ outcome: "synthetic" }),
+      });
+
+      await sendTestWebhook("cfg-mantis");
+
+      const [, init] = fetchSpy.mock.calls[0];
+      expect(Object.keys(init.headers)).toEqual(["content-type"]);
     });
 
     it("Test 13 (AZURE_DEVOPS): posts Authorization: Basic <base64> with synthetic workitem.updated payload", async () => {

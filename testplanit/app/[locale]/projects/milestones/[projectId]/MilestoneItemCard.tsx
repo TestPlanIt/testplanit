@@ -42,6 +42,7 @@ import {
   ColorMap,
   getStatus,
   hasCalendarDates,
+  isTrackerManaged,
   getStatusStyle,
   MilestonesWithTypes,
 } from "~/utils/milestoneUtils";
@@ -104,7 +105,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
   // completedAt, all locked by @deny('update', integrationId != null) for
   // synced milestones — hide those actions instead of offering ones that
   // always fail. The tracker owns a synced milestone's lifecycle.
-  const isSynced = milestone.integrationId != null;
+  const isSynced = isTrackerManaged(milestone);
 
   const canManage =
     session.user.access === "ADMIN" || session.user.access === "PROJECTADMIN";
@@ -123,7 +124,10 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
         leading={
           startDate ? (
             <div className="flex max-w-0 shrink-0 overflow-hidden opacity-0 transition-all duration-200 ease-out motion-reduce:transition-none @2xl:me-3 @2xl:max-w-20 @2xl:opacity-100">
-              <CalendarDisplay date={startDate} />
+              <CalendarDisplay
+                date={startDate}
+                dateOnly={hasCalendarDates(milestone)}
+              />
             </div>
           ) : null
         }

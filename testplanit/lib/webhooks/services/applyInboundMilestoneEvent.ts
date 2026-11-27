@@ -41,6 +41,9 @@ const STATE_TRANSITION_EVENTS = new Set([
   "milestone_opened",
 ]);
 
+/** The event type a milestone is refreshed under when an issue leaves it. */
+const LEFT_MILESTONE_EVENT = "milestone_demilestoned";
+
 /**
  * Wall-clock budget for waiting out a contended sync lock, shared across a
  * single event's whole fan-out (NOT per row — a five-project artifact must
@@ -825,6 +828,42 @@ export async function applyInboundMilestoneEvent(
       err
     );
     finalOutcome = "error";
+  }
+
+  // An issue that moved between two milestones in one event changed the
+  // membership of both; the one it left is refreshed whether or not the one
+  // it joined is tracked.
+  if (ref.kind === "RELEASE" && ref.movedFromExternalId) {
+    const leftExternalId = ref.movedFromExternalId;
+    try {
+      const left = await resolveMilestoneEventTargets({
+        kind: "RELEASE",
+        externalId: leftExternalId,
+        externalProjectId: ref.externalProjectId,
+        merge: false,
+      });
+      if (left && left.tracked.length > 0) {
+        const deadlineMs = Date.now() + LOCK_CONTENTION_BUDGET_MS;
+        for (const row of left.tracked) {
+          const rowOutcome = await refreshTrackedRow(
+            LEFT_MILESTONE_EVENT,
+            leftExternalId,
+            row,
+            deadlineMs
+          );
+          if (rowOutcome === "dropped") droppedRows++;
+        }
+        if (finalOutcome === "unmatched") {
+          milestoneId = left.tracked[0].milestoneId;
+          finalOutcome = "refreshed";
+        }
+      }
+    } catch (err) {
+      console.error(
+        `[applyInboundMilestoneEvent] refresh of the milestone an issue left threw for externalId=${leftExternalId}:`,
+        err
+      );
+    }
   }
 
   await captureAuditEvent({

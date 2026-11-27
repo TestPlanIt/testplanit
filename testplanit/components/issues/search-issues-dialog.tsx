@@ -28,6 +28,7 @@ import { isIntegrationAuthCompleteMessage } from "~/lib/integrations/oauthPopup"
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { CreateIssueJiraForm } from "./create-issue-jira-form";
+import type { TrackerMilestoneRef } from "./tracker-milestone";
 import { apiFetch } from "~/lib/basePath";
 
 interface ExternalIssue {
@@ -111,6 +112,8 @@ interface SearchIssuesDialogProps {
     testRunId: number;
     testRunCaseId: number;
   };
+  /** The synced tracker milestone a new issue starts in, when opened from one. */
+  trackerMilestone?: TrackerMilestoneRef;
 }
 
 export function SearchIssuesDialog({
@@ -124,6 +127,7 @@ export function SearchIssuesDialog({
   includeRequirements = false,
   allowInternalPicks = true,
   iterationContext,
+  trackerMilestone,
 }: SearchIssuesDialogProps) {
   const t = useTranslations();
   const [searchQuery, setSearchQuery] = useState("");
@@ -614,7 +618,7 @@ export function SearchIssuesDialog({
                 <DialogDescription>
                   {activeIntegration && searchExternal
                     ? t("issues.searchExternalDescription", {
-                        provider: activeIntegration.integration.provider,
+                        provider: activeIntegration.integration.name,
                       })
                     : t("issues.searchIssuesDescription")}
                 </DialogDescription>
@@ -1017,6 +1021,7 @@ export function SearchIssuesDialog({
             projectId={projectId}
             integrationId={activeIntegration.integrationId}
             projectIntegrationId={activeIntegration.id}
+            trackerMilestone={trackerMilestone}
             defaultValues={
               iterationPrefill
                 ? {
@@ -1053,6 +1058,7 @@ export function SearchIssuesDialog({
             open={showCreateDialog}
             onOpenChange={setShowCreateDialog}
             projectId={projectId}
+            trackerMilestone={trackerMilestone}
             defaultValues={
               iterationPrefill
                 ? {

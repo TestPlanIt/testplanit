@@ -58,6 +58,8 @@ interface DynamicJiraFieldProps {
   form: UseFormReturn<any>;
   integrationId: number;
   projectKey?: string;
+  /** A sprint the form already knows by name, shown when it is the value. */
+  knownSprint?: { id: string; name: string };
 }
 
 // Separate component for description field to avoid hooks in render function
@@ -274,17 +276,25 @@ function SprintPickerField({
   t,
   integrationId,
   projectKey,
+  knownSprint,
 }: {
   field: JiraField;
   formField: any;
   t: any;
   integrationId: number;
   projectKey?: string;
+  knownSprint?: { id: string; name: string };
 }) {
   const queryClient = useQueryClient();
-  const [selectedSprint, setSelectedSprint] = useState<SprintOption | null>(
-    formField.value ? { id: formField.value, name: formField.value } : null
-  );
+  const [pickedSprint, setPickedSprint] = useState<SprintOption | null>(null);
+  const sprintId = formField.value ? String(formField.value) : "";
+  const selectedSprint: SprintOption | null = !sprintId
+    ? null
+    : pickedSprint?.id === sprintId
+      ? pickedSprint
+      : knownSprint?.id === sprintId
+        ? knownSprint
+        : { id: sprintId, name: sprintId };
 
   const fetchSprints = useCallback(
     async (query: string, page: number, pageSize: number) => {
@@ -340,7 +350,7 @@ function SprintPickerField({
         <AsyncCombobox
           value={selectedSprint}
           onValueChange={(value) => {
-            setSelectedSprint(value);
+            setPickedSprint(value);
             formField.onChange(value?.id ?? "");
           }}
           fetchOptions={fetchSprints}
@@ -460,6 +470,7 @@ export function DynamicJiraField({
   form,
   integrationId,
   projectKey,
+  knownSprint,
 }: DynamicJiraFieldProps) {
   const t = useTranslations();
   const { theme } = useTheme();
@@ -674,6 +685,7 @@ export function DynamicJiraField({
               t={t}
               integrationId={integrationId}
               projectKey={projectKey}
+              knownSprint={knownSprint}
             />
           )}
         />

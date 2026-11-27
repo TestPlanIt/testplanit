@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MantisBTAdapter } from "./MantisBTAdapter";
 
 const mockFetch = vi.fn();
@@ -17,6 +17,46 @@ function noContent() {
 
 function httpError(status: number, body = "error") {
   return { ok: false, status, text: () => Promise.resolve(body) };
+}
+
+/** MantisBT answers a file upload with 201 and no body. */
+function createdEmpty() {
+  return {
+    ok: true,
+    status: 201,
+    json: () => Promise.reject(new SyntaxError("Unexpected end of JSON input")),
+  };
+}
+
+const TIPTAP_DOC = {
+  type: "doc" as const,
+  content: [
+    {
+      type: "paragraph",
+      content: [
+        { type: "text", text: "Iteration 3 of 5 on " },
+        { type: "text", text: "Bad password", marks: [{ type: "bold" }] },
+      ],
+    },
+    {
+      type: "bulletList",
+      content: [
+        {
+          type: "listItem",
+          content: [
+            { type: "paragraph", content: [{ type: "text", text: "first" }] },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+const TIPTAP_MARKDOWN = "Iteration 3 of 5 on **Bad password**\n\n- first";
+
+/** `count` issues for a scan page, none of them in a version. */
+function plainIssues(startId: number, count: number) {
+  return Array.from({ length: count }, (_, i) => ({ id: startId + i }));
 }
 
 describe("MantisBTAdapter", () => {
@@ -49,10 +89,10 @@ describe("MantisBTAdapter", () => {
         searchIssues: true,
         webhooks: true,
         customFields: true,
-        attachments: false,
+        attachments: true,
         linkedIssues: true,
         comments: true,
-        milestones: false,
+        milestones: { kinds: ["RELEASE"], webhooks: false },
       });
     });
   });
@@ -779,6 +819,586 @@ describe("MantisBTAdapter", () => {
         displayName: "Ada Lovelace",
         emailAddress: "ada@x.io",
       });
+    });
+  });
+
+  describe("TipTap descriptions", () => {
+    it("createIssue sends a TipTap doc as Markdown", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issue: { id: 102 } }));
+
+      await adapter.createIssue({
+        title: "From an iteration",
+        description: TIPTAP_DOC,
+        projectId: "5",
+      });
+
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body).description).toBe(
+        TIPTAP_MARKDOWN
+      );
+    });
+
+    it("updateIssue sends a TipTap doc as Markdown", async () => {
+      await authenticate();
+      mockFetch
+        .mockResolvedValueOnce(okJson({ issues: [{ id: 42 }] }))
+        .mockResolvedValueOnce(okJson({ issues: [{ id: 42 }] }));
+
+      await adapter.updateIssue("42", { description: TIPTAP_DOC });
+
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({
+        description: TIPTAP_MARKDOWN,
+      });
+    });
+
+    it("passes a string description through unchanged", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issue: { id: 103 } }));
+
+      await adapter.createIssue({
+        title: "Plain",
+        description: "a_b * c",
+        projectId: "5",
+      });
+
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body).description).toBe(
+        "a_b * c"
+      );
+    });
+  });
+
+  describe("uploadAttachment", () => {
+    it("POSTs the file as base64 and accepts the empty 201 answer", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(createdEmpty());
+
+      const result = await adapter.uploadAttachment(
+        "#42",
+        Buffer.from("hello"),
+        "shot.png"
+      );
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toBe(`${API}/issues/42/files`);
+      expect(opts.method).toBe("POST");
+      expect(JSON.parse(opts.body)).toEqual({
+        files: [{ name: "shot.png", content: "aGVsbG8=" }],
+      });
+      expect(result).toEqual({ id: "", url: "" });
+    });
+
+    it("throws when MantisBT refuses the file", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(httpError(400, "File too big"));
+
+      await expect(
+        adapter.uploadAttachment("42", Buffer.from("x"), "big.mp4")
+      ).rejects.toThrow("HTTP 400: File too big");
+    });
+  });
+
+  describe("listAttachments", () => {
+    it("reads metadata from the issue, including files added with a note", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          issues: [
+            {
+              id: 42,
+              attachments: [
+                {
+                  id: 3,
+                  filename: "spec.pdf",
+                  size: 125,
+                  content_type: "application/pdf; charset=us-ascii",
+                  created_at: "2026-11-27T14:26:52+00:00",
+                },
+                {
+                  id: 2,
+                  filename: "shot.png",
+                  size: 70,
+                  content_type: "image/png; charset=binary",
+                },
+              ],
+              notes: [
+                { id: 1, text: "no files" },
+                {
+                  id: 2,
+                  text: "see screenshot",
+                  attachments: [
+                    {
+                      id: 4,
+                      filename: "note-shot.png",
+                      size: 78,
+                      content_type: "image/png; charset=binary",
+                    },
+                    { id: 2, filename: "shot.png" },
+                  ],
+                },
+              ],
+            },
+          ],
+        })
+      );
+
+      const result = await adapter.listAttachments("#42");
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        `${API}/issues/42?select=id,attachments,notes`
+      );
+      expect(result).toEqual([
+        {
+          id: "2",
+          filename: "shot.png",
+          mimeType: "image/png",
+          byteSize: 70,
+          createdAt: undefined,
+          contentUrl: `${API}/issues/42/files/2`,
+        },
+        {
+          id: "3",
+          filename: "spec.pdf",
+          mimeType: "application/pdf",
+          byteSize: 125,
+          createdAt: new Date("2026-11-27T14:26:52+00:00"),
+          contentUrl: `${API}/issues/42/files/3`,
+        },
+        {
+          id: "4",
+          filename: "note-shot.png",
+          mimeType: "image/png",
+          byteSize: 78,
+          createdAt: undefined,
+          contentUrl: `${API}/issues/42/files/4`,
+        },
+      ]);
+    });
+
+    it("returns nothing for an issue without files", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issues: [{ id: 42 }] }));
+
+      await expect(adapter.listAttachments("42")).resolves.toEqual([]);
+    });
+  });
+
+  describe("downloadAttachment", () => {
+    const meta = {
+      id: "2",
+      filename: "shot.png",
+      mimeType: "image/png",
+      byteSize: 5,
+      contentUrl: `${API}/issues/42/files/2`,
+    };
+
+    it("decodes the base64 content of the file", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          files: [
+            {
+              id: 2,
+              filename: "shot.png",
+              size: 5,
+              content_type: "image/png; charset=binary",
+              content: "aGVsbG8=",
+            },
+          ],
+        })
+      );
+
+      const result = await adapter.downloadAttachment(meta);
+
+      expect(mockFetch.mock.calls[0][0]).toBe(`${API}/issues/42/files/2`);
+      expect(result.buffer.toString("utf8")).toBe("hello");
+      expect(result.mimeType).toBe("image/png");
+    });
+
+    it("keeps the listed type when MantisBT reports a generic one", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          files: [
+            {
+              id: 2,
+              content_type: "application/octet-stream; charset=binary",
+              content: "aGVsbG8=",
+            },
+          ],
+        })
+      );
+
+      const result = await adapter.downloadAttachment(meta);
+
+      expect(result.mimeType).toBe("image/png");
+    });
+
+    it("refuses a URL outside this instance's issue files", async () => {
+      await authenticate();
+
+      await expect(
+        adapter.downloadAttachment({
+          ...meta,
+          contentUrl:
+            "https://elsewhere.example.com/api/rest/issues/42/files/2",
+        })
+      ).rejects.toThrow("MantisBT attachment has no download URL");
+      await expect(
+        adapter.downloadAttachment({ ...meta, contentUrl: undefined })
+      ).rejects.toThrow("MantisBT attachment has no download URL");
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("does not fetch a file listed as over the size cap", async () => {
+      await authenticate();
+
+      await expect(
+        adapter.downloadAttachment({ ...meta, byteSize: 11 * 1024 * 1024 })
+      ).rejects.toThrow("Binary response too large");
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("rejects content that decodes past the size cap", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          files: [
+            {
+              id: 2,
+              content: Buffer.alloc(10 * 1024 * 1024 + 1).toString("base64"),
+            },
+          ],
+        })
+      );
+
+      await expect(
+        adapter.downloadAttachment({ ...meta, byteSize: undefined })
+      ).rejects.toThrow("Binary response too large");
+    });
+
+    it("throws when the file is gone", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ files: [] }));
+
+      await expect(adapter.downloadAttachment(meta)).rejects.toThrow(
+        "MantisBT attachment 2 has no content"
+      );
+    });
+  });
+
+  describe("getExternalMilestones", () => {
+    const project = {
+      id: 5,
+      name: "Demo",
+      versions: [
+        {
+          id: 4,
+          name: "9.0",
+          description: "Next",
+          released: false,
+          obsolete: false,
+          timestamp: "2027-03-01T00:00:00+00:00",
+        },
+        {
+          id: 5,
+          name: "8.0",
+          description: "",
+          released: true,
+          obsolete: false,
+          timestamp: "2026-09-15T00:00:00+00:00",
+        },
+        { id: 6, name: "7.0", released: true, obsolete: true },
+        { id: 7, name: "6.0-dropped", released: false, obsolete: true },
+        { name: "no id" },
+      ],
+    };
+
+    it("maps the project's versions to RELEASE milestones", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ projects: [project] }));
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "5",
+        includeClosed: true,
+      });
+
+      expect(mockFetch.mock.calls[0][0]).toBe(`${API}/projects/5`);
+      expect(result).toEqual({
+        hasMore: false,
+        items: [
+          {
+            id: "5:4",
+            kind: "RELEASE",
+            name: "9.0",
+            description: "Next",
+            endDate: new Date("2027-03-01T00:00:00Z"),
+            state: "ACTIVE",
+            rawState: "unreleased",
+            url: `${BASE_URL}/roadmap_page.php?version_id=4`,
+          },
+          {
+            id: "5:5",
+            kind: "RELEASE",
+            name: "8.0",
+            description: undefined,
+            endDate: new Date("2026-09-15T00:00:00Z"),
+            state: "CLOSED",
+            rawState: "released",
+            url: `${BASE_URL}/changelog_page.php?version_id=5`,
+          },
+          {
+            id: "5:6",
+            kind: "RELEASE",
+            name: "7.0",
+            description: undefined,
+            endDate: undefined,
+            state: "CLOSED",
+            rawState: "obsolete",
+            url: `${BASE_URL}/changelog_page.php?version_id=6`,
+          },
+          {
+            id: "5:7",
+            kind: "RELEASE",
+            name: "6.0-dropped",
+            description: undefined,
+            endDate: undefined,
+            state: "CLOSED",
+            rawState: "obsolete",
+            url: `${BASE_URL}/roadmap_page.php?version_id=7`,
+          },
+        ],
+      });
+    });
+
+    it("leaves released and obsolete versions out unless closed ones are asked for", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ projects: [project] }));
+
+      const result = await adapter.getExternalMilestones({ projectKey: "5" });
+
+      expect(result.items.map((item) => item.id)).toEqual(["5:4"]);
+    });
+
+    it("has no ITERATION milestones and does not ask MantisBT for them", async () => {
+      await authenticate();
+
+      await expect(
+        adapter.getExternalMilestones({ projectKey: "5", kind: "ITERATION" })
+      ).resolves.toEqual({ items: [], hasMore: false });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("throws when the project is not returned", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ projects: [] }));
+
+      await expect(
+        adapter.getExternalMilestones({ projectKey: "5" })
+      ).rejects.toThrow("MantisBT project 5 not found");
+    });
+  });
+
+  describe("getMilestoneIssues", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    const page = [
+      { id: 10, summary: "targeted", target_version: { id: 4, name: "9.0" } },
+      {
+        id: 11,
+        summary: "both",
+        target_version: { id: 4, name: "9.0" },
+        fixed_in_version: { id: 5, name: "8.0" },
+      },
+      {
+        id: 12,
+        summary: "fixed",
+        status: { id: 90, name: "closed" },
+        fixed_in_version: { id: 5, name: "8.0" },
+      },
+      {
+        id: 13,
+        summary: "same version twice",
+        target_version: { id: 6, name: "7.0" },
+        fixed_in_version: { id: 6, name: "7.0" },
+      },
+      { id: 14, summary: "no version" },
+    ];
+
+    it("returns the issues targeted at or fixed in the version, from one project walk", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issues: page }));
+
+      const nine = await adapter.getMilestoneIssues(
+        { id: "5:4", kind: "RELEASE" },
+        { limit: 100 }
+      );
+      const eight = await adapter.getMilestoneIssues({
+        id: "5:5",
+        kind: "RELEASE",
+      });
+      const seven = await adapter.getMilestoneIssues({
+        id: "5:6",
+        kind: "RELEASE",
+      });
+      const none = await adapter.getMilestoneIssues({
+        id: "5:99",
+        kind: "RELEASE",
+      });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const url = new URL(mockFetch.mock.calls[0][0]);
+      expect(`${url.origin}${url.pathname}`).toBe(`${API}/issues`);
+      expect(url.searchParams.get("project_id")).toBe("5");
+      expect(url.searchParams.get("page_size")).toBe("1000");
+      expect(url.searchParams.get("page")).toBe("1");
+      expect(url.searchParams.get("select")?.split(",")).toEqual(
+        expect.arrayContaining([
+          "id",
+          "summary",
+          "description",
+          "status",
+          "target_version",
+          "fixed_in_version",
+        ])
+      );
+
+      expect(nine.issues.map((i) => i.id)).toEqual(["10", "11"]);
+      expect(nine).toMatchObject({ total: 2, hasMore: false });
+      expect(eight.issues.map((i) => i.id)).toEqual(["11", "12"]);
+      expect(eight.issues[1]).toMatchObject({
+        key: "#12",
+        title: "fixed",
+        status: "closed",
+      });
+      expect(seven.issues.map((i) => i.id)).toEqual(["13"]);
+      expect(none).toEqual({ issues: [], total: 0, hasMore: false });
+    });
+
+    it("returns nothing, without a request, for a sprint or an id it did not issue", async () => {
+      await authenticate();
+
+      await expect(
+        adapter.getMilestoneIssues({ id: "5:4", kind: "ITERATION" })
+      ).resolves.toEqual({ issues: [], hasMore: false });
+      await expect(
+        adapter.getMilestoneIssues({ id: "owner/repo#4", kind: "RELEASE" })
+      ).resolves.toEqual({ issues: [], hasMore: false });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("walks every page, then reads the first again for issues updated meanwhile", async () => {
+      await authenticate();
+      const moved = {
+        id: 5000,
+        summary: "retargeted during the walk",
+        target_version: { id: 4, name: "9.0" },
+      };
+      const left = { id: 1, summary: "left the version during the walk" };
+      mockFetch
+        .mockResolvedValueOnce(
+          okJson({
+            issues: [
+              { id: 1, target_version: { id: 4, name: "9.0" } },
+              ...plainIssues(2, 999),
+            ],
+          })
+        )
+        .mockResolvedValueOnce(
+          okJson({
+            issues: [
+              { id: 2001, fixed_in_version: { id: 4, name: "9.0" } },
+              ...plainIssues(2002, 999),
+            ],
+          })
+        )
+        .mockResolvedValueOnce(okJson({ issues: plainIssues(4000, 3) }))
+        .mockResolvedValueOnce(
+          okJson({ issues: [moved, left, ...plainIssues(2, 998)] })
+        );
+
+      const result = await adapter.getMilestoneIssues({
+        id: "5:4",
+        kind: "RELEASE",
+      });
+
+      expect(
+        mockFetch.mock.calls.map(([url]) =>
+          new URL(url).searchParams.get("page")
+        )
+      ).toEqual(["1", "2", "3", "1"]);
+      expect(result.issues.map((i) => i.id).sort()).toEqual(["2001", "5000"]);
+    });
+
+    it("refuses a project past the page limit and does not keep the failure", async () => {
+      await authenticate();
+      mockFetch.mockImplementation(() =>
+        Promise.resolve(okJson({ issues: plainIssues(1, 1000) }))
+      );
+
+      await expect(
+        adapter.getMilestoneIssues({ id: "5:4", kind: "RELEASE" })
+      ).rejects.toThrow(
+        "MantisBT project 5 has 20000 or more issues, too many to read in full."
+      );
+      expect(mockFetch).toHaveBeenCalledTimes(20);
+
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce(okJson({ issues: page }));
+      const retry = await adapter.getMilestoneIssues({
+        id: "5:4",
+        kind: "RELEASE",
+      });
+      expect(retry.issues.map((i) => i.id)).toEqual(["10", "11"]);
+    });
+
+    it("shares one walk between concurrent callers and walks again after a minute", async () => {
+      await authenticate();
+      mockFetch.mockResolvedValueOnce(okJson({ issues: page }));
+
+      const [first, second] = await Promise.all([
+        adapter.getMilestoneIssues({ id: "5:4", kind: "RELEASE" }),
+        adapter.getMilestoneIssues({ id: "5:5", kind: "RELEASE" }),
+      ]);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(first.issues).toHaveLength(2);
+      expect(second.issues).toHaveLength(2);
+
+      const now = Date.now();
+      vi.spyOn(Date, "now").mockReturnValue(now + 61_000);
+      mockFetch.mockResolvedValueOnce(
+        okJson({ issues: [{ id: 10, target_version: { id: 5, name: "8.0" } }] })
+      );
+
+      const later = await adapter.getMilestoneIssues({
+        id: "5:4",
+        kind: "RELEASE",
+      });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(later.issues).toEqual([]);
+    });
+
+    it("walks each project separately", async () => {
+      await authenticate();
+      mockFetch
+        .mockResolvedValueOnce(okJson({ issues: page }))
+        .mockResolvedValueOnce(
+          okJson({ issues: [{ id: 77, target_version: { id: 4 } }] })
+        );
+
+      await adapter.getMilestoneIssues({ id: "5:4", kind: "RELEASE" });
+      const other = await adapter.getMilestoneIssues({
+        id: "6:4",
+        kind: "RELEASE",
+      });
+
+      expect(
+        mockFetch.mock.calls.map(([url]) =>
+          new URL(url).searchParams.get("project_id")
+        )
+      ).toEqual(["5", "6"]);
+      expect(other.issues.map((i) => i.id)).toEqual(["77"]);
     });
   });
 

@@ -2323,14 +2323,23 @@ describe("GitHubAdapter", () => {
           title: "v1.2",
           state: "open",
           dueOn: "2026-11-17T00:00:00Z",
+          externalId: "testowner/testrepo#4",
         },
-        { id: "5", title: "Backlog", state: "open", dueOn: null },
+        {
+          id: "5",
+          title: "Backlog",
+          state: "open",
+          dueOn: null,
+          externalId: "testowner/testrepo#5",
+        },
       ]);
       expect(lastRequestUrl()).toContain("/milestones?state=open");
     });
 
     it("getOrgIssueTypes returns an empty list when the owner has none", async () => {
-      mockFetch.mockResolvedValueOnce(notFound());
+      mockFetch
+        .mockResolvedValueOnce(notFound())
+        .mockResolvedValueOnce(notFound());
 
       await expect(
         adapter.getOrgIssueTypes("testowner/testrepo")
@@ -2338,6 +2347,34 @@ describe("GitHubAdapter", () => {
       expect(lastRequestUrl()).toBe(
         "https://api.github.com/orgs/testowner/issue-types"
       );
+    });
+
+    it("getOrgIssueTypes reads the repository's types, whoever owns it", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson([{ id: 1, name: "Bug", is_enabled: true, color: "red" }])
+      );
+
+      const types = await adapter.getOrgIssueTypes("testowner/testrepo");
+
+      expect(lastRequestUrl()).toBe(
+        "https://api.github.com/repos/testowner/testrepo/issue-types"
+      );
+      expect(types.map((type) => type.id)).toEqual(["Bug"]);
+    });
+
+    it("getOrgIssueTypes asks the organization when the repository endpoint is missing", async () => {
+      mockFetch
+        .mockResolvedValueOnce(notFound())
+        .mockResolvedValueOnce(
+          okJson([{ id: 1, name: "Task", is_enabled: true }])
+        );
+
+      const types = await adapter.getOrgIssueTypes("testowner/testrepo");
+
+      expect(lastRequestUrl()).toBe(
+        "https://api.github.com/orgs/testowner/issue-types"
+      );
+      expect(types.map((type) => type.id)).toEqual(["Task"]);
     });
 
     it("getOrgIssueTypes keeps only enabled types, keyed by name", async () => {
@@ -2421,7 +2458,15 @@ describe("GitHubAdapter", () => {
 
       expect(metadata).toEqual({
         labels: [{ id: "bug", name: "bug", color: "d73a4a" }],
-        milestones: [{ id: "1", title: "v1", state: "open", dueOn: null }],
+        milestones: [
+          {
+            id: "1",
+            title: "v1",
+            state: "open",
+            dueOn: null,
+            externalId: "testowner/testrepo#1",
+          },
+        ],
         assignees: [],
         issueTypes: [],
       });

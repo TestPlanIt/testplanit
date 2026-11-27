@@ -129,6 +129,21 @@ export const hasCalendarDates = (milestone: {
   externalKind?: MilestoneExternalKind | null;
 }): boolean => milestone.externalKind !== "ITERATION";
 
+/**
+ * Whether a tracker still owns the milestone's name, description, dates and
+ * state. A milestone converted to local keeps its `integrationId` as a record
+ * of where it came from, with `detachedAt` set, and is editable again.
+ */
+export const isTrackerManaged = (
+  milestone:
+    | {
+        integrationId?: number | null;
+        detachedAt?: Date | string | null;
+      }
+    | null
+    | undefined
+): boolean => milestone?.integrationId != null && milestone.detachedAt == null;
+
 export const getCondition = (milestone: Milestones): string => {
   const now = new Date();
   const startDate = milestone.startedAt ? new Date(milestone.startedAt) : null;

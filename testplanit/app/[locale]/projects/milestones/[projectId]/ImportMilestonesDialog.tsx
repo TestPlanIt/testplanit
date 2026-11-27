@@ -87,7 +87,14 @@ export function ImportMilestonesDialog({
   const t = useTranslations("milestones.import");
   const tCommon = useTranslations("common");
   const providerName = providerDisplayName(provider);
-  const offersSprints = milestoneKindsFor(provider).includes("ITERATION");
+  const offeredKinds = milestoneKindsFor(provider);
+  const singleKind = offeredKinds.length === 1 ? offeredKinds[0] : null;
+  const searchPlaceholder =
+    singleKind === "RELEASE"
+      ? t("searchPlaceholderReleases")
+      : singleKind === "ITERATION"
+        ? t("searchPlaceholderSprints")
+        : t("searchPlaceholder");
 
   // Turn a failed response into something a user can act on. A JSON `error`
   // from our own route is always the best message; without one we're looking
@@ -333,7 +340,7 @@ export function ImportMilestonesDialog({
           <Search className="absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             data-testid="import-milestones-search"
-            placeholder={t("searchPlaceholder")}
+            placeholder={searchPlaceholder}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             className="ps-10"
@@ -342,24 +349,24 @@ export function ImportMilestonesDialog({
 
         {/* Kind filter — Releases and Sprints are fetched from different Jira
             APIs, so this narrows the request rather than the rendered list. */}
-        <div className="flex flex-wrap gap-1">
-          <Badge
-            variant={kindFilter === null ? "default" : "outline"}
-            className="cursor-pointer"
-            data-testid="import-milestones-kind-all"
-            onClick={() => handleKindFilterChange(null)}
-          >
-            {tCommon("filters.all")}
-          </Badge>
-          <Badge
-            variant={kindFilter === "RELEASE" ? "default" : "outline"}
-            className="cursor-pointer"
-            data-testid="import-milestones-kind-release"
-            onClick={() => handleKindFilterChange("RELEASE")}
-          >
-            {t("kindRelease")}
-          </Badge>
-          {offersSprints && (
+        {!singleKind && (
+          <div className="flex flex-wrap gap-1">
+            <Badge
+              variant={kindFilter === null ? "default" : "outline"}
+              className="cursor-pointer"
+              data-testid="import-milestones-kind-all"
+              onClick={() => handleKindFilterChange(null)}
+            >
+              {tCommon("filters.all")}
+            </Badge>
+            <Badge
+              variant={kindFilter === "RELEASE" ? "default" : "outline"}
+              className="cursor-pointer"
+              data-testid="import-milestones-kind-release"
+              onClick={() => handleKindFilterChange("RELEASE")}
+            >
+              {t("kindRelease")}
+            </Badge>
             <Badge
               variant={kindFilter === "ITERATION" ? "default" : "outline"}
               className="cursor-pointer"
@@ -368,8 +375,8 @@ export function ImportMilestonesDialog({
             >
               {t("kindSprint")}
             </Badge>
-          )}
-        </div>
+          </div>
+        )}
 
         {showProjectMeta && (
           <div className="flex flex-wrap gap-1">

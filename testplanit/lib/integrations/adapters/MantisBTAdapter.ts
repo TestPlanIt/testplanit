@@ -1,14 +1,47 @@
+import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
 import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
   CreateIssueData,
+  ExternalMilestone,
   IssueAdapterCapabilities,
+  IssueAttachmentMeta,
   IssueComment,
   IssueData,
   IssueSearchOptions,
   LinkedIssueRef,
   UpdateIssueData,
 } from "./IssueAdapter";
+
+const MAX_ATTACHMENT_DOWNLOAD_BYTES = 10 * 1024 * 1024;
+
+/**
+ * MantisBT cannot list the issues of a version, so membership is read by
+ * walking the whole project. One walk serves every version of the project
+ * until `VERSION_SCAN_TTL_MS` after it finishes, and a project of more than
+ * `VERSION_SCAN_MAX_PAGES` full pages is not walked.
+ */
+const VERSION_SCAN_PAGE_SIZE = 1000;
+const VERSION_SCAN_MAX_PAGES = 20;
+const VERSION_SCAN_TTL_MS = 60_000;
+
+/** The issue fields a version scan asks for: what mapIssue reads, plus the versions. */
+const VERSION_SCAN_FIELDS = [
+  "id",
+  "summary",
+  "description",
+  "status",
+  "priority",
+  "category",
+  "handler",
+  "reporter",
+  "tags",
+  "custom_fields",
+  "created_at",
+  "updated_at",
+  "target_version",
+  "fixed_in_version",
+].join(",");
 
 interface MantisRef {
   id: number;
@@ -28,11 +61,22 @@ interface MantisCustomField {
   value: unknown;
 }
 
+/** `content` (base64) is only present when read through `/issues/:id/files`. */
+interface MantisAttachment {
+  id: number;
+  filename?: string;
+  size?: number;
+  content_type?: string;
+  created_at?: string;
+  content?: string;
+}
+
 interface MantisNote {
   id?: number;
   reporter?: MantisUser;
   text?: string;
   created_at?: string;
+  attachments?: MantisAttachment[];
 }
 
 interface MantisRelationship {
@@ -64,6 +108,9 @@ interface MantisIssue {
   updated_at?: string;
   notes?: MantisNote[];
   relationships?: MantisRelationship[];
+  attachments?: MantisAttachment[];
+  target_version?: MantisRef;
+  fixed_in_version?: MantisRef;
 }
 
 /** A custom field definition as listed on a project (`GET /projects/:id`). */
@@ -80,9 +127,12 @@ interface MantisCustomFieldDef {
 }
 
 interface MantisVersion {
+  id?: number;
   name?: string;
+  description?: string;
   released?: boolean;
   obsolete?: boolean;
+  timestamp?: string;
 }
 
 interface MantisProject {
@@ -178,6 +228,71 @@ function dateToMantisTimestamp(value: unknown): string | undefined {
   return Number.isNaN(ms) ? undefined : String(Math.floor(ms / 1000));
 }
 
+function isTiptapDoc(value: unknown): value is { type: "doc"; content: any[] } {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "type" in value &&
+    (value as { type: unknown }).type === "doc"
+  );
+}
+
+/**
+ * The issue description as the text MantisBT stores: a TipTap doc becomes
+ * Markdown, a string passes through.
+ */
+function renderMantisDescription(description: unknown): string {
+  if (description === undefined || description === null) return "";
+  if (isTiptapDoc(description)) return tiptapToMarkdown(description);
+  if (typeof description === "string") return description;
+  return String(description);
+}
+
+/** `image/png; charset=binary` → `image/png`. */
+function mimeTypeOf(contentType: string | undefined): string | undefined {
+  const mimeType = contentType?.split(";")[0]?.trim().toLowerCase();
+  return mimeType || undefined;
+}
+
+function milestoneExternalId(projectId: string, versionId: number): string {
+  return `${projectId}:${versionId}`;
+}
+
+function parseMilestoneRef(
+  id: string
+): { projectId: string; versionId: number } | null {
+  const match = id.match(/^(\d+):(\d+)$/);
+  return match ? { projectId: match[1], versionId: Number(match[2]) } : null;
+}
+
+/**
+ * A version is ACTIVE until it is released or marked obsolete. Its date is
+ * the release date, planned or actual; MantisBT has no start date.
+ */
+function mapMantisVersion(
+  version: MantisVersion & { id: number },
+  projectId: string,
+  baseUrl: string
+): ExternalMilestone {
+  const rawState = version.obsolete
+    ? "obsolete"
+    : version.released
+      ? "released"
+      : "unreleased";
+  const date = version.timestamp ? new Date(version.timestamp) : undefined;
+  const page = version.released ? "changelog_page" : "roadmap_page";
+  return {
+    id: milestoneExternalId(projectId, version.id),
+    kind: "RELEASE",
+    name: version.name || String(version.id),
+    description: version.description || undefined,
+    endDate: date && !Number.isNaN(date.getTime()) ? date : undefined,
+    state: rawState === "unreleased" ? "ACTIVE" : "CLOSED",
+    rawState,
+    url: `${baseUrl}/${page}.php?version_id=${version.id}`,
+  };
+}
+
 /**
  * Adapter for MantisBT (https://www.mantisbt.org) via its REST API (Mantis 2.x).
  *
@@ -189,10 +304,17 @@ function dateToMantisTimestamp(value: unknown): string | undefined {
  * categories → issue types (Mantis requires a category on every new issue, so
  * the create dialog's "type" selector picks the category), status/priority/
  * severity → config enums passed by name, notes → comments, relationships →
- * linked issues, tags → labels. Single-issue GETs return `{ issues: [issue] }`.
+ * linked issues, tags → labels, versions → RELEASE milestones. Single-issue
+ * GETs return `{ issues: [issue] }`.
  */
 export class MantisBTAdapter extends BaseAdapter {
   private baseUrl: string = "";
+
+  /** Version membership per project, keyed by project id. */
+  private versionScans = new Map<
+    string,
+    { expiresAt: number; members: Promise<Map<number, IssueData[]>> }
+  >();
 
   constructor(config: any) {
     super(config);
@@ -213,10 +335,10 @@ export class MantisBTAdapter extends BaseAdapter {
       searchIssues: true,
       webhooks: true,
       customFields: true,
-      attachments: false,
+      attachments: true,
       linkedIssues: true,
       comments: true,
-      milestones: false,
+      milestones: { kinds: ["RELEASE"], webhooks: false },
     };
   }
 
@@ -335,7 +457,7 @@ export class MantisBTAdapter extends BaseAdapter {
     const issue: Record<string, unknown> = {
       summary: data.title,
       // Mantis requires a non-empty description on create.
-      description: typeof data.description === "string" ? data.description : "",
+      description: renderMantisDescription(data.description),
       project: this.refFromValue(data.projectId),
     };
     // The create dialog's "type" selector maps to the (mandatory) Mantis
@@ -373,8 +495,7 @@ export class MantisBTAdapter extends BaseAdapter {
     const issue: Record<string, unknown> = {};
     if (data.title !== undefined) issue.summary = data.title;
     if (data.description !== undefined) {
-      issue.description =
-        typeof data.description === "string" ? data.description : "";
+      issue.description = renderMantisDescription(data.description);
     }
     // Statuses/priorities are Mantis config enums with no list endpoint; pass
     // them through by name and let the server resolve them.
@@ -442,6 +563,244 @@ export class MantisBTAdapter extends BaseAdapter {
       console.warn("[MantisBTAdapter] getLinkedIssues failed:", error);
       return [];
     }
+  }
+
+  /**
+   * Attach a file to an issue. MantisBT answers with an empty body, so the
+   * new file's id is not known.
+   */
+  async uploadAttachment(
+    issueId: string,
+    file: Buffer,
+    filename: string
+  ): Promise<{ id: string; url: string }> {
+    const id = this.parseId(issueId);
+    try {
+      await this.makeRequest(`${this.apiBase}/issues/${id}/files`, {
+        method: "POST",
+        body: JSON.stringify({
+          files: [{ name: filename, content: file.toString("base64") }],
+        }),
+      });
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+    }
+    return { id: "", url: "" };
+  }
+
+  /**
+   * The issue carries the metadata of its own files and of the files added
+   * with each note; the files endpoint would return every file's bytes too.
+   */
+  async listAttachments(issueId: string): Promise<IssueAttachmentMeta[]> {
+    const id = this.parseId(issueId);
+    const resp = await this.makeRequest<{ issues?: MantisIssue[] }>(
+      `${this.apiBase}/issues/${id}?select=id,attachments,notes`
+    );
+    const issue = resp.issues?.[0];
+    const byId = new Map<number, MantisAttachment>();
+    for (const attachment of [
+      ...(issue?.attachments ?? []),
+      ...(issue?.notes ?? []).flatMap((note) => note.attachments ?? []),
+    ]) {
+      if (attachment?.id != null && !byId.has(attachment.id)) {
+        byId.set(attachment.id, attachment);
+      }
+    }
+    return [...byId.values()]
+      .sort((a, b) => a.id - b.id)
+      .map((a) => ({
+        id: String(a.id),
+        filename: a.filename || `attachment-${a.id}`,
+        mimeType: mimeTypeOf(a.content_type),
+        byteSize: typeof a.size === "number" ? a.size : undefined,
+        createdAt: a.created_at ? new Date(a.created_at) : undefined,
+        contentUrl: `${this.apiBase}/issues/${id}/files/${a.id}`,
+      }));
+  }
+
+  /** MantisBT returns a file's bytes as base64 inside a JSON document. */
+  async downloadAttachment(
+    meta: IssueAttachmentMeta
+  ): Promise<{ buffer: Buffer; mimeType?: string }> {
+    if (
+      !meta.contentUrl ||
+      !meta.contentUrl.startsWith(`${this.apiBase}/issues/`)
+    ) {
+      throw new Error("MantisBT attachment has no download URL");
+    }
+    if (meta.byteSize && meta.byteSize > MAX_ATTACHMENT_DOWNLOAD_BYTES) {
+      throw new Error(
+        `Binary response too large: ${meta.byteSize} bytes (max ${MAX_ATTACHMENT_DOWNLOAD_BYTES})`
+      );
+    }
+    const resp = await this.makeRequest<{ files?: MantisAttachment[] }>(
+      meta.contentUrl
+    );
+    const file = resp.files?.[0];
+    if (!file || typeof file.content !== "string") {
+      throw new Error(`MantisBT attachment ${meta.id} has no content`);
+    }
+    const buffer = Buffer.from(file.content, "base64");
+    if (buffer.byteLength > MAX_ATTACHMENT_DOWNLOAD_BYTES) {
+      throw new Error(
+        `Binary response too large: ${buffer.byteLength} bytes (max ${MAX_ATTACHMENT_DOWNLOAD_BYTES})`
+      );
+    }
+    const mimeType = mimeTypeOf(file.content_type);
+    return {
+      buffer,
+      mimeType:
+        mimeType && mimeType !== "application/octet-stream"
+          ? mimeType
+          : meta.mimeType,
+    };
+  }
+
+  /**
+   * The project's versions as RELEASE milestones. The external id is
+   * `projectId:versionId`, which is what `getMilestoneIssues` needs to find
+   * the project again. MantisBT has nothing like a sprint.
+   */
+  async getExternalMilestones(options: {
+    projectKey: string;
+    kind?: "RELEASE" | "ITERATION";
+    includeClosed?: boolean;
+    pageToken?: string;
+  }): Promise<{
+    items: ExternalMilestone[];
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    if (options.kind === "ITERATION") {
+      return { items: [], hasMore: false };
+    }
+    const project = await this.loadProject(options.projectKey);
+    if (!project) {
+      throw new Error(`MantisBT project ${options.projectKey} not found`);
+    }
+    const projectId = String(project.id);
+    const items = (project.versions ?? [])
+      .filter(
+        (version): version is MantisVersion & { id: number } =>
+          typeof version.id === "number"
+      )
+      .map((version) => mapMantisVersion(version, projectId, this.baseUrl))
+      .filter((item) => options.includeClosed || item.state !== "CLOSED");
+    return { items, hasMore: false };
+  }
+
+  /**
+   * The issues targeted at a version or fixed in it, all in one page.
+   */
+  async getMilestoneIssues(
+    ref: { id: string; kind: "RELEASE" | "ITERATION" },
+    _options?: { pageToken?: string; limit?: number }
+  ): Promise<{
+    issues: IssueData[];
+    total?: number;
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    const parsed = parseMilestoneRef(ref.id);
+    if (!parsed || ref.kind !== "RELEASE") {
+      return { issues: [], hasMore: false };
+    }
+    const members = await this.versionMembers(parsed.projectId);
+    const issues = [...(members.get(parsed.versionId) ?? [])];
+    return { issues, total: issues.length, hasMore: false };
+  }
+
+  /**
+   * Version membership for a project, from a walk shared by every caller
+   * that asks within `VERSION_SCAN_TTL_MS` of its completion.
+   */
+  private versionMembers(projectId: string): Promise<Map<number, IssueData[]>> {
+    const cached = this.versionScans.get(projectId);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.members;
+    }
+    const entry = {
+      expiresAt: Number.POSITIVE_INFINITY,
+      members: this.scanVersionMembers(projectId),
+    };
+    this.versionScans.set(projectId, entry);
+    const forget = () => {
+      if (this.versionScans.get(projectId) === entry) {
+        this.versionScans.delete(projectId);
+      }
+    };
+    entry.members.then(() => {
+      entry.expiresAt = Date.now() + VERSION_SCAN_TTL_MS;
+      setTimeout(forget, VERSION_SCAN_TTL_MS).unref?.();
+    }, forget);
+    return entry.members;
+  }
+
+  /**
+   * Walks the project's issues, most recently updated first, and groups
+   * those with a target or fixed-in version by version id. An issue updated
+   * while the walk runs moves to the front, behind the pages already read,
+   * so a walk of more than one page reads the first page again at the end.
+   */
+  private async scanVersionMembers(
+    projectId: string
+  ): Promise<Map<number, IssueData[]>> {
+    const versioned = new Map<
+      number,
+      { issue: IssueData; versions: number[] }
+    >();
+    const readPage = async (page: number): Promise<number> => {
+      const params = new URLSearchParams({
+        project_id: projectId,
+        page_size: String(VERSION_SCAN_PAGE_SIZE),
+        page: String(page),
+        select: VERSION_SCAN_FIELDS,
+      });
+      const resp = await this.makeRequest<{ issues?: MantisIssue[] }>(
+        `${this.apiBase}/issues?${params.toString()}`
+      );
+      const issues = resp.issues ?? [];
+      for (const issue of issues) {
+        const versions = [
+          ...new Set(
+            [issue.target_version?.id, issue.fixed_in_version?.id]
+              .filter((id) => id !== undefined && id !== null)
+              .map(Number)
+              .filter((id) => !Number.isNaN(id))
+          ),
+        ];
+        if (versions.length > 0) {
+          versioned.set(issue.id, { issue: this.mapIssue(issue), versions });
+        } else {
+          versioned.delete(issue.id);
+        }
+      }
+      return issues.length;
+    };
+
+    let page = 1;
+    while ((await readPage(page)) >= VERSION_SCAN_PAGE_SIZE) {
+      if (page >= VERSION_SCAN_MAX_PAGES) {
+        throw new Error(
+          `MantisBT project ${projectId} has ${VERSION_SCAN_PAGE_SIZE * VERSION_SCAN_MAX_PAGES} or more issues, too many to read in full. MantisBT cannot list the issues of a version, so they were not synced.`
+        );
+      }
+      page += 1;
+    }
+    if (page > 1) {
+      await readPage(1);
+    }
+
+    const members = new Map<number, IssueData[]>();
+    for (const { issue, versions } of versioned.values()) {
+      for (const versionId of versions) {
+        const list = members.get(versionId);
+        if (list) list.push(issue);
+        else members.set(versionId, [issue]);
+      }
+    }
+    return members;
   }
 
   async getProjects(): Promise<

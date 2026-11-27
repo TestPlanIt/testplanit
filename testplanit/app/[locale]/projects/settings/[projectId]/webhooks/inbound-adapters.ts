@@ -124,6 +124,7 @@ export const ISSUE_SETUP_STEP_KEYS: Record<IssueInboundAdapterType, string[]> =
       "setupStepsJiraStep1",
       "setupStepsJiraStep2",
       "setupStepsJiraStep3",
+      "setupStepsJiraMilestones",
       "setupStepsJiraStep4",
     ],
     GITHUB: [
@@ -131,6 +132,7 @@ export const ISSUE_SETUP_STEP_KEYS: Record<IssueInboundAdapterType, string[]> =
       "setupStepsGithubStep2",
       "setupStepsGithubStep3",
       "setupStepsGithubStep4",
+      "setupStepsGithubMilestones",
       "setupStepsGithubStep5",
     ],
     AZURE_DEVOPS: [
@@ -144,6 +146,7 @@ export const ISSUE_SETUP_STEP_KEYS: Record<IssueInboundAdapterType, string[]> =
       "setupStepsGitlabStep1",
       "setupStepsGitlabStep2",
       "setupStepsGitlabStep3",
+      "setupStepsGitlabMilestones",
       "setupStepsGitlabStep4",
     ],
     GITEA: [
@@ -151,6 +154,7 @@ export const ISSUE_SETUP_STEP_KEYS: Record<IssueInboundAdapterType, string[]> =
       "setupStepsGiteaStep2",
       "setupStepsGiteaStep3",
       "setupStepsGiteaStep4",
+      "setupStepsGiteaMilestones",
       "setupStepsGiteaStep5",
     ],
     REDMINE: [
@@ -158,6 +162,7 @@ export const ISSUE_SETUP_STEP_KEYS: Record<IssueInboundAdapterType, string[]> =
       "setupStepsRedmineStep2",
       "setupStepsRedmineStep3",
       "setupStepsRedmineStep4",
+      "setupStepsRedmineStep5",
     ],
     MANTISBT: [
       "setupStepsMantisbtStep1",
@@ -189,8 +194,20 @@ export function hasRotatableSecret(adapterType: string): boolean {
     adapterType === "GITLAB" ||
     adapterType === "GITEA" ||
     adapterType === "BITBUCKET" ||
-    adapterType === "CLICKUP"
+    adapterType === "CLICKUP" ||
+    adapterType === "REDMINE"
   );
+}
+
+/**
+ * Help text for the "Accept unsigned deliveries" switch, for the trackers
+ * that sign their webhooks in some versions and not in others; null for the
+ * rest, which get no switch.
+ */
+export function unsignedDeliveriesHelpKey(adapterType: string): string | null {
+  if (adapterType === "JIRA") return "webhookAllowUnsigned";
+  if (adapterType === "REDMINE") return "webhookAllowUnsignedRedmine";
+  return null;
 }
 
 export type EndpointHealth = "HEALTHY" | "DEGRADED" | "DISABLED";

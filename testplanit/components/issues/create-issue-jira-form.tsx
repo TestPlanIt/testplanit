@@ -32,7 +32,9 @@ import {
   isJiraSprintField,
   jiraDefaultFormValue,
   jiraIdRef,
+  jiraMilestoneFormValue,
 } from "./jira-field-types";
+import type { TrackerMilestoneRef } from "./tracker-milestone";
 import { apiFetch } from "~/lib/basePath";
 
 interface JiraField {
@@ -87,6 +89,8 @@ interface CreateIssueJiraFormProps {
      */
     description?: string | Record<string, unknown> | null;
   };
+  /** The synced Jira release or sprint the form starts with chosen. */
+  trackerMilestone?: TrackerMilestoneRef;
 }
 
 export function CreateIssueJiraForm({
@@ -100,6 +104,7 @@ export function CreateIssueJiraForm({
   onIssueCreated,
   failureSignatureId,
   defaultValues,
+  trackerMilestone,
 }: CreateIssueJiraFormProps) {
   const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
@@ -370,11 +375,36 @@ export function CreateIssueJiraForm({
             field.defaultValue
           );
         }
+        if (trackerMilestone?.integrationId === integrationId) {
+          const milestoneValue = jiraMilestoneFormValue(
+            field,
+            trackerMilestone
+          );
+          if (milestoneValue !== undefined) {
+            newDefaults[field.key] = milestoneValue;
+          }
+        }
       });
 
       form.reset(newDefaults);
     }
-  }, [fields, defaultValues, form, initialDescription]);
+  }, [
+    fields,
+    defaultValues,
+    form,
+    initialDescription,
+    trackerMilestone,
+    integrationId,
+  ]);
+
+  const knownSprint = useMemo(
+    () =>
+      trackerMilestone?.kind === "ITERATION" &&
+      trackerMilestone.integrationId === integrationId
+        ? { id: trackerMilestone.externalId, name: trackerMilestone.name }
+        : undefined,
+    [trackerMilestone, integrationId]
+  );
 
   const onSubmit = async (data: any) => {
     setIsLoading(true);
@@ -592,6 +622,7 @@ export function CreateIssueJiraForm({
                   form={form}
                   integrationId={integrationId}
                   projectKey={selectedProjectKey}
+                  knownSprint={knownSprint}
                 />
               ))}
 

@@ -106,8 +106,8 @@ export function MilestoneSyncSettings({
     { enabled: isMilestoneSyncCapable(integration.provider) }
   );
 
-  // The kinds this tracker offers; a provider with only releases never
-  // shows, saves or compares a sprint kind.
+  // The kinds this tracker offers; a provider never shows, saves or
+  // compares a kind it does not have.
   const providerKinds = useMemo(
     () => milestoneKindsFor(integration.provider),
     [integration.provider]
@@ -262,19 +262,21 @@ export function MilestoneSyncSettings({
             <Label className="text-sm text-muted-foreground">
               {t("milestoneSync.kindsLabel")}
             </Label>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="milestoneSyncKindRelease"
-                checked={pending.kinds.includes("RELEASE")}
-                disabled={isSaving}
-                onCheckedChange={(checked) =>
-                  handleKindToggle("RELEASE", !!checked)
-                }
-              />
-              <Label htmlFor="milestoneSyncKindRelease">
-                {t("milestoneSync.releasesLabel")}
-              </Label>
-            </div>
+            {providerKinds.includes("RELEASE") && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="milestoneSyncKindRelease"
+                  checked={pending.kinds.includes("RELEASE")}
+                  disabled={isSaving}
+                  onCheckedChange={(checked) =>
+                    handleKindToggle("RELEASE", !!checked)
+                  }
+                />
+                <Label htmlFor="milestoneSyncKindRelease">
+                  {t("milestoneSync.releasesLabel")}
+                </Label>
+              </div>
+            )}
             {providerKinds.includes("ITERATION") && (
               <div className="flex items-center gap-2">
                 <Checkbox

@@ -44,6 +44,7 @@ import {
 
 import { adapterLabelKey } from "./inbound-adapters";
 import { WebhookDeliveryDrawer } from "./webhook-delivery-drawer";
+import { eventLabelKey } from "./webhook-event-labels";
 
 type DeliveryListItem = {
   id: string;
@@ -72,46 +73,6 @@ interface WebhookDeliveriesTabProps {
 }
 
 type StatusFilter = "all" | "failed" | "success";
-
-const EVENT_LABEL_KEYS: Record<string, string> = {
-  // Outbound events
-  "test_run.created": "events.testRunCreated",
-  "test_run.state_changed": "events.testRunStateChanged",
-  "test_run.completed": "events.testRunCompleted",
-  "test_run.duplicated": "events.testRunDuplicated",
-  "test_run.result_added": "events.testRunResultAdded",
-  "session.created": "events.sessionCreated",
-  "session.state_changed": "events.sessionStateChanged",
-  "session.completed": "events.sessionCompleted",
-  "session.duplicated": "events.sessionDuplicated",
-  "session.result_added": "events.sessionResultAdded",
-  "issue.created": "events.issueCreated",
-  "issue.updated": "events.issueUpdated",
-  "issue.deleted": "events.issueDeleted",
-  "case.created": "events.caseCreated",
-  "case.updated": "events.caseUpdated",
-  "case.deleted": "events.caseDeleted",
-  // Inbound: Jira
-  "jira:issue_created": "events.jiraIssueCreated",
-  "jira:issue_updated": "events.jiraIssueUpdated",
-  "jira:issue_deleted": "events.jiraIssueDeleted",
-  // Inbound: GitHub
-  issues: "events.githubIssues",
-  pull_request: "events.githubPullRequest",
-  push: "events.githubPush",
-  issue_comment: "events.githubIssueComment",
-  // Inbound: Azure DevOps
-  "workitem.created": "events.adoWorkitemCreated",
-  "workitem.updated": "events.adoWorkitemUpdated",
-  "workitem.deleted": "events.adoWorkitemDeleted",
-  // Synthetic test event ("Send test webhook" / "Send test event")
-  "webhook.test": "events.webhookTest",
-};
-
-function eventLabelKey(eventType: string | null | undefined): string | null {
-  if (!eventType) return null;
-  return EVENT_LABEL_KEYS[eventType] ?? null;
-}
 
 interface FilterState {
   configIds: string[];
@@ -248,6 +209,12 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
     orderBy: { eventType: "asc" },
   });
 
+  const filterAdapterType = configList.some(
+    (config) => config.adapterType === "GITHUB"
+  )
+    ? "GITHUB"
+    : (configList[0]?.adapterType ?? null);
+
   const eventOptions = useMemo(() => {
     const rows = (eventTypeRows ?? []) as Array<{ eventType: string | null }>;
     const seen = new Set<string>();
@@ -255,7 +222,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
     for (const row of rows) {
       if (!row.eventType || seen.has(row.eventType)) continue;
       seen.add(row.eventType);
-      const k = eventLabelKey(row.eventType);
+      const k = eventLabelKey(row.eventType, filterAdapterType);
       options.push({
         value: row.eventType,
         label: k ? (t as unknown as (key: string) => string)(k) : row.eventType,
@@ -263,7 +230,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
     }
     options.sort((a, b) => a.label.localeCompare(b.label));
     return options;
-  }, [eventTypeRows, t]);
+  }, [eventTypeRows, filterAdapterType, t]);
 
   // ─── Fetch deliveries with filter applied ───────────────────────────
   const where = useMemo(() => {
@@ -646,7 +613,10 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
         enableResizing: true,
         size: 250,
         cell: ({ row }) => {
-          const k = eventLabelKey(row.original.eventType);
+          const k = eventLabelKey(
+            row.original.eventType,
+            row.original.adapterType
+          );
           return k
             ? (t as unknown as (key: string) => string)(k)
             : (row.original.eventType ?? "—");

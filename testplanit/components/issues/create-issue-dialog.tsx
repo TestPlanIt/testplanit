@@ -47,6 +47,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { apiFetch } from "~/lib/basePath";
+import type { TrackerMilestoneRef } from "./tracker-milestone";
 
 // INT-05: description accepts either a plain string (manual issue create
 // flow) or a TipTap doc (programmatic prefill from a failed iteration).
@@ -67,6 +68,7 @@ interface TrackerCreateMetadata {
     title: string;
     state: string;
     dueOn?: string | null;
+    externalId?: string;
   }>;
   assignees: Array<{ id: string; name: string; avatarUrl?: string }>;
   issueTypes: Array<{
@@ -78,12 +80,13 @@ interface TrackerCreateMetadata {
 }
 
 /** Trackers whose create form offers labels, assignees, milestone and type. */
-const METADATA_PROVIDERS = new Set(["GITHUB"]);
+const METADATA_PROVIDERS = new Set(["GITHUB", "GITLAB", "GITEA"]);
 
 /** Trackers with no priority field; they are not sent one. */
 const PRIORITY_LESS_PROVIDERS = new Set(["GITHUB", "GITEA", "GITLAB"]);
 
-const MAX_ASSIGNEES = 10;
+/** The most assignees a tracker takes on one issue, where it sets a limit. */
+const MAX_ASSIGNEES_BY_PROVIDER: Record<string, number> = { GITHUB: 10 };
 
 /** Select item standing for "nothing chosen"; Radix refuses an empty value. */
 const NONE_VALUE = "__none__";
@@ -191,6 +194,8 @@ interface CreateIssueDialogProps {
     | "testRunStepResult"
     | "failureSignature";
   entityId?: number;
+  /** The synced tracker milestone the form starts with chosen. */
+  trackerMilestone?: TrackerMilestoneRef;
 }
 
 function isTiptapDocValue(value: unknown): value is TiptapDocValue {
@@ -205,6 +210,7 @@ export function CreateIssueDialog({
   defaultValues,
   entityType,
   entityId,
+  trackerMilestone,
 }: CreateIssueDialogProps) {
   const t = useTranslations();
   const { data: session } = useSession();
@@ -230,9 +236,9 @@ export function CreateIssueDialog({
   const [selectedAssignees, setSelectedAssignees] = useState<
     TrackerCreateMetadata["assignees"]
   >([]);
-  const [selectedMilestone, setSelectedMilestone] = useState<string | null>(
-    null
-  );
+  const [milestoneChoice, setMilestoneChoice] = useState<
+    string | null | undefined
+  >(undefined);
   const [selectedTrackerType, setSelectedTrackerType] = useState<string | null>(
     null
   );
@@ -292,6 +298,29 @@ export function CreateIssueDialog({
 
   const activeIntegration = projectIntegrations?.[0];
   const integrationId = activeIntegration?.integrationId;
+
+  const trackerMilestoneIntegrationId = trackerMilestone?.integrationId;
+  const trackerMilestoneExternalId = trackerMilestone?.externalId;
+  const suggestedMilestone = useMemo(() => {
+    if (
+      !trackerMilestoneExternalId ||
+      trackerMilestoneIntegrationId !== integrationId
+    ) {
+      return null;
+    }
+    return (
+      trackerMetadata?.milestones.find(
+        (milestone) => milestone.externalId === trackerMilestoneExternalId
+      )?.id ?? null
+    );
+  }, [
+    trackerMetadata,
+    trackerMilestoneExternalId,
+    trackerMilestoneIntegrationId,
+    integrationId,
+  ]);
+  const selectedMilestone =
+    milestoneChoice === undefined ? suggestedMilestone : milestoneChoice;
 
   // Fetch active IntegrationProject records for multi-project support (D-09, D-10)
   const { data: integrationProjects } = useClientQueries(
@@ -369,6 +398,7 @@ export function CreateIssueDialog({
   const darkTheme = isDarkTheme(resolvedTheme);
   const offersMetadata = useIntegration && METADATA_PROVIDERS.has(provider);
   const sendsPriority = !PRIORITY_LESS_PROVIDERS.has(provider);
+  const maxAssignees = MAX_ASSIGNEES_BY_PROVIDER[provider];
 
   const fetchLabelOptions = useCallback(
     async (query: string, page: number, pageSize: number) =>
@@ -567,7 +597,7 @@ export function CreateIssueDialog({
       setTrackerMetadata(null);
       setSelectedLabels([]);
       setSelectedAssignees([]);
-      setSelectedMilestone(null);
+      setMilestoneChoice(undefined);
       setSelectedTrackerType(null);
     }
   }, [open]);
@@ -577,7 +607,7 @@ export function CreateIssueDialog({
   useEffect(() => {
     setSelectedLabels([]);
     setSelectedAssignees([]);
-    setSelectedMilestone(null);
+    setMilestoneChoice(undefined);
     setSelectedTrackerType(null);
   }, [effectiveProjectKey]);
 
@@ -1107,7 +1137,7 @@ export function CreateIssueDialog({
           <DialogDescription>
             {activeIntegration && !isSimpleUrlIntegration
               ? t("issues.createIssueDescriptionWithIntegration", {
-                  provider: activeIntegration.integration.provider,
+                  provider: activeIntegration.integration.name,
                 })
               : isSimpleUrlIntegration
                 ? t("issues.createIssueDescriptionSimpleUrl")
@@ -1367,7 +1397,7 @@ export function CreateIssueDialog({
                     disabled={loadingMetadata}
                     value={selectedAssignees}
                     onValueChange={(users) =>
-                      setSelectedAssignees(users.slice(0, MAX_ASSIGNEES))
+                      setSelectedAssignees(users.slice(0, maxAssignees))
                     }
                     fetchOptions={fetchAssigneeOptions}
                     renderOption={(user) => (
@@ -1401,9 +1431,11 @@ export function CreateIssueDialog({
                     className="w-full"
                     hideSelectAll
                   />
-                  <p className="text-xs text-muted-foreground">
-                    {t("issues.assigneesLimit", { max: MAX_ASSIGNEES })}
-                  </p>
+                  {maxAssignees !== undefined && (
+                    <p className="text-xs text-muted-foreground">
+                      {t("issues.assigneesLimit", { max: maxAssignees })}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1414,7 +1446,7 @@ export function CreateIssueDialog({
                     disabled={loadingMetadata}
                     value={selectedMilestone ?? NONE_VALUE}
                     onValueChange={(value) =>
-                      setSelectedMilestone(value === NONE_VALUE ? null : value)
+                      setMilestoneChoice(value === NONE_VALUE ? null : value)
                     }
                   >
                     <SelectTrigger

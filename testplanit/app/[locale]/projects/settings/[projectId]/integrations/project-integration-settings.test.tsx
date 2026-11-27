@@ -603,13 +603,13 @@ describe("ProjectIntegrationSettings", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders Requirement Types but not Milestone Sync for GITEA (label-mode requirement classification, no milestone sync)", () => {
-    const giteaProps = {
+  it("renders Requirement Types but not Milestone Sync for CLICKUP (no milestone sync)", () => {
+    const clickUpProps = {
       ...defaultProps,
-      integration: { ...defaultProps.integration, provider: "GITEA" },
+      integration: { ...defaultProps.integration, provider: "CLICKUP" },
     };
 
-    render(<ProjectIntegrationSettings {...giteaProps} />);
+    render(<ProjectIntegrationSettings {...clickUpProps} />);
 
     expect(
       screen.queryByTestId("milestone-sync-section")

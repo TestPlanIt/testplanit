@@ -6,8 +6,9 @@ import type {
   WebhookAdapter,
 } from "./types";
 
-// Gitea uses HMAC-SHA256 over the raw body, matching GitHub's scheme.
-// Signature header: X-Gitea-Signature (format: sha256=<64-hex>)
+// Gitea signs the raw body with HMAC-SHA256.
+// Signature header: X-Gitea-Signature (the bare 64-hex digest; a "sha256="
+//                   prefix, as on X-Hub-Signature-256, is accepted too)
 // Event header:     X-Gitea-Event     (e.g. "issues")
 const SIGNATURE_HEADER = "x-gitea-signature";
 const EVENT_HEADER = "x-gitea-event";
@@ -24,8 +25,30 @@ interface GiteaIssuesPayload {
     number?: number;
     state?: string;
     title?: string;
+    milestone?: { id?: number } | null;
   };
   repository?: { full_name?: string };
+}
+
+/**
+ * Gitea has no event for a milestone itself. The one milestone signal it
+ * sends is the `issues` event's `milestoned` action, with the milestone the
+ * issue now belongs to on the issue; that becomes `milestone_milestoned`,
+ * the shape the receiver route dispatches to milestone sync. `demilestoned`
+ * names no milestone at all, so it stays an ordinary issue event.
+ */
+function milestoneEventType(
+  headerEvent: string,
+  payload: GiteaIssuesPayload
+): string | null {
+  if (
+    headerEvent === "issues" &&
+    payload.action === "milestoned" &&
+    typeof payload.issue?.milestone?.id === "number"
+  ) {
+    return "milestone_milestoned";
+  }
+  return null;
 }
 
 function constantTimeEqualHex(a: string, b: string): boolean {
@@ -42,10 +65,11 @@ export const giteaAdapter: WebhookAdapter = {
   verify(rawBody: Buffer, headers: Headers, secret: string): VerifyResult {
     const sig = headers.get(SIGNATURE_HEADER);
     if (!sig) return { valid: false, reason: "missing-signature" };
-    if (!sig.startsWith(SIGNATURE_PREFIX)) {
-      return { valid: false, reason: "malformed-signature" };
-    }
-    const provided = sig.slice(SIGNATURE_PREFIX.length).toLowerCase();
+    const provided = (
+      sig.startsWith(SIGNATURE_PREFIX)
+        ? sig.slice(SIGNATURE_PREFIX.length)
+        : sig
+    ).toLowerCase();
     if (!HEX_64_RE.test(provided)) {
       return { valid: false, reason: "malformed-signature" };
     }
@@ -54,8 +78,8 @@ export const giteaAdapter: WebhookAdapter = {
       return { valid: false, reason: "signature-mismatch" };
     }
 
-    const eventType = headers.get(EVENT_HEADER);
-    if (!eventType) return { valid: false, reason: "missing-required-field" };
+    const headerEvent = headers.get(EVENT_HEADER);
+    if (!headerEvent) return { valid: false, reason: "missing-required-field" };
 
     let parsed: GiteaIssuesPayload;
     try {
@@ -63,6 +87,8 @@ export const giteaAdapter: WebhookAdapter = {
     } catch {
       return { valid: false, reason: "unparseable-body" };
     }
+
+    const eventType = milestoneEventType(headerEvent, parsed) ?? headerEvent;
 
     const repo = parsed.repository?.full_name;
     const num = parsed.issue?.number;
@@ -104,5 +130,20 @@ export const giteaAdapter: WebhookAdapter = {
     const p = raw as GiteaIssuesPayload;
     const state = p.issue?.state;
     return typeof state === "string" ? state : null;
+  },
+
+  extractMilestoneEventRef(payload, eventType) {
+    if (!eventType.startsWith("milestone_")) return null;
+    const raw = (payload as ParsedWebhookPayload).data ?? payload;
+    const p = raw as GiteaIssuesPayload;
+    const repo = p.repository?.full_name;
+    const id = p.issue?.milestone?.id;
+    if (typeof repo !== "string" || typeof id !== "number") return null;
+    return {
+      kind: "RELEASE",
+      externalId: `${repo}#${id}`,
+      externalProjectId: repo,
+      merge: false,
+    };
   },
 };

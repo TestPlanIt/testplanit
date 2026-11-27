@@ -226,6 +226,8 @@ export interface CreateIssueMetadata {
     title: string;
     state: string;
     dueOn?: string | null;
+    /** The id `getExternalMilestones` gives the same milestone. */
+    externalId?: string;
   }>;
   assignees: Array<{
     id: string;

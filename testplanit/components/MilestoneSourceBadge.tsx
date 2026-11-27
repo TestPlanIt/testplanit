@@ -24,9 +24,12 @@ import {
 import { ExternalLink, Unlink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "~/lib/navigation";
-import { siGithub, siJira } from "simple-icons";
+import { siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
 import { toast } from "sonner";
+import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
+import { MantisBTIcon } from "@/components/shared/mantisbt-icon";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { providerDisplayName } from "~/lib/integrations/providerDisplayName";
 import { safeExternalUrl } from "~/utils/externalUrl";
 import { apiFetch } from "~/lib/basePath";
 
@@ -150,7 +153,16 @@ export function resolveMilestoneProjectSpace(
   return { name, short };
 }
 
-/** The tracker's mark: GitHub's for GitHub milestones, Jira's otherwise. */
+const AZURE_DEVOPS_PATH =
+  "M17,4v9.74l-4,3.28-6.2-2.26V17L3.29,12.41l10.23.8V4.44Zm-3.41.49L7.85,1V3.29L2.58,4.84,1,6.87v4.61l2.26,1V6.57Z";
+
+const SIMPLE_ICON_GLYPHS: Record<string, { path: string; color: string }> = {
+  GITHUB: { path: siGithub.path, color: "text-foreground" },
+  GITLAB: { path: siGitlab.path, color: "text-[#FC6D26]" },
+  REDMINE: { path: siRedmine.path, color: "text-[#B32024]" },
+};
+
+/** The tracker's mark; a provider without one of its own shows Jira's. */
 export function TrackerGlyph({
   provider,
   className = "h-3 w-3",
@@ -158,27 +170,38 @@ export function TrackerGlyph({
   provider: string;
   className?: string;
 }) {
-  if (provider === "GITHUB") {
+  const glyph = SIMPLE_ICON_GLYPHS[provider];
+  if (glyph) {
     return (
       <svg
         viewBox="0 0 24 24"
-        className={`${className} text-foreground`}
+        className={`${className} ${glyph.color}`}
         fill="currentColor"
         aria-hidden="true"
       >
-        <path d={siGithub.path} />
+        <path d={glyph.path} />
+      </svg>
+    );
+  }
+  if (provider === "GITEA") {
+    return <GiteaPlatformIcon className={className} />;
+  }
+  if (provider === "MANTISBT") {
+    return <MantisBTIcon className={`${className} text-[#59A635]`} />;
+  }
+  if (provider === "AZURE_DEVOPS") {
+    return (
+      <svg
+        viewBox="0 0 18 18"
+        className={`${className} text-[#0078D7]`}
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path d={AZURE_DEVOPS_PATH} />
       </svg>
     );
   }
   return <JiraGlyph className={className} />;
-}
-
-/** The provider segment of the badge label. */
-export function useMilestoneProviderLabel(provider: string): string {
-  const t = useTranslations("milestones");
-  return provider === "GITHUB"
-    ? t("sync.providerGitHub")
-    : t("sync.providerJira");
 }
 
 /**
@@ -214,7 +237,7 @@ function RemovedOrMergedBadge({
 }: MilestoneSourceBadgeProps & { providerKey: string }) {
   const t = useTranslations("milestones");
   const router = useRouter();
-  const provider = useMilestoneProviderLabel(providerKey);
+  const provider = providerDisplayName(providerKey);
   const isMerged = milestone.externalState === "merged";
 
   // Only look up the merge target when we actually need it — this query is
@@ -308,7 +331,7 @@ function SourceBadgeWithUnlinkMenu({
   const [isUnlinking, setIsUnlinking] = useState(false);
   const { isProjectAdmin } = useProjectPermissions(projectId ?? 0);
 
-  const provider = useMilestoneProviderLabel(providerKey);
+  const provider = providerDisplayName(providerKey);
 
   const handleUnlink = async () => {
     setIsUnlinking(true);
@@ -466,7 +489,7 @@ export function MilestoneSourceBadge({
   const isLocal =
     milestone.integrationId == null && milestone.detachedAt == null;
 
-  const provider = useMilestoneProviderLabel(providerKey);
+  const provider = providerDisplayName(providerKey);
   const kind =
     milestone.externalKind === "RELEASE"
       ? t("import.kindRelease")

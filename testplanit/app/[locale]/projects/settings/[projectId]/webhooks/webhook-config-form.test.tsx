@@ -19,6 +19,7 @@ const {
   mockDeleteInbound,
   mockSendTest,
   mockReEnableWebhookConfig,
+  mockSetWebhookAllowUnsigned,
   mockToastSuccess,
   mockToastError,
 } = vi.hoisted(() => ({
@@ -27,6 +28,7 @@ const {
   mockFindManyConnections: vi.fn(),
   mockWizard: vi.fn(),
   mockSetWebhookActive: vi.fn(),
+  mockSetWebhookAllowUnsigned: vi.fn(),
   mockCreateOrRotateInbound: vi.fn(),
   mockDeleteInbound: vi.fn(),
   mockSendTest: vi.fn(),
@@ -98,6 +100,8 @@ vi.mock("~/app/actions/webhook-config", () => ({
   deleteInboundWebhook: (...args: any[]) => mockDeleteInbound(...args),
   sendTestWebhook: (...args: any[]) => mockSendTest(...args),
   setWebhookActive: (...args: any[]) => mockSetWebhookActive(...args),
+  setWebhookAllowUnsigned: (...args: any[]) =>
+    mockSetWebhookAllowUnsigned(...args),
   reEnableWebhookConfig: (...args: any[]) => mockReEnableWebhookConfig(...args),
 }));
 
@@ -374,6 +378,23 @@ const githubConfig: ConfigFixture = {
   adapterType: "GITHUB",
   direction: "INBOUND",
   token: "whk_" + "b".repeat(64),
+  isActive: true,
+  lastReceivedAt: null,
+  endpointHealth: "HEALTHY",
+  consecutiveFailureCount: 0,
+  lastDispatchedAt: null,
+  lastSuccessAt: null,
+  lastFailureAt: null,
+  createdAt: new Date("2026-04-26T00:00:00Z"),
+  updatedAt: new Date("2026-04-26T00:00:00Z"),
+};
+
+const redmineConfig: ConfigFixture = {
+  id: "cfg-redmine",
+  projectId: 42,
+  adapterType: "REDMINE",
+  direction: "INBOUND",
+  token: "whk_" + "d".repeat(64),
   isActive: true,
   lastReceivedAt: null,
   endpointHealth: "HEALTHY",
@@ -699,6 +720,44 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     expect(
       within(adoCard).queryByTestId("webhook-rotate-button")
     ).not.toBeInTheDocument();
+  });
+
+  it("renders the rotate button on the Redmine card", () => {
+    setConfigs([redmineConfig]);
+    render(<WebhookConfigForm projectId={42} />);
+    const card = screen.getByTestId("webhook-inbound-card-redmine");
+    expect(
+      within(card).getByTestId("webhook-rotate-button")
+    ).toBeInTheDocument();
+  });
+
+  // ─── Accept unsigned deliveries ──────────────────────────────────────
+
+  it("offers the accept-unsigned switch on Jira and Redmine cards only", () => {
+    setConfigs([jiraConfig, redmineConfig, githubConfig, adoConfig]);
+    render(<WebhookConfigForm projectId={42} />);
+    const has = (slug: string) =>
+      within(screen.getByTestId(`webhook-inbound-card-${slug}`)).queryByTestId(
+        "webhook-allow-unsigned-switch"
+      ) !== null;
+    expect(has("jira")).toBe(true);
+    expect(has("redmine")).toBe(true);
+    expect(has("github")).toBe(false);
+    expect(has("ado")).toBe(false);
+  });
+
+  it("turning the switch on for Redmine saves it on that webhook", async () => {
+    mockSetWebhookAllowUnsigned.mockResolvedValue({ success: true });
+    setConfigs([redmineConfig]);
+    render(<WebhookConfigForm projectId={42} />);
+    const card = screen.getByTestId("webhook-inbound-card-redmine");
+    fireEvent.click(within(card).getByTestId("webhook-allow-unsigned-switch"));
+    await waitFor(() =>
+      expect(mockSetWebhookAllowUnsigned).toHaveBeenCalledWith(
+        "cfg-redmine",
+        true
+      )
+    );
   });
 
   // ─── Delete confirmation via shadcn AlertDialog ──────────────────────
