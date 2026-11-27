@@ -68,7 +68,7 @@ The fields available for mapping depend on the template you select. You'll alway
 | Created By | No | User who created the case |
 | Version | No | Version number |
 | Test Runs | No | Associated test runs |
-| ID | No | Test case ID |
+| ID | No | ID of an existing test case in this project to update (see **ID column** below) |
 | Folder | Conditional | Required when importing to multiple folders |
 
 **Template Custom Fields:**
@@ -253,7 +253,7 @@ row and test case they came from. The test cases still import.
 - **Folders**: Auto-create folder hierarchy based on the folder split mode (see below)
 - **Tags**: Comma-separated values are split into individual tags; existing tags are reused, new ones are created
 - **Auto-matching**: Column names are automatically matched to similar field names; you can override any auto-match
-- **ID column**: If you map an `ID` column and a value matches an existing test case, that case is updated in place. Without a matching ID, a new case is created.
+- **ID column**: If you map an `ID` column and a value matches a test case in the project you are importing into, that case is updated in place. Every other row creates a new case, and the new case gets the next available ID, not the ID from the file. IDs exported from another tool, another project, or another TestPlanIt instance are therefore not kept.
 
 #### Saved Column Mappings
 
@@ -598,7 +598,7 @@ To update existing test cases via CSV:
 2. Edit the CSV — keep the `ID` column intact
 3. Re-import the CSV with the `ID` column mapped to the **ID** system field
 
-Rows whose ID matches an existing test case update that case in place; rows without a matching ID (or without an ID mapping) create new cases. There is no separate "Update existing" mode; the importer's behavior is driven entirely by whether an ID is mapped and matches.
+Rows whose ID matches a test case in the project you are importing into update that case in place; rows without a matching ID (or without an ID mapping) create new cases with the next available ID. There is no separate "Update existing" mode; the importer's behavior is driven entirely by whether an ID is mapped and matches.
 
 #### Bulk Tag Management
 
@@ -879,6 +879,9 @@ The CSV and PDF exports are generated in the browser from data already loaded by
 
 **Issue**: Duplicate test cases
 **Solution**: Map your CSV's `ID` column to the **ID** system field — rows with a matching ID update the existing case instead of creating a duplicate
+
+**Issue**: Imported cases have different IDs than the ones in the CSV
+**Solution**: This is expected. An ID in the file is only used to find a case in the project you are importing into and update it. A row whose ID matches no case there is created as a new case with the next available ID. To keep a reference to the original IDs, import them into a custom text field instead of the **ID** system field.
 
 **Issue**: Multi-row CSV imports each step as a separate case
 **Solution**: On the first wizard page, choose **"Test cases can span multiple rows"**, then make sure (1) the CSV has a recognized step content column (`Step Content`, `Step`, `Steps`, `Action`, `Actions`, `Step Description`, or any column mapped to the **Steps** system field), and (2) an **ID** or **Name** column is mapped so rows can be grouped. The preview page shows whether grouping happened.

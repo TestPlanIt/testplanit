@@ -1474,7 +1474,7 @@ describe("CSV Import API Route", () => {
   });
 
   describe("Update/Create by ID", () => {
-    it("creates new test case with specified ID", async () => {
+    it("creates a row whose ID matches no case in the project with a new ID", async () => {
       mockEnhancedDb.repositoryCases.findFirst.mockResolvedValue(null);
 
       const request = createRequest({
@@ -1497,12 +1497,15 @@ describe("CSV Import API Route", () => {
       const result = await parseSSEResponse(response);
 
       expect(result.complete).toBeDefined();
+      expect(mockEnhancedDb.repositoryCases.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 1001, projectId: 1 } })
+      );
       expect(mockEnhancedDb.repositoryCases.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          id: 1001,
-          name: "Test Case 1",
-        }),
+        data: expect.objectContaining({ name: "Test Case 1" }),
       });
+      expect(
+        mockEnhancedDb.repositoryCases.create.mock.calls[0][0].data
+      ).not.toHaveProperty("id");
     });
 
     it("updates existing test case when ID exists", async () => {
@@ -1799,21 +1802,16 @@ describe("CSV Import API Route", () => {
         }),
       });
 
-      // Verify create was called for new cases
-      expect(mockEnhancedDb.repositoryCases.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          id: 1002,
-          name: "New Case",
-        }),
-      });
-
-      // Verify create was called for auto-ID case
-      expect(mockEnhancedDb.repositoryCases.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          name: "Auto ID Case",
-          // No id field
-        }),
-      });
+      const createdData = mockEnhancedDb.repositoryCases.create.mock.calls.map(
+        ([args]: any[]) => args.data
+      );
+      expect(createdData.map((d: any) => d.name)).toEqual([
+        "New Case",
+        "Auto ID Case",
+      ]);
+      for (const data of createdData) {
+        expect(data).not.toHaveProperty("id");
+      }
     });
   });
 

@@ -721,83 +721,43 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
             folderMaxOrders[caseData.folderId]++;
             const caseOrder = folderMaxOrders[caseData.folderId];
 
-            if (caseData.id) {
-              const existingCase = await enhancedDb.repositoryCases.findFirst({
-                where: {
-                  id: caseData.id,
-                  projectId: body.projectId,
-                },
-              });
-
-              if (existingCase) {
-                isUpdate = true;
-                reusedCaseId = caseData.id;
-                // `automated` is written together with the currentVersion
-                // bump below, not here: a flag change on its own would make
-                // the ORM side-effects hook write a snapshot of its own on
-                // top of the one this import records.
-                newCase = await enhancedDb.repositoryCases.update({
-                  where: { id: caseData.id },
-                  data: {
-                    name: caseData.name,
-                    folderId: caseData.folderId,
-                    templateId: caseData.templateId,
-                    stateId: stateId,
-                    estimate: caseData.estimate,
-                    forecastManual: caseData.forecastManual,
+            const existingCase = caseData.id
+              ? await enhancedDb.repositoryCases.findFirst({
+                  where: {
+                    id: caseData.id,
+                    projectId: body.projectId,
                   },
-                });
-              } else {
-                // Create-or-restore: if a prior soft-deleted case
-                // exists at the same (projectId, name, className, source)
-                // tuple, resurrect it with the imported payload instead
-                // of 23505ing. The resurrected row keeps its existing
-                // id; the caseData.id we tried to preserve is a no-op in
-                // that branch — acceptable because importers treat ids
-                // as a hint, not a hard requirement. We can't use
-                // Prisma's compound-unique upsert because the generated
-                // type rejects null for `className` (typed as `string`,
-                // not `string | null`).
-                const importFields = {
+                  select: { id: true },
+                })
+              : null;
+
+            if (existingCase) {
+              isUpdate = true;
+              reusedCaseId = existingCase.id;
+              // `automated` is written together with the currentVersion
+              // bump below, not here: a flag change on its own would make
+              // the ORM side-effects hook write a snapshot of its own on
+              // top of the one this import records.
+              newCase = await enhancedDb.repositoryCases.update({
+                where: { id: existingCase.id },
+                data: {
                   name: caseData.name,
-                  repositoryId: caseData.repositoryId,
                   folderId: caseData.folderId,
                   templateId: caseData.templateId,
                   stateId: stateId,
-                  automated: caseData.automated,
                   estimate: caseData.estimate,
                   forecastManual: caseData.forecastManual,
-                  order: caseOrder,
-                  ...(createdAt && { createdAt }),
-                };
-                const softDeletedExisting =
-                  await enhancedDb.repositoryCases.findFirst({
-                    where: {
-                      projectId: caseData.projectId,
-                      name: caseData.name,
-                      className: null,
-                      source: caseData.source,
-                      isDeleted: true,
-                    },
-                    select: { id: true },
-                  });
-                reusedCaseId = softDeletedExisting?.id ?? null;
-                newCase = softDeletedExisting
-                  ? await enhancedDb.repositoryCases.update({
-                      where: { id: softDeletedExisting.id },
-                      data: { ...importFields, isDeleted: false },
-                    })
-                  : await enhancedDb.repositoryCases.create({
-                      data: {
-                        id: caseData.id,
-                        projectId: caseData.projectId,
-                        source: caseData.source,
-                        creatorId: creatorId,
-                        ...importFields,
-                      },
-                    });
-              }
+                },
+              });
             } else {
+              // Create-or-restore: if a prior soft-deleted case exists at
+              // the same (projectId, name, className, source) tuple,
+              // resurrect it with the imported payload instead of
+              // 23505ing. We can't use Prisma's compound-unique upsert
+              // because the generated type rejects null for `className`.
+              // A file ID that matched nothing above is never written as
+              // the new case's id: an explicit id leaves the id sequence
+              // behind, and later creates then collide on the primary key.
               const importFields = {
                 name: caseData.name,
                 repositoryId: caseData.repositoryId,

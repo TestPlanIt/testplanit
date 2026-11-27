@@ -3429,7 +3429,7 @@
           "descriptionTestLink": "Map each TestLink field to a field in the template or choose to ignore it.",
           "ignoreColumn": "Ignore Column",
           "requiredFieldsWarning": "{count, plural, one {# required field is} other {# required fields are}} not mapped",
-          "caseIdHint": "This must be the numeric Case ID — matching cases are overwritten."
+          "caseIdHint": "This must be the numeric Case ID — matching cases in this project are overwritten. Other rows are created with a new ID."
         },
         "page3": {
           "title": "Field Mapping Summary",
