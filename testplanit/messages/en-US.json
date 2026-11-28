@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "Enter the code from your sign-in email. Codes only work in the browser where you requested the link.",
         "backToRequest": "Request a new link instead"
       },
+      "passkey": {
+        "signIn": "Sign in with a passkey",
+        "failed": "That passkey could not be used to sign in. Try again or sign in another way.",
+        "unavailable": "Passkey sign-in is not available right now.",
+        "addressMismatch": "Passkeys are set up for a different address than the one in your browser. Ask an administrator to check the application URL.",
+        "tooManyRequests": "Too many attempts. Please wait a moment and try again."
+      },
       "twoFactor": {
         "title": "Two-Factor Authentication",
         "description": "Enter the 6-digit code from your authenticator app or use a backup code."
@@ -3155,6 +3162,32 @@
         "agentTokenBadge": "Agent token",
         "errors": {
           "nameRequired": "Token name is required."
+        }
+      },
+      "passkeys": {
+        "title": "Passkeys",
+        "description": "A passkey lets you sign in with your device's fingerprint, face or PIN instead of your password.",
+        "add": "Add Passkey",
+        "addTitle": "Add a Passkey",
+        "addDescription": "Confirm it's you, then follow your browser's prompt to create the passkey.",
+        "nameLabel": "Passkey Name",
+        "namePlaceholder": "e.g., MacBook, Phone",
+        "passwordLabel": "Current Password",
+        "codeLabel": "Authenticator Code",
+        "noPasskeys": "No passkeys added yet.",
+        "removeTitle": "Remove Passkey?",
+        "removeDescription": "This passkey will no longer sign in to this account. It also stays on the device or password manager that holds it until it is deleted there.",
+        "disabledNotice": "Passkey sign-in is switched off. Passkeys cannot be added or used until an administrator switches it back on.",
+        "notSupported": "This browser does not support passkeys.",
+        "errors": {
+          "invalidPassword": "The current password is incorrect.",
+          "passwordNotSet": "Set a password before adding a passkey.",
+          "tooManyAttempts": "Too many attempts. Please try again later.",
+          "limitReached": "This account has the maximum number of passkeys. Remove one to add another.",
+          "alreadyRegistered": "This device already has a passkey for this account.",
+          "registrationFailed": "The passkey could not be added. Please try again.",
+          "unavailable": "Passkeys are not available for this account.",
+          "removeFailed": "The passkey could not be removed."
         }
       }
     },
@@ -5359,6 +5392,9 @@
         "magicLink": {
           "title": "Magic Link Authentication",
           "description": "Enable or disable passwordless email-based authentication"
+        },
+        "passkeys": {
+          "title": "Passkeys"
         }
       },
       "providers": {
@@ -5438,6 +5474,9 @@
         "magicLinkDisabled": "Magic Link authentication disabled",
         "magicLinkCreated": "Magic Link provider created",
         "magicLinkUpdateFailed": "Failed to update Magic Link provider",
+        "passkeysEnabled": "Passkey sign-in enabled",
+        "passkeysDisabled": "Passkey sign-in disabled",
+        "passkeysUpdateFailed": "Failed to update passkey setting",
         "configureFirst": "Please configure the provider before enabling it",
         "domainRestrictionEnabled": "Email domain restriction enabled",
         "domainRestrictionDisabled": "Email domain restriction disabled",
@@ -8115,6 +8154,7 @@
     "roles": "## Roles\nRoles control what users can do — each one toggles permissions per application area. Assign a role to users directly or as a project default.",
     "sso": "## Authentication\nManage how users sign in and whether new accounts can register.",
     "ssoProviders": "## Sign-in Providers\nConfigure how users can sign in to your application.",
+    "ssoPasskeys": "## Passkeys\nUsers with a password can add passkeys to their profile and sign in with their device's fingerprint, face or PIN. A passkey sign-in counts as two-factor authentication.\n\nPasskeys need the application to be served over HTTPS (or on localhost); otherwise this row shows Not Configured. They are unavailable while Force SSO Login is on.",
     "ssoRegistration": "## Registration Settings\nControl who can register for new accounts.",
     "ssoAllowRegistration": "## Allow Self-Registration\nWhen disabled, new users cannot sign up directly or create an account via SSO. Existing users can still sign in.",
     "ssoDefaultAccess": "## Default Access Level\nThe system access level assigned to new users when they register.",

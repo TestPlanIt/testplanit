@@ -154,6 +154,8 @@ When enabled:
 | Password logins only | 2FA required | 2FA optional |
 | All logins | 2FA required | 2FA required |
 
+A [passkey](./passkeys.md) sign-in is never asked for a 2FA code, under any of these settings. Adding a passkey requires the account's password and, when 2FA is enabled for the account, a code from the authenticator app.
+
 ### SSO and Personal 2FA
 
 When **Require 2FA for All Logins** is NOT enabled:

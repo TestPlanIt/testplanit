@@ -16,6 +16,9 @@ vi.mock("~/lib/db", () => {
     account: {
       deleteMany: vi.fn(),
     },
+    passkey: {
+      deleteMany: vi.fn(),
+    },
     appConfig: {
       findUnique: vi.fn(),
     },
@@ -103,6 +106,7 @@ interface TxLike {
   };
   roles: { findFirst: ReturnType<typeof vi.fn> };
   account: { deleteMany: ReturnType<typeof vi.fn> };
+  passkey: { deleteMany: ReturnType<typeof vi.fn> };
   appConfig: { findUnique: ReturnType<typeof vi.fn> };
   scimToken: { findUnique: ReturnType<typeof vi.fn> };
 }
@@ -826,6 +830,9 @@ describe("patchScimUser", () => {
     expect(tx.account.deleteMany).toHaveBeenCalledWith({
       where: { userId: "user_1" },
     });
+    expect(tx.passkey.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user_1" },
+    });
   });
 
   it("H4: PATCH on tombstoned row throws ScimNotFoundError", async () => {
@@ -974,6 +981,22 @@ describe("deleteScimUser", () => {
 
     const result = await deleteScimUser("user_1", CTX);
     expect(result.status).toBe(204);
+  });
+
+  it("I4b: removes the user's Account rows and passkeys", async () => {
+    tx.user.findUnique.mockResolvedValue(makeUser());
+    tx.user.update.mockResolvedValue(
+      makeUser({ isDeleted: true, isActive: false })
+    );
+
+    await deleteScimUser("user_1", CTX);
+
+    expect(tx.account.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user_1" },
+    });
+    expect(tx.passkey.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user_1" },
+    });
   });
 
   it("I5: idempotent on already-tombstoned row; returns 204 without emitting a second webhook", async () => {

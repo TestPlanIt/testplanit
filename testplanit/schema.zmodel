@@ -225,6 +225,7 @@ model User {
     createdComments                          Comment[]                         @relation("CommentCreator")
     commentMentions                          CommentMention[]                  @relation("CommentMentions")
     apiTokens                                ApiToken[]
+    passkeys                                 Passkey[]
     scimSystemTokens                         ScimToken[]                       @relation("ScimSystemUser")
     scimTokensCreated                        ScimToken[]                       @relation("ScimTokenCreatedBy")
     scimTokensRevoked                        ScimToken[]                       @relation("ScimTokenRevokedBy")
@@ -331,6 +332,29 @@ model ApiToken {
     @@index([isActive, expiresAt])
     @@deny('all', auth() == null)
     @@allow('create, read, update, delete', auth().id == userId || auth().access == 'ADMIN')
+}
+
+// WebAuthn credentials for passkey sign-in
+model Passkey {
+    id           String    @id @default(cuid())
+    userId       String    @deny('update', true)
+    credentialId String    @unique
+    userHandle   String    @omit // The account id the device was given; differs per install on a shared host
+    publicKey    String    @db.Text @omit @deny('read', true)
+    counter      BigInt    @default(0) @omit
+    transports   String[]  @default([])
+    deviceType   String
+    backedUp     Boolean   @default(false)
+    aaguid       String?
+    name         String    @length(1, 100)
+    createdAt    DateTime  @default(now()) @db.Timestamptz(6)
+    lastUsedAt   DateTime? @db.Timestamptz(6)
+    user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@deny('all', auth() == null)
+    // Registration and sign-in bookkeeping use dedicated routes on the raw client
+    @@allow('read, delete', auth().id == userId || auth().access == 'ADMIN')
 }
 
 // IdP source for a SCIM token. Drives per-IdP leniency in downstream PATCH
@@ -6787,6 +6811,7 @@ model RegistrationSettings {
     // Two-factor authentication settings
     force2FANonSSO           Boolean  @default(false) // Force 2FA for email/password logins
     force2FAAllLogins        Boolean  @default(false) // Force 2FA for all logins including SSO
+    allowPasskeys            Boolean  @default(true)
     // Email verification settings
     requireEmailVerification Boolean  @default(true)  // Require email verification for email/password sign-ups
     minPasswordLength        Int      @default(12)
@@ -7216,6 +7241,8 @@ enum AuditAction {
     PASSWORD_POLICY_CHANGED
     FORCE_PASSWORD_CHANGE
     PASSWORD_REVOKED
+    PASSKEY_REGISTERED
+    PASSKEY_REMOVED
     WEBHOOK_RECEIVED
     WEBHOOK_DISPATCHED
     WEBHOOK_REPLAYED

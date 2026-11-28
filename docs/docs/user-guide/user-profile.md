@@ -43,11 +43,13 @@ Displays core account details:
 - **Default Role**: The default role assigned to the user
 - **API User**: Indicates if this is an API account (shown as a disabled switch)
 - **Two-Factor Authentication (2FA)**: Toggle, QR code setup, backup code management, and regeneration controls
+- **Passkeys**: Shown for accounts with the Internal or Email & SSO authentication method. Lists the account's passkeys with the dates they were created and last used. On your own profile you can add a passkey; you and administrators can remove one.
+
 :::note
 If your organization has enforced 2FA, you will not be able to disable it. A notice will appear if SSO logins bypass your personal 2FA settings.
 :::
 
-For detailed 2FA setup instructions, see [Two-Factor Authentication](./two-factor-authentication.md).
+For detailed 2FA setup instructions, see [Two-Factor Authentication](./two-factor-authentication.md). For passkeys, see [Passkeys](./passkeys.md).
 
 ### Assignments
 

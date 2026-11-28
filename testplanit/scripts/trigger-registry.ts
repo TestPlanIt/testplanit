@@ -430,7 +430,7 @@ export const REGISTRY_PROHIBITED = [
 /*
  * SAF-04 — credential/token tables deliberately EXCLUDED from the registry (absence is the
  * control; they are covered by semantic captureAuditEvent calls, never by row triggers):
- *   ApiToken, ScimToken, VerificationToken, PasswordHistory, Account,
+ *   ApiToken, ScimToken, VerificationToken, PasswordHistory, Account, Passkey,
  *   UserIntegrationAuth, WebhookConfigSecret, SsoProvider.
  * Do not add any of these to TRIGGER_REGISTRY.
  */

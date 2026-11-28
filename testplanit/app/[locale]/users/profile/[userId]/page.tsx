@@ -85,6 +85,7 @@ import { ApiTokenSettings } from "./ApiTokenSettings";
 import { ChangePasswordModal } from "./ChangePasswordModal";
 import { EditAvatar } from "./EditAvatar";
 import { RemoveAvatar } from "./RemoveAvatar";
+import { PasskeySettings } from "./PasskeySettings";
 import { TwoFactorSettings } from "./TwoFactorSettings";
 import { apiFetch } from "~/lib/basePath";
 import { clientCookie } from "~/lib/auth/cookieScope";
@@ -905,6 +906,24 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                 isOwnProfile={user?.id === session?.user?.id}
                                 onUpdate={() => refetchUser()}
                               />
+
+                              {/* Passkeys - for accounts that sign in with their own password */}
+                              {(user.authMethod === "INTERNAL" ||
+                                user.authMethod === "BOTH") && (
+                                <>
+                                  <Separator className="opacity-50" />
+                                  <PasskeySettings
+                                    userId={user.id}
+                                    isOwnProfile={
+                                      user?.id === session?.user?.id
+                                    }
+                                    isAdmin={session?.user?.access === "ADMIN"}
+                                    twoFactorEnabled={
+                                      user.twoFactorEnabled || false
+                                    }
+                                  />
+                                </>
+                              )}
                             </div>
                           </div>
                         </AccordionContent>

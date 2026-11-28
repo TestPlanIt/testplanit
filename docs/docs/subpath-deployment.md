@@ -169,6 +169,15 @@ Over HTTPS the CSRF cookie uses a `__Secure-` name instead of the `__Host-`
 name used at the root, because `__Host-` cookies cannot be scoped to a path.
 At the root install nothing changes.
 
+## Passkeys on a shared host
+
+[Passkeys](./user-guide/passkeys.md) belong to the host name, not the path, so
+a browser lists the passkeys of every application on the host together. Under
+a prefix, the account name of each TestPlanIt passkey ends with the prefix
+(`pat@example.com (/testplanit)`), and two TestPlanIt installs under different
+prefixes keep separate passkeys. Changing the prefix keeps existing passkeys
+working; changing the host name does not.
+
 ## Checking an install
 
 After deploying, confirm from outside the proxy that:

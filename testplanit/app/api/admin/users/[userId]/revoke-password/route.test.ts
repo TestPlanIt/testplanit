@@ -14,6 +14,9 @@ vi.mock("~/server/db", () => ({
     ssoProvider: {
       findFirst: vi.fn(),
     },
+    passkey: {
+      deleteMany: vi.fn(),
+    },
   },
 }));
 
@@ -79,6 +82,7 @@ describe("POST /api/admin/users/[userId]/revoke-password", () => {
     setEmailEnv(false);
     mockCaptureAuditEvent.mockResolvedValue(undefined);
     mockInvalidateSessionUserCache.mockResolvedValue(undefined);
+    mockDb.passkey.deleteMany.mockResolvedValue({ count: 0 } as any);
     mockDb.ssoProvider.findFirst.mockResolvedValue(null);
   });
 
@@ -230,6 +234,35 @@ describe("POST /api/admin/users/[userId]/revoke-password", () => {
           password: null,
           passwordChangedAt: expect.any(Date),
         }),
+      })
+    );
+  });
+
+  it("removes the user's passkeys and records how many", async () => {
+    mockGetServerAuthSession.mockResolvedValue(makeAdminSession());
+    mockDb.user.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "user@test.com",
+      isDeleted: false,
+      authMethod: "INTERNAL",
+      password: "hashed-password",
+    } as any);
+    setEmailEnv(true);
+    mockDb.user.update.mockResolvedValue({} as any);
+    mockDb.passkey.deleteMany.mockResolvedValue({ count: 2 } as any);
+
+    const res = await POST(makeRequest(), {
+      params: Promise.resolve({ userId: "user-1" }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockDb.passkey.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+    });
+    expect(mockCaptureAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "PASSWORD_REVOKED",
+        metadata: { revokedBy: "admin-1", passkeysRemoved: 2 },
       })
     );
   });

@@ -6,7 +6,7 @@ import type { NextPage } from "next";
 import { getCsrfToken, signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -40,7 +40,18 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { Asterisk, LinkIcon, Loader2, Mail, Shield } from "lucide-react";
+import {
+  browserSupportsWebAuthn,
+  startAuthentication,
+} from "@simplewebauthn/browser";
+import {
+  Asterisk,
+  Fingerprint,
+  LinkIcon,
+  Loader2,
+  Mail,
+  Shield,
+} from "lucide-react";
 import { siApple, siGoogle } from "simple-icons";
 import { Link } from "~/lib/navigation";
 import { TestPlanItLogo } from "@/components/TestPlanItLogo";
@@ -58,6 +69,11 @@ const AppleIcon = ({ className }: { className?: string }) => (
     <path d={siApple.path} />
   </svg>
 );
+
+// Browser support never changes while the page is open; reading it through
+// useSyncExternalStore keeps the server render and first client render equal.
+const subscribeToNothing = () => () => {};
+const passkeysUnsupportedOnServer = () => false;
 
 const MicrosoftIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
@@ -98,6 +114,12 @@ const Signin: NextPage = () => {
   const [submissionError, setSubmissionError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSsoLoading, setIsSsoLoading] = useState<string | null>(null);
+  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
+  const passkeySupported = useSyncExternalStore(
+    subscribeToNothing,
+    browserSupportsWebAuthn,
+    passkeysUnsupportedOnServer
+  );
   const [showDelayedLoader, setShowDelayedLoader] = useState(false);
   const [showMagicLinkInput, setShowMagicLinkInput] = useState(false);
   const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
@@ -172,9 +194,10 @@ const Signin: NextPage = () => {
 
   // Fetch ALL SSO providers (we need all to check forceSso)
   // Sort by name at the database level to help with SAML providers
-  const { data: registrationSettings } = useClientQueries(
-    schema
-  ).registrationSettings.useFindFirst(undefined, { enabled: sessionCleared });
+  const { data: registrationSettings, isSuccess: registrationSettingsLoaded } =
+    useClientQueries(schema).registrationSettings.useFindFirst(undefined, {
+      enabled: sessionCleared,
+    });
 
   // Wait for session to be cleared before fetching to prevent 410 errors with stale sessions
   const { data: ssoProviders, isLoading: isLoadingSsoProviders } =
@@ -233,6 +256,13 @@ const Signin: NextPage = () => {
   // Check if force SSO is enabled (same logic as admin page)
   const forceSsoEnabled =
     ssoProviders?.some((provider) => provider.forceSso) || false;
+
+  // Shown only once the settings have answered, so the button never flashes
+  // on installs that switched passkeys off.
+  const showPasskey =
+    passkeySupported &&
+    registrationSettingsLoaded &&
+    registrationSettings?.allowPasskeys !== false;
 
   // Delayed loading state to prevent loader flash
   // Show loader after 500ms if we're still loading SSO providers or waiting for session to clear
@@ -497,6 +527,69 @@ const Signin: NextPage = () => {
     router.push(stripBasePath(callbackUrl));
   }
 
+  async function handlePasskeySignIn() {
+    setSubmissionError("");
+    setIsPasskeyLoading(true);
+    try {
+      clearSessionCookies();
+      const res = await apiFetch("/api/auth/passkey/authenticate/options", {
+        method: "POST",
+      });
+      if (res.status === 429) {
+        setSubmissionError(t("auth.signin.passkey.tooManyRequests"));
+        return;
+      }
+      const body = res.ok ? await res.json() : null;
+      if (!body?.enabled) {
+        setSubmissionError(
+          body?.reason === "address_mismatch"
+            ? t("auth.signin.passkey.addressMismatch")
+            : t("auth.signin.passkey.unavailable")
+        );
+        return;
+      }
+
+      let assertion;
+      try {
+        assertion = await startAuthentication({ optionsJSON: body.options });
+      } catch (error) {
+        // Dismissing the browser's prompt is not an error worth reporting.
+        const dismissed =
+          error instanceof Error &&
+          (error.name === "NotAllowedError" || error.name === "AbortError");
+        if (!dismissed) {
+          setSubmissionError(t("auth.signin.passkey.failed"));
+        }
+        return;
+      }
+
+      const result = await signIn("passkey", {
+        redirect: false,
+        response: JSON.stringify(assertion),
+        challengeToken: body.challengeToken,
+      });
+      if (result?.ok && !result.error) {
+        await completeSignedInRedirect();
+        return;
+      }
+      switch (result?.error) {
+        case "PASSKEY_RATE_LIMITED":
+          setSubmissionError(t("auth.signin.passkey.tooManyRequests"));
+          break;
+        case "PASSKEY_UNAVAILABLE":
+          setSubmissionError(t("auth.signin.passkey.unavailable"));
+          break;
+        default:
+          setSubmissionError(t("auth.signin.passkey.failed"));
+      }
+    } catch (error) {
+      console.error("Passkey sign-in error:", error);
+      setSubmissionError(t("auth.signin.passkey.failed"));
+    } finally {
+      setIsPasskeyLoading(false);
+    }
+  }
+
   async function handleVerifyPasswordlessCode() {
     if (isVerifyingCode) return;
     const code = passwordlessCode.replace(/[\s-]/g, "");
@@ -725,8 +818,8 @@ const Signin: NextPage = () => {
                   </Button>
                 </div>
 
-                {/* SSO Options */}
-                {configuredProviders.length > 0 && (
+                {/* Passkey and SSO options */}
+                {(showPasskey || configuredProviders.length > 0) && (
                   <>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
@@ -740,6 +833,25 @@ const Signin: NextPage = () => {
                     </div>
 
                     <div className="min-w-fit space-y-2">
+                      {showPasskey && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full shrink-0"
+                          onClick={handlePasskeySignIn}
+                          disabled={isPasskeyLoading}
+                          data-testid="passkey-signin-button"
+                        >
+                          {isPasskeyLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Fingerprint className="h-4 w-4" />
+                          )}
+                          {isPasskeyLoading
+                            ? tCommon("loading")
+                            : t("auth.signin.passkey.signIn")}
+                        </Button>
+                      )}
                       {configuredProviders.map((provider) => (
                         <Button
                           key={provider.id}

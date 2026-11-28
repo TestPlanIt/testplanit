@@ -48,7 +48,13 @@ type SignInProviderRow = {
   onConfigure: (() => void) | null;
   onDelete?: () => void;
   typeLabel?: string;
+  /** Explains a method that has nothing to configure on this page. */
+  helpKey?: string;
+  /** The switch is locked while another setting overrides this method. */
+  disabled?: boolean;
 };
+
+const PASSKEYS_ROW_ID = "PASSKEYS";
 
 export default function SSOAdminPage() {
   const { data: session } = useSession();
@@ -126,6 +132,9 @@ export default function SSOAdminPage() {
 
   // Magic Link state
   const [magicLinkConfigured, setMagicLinkConfigured] = useState(false);
+
+  // Passkey state: whether the application's address can host passkeys
+  const [passkeyConfigured, setPasskeyConfigured] = useState(false);
 
   // Each provider's identifiers and which secrets are stored; the secrets
   // themselves stay on the server.
@@ -229,6 +238,23 @@ export default function SSOAdminPage() {
     void checkMagicLinkConfig();
   }, []);
 
+  // Check if passkeys can work at this address (HTTPS or localhost)
+  useEffect(() => {
+    const checkPasskeyConfig = async () => {
+      try {
+        const response = await apiFetch("/api/admin/sso/passkey-status");
+        if (response.ok) {
+          const data = await response.json();
+          setPasskeyConfigured(data.configured);
+        }
+      } catch (error) {
+        console.error("Failed to check passkey configuration:", error);
+      }
+    };
+
+    void checkPasskeyConfig();
+  }, []);
+
   // Sync optimistic toggle state with server data
   useEffect(() => {
     if (ssoProviders) {
@@ -251,6 +277,7 @@ export default function SSOAdminPage() {
         ...prev,
         allowOpenRegistration:
           registrationSettings.allowOpenRegistration ?? true,
+        allowPasskeys: registrationSettings.allowPasskeys ?? true,
       }));
     }
   }, [registrationSettings]);
@@ -680,6 +707,31 @@ export default function SSOAdminPage() {
     }
   };
 
+  const handleTogglePasskeys = async (enabled: boolean) => {
+    setToggleState((prev) => ({ ...prev, allowPasskeys: enabled }));
+    try {
+      await upsertSettings({
+        where: {
+          id: registrationSettings?.id ?? "default-registration-settings",
+        },
+        create: {
+          id: "default-registration-settings",
+          allowPasskeys: enabled,
+        },
+        update: { allowPasskeys: enabled },
+      });
+      toast.success(
+        enabled
+          ? t("admin.sso.messages.passkeysEnabled")
+          : t("admin.sso.messages.passkeysDisabled")
+      );
+      void refetchSettings();
+    } catch {
+      setToggleState((prev) => ({ ...prev, allowPasskeys: !enabled }));
+      toast.error(t("admin.sso.messages.passkeysUpdateFailed"));
+    }
+  };
+
   const handleToggleAllowOpenRegistration = async (enabled: boolean) => {
     setToggleState((prev) => ({ ...prev, allowOpenRegistration: enabled }));
     try {
@@ -901,6 +953,7 @@ export default function SSOAdminPage() {
     (p) => p.type === SsoProviderType.MAGIC_LINK
   );
   // globalForceSso is now tracked in toggleState
+  const forceSsoEnabled = ssoProviders?.some((p) => p.forceSso) ?? false;
 
   const signInProviders: SignInProviderRow[] = [
     {
@@ -953,6 +1006,18 @@ export default function SSOAdminPage() {
       onToggle: handleToggleMagicLink,
       onConfigure: null,
     },
+    // Not an identity provider: a setting, on unless switched off. Force SSO
+    // turns passkeys off whatever this says, so the switch is locked then.
+    {
+      id: PASSKEYS_ROW_ID,
+      name: t("admin.sso.globalSettings.passkeys.title"),
+      configured: passkeyConfigured,
+      enabled: (toggleState.allowPasskeys ?? true) && !forceSsoEnabled,
+      onToggle: handleTogglePasskeys,
+      onConfigure: null,
+      helpKey: "ssoPasskeys",
+      disabled: forceSsoEnabled,
+    },
   ];
 
   const providerColumns: ColumnDef<SignInProviderRow>[] = [
@@ -969,6 +1034,9 @@ export default function SSOAdminPage() {
           <span className="font-medium">{row.original.name}</span>
           {row.original.typeLabel ? (
             <Badge variant="outline">{row.original.typeLabel}</Badge>
+          ) : null}
+          {row.original.helpKey ? (
+            <HelpPopover helpKey={row.original.helpKey} />
           ) : null}
         </span>
       ),
@@ -998,6 +1066,8 @@ export default function SSOAdminPage() {
           aria-label={row.original.name}
           checked={row.original.enabled}
           onCheckedChange={row.original.onToggle}
+          disabled={row.original.disabled}
+          data-testid={`sign-in-provider-switch-${row.original.id}`}
         />
       ),
     },

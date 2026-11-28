@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { reissueSessionCookie } from "~/lib/auth/sessionCookie";
+import { verifyCurrentPassword } from "~/lib/auth/verifyCurrentPassword";
 import { updatePasswordHistory } from "~/lib/password-history";
 import { invalidateSessionUserCache } from "~/lib/session-cache";
 import { auditPasswordChange } from "~/lib/services/auditLog";
@@ -48,29 +49,28 @@ const handlePOST = withAuditContext(
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
 
-      // A "real" password is one the user chose, stored as a bcrypt hash.
-      // SSO-auto-provisioned users get a plain randomUUID() stored as-is.
-      const hasBcryptPassword =
-        typeof user.password === "string" &&
-        (user.password.startsWith("$2b$") || user.password.startsWith("$2a$"));
-
-      if (hasBcryptPassword) {
-        if (!currentPassword) {
-          return NextResponse.json(
-            { error: "Current password is required" },
-            { status: 400 }
-          );
-        }
-        const isCurrentPasswordValid = await bcrypt.compare(
-          currentPassword,
-          user.password!
+      // Accounts without a password of their own (SSO-provisioned) skip the
+      // check; everyone else must prove the current one.
+      const currentPasswordCheck = await verifyCurrentPassword(
+        userId,
+        user.password,
+        currentPassword
+      );
+      if (currentPasswordCheck === "rate_limited") {
+        return NextResponse.json(
+          { error: "Too many attempts. Please try again later." },
+          { status: 429 }
         );
-        if (!isCurrentPasswordValid) {
-          return NextResponse.json(
-            { error: "Invalid current password" },
-            { status: 400 }
-          );
-        }
+      }
+      if (currentPasswordCheck === "invalid") {
+        return NextResponse.json(
+          {
+            error: currentPassword
+              ? "Invalid current password"
+              : "Current password is required",
+          },
+          { status: 400 }
+        );
       }
 
       // Validate against password policy (per D-01). Returns structured

@@ -126,6 +126,7 @@ const sidebars: SidebarsConfig = {
                 'user-guide/passwordless-sign-in', // Device-bound magic link + relay code (scanner-proof)
                 'user-guide/security-settings', // Sign-in enforcement, password policy, lockout, enforcement
                 'user-guide/two-factor-authentication', // Two-factor authentication
+                'user-guide/passkeys', // Passkey sign-in
                 'api-tokens', // API tokens
                 'user-guide/scim', // SCIM 2.0 provisioning from external IdP
               ],

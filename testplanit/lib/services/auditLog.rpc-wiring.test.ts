@@ -97,6 +97,7 @@ describe("RPC audit wiring guard", () => {
       "allowedEmailDomain",
       "appConfig",
       "apiToken",
+      "passkey",
     ];
     expect([...AUDITED_RPC_ENTITY_ACCESSORS].sort()).toEqual(
       SEMANTIC_ACCESSORS.slice().sort()

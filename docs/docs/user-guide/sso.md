@@ -169,6 +169,14 @@ By default the link is device-bound: it signs you in only in the browser that re
 Magic Link authentication is ideal for users who prefer a password-free experience or for organizations that want to simplify the sign-in process while maintaining security.
 :::
 
+#### Passkeys
+
+Toggle to enable/disable [passkey](./passkeys.md) sign-in. It is on by default. When enabled, users with a password can add passkeys to their profile and sign in with their device's fingerprint, face or PIN.
+
+- The row shows **Configured** when the application is served over HTTPS or on `localhost`, which passkeys require. There is nothing else to set up.
+- When disabled, the **Sign in with a passkey** button is hidden, passkey sign-ins are refused, and users cannot add passkeys. Existing passkeys are kept and work again when the toggle is turned back on.
+- The toggle is locked off while **Force SSO Login** is on.
+
 #### Enable Google OAuth
 
 Toggle to enable/disable Google OAuth authentication. When enabled, users can sign in using their Google accounts.
@@ -314,6 +322,7 @@ The sign-in page behavior changes based on SSO configuration:
 - **SSO options** appear below the form after an "Or" divider
 - Users can choose between:
   - Traditional email/password login
+  - A passkey, when passkeys are enabled
   - Available SSO providers (Google OAuth, Apple Sign In, Microsoft, Magic Link, SAML)
 - Link to signup page remains visible
 

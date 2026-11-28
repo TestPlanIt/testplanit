@@ -9,6 +9,9 @@ emailed link is inert on its own: nothing is consumed when a link is opened,
 and sign-in completes only in the browser that requested it (or via a short
 relay code entered there).
 
+To sign in with a device's fingerprint, face or PIN instead of an emailed
+link, see [Passkeys](./passkeys.md).
+
 ## How it works
 
 1. The user enters their email on the sign-in screen. The server creates a

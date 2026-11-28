@@ -257,6 +257,34 @@ export async function registerSamlAssertion(
   return result !== null;
 }
 
+// In-process record of spent one-time keys, used only when Valkey is absent
+// (a single-process install). Maps key -> expiry in epoch ms.
+const spentOnceKeys = new Map<string, number>();
+
+/**
+ * Mark a one-time key as spent. Returns true the first time a key is seen and
+ * false on every later call until `ttlSeconds` has passed, so a token that
+ * carries the key can be accepted exactly once. Cross-pod with Valkey; without
+ * it the record lives in this process.
+ */
+export async function consumeOnce(
+  key: string,
+  ttlSeconds: number
+): Promise<boolean> {
+  const ttl = Math.max(1, Math.ceil(ttlSeconds));
+  if (valkeyConnection) {
+    const result = await valkeyConnection.set(key, "1", "EX", ttl, "NX");
+    return result !== null;
+  }
+  const now = Date.now();
+  for (const [spentKey, expiresAt] of spentOnceKeys) {
+    if (expiresAt <= now) spentOnceKeys.delete(spentKey);
+  }
+  if (spentOnceKeys.has(key)) return false;
+  spentOnceKeys.set(key, now + ttl * 1000);
+  return true;
+}
+
 // Rate limiting configuration
 export interface RateLimitConfig {
   windowMs: number;

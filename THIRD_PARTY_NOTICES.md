@@ -556,6 +556,13 @@ The Docker Compose files and Helm chart also pull third-party container images f
 - **Repository**: <https://github.com/soldair/node-qrcode>
 - **Copyright**: Copyright (c) 2012 Ryan Day
 
+### SimpleWebAuthn (@simplewebauthn/server, @simplewebauthn/browser)
+
+- **Version**: 14.x
+- **License**: MIT
+- **Repository**: <https://github.com/MasterKale/SimpleWebAuthn>
+- **Copyright**: Copyright (c) 2020 Matthew Miller
+
 ### Nodemailer
 
 - **Version**: 10.x

@@ -3,7 +3,7 @@ import { generateSecret, generateURI, verify } from "otplib";
 import QRCode from "qrcode";
 import { EncryptionService, getMasterKey } from "~/utils/encryption";
 
-const APP_NAME = "TestPlanIt";
+export const APP_NAME = "TestPlanIt";
 
 // Version prefixes for encrypted 2FA secrets stored in the DB:
 //   v1: legacy XOR + repeating key (insecure — decrypt-only for migration)

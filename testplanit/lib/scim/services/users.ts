@@ -843,6 +843,7 @@ export async function patchScimUser(
     // login attempt forces re-authentication through the IdP.
     if (updates.isActive === false) {
       await tx.account.deleteMany({ where: { userId: current.id } });
+      await tx.passkey.deleteMany({ where: { userId: current.id } });
     }
 
     await emitScimUserUpdated(
@@ -910,6 +911,7 @@ export async function deleteScimUser(
     // Account-row cleanup runs inside the same tx so a tombstoned user
     // cannot re-establish a session via a stale Account row.
     await tx.account.deleteMany({ where: { userId: tombstoned.id } });
+    await tx.passkey.deleteMany({ where: { userId: tombstoned.id } });
 
     // ctx referenced to keep the parameter intentional for future actor-
     // attribution overrides; the audit row carries scimTokenId via the ALS

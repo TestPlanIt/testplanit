@@ -58,6 +58,7 @@ export const ENTITY_NAME_FIELDS: Record<string, string | string[]> = {
   AllowedEmailDomain: "domain",
   AppConfig: "key",
   ApiToken: "name",
+  Passkey: "name",
   UserProjectPermission: ["userId", "projectId"],
   GroupProjectPermission: ["groupId", "projectId"],
   Account: ["provider", "providerAccountId"],
@@ -258,6 +259,7 @@ export const AUDITED_RPC_ENTITY_ACCESSORS: readonly string[] = [
   "allowedEmailDomain",
   "appConfig",
   "apiToken",
+  "passkey",
 ];
 
 /**
@@ -274,6 +276,7 @@ export const RPC_ENTITY_TYPE_MAP: Record<string, string> = {
   allowedEmailDomain: "AllowedEmailDomain",
   appConfig: "AppConfig",
   apiToken: "ApiToken",
+  passkey: "Passkey",
 };
 
 /**

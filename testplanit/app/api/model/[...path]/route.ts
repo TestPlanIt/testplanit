@@ -276,6 +276,7 @@ function extractEntityName(
     allowedEmailDomain: "domain",
     appConfig: "key",
     apiToken: "name",
+    passkey: "name",
     ...CONFIG_NAME_FIELD_BY_ACCESSOR,
   };
 
@@ -1949,6 +1950,15 @@ async function handleRequest(
                   finalAuditAction = "API_KEY_REVOKED";
                 }
               }
+            } else if (parsedPath.model === "passkey") {
+              // Rows are only ever removed here: registration and sign-in
+              // bookkeeping go through their own routes.
+              if (
+                parsedPath.operation === "delete" ||
+                parsedPath.operation === "deleteMany"
+              ) {
+                finalAuditAction = "PASSKEY_REMOVED";
+              }
             } else if (parsedPath.model === "appConfig") {
               finalAuditAction = "SYSTEM_CONFIG_CHANGED";
             } else if (parsedPath.model === "ssoProvider") {
@@ -2022,6 +2032,9 @@ async function handleRequest(
                       tokenPrefix: data.tokenPrefix,
                       tokenOwnerId: data.userId,
                     }
+                  : {}),
+                ...(parsedPath.model === "passkey" && data?.userId
+                  ? { passkeyOwnerId: data.userId }
                   : {}),
               },
             };

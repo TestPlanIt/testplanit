@@ -2044,6 +2044,33 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
     );
   });
 
+  it("emits PASSKEY_REMOVED naming the passkey and its owner when one is deleted", async () => {
+    const { baseDb } = await import("~/lib/db");
+    const removed = { id: "passkey-1", name: "MacBook", userId: "user-2" };
+    (baseDb as any).passkey = {
+      findUnique: vi.fn().mockResolvedValue(removed),
+    };
+
+    const res = await run(
+      "passkey",
+      "delete",
+      { where: { id: "passkey-1" } },
+      removed
+    );
+
+    expect(res.status).toBe(200);
+    expect(captureAuditEvent).toHaveBeenCalledTimes(1);
+    expect(captureAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "PASSKEY_REMOVED",
+        entityType: "Passkey",
+        entityId: "passkey-1",
+        entityName: "MacBook",
+        metadata: expect.objectContaining({ passkeyOwnerId: "user-2" }),
+      })
+    );
+  });
+
   it("emits SYSTEM_CONFIG_CHANGED on an appConfig write", async () => {
     const { baseDb } = await import("~/lib/db");
     (baseDb as any).appConfig = { findUnique: vi.fn() };

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { hasRealPassword } from "~/lib/auth/verifyCurrentPassword";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { withRequestRouting } from "~/lib/db/requestRouting";
@@ -35,11 +36,7 @@ async function handleGET(
     }),
   ]);
 
-  // A "real" password is one the user chose — bcrypt hashes start with $2b$/$2a$.
-  // SSO-auto-provisioned users get randomUUID() stored as plain text (no prefix).
-  const hasPassword =
-    typeof user?.password === "string" &&
-    (user.password.startsWith("$2b$") || user.password.startsWith("$2a$"));
+  const hasPassword = hasRealPassword(user?.password);
 
   if (!settings) {
     return NextResponse.json({ policy: null, hasPassword });

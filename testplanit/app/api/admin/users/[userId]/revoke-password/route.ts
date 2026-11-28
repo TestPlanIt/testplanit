@@ -78,6 +78,12 @@ const handlePOST = withAuditContext(
       },
     });
 
+    // A passkey stands in for the password at sign-in, so it goes with it:
+    // revoking leaves the account with no credential of its own.
+    const { count: passkeysRemoved } = await db.passkey.deleteMany({
+      where: { userId },
+    });
+
     // Invalidate session cache immediately
     await invalidateSessionUserCache(userId);
 
@@ -88,7 +94,7 @@ const handlePOST = withAuditContext(
       entityId: userId,
       entityName: targetUser.email ?? undefined,
       userId: session.user.id,
-      metadata: { revokedBy: session.user.id },
+      metadata: { revokedBy: session.user.id, passkeysRemoved },
     });
 
     return NextResponse.json({ success: true });

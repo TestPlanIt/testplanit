@@ -62,6 +62,8 @@ This view is available to anyone who can open the item — no administrator acce
 | `TWO_FACTOR_ENABLED` | User completed 2FA enrollment |
 | `TWO_FACTOR_VERIFIED` | User passed a 2FA challenge (SSO flow) |
 | `TWO_FACTOR_CODES_REGENERATED` | User regenerated their 2FA backup codes |
+| `PASSKEY_REGISTERED` | User added a passkey |
+| `PASSKEY_REMOVED` | A passkey was removed by its owner or an administrator |
 
 ### Data Operations
 

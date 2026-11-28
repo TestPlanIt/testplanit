@@ -52,6 +52,10 @@ vi.mock("bcrypt", () => ({
   },
 }));
 
+vi.mock("~/lib/auth-security", () => ({
+  checkRateLimit: vi.fn().mockResolvedValue(true),
+}));
+
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { validatePasswordPolicy } from "~/lib/validate-password-policy";
@@ -277,6 +281,32 @@ describe("POST /api/users/[userId]/change-password", () => {
       expect(res.status).toBe(400);
       const body = await res.json();
       expect(body.error).toMatch(/invalid current password/i);
+    });
+
+    it("returns 429 and changes nothing once current-password attempts are used up", async () => {
+      const bcrypt = (await import("bcrypt")).default;
+      const { checkRateLimit } = await import("~/lib/auth-security");
+      vi.mocked(checkRateLimit).mockResolvedValueOnce(false);
+
+      mockGetServerAuthSession.mockResolvedValue(makeUserSession());
+      mockDb.user.findUnique.mockResolvedValue({
+        id: "user-1",
+        password: "$2b$10$abcdefghijklmnopqrstuuVGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+        email: "user@test.com",
+      } as any);
+
+      const res = await POST(
+        makeRequest("user-1", { currentPassword: "AnotherGuess1!" }),
+        { params: Promise.resolve({ userId: "user-1" }) }
+      );
+
+      expect(res.status).toBe(429);
+      expect(checkRateLimit).toHaveBeenCalledWith(
+        "current-password:user-1",
+        expect.objectContaining({ maxAttempts: 10 })
+      );
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+      expect(mockDb.user.update).not.toHaveBeenCalled();
     });
   });
 

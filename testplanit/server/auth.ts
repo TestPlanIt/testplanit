@@ -23,6 +23,7 @@ import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 
 import { updateAuditContext } from "~/lib/auditContext";
+import { authorizePasskey } from "~/lib/passkey";
 import {
   authorizePasswordlessComplete,
   isPasswordlessDeviceBoundEnabled,
@@ -32,6 +33,10 @@ import { auditAuthEvent } from "~/lib/services/auditLog";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { isForceSsoEnabled } from "~/lib/utils/force-sso";
 import { needsEmailVerification } from "~/lib/auth/emailVerification";
+import {
+  isLocalCredentialProvider,
+  PASSKEY_PROVIDER_ID,
+} from "~/lib/auth/providers";
 import { passwordChangedSinceIssue } from "~/lib/auth/sessionInvalidation";
 import { resolveSsoConfig } from "~/lib/auth/ssoConfig";
 import { db } from "~/server/db";
@@ -433,7 +438,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
       },
       async signIn({ user, account }) {
         // For OAuth/SSO sign-ins
-        if (account?.provider !== "credentials") {
+        if (!isLocalCredentialProvider(account?.provider)) {
           // First check if user exists by email (not by ID, since ID might not
           // exist yet). Emails match case-insensitively; an exact-cased row
           // wins when case-variant duplicates exist.
@@ -625,7 +630,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           }
 
           // Check if 2FA verification is required for SSO logins
-          if (account && account.provider !== "credentials") {
+          if (account && !isLocalCredentialProvider(account.provider)) {
             const registrationSettings =
               await db.registrationSettings.findFirst();
             if (registrationSettings?.force2FAAllLogins) {
@@ -674,6 +679,17 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             }),
           ]
         : []),
+      // Passkey (WebAuthn) sign-in. The authorizer refuses while passkeys
+      // are switched off or Force SSO is on, so the provider is always listed.
+      CredentialsProvider({
+        id: PASSKEY_PROVIDER_ID,
+        name: "Passkey",
+        credentials: {
+          response: { type: "text" },
+          challengeToken: { type: "text" },
+        },
+        authorize: authorizePasskey(db),
+      }),
       // Dynamic providers from database
       ...dynamicProviders,
       // Fallback Google OAuth Provider from environment variables (for backward compatibility)
@@ -852,7 +868,7 @@ export const authOptions: NextAuthOptions = {
     },
     async signIn({ user, account }) {
       // For OAuth/SSO sign-ins
-      if (account?.provider !== "credentials") {
+      if (!isLocalCredentialProvider(account?.provider)) {
         // First check if user exists by email (not by ID, since ID might not
         // exist yet). Emails match case-insensitively; an exact-cased row
         // wins when case-variant duplicates exist.
@@ -1023,7 +1039,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Check if 2FA verification is required for SSO logins
-        if (account && account.provider !== "credentials") {
+        if (account && !isLocalCredentialProvider(account.provider)) {
           const registrationSettings =
             await db.registrationSettings.findFirst();
           if (registrationSettings?.force2FAAllLogins) {

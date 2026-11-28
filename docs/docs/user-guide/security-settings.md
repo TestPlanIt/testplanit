@@ -43,6 +43,8 @@ When enabled, users signing in with email/password must set up and use two-facto
 
 When enabled, all users must verify with 2FA after signing in, including SSO users. SSO users must set up and verify 2FA after identity provider authentication. Enabling this toggle implicitly enables **Require 2FA for Password Logins** as well.
 
+A [passkey](./passkeys.md) sign-in is not asked for a 2FA code under either 2FA toggle. Passkeys are switched on and off with the other sign-in methods, at [Admin → Authentication → Authentication](./sso.md), and are unavailable while **Force SSO Login** is on.
+
 ## Password Policy
 
 Password policy settings define the minimum requirements for all user passwords. These rules are enforced when users sign up, change their password, or are forced to set a new password.
@@ -102,7 +104,7 @@ This targets users with INTERNAL or BOTH auth methods who are active and not alr
 
 ### Revoke Password
 
-From the **Admin → People & Access → Users** page, click the three-dot menu on any internal user and select **Revoke Password**. This removes the user's password entirely, requiring them to use an alternative login method (SSO or Magic Link). It also signs the user out of every active browser session.
+From the **Admin → People & Access → Users** page, click the three-dot menu on any internal user and select **Revoke Password**. This removes the user's password entirely, requiring them to use an alternative login method (SSO or Magic Link). It also removes the user's [passkeys](./passkeys.md) and signs the user out of every active browser session.
 
 **Prerequisites:** At least one passwordless login method must be configured before passwords can be revoked:
 
