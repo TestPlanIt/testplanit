@@ -872,16 +872,16 @@ export const sideEffectsPlugin = definePlugin(schema, {
               const old = before[i] ?? null;
               if (!row?.id) continue;
               if (row.projectId != null) {
-                if (old) await emitTestRunUpdateEvents(old, row, tx);
-                // Alerts (#651): run metrics that wait for
-                // completion are evaluated when the run first completes.
-                if (
-                  old &&
-                  row.isCompleted === true &&
-                  old.isCompleted !== true &&
-                  typeof tx.alertRule?.count === "function"
-                ) {
-                  if (await projectHasActiveAlertRules(tx, row.projectId)) {
+                if (old) {
+                  await emitTestRunUpdateEvents(old, row, tx);
+                  // Alerts (#651): run metrics that wait for
+                  // completion are evaluated when the run first completes.
+                  if (
+                    row.isCompleted === true &&
+                    old.isCompleted !== true &&
+                    typeof tx.alertRule?.count === "function" &&
+                    (await projectHasActiveAlertRules(tx, row.projectId))
+                  ) {
                     const { getCurrentTenantId } =
                       await import("~/lib/multiTenantDb");
                     void enqueueAlertRunEvaluation({
@@ -892,8 +892,9 @@ export const sideEffectsPlugin = definePlugin(schema, {
                     });
                   }
                 }
-                // A duplicate carries the source run id — emit the richer
-                // test_run.duplicated event instead of the generic .created.
+                // A new run. A duplicate carries the source run id — emit
+                // the richer test_run.duplicated event instead of the
+                // generic .created.
                 else if (row.duplicatedFromId != null)
                   await emitTestRunDuplicated(
                     row.id,
@@ -976,16 +977,16 @@ export const sideEffectsPlugin = definePlugin(schema, {
                 }
               }
               if (row.projectId != null) {
-                if (old) await emitSessionUpdateEvents(old, row, tx);
-                // Alerts: the session overrun metric is evaluated when a
-                // session first completes.
-                if (
-                  old &&
-                  row.isCompleted === true &&
-                  old.isCompleted !== true &&
-                  typeof tx.alertRule?.count === "function"
-                ) {
-                  if (await projectHasActiveAlertRules(tx, row.projectId)) {
+                if (old) {
+                  await emitSessionUpdateEvents(old, row, tx);
+                  // Alerts: the session overrun metric is evaluated when a
+                  // session first completes.
+                  if (
+                    row.isCompleted === true &&
+                    old.isCompleted !== true &&
+                    typeof tx.alertRule?.count === "function" &&
+                    (await projectHasActiveAlertRules(tx, row.projectId))
+                  ) {
                     const { getCurrentTenantId } =
                       await import("~/lib/multiTenantDb");
                     void enqueueAlertSessionEvaluation({
@@ -995,8 +996,9 @@ export const sideEffectsPlugin = definePlugin(schema, {
                     });
                   }
                 }
-                // A duplicate carries the source session id — emit the richer
-                // session.duplicated event instead of the generic .created.
+                // A new session. A duplicate carries the source session id —
+                // emit the richer session.duplicated event instead of the
+                // generic .created.
                 else if (row.duplicatedFromId != null)
                   await emitSessionDuplicated(
                     row.id,
