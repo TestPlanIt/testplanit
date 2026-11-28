@@ -1,3 +1,9 @@
+## [1.2.19](https://github.com/TestPlanIt/testplanit/compare/v1.2.18...v1.2.19) (2026-11-28)
+
+### Bug Fixes
+
+* **auth:** enforce two-factor on every sign-in path and keep magic links device-bound ([#780](https://github.com/TestPlanIt/testplanit/issues/780)) ([8f7c724](https://github.com/TestPlanIt/testplanit/commit/8f7c7247dea93a970a38f3ac04334c8ede06a898))
+
 ## [1.2.18](https://github.com/TestPlanIt/testplanit/compare/v1.2.17...v1.2.18) (2026-11-27)
 
 ### Bug Fixes
