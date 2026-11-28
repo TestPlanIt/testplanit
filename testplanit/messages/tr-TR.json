@@ -6808,6 +6808,15 @@
         "githubBaseUrl": "API Temel URL'si",
         "githubBaseUrlPlaceholder": "https://github.example.com/api/v3",
         "githubBaseUrlHelp": "GitHub Enterprise Server için tam GitHub API kök dizini (genellikle /api/v3 ile biter). api.github.com kullanmak için boş bırakın.",
+        "githubAppId": "Uygulama Kimliği",
+        "githubAppIdPlaceholder": "123456",
+        "githubAppIdHelp": "GitHub Uygulamanızın ayarlar sayfasında gösterilen Uygulama Kimliği",
+        "githubAppInstallationId": "Yükleme Kimliği",
+        "githubAppInstallationIdPlaceholder": "12345678",
+        "githubAppInstallationIdHelp": "Yüklemenin ayarlar URL'sinin sonundaki numara",
+        "githubAppPrivateKey": "Özel Anahtar",
+        "githubAppPrivateKeyPlaceholder": "-----BEGIN RSA PRIVATE KEY-----",
+        "githubAppPrivateKeyHelp": "GitHub Uygulaması için oluşturulan özel anahtar (.pem) dosyasının içeriği",
         "giteaInstanceUrlPlaceholder": "https://gitea.example.com",
         "owner": "Mal sahibi",
         "ownerPlaceholder": "kullanıcı adı veya kuruluş",
@@ -6825,6 +6834,7 @@
         "apiKeyWarningPoint4": "Jira Cloud'da, her sorunu onu oluşturan kişi tarafından bildirilmek üzere bunun yerine OAuth 2.0 kullanın. OAuth 2.0, Jira Server veya Data Center için kullanılamaz.",
         "tokenCreatorNoticeTitle": "Sorun yaratıcısının atıfı",
         "tokenCreatorNoticeDescription": "Bu entegrasyon aracılığıyla oluşturulan sorunlar, her zaman bu erişim belirtecinin sahibi olan hesap olarak kaydedilir, sorunu oluşturan TestPlanIt kullanıcısı olarak değil. Bu sağlayıcının API'si, oluşturucuyu başka bir kullanıcı adına ayarlamaya izin vermez.",
+        "appCreatorNoticeDescription": "Bu entegrasyon aracılığıyla oluşturulan sorunlar, onları oluşturan TestPlanIt kullanıcısı değil, GitHub Uygulamasının kendi bot hesabında kaydedilir.",
         "callbackUrlLabel": "Geri çağırma URL'si (yönlendirme URI'si)",
         "callbackUrlDescription": "Bu tam URL'yi sağlayıcınızın OAuth uygulamasında geri çağırma / yönlendirme URI'si olarak kaydedin. Tam olarak eşleşmelidir, aksi takdirde yetkilendirme başarısız olur.",
         "callbackUrlCopied": "Kopyalandı",
@@ -6860,7 +6870,8 @@
       "authType": {
         "api_key": "API Anahtarı",
         "oauth2": "OAuth 2.0",
-        "personal_access_token": "Kişisel Erişim Jetonu"
+        "personal_access_token": "Kişisel Erişim Jetonu",
+        "github_app": "GitHub Uygulaması"
       },
       "validation": {
         "nameRequired": "Sorun Entegrasyon adı gereklidir.",
@@ -8292,7 +8303,7 @@
     },
     "integration": {
       "name": "## Entegrasyon Adı\nSistem genelinde bu entegrasyonu tanımlamak için açıklayıcı bir ad.\n\n- Diğer entegrasyonlardan ayırt etmek için benzersiz olmalıdır\n- Proje ayarlarında ve yapılandırmasında kullanılır\n- Hizmeti ve amacını açıkça belirtmelidir",
-      "authType": "## Kimlik Doğrulama Türü\nHarici hizmetle nasıl kimlik doğrulaması yapacağınızı seçin.\n\n- **API Anahtarı:** E-posta ve API belirteci kullanarak basit kimlik doğrulama\n- **OAuth 2.0:** OAuth akışı kullanarak güvenli kimlik doğrulama\n- **Kişisel Erişim Belirteci:** Doğrudan belirteç tabanlı kimlik doğrulama",
+      "authType": "## Kimlik Doğrulama Türü\nDış hizmetle kimlik doğrulamanın nasıl yapılacağını seçin.\n\n- **API Anahtarı:** E-posta ve API belirteci kullanarak basit kimlik doğrulama\n- **OAuth 2.0:** OAuth akışı kullanarak güvenli kimlik doğrulama\n- **Kişisel Erişim Belirteci:** Doğrudan belirteç tabanlı kimlik doğrulama\n- **GitHub Uygulaması:** Depolarınıza yüklenmiş bir GitHub Uygulaması olarak kimlik doğrulama",
       "email": "## E-posta Adresi\nHarici hizmet için hesap e-posta adresiniz.\n\n- API anahtarı kimlik doğrulaması için kullanılır\n- API belirtecini oluşturan hesapla eşleşmelidir\n- Jira Cloud için gereklidir; Jira Server / Data Center için boş bırakın",
       "apiToken": "## API Token\nHarici hizmetteki hesap ayarlarınızdan bir API token oluşturun.\n\n- Genellikle Hesap Ayarları → Güvenlik → API Token'ları bölümünde bulunur\n- Parolanızı ifşa etmeden güvenli erişim sağlar\n- Gerektiğinde iptal edilebilir ve yeniden oluşturulabilir",
       "username": "## Kullanıcı Adı\nJira Server / Data Center hesabınızın kullanıcı adı, Temel kimlik doğrulaması için.\n\n- Şifre ile birlikte kullanılır\n- Jira Cloud için boş bırakın\n- Kişisel Erişim Jetonu ile kimlik doğrulaması yaptığınızda boş bırakın",
@@ -8316,7 +8327,10 @@
       "mantisBTUrl": "## MantisBT URL\nMantisBT örneğinizin temel URL'si.\n\n- Biçim: https://mantisbt.example.com\n- /api/rest veya diğer yolları içermeyin\n- Bu sunucudan erişilebilir olmalıdır",
       "clickupTeamId": "## ClickUp Takımı (Çalışma Alanı) ID\nGorevlerin ait olduğu ClickUp Takımının (ayrıca Çalışma Alanı olarak da adlandırılır) sayısal ID'si.\n\n- ClickUp URL'sinde bulunur: app.clickup.com/{teamId}/...\n- Proje seçerken Boşlukları/Klasörleri/Listeleri taramak için gereklidir",
       "clickupListId": "## Varsayılan ClickUp Liste ID'si\nYeni görevlerin varsayılan olarak oluşturulduğu Liste.\n\n- ClickUp URL'sinde bulunur veya Liste'nin \"Bağlantıyı Kopyala\" seçeneği aracılığıyla\n- İsteğe bağlı — bunun yerine soruna göre belirli bir Liste seçilebilir",
-      "githubBaseUrl": "## API Temel URL'si\nGitHub Enterprise Server için tam GitHub API kök dizini.\n\n- Genellikle /api/v3 ile biter\n- api.github.com kullanmak için boş bırakın\n- Bu sunucudan erişilebilir olmalıdır"
+      "githubBaseUrl": "## API Temel URL'si\nGitHub Enterprise Server için tam GitHub API kök dizini.\n\n- Genellikle /api/v3 ile biter\n- api.github.com kullanmak için boş bırakın\n- Bu sunucudan erişilebilir olmalıdır",
+      "githubAppId": "## Uygulama Kimliği\nGitHub Uygulamanızın sayısal Kimliği.\n\n- Uygulamanın ayarlar sayfasının en üstünde Genel bölümünde gösterilir\n- İstemci Kimliği değildir",
+      "githubAppInstallationId": "## Yükleme Kimliği\nGitHub Uygulamasının nereye yüklendiğini tanımlar.\n\n- Uygulamanın kuruluşunuz veya hesabınız için yükleme ayarlarını açın\n- Kimlik, bu sayfanın URL'sinin sonundaki numaradır\n- Bir entegrasyon bir yüklemeyi kapsar",
+      "githubAppPrivateKey": "## Özel Anahtar\nGitHub Uygulaması için oluşturulan özel anahtar.\n\n- Uygulamanın ayarlar sayfasında Özel anahtarlar bölümünde oluşturun\n- İndirilen .pem dosyasının tüm içeriğini yapıştırın\n- Şifrelenmiş şekilde saklanır; depolanan anahtarı saklamak için düzenlerken boş bırakın"
     },
     "config": {
       "name": "## Yapılandırma Adı\nBu yapılandırma için açık ve açıklayıcı bir ad.\n\n- Yapılandırmayı oluşturan varyant kombinasyonlarını açıklamaya yardımcı olur (örneğin \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", vb.).",

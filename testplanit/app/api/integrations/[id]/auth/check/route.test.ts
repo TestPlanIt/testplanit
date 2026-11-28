@@ -60,6 +60,19 @@ describe("GET /api/integrations/[id]/auth/check", () => {
     expect(userIntegrationAuthFindFirstMock).not.toHaveBeenCalled();
   });
 
+  it("treats a GitHub App integration as authenticated at the integration level", async () => {
+    integrationFindUniqueMock.mockResolvedValue({
+      id: 1,
+      provider: "GITHUB",
+      authType: "GITHUB_APP",
+    });
+    const response = await GET(buildGet(), params);
+    const data = await response.json();
+    expect(response.status).toBe(200);
+    expect(data.authenticated).toBe(true);
+    expect(userIntegrationAuthFindFirstMock).not.toHaveBeenCalled();
+  });
+
   it("returns 401 with an authUrl when the user has not authorized an OAuth integration", async () => {
     integrationFindUniqueMock.mockResolvedValue({
       id: 1,

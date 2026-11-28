@@ -265,6 +265,77 @@ describe("IntegrationConfigForm", () => {
     });
   });
 
+  describe("GITHUB + GITHUB_APP", () => {
+    it("asks for the App ID, installation ID and private key, the key in a multi-line box", () => {
+      const onCredentialsChange = vi.fn();
+      const onSettingsChange = vi.fn();
+      render(
+        <IntegrationConfigForm
+          {...defaultProps}
+          provider="GITHUB"
+          authType="GITHUB_APP"
+          onCredentialsChange={onCredentialsChange}
+          onSettingsChange={onSettingsChange}
+        />
+      );
+
+      expect(screen.getByText("githubAppId")).toBeInTheDocument();
+      expect(screen.getByText("githubAppInstallationId")).toBeInTheDocument();
+      expect(screen.getByText("githubAppPrivateKey")).toBeInTheDocument();
+      expect(document.querySelectorAll('input[type="password"]')).toHaveLength(
+        0
+      );
+
+      const key = screen.getByPlaceholderText("githubAppPrivateKeyPlaceholder");
+      expect(key.tagName).toBe("TEXTAREA");
+      fireEvent.change(key, {
+        target: { value: "-----BEGIN RSA PRIVATE KEY-----\nabc\n" },
+      });
+      expect(onCredentialsChange).toHaveBeenCalledWith({
+        privateKey: "-----BEGIN RSA PRIVATE KEY-----\nabc\n",
+      });
+
+      fireEvent.change(screen.getByPlaceholderText("githubAppIdPlaceholder"), {
+        target: { value: "123456" },
+      });
+      expect(onSettingsChange).toHaveBeenCalledWith({ appId: "123456" });
+    });
+
+    it("says issues are created by the App's bot account", () => {
+      render(
+        <IntegrationConfigForm
+          {...defaultProps}
+          provider="GITHUB"
+          authType="GITHUB_APP"
+        />
+      );
+
+      expect(
+        screen.getByText("appCreatorNoticeDescription")
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText("tokenCreatorNoticeDescription")
+      ).not.toBeInTheDocument();
+    });
+
+    it("offers to keep the stored private key when editing", () => {
+      render(
+        <IntegrationConfigForm
+          {...defaultProps}
+          provider="GITHUB"
+          authType="GITHUB_APP"
+          settings={{ appId: "123456", installationId: "987" }}
+          isEdit
+        />
+      );
+
+      const keep = screen.getByPlaceholderText("leaveBlankToKeep");
+      expect(keep.tagName).toBe("TEXTAREA");
+      expect(screen.getByDisplayValue("123456")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("987")).toBeInTheDocument();
+    });
+  });
+
   describe("AZURE_DEVOPS + PERSONAL_ACCESS_TOKEN", () => {
     it("renders personalAccessToken and organizationUrl fields", () => {
       render(

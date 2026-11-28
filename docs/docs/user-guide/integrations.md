@@ -62,6 +62,12 @@ TestPlanIt's powerful integration system allows you to connect with external iss
 - Used by GitHub, GitLab, Gitea/Forgejo/Gogs, and Azure DevOps
 - Best for: Developer tools, CI/CD integration
 
+#### GitHub App
+
+- The integration authenticates as a GitHub App installed on your repositories, with no user's token
+- Configured at the system level; issues are created by the App's bot account
+- Best for: Organizations that do not allow personal access tokens
+
 ## Supported Integration Types
 
 ### 1. **Jira Integration**
@@ -94,7 +100,7 @@ Connect to GitHub for issue tracking and repository integration.
 - Search issues by text or by exact number format (e.g., `#42`)
 - Track issue status across both platforms: Open, Closed, and Not planned or Duplicate for an issue closed for that reason
 - The parent issue, sub-issues, "blocked by" and "blocking" dependencies, "relates to" links and mentions from other issues surfaced as linked issues
-- Personal Access Token or OAuth 2.0 authentication (OAuth attributes issues to the individual user)
+- Personal Access Token, OAuth 2.0 or GitHub App authentication (OAuth attributes issues to the individual user)
 - Inbound webhook support for real-time status sync
 - Works with both github.com and **GitHub Enterprise Server** — set the integration's optional **API Base URL** to your GHES API root (typically `https://<your-host>/api/v3`) to point the adapter, scope probes, and repository sync at your enterprise instance instead of github.com
 
@@ -362,6 +368,23 @@ OAuth 2.0 gives **per-user attribution**: each user authorizes individually and 
 
 3. In TestPlanIt, add a GitHub integration, choose **OAuth 2.0**, and enter the **Client ID** and **Client Secret** from the OAuth App. For GitHub Enterprise Server, also set the optional API Base URL to your GHES API root. TestPlanIt requests the `repo` and `read:user` scopes.
 4. Finish the shared steps in [Completing the OAuth setup](#completing-the-oauth-setup-all-providers) — the integration must be activated, assigned to a project, and have a linked repository before issues can be created.
+
+#### GitHub with a GitHub App
+
+A GitHub App authenticates as itself, so no personal access token is involved. Issues are created by the App's bot account (`<app name>[bot]`), regardless of which TestPlanIt user created them. Works with github.com and GitHub Enterprise Server.
+
+1. In GitHub, create a GitHub App under **Settings → Developer settings → GitHub Apps** (for an organization, **Organization settings → Developer settings → GitHub Apps**). Enter a name and a homepage URL. No callback URL is needed, and the App's own webhook can be switched off (**Webhook → Active**).
+2. Give the App these permissions:
+   - Repository permissions → **Issues**: Read and write
+   - Repository permissions → **Contents**: Read-only (issue templates and issue forms)
+   - Repository permissions → **Metadata**: Read-only (GitHub selects it)
+   - Organization permissions → **Issue Types** and **Issue Fields**: Read-only, to offer them on the create form
+3. Create the App and note its **App ID**. Under **Private keys**, generate a private key; GitHub downloads a `.pem` file.
+4. Install the App (**Install App**) on the organization or account, and choose the repositories it may use. The **Installation ID** is the number at the end of the installation's settings URL (`…/settings/installations/<id>`).
+5. In TestPlanIt, add a GitHub integration, choose **GitHub App**, and enter the **App ID**, the **Installation ID** and the whole contents of the `.pem` file as the **Private Key**. For GitHub Enterprise Server, also set the optional API Base URL to your GHES API root.
+6. Click **Test Connection**. TestPlanIt exchanges the key for an installation access token, lists the repositories the App was installed on, and runs an issue search.
+
+Only the repositories the App is installed on can be linked to a project. TestPlanIt renews the installation access token by itself; the private key is stored encrypted and is never shown again.
 
 #### GitLab with Personal Access Token
 

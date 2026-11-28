@@ -6808,6 +6808,15 @@
         "githubBaseUrl": "API 基本 URL",
         "githubBaseUrlPlaceholder": "https://github.example.com/api/v3",
         "githubBaseUrlHelp": "GitHub 企業伺服器的完整 GitHub API 根目錄（通常以 /api/v3 結尾）。留空則使用 api.github.com。",
+        "githubAppId": "應用程式 ID",
+        "githubAppIdPlaceholder": "123456",
+        "githubAppIdHelp": "在您的 GitHub 應用程式設定頁面上顯示的應用程式 ID",
+        "githubAppInstallationId": "安裝 ID",
+        "githubAppInstallationIdPlaceholder": "12345678",
+        "githubAppInstallationIdHelp": "安裝設定 URL 末尾的數字",
+        "githubAppPrivateKey": "私密金鑰",
+        "githubAppPrivateKeyPlaceholder": "-----BEGIN RSA PRIVATE KEY-----",
+        "githubAppPrivateKeyHelp": "為 GitHub 應用程式產生的私密金鑰 (.pem) 檔案的內容",
         "giteaInstanceUrlPlaceholder": "https://gitea.example.com",
         "owner": "擁有者",
         "ownerPlaceholder": "使用者名稱或組織",
@@ -6825,6 +6834,7 @@
         "apiKeyWarningPoint4": "在Jira Cloud上，改用OAuth 2.0，以便每個問題都由建立者報告。OAuth 2.0不適用於Jira Server或Data Center。",
         "tokenCreatorNoticeTitle": "問題創建者歸屬",
         "tokenCreatorNoticeDescription": "透過此整合建立的問題始終記錄為擁有此存取權杖的帳戶，而不是建立問題的 TestPlanIt 使用者。此提供者的 API 不允許代表其他使用者設定創建者。",
+        "appCreatorNoticeDescription": "透過此整合建立的議題會記錄為 GitHub 應用程式本身的機器人帳戶，而非建立它們的 TestPlanIt 使用者。",
         "callbackUrlLabel": "回呼 URL（重新導向 URI）",
         "callbackUrlDescription": "請在您提供者的 OAuth 應用程式中，將此確切的 URL 註冊為回呼／重新導向 URI。必須完全相符，否則授權將失敗。",
         "callbackUrlCopied": "已複製",
@@ -6860,7 +6870,8 @@
       "authType": {
         "api_key": "API金鑰",
         "oauth2": "OAuth 2.0",
-        "personal_access_token": "個人訪問令牌"
+        "personal_access_token": "個人訪問令牌",
+        "github_app": "GitHub 應用程式"
       },
       "validation": {
         "nameRequired": "問題整合名稱為必填項",
@@ -8292,7 +8303,7 @@
     },
     "integration": {
       "name": "## 整合名稱\n用於在整個系統中標識此整合的描述性名稱。\n\n- 必須唯一，以便與其他整合區分開來。\n- 用於專案設定與設定。\n- 應清楚地表明服務和用途。",
-      "authType": "## 驗證類型\n選擇如何與外部服務進行驗證。\n\n- **API 金鑰：** 使用電子郵件和 API 權杖的簡單驗證\n- **OAuth 2.0：** 使用 OAuth 流程的安全驗證\n- **個人存取權杖：** 直接以權杖為基礎的驗證",
+      "authType": "## 驗證類型\n選擇如何向外部服務進行驗證。\n\n- **API 金鑰：** 使用電子郵件和 API 權杖進行簡單驗證\n- **OAuth 2.0：** 使用 OAuth 流程進行安全驗證\n- **個人存取權杖：** 直接的權杖型驗證\n- **GitHub 應用程式：** 作為安裝在您存放庫上的 GitHub 應用程式進行驗證",
       "email": "## 電子郵件地址\n您的外部服務帳號電子郵件地址。\n\n- 用於 API 金鑰驗證\n- 必須與產生 API 令牌的帳戶匹配\n- Jira Cloud 必需；Jira Server / Data Center 留空",
       "apiToken": "## API 令牌\n在外部服務的帳戶設定中產生 API 令牌。\n\n- 通常位於「帳號設定」→「安全性」→「API 令牌」中。\n- 提供安全訪問，無需暴露您的密碼。\n- 可依需要撤銷和重新產生。",
       "username": "## 使用者名稱\n您的 Jira Server / Data Center 帳戶的使用者名稱，用於基本身分驗證。\n\n- 與密碼一起使用\n- 適用於 Jira Cloud 時請留空\n- 使用個人存取令牌進行身分驗證時請留空",
@@ -8316,7 +8327,10 @@
       "mantisBTUrl": "## MantisBT URL\n您的 MantisBT 實例的基本 URL。\n\n- 格式：https://mantisbt.example.com\n- 請勿包含 /api/rest 或其他路徑\n- 必須可從此伺服器存取",
       "clickupTeamId": "## ClickUp 團隊（工作區）ID\n工作區中任務所屬的 ClickUp 團隊（也稱為工作區）的數字 ID。\n\n- 在 ClickUp URL 中找到：app.clickup.com/{teamId}/...\n- 選擇項目時需要瀏覽空間/資料夾/清單",
       "clickupListId": "## 預設 ClickUp 清單 ID\n預設情況下建立新工作的清單。\n\n- 在 ClickUp URL 中找到，或透過清單的「複製連結」選項\n- 可選 — 可以改為針對每個問題選擇特定清單",
-      "githubBaseUrl": "## API 基本 URL\nGitHub Enterprise Server 的完整 GitHub API 根目錄。\n\n- 通常以 /api/v3 結尾\n- 留空則使用 api.github.com\n- 必須可從此伺服器存取"
+      "githubBaseUrl": "## API 基本 URL\nGitHub Enterprise Server 的完整 GitHub API 根目錄。\n\n- 通常以 /api/v3 結尾\n- 留空則使用 api.github.com\n- 必須可從此伺服器存取",
+      "githubAppId": "## 應用程式 ID\n您的 GitHub 應用程式的數字 ID。\n\n- 在應用程式設定頁面的「一般」下方的頂部顯示\n- 不是用戶端 ID",
+      "githubAppInstallationId": "## 安裝 ID\n識別 GitHub 應用程式的安裝位置。\n\n- 開啟您的組織或帳戶的應用程式安裝設定\n- 此識別碼是該頁面 URL 末尾的數字\n- 一個整合涵蓋一個安裝",
+      "githubAppPrivateKey": "## 私密金鑰\n為 GitHub 應用程式產生的私密金鑰。\n\n- 在應用程式設定頁面的「私密金鑰」下方產生一個\n- 貼上下載的 .pem 檔案的全部內容\n- 以加密方式儲存；編輯時保持空白可保留儲存的金鑰"
     },
     "config": {
       "name": "## 設定名稱\n此組態的清晰、描述性名稱。\n\n- 有助於描述構成配置的變體組合（例如「Chrome，Windows 10」、「Safari/macOS 15.5」、「Edge/Windows 11」等）。",

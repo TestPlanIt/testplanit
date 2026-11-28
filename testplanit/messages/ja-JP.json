@@ -6808,6 +6808,15 @@
         "githubBaseUrl": "APIベースURL",
         "githubBaseUrlPlaceholder": "https://github.example.com/api/v3",
         "githubBaseUrlHelp": "GitHub Enterprise Server の完全な GitHub API ルート (通常は /api/v3 で終わります)。api.github.com を使用する場合は空白のままにしてください。",
+        "githubAppId": "アプリID",
+        "githubAppIdPlaceholder": "123456",
+        "githubAppIdHelp": "GitHubアプリの設定ページに表示されるアプリID",
+        "githubAppInstallationId": "インストールID",
+        "githubAppInstallationIdPlaceholder": "12345678",
+        "githubAppInstallationIdHelp": "インストールの設定URLの末尾の番号",
+        "githubAppPrivateKey": "秘密鍵",
+        "githubAppPrivateKeyPlaceholder": "-----BEGIN RSA PRIVATE KEY-----",
+        "githubAppPrivateKeyHelp": "GitHubアプリ用に生成された秘密鍵（.pem）ファイルの内容",
         "giteaInstanceUrlPlaceholder": "https://gitea.example.com",
         "owner": "所有者",
         "ownerPlaceholder": "ユーザー名または組織",
@@ -6825,6 +6834,7 @@
         "apiKeyWarningPoint4": "Jira Cloudでは、代わりにOAuth 2.0を使用して、各イシューがそれを作成した人によって報告されるようにしてください。OAuth 2.0はJira ServerまたはData Centerでは利用できません。",
         "tokenCreatorNoticeTitle": "問題作成者の帰属表示",
         "tokenCreatorNoticeDescription": "この連携機能を通じて作成された課題は、作成者である TestPlanIt ユーザーではなく、このアクセス トークンを所有するアカウントに記録されます。このプロバイダーの API では、他のユーザーに代わって作成者を設定することはできません。",
+        "appCreatorNoticeDescription": "この統合を通じて作成されたイシューは、TestPlanItユーザーではなく、GitHubアプリ自体のボットアカウントとして記録されます。",
         "callbackUrlLabel": "コールバックURL（リダイレクトURI）",
         "callbackUrlDescription": "このURLを、プロバイダーのOAuthアプリのコールバック／リダイレクトURIとして正確に登録してください。完全に一致しないと承認が失敗します。",
         "callbackUrlCopied": "コピーしました",
@@ -6860,7 +6870,8 @@
       "authType": {
         "api_key": "APIキー",
         "oauth2": "OAuth 2.0",
-        "personal_access_token": "個人アクセストークン"
+        "personal_access_token": "個人アクセストークン",
+        "github_app": "GitHubアプリ"
       },
       "validation": {
         "nameRequired": "課題統合名は必須です",
@@ -8292,7 +8303,7 @@
     },
     "integration": {
       "name": "## 統合名\nシステム全体でこの統合を識別するための説明的な名前。\n\n- 他の統合と区別するために一意である必要があります\n- プロジェクトの設定と構成で使用されます\n- サービスと目的を明確に示す必要があります",
-      "authType": "## 認証タイプ\n外部サービスでの認証方法を選択します。\n\n- **APIキー:** メールとAPIトークンを使用したシンプルな認証\n- **OAuth 2.0:** OAuthフローを使用した安全な認証\n- **個人アクセストークン:** トークンベースの直接認証",
+      "authType": "## 認証タイプ\n外部サービスでの認証方法を選択します。\n\n- **APIキー：** メールとAPIトークンを使用した簡単な認証\n- **OAuth 2.0：** OAuthフローを使用したセキュアな認証\n- **個人用アクセストークン：** トークンベースの直接認証\n- **GitHubアプリ：** リポジトリにインストールされたGitHubアプリとして認証",
       "email": "## メールアドレス\n外部サービス用のアカウントのメールアドレス。\n\n- APIキー認証に使用されます\n- APIトークンを生成したアカウントと一致する必要があります\n- Jira Cloudに必須。Jira Server / Data Centerの場合は空白のままにしてください",
       "apiToken": "## APIトークン\n外部サービスのアカウント設定からAPIトークンを生成します。\n\n- 通常はアカウント設定 → セキュリティ → APIトークンにあります\n- パスワードを公開することなく安全なアクセスを提供します\n- 必要に応じて取り消しや再生成が可能です",
       "username": "## ユーザー名\nBasic認証用のJira Server / Data Centerアカウントのユーザー名。\n\n- パスワードと一緒に使用します\n- Jira Cloudの場合は空白にしてください\n- Personal Access Tokenで認証する場合は空白にしてください",
@@ -8316,7 +8327,10 @@
       "mantisBTUrl": "## MantisBT URL\nMantisBTインスタンスのベースURL。\n\n- 形式: https://mantisbt.example.com\n- /api/restやその他のパスを含めないでください\n- このサーバーからアクセスできる必要があります",
       "clickupTeamId": "## ClickUp Team（Workspace）ID\nClickUp Team（Workspaceとも呼ばれます）のタスクが属する数値ID。\n\n- ClickUp URLで見つかります：app.clickup.com/{teamId}/...\n- プロジェクトを選択する際にSpaces/Folders/Listsを閲覧するために必要です",
       "clickupListId": "## デフォルトのClickUp List ID\n新しいタスクがデフォルトで作成されるList。\n\n- ClickUp URLまたはListの「リンクをコピー」オプションを使用して見つかります\n- オプション — 代わりに問題ごとに特定のListを選択できます",
-      "githubBaseUrl": "## APIベースURL\nGitHub Enterprise Serverの完全なGitHub APIルート。\n\n- 通常は/api/v3で終わります\n- api.github.comを使用する場合は空白のままにしてください\n- このサーバーからアクセスできる必要があります"
+      "githubBaseUrl": "## APIベースURL\nGitHub Enterprise Serverの完全なGitHub APIルート。\n\n- 通常は/api/v3で終わります\n- api.github.comを使用する場合は空白のままにしてください\n- このサーバーからアクセスできる必要があります",
+      "githubAppId": "## アプリID\nGitHubアプリの数値ID。\n\n- アプリの設定ページの「一般」セクションの上部に表示されます\n- クライアントIDではありません",
+      "githubAppInstallationId": "## インストールID\nGitHubアプリがインストールされている場所を識別します。\n\n- 組織またはアカウントのアプリのインストール設定を開きます\n- IDはそのページのURLの末尾の番号です\n- 1つの統合は1つのインストールをカバーします",
+      "githubAppPrivateKey": "## 秘密鍵\nGitHubアプリ用に生成された秘密鍵。\n\n- アプリの設定ページの「秘密鍵」セクションで生成します\n- ダウンロードした.pemファイルの内容全体を貼り付けます\n- 暗号化して保存されます。編集時に保存されたキーを保持する場合は空白のままにします"
     },
     "config": {
       "name": "## 構成名\nこの構成の明確で分かりやすい名前。\n\n- 構成を構成するバリアントの組み合わせを説明するのに役立ちます (例: \"Chrome、Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", など)。",

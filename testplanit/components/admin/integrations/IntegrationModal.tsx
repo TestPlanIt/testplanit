@@ -58,6 +58,7 @@ const providerAuthTypes: Record<IntegrationProvider, IntegrationAuthType[]> = {
   [IntegrationProvider.GITHUB]: [
     IntegrationAuthType.PERSONAL_ACCESS_TOKEN,
     IntegrationAuthType.OAUTH2,
+    IntegrationAuthType.GITHUB_APP,
   ],
   [IntegrationProvider.AZURE_DEVOPS]: [
     IntegrationAuthType.PERSONAL_ACCESS_TOKEN,

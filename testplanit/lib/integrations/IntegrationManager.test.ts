@@ -51,11 +51,17 @@ vi.mock("./AuthenticationService", () => ({
   },
 }));
 
+// The installation-token exchange is covered in githubApp.test.ts.
+vi.mock("./githubApp", () => ({
+  mintGitHubInstallationToken: vi.fn(),
+}));
+
 // Get the mocked rawDb
 import { rawDb } from "@/lib/rawDb";
 import valkeyConnection from "@/lib/valkey";
 import { EncryptionService, decrypt, isEncrypted } from "@/utils/encryption";
 import { AuthenticationService } from "./AuthenticationService";
+import { mintGitHubInstallationToken } from "./githubApp";
 
 const mockDb = rawDb as unknown as {
   integration: {
@@ -1137,6 +1143,95 @@ describe("IntegrationManager", () => {
       const adapter = await manager.getAdapter("2");
 
       expect(adapter).toBeInstanceOf(GitHubAdapter);
+    });
+
+    it("authenticates a GitHub App integration as its installation and renews through the stored key", async () => {
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+      vi.mocked(mintGitHubInstallationToken).mockResolvedValue({
+        token: "ghs_installation",
+        expiresAt,
+      });
+      mockDb.integration.findUnique.mockResolvedValue({
+        id: 9,
+        name: "GitHub App",
+        provider: "GITHUB",
+        status: "ACTIVE",
+        authType: "GITHUB_APP",
+        credentials: {
+          privateKey: "pem-contents",
+          // Left behind by an earlier personal access token setup.
+          personalAccessToken: "ghp_stale",
+        },
+        settings: {
+          appId: "123456",
+          installationId: "987",
+          baseUrl: "https://ghes.example.com/api/v3",
+        },
+        // Left behind by an earlier OAuth setup.
+        userIntegrationAuths: [
+          {
+            id: "stale-row",
+            userId: "user-1",
+            accessToken: "gho_stale",
+            refreshToken: null,
+            tokenExpiresAt: null,
+            needsReauthAt: null,
+          },
+        ],
+      });
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ total_count: 0, repositories: [] }),
+      });
+      global.fetch = mockFetch;
+
+      const adapter = await manager.getAdapter("9");
+
+      expect(adapter).toBeInstanceOf(GitHubAdapter);
+      expect(mintGitHubInstallationToken).toHaveBeenCalledWith({
+        baseUrl: "https://ghes.example.com/api/v3",
+        appId: "123456",
+        installationId: "987",
+        privateKey: "pem-contents",
+      });
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "https://ghes.example.com/api/v3/installation/repositories?per_page=1"
+      );
+      expect(mockFetch.mock.calls[0][1].headers.Authorization).toBe(
+        "token ghs_installation"
+      );
+
+      const authData = (adapter as any).authData;
+      expect(authData.installation).toBe(true);
+      expect(authData.expiresAt).toBe(expiresAt);
+      vi.mocked(mintGitHubInstallationToken).mockResolvedValue({
+        token: "ghs_renewed",
+        expiresAt,
+      });
+      await expect(authData.renew()).resolves.toEqual({
+        apiKey: "ghs_renewed",
+        expiresAt,
+      });
+    });
+
+    it("does not load a GitHub App integration GitHub refuses", async () => {
+      vi.mocked(mintGitHubInstallationToken).mockRejectedValue(
+        new Error("HTTP 401: A JSON web token could not be decoded")
+      );
+      mockDb.integration.findUnique.mockResolvedValue({
+        id: 10,
+        name: "GitHub App",
+        provider: "GITHUB",
+        status: "ACTIVE",
+        authType: "GITHUB_APP",
+        credentials: { privateKey: "pem-contents" },
+        settings: { appId: "123456", installationId: "987" },
+        userIntegrationAuths: [],
+      });
+
+      await expect(manager.getAdapter("10")).rejects.toThrow(
+        "HTTP 401: A JSON web token could not be decoded"
+      );
     });
 
     it("should create Azure DevOps adapter", async () => {

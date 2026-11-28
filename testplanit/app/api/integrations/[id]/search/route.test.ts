@@ -276,6 +276,26 @@ describe("GET /api/integrations/[id]/search", () => {
     });
   });
 
+  describe("Search with a GitHub App integration", () => {
+    it("searches on the integration's own credentials, asking no user to authorize", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      mockDb.integration.findUnique.mockResolvedValue({
+        id: 1,
+        provider: "GITHUB",
+        authType: "GITHUB_APP",
+        credentials: { privateKey: "pem-contents" },
+        userIntegrationAuths: [],
+      });
+
+      const response = await GET(createRequest("test"), params);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.issues).toBeDefined();
+      expect(data.authUrl).toBeUndefined();
+    });
+  });
+
   describe("Successful search with OAuth integration", () => {
     it("returns search results when user has valid OAuth token", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);

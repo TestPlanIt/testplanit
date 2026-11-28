@@ -102,12 +102,13 @@ Defines available date format options for user preferences (e.g., MM/DD/YYYY, YY
 
 ### IntegrationAuthType
 
-Defines authentication methods for integrations (NONE, OAUTH2, PERSONAL_ACCESS_TOKEN, API_KEY).
+Defines authentication methods for integrations (NONE, OAUTH2, PERSONAL_ACCESS_TOKEN, API_KEY, GITHUB_APP).
 
 - NONE
 - OAUTH2
 - PERSONAL_ACCESS_TOKEN
 - API_KEY
+- GITHUB_APP
 
 ### IntegrationProvider
 

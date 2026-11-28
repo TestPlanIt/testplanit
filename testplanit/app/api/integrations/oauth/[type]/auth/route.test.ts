@@ -83,6 +83,27 @@ describe("GET /api/integrations/oauth/[type]/auth", () => {
     );
   });
 
+  it.each(["PERSONAL_ACCESS_TOKEN", "GITHUB_APP", "API_KEY"])(
+    "refuses to start OAuth for a %s integration",
+    async (authType) => {
+      integrationFindUniqueMock.mockResolvedValue({
+        id: 2,
+        provider: "JIRA",
+        status: "ACTIVE",
+        authType,
+      });
+
+      const response = await GET(buildGet("?integrationId=2"), params);
+
+      expect(response.status).toBe(400);
+      expect((await response.json()).error).toBe(
+        "This integration does not use OAuth"
+      );
+      expect(getAdapterMock).not.toHaveBeenCalled();
+      expect(storeOAuthStateMock).not.toHaveBeenCalled();
+    }
+  );
+
   it("builds the adapter with allowInactive so the active-check doesn't block setup", async () => {
     await GET(buildGet("?integrationId=2"), params);
 

@@ -24,7 +24,14 @@ vi.mock("@/utils/encryption", () => ({
   isEncrypted: vi.fn(),
 }));
 
+// The token exchange itself is covered in githubApp.test.ts.
+vi.mock("@/lib/integrations/githubApp", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/integrations/githubApp")>()),
+  mintGitHubInstallationToken: vi.fn(),
+}));
+
 import { baseDb } from "@/lib/db";
+import { mintGitHubInstallationToken } from "@/lib/integrations/githubApp";
 import { decrypt, isEncrypted } from "@/utils/encryption";
 import { getServerSession } from "next-auth";
 
@@ -375,6 +382,96 @@ describe("POST /api/integrations/test-connection", () => {
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(mockFetch).toHaveBeenCalled();
+    });
+  });
+
+  describe("GITHUB provider, GitHub App", () => {
+    const appRequest = () =>
+      createRequest({
+        provider: "GITHUB",
+        authType: "GITHUB_APP",
+        credentials: { privateKey: "pem-contents" },
+        settings: {
+          appId: "123456",
+          installationId: "987",
+          baseUrl: "https://ghes.example.com/api/v3/",
+        },
+      });
+
+    it("buys an installation token and probes what an installation can reach", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      vi.mocked(mintGitHubInstallationToken).mockResolvedValue({
+        token: "ghs_installation",
+        expiresAt: new Date(),
+      });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: async () => ({}),
+      });
+
+      const response = await POST(appRequest());
+      const data = await response.json();
+
+      expect(data.success).toBe(true);
+      expect(mintGitHubInstallationToken).toHaveBeenCalledWith({
+        baseUrl: "https://ghes.example.com/api/v3/",
+        appId: "123456",
+        installationId: "987",
+        privateKey: "pem-contents",
+      });
+      const urls = mockFetch.mock.calls.map((call) => call[0]);
+      expect(urls).toEqual([
+        "https://ghes.example.com/api/v3/installation/repositories?per_page=1",
+        "https://ghes.example.com/api/v3/search/issues?q=is:issue&per_page=1",
+      ]);
+      expect(mockFetch.mock.calls[0][1].headers.Authorization).toBe(
+        "token ghs_installation"
+      );
+      expect(data.capabilities?.connection?.ok).toBe(true);
+      expect(data.capabilities?.searchIssues?.ok).toBe(true);
+    });
+
+    it("reports GitHub's reason when the App cannot authenticate, without probing", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      vi.mocked(mintGitHubInstallationToken).mockRejectedValue(
+        new Error("HTTP 404: Integration not found")
+      );
+
+      const response = await POST(appRequest());
+      const data = await response.json();
+
+      expect(data.success).toBe(false);
+      expect(data.error).toBe(
+        "Authentication failed (GitHub App): HTTP 404: Integration not found"
+      );
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("fails when the installation token cannot list its repositories", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      vi.mocked(mintGitHubInstallationToken).mockResolvedValue({
+        token: "ghs_installation",
+        expiresAt: new Date(),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        json: async () => ({
+          message: "Resource not accessible by integration",
+        }),
+      });
+
+      const response = await POST(appRequest());
+      const data = await response.json();
+
+      expect(data.success).toBe(false);
+      expect(data.error).toBe(
+        "Authentication failed (GitHub App): HTTP 403: Resource not accessible by integration"
+      );
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
   });
 

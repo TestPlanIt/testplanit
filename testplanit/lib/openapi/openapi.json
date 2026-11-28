@@ -181640,7 +181640,8 @@
           "NONE",
           "OAUTH2",
           "PERSONAL_ACCESS_TOKEN",
-          "API_KEY"
+          "API_KEY",
+          "GITHUB_APP"
         ]
       },
       "EnumIntegrationAuthTypeFilter": {

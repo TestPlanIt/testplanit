@@ -208,6 +208,21 @@ describe("performIssueRefreshSystem — auth + wiring", () => {
     expect(mockUserFindUnique).not.toHaveBeenCalled();
   });
 
+  it("GITHUB_APP integration with its stored key succeeds without a userId", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "GITHUB_APP",
+      credentials: { privateKey: "pem-contents" },
+      provider: "JIRA",
+    });
+
+    const result = await syncService.performIssueRefreshSystem(1, "JIRA-1");
+
+    expect(result.success).toBe(true);
+    expect(mockSyncIssue).toHaveBeenCalledTimes(1);
+    expect(mockUserFindUnique).not.toHaveBeenCalled();
+  });
+
   it("API_KEY integration with credentials succeeds", async () => {
     mockIntegrationFindUnique.mockResolvedValueOnce({
       id: 1,

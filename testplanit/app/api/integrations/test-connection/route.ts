@@ -1,6 +1,10 @@
 import { baseDb } from "@/lib/db";
 import { resolveStoredCredentials } from "@/lib/integrations/credentials";
 import {
+  githubApiRoot,
+  mintGitHubInstallationToken,
+} from "@/lib/integrations/githubApp";
+import {
   isIntegrationApiError,
   responseStatusForIntegrationError,
 } from "@/lib/integrations/errors";
@@ -345,6 +349,70 @@ function checkOAuthClientConfig(
     success: true,
     error: undefined,
     requiresUserAuth: true,
+  };
+}
+
+/**
+ * A GitHub App has no user, so the personal access token probes do not
+ * apply: `/user` and `/issues` refuse an installation token. The App is
+ * tested by what it must be able to do instead: buy an installation token
+ * with its private key, list the repositories it was installed on, and
+ * search issues.
+ */
+async function testGithubAppConnection(
+  credentials: Record<string, string>,
+  settings: Record<string, string>
+): Promise<TestConnectionResult> {
+  let token: string;
+  try {
+    ({ token } = await mintGitHubInstallationToken({
+      baseUrl: settings?.baseUrl,
+      appId: settings?.appId,
+      installationId: settings?.installationId,
+      privateKey: credentials?.privateKey,
+    }));
+  } catch (error) {
+    const connection: CapabilityProbe = {
+      ok: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+    return {
+      success: false,
+      error: summarizeProbeFailures("GitHub App", { connection }),
+      capabilities: { connection },
+    };
+  }
+
+  const baseUrl = githubApiRoot(settings?.baseUrl);
+  const headers = {
+    Authorization: `token ${token}`,
+    Accept: "application/vnd.github+json",
+  };
+
+  const connection = await probe(
+    `${baseUrl}/installation/repositories?per_page=1`,
+    { headers }
+  );
+  if (!connection.ok) {
+    return {
+      success: false,
+      error: summarizeProbeFailures("GitHub App", { connection }),
+      capabilities: { connection },
+    };
+  }
+
+  const searchIssues = await probe(
+    `${baseUrl}/search/issues?q=is:issue&per_page=1`,
+    { headers }
+  );
+
+  const success = connection.ok && searchIssues.ok;
+  return {
+    success,
+    error: success
+      ? undefined
+      : summarizeProbeFailures("GitHub App", { connection, searchIssues }),
+    capabilities: { connection, searchIssues },
   };
 }
 
@@ -888,7 +956,9 @@ const handlePOST = withAuditContext(async (req: NextRequest) => {
         result =
           authType === "OAUTH2"
             ? checkOAuthClientConfig(testCredentials)
-            : await testGithubConnection(testCredentials, testSettings);
+            : authType === "GITHUB_APP"
+              ? await testGithubAppConnection(testCredentials, testSettings)
+              : await testGithubConnection(testCredentials, testSettings);
         break;
       case IntegrationProvider.AZURE_DEVOPS:
         result = await testAzureDevOpsConnection(testCredentials, testSettings);

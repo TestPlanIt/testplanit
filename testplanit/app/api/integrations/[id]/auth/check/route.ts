@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
 import { withRequestRouting } from "~/lib/db/requestRouting";
+import { usesIntegrationCredentials } from "~/lib/integrations/authTypes";
 
 async function handleGET(
   request: NextRequest,
@@ -30,11 +31,8 @@ async function handleGET(
       );
     }
 
-    // If it's an API key or PAT integration, it's already authenticated at the integration level
-    if (
-      integration.authType === "API_KEY" ||
-      integration.authType === "PERSONAL_ACCESS_TOKEN"
-    ) {
+    // Credentials that belong to the integration authenticate every user.
+    if (usesIntegrationCredentials(integration.authType)) {
       return NextResponse.json({ authenticated: true });
     }
 

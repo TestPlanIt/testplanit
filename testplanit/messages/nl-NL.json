@@ -6808,6 +6808,15 @@
         "githubBaseUrl": "API-basis-URL",
         "githubBaseUrlPlaceholder": "https://github.example.com/api/v3",
         "githubBaseUrlHelp": "De volledige GitHub API-root voor GitHub Enterprise Server (eindigt doorgaans op /api/v3). Laat dit veld leeg om api.github.com te gebruiken.",
+        "githubAppId": "App-ID",
+        "githubAppIdPlaceholder": "123456",
+        "githubAppIdHelp": "De App-ID weergegeven op de instellingenpagina van uw GitHub-app",
+        "githubAppInstallationId": "Installatie-ID",
+        "githubAppInstallationIdPlaceholder": "12345678",
+        "githubAppInstallationIdHelp": "Het getal aan het einde van de instellings-URL van de installatie",
+        "githubAppPrivateKey": "Persoonlijke sleutel",
+        "githubAppPrivateKeyPlaceholder": "-----BEGIN RSA PRIVATE KEY-----",
+        "githubAppPrivateKeyHelp": "De inhoud van een persoonlijke-sleutelbestand (.pem) gegenereerd voor de GitHub-app",
         "giteaInstanceUrlPlaceholder": "https://gitea.example.com",
         "owner": "Eigenaar",
         "ownerPlaceholder": "gebruikersnaam of organisatie",
@@ -6825,6 +6834,7 @@
         "apiKeyWarningPoint4": "Gebruik op Jira Cloud in plaats daarvan OAuth 2.0 zodat elk probleem wordt gerapporteerd door de persoon die het heeft aangemaakt. OAuth 2.0 is niet beschikbaar voor Jira Server of Data Center.",
         "tokenCreatorNoticeTitle": "Naamsvermelding van de maker van het probleem",
         "tokenCreatorNoticeDescription": "Issues die via deze integratie worden aangemaakt, worden altijd geregistreerd onder het account dat eigenaar is van dit toegangstoken, en niet onder de TestPlanIt-gebruiker die ze heeft aangemaakt. De API van deze provider staat niet toe dat de maker namens een andere gebruiker wordt ingesteld.",
+        "appCreatorNoticeDescription": "Problemen die via deze integratie zijn aangemaakt, worden geregistreerd als account van de GitHub-app-bot zelf, niet als account van de TestPlanIt-gebruiker die deze heeft aangemaakt.",
         "callbackUrlLabel": "Callback-URL (redirect-URI)",
         "callbackUrlDescription": "Registreer precies deze URL als de callback-/redirect-URI in de OAuth-app van uw provider. Deze moet exact overeenkomen, anders mislukt de autorisatie.",
         "callbackUrlCopied": "Gekopieerd",
@@ -6860,7 +6870,8 @@
       "authType": {
         "api_key": "API-sleutel",
         "oauth2": "OAuth 2.0",
-        "personal_access_token": "Persoonlijke toegangstoken"
+        "personal_access_token": "Persoonlijke toegangstoken",
+        "github_app": "GitHub App"
       },
       "validation": {
         "nameRequired": "De naam van de issue-integratie is vereist.",
@@ -8292,7 +8303,7 @@
     },
     "integration": {
       "name": "## Integratienaam\nEen beschrijvende naam om deze integratie in het systeem te identificeren.\n\n- Moet uniek zijn om te onderscheiden van andere integraties.\n- Wordt gebruikt in projectinstellingen en configuratie.\n- Moet duidelijk de service en het doel aangeven.",
-      "authType": "## Authenticatietype\nKies hoe u wilt authenticeren met de externe service.\n\n- **API-sleutel:** Eenvoudige authenticatie met behulp van e-mail en API-token\n- **OAuth 2.0:** Veilige authenticatie met behulp van de OAuth-stroom\n- **Persoonlijke toegangstoken:** Directe op tokens gebaseerde authenticatie",
+      "authType": "## Verificatietype\nKies hoe u wilt verifiëren met de externe service.\n\n- **API-sleutel:** Eenvoudige verificatie met e-mail en API-token\n- **OAuth 2.0:** Veilige verificatie via OAuth-flow\n- **Persoonlijk toegangstoken:** Directe verificatie op basis van tokens\n- **GitHub App:** Verificatie als een GitHub-app geïnstalleerd op uw opslagplaatsen",
       "email": "## E-mailadres\nUw e-mailadres voor de externe service.\n\n- Gebruikt voor API-sleutelauthenticatie\n- Moet overeenkomen met het account dat het API-token heeft gegenereerd\n- Vereist voor Jira Cloud; laat leeg voor Jira Server / Data Center",
       "apiToken": "## API-token\nGenereer een API-token vanuit uw accountinstellingen in de externe service.\n\n- Meestal te vinden in Accountinstellingen → Beveiliging → API-tokens\n- Biedt veilige toegang zonder uw wachtwoord bloot te stellen\n- Kan indien nodig worden ingetrokken en opnieuw worden gegenereerd",
       "username": "## Gebruikersnaam\nDe gebruikersnaam van uw Jira Server / Data Center-account, voor basisverificatie.\n\n- Gebruikt samen met het wachtwoord\n- Laat leeg voor Jira Cloud\n- Laat leeg wanneer u zich verifieert met een Personal Access Token",
@@ -8316,7 +8327,10 @@
       "mantisBTUrl": "## MantisBT URL\nDe basis-URL van uw MantisBT-instantie.\n\n- Formaat: https://mantisbt.example.com\n- Voeg geen /api/rest of andere paden toe\n- Moet toegankelijk zijn vanaf deze server",
       "clickupTeamId": "## ClickUp Team (Workspace) ID\nDe numerieke ID van het ClickUp Team (ook wel Workspace genoemd) waartoe taken behoren.\n\n- Te vinden in de ClickUp URL: app.clickup.com/{teamId}/...\n- Vereist om Spaces/Folders/Lists te doorzoeken bij het selecteren van een project",
       "clickupListId": "## Standaard ClickUp List ID\nDe List waarin nieuwe taken standaard worden gemaakt.\n\n- Te vinden in de ClickUp URL of via de optie \"Link kopiëren\" van de List\n- Optioneel — per probleem kan een specifieke List worden gekozen",
-      "githubBaseUrl": "## API-basis-URL\nVolledige GitHub API-root voor GitHub Enterprise Server.\n\n- Eindigt doorgaans op /api/v3\n- Laat dit veld leeg om api.github.com te gebruiken\n- Moet toegankelijk zijn vanaf deze server"
+      "githubBaseUrl": "## API-basis-URL\nVolledige GitHub API-root voor GitHub Enterprise Server.\n\n- Eindigt doorgaans op /api/v3\n- Laat dit veld leeg om api.github.com te gebruiken\n- Moet toegankelijk zijn vanaf deze server",
+      "githubAppId": "## App-ID\nDe numerieke ID van uw GitHub-app.\n\n- Weergegeven boven aan de instellingenpagina van de app onder Algemeen\n- Niet de client-ID",
+      "githubAppInstallationId": "## Installatie-ID\nIdentificeert waar de GitHub-app is geïnstalleerd.\n\n- Open de installatie-instellingen van de app voor uw organisatie of account\n- De ID is het getal aan het einde van de URL van die pagina\n- Eén integratie omvat één installatie",
+      "githubAppPrivateKey": "## Persoonlijke sleutel\nEen persoonlijke sleutel gegenereerd voor de GitHub-app.\n\n- Genereer er één op de instellingenpagina van de app onder Persoonlijke sleutels\n- Plak de volledige inhoud van het gedownloade .pem-bestand\n- Versleuteld opgeslagen; laat leeg bij bewerking om de opgeslagen sleutel te behouden"
     },
     "config": {
       "name": "## Configuratienaam\nEen duidelijke, beschrijvende naam voor deze configuratie.\n\n- Helpt bij het beschrijven van de variantcombinaties waaruit de configuratie bestaat (bijv. \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", enz.).",

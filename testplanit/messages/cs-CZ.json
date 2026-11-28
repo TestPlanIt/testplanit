@@ -6808,6 +6808,15 @@
         "githubBaseUrl": "Základní URL adresa API",
         "githubBaseUrlPlaceholder": "https://github.example.com/api/v3",
         "githubBaseUrlHelp": "Úplný kořen API GitHub pro GitHub Enterprise Server (obvykle končí na /api/v3). Ponechte prázdné pro použití api.github.com.",
+        "githubAppId": "ID aplikace",
+        "githubAppIdPlaceholder": "123456",
+        "githubAppIdHelp": "ID aplikace zobrazené na stránce nastavení vaší aplikace GitHub",
+        "githubAppInstallationId": "ID instalace",
+        "githubAppInstallationIdPlaceholder": "12345678",
+        "githubAppInstallationIdHelp": "Číslo na konci adresy URL nastavení instalace",
+        "githubAppPrivateKey": "Privátní klíč",
+        "githubAppPrivateKeyPlaceholder": "-----BEGIN RSA PRIVATE KEY-----",
+        "githubAppPrivateKeyHelp": "Obsah souboru privátního klíče (.pem) vygenerovaného pro aplikaci GitHub",
         "giteaInstanceUrlPlaceholder": "https://gitea.example.com",
         "owner": "Vlastník",
         "ownerPlaceholder": "uživatelské jméno nebo organizace",
@@ -6825,6 +6834,7 @@
         "apiKeyWarningPoint4": "V Jira Cloud místo toho použijte OAuth 2.0, aby byl každý problém hlášen osobou, která jej vytvořila. OAuth 2.0 není dostupný pro Jira Server nebo Data Center.",
         "tokenCreatorNoticeTitle": "Přiřazení tvůrce úkolu",
         "tokenCreatorNoticeDescription": "Úkoly vytvořené prostřednictvím této integrace jsou vždy zaznamenány jako vytvořené účtem, kterému patří tento přístupový token, nikoli uživatelem TestPlanIt, který je vytvořil. API tohoto poskytovatele neumožňuje nastavit tvůrce jménem jiného uživatele.",
+        "appCreatorNoticeDescription": "Problémy vytvořené prostřednictvím této integrace jsou zaznamenány jako vlastní účet bota aplikace GitHub, nikoli jako uživatel TestPlanIt, který je vytvořil.",
         "callbackUrlLabel": "Callback URL (přesměrovací URI)",
         "callbackUrlDescription": "Zaregistrujte tuto přesnou URL adresu jako callback / přesměrovací URI v aplikaci OAuth u vašeho poskytovatele. Musí se přesně shodovat, jinak autorizace selže.",
         "callbackUrlCopied": "Zkopírováno",
@@ -6860,7 +6870,8 @@
       "authType": {
         "api_key": "Klíč API",
         "oauth2": "OAuth 2.0",
-        "personal_access_token": "Osobní přístupový token"
+        "personal_access_token": "Osobní přístupový token",
+        "github_app": "Aplikace GitHub"
       },
       "validation": {
         "nameRequired": "Název integrace úkolů je povinný",
@@ -8292,7 +8303,7 @@
     },
     "integration": {
       "name": "## Název integrace\nVýstižný název pro identifikaci této integrace v celém systému.\n\n- Musí být jedinečný, aby se odlišil od ostatních integrací\n- Používá se v nastavení a konfiguraci projektu\n- Měl by jasně naznačovat službu a účel",
-      "authType": "## Typ ověření\nVyberte způsob ověření u externí služby.\n\n- **Klíč API:** Jednoduché ověření pomocí e-mailu a tokenu API\n- **OAuth 2.0:** Zabezpečené ověření pomocí procesu OAuth\n- **Osobní přístupový token:** Přímé ověření na základě tokenu",
+      "authType": "## Typ ověření\nZvolte, jak se ověřit u externí služby.\n\n- **Klíč API:** Jednoduché ověření pomocí e-mailu a tokenu API\n- **OAuth 2.0:** Bezpečné ověření pomocí toku OAuth\n- **Token osobního přístupu:** Přímé ověření na základě tokenu\n- **Aplikace GitHub:** Ověření jako aplikace GitHub nainstalovaná ve vašich repozitářích",
       "email": "## E-mailová adresa\nVaše e-mailová adresa účtu pro externí službu.\n\n- Používá se pro autentizaci klíče API\n- Musí odpovídat účtu, který generoval token API\n- Vyžadováno pro Jiru Cloud; ponechte prázdné pro Jiru Server / Data Center",
       "apiToken": "## Token API\nVygenerujte token API v nastavení vašeho účtu v externí službě.\n\n- Obvykle se nachází v Nastavení účtu → Zabezpečení → Tokeny API\n- Poskytuje bezpečný přístup bez odhalení hesla\n- Lze podle potřeby zrušit a znovu vygenerovat",
       "username": "## Uživatelské jméno\nUživatelské jméno vašeho účtu Jira Server / Data Center pro základní ověřování.\n\n- Používáno spolu s heslem\n- Ponechte prázdné pro Jira Cloud\n- Ponechte prázdné, když se ověřujete pomocí tokenu osobního přístupu",
@@ -8316,7 +8327,10 @@
       "mantisBTUrl": "## URL adresa MantisBT\nZákladní URL adresa vaší instance MantisBT.\n\n- Formát: https://mantisbt.example.com\n- Nezahrnujte /api/rest ani jiné cesty\n- Musí být přístupná z tohoto serveru",
       "clickupTeamId": "## ID týmu ClickUp (Workspace)\nNumerické ID týmu ClickUp (nazývaného také Workspace), ke kterému úkoly patří.\n\n- Najdete v adrese URL ClickUp: app.clickup.com/{teamId}/...\n- Vyžadováno pro procházení Spaces/Folders/Lists při výběru projektu",
       "clickupListId": "## Výchozí ID seznamu ClickUp\nSeznam, ve kterém se ve výchozím nastavení vytvářejí nové úkoly.\n\n- Najdete v adrese URL ClickUp nebo pomocí možnosti \"Kopírovat odkaz\" seznamu\n- Volitelné — konkrétní seznam lze zvolit jednotlivě pro každý problém",
-      "githubBaseUrl": "## Základní URL adresa API\nÚplný kořen API GitHub pro GitHub Enterprise Server.\n\n- Obvykle končí na /api/v3\n- Ponechte prázdné pro použití api.github.com\n- Musí být přístupný z tohoto serveru"
+      "githubBaseUrl": "## Základní URL adresa API\nÚplný kořen API GitHub pro GitHub Enterprise Server.\n\n- Obvykle končí na /api/v3\n- Ponechte prázdné pro použití api.github.com\n- Musí být přístupný z tohoto serveru",
+      "githubAppId": "## ID aplikace\nNumerické ID vaší aplikace GitHub.\n\n- Zobrazeno v horní části stránky nastavení aplikace v sekci Obecné\n- Není to Client ID",
+      "githubAppInstallationId": "## ID instalace\nIdentifikuje, kde je aplikace GitHub nainstalována.\n\n- Otevřete nastavení instalace aplikace pro vaši organizaci nebo účet\n- ID je číslo na konci adresy URL té stránky\n- Jedna integrace pokrývá jednu instalaci",
+      "githubAppPrivateKey": "## Privátní klíč\nPrivátní klíč vygenerovaný pro aplikaci GitHub.\n\n- Vygenerujte jeden na stránce nastavení aplikace v sekci Privátní klíče\n- Vložte celý obsah staženého souboru .pem\n- Uložen šifrovaně; při úpravě ponechte prázdné, abyste zachovali uložený klíč"
     },
     "config": {
       "name": "## Název konfigurace\nJasný, popisný název této konfigurace.\n\n- Pomáhá popsat kombinace variant, které tvoří konfiguraci (např. „Chrome, Windows 10“, „Safari/macOS 15.5“, „Edge/Windows 11“ atd.).",

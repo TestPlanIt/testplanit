@@ -5,6 +5,7 @@ import { EncryptionService, getMasterKey } from "@/utils/encryption";
 import type { Integration, IntegrationProvider } from "~/zenstack/models";
 import { AuthenticationService } from "./AuthenticationService";
 import { resolveStoredCredentials } from "./credentials";
+import { mintGitHubInstallationToken } from "./githubApp";
 import {
   RefreshTokenRevokedError,
   credentialsCorruptError,
@@ -227,8 +228,43 @@ export class IntegrationManager {
       return adapter;
     }
 
+    // A GitHub App authenticates as its installation: the stored private key
+    // buys an access token that lasts an hour. The cached adapter is rebuilt
+    // before that token lapses, and renews it itself during a long job. User
+    // rows left by an earlier OAuth setup play no part.
+    if (integration.authType === "GITHUB_APP") {
+      const credentials = integration.credentials
+        ? await resolveStoredCredentials(
+            integration.credentials,
+            integration.provider
+          )
+        : {};
+      const settings = (
+        integration.settings && typeof integration.settings === "object"
+          ? integration.settings
+          : {}
+      ) as Record<string, any>;
+      const app = {
+        baseUrl: settings.baseUrl,
+        appId: settings.appId,
+        installationId: settings.installationId,
+        privateKey: credentials.privateKey,
+      };
+      const renew = async () => {
+        const fresh = await mintGitHubInstallationToken(app);
+        return { apiKey: fresh.token, expiresAt: fresh.expiresAt };
+      };
+      const first = await renew();
+      authData.apiKey = first.apiKey;
+      authData.expiresAt = first.expiresAt;
+      authData.installation = true;
+      authData.renew = renew;
+      if (settings.baseUrl) authData.baseUrl = settings.baseUrl;
+
+      await adapter.authenticate(authData);
+    }
     // Handle API key or PAT authentication
-    if (
+    else if (
       (integration.authType === "API_KEY" ||
         integration.authType === "PERSONAL_ACCESS_TOKEN") &&
       integration.credentials
@@ -499,6 +535,7 @@ export class IntegrationManager {
         return "oauth";
       case "PERSONAL_ACCESS_TOKEN":
       case "API_KEY":
+      case "GITHUB_APP":
         return "api_key";
       default:
         return "basic";

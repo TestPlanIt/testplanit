@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -168,6 +169,33 @@ const authTypeFields: Record<string, FieldConfig[]> = {
     [PAT_FIELD],
   [`${IntegrationProvider.GITHUB}_${IntegrationAuthType.OAUTH2}`]:
     OAUTH_CLIENT_FIELDS,
+  [`${IntegrationProvider.GITHUB}_${IntegrationAuthType.GITHUB_APP}`]: [
+    {
+      name: "appId",
+      label: "config.githubAppId",
+      placeholder: "config.githubAppIdPlaceholder",
+      help: "config.githubAppIdHelp",
+      isCredential: false,
+      required: true,
+    },
+    {
+      name: "installationId",
+      label: "config.githubAppInstallationId",
+      placeholder: "config.githubAppInstallationIdPlaceholder",
+      help: "config.githubAppInstallationIdHelp",
+      isCredential: false,
+      required: true,
+    },
+    {
+      name: "privateKey",
+      label: "config.githubAppPrivateKey",
+      placeholder: "config.githubAppPrivateKeyPlaceholder",
+      help: "config.githubAppPrivateKeyHelp",
+      type: "textarea",
+      isCredential: true,
+      required: true,
+    },
+  ],
   [`${IntegrationProvider.GITLAB}_${IntegrationAuthType.PERSONAL_ACCESS_TOKEN}`]:
     [PAT_FIELD],
   [`${IntegrationProvider.GITLAB}_${IntegrationAuthType.OAUTH2}`]:
@@ -429,6 +457,7 @@ export function IntegrationConfigForm({
   // Token-based issue trackers always record the token owner as the creator
   const showTokenCreatorNotice =
     authType === IntegrationAuthType.PERSONAL_ACCESS_TOKEN;
+  const showAppCreatorNotice = authType === IntegrationAuthType.GITHUB_APP;
 
   return (
     <div className="space-y-4">
@@ -457,6 +486,15 @@ export function IntegrationConfigForm({
           <AlertTitle>{t("config.tokenCreatorNoticeTitle")}</AlertTitle>
           <AlertDescription>
             <p className="mt-2">{t("config.tokenCreatorNoticeDescription")}</p>
+          </AlertDescription>
+        </Alert>
+      )}
+      {showAppCreatorNotice && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>{t("config.tokenCreatorNoticeTitle")}</AlertTitle>
+          <AlertDescription>
+            <p className="mt-2">{t("config.appCreatorNoticeDescription")}</p>
           </AlertDescription>
         </Alert>
       )}
@@ -500,6 +538,20 @@ export function IntegrationConfigForm({
                       ))}
                     </SelectContent>
                   </Select>
+                ) : field.type === "textarea" ? (
+                  <Textarea
+                    rows={4}
+                    className="font-mono text-xs"
+                    placeholder={
+                      isEdit && field.isCredential && !value
+                        ? t("config.leaveBlankToKeep" as any)
+                        : (t as unknown as (key: string) => string)(
+                            field.placeholder
+                          )
+                    }
+                    value={value}
+                    onChange={(e) => handleFieldChange(field, e.target.value)}
+                  />
                 ) : (
                   <Input
                     type={field.type || "text"}

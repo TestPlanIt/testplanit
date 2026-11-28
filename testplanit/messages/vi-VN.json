@@ -6808,6 +6808,15 @@
         "githubBaseUrl": "URL cơ sở của API",
         "githubBaseUrlPlaceholder": "https://github.example.com/api/v3",
         "githubBaseUrlHelp": "Đường dẫn API gốc đầy đủ của GitHub dành cho GitHub Enterprise Server (thường kết thúc bằng /api/v3). Để trống nếu muốn sử dụng api.github.com.",
+        "githubAppId": "ID Ứng dụng",
+        "githubAppIdPlaceholder": "123456",
+        "githubAppIdHelp": "ID Ứng dụng được hiển thị trên trang cài đặt GitHub App của bạn",
+        "githubAppInstallationId": "ID Cài đặt",
+        "githubAppInstallationIdPlaceholder": "12345678",
+        "githubAppInstallationIdHelp": "Số ở cuối URL cài đặt của lần cài đặt",
+        "githubAppPrivateKey": "Khóa Riêng tư",
+        "githubAppPrivateKeyPlaceholder": "-----BEGIN RSA PRIVATE KEY-----",
+        "githubAppPrivateKeyHelp": "Nội dung của tệp khóa riêng tư (.pem) được tạo cho GitHub App",
         "giteaInstanceUrlPlaceholder": "https://gitea.example.com",
         "owner": "Người sở hữu",
         "ownerPlaceholder": "tên người dùng hoặc tổ chức",
@@ -6825,6 +6834,7 @@
         "apiKeyWarningPoint4": "Trên Jira Cloud, hãy sử dụng OAuth 2.0 thay vào đó để mỗi vấn đề được báo cáo bởi người tạo nó. OAuth 2.0 không khả dụng cho Jira Server hoặc Data Center.",
         "tokenCreatorNoticeTitle": "Ghi nhận người tạo vấn đề",
         "tokenCreatorNoticeDescription": "Các sự cố được tạo ra thông qua quá trình tích hợp này luôn được ghi nhận là do tài khoản sở hữu mã thông báo truy cập đó gây ra, chứ không phải do người dùng TestPlanIt đã tạo ra chúng. API của nhà cung cấp này không cho phép thiết lập người tạo thay mặt người dùng khác.",
+        "appCreatorNoticeDescription": "Các vấn đề được tạo thông qua tích hợp này được ghi lại dưới tài khoản bot riêng của GitHub App, không phải người dùng TestPlanIt đã tạo chúng.",
         "callbackUrlLabel": "URL gọi lại (redirect URI)",
         "callbackUrlDescription": "Đăng ký URL chính xác này làm callback / redirect URI trong ứng dụng OAuth của nhà cung cấp của bạn. URL này phải khớp chính xác nếu không quá trình ủy quyền sẽ thất bại.",
         "callbackUrlCopied": "Đã sao chép",
@@ -6860,7 +6870,8 @@
       "authType": {
         "api_key": "Khóa API",
         "oauth2": "OAuth 2.0",
-        "personal_access_token": "Mã truy cập cá nhân"
+        "personal_access_token": "Mã truy cập cá nhân",
+        "github_app": "GitHub App"
       },
       "validation": {
         "nameRequired": "Tên tích hợp sự cố là bắt buộc",
@@ -8292,7 +8303,7 @@
     },
     "integration": {
       "name": "## Tên Tích hợp\nMột tên mô tả để xác định tích hợp này trên toàn hệ thống.\n\n- Phải là duy nhất để phân biệt với các tích hợp khác\n- Được sử dụng trong cài đặt và cấu hình dự án\n- Nên chỉ rõ dịch vụ và mục đích",
-      "authType": "## Loại xác thực\nChọn cách xác thực với dịch vụ bên ngoài.\n\n- **Khóa API:** Xác thực đơn giản bằng email và mã thông báo API\n- **OAuth 2.0:** Xác thực an toàn bằng quy trình OAuth\n- **Mã thông báo truy cập cá nhân:** Xác thực trực tiếp dựa trên mã thông báo",
+      "authType": "## Loại Xác thực\nChọn cách xác thực với dịch vụ bên ngoài.\n\n- **Khóa API:** Xác thực đơn giản bằng email và mã thông báo API\n- **OAuth 2.0:** Xác thực an toàn bằng luồng OAuth\n- **Mã Truy cập Cá nhân:** Xác thực trực tiếp dựa trên mã thông báo\n- **GitHub App:** Xác thực như một GitHub App được cài đặt trên kho lưu trữ của bạn",
       "email": "## Địa chỉ Email\nĐịa chỉ email tài khoản của bạn cho dịch vụ bên ngoài.\n\n- Được sử dụng để xác thực khóa API\n- Phải trùng khớp với tài khoản đã tạo mã thông báo API\n- Bắt buộc đối với Jira Cloud; để trống đối với Jira Server / Data Center",
       "apiToken": "## Mã thông báo API\nTạo mã thông báo API từ cài đặt tài khoản của bạn trong dịch vụ bên ngoài.\n\n- Thường được tìm thấy trong Cài đặt tài khoản → Bảo mật → Mã thông báo API\n- Cung cấp quyền truy cập an toàn mà không cần tiết lộ mật khẩu của bạn\n- Có thể bị thu hồi và tạo lại khi cần",
       "username": "## Tên người dùng\nTên người dùng của tài khoản Jira Server / Data Center của bạn, dùng cho xác thực Basic.\n\n- Được sử dụng cùng với mật khẩu\n- Để trống cho Jira Cloud\n- Để trống khi bạn xác thực bằng Personal Access Token",
@@ -8316,7 +8327,10 @@
       "mantisBTUrl": "## URL MantisBT\nURL cơ sở của phiên bản MantisBT của bạn.\n\n- Định dạng: https://mantisbt.example.com\n- Không bao gồm /api/rest hoặc các đường dẫn khác\n- Phải có thể truy cập được từ máy chủ này",
       "clickupTeamId": "## ID nhóm ClickUp (Không gian làm việc)\nID số của Nhóm ClickUp (còn gọi là Không gian làm việc) mà các tác vụ thuộc về.\n\n- Tìm thấy trong URL ClickUp: app.clickup.com/{teamId}/...\n- Cần thiết để duyệt Khoảng không gian/Thư mục/Danh sách khi chọn một dự án",
       "clickupListId": "## ID danh sách ClickUp mặc định\nDanh sách mà các tác vụ mới được tạo theo mặc định.\n\n- Tìm thấy trong URL ClickUp hoặc thông qua tùy chọn \"Sao chép liên kết\" của Danh sách\n- Tùy chọn — một Danh sách cụ thể có thể được chọn cho mỗi vấn đề thay thế",
-      "githubBaseUrl": "## URL cơ sở ở API\nĐường dẫn gốc API GitHub đầy đủ dành cho GitHub Enterprise Server.\n\n- Thường kết thúc bằng /api/v3\n- Để trống nếu muốn sử dụng api.github.com\n- Phải có thể truy cập được từ máy chủ này"
+      "githubBaseUrl": "## URL cơ sở ở API\nĐường dẫn gốc API GitHub đầy đủ dành cho GitHub Enterprise Server.\n\n- Thường kết thúc bằng /api/v3\n- Để trống nếu muốn sử dụng api.github.com\n- Phải có thể truy cập được từ máy chủ này",
+      "githubAppId": "## ID Ứng dụng\nID số của GitHub App của bạn.\n\n- Được hiển thị ở đầu trang cài đặt của Ứng dụng trong phần Tổng quát\n- Không phải ID Khách hàng",
+      "githubAppInstallationId": "## ID Cài đặt\nXác định nơi GitHub App được cài đặt.\n\n- Mở cài đặt cài đặt của Ứng dụng cho tổ chức hoặc tài khoản của bạn\n- ID là số ở cuối URL của trang đó\n- Một tích hợp bao gồm một cài đặt",
+      "githubAppPrivateKey": "## Khóa Riêng tư\nMột khóa riêng tư được tạo cho GitHub App.\n\n- Tạo một trên trang cài đặt của Ứng dụng trong phần Khóa riêng tư\n- Dán toàn bộ nội dung của tệp .pem được tải xuống\n- Được lưu trữ được mã hóa; để trống khi chỉnh sửa để giữ khóa được lưu trữ"
     },
     "config": {
       "name": "## Tên Cấu Hình\nMột tên rõ ràng, mô tả cho cấu hình này.\n\n- Giúp mô tả các tổ hợp biến thể tạo nên Cấu Hình (ví dụ: \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", v.v.).",

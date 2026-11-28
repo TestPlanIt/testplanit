@@ -16,6 +16,7 @@ import { projectIssueUpdateChannel } from "../../webhooks/issueUpdateChannels";
 import type { IssueAdapter, IssueData } from "../adapters/IssueAdapter";
 import { issueCache } from "../cache/IssueCache";
 import { AuthenticationService } from "../AuthenticationService";
+import { usesIntegrationCredentials } from "../authTypes";
 import { integrationManager } from "../IntegrationManager";
 import {
   effectiveRequirementTypeIds,
@@ -790,10 +791,7 @@ export class SyncService {
           );
           throw new Error("Authentication token has expired");
         }
-      } else if (
-        integration.authType === "API_KEY" ||
-        integration.authType === "PERSONAL_ACCESS_TOKEN"
-      ) {
+      } else if (usesIntegrationCredentials(integration.authType)) {
         // For API key or PAT, check if integration has credentials
         if (!integration.credentials) {
           throw new Error("Integration is missing credentials");
@@ -1814,10 +1812,7 @@ export class SyncService {
           );
           throw new Error("Authentication token has expired");
         }
-      } else if (
-        integration.authType === "API_KEY" ||
-        integration.authType === "PERSONAL_ACCESS_TOKEN"
-      ) {
+      } else if (usesIntegrationCredentials(integration.authType)) {
         // For API key or PAT, check if integration has credentials
         if (!integration.credentials) {
           throw new Error("Integration is missing credentials");

@@ -56,6 +56,15 @@ async function handleGET(
       );
     }
 
+    // A provider's adapter answers for OAuth whichever way this integration
+    // authenticates, so the integration itself has to be an OAuth one.
+    if (integration.authType !== "OAUTH2") {
+      return NextResponse.json(
+        { error: "This integration does not use OAuth" },
+        { status: 400 }
+      );
+    }
+
     // Get the appropriate adapter based on the integration
     const manager = IntegrationManager.getInstance();
     // The integration is intentionally inactive until this authorization

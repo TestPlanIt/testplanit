@@ -150,7 +150,7 @@ describe("GitHubAdapter", () => {
           password: "p",
         })
       ).rejects.toThrow(
-        "GitHub adapter only supports OAuth and Personal Access Token authentication"
+        "GitHub adapter only supports OAuth, Personal Access Token and GitHub App authentication"
       );
     });
 
@@ -2792,6 +2792,168 @@ describe("GitHubAdapter", () => {
         expect.objectContaining({ message: "Resource not accessible" })
       );
       consoleError.mockRestore();
+    });
+  });
+
+  describe("GitHub App installation", () => {
+    const okJson = (payload: unknown) => ({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(payload),
+    });
+    const installationAuth = (extra: Record<string, unknown> = {}) => ({
+      type: "api_key" as const,
+      apiKey: "ghs_first",
+      installation: true,
+      ...extra,
+    });
+    const authorization = (callIndex: number) =>
+      (mockFetch.mock.calls[callIndex][1].headers as Record<string, string>)
+        .Authorization;
+
+    beforeEach(() => {
+      (adapter as any).rateLimitDelay = 0;
+    });
+
+    it("validates an installation token against the installation, not a user", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson({ total_count: 0, repositories: [] })
+      );
+
+      await adapter.authenticate(installationAuth());
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "https://api.github.com/installation/repositories?per_page=1"
+      );
+      expect(authorization(0)).toBe("token ghs_first");
+    });
+
+    it("refuses an installation token GitHub does not accept", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 401,
+        text: () => Promise.resolve("Bad credentials"),
+        headers: { get: () => null },
+      });
+      (adapter as any).maxRetries = 0;
+
+      await expect(adapter.authenticate(installationAuth())).rejects.toThrow(
+        "Invalid GitHub App installation token"
+      );
+    });
+
+    it("lists the repositories the installation was given, page by page", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson({ total_count: 0, repositories: [] })
+      );
+      await adapter.authenticate(installationAuth());
+      const fullPage = Array.from({ length: 100 }, (_, index) => ({
+        name: `repo-${index}`,
+        full_name: `acme/repo-${index}`,
+      }));
+      mockFetch
+        .mockResolvedValueOnce(
+          okJson({ total_count: 101, repositories: fullPage })
+        )
+        .mockResolvedValueOnce(
+          okJson({
+            total_count: 101,
+            repositories: [{ name: "last", full_name: "acme/last" }],
+          })
+        );
+
+      const projects = await adapter.getProjects();
+
+      expect(projects).toHaveLength(101);
+      expect(projects[100]).toEqual({
+        id: "acme/last",
+        key: "last",
+        name: "acme/last",
+      });
+      expect(mockFetch.mock.calls[1][0]).toBe(
+        "https://api.github.com/installation/repositories?per_page=100&page=1"
+      );
+      expect(mockFetch.mock.calls[2][0]).toContain("page=2");
+    });
+
+    it("finds a repository named without its owner among the installation's", async () => {
+      const ownerless = new GitHubAdapter({ provider: "GITHUB" });
+      (ownerless as any).rateLimitDelay = 0;
+      mockFetch.mockResolvedValueOnce(
+        okJson({ total_count: 0, repositories: [] })
+      );
+      await ownerless.authenticate(installationAuth());
+      mockFetch
+        .mockResolvedValueOnce(
+          okJson({
+            total_count: 1,
+            repositories: [{ name: "tracker", full_name: "acme/tracker" }],
+          })
+        )
+        .mockResolvedValueOnce(okJson([{ name: "bug", color: "d73a4a" }]));
+
+      await ownerless.getLabels("tracker");
+
+      expect(mockFetch.mock.calls[1][0]).toContain(
+        "/installation/repositories?"
+      );
+      expect(mockFetch.mock.calls[2][0]).toContain(
+        "/repos/acme/tracker/labels?"
+      );
+    });
+
+    it("replaces the token shortly before it expires, once for requests made together", async () => {
+      const renew = vi.fn().mockResolvedValue({
+        apiKey: "ghs_second",
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      });
+      mockFetch.mockResolvedValueOnce(
+        okJson({ total_count: 0, repositories: [] })
+      );
+      await adapter.authenticate(
+        installationAuth({
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+          renew,
+        })
+      );
+      expect(renew).not.toHaveBeenCalled();
+
+      // Four minutes left: inside the renewal margin.
+      (adapter as any).authData.expiresAt = new Date(
+        Date.now() + 4 * 60 * 1000
+      );
+      mockFetch.mockResolvedValue(okJson([]));
+
+      await Promise.all([
+        adapter.getLabels("testowner/testrepo"),
+        adapter.getAssignableUsers("testowner/testrepo"),
+      ]);
+
+      expect(renew).toHaveBeenCalledTimes(1);
+      expect(authorization(1)).toBe("token ghs_second");
+      expect(authorization(2)).toBe("token ghs_second");
+
+      await adapter.getLabels("testowner/testrepo");
+      expect(renew).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps a token that has plenty of time left", async () => {
+      const renew = vi.fn();
+      mockFetch.mockResolvedValueOnce(
+        okJson({ total_count: 0, repositories: [] })
+      );
+      await adapter.authenticate(
+        installationAuth({
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+          renew,
+        })
+      );
+      mockFetch.mockResolvedValueOnce(okJson([]));
+
+      await adapter.getLabels("testowner/testrepo");
+
+      expect(renew).not.toHaveBeenCalled();
+      expect(authorization(1)).toBe("token ghs_first");
     });
   });
 

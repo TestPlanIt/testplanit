@@ -280,6 +280,13 @@ export interface AuthenticationData {
   expiresAt?: Date;
   email?: string;
   apiToken?: string;
+  /** `apiKey` is a GitHub App installation token, which is no user's. */
+  installation?: boolean;
+  /**
+   * Returns a fresh `apiKey` when the current one is about to expire, for a
+   * credential the adapter can renew by itself.
+   */
+  renew?: () => Promise<{ apiKey: string; expiresAt?: Date }>;
 }
 
 export interface WebhookData {

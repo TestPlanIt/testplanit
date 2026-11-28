@@ -6808,6 +6808,15 @@
         "githubBaseUrl": "URL base da API",
         "githubBaseUrlPlaceholder": "https://github.example.com/api/v3",
         "githubBaseUrlHelp": "Diretório raiz completo da API do GitHub para o GitHub Enterprise Server (normalmente termina em /api/v3). Deixe em branco para usar api.github.com.",
+        "githubAppId": "ID do App",
+        "githubAppIdPlaceholder": "123456",
+        "githubAppIdHelp": "O ID do App mostrado na página de configurações do seu App GitHub",
+        "githubAppInstallationId": "ID de Instalação",
+        "githubAppInstallationIdPlaceholder": "12345678",
+        "githubAppInstallationIdHelp": "O número no final da URL de configurações da instalação",
+        "githubAppPrivateKey": "Chave Privada",
+        "githubAppPrivateKeyPlaceholder": "-----BEGIN RSA PRIVATE KEY-----",
+        "githubAppPrivateKeyHelp": "O conteúdo de um arquivo de chave privada (.pem) gerado para o App GitHub",
         "giteaInstanceUrlPlaceholder": "https://gitea.example.com",
         "owner": "Proprietário",
         "ownerPlaceholder": "nome de usuário ou organização",
@@ -6825,6 +6834,7 @@
         "apiKeyWarningPoint4": "No Jira Cloud, use OAuth 2.0 em vez disso para ter cada problema relatado pela pessoa que o criou. OAuth 2.0 não está disponível para Jira Server ou Data Center.",
         "tokenCreatorNoticeTitle": "Atribuição do criador do problema",
         "tokenCreatorNoticeDescription": "Os problemas criados por meio dessa integração são sempre registrados como pertencentes à conta que possui o token de acesso, e não ao usuário do TestPlanIt que os criou. A API desse provedor não permite definir o criador em nome de outro usuário.",
+        "appCreatorNoticeDescription": "Problemas criados através desta integração são registrados como a conta de bot do próprio App GitHub, não do usuário TestPlanIt que os criou.",
         "callbackUrlLabel": "URL de Retorno (URI de redirecionamento)",
         "callbackUrlDescription": "Registre esta URL exata como a URI de retorno/redirecionamento no aplicativo OAuth do seu provedor. Ela deve corresponder exatamente ou a autorização falhará.",
         "callbackUrlCopied": "Copiado",
@@ -6860,7 +6870,8 @@
       "authType": {
         "api_key": "Chave de API",
         "oauth2": "OAuth 2.0",
-        "personal_access_token": "Token de Acesso Pessoal"
+        "personal_access_token": "Token de Acesso Pessoal",
+        "github_app": "App GitHub"
       },
       "validation": {
         "nameRequired": "É obrigatório o nome da integração do problema.",
@@ -8292,7 +8303,7 @@
     },
     "integration": {
       "name": "## Nome da Integração\nUm nome descritivo para identificar esta integração em todo o sistema.\n\n- Deve ser único para diferenciá-lo de outras integrações\n- Usado nas configurações e definições do projeto\n- Deve indicar claramente o serviço e a finalidade",
-      "authType": "## Tipo de Autenticação\nEscolha como autenticar com o serviço externo.\n\n- **Chave de API:** Autenticação simples usando e-mail e token de API\n- **OAuth 2.0:** Autenticação segura usando o fluxo OAuth\n- **Token de Acesso Pessoal:** Autenticação direta baseada em token",
+      "authType": "## Tipo de Autenticação\nEscolha como autenticar com o serviço externo.\n\n- **Chave de API:** Autenticação simples usando email e token de API\n- **OAuth 2.0:** Autenticação segura usando fluxo OAuth\n- **Token de Acesso Pessoal:** Autenticação direta baseada em token\n- **App GitHub:** Autenticação como um App GitHub instalado em seus repositórios",
       "email": "## Endereço de E-mail\nSeu endereço de e-mail para o serviço externo.\n\n- Usado para autenticação da chave da API\n- Deve corresponder à conta que gerou o token da API\n- Obrigatório para Jira Cloud; deixe em branco para Jira Server / Data Center",
       "apiToken": "## Token de API\nGere um token de API nas configurações da sua conta no serviço externo.\n\n- Geralmente encontrado em Configurações da conta → Segurança → Tokens de API\n- Fornece acesso seguro sem expor sua senha\n- Pode ser revogado e regenerado conforme necessário",
       "username": "## Nome de usuário\nO nome de usuário da sua conta Jira Server / Data Center, para autenticação básica.\n\n- Usado junto com a senha\n- Deixe em branco para Jira Cloud\n- Deixe em branco quando você se autentica com um Personal Access Token",
@@ -8316,7 +8327,10 @@
       "mantisBTUrl": "## URL do MantisBT\nA URL base da sua instância MantisBT.\n\n- Formato: https://mantisbt.example.com\n- Não inclua /api/rest ou outros caminhos\n- Deve ser acessível a partir deste servidor",
       "clickupTeamId": "## ID da Equipe ClickUp (Workspace)\nO ID numérico da Equipe ClickUp (também chamada de Workspace) à qual as tarefas pertencem.\n\n- Encontrado na URL do ClickUp: app.clickup.com/{teamId}/...\n- Obrigatório para navegar em Spaces/Folders/Lists ao selecionar um projeto",
       "clickupListId": "## ID da Lista ClickUp Padrão\nA Lista em que as novas tarefas são criadas por padrão.\n\n- Encontrado na URL do ClickUp ou por meio da opção \"Copiar link\" da Lista\n- Opcional — uma Lista específica pode ser escolhida por problema",
-      "githubBaseUrl": "## URL Base da API\nRaiz completa da API do GitHub para o GitHub Enterprise Server.\n\n- Normalmente termina em /api/v3\n- Deixe em branco para usar api.github.com\n- Deve ser acessível a partir deste servidor"
+      "githubBaseUrl": "## URL Base da API\nRaiz completa da API do GitHub para o GitHub Enterprise Server.\n\n- Normalmente termina em /api/v3\n- Deixe em branco para usar api.github.com\n- Deve ser acessível a partir deste servidor",
+      "githubAppId": "## ID do App\nO ID numérico do seu App GitHub.\n\n- Mostrado no topo da página de configurações do App em Geral\n- Não é o ID do Cliente",
+      "githubAppInstallationId": "## ID de Instalação\nIdentifica onde o App GitHub está instalado.\n\n- Abra as configurações de instalação do App para sua organização ou conta\n- O ID é o número no final da URL dessa página\n- Uma integração cobre uma instalação",
+      "githubAppPrivateKey": "## Chave Privada\nUma chave privada gerada para o App GitHub.\n\n- Gere uma na página de configurações do App em Chaves privadas\n- Cole todo o conteúdo do arquivo .pem baixado\n- Armazenado criptografado; deixe em branco ao editar para manter a chave armazenada"
     },
     "config": {
       "name": "## Nome da Configuração\nUm nome claro e descritivo para esta configuração.\n\n- Ajuda a descrever as combinações variantes que compõem a Configuração (ex.: \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", etc.).",

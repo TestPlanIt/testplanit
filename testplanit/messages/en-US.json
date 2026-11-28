@@ -6808,6 +6808,15 @@
         "githubBaseUrl": "API Base URL",
         "githubBaseUrlPlaceholder": "https://github.example.com/api/v3",
         "githubBaseUrlHelp": "Full GitHub API root for GitHub Enterprise Server (typically ends in /api/v3). Leave blank to use api.github.com.",
+        "githubAppId": "App ID",
+        "githubAppIdPlaceholder": "123456",
+        "githubAppIdHelp": "The App ID shown on your GitHub App's settings page",
+        "githubAppInstallationId": "Installation ID",
+        "githubAppInstallationIdPlaceholder": "12345678",
+        "githubAppInstallationIdHelp": "The number at the end of the installation's settings URL",
+        "githubAppPrivateKey": "Private Key",
+        "githubAppPrivateKeyPlaceholder": "-----BEGIN RSA PRIVATE KEY-----",
+        "githubAppPrivateKeyHelp": "The contents of a private key (.pem) file generated for the GitHub App",
         "giteaInstanceUrlPlaceholder": "https://gitea.example.com",
         "owner": "Owner",
         "ownerPlaceholder": "username or organization",
@@ -6825,6 +6834,7 @@
         "apiKeyWarningPoint4": "On Jira Cloud, use OAuth 2.0 instead to have each issue reported by the person who created it. OAuth 2.0 is not available for Jira Server or Data Center.",
         "tokenCreatorNoticeTitle": "Issue creator attribution",
         "tokenCreatorNoticeDescription": "Issues created through this integration are always recorded as the account that owns this access token, not the TestPlanIt user who created them. This provider's API does not allow setting the creator on another user's behalf.",
+        "appCreatorNoticeDescription": "Issues created through this integration are recorded as the GitHub App's own bot account, not the TestPlanIt user who created them.",
         "callbackUrlLabel": "Callback URL (redirect URI)",
         "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
         "callbackUrlCopied": "Copied",
@@ -6860,7 +6870,8 @@
       "authType": {
         "api_key": "API Key",
         "oauth2": "OAuth 2.0",
-        "personal_access_token": "Personal Access Token"
+        "personal_access_token": "Personal Access Token",
+        "github_app": "GitHub App"
       },
       "validation": {
         "nameRequired": "Issue Integration name is required",
@@ -8292,7 +8303,7 @@
     },
     "integration": {
       "name": "## Integration Name\nA descriptive name to identify this integration across the system.\n\n- Must be unique to distinguish from other integrations\n- Used in project settings and configuration\n- Should clearly indicate the service and purpose",
-      "authType": "## Authentication Type\nChoose how to authenticate with the external service.\n\n- **API Key:** Simple authentication using email and API token\n- **OAuth 2.0:** Secure authentication using OAuth flow\n- **Personal Access Token:** Direct token-based authentication",
+      "authType": "## Authentication Type\nChoose how to authenticate with the external service.\n\n- **API Key:** Simple authentication using email and API token\n- **OAuth 2.0:** Secure authentication using OAuth flow\n- **Personal Access Token:** Direct token-based authentication\n- **GitHub App:** Authentication as a GitHub App installed on your repositories",
       "email": "## Email Address\nYour account email address for the external service.\n\n- Used for API key authentication\n- Must match the account that generated the API token\n- Required for Jira Cloud; leave blank for Jira Server / Data Center",
       "apiToken": "## API Token\nGenerate an API token from your account settings in the external service.\n\n- Usually found in Account Settings → Security → API Tokens\n- Provides secure access without exposing your password\n- Can be revoked and regenerated as needed",
       "username": "## Username\nThe username of your Jira Server / Data Center account, for Basic authentication.\n\n- Used together with the password\n- Leave blank for Jira Cloud\n- Leave blank when you authenticate with a Personal Access Token",
@@ -8316,7 +8327,10 @@
       "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
       "clickupTeamId": "## ClickUp Team (Workspace) ID\nThe numeric ID of the ClickUp Team (also called Workspace) tasks belong to.\n\n- Found in the ClickUp URL: app.clickup.com/{teamId}/...\n- Required to browse Spaces/Folders/Lists when picking a project",
       "clickupListId": "## Default ClickUp List ID\nThe List new tasks are created in by default.\n\n- Found in the ClickUp URL, or via the List's \"Copy link\" option\n- Optional — a specific List can be chosen per issue instead",
-      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
+      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server",
+      "githubAppId": "## App ID\nThe numeric ID of your GitHub App.\n\n- Shown at the top of the App's settings page under General\n- Not the Client ID",
+      "githubAppInstallationId": "## Installation ID\nIdentifies where the GitHub App is installed.\n\n- Open the App's installation settings for your organization or account\n- The ID is the number at the end of that page's URL\n- One integration covers one installation",
+      "githubAppPrivateKey": "## Private Key\nA private key generated for the GitHub App.\n\n- Generate one on the App's settings page under Private keys\n- Paste the whole contents of the downloaded .pem file\n- Stored encrypted; leave blank when editing to keep the stored key"
     },
     "config": {
       "name": "## Configuration Name\nA clear, descriptive name for this configuration.\n\n- Helps describe the variant cominations that make up the Configuration (e.g. \"Chrome, Windows 10\",  \"Safari/macOS 15.5\", \"Edge/Windows 11\", etc.).",

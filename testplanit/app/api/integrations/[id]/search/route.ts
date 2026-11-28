@@ -12,6 +12,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authOptions } from "~/server/auth";
 import { withRequestRouting } from "~/lib/db/requestRouting";
+import { usesIntegrationCredentials } from "~/lib/integrations/authTypes";
 
 async function handleGET(
   request: NextRequest,
@@ -69,9 +70,9 @@ async function handleGET(
     }
 
     provider = integration.provider;
-    const usesStoredCredentials =
-      integration.authType === "API_KEY" ||
-      integration.authType === "PERSONAL_ACCESS_TOKEN";
+    const usesStoredCredentials = usesIntegrationCredentials(
+      integration.authType
+    );
     // Only OAuth integrations can be repaired by the user re-authorizing;
     // expired API keys/PATs are fixed by an admin on the integration.
     if (!usesStoredCredentials) {

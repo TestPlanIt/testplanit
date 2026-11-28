@@ -63,6 +63,9 @@ const MAX_PAGES = 30;
 /** An issue's timeline is read up to this many pages (1,000 events). */
 const MAX_TIMELINE_PAGES = 10;
 
+/** A renewable token is replaced this long before it expires. */
+const TOKEN_RENEWAL_MARGIN_MS = 5 * 60 * 1000;
+
 /** Sent where a request names its media type and REST API version. */
 const GITHUB_REST_HEADERS = {
   Accept: "application/vnd.github+json",
@@ -300,6 +303,9 @@ export class GitHubAdapter extends BaseAdapter {
   private resolvedRepos = new Map<string, { owner: string; repo: string }>();
   private clientSecret?: string;
   private redirectUri?: string;
+  // Set when the token belongs to a GitHub App installation.
+  private installation = false;
+  private tokenRenewal: Promise<void> | null = null;
 
   constructor(config: any) {
     super(config);
@@ -374,8 +380,24 @@ export class GitHubAdapter extends BaseAdapter {
 
     if (authData.type !== "api_key") {
       throw new Error(
-        "GitHub adapter only supports OAuth and Personal Access Token authentication"
+        "GitHub adapter only supports OAuth, Personal Access Token and GitHub App authentication"
       );
+    }
+
+    if (authData.installation) {
+      if (!authData.apiKey) {
+        throw new Error("GitHub App authentication requires an access token");
+      }
+      this.installation = true;
+      // An installation token is nobody's, so /user refuses it.
+      try {
+        await this.makeRequest(
+          `${this.baseUrl}/installation/repositories?per_page=1`
+        );
+      } catch {
+        throw new Error("Invalid GitHub App installation token");
+      }
+      return;
     }
 
     if (!authData.apiKey) {
@@ -486,6 +508,62 @@ export class GitHubAdapter extends BaseAdapter {
         ? new Date(Date.now() + data.expires_in * 1000)
         : undefined,
     };
+  }
+
+  /**
+   * Replaces a renewable token shortly before it expires. A GitHub App
+   * installation token lasts an hour, less than a long sync can take.
+   */
+  private async renewTokenIfDue(): Promise<void> {
+    const auth = this.authData;
+    if (!auth?.renew || !auth.expiresAt) return;
+    const remaining = new Date(auth.expiresAt).getTime() - Date.now();
+    if (remaining > TOKEN_RENEWAL_MARGIN_MS) return;
+    this.tokenRenewal ??= auth
+      .renew()
+      .then((fresh) => {
+        auth.apiKey = fresh.apiKey;
+        auth.expiresAt = fresh.expiresAt;
+      })
+      .finally(() => {
+        this.tokenRenewal = null;
+      });
+    await this.tokenRenewal;
+  }
+
+  protected async makeRequest<T>(
+    url: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    await this.renewTokenIfDue();
+    return super.makeRequest<T>(url, options);
+  }
+
+  protected async makeBinaryRequest(
+    url: string,
+    maxBytes: number
+  ): Promise<{ buffer: Buffer; contentType?: string }> {
+    await this.renewTokenIfDue();
+    return super.makeBinaryRequest(url, maxBytes);
+  }
+
+  /**
+   * The repositories a GitHub App installation was given. An installation
+   * has no user, so the listing a user token reads does not answer for it.
+   */
+  private async listInstallationRepositories(): Promise<any[]> {
+    const repositories: any[] = [];
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const body = await this.makeRequest<any>(
+        `${this.baseUrl}/installation/repositories?per_page=${PAGE_SIZE}&page=${page}`
+      );
+      const items: any[] = Array.isArray(body?.repositories)
+        ? body.repositories
+        : [];
+      repositories.push(...items);
+      if (items.length < PAGE_SIZE) break;
+    }
+    return repositories;
   }
 
   protected buildUrl(path: string): string {
@@ -834,9 +912,11 @@ export class GitHubAdapter extends BaseAdapter {
   async getProjects(): Promise<
     Array<{ id: string; key: string; name: string }>
   > {
-    const repos = await this.listAllPages<any>(`${this.baseUrl}/user/repos`, {
-      sort: "updated",
-    });
+    const repos = this.installation
+      ? await this.listInstallationRepositories()
+      : await this.listAllPages<any>(`${this.baseUrl}/user/repos`, {
+          sort: "updated",
+        });
 
     return repos.map((repo) => ({
       id: repo.full_name,
@@ -890,17 +970,24 @@ export class GitHubAdapter extends BaseAdapter {
     }
 
     const matches: string[] = [];
-    for (let page = 1; page <= 10; page++) {
-      const repos = await this.makeRequest<any[]>(
-        `${this.baseUrl}/user/repos?per_page=100&page=${page}`
-      );
+    const collect = (repos: any[]) => {
       for (const repo of repos) {
         if (repo.name?.toLowerCase() === projectKey.toLowerCase()) {
           matches.push(repo.full_name);
         }
       }
-      if (repos.length < 100) {
-        break;
+    };
+    if (this.installation) {
+      collect(await this.listInstallationRepositories());
+    } else {
+      for (let page = 1; page <= 10; page++) {
+        const repos = await this.makeRequest<any[]>(
+          `${this.baseUrl}/user/repos?per_page=100&page=${page}`
+        );
+        collect(repos);
+        if (repos.length < 100) {
+          break;
+        }
       }
     }
 
