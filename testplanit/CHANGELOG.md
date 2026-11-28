@@ -1,3 +1,9 @@
+## [1.2.20](https://github.com/TestPlanIt/testplanit/compare/v1.2.19...v1.2.20) (2026-11-28)
+
+### Bug Fixes
+
+* **webhooks:** stop announcing an updated run or session as created ([#781](https://github.com/TestPlanIt/testplanit/issues/781)) ([184f027](https://github.com/TestPlanIt/testplanit/commit/184f027a163e4ba9ec74f7f593c0c9dd9a94d7ce))
+
 ## [1.2.19](https://github.com/TestPlanIt/testplanit/compare/v1.2.18...v1.2.19) (2026-11-28)
 
 ### Bug Fixes
