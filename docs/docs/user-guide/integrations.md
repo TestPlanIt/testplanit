@@ -100,6 +100,8 @@ Connect to GitHub for issue tracking and repository integration.
 - Search issues by text or by exact number format (e.g., `#42`)
 - Track issue status across both platforms: Open, Closed, and Not planned or Duplicate for an issue closed for that reason
 - The parent issue, sub-issues, "blocked by" and "blocking" dependencies, "relates to" links and mentions from other issues surfaced as linked issues
+- Repository milestones sync as Release milestones, and the iterations of the Projects linked to the repository as Sprint milestones (see [Milestone Sync](./projects/settings/integrations.md#milestone-sync))
+- A completed test run can post its results as a comment on the issues it covers, one comment per issue that later runs update. A project switches this on in its settings (see [Result Comments](./projects/settings/integrations.md#result-comments)); it needs a Personal Access Token or GitHub App connection
 - Personal Access Token, OAuth 2.0 or GitHub App authentication (OAuth attributes issues to the individual user)
 - Inbound webhook support for real-time status sync
 - Works with both github.com and **GitHub Enterprise Server** — set the integration's optional **API Base URL** to your GHES API root (typically `https://<your-host>/api/v3`) to point the adapter, scope probes, and repository sync at your enterprise instance instead of github.com
@@ -347,6 +349,7 @@ The Atlassian 3LO OAuth flow used here routes through the `api.atlassian.com` ga
    - `repo` - Full repository access
    - `write:issues` - Create and update issues
    - `read:org` - Optional. Lets the create form follow the issue fields pinned to each issue type
+   - `read:project` - Optional. Lets milestone sync read the iterations of the Projects linked to the repository
 3. Configure in TestPlanIt:
 
 ```text
@@ -366,7 +369,7 @@ OAuth 2.0 gives **per-user attribution**: each user authorizes individually and 
    <your-testplanit-url>/api/integrations/oauth/github/callback
    ```
 
-3. In TestPlanIt, add a GitHub integration, choose **OAuth 2.0**, and enter the **Client ID** and **Client Secret** from the OAuth App. For GitHub Enterprise Server, also set the optional API Base URL to your GHES API root. TestPlanIt requests the `repo` and `read:user` scopes.
+3. In TestPlanIt, add a GitHub integration, choose **OAuth 2.0**, and enter the **Client ID** and **Client Secret** from the OAuth App. For GitHub Enterprise Server, also set the optional API Base URL to your GHES API root. TestPlanIt requests the `repo` and `read:user` scopes. They do not cover GitHub Projects, so an OAuth connection syncs repository milestones but not Project iterations.
 4. Finish the shared steps in [Completing the OAuth setup](#completing-the-oauth-setup-all-providers) — the integration must be activated, assigned to a project, and have a linked repository before issues can be created.
 
 #### GitHub with a GitHub App
@@ -379,6 +382,7 @@ A GitHub App authenticates as itself, so no personal access token is involved. I
    - Repository permissions → **Contents**: Read-only (issue templates and issue forms)
    - Repository permissions → **Metadata**: Read-only (GitHub selects it)
    - Organization permissions → **Issue Types** and **Issue Fields**: Read-only, to offer them on the create form
+   - Organization permissions → **Projects**: Read-only, to sync the iterations of the organization's Projects as Sprint milestones
 3. Create the App and note its **App ID**. Under **Private keys**, generate a private key; GitHub downloads a `.pem` file.
 4. Install the App (**Install App**) on the organization or account, and choose the repositories it may use. The **Installation ID** is the number at the end of the installation's settings URL (`…/settings/installations/<id>`).
 5. In TestPlanIt, add a GitHub integration, choose **GitHub App**, and enter the **App ID**, the **Installation ID** and the whole contents of the `.pem` file as the **Private Key**. For GitHub Enterprise Server, also set the optional API Base URL to your GHES API root.

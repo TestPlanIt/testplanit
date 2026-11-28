@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "Geben Sie den Code aus Ihrer Anmelde-E-Mail ein. Codes funktionieren nur in dem Browser, in dem Sie den Link angefordert haben.",
         "backToRequest": "Stattdessen einen neuen Link anfordern"
       },
+      "passkey": {
+        "signIn": "Mit einem Passkey anmelden",
+        "failed": "Dieser Passkey konnte nicht zur Anmeldung verwendet werden. Versuchen Sie es erneut oder melden Sie sich auf andere Weise an.",
+        "unavailable": "Die Passkey-Anmeldung ist derzeit nicht verfügbar.",
+        "addressMismatch": "Passkeys sind für eine andere Adresse eingerichtet als die in Ihrem Browser. Bitten Sie einen Administrator, die Anwendungs-URL zu überprüfen.",
+        "tooManyRequests": "Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es erneut."
+      },
       "twoFactor": {
         "title": "Zwei-Faktor-Authentifizierung",
         "description": "Geben Sie den 6-stelligen Code aus Ihrer Authentifizierungs-App ein oder verwenden Sie einen Ersatzcode."
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "Diese verbundenen Projekte nach neuen Meilensteinen durchsuchen",
             "settingsSaved": "Einstellungen für die Meilenstein-Synchronisierung gespeichert",
             "saveError": "Einstellungen für die Meilenstein-Synchronisierung konnten nicht gespeichert werden"
+          },
+          "resultComments": {
+            "title": "Ergebnis-Kommentare",
+            "description": "Nach Abschluss eines Testlaufs werden seine Ergebnisse als Kommentar auf den {provider}-Problemen gepostet, die er abdeckt: die mit seinen Testfällen, seinen Ergebnissen und dem Lauf verknüpften Probleme. Jedes Problem enthält einen Kommentar, den spätere Läufe aktualisieren. Der Kommentar nennt den Testlauf und die verknüpften Testfälle mit ihren Ergebnissen und verlinkt diese in TestPlanIt.",
+            "enableLabel": "Ergebnisse auf verknüpften Problemen posten"
           },
           "requirementsConfig": {
             "title": "Anforderungssynchronisierung",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "Benutzerprofil",
       "edit": {
-        "title": "Profil bearbeiten",
         "timezonePlaceholder": "Zeitzone auswählen oder suchen...",
         "timezoneRequired": "Zeitzone erforderlich.",
         "deleteAvatar": "Avatar löschen",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "Agententoken",
         "errors": {
           "nameRequired": "Ein Token-Name ist erforderlich."
+        }
+      },
+      "passkeys": {
+        "title": "Passschlüssel",
+        "description": "Ein Passkey ermöglicht Ihnen die Anmeldung mit dem Fingerabdruck, dem Gesicht oder der PIN Ihres Geräts statt mit Ihrem Passwort.",
+        "add": "Passkey hinzufügen",
+        "addTitle": "Passkey hinzufügen",
+        "addDescription": "Bestätigen Sie Ihre Identität und folgen Sie dann der Aufforderung Ihres Browsers, um den Passkey zu erstellen.",
+        "nameLabel": "Passkey-Name",
+        "namePlaceholder": "z. B. MacBook, Telefon",
+        "passwordLabel": "Aktuelles Passwort",
+        "codeLabel": "Authentifizierungscode",
+        "noPasskeys": "Noch keine Passkeys hinzugefügt.",
+        "removeTitle": "Passkey entfernen?",
+        "removeDescription": "Dieser Passkey meldet sich nicht mehr bei diesem Konto an. Er bleibt auch auf dem Gerät oder Password Manager, auf dem er gespeichert ist, bis er dort gelöscht wird.",
+        "disabledNotice": "Die Passkey-Anmeldung ist deaktiviert. Passkeys können nicht hinzugefügt oder verwendet werden, bis ein Administrator sie wieder aktiviert.",
+        "notSupported": "Dieser Browser unterstützt Passkeys nicht.",
+        "errors": {
+          "invalidPassword": "Das aktuelle Passwort ist falsch.",
+          "passwordNotSet": "Legen Sie ein Passwort fest, bevor Sie einen Passkey hinzufügen.",
+          "tooManyAttempts": "Zu viele Versuche. Bitte versuchen Sie es später erneut.",
+          "limitReached": "Dieses Konto hat die maximale Anzahl von Passkeys. Entfernen Sie einen, um einen anderen hinzuzufügen.",
+          "alreadyRegistered": "Dieses Gerät hat bereits einen Passkey für dieses Konto.",
+          "registrationFailed": "Der Passkey konnte nicht hinzugefügt werden. Bitte versuchen Sie es erneut.",
+          "unavailable": "Passkeys sind für dieses Konto nicht verfügbar.",
+          "removeFailed": "Der Passkey konnte nicht entfernt werden."
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "Magic Link-Authentifizierung",
           "description": "Passwortlose E-Mail-basierte Authentifizierung aktivieren oder deaktivieren"
+        },
+        "passkeys": {
+          "title": "Passschlüssel"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "Magic Link-Authentifizierung deaktiviert",
         "magicLinkCreated": "Magic Link-Anbieter erstellt",
         "magicLinkUpdateFailed": "Aktualisierung des Magic Link-Anbieters fehlgeschlagen",
+        "passkeysEnabled": "Passkey-Anmeldung aktiviert",
+        "passkeysDisabled": "Passkey-Anmeldung deaktiviert",
+        "passkeysUpdateFailed": "Passkey-Einstellung konnte nicht aktualisiert werden",
         "configureFirst": "Bitte konfigurieren Sie den Provider, bevor Sie ihn aktivieren.",
         "domainRestrictionEnabled": "E-Mail-Domänenbeschränkung aktiviert",
         "domainRestrictionDisabled": "E-Mail-Domänenbeschränkung deaktiviert",
@@ -8116,6 +8159,7 @@
     "roles": "## Rollen\nRollen steuern, was Benutzer tun können – jede schaltet Berechtigungen pro Anwendungsbereich um. Weisen Sie Benutzern eine Rolle direkt oder als Projektstandard zu.",
     "sso": "## Authentifizierung\nVerwalten Sie, wie sich Benutzer anmelden und ob neue Konten registriert werden können.",
     "ssoProviders": "## Anmeldeanbieter\nKonfigurieren Sie, wie sich Benutzer bei Ihrer Anwendung anmelden können.",
+    "ssoPasskeys": "## Passkeys\nBenutzer mit einem Passwort können Passkeys zu ihrem Profil hinzufügen und sich mit dem Fingerabdruck, dem Gesicht oder der PIN ihres Geräts anmelden. Eine Passkey-Anmeldung zählt als Zwei-Faktor-Authentifizierung.\n\nPasskeys erfordern, dass die Anwendung über HTTPS (oder auf localhost) bereitgestellt wird; andernfalls wird in dieser Zeile \"Nicht konfiguriert\" angezeigt. Sie sind nicht verfügbar, während \"Force SSO Login\" aktiviert ist.",
     "ssoRegistration": "## Registrierungseinstellungen\nLegen Sie fest, wer sich für neue Konten registrieren kann.",
     "ssoAllowRegistration": "## Selbstregistrierung zulassen\nWenn diese Funktion deaktiviert ist, können sich neue Benutzer weder direkt registrieren noch ein Konto per SSO erstellen. Bestehende Benutzer können sich weiterhin anmelden.",
     "ssoDefaultAccess": "## Standardzugriffsebene\nDie Systemzugriffsebene, die neuen Benutzern bei der Registrierung zugewiesen wird.",

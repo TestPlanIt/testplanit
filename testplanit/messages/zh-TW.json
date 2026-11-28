@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "輸入登入電子郵件中的驗證碼。驗證碼僅在您請求連結的瀏覽器中有效。",
         "backToRequest": "改為請求新連結"
       },
+      "passkey": {
+        "signIn": "使用通行密鑰登入",
+        "failed": "該通行密鑰無法用於登入。請重試或以其他方式登入。",
+        "unavailable": "通行密鑰登入目前不可用。",
+        "addressMismatch": "通行密鑰是為與您瀏覽器中的位址不同的位址設定的。請要求管理員檢查應用程式 URL。",
+        "tooManyRequests": "嘗試次數過多。請稍待片刻後重試。"
+      },
       "twoFactor": {
         "title": "雙重身份驗證",
         "description": "輸入身份驗證器應用程式中的 6 位元驗證碼，或使用備用驗證碼。"
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "掃描這些已連結的專案以尋找新的里程碑",
             "settingsSaved": "里程碑同步設定已儲存",
             "saveError": "儲存里程碑同步設定失敗"
+          },
+          "resultComments": {
+            "title": "結果評論",
+            "description": "測試執行完成時，將其結果作為評論發佈在它涵蓋的 {provider} 議題上：連結到其測試案例、其結果和執行的議題。每個議題會保留一個評論，之後執行會更新該評論。評論會命名測試執行和連結的測試案例及其結果，並在 TestPlanIt 中連結到它們。",
+            "enableLabel": "在連結的議題上發佈結果"
           },
           "requirementsConfig": {
             "title": "需求同步",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "用戶個人資料",
       "edit": {
-        "title": "編輯個人資料",
         "timezonePlaceholder": "選擇或搜尋時區...",
         "timezoneRequired": "必須填寫時區資訊。",
         "deleteAvatar": "刪除頭像",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "代理令牌",
         "errors": {
           "nameRequired": "令牌名稱為必填項。"
+        }
+      },
+      "passkeys": {
+        "title": "通行密鑰",
+        "description": "通行密鑰讓您可以使用裝置的指紋、臉部或 PIN 而非密碼登入。",
+        "add": "新增通行密鑰",
+        "addTitle": "新增通行密鑰",
+        "addDescription": "確認您的身份，然後按照您瀏覽器的提示建立通行密鑰。",
+        "nameLabel": "通行密鑰名稱",
+        "namePlaceholder": "例如：MacBook、Phone",
+        "passwordLabel": "目前密碼",
+        "codeLabel": "驗證器代碼",
+        "noPasskeys": "尚未新增任何通行密鑰。",
+        "removeTitle": "移除通行密鑰？",
+        "removeDescription": "此通行密鑰將不再能登入此帳戶。它也會保留在存放它的裝置或密碼管理員中，直到在該處被刪除。",
+        "disabledNotice": "通行密鑰登入已關閉。在管理員重新開啟之前，無法新增或使用通行密鑰。",
+        "notSupported": "此瀏覽器不支援通行密鑰。",
+        "errors": {
+          "invalidPassword": "目前密碼不正確。",
+          "passwordNotSet": "在新增通行密鑰之前，請先設定密碼。",
+          "tooManyAttempts": "嘗試次數過多。請稍後重試。",
+          "limitReached": "此帳戶已達到通行密鑰的最大數量。移除一個即可新增另一個。",
+          "alreadyRegistered": "此裝置已為此帳戶設有通行密鑰。",
+          "registrationFailed": "無法新增通行密鑰。請重試。",
+          "unavailable": "此帳戶不可用通行密鑰。",
+          "removeFailed": "無法移除通行密鑰。"
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "魔法連結認證",
           "description": "啟用或停用基於電子郵件的無密碼身份驗證"
+        },
+        "passkeys": {
+          "title": "通行密鑰"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "Magic Link 身份驗證已停用",
         "magicLinkCreated": "Magic Link 提供者創建",
         "magicLinkUpdateFailed": "更新 Magic Link 提供者失敗",
+        "passkeysEnabled": "通行密鑰登入已啟用",
+        "passkeysDisabled": "通行密鑰登入已停用",
+        "passkeysUpdateFailed": "無法更新通行密鑰設定",
         "configureFirst": "請先配置提供程序，然後再啟用它。",
         "domainRestrictionEnabled": "已啟用電子郵件網域限制",
         "domainRestrictionDisabled": "電子郵件網域限制已停用",
@@ -8116,6 +8159,7 @@
     "roles": "## 角色\n角色控制使用者可以執行的操作——每個角色會針對各應用程式區域切換權限。您可以直接將角色指派給使用者，或將其設為專案預設值。",
     "sso": "## 驗證\n管理使用者的登入方式，以及是否可以註冊新帳戶。",
     "ssoProviders": "## 登入提供者\n配置使用者如何登入您的應用程式。",
+    "ssoPasskeys": "## 通行密鑰\n有密碼的使用者可以在其設定檔中新增通行密鑰，並使用裝置的指紋、臉部或 PIN 登入。通行密鑰登入視為雙因素驗證。\n\n通行密鑰需要應用程式透過 HTTPS（或在 localhost 上）提供；否則此列將顯示「未設定」。當強制 SSO 登入開啟時，通行密鑰不可用。",
     "ssoRegistration": "## 註冊設定\n控制誰可以註冊新帳戶。",
     "ssoAllowRegistration": "## 允許自行註冊\n停用此功能後，新使用者無法直接註冊或透過 SSO 建立帳戶。現有使用者仍可登入。",
     "ssoDefaultAccess": "## 預設存取層級\n新使用者註冊時指派的系統存取層級。",

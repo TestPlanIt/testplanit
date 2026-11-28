@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "Introduce el código de tu correo electrónico de inicio de sesión. Los códigos solo funcionan en el navegador donde solicitaste el enlace.",
         "backToRequest": "Solicitar un nuevo enlace en su lugar"
       },
+      "passkey": {
+        "signIn": "Inicia sesión con una contraseña",
+        "failed": "Esa contraseña no se pudo usar para iniciar sesión. Inténtalo de nuevo o inicia sesión de otra forma.",
+        "unavailable": "El inicio de sesión con contraseña no está disponible en este momento.",
+        "addressMismatch": "Las contraseñas se han configurado para una dirección diferente a la de tu navegador. Pide a un administrador que compruebe la URL de la aplicación.",
+        "tooManyRequests": "Demasiados intentos. Espera un momento e inténtalo de nuevo."
+      },
       "twoFactor": {
         "title": "Autenticación de dos factores",
         "description": "Ingrese el código de 6 dígitos de su aplicación de autenticación o use un código de respaldo."
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "Buscar hitos nuevos en estos proyectos conectados",
             "settingsSaved": "Ajustes de sincronización de hitos guardados",
             "saveError": "No se pudieron guardar los ajustes de sincronización de hitos"
+          },
+          "resultComments": {
+            "title": "Comentarios de Resultados",
+            "description": "Cuando se complete una ejecución de prueba, publica sus resultados como comentario en los problemas de {provider} que cubre: los problemas vinculados a sus casos de prueba, a sus resultados y a la ejecución. Cada problema tiene un comentario, que las ejecuciones posteriores actualizan. El comentario nombra la ejecución de prueba y los casos de prueba vinculados con sus resultados, y vincula a ellos en TestPlanIt.",
+            "enableLabel": "Publica resultados en problemas vinculados"
           },
           "requirementsConfig": {
             "title": "Sincronización de requisitos",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "Perfil de usuario",
       "edit": {
-        "title": "Editar perfil",
         "timezonePlaceholder": "Seleccionar o buscar zona horaria...",
         "timezoneRequired": "Zona horaria requerida.",
         "deleteAvatar": "Eliminar avatar",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "Token de agente",
         "errors": {
           "nameRequired": "Se requiere el nombre del token."
+        }
+      },
+      "passkeys": {
+        "title": "Contraseñas",
+        "description": "Una contraseña te permite iniciar sesión con la huella dactilar, cara o PIN de tu dispositivo en lugar de tu contraseña.",
+        "add": "Agregar contraseña",
+        "addTitle": "Agregar una contraseña",
+        "addDescription": "Confirma que eres tú y luego sigue el mensaje de tu navegador para crear la contraseña.",
+        "nameLabel": "Nombre de la contraseña",
+        "namePlaceholder": "p. ej., MacBook, Teléfono",
+        "passwordLabel": "Contraseña actual",
+        "codeLabel": "Código de autenticador",
+        "noPasskeys": "Sin contraseñas añadidas aún.",
+        "removeTitle": "¿Eliminar contraseña?",
+        "removeDescription": "Esta contraseña ya no iniciará sesión en esta cuenta. También permanece en el dispositivo o gestor de contraseñas que la contiene hasta que se elimine allí.",
+        "disabledNotice": "El inicio de sesión con contraseña está desactivado. Las contraseñas no se pueden añadir ni usar hasta que un administrador lo active de nuevo.",
+        "notSupported": "Este navegador no admite contraseñas.",
+        "errors": {
+          "invalidPassword": "La contraseña actual es incorrecta.",
+          "passwordNotSet": "Establece una contraseña antes de añadir una contraseña.",
+          "tooManyAttempts": "Demasiados intentos. Inténtalo más tarde.",
+          "limitReached": "Esta cuenta tiene el número máximo de contraseñas. Elimina una para añadir otra.",
+          "alreadyRegistered": "Este dispositivo ya tiene una contraseña para esta cuenta.",
+          "registrationFailed": "La contraseña no se pudo añadir. Inténtalo de nuevo.",
+          "unavailable": "Las contraseñas no están disponibles para esta cuenta.",
+          "removeFailed": "La contraseña no se pudo eliminar."
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "Autenticación mediante enlace mágico",
           "description": "Habilitar o deshabilitar la autenticación sin contraseña basada en correo electrónico"
+        },
+        "passkeys": {
+          "title": "Contraseñas"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "Autenticación de Magic Link desactivada",
         "magicLinkCreated": "El proveedor Magic Link creó",
         "magicLinkUpdateFailed": "No se pudo actualizar el proveedor de Magic Link.",
+        "passkeysEnabled": "Inicio de sesión con contraseña habilitado",
+        "passkeysDisabled": "Inicio de sesión con contraseña deshabilitado",
+        "passkeysUpdateFailed": "Error al actualizar la configuración de contraseña",
         "configureFirst": "Por favor, configure el proveedor antes de activarlo",
         "domainRestrictionEnabled": "Restricción de dominio de correo electrónico habilitada",
         "domainRestrictionDisabled": "Restricción de dominio de correo electrónico deshabilitada",
@@ -8116,6 +8159,7 @@
     "roles": "## Roles\nLos roles controlan lo que los usuarios pueden hacer: cada uno activa o desactiva permisos por área de aplicación. Asigne un rol a los usuarios directamente o como valor predeterminado del proyecto.",
     "sso": "## Autenticación\nAdministre cómo los usuarios inician sesión y si se pueden registrar nuevas cuentas.",
     "ssoProviders": "## Proveedores de inicio de sesión\nConfigurar cómo los usuarios pueden iniciar sesión en su aplicación.",
+    "ssoPasskeys": "## Contraseñas\nLos usuarios con contraseña pueden añadir contraseñas a su perfil e iniciar sesión con la huella dactilar, cara o PIN de su dispositivo. Un inicio de sesión con contraseña cuenta como autenticación de dos factores.\n\nLas contraseñas requieren que la aplicación se sirva sobre HTTPS (u otro localhost); de lo contrario, esta fila muestra No configurado. No están disponibles mientras Forzar inicio de sesión SSO está activado.",
     "ssoRegistration": "## Configuración de registro\nControlar quién puede registrarse para nuevas cuentas.",
     "ssoAllowRegistration": "## Permitir autorregistro\nCuando esta función está desactivada, los nuevos usuarios no pueden registrarse directamente ni crear una cuenta mediante SSO. Los usuarios existentes sí pueden iniciar sesión.",
     "ssoDefaultAccess": "## Nivel de acceso predeterminado\nEl nivel de acceso al sistema asignado a los nuevos usuarios cuando se registran.",

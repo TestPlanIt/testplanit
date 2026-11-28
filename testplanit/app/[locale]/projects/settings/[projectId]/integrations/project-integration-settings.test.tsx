@@ -750,6 +750,52 @@ describe("ProjectIntegrationSettings", () => {
     await waitFor(() => expect(getSaveButton()).toBeDisabled());
   });
 
+  it("saving linked projects keeps what the other sections saved after the page opened", async () => {
+    mockUpdatePI.mockResolvedValue({});
+    const { rerender } = render(
+      <ProjectIntegrationSettings {...defaultProps} />
+    );
+
+    // A section below saved its own settings since the page opened, and a
+    // mapping's default issue type changed.
+    const savedSince = {
+      milestoneSync: { enabled: true, kinds: ["RELEASE"] },
+      resultComments: { enabled: true },
+    };
+    const loaded = mockFindMany.mock.results[0].value;
+    mockFindMany.mockReturnValue({
+      ...loaded,
+      data: loaded.data.map((mapping: any, index: number) =>
+        index === 0
+          ? {
+              ...mapping,
+              defaultIssueType: "epic-1",
+              defaultIssueTypeName: "Epic",
+            }
+          : mapping
+      ),
+    });
+    rerender(
+      <ProjectIntegrationSettings
+        {...defaultProps}
+        projectIntegration={{
+          ...defaultProps.projectIntegration,
+          config: savedSince,
+        }}
+      />
+    );
+
+    fireEvent.click(
+      within(screen.getByTestId("linked-projects-section")).getByRole(
+        "button",
+        { name: "save" }
+      )
+    );
+
+    await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
+    expect(mockUpdatePI.mock.calls[0][0].data.config).toEqual(savedSince);
+  });
+
   // --- Test 17 (#501/28-20): one import affordance per mapping, page-wide ---
   it("offers exactly one import action per linked project", () => {
     // A single linked mapping -- the Requirement Types section (mounted as

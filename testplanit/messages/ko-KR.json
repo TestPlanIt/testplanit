@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "로그인 이메일의 코드를 입력하세요. 코드는 링크를 요청한 브라우저에서만 작동합니다.",
         "backToRequest": "대신 새 링크 요청하기"
       },
+      "passkey": {
+        "signIn": "패스키로 로그인",
+        "failed": "해당 패스키를 사용하여 로그인할 수 없습니다. 다시 시도하거나 다른 방법으로 로그인하세요.",
+        "unavailable": "패스키 로그인은 현재 사용할 수 없습니다.",
+        "addressMismatch": "패스키가 브라우저의 주소와 다른 주소로 설정되었습니다. 관리자에게 애플리케이션 URL을 확인하도록 요청하세요.",
+        "tooManyRequests": "시도 횟수가 너무 많습니다. 잠시 기다렸다가 다시 시도하세요."
+      },
       "twoFactor": {
         "title": "2단계 인증",
         "description": "인증 앱에서 6자리 코드를 입력하거나 백업 코드를 사용하세요."
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "새 마일스톤을 위해 연결된 프로젝트 스캔",
             "settingsSaved": "마일스톤 동기화 설정이 저장되었습니다",
             "saveError": "마일스톤 동기화 설정을 저장하는 데 실패했습니다"
+          },
+          "resultComments": {
+            "title": "결과 댓글",
+            "description": "테스트 실행이 완료되면 해당 결과를 {provider} 이슈에 댓글로 게시합니다. 이슈는 테스트 케이스, 결과 및 실행에 연결됩니다. 각 이슈에는 하나의 댓글이 있으며, 나중의 실행에서 업데이트됩니다. 댓글에는 테스트 실행과 연결된 테스트 케이스 및 결과가 나열되며 TestPlanIt의 링크가 포함됩니다.",
+            "enableLabel": "연결된 이슈에 결과 게시"
           },
           "requirementsConfig": {
             "title": "요구 사항 동기화",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "사용자 프로필",
       "edit": {
-        "title": "프로필 수정",
         "timezonePlaceholder": "시간대를 선택하거나 검색하세요...",
         "timezoneRequired": "시간대 정보는 필수입니다.",
         "deleteAvatar": "아바타 삭제",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "에이전트 토큰",
         "errors": {
           "nameRequired": "토큰 이름은 필수 입력 사항입니다."
+        }
+      },
+      "passkeys": {
+        "title": "패스키",
+        "description": "패스키를 사용하면 비밀번호 대신 기기의 지문, 얼굴 또는 PIN으로 로그인할 수 있습니다.",
+        "add": "패스키 추가",
+        "addTitle": "패스키 추가",
+        "addDescription": "본인 확인 후 브라우저 프롬프트에 따라 패스키를 만들어주세요.",
+        "nameLabel": "패스키 이름",
+        "namePlaceholder": "예: MacBook, Phone",
+        "passwordLabel": "현재 비밀번호",
+        "codeLabel": "인증 코드",
+        "noPasskeys": "추가된 패스키가 없습니다.",
+        "removeTitle": "패스키를 제거하시겠습니까?",
+        "removeDescription": "이 패스키는 더 이상 이 계정에 로그인할 수 없습니다. 또한 패스키를 보유한 기기나 비밀번호 관리자에서 삭제될 때까지 유지됩니다.",
+        "disabledNotice": "패스키 로그인이 비활성화되었습니다. 관리자가 다시 활성화할 때까지 패스키를 추가하거나 사용할 수 없습니다.",
+        "notSupported": "이 브라우저는 패스키를 지원하지 않습니다.",
+        "errors": {
+          "invalidPassword": "현재 비밀번호가 올바르지 않습니다.",
+          "passwordNotSet": "패스키를 추가하기 전에 비밀번호를 설정하세요.",
+          "tooManyAttempts": "시도 횟수가 너무 많습니다. 나중에 다시 시도하세요.",
+          "limitReached": "이 계정은 최대 개수의 패스키를 가지고 있습니다. 다른 패스키를 추가하려면 하나를 제거하세요.",
+          "alreadyRegistered": "이 기기에는 이미 이 계정의 패스키가 있습니다.",
+          "registrationFailed": "패스키를 추가할 수 없습니다. 다시 시도하세요.",
+          "unavailable": "이 계정에서는 패스키를 사용할 수 없습니다.",
+          "removeFailed": "패스키를 제거할 수 없습니다."
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "매직 링크 인증",
           "description": "비밀번호 없이 이메일 기반 인증을 활성화 또는 비활성화합니다."
+        },
+        "passkeys": {
+          "title": "패스키"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "매직링크 인증이 비활성화되었습니다.",
         "magicLinkCreated": "매직 링크 제공업체가 생성했습니다.",
         "magicLinkUpdateFailed": "매직링크 공급자 업데이트에 실패했습니다.",
+        "passkeysEnabled": "패스키 로그인 활성화됨",
+        "passkeysDisabled": "패스키 로그인 비활성화됨",
+        "passkeysUpdateFailed": "패스키 설정 업데이트 실패",
         "configureFirst": "활성화하기 전에 공급자를 구성하십시오.",
         "domainRestrictionEnabled": "이메일 도메인 제한이 활성화되었습니다.",
         "domainRestrictionDisabled": "이메일 도메인 제한이 해제되었습니다.",
@@ -8116,6 +8159,7 @@
     "roles": "## 역할\n역할은 사용자가 수행할 수 있는 작업을 제어하며, 각 역할은 애플리케이션 영역별 권한을 전환합니다. 역할을 사용자에게 직접 할당하거나 프로젝트 기본값으로 설정할 수 있습니다.",
     "sso": "## 인증\n사용자의 로그인 방식과 신규 계정 등록 가능 여부를 관리합니다.",
     "ssoProviders": "## 로그인 제공업체\n사용자가 애플리케이션에 로그인하는 방법을 구성하세요.",
+    "ssoPasskeys": "## 패스키\n비밀번호가 있는 사용자는 프로필에 패스키를 추가하고 기기의 지문, 얼굴 또는 PIN으로 로그인할 수 있습니다. 패스키 로그인은 2단계 인증으로 계산됩니다.\n\n패스키는 애플리케이션이 HTTPS를 통해 제공되거나 localhost에서 제공되어야 합니다(그렇지 않으면 이 행에 구성되지 않음이 표시됨). Force SSO Login이 활성화된 동안에는 사용할 수 없습니다.",
     "ssoRegistration": "## 등록 설정\n새 계정 등록 권한을 관리하세요.",
     "ssoAllowRegistration": "## 자체 등록 허용\n이 기능이 비활성화되면 신규 사용자는 직접 가입하거나 SSO를 통해 계정을 생성할 수 없습니다. 기존 사용자는 계속 로그인할 수 있습니다.",
     "ssoDefaultAccess": "## 기본 접근 수준\n신규 사용자가 등록할 때 할당되는 시스템 접근 수준.",

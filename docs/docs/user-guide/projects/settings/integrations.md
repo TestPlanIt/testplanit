@@ -92,14 +92,16 @@ For milestone-capable providers (Jira, GitHub, GitLab, Gitea/Forgejo, Redmine, M
   | Tracker | Releases | Sprints |
   | --- | --- | --- |
   | Jira | Fix Versions | Sprints |
-  | GitHub | Repository milestones | |
+  | GitHub | Repository milestones | Iterations of the Projects linked to the repository |
   | GitLab | Project milestones, and those of the project's parent groups | |
   | Gitea / Forgejo | Repository milestones | |
   | Redmine | Versions, including those other projects share with the project | |
   | MantisBT | Versions | |
   | Azure DevOps | | Iterations |
 
-  A GitLab milestone has a start and a due date; GitHub, Gitea, Redmine and MantisBT artifacts carry a single date, which becomes the milestone's due date. An Azure DevOps iteration has no state of its own: it is shown as started from its start date and completed once its finish date has passed.
+  A GitLab milestone has a start and a due date; GitHub milestones and Gitea, Redmine and MantisBT artifacts carry a single date, which becomes the milestone's due date. An Azure DevOps iteration has no state of its own: it is shown as started from its start date and completed once its finish date has passed. A GitHub iteration likewise: it has a first day and a length in days, is shown as started from its first day, and is completed once its last day is over or GitHub lists it as completed.
+
+  GitHub iterations belong to a Project, not to a repository. TestPlanIt reads the iteration fields of the Projects linked to the repository (the repository's **Projects** tab → **Link a project**); the iterations of a closed Project count as completed. A Project can hold issues from several repositories, so an iteration is imported once per linked repository, and each milestone holds that repository's issues. Reading Projects needs access that issues do not: see the GitHub setup sections under [Integrations](../../integrations.md#github-with-personal-access-token).
 - **Automatically add new ones** (auto-track) — when on, newly created unreleased versions and active/future sprints are imported automatically as they appear, without anyone opening the Import dialog. Only artifacts created **after** auto-track is enabled are imported — anything that already existed at that moment is left alone (use the Import dialog to pick those explicitly). When auto-track is on, a checkbox list of the project's connected tracker projects appears — all are scanned by default, and unchecking one stops new milestones from being created from it (explicit imports and already-synced milestones are unaffected; changing the selection re-baselines so re-included projects don't backfill). Auto-tracked imports are attributed to the admin who enabled sync (or auto-track), not to whoever's page load happens to trigger the pass.
 
 Enabling milestone sync also provisions the **Release** and **Sprint** [milestone types](../../milestone-types.md) for the project.
@@ -129,6 +131,28 @@ Classified requirements appear on the project's [Requirements](../requirements.m
 :::info
 Changing requirement type settings requires **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../../permissions-guide.md).
 :::
+
+## Result Comments
+
+On a GitHub integration that authenticates with a personal access token or as a GitHub App, a **Result Comments** section appears below **Requirement Sync**. Switch on **Post results on linked issues** and save: from then on TestPlanIt comments on GitHub issues each time a test run in the project is completed. The setting is off by default.
+
+A completed run posts on every issue of the integration that it covers:
+
+- issues linked to a test case in the run
+- issues linked to a result, or to a step of a result, recorded in the run
+- issues linked to the run itself
+
+Each issue holds one comment per TestPlanIt project. The first run adds it and each later run that covers the issue replaces its content. The comment shows:
+
+- the name of the test run, linked to the run in TestPlanIt, and the day it was completed
+- the number of test cases per status, counting the run's test cases linked to the issue
+- a table of those test cases with their results, each linked to the test case in the run. A comment lists 50 test cases and counts the rest
+
+An issue linked only to the run shows the counts of the whole run and no table.
+
+The comment is written by the account the integration authenticates as: the owner of the token, or the App's bot account (`<app name>[bot]`). Everyone who can read the issue sees the names of the run and its test cases, and the links carry the address of your TestPlanIt instance. One run posts on at most 100 issues.
+
+TestPlanIt posts when a run is completed in the app or through the API, which includes the CLI and the reporters. A run that an importer creates already completed posts nothing, and neither does a run TestPlanIt closes by itself as abandoned. An integration that uses OAuth 2.0 does not offer the section.
 
 ## Related pages
 

@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "Nhập mã từ email đăng nhập của bạn. Mã chỉ hoạt động trong trình duyệt mà bạn đã yêu cầu liên kết.",
         "backToRequest": "Yêu cầu một liên kết mới thay thế"
       },
+      "passkey": {
+        "signIn": "Đăng nhập bằng passkey",
+        "failed": "Không thể sử dụng passkey này để đăng nhập. Vui lòng thử lại hoặc sử dụng cách đăng nhập khác.",
+        "unavailable": "Đăng nhập bằng passkey hiện không khả dụng.",
+        "addressMismatch": "Passkeys được thiết lập cho một địa chỉ khác với địa chỉ trong trình duyệt của bạn. Hãy yêu cầu quản trị viên kiểm tra URL ứng dụng.",
+        "tooManyRequests": "Quá nhiều lần thử. Vui lòng chờ một lúc rồi thử lại."
+      },
       "twoFactor": {
         "title": "Xác thực hai yếu tố",
         "description": "Nhập mã 6 chữ số từ ứng dụng xác thực của bạn hoặc sử dụng mã dự phòng."
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "Quét các dự án đã kết nối này để tìm cột mốc mới",
             "settingsSaved": "Đã lưu cài đặt đồng bộ cột mốc",
             "saveError": "Không thể lưu cài đặt đồng bộ cột mốc"
+          },
+          "resultComments": {
+            "title": "Bình luận về Kết quả",
+            "description": "Khi một lần chạy thử nghiệm hoàn thành, hãy đăng kết quả của nó dưới dạng bình luận về các vấn đề {provider} mà nó bao gồm: các vấn đề được liên kết với các trường hợp thử nghiệm của nó, kết quả của nó và lần chạy. Mỗi vấn đề chứa một bình luận, mà các lần chạy sau sẽ cập nhật. Bình luận ghi tên lần chạy thử nghiệm và các trường hợp thử nghiệm được liên kết với kết quả của chúng, và liên kết với chúng trong TestPlanIt.",
+            "enableLabel": "Đăng kết quả trên các vấn đề được liên kết"
           },
           "requirementsConfig": {
             "title": "Đồng bộ yêu cầu",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "Hồ sơ người dùng",
       "edit": {
-        "title": "Chỉnh sửa hồ sơ",
         "timezonePlaceholder": "Chọn hoặc tìm kiếm múi giờ...",
         "timezoneRequired": "Cần phải nhập múi giờ.",
         "deleteAvatar": "Xóa ảnh đại diện",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "Mã thông báo đại lý",
         "errors": {
           "nameRequired": "Tên mã thông báo là bắt buộc."
+        }
+      },
+      "passkeys": {
+        "title": "Khóa truy cập",
+        "description": "Passkey cho phép bạn đăng nhập bằng dấu vân tay, khuôn mặt hoặc PIN của thiết bị thay vì mật khẩu của bạn.",
+        "add": "Thêm Passkey",
+        "addTitle": "Thêm một Passkey",
+        "addDescription": "Xác nhận đó là bạn, sau đó làm theo lời nhắc của trình duyệt để tạo passkey.",
+        "nameLabel": "Tên Passkey",
+        "namePlaceholder": "ví dụ: MacBook, Phone",
+        "passwordLabel": "Mật khẩu hiện tại",
+        "codeLabel": "Mã Authenticator",
+        "noPasskeys": "Chưa thêm passkey nào.",
+        "removeTitle": "Xóa Passkey?",
+        "removeDescription": "Passkey này sẽ không còn được sử dụng để đăng nhập vào tài khoản này. Nó cũng vẫn nằm trên thiết bị hoặc trình quản lý mật khẩu chứa nó cho đến khi bị xóa tại đó.",
+        "disabledNotice": "Đăng nhập bằng passkey bị tắt. Không thể thêm hoặc sử dụng passkeys cho đến khi quản trị viên bật lại.",
+        "notSupported": "Trình duyệt này không hỗ trợ passkeys.",
+        "errors": {
+          "invalidPassword": "Mật khẩu hiện tại không chính xác.",
+          "passwordNotSet": "Đặt mật khẩu trước khi thêm passkey.",
+          "tooManyAttempts": "Quá nhiều lần thử. Vui lòng thử lại sau.",
+          "limitReached": "Tài khoản này có số lượng passkeys tối đa. Hãy xóa một passkey để thêm cái khác.",
+          "alreadyRegistered": "Thiết bị này đã có passkey cho tài khoản này.",
+          "registrationFailed": "Không thể thêm passkey. Vui lòng thử lại.",
+          "unavailable": "Passkeys không khả dụng cho tài khoản này.",
+          "removeFailed": "Không thể xóa passkey."
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "Xác thực liên kết ma thuật",
           "description": "Bật hoặc tắt xác thực qua email không cần mật khẩu"
+        },
+        "passkeys": {
+          "title": "Khóa truy cập"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "Xác thực Magic Link đã bị vô hiệu hóa",
         "magicLinkCreated": "Nhà cung cấp Magic Link đã tạo ra",
         "magicLinkUpdateFailed": "Không thể cập nhật nhà cung cấp Magic Link.",
+        "passkeysEnabled": "Đăng nhập bằng passkey được bật",
+        "passkeysDisabled": "Đăng nhập bằng passkey bị tắt",
+        "passkeysUpdateFailed": "Không thể cập nhật cài đặt passkey",
         "configureFirst": "Vui lòng cấu hình nhà cung cấp trước khi kích hoạt nó.",
         "domainRestrictionEnabled": "Đã bật hạn chế tên miền email.",
         "domainRestrictionDisabled": "Hạn chế tên miền email đã bị vô hiệu hóa.",
@@ -8116,6 +8159,7 @@
     "roles": "## Vai trò\nVai trò kiểm soát những gì người dùng có thể làm — mỗi vai trò bật/tắt quyền theo từng khu vực ứng dụng. Gán vai trò cho người dùng trực tiếp hoặc làm mặc định của dự án.",
     "sso": "## Xác thực\nQuản lý cách người dùng đăng nhập và liệu tài khoản mới có thể đăng ký hay không.",
     "ssoProviders": "## Nhà cung cấp đăng nhập\nCấu hình cách người dùng có thể đăng nhập vào ứng dụng của bạn.",
+    "ssoPasskeys": "## Passkeys\nCác người dùng có mật khẩu có thể thêm passkeys vào hồ sơ của họ và đăng nhập bằng dấu vân tay, khuôn mặt hoặc PIN của thiết bị. Đăng nhập bằng passkey được tính là xác thực hai yếu tố.\n\nPasskeys cần ứng dụng được phục vụ qua HTTPS (hoặc trên localhost); nếu không, hàng này sẽ hiển thị Not Configured. Chúng không khả dụng khi Force SSO Login được bật.",
     "ssoRegistration": "## Cài đặt đăng ký\nKiểm soát ai có thể đăng ký tài khoản mới.",
     "ssoAllowRegistration": "## Cho phép tự đăng ký\nKhi tính năng này bị vô hiệu hóa, người dùng mới không thể đăng ký trực tiếp hoặc tạo tài khoản thông qua SSO. Người dùng hiện tại vẫn có thể đăng nhập.",
     "ssoDefaultAccess": "## Mức truy cập mặc định\nMức độ truy cập hệ thống được chỉ định cho người dùng mới khi họ đăng ký.",

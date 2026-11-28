@@ -310,6 +310,11 @@ const EXEMPT_IDENTITY_LOOKUP_FILES = [
   // "Suggest again" resolves the issue a suggested change was made for, by
   // the id stored on that suggestion; either row kind can have one.
   "lib/services/caseUpkeep/regenerate.ts",
+  // Result comments resolve, by id, the issues a completed run's case,
+  // result and run links name, to learn where each one lives in the
+  // tracker. Results are posted on either row kind: the tests of a
+  // requirement and the retest of a defect both belong on their issue.
+  "lib/integrations/services/ResultCommentService.ts",
   "components/issues/DeferredIssueManager.tsx",
   "components/issues/ManageSimpleUrlIssues.tsx",
   "components/search/FacetedSearchFilters.tsx",

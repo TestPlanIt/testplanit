@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "Giriş e-postanızdaki kodu girin. Kodlar yalnızca bağlantıyı istediğiniz tarayıcıda çalışır.",
         "backToRequest": "Bunun yerine yeni bir bağlantı isteyin"
       },
+      "passkey": {
+        "signIn": "Geçiş anahtarıyla oturum açın",
+        "failed": "Bu geçiş anahtarı oturum açmak için kullanılamadı. Tekrar deneyin veya başka bir yöntemle oturum açın.",
+        "unavailable": "Geçiş anahtarıyla oturum açma şu anda kullanılamıyor.",
+        "addressMismatch": "Geçiş anahtarları tarayıcınızdaki adresinden farklı bir adres için ayarlanmıştır. Yöneticiye uygulama URL'sini kontrol etmesini isteyin.",
+        "tooManyRequests": "Çok fazla deneme. Lütfen bir an bekleyin ve tekrar deneyin."
+      },
       "twoFactor": {
         "title": "İki Faktörlü Kimlik Doğrulama",
         "description": "Kimlik doğrulama uygulamanızdan aldığınız 6 haneli kodu girin veya yedek bir kod kullanın."
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "Yeni dönüm noktaları için bu bağlı projeleri tara",
             "settingsSaved": "Dönüm noktası senkronizasyon ayarları kaydedildi",
             "saveError": "Dönüm noktası senkronizasyon ayarları kaydedilemedi"
+          },
+          "resultComments": {
+            "title": "Sonuç Yorumları",
+            "description": "Bir test çalıştırması tamamlandığında, sonuçlarını kapsadığı {provider} sorunlarında bir yorum olarak gönderin: test durumlarına bağlı sorunlar, sonuçlarına ve çalıştırmaya bağlı sorunlar. Her sorun bir yorum içerir ve sonraki çalıştırmalar bunu günceller. Yorum, test çalıştırmasını ve bağlı test durumlarını sonuçlarıyla adlandırır ve TestPlanIt'te bunlara bağlantı verir.",
+            "enableLabel": "Sonuçları bağlı sorunlarda yayınla"
           },
           "requirementsConfig": {
             "title": "Gereksinim Senkronizasyonu",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "Kullanıcı Profili",
       "edit": {
-        "title": "Profil Düzenle",
         "timezonePlaceholder": "Saat dilimi seçin veya arayın...",
         "timezoneRequired": "Saat dilimi bilgisi gereklidir.",
         "deleteAvatar": "Avatarı Sil",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "Temsilci belirteci",
         "errors": {
           "nameRequired": "Token adı zorunludur."
+        }
+      },
+      "passkeys": {
+        "title": "Geçiş Anahtarları",
+        "description": "Geçiş anahtarı, parolanız yerine cihazınızın parmak izi, yüzü veya PIN'i ile oturum açmanıza olanak tanır.",
+        "add": "Geçiş Anahtarı Ekle",
+        "addTitle": "Geçiş Anahtarı Ekleyin",
+        "addDescription": "Bunun siz olduğunuzu onaylayın, ardından geçiş anahtarını oluşturmak için tarayıcınızın istemini izleyin.",
+        "nameLabel": "Geçiş Anahtarı Adı",
+        "namePlaceholder": "ör., MacBook, Telefon",
+        "passwordLabel": "Mevcut Parola",
+        "codeLabel": "Kimlik Doğrulayıcı Kodu",
+        "noPasskeys": "Henüz geçiş anahtarı eklenmemiş.",
+        "removeTitle": "Geçiş Anahtarı Kaldırılsın mı?",
+        "removeDescription": "Bu geçiş anahtarı artık bu hesaba oturum açamayacak. Ayrıca onu içeren cihaz veya parola yöneticisinde kalır ve orada silinene kadar kalır.",
+        "disabledNotice": "Geçiş anahtarıyla oturum açma kapatılmıştır. Yönetici bunu tekrar açana kadar geçiş anahtarları eklenemez veya kullanılamaz.",
+        "notSupported": "Bu tarayıcı geçiş anahtarlarını desteklemiyor.",
+        "errors": {
+          "invalidPassword": "Mevcut parola yanlıştır.",
+          "passwordNotSet": "Geçiş anahtarı eklemeden önce bir parola ayarlayın.",
+          "tooManyAttempts": "Çok fazla deneme. Lütfen daha sonra tekrar deneyin.",
+          "limitReached": "Bu hesap maksimum sayıda geçiş anahtarına sahiptir. Başka bir tane eklemek için birini kaldırın.",
+          "alreadyRegistered": "Bu cihazın zaten bu hesap için bir geçiş anahtarı var.",
+          "registrationFailed": "Geçiş anahtarı eklenemedi. Lütfen tekrar deneyin.",
+          "unavailable": "Geçiş anahtarları bu hesap için kullanılamıyor.",
+          "removeFailed": "Geçiş anahtarı kaldırılamadı."
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "Sihirli Bağlantı Kimlik Doğrulaması",
           "description": "Parolasız e-posta tabanlı kimlik doğrulamasını etkinleştirin veya devre dışı bırakın."
+        },
+        "passkeys": {
+          "title": "Geçiş Anahtarları"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "Magic Link kimlik doğrulaması devre dışı bırakıldı",
         "magicLinkCreated": "Magic Link sağlayıcısı oluşturuldu",
         "magicLinkUpdateFailed": "Magic Link sağlayıcısını güncelleme başarısız oldu.",
+        "passkeysEnabled": "Geçiş anahtarıyla oturum açma etkinleştirildi",
+        "passkeysDisabled": "Geçiş anahtarıyla oturum açma devre dışı bırakıldı",
+        "passkeysUpdateFailed": "Geçiş anahtarı ayarı güncellenemedi",
         "configureFirst": "Lütfen sağlayıcıyı etkinleştirmeden önce yapılandırın.",
         "domainRestrictionEnabled": "E-posta alan adı kısıtlaması etkinleştirildi.",
         "domainRestrictionDisabled": "E-posta alan adı kısıtlaması devre dışı bırakıldı.",
@@ -8116,6 +8159,7 @@
     "roles": "## Roller\nRoller, kullanıcıların neler yapabileceğini kontrol eder — her biri uygulama alanı başına izinleri açar/kapatır. Bir rolü kullanıcılara doğrudan veya proje varsayılanı olarak atayın.",
     "sso": "## Kimlik Doğrulama\nKullanıcıların nasıl oturum açacağını ve yeni hesapların kaydolup kaydolamayacağını yönetin.",
     "ssoProviders": "## Oturum Açma Sağlayıcıları\nKullanıcıların uygulamanıza nasıl giriş yapabileceğini yapılandırın.",
+    "ssoPasskeys": "## Geçiş Anahtarları\nParolası olan kullanıcılar profillerine geçiş anahtarları ekleyebilir ve cihazlarının parmak izi, yüzü veya PIN'i ile oturum açabilir. Geçiş anahtarıyla oturum açma iki faktörlü kimlik doğrulama olarak sayılır.\n\nGeçiş anahtarları uygulamanın HTTPS üzerinden (veya localhost'ta) sunulmasını gerektirir; aksi takdirde bu satırda Yapılandırılmamış gösterilir. Zorunlu SSO Oturum Açma açıkken kullanılamaz.",
     "ssoRegistration": "## Kayıt Ayarları\nYeni hesap açma yetkisini kimlere bırakabileceğinizi kontrol edin.",
     "ssoAllowRegistration": "## Kendi Kendine Kayda İzin Ver\nDevre dışı bırakıldığında, yeni kullanıcılar doğrudan kaydolamaz veya SSO aracılığıyla hesap oluşturamaz. Mevcut kullanıcılar yine de giriş yapabilir.",
     "ssoDefaultAccess": "## Varsayılan Erişim Düzeyi\nYeni kullanıcılara kayıt olduklarında atanan sistem erişim düzeyi.",

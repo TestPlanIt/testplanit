@@ -23,7 +23,7 @@ describe("milestoneSyncProviders", () => {
 
   it("offers each tracker the kinds it has", () => {
     expect(milestoneKindsFor("JIRA")).toEqual(["RELEASE", "ITERATION"]);
-    expect(milestoneKindsFor("GITHUB")).toEqual(["RELEASE"]);
+    expect(milestoneKindsFor("GITHUB")).toEqual(["RELEASE", "ITERATION"]);
     expect(milestoneKindsFor("GITLAB")).toEqual(["RELEASE"]);
     expect(milestoneKindsFor("AZURE_DEVOPS")).toEqual(["ITERATION"]);
   });

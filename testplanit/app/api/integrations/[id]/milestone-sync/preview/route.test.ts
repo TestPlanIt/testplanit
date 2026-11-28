@@ -233,6 +233,49 @@ describe("milestone-sync preview route — multi-mapping union", () => {
     expect(body.warnings).toEqual(["ABT: HTTP 400: boom"]);
   });
 
+  it("passes on what a tracker could not read beside what it could", async () => {
+    getExternalMilestones.mockImplementation(async ({ projectKey }: any) =>
+      projectKey === "ABT"
+        ? {
+            items: [
+              { id: "v-1", kind: "RELEASE", name: "Icebox", state: "FUTURE" },
+            ],
+            hasMore: false,
+            warnings: ["Sprints could not be read"],
+          }
+        : { items: [], hasMore: false, warnings: ["Sprints could not be read"] }
+    );
+
+    const res = await GET(
+      createRequest({ projectMappingId: "map-abt" }),
+      params
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.items.map((item: any) => item.id)).toEqual(["v-1"]);
+    expect(body.warnings).toEqual([
+      "ABT: Sprints could not be read",
+      "ADM: Sprints could not be read",
+    ]);
+  });
+
+  it("answers 200 with the reason when nothing is found and part could not be read", async () => {
+    getExternalMilestones.mockResolvedValue({
+      items: [],
+      hasMore: false,
+      warnings: ["Sprints could not be read"],
+    });
+
+    const res = await GET(
+      createRequest({ projectMappingId: "map-abt" }),
+      params
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.items).toEqual([]);
+    expect(body.warnings).toHaveLength(2);
+  });
+
   it("fails with 500 only when every mapping's fetch fails", async () => {
     getExternalMilestones.mockRejectedValue(new Error("HTTP 401: nope"));
     const res = await GET(

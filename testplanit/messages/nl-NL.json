@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "Voer de code uit uw aanmeldings-e-mail in. Codes werken alleen in de browser waar u de link heeft aangevraagd.",
         "backToRequest": "In plaats daarvan een nieuwe link aanvragen"
       },
+      "passkey": {
+        "signIn": "Meld je aan met een toegangssleutel",
+        "failed": "Deze toegangssleutel kan niet worden gebruikt om je aan te melden. Probeer het opnieuw of meld je op een ander moment aan.",
+        "unavailable": "Aanmelding met toegangssleutel is op dit moment niet beschikbaar.",
+        "addressMismatch": "Toegangssleutels zijn ingesteld voor een ander adres dan het adres in je browser. Vraag een beheerder om de toepassings-URL te controleren.",
+        "tooManyRequests": "Te veel pogingen. Wacht even en probeer het opnieuw."
+      },
       "twoFactor": {
         "title": "Tweefactorauthenticatie",
         "description": "Voer de 6-cijferige code van uw authenticatie-app in of gebruik een reservecode."
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "Scan deze verbonden projecten op nieuwe mijlpalen",
             "settingsSaved": "Instellingen voor mijlpaalsynchronisatie opgeslagen",
             "saveError": "Instellingen voor mijlpaalsynchronisatie konden niet worden opgeslagen"
+          },
+          "resultComments": {
+            "title": "Opmerkingen bij resultaten",
+            "description": "Wanneer een testronde is voltooid, plaats je resultaten als opmerking op de {provider}-problemen die het omvat: de problemen die aan de testgevallen, resultaten en uitvoeringen zijn gekoppeld. Elk probleem bevat één opmerking, die latere runs bijwerken. De opmerking noemt de testronde en de gekoppelde testgevallen met hun resultaten, en linkt naar hen in TestPlanIt.",
+            "enableLabel": "Plaats resultaten op gekoppelde problemen"
           },
           "requirementsConfig": {
             "title": "Vereiste synchronisatie",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "Gebruikersprofiel",
       "edit": {
-        "title": "Profiel bewerken",
         "timezonePlaceholder": "Selecteer of zoek tijdzone...",
         "timezoneRequired": "Tijdzone is vereist.",
         "deleteAvatar": "Avatar verwijderen",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "Agent-token",
         "errors": {
           "nameRequired": "Een tokennaam is vereist."
+        }
+      },
+      "passkeys": {
+        "title": "Toegangssleutels",
+        "description": "Met een toegangssleutel kunt u zich aanmelden met de vingerafdruk, het gezicht of de pincode van uw apparaat in plaats van uw wachtwoord.",
+        "add": "Toegangssleutel toevoegen",
+        "addTitle": "Een toegangssleutel toevoegen",
+        "addDescription": "Bevestig dat jij het bent en volg vervolgens de prompt van je browser om de toegangssleutel te maken.",
+        "nameLabel": "Naam toegangssleutel",
+        "namePlaceholder": "bijv. MacBook, telefoon",
+        "passwordLabel": "Huidi wachtwoord",
+        "codeLabel": "Authenticatorcode",
+        "noPasskeys": "Nog geen toegangssleutels toegevoegd.",
+        "removeTitle": "Toegangssleutel verwijderen?",
+        "removeDescription": "Deze toegangssleutel meldt zich niet meer aan bij dit account. Het blijft ook op het apparaat of wachtwoordbeheerder staan dat het bevat totdat het daar is verwijderd.",
+        "disabledNotice": "Aanmelding met toegangssleutel is uitgeschakeld. Toegangssleutels kunnen pas worden toegevoegd of gebruikt als een beheerder deze weer inschakelt.",
+        "notSupported": "Deze browser ondersteunt geen toegangssleutels.",
+        "errors": {
+          "invalidPassword": "Het huidi wachtwoord is onjuist.",
+          "passwordNotSet": "Stel een wachtwoord in voordat u een toegangssleutel toevoegt.",
+          "tooManyAttempts": "Te veel pogingen. Probeer het later opnieuw.",
+          "limitReached": "Dit account heeft het maximale aantal toegangssleutels. Verwijder er een om er nog een toe te voegen.",
+          "alreadyRegistered": "Dit apparaat heeft al een toegangssleutel voor dit account.",
+          "registrationFailed": "De toegangssleutel kon niet worden toegevoegd. Probeer het opnieuw.",
+          "unavailable": "Toegangssleutels zijn niet beschikbaar voor dit account.",
+          "removeFailed": "De toegangssleutel kon niet worden verwijderd."
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "Magic Link-authenticatie",
           "description": "E-mailgebaseerde authenticatie zonder wachtwoord inschakelen of uitschakelen"
+        },
+        "passkeys": {
+          "title": "Toegangssleutels"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "Magic Link-authenticatie uitgeschakeld",
         "magicLinkCreated": "Magic Link-aanbieder gemaakt",
         "magicLinkUpdateFailed": "Het bijwerken van de Magic Link-provider is mislukt.",
+        "passkeysEnabled": "Aanmelding met toegangssleutel ingeschakeld",
+        "passkeysDisabled": "Aanmelding met toegangssleutel uitgeschakeld",
+        "passkeysUpdateFailed": "Toegangssleutelinstelling kan niet worden bijgewerkt",
         "configureFirst": "Configureer de provider voordat u deze inschakelt",
         "domainRestrictionEnabled": "E-maildomeinbeperking ingeschakeld",
         "domainRestrictionDisabled": "E-maildomeinbeperking uitgeschakeld",
@@ -8116,6 +8159,7 @@
     "roles": "## Rollen\nRollen bepalen wat gebruikers kunnen doen — elke rol schakelt machtigingen per toepassingsgebied in of uit. Wijs een rol direct toe aan gebruikers of als projectstandaard.",
     "sso": "## Authenticatie\nBeheer hoe gebruikers zich aanmelden en of nieuwe accounts zich kunnen registreren.",
     "ssoProviders": "## Aanmeldproviders\nConfigureer hoe gebruikers zich kunnen aanmelden bij uw applicatie.",
+    "ssoPasskeys": "## Toegangssleutels\nGebruikers met een wachtwoord kunnen toegangssleutels aan hun profiel toevoegen en zich aanmelden met de vingerafdruk, het gezicht of de pincode van hun apparaat. Een aanmelding met een toegangssleutel telt als twee-factor authenticatie.\n\nToegangssleutels vereisen dat de toepassing via HTTPS (of op localhost) wordt geleverd; anders wordt in deze rij 'Niet geconfigureerd' weergegeven. Ze zijn niet beschikbaar terwijl 'SSO-aanmelding afdwingen' is ingeschakeld.",
     "ssoRegistration": "## Registratie-instellingen\nBepaal wie zich kan registreren voor nieuwe accounts.",
     "ssoAllowRegistration": "## Zelfregistratie toestaan\nWanneer deze functie is uitgeschakeld, kunnen nieuwe gebruikers zich niet rechtstreeks registreren of een account aanmaken via SSO. Bestaande gebruikers kunnen zich nog steeds aanmelden.",
     "ssoDefaultAccess": "## Standaardtoegangsniveau\nHet toegangsniveau tot het systeem dat aan nieuwe gebruikers wordt toegewezen bij hun registratie.",

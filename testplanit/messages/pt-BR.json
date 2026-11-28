@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "Digite o código do seu e-mail de login. Os códigos só funcionam no navegador em que você solicitou o link.",
         "backToRequest": "Solicitar um novo link em vez disso"
       },
+      "passkey": {
+        "signIn": "Entrar com uma chave de acesso",
+        "failed": "Essa chave de acesso não pôde ser usada para entrar. Tente novamente ou entre de outra forma.",
+        "unavailable": "A entrada com chave de acesso não está disponível no momento.",
+        "addressMismatch": "As chaves de acesso foram configuradas para um endereço diferente do que está em seu navegador. Peça a um administrador para verificar a URL da aplicação.",
+        "tooManyRequests": "Muitas tentativas. Aguarde um momento e tente novamente."
+      },
       "twoFactor": {
         "title": "Autenticação de dois fatores",
         "description": "Insira o código de 6 dígitos do seu aplicativo autenticador ou use um código de backup."
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "Verificar estes projetos conectados em busca de novos marcos",
             "settingsSaved": "Configurações de sincronização de marco salvas",
             "saveError": "Falha ao salvar as configurações de sincronização de marco"
+          },
+          "resultComments": {
+            "title": "Comentários de Resultado",
+            "description": "Quando uma execução de teste é concluída, publique seus resultados como um comentário nas questões do {provider} que ela cobre: as questões vinculadas a seus casos de teste, a seus resultados e à execução. Cada questão contém um comentário, que execuções posteriores atualizam. O comentário nomeia a execução de teste e os casos de teste vinculados com seus resultados, e os vincula no TestPlanIt.",
+            "enableLabel": "Publicar resultados em questões vinculadas"
           },
           "requirementsConfig": {
             "title": "Sincronização de Requisitos",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "Perfil do usuário",
       "edit": {
-        "title": "Editar perfil",
         "timezonePlaceholder": "Selecione ou pesquise o fuso horário...",
         "timezoneRequired": "É necessário informar o fuso horário.",
         "deleteAvatar": "Excluir avatar",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "Token do agente",
         "errors": {
           "nameRequired": "O nome do token é obrigatório."
+        }
+      },
+      "passkeys": {
+        "title": "Chaves de acesso",
+        "description": "Uma chave de acesso permite que você entre com a impressão digital, o rosto ou o PIN do seu dispositivo, em vez de sua senha.",
+        "add": "Adicionar Chave de Acesso",
+        "addTitle": "Adicionar uma Chave de Acesso",
+        "addDescription": "Confirme que é você e siga o prompt do seu navegador para criar a chave de acesso.",
+        "nameLabel": "Nome da Chave de Acesso",
+        "namePlaceholder": "por exemplo, MacBook, Telefone",
+        "passwordLabel": "Senha Atual",
+        "codeLabel": "Código do Autenticador",
+        "noPasskeys": "Nenhuma chave de acesso adicionada ainda.",
+        "removeTitle": "Remover Chave de Acesso?",
+        "removeDescription": "Esta chave de acesso não entrará mais nesta conta. Ela também permanece no dispositivo ou no gerenciador de senhas que a contém até ser deletada lá.",
+        "disabledNotice": "A entrada com chave de acesso está desativada. As chaves de acesso não podem ser adicionadas ou usadas até que um administrador a ative novamente.",
+        "notSupported": "Este navegador não suporta chaves de acesso.",
+        "errors": {
+          "invalidPassword": "A senha atual está incorreta.",
+          "passwordNotSet": "Defina uma senha antes de adicionar uma chave de acesso.",
+          "tooManyAttempts": "Muitas tentativas. Tente novamente mais tarde.",
+          "limitReached": "Esta conta tem o número máximo de chaves de acesso. Remova uma para adicionar outra.",
+          "alreadyRegistered": "Este dispositivo já tem uma chave de acesso para esta conta.",
+          "registrationFailed": "A chave de acesso não pôde ser adicionada. Tente novamente.",
+          "unavailable": "As chaves de acesso não estão disponíveis para esta conta.",
+          "removeFailed": "A chave de acesso não pôde ser removida."
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "Autenticação Magic Link",
           "description": "Ativar ou desativar a autenticação sem senha baseada em e-mail."
+        },
+        "passkeys": {
+          "title": "Chaves de acesso"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "Autenticação do Magic Link desativada",
         "magicLinkCreated": "Provedor Magic Link criado",
         "magicLinkUpdateFailed": "Falha ao atualizar o provedor Magic Link",
+        "passkeysEnabled": "Entrada com chave de acesso ativada",
+        "passkeysDisabled": "Entrada com chave de acesso desativada",
+        "passkeysUpdateFailed": "Falha ao atualizar a configuração de chave de acesso",
         "configureFirst": "Configure o provedor antes de ativá-lo.",
         "domainRestrictionEnabled": "Restrição de domínio de e-mail ativada",
         "domainRestrictionDisabled": "Restrição de domínio de e-mail desativada",
@@ -8116,6 +8159,7 @@
     "roles": "## Funções\nAs funções controlam o que os usuários podem fazer — cada uma alterna permissões por área do aplicativo. Atribua uma função aos usuários diretamente ou como padrão do projeto.",
     "sso": "## Autenticação\nGerencie como os usuários fazem login e se novas contas podem se registrar.",
     "ssoProviders": "## Provedores de Login\nConfigure como os usuários podem fazer login em seu aplicativo.",
+    "ssoPasskeys": "## Chaves de acesso\nUsuários com uma senha podem adicionar chaves de acesso ao seu perfil e entrar com a impressão digital, o rosto ou o PIN do seu dispositivo. Uma entrada com chave de acesso conta como autenticação de dois fatores.\n\nAs chaves de acesso precisam que a aplicação seja servida por HTTPS (ou no localhost); caso contrário, esta linha mostra Não Configurado. Elas não estão disponíveis enquanto Forçar Login SSO está ativado.",
     "ssoRegistration": "## Configurações de Registro\nControle quem pode se registrar para novas contas.",
     "ssoAllowRegistration": "## Permitir Autorregistro\nQuando desativado, novos usuários não podem se cadastrar diretamente ou criar uma conta via SSO. Usuários existentes ainda podem fazer login.",
     "ssoDefaultAccess": "## Nível de Acesso Padrão\nO nível de acesso do sistema atribuído a novos usuários quando se registram.",

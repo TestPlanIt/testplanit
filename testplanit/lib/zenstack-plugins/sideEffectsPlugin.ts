@@ -158,6 +158,10 @@ import {
   projectHasActiveAlertRules,
 } from "~/lib/services/alertEnqueue";
 import { snapshotAutomatedFlip } from "~/lib/services/caseAutomatedVersioning";
+import {
+  enqueueRunResultComments,
+  resultCommentIntegrationId,
+} from "~/lib/integrations/resultCommentEnqueue";
 
 // Models whose standalone hooked-client writes set the app.audit_context GUC so
 // the CDC trigger records the acting user. When the write is already inside an
@@ -873,6 +877,29 @@ export const sideEffectsPlugin = definePlugin(schema, {
               if (!row?.id) continue;
               if (row.projectId != null) {
                 if (old) await emitTestRunUpdateEvents(old, row, tx);
+                // A run that completes posts its results on the tracker
+                // issues it covers, where the project switched that on.
+                if (
+                  old &&
+                  row.isCompleted === true &&
+                  old.isCompleted !== true &&
+                  typeof tx.projectIntegration?.findFirst === "function"
+                ) {
+                  const integrationId = await resultCommentIntegrationId(
+                    tx,
+                    row.projectId
+                  );
+                  if (integrationId != null) {
+                    const { getCurrentTenantId } =
+                      await import("~/lib/multiTenantDb");
+                    void enqueueRunResultComments({
+                      runId: row.id,
+                      projectId: row.projectId,
+                      integrationId,
+                      tenantId: getCurrentTenantId(),
+                    });
+                  }
+                }
                 // Alerts (#651): run metrics that wait for
                 // completion are evaluated when the run first completes.
                 if (

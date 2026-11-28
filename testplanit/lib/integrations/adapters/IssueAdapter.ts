@@ -414,6 +414,19 @@ export interface IssueAdapter {
   getIssueComments?(issueId: string): Promise<IssueComment[]>;
 
   /**
+   * Write a comment the issue should hold once. `marker` is the text the
+   * body starts with: the comment that already starts with it is replaced,
+   * and one is added when the issue has none. Throws when the tracker
+   * cannot be read or refuses the write. Adapters that cannot edit a
+   * comment omit this method.
+   */
+  upsertIssueComment?(
+    issueId: string,
+    marker: string,
+    body: string
+  ): Promise<{ id?: string; created: boolean; changed: boolean }>;
+
+  /**
    * Fetch time-based tracker artifacts (Jira Fix Versions / Sprints, or the
    * provider's equivalent) for milestone sync. Adapters without the
    * `milestones` capability omit this method and declare `milestones: false`.
@@ -434,6 +447,8 @@ export interface IssueAdapter {
     items: ExternalMilestone[];
     hasMore: boolean;
     nextPageToken?: string;
+    /** Why part of the answer is missing, when the rest could be read. */
+    warnings?: string[];
   }>;
 
   /**

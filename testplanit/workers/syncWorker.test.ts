@@ -15,6 +15,14 @@ vi.mock("../lib/integrations/services/SyncService", () => ({
   SyncJobData: {},
 }));
 
+const mockPostRunResultComments = vi.fn();
+vi.mock("../lib/integrations/services/ResultCommentService", () => ({
+  resultCommentService: {
+    postRunResultComments: (...args: any[]) =>
+      mockPostRunResultComments(...args),
+  },
+}));
+
 // Mock Valkey connection to null to prevent worker creation
 vi.mock("../lib/valkey", () => ({
   default: null,
@@ -23,6 +31,7 @@ vi.mock("../lib/valkey", () => ({
 // Mock queue names
 vi.mock("../lib/queueNames", () => ({
   SYNC_QUEUE_NAME: "test-sync-queue",
+  JOB_POST_RESULT_COMMENTS: "post-result-comments",
 }));
 
 // Mock multi-tenant db helpers so `processor` can run in single-tenant mode
@@ -301,6 +310,57 @@ describe("SyncWorker", () => {
           }),
         })
       );
+    });
+  });
+
+  describe("post-result-comments job", () => {
+    const db = { marker: "tenant-db" };
+
+    beforeEach(() => {
+      mockGetDbClientForJob.mockReturnValue(db);
+    });
+
+    const jobFor = (data: unknown) =>
+      ({
+        id: "job-9",
+        name: "post-result-comments",
+        data: {
+          userId: "user-1",
+          integrationId: 14,
+          projectId: "374",
+          action: "sync" as const,
+          data,
+          tenantId: "tenant-a",
+        },
+      }) as unknown as Job;
+
+    it("posts the run's comments with the job's database client and tenant", async () => {
+      const outcome = {
+        success: true,
+        created: 1,
+        updated: 2,
+        unchanged: 0,
+        errors: [],
+      };
+      mockPostRunResultComments.mockResolvedValue(outcome);
+
+      const { processor } = await import("./syncWorker");
+      const result = await processor(jobFor({ runId: 81 }));
+
+      expect(mockPostRunResultComments).toHaveBeenCalledWith(81, {
+        dbClient: db,
+        tenantId: "tenant-a",
+      });
+      expect(result).toBe(outcome);
+    });
+
+    it("refuses a job that names no run", async () => {
+      const { processor } = await import("./syncWorker");
+
+      await expect(processor(jobFor({}))).rejects.toThrow(
+        "Run ID is required to post result comments"
+      );
+      expect(mockPostRunResultComments).not.toHaveBeenCalled();
     });
   });
 

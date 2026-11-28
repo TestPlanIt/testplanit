@@ -1467,6 +1467,11 @@
             "settingsSaved": "Milestone sync settings saved",
             "saveError": "Failed to save milestone sync settings"
           },
+          "resultComments": {
+            "title": "Result Comments",
+            "description": "When a test run is completed, post its results as a comment on the {provider} issues it covers: the issues linked to its test cases, to its results and to the run. Each issue holds one comment, which later runs update. The comment names the test run and the linked test cases with their results, and links to them in TestPlanIt.",
+            "enableLabel": "Post results on linked issues"
+          },
           "requirementsConfig": {
             "title": "Requirement Sync",
             "description": "Sync which tracker issue types count as requirements. Existing issues are reclassified to match.",

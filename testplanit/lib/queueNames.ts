@@ -80,6 +80,8 @@ export const JOB_SWEEP_ABANDONED_RUNS = "sweep-abandoned-runs";
 export const JOB_PURGE_STALE_CASE_DRAFTS = "purge-stale-case-drafts";
 export const JOB_SWEEP_REPORT_BUILDER_STATES = "sweep-report-builder-states";
 export const JOB_CHECK_FOR_RELEASES = "check-for-releases";
+/** Post a completed run's results on the tracker issues it covers. */
+export const JOB_POST_RESULT_COMMENTS = "post-result-comments";
 
 /** Every queue the workers serve, for the queue alerts' scope picker. */
 export const ALL_QUEUE_NAMES = [

@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "Saisissez le code indiqué dans votre e-mail de connexion. Les codes fonctionnent uniquement dans le navigateur où vous avez demandé le lien.",
         "backToRequest": "Demander un nouveau lien à la place"
       },
+      "passkey": {
+        "signIn": "Se connecter avec une passkey",
+        "failed": "Cette passkey n'a pas pu être utilisée pour se connecter. Réessayez ou connectez-vous d'une autre manière.",
+        "unavailable": "La connexion par passkey n'est pas disponible pour le moment.",
+        "addressMismatch": "Les passkeys sont configurées pour une adresse différente de celle dans votre navigateur. Demandez à un administrateur de vérifier l'URL de l'application.",
+        "tooManyRequests": "Trop de tentatives. Veuillez attendre un moment et réessayer."
+      },
       "twoFactor": {
         "title": "Authentification à deux facteurs",
         "description": "Saisissez le code à 6 chiffres de votre application d'authentification ou utilisez un code de secours."
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "Analyser ces projets connectés pour détecter de nouveaux jalons",
             "settingsSaved": "Paramètres de synchronisation des jalons enregistrés",
             "saveError": "Impossible d'enregistrer les paramètres de synchronisation des jalons"
+          },
+          "resultComments": {
+            "title": "Commentaires des résultats",
+            "description": "Lorsqu'une exécution de test est terminée, publiez ses résultats en tant que commentaire sur les problèmes {provider} qu'elle couvre : les problèmes liés à ses cas de test, à ses résultats et à l'exécution. Chaque problème contient un commentaire, que les exécutions ultérieures mettent à jour. Le commentaire nomme l'exécution de test et les cas de test liés avec leurs résultats, et crée des liens vers eux dans TestPlanIt.",
+            "enableLabel": "Publier les résultats sur les problèmes liés"
           },
           "requirementsConfig": {
             "title": "Synchronisation des exigences",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "Profil utilisateur",
       "edit": {
-        "title": "Modifier le profil",
         "timezonePlaceholder": "Sélectionnez ou recherchez le fuseau horaire...",
         "timezoneRequired": "Le fuseau horaire est requis.",
         "deleteAvatar": "Supprimer l'avatar",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "Jeton d'agent",
         "errors": {
           "nameRequired": "Le nom du jeton est obligatoire."
+        }
+      },
+      "passkeys": {
+        "title": "Clés d'accès",
+        "description": "Une passkey vous permet de vous connecter avec l'empreinte digitale, le visage ou le code PIN de votre appareil au lieu de votre mot de passe.",
+        "add": "Ajouter une passkey",
+        "addTitle": "Ajouter une passkey",
+        "addDescription": "Confirmez votre identité, puis suivez l'invite de votre navigateur pour créer la passkey.",
+        "nameLabel": "Nom de la passkey",
+        "namePlaceholder": "p. ex., MacBook, Téléphone",
+        "passwordLabel": "Mot de passe actuel",
+        "codeLabel": "Code d'authentification",
+        "noPasskeys": "Aucune passkey ajoutée pour le moment.",
+        "removeTitle": "Supprimer la passkey ?",
+        "removeDescription": "Cette passkey ne permettra plus de se connecter à ce compte. Elle reste également sur l'appareil ou le gestionnaire de mots de passe qui la contient jusqu'à sa suppression à cet endroit.",
+        "disabledNotice": "La connexion par passkey est désactivée. Les passkeys ne peuvent pas être ajoutées ou utilisées jusqu'à ce qu'un administrateur la réactive.",
+        "notSupported": "Ce navigateur ne supporte pas les passkeys.",
+        "errors": {
+          "invalidPassword": "Le mot de passe actuel est incorrect.",
+          "passwordNotSet": "Définissez un mot de passe avant d'ajouter une passkey.",
+          "tooManyAttempts": "Trop de tentatives. Veuillez réessayer plus tard.",
+          "limitReached": "Ce compte a atteint le nombre maximal de passkeys. Supprimez-en une pour en ajouter une autre.",
+          "alreadyRegistered": "Cet appareil a déjà une passkey pour ce compte.",
+          "registrationFailed": "La passkey n'a pas pu être ajoutée. Veuillez réessayer.",
+          "unavailable": "Les passkeys ne sont pas disponibles pour ce compte.",
+          "removeFailed": "La passkey n'a pas pu être supprimée."
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "Authentification Magic Link",
           "description": "Activer ou désactiver l'authentification par e-mail sans mot de passe"
+        },
+        "passkeys": {
+          "title": "Clés d'accès"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "L'authentification Magic Link a été désactivée.",
         "magicLinkCreated": "fournisseur Magic Link créé",
         "magicLinkUpdateFailed": "Échec de la mise à jour du fournisseur Magic Link",
+        "passkeysEnabled": "Connexion par passkey activée",
+        "passkeysDisabled": "Connexion par passkey désactivée",
+        "passkeysUpdateFailed": "Échec de la mise à jour des paramètres de passkey",
         "configureFirst": "Veuillez configurer le fournisseur avant de l'activer.",
         "domainRestrictionEnabled": "Restriction du domaine de messagerie activée",
         "domainRestrictionDisabled": "Restriction du domaine de messagerie désactivée",
@@ -8116,6 +8159,7 @@
     "roles": "## Rôles\nLes rôles contrôlent ce que les utilisateurs peuvent faire — chacun active ou désactive des permissions par domaine d'application. Attribuez un rôle aux utilisateurs directement ou comme rôle par défaut du projet.",
     "sso": "## Authentification\nGérez la manière dont les utilisateurs se connectent et si de nouveaux comptes peuvent s'inscrire.",
     "ssoProviders": "## Fournisseurs de connexion\nConfigurez la manière dont les utilisateurs peuvent se connecter à votre application.",
+    "ssoPasskeys": "## Passkeys\nLes utilisateurs disposant d'un mot de passe peuvent ajouter des passkeys à leur profil et se connecter avec l'empreinte digitale, le visage ou le code PIN de leur appareil. Une connexion par passkey est comptabilisée comme une authentification à deux facteurs.\n\nLes passkeys nécessitent que l'application soit servie via HTTPS (ou sur localhost) ; sinon, cette ligne affiche Non configuré. Elles ne sont pas disponibles lorsque la connexion SSO forcée est activée.",
     "ssoRegistration": "## Paramètres d'inscription\nContrôlez qui peut créer de nouveaux comptes.",
     "ssoAllowRegistration": "## Autoriser l'auto-inscription\nLorsque cette fonctionnalité est désactivée, les nouveaux utilisateurs ne peuvent ni s'inscrire directement ni créer de compte via SSO. Les utilisateurs existants peuvent toujours se connecter.",
     "ssoDefaultAccess": "## Niveau d'accès par défaut\nLe niveau d'accès au système attribué aux nouveaux utilisateurs lors de leur inscription.",

@@ -13,7 +13,8 @@ import {
   MultiTenantJobData,
   validateMultiTenantJobData,
 } from "../lib/multiTenantDb";
-import { SYNC_QUEUE_NAME } from "../lib/queueNames";
+import { resultCommentService } from "../lib/integrations/services/ResultCommentService";
+import { JOB_POST_RESULT_COMMENTS, SYNC_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -439,6 +440,37 @@ const processor = async (job: Job<MultiTenantSyncJobData>) =>
           return { success: false, error: "Not implemented" };
         } catch (error) {
           console.error("Failed to update issue:", error);
+          throw error;
+        }
+
+      case JOB_POST_RESULT_COMMENTS:
+        try {
+          const runId = Number(jobData.data?.runId);
+          if (!Number.isInteger(runId) || runId <= 0) {
+            throw new Error("Run ID is required to post result comments");
+          }
+          const result = await resultCommentService.postRunResultComments(
+            runId,
+            { ...serviceOptions, tenantId: jobData.tenantId }
+          );
+          if (result.skipped) {
+            console.log(
+              `Result comments for run ${runId} skipped: ${result.skipped}`
+            );
+          } else {
+            console.log(
+              `Result comments for run ${runId}: ${result.created} created, ${result.updated} updated, ${result.unchanged} unchanged`
+            );
+          }
+          if (result.errors.length > 0) {
+            console.warn(
+              `Result comments for run ${runId} had ${result.errors.length} errors:`,
+              result.errors
+            );
+          }
+          return result;
+        } catch (error) {
+          console.error("Failed to post result comments:", error);
           throw error;
         }
 

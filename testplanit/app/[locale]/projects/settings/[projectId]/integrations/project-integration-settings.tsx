@@ -53,6 +53,7 @@ import { ImportIssuesDialog } from "./import-issues-dialog";
 import { MilestoneSyncSettings } from "./milestone-sync-settings";
 import { readRequirementTypeConfig } from "~/lib/integrations/requirementTypeConfig";
 import { RequirementsConfigSettings } from "./requirements-config-settings";
+import { ResultCommentsSettings } from "./result-comments-settings";
 import { apiFetch, withBasePath } from "~/lib/basePath";
 
 /** Trackers whose linked projects can carry a default issue type. */
@@ -117,9 +118,10 @@ export function ProjectIntegrationSettings({
   const [externalProjects, setExternalProjects] = useState<ExternalProject[]>(
     []
   );
-  const [config, _setConfig] = useState(
-    (projectIntegration.config as Record<string, any>) || {}
-  );
+  // Read when saving, never kept from mount: the cards below save their own
+  // keys into this object, and a copy taken at mount would write them back
+  // out as they were.
+  const config = (projectIntegration.config as Record<string, any>) || {};
 
   // The requirement types saved in Requirement Sync. The import dialog's
   // typed path gates on receiving these: without them it refuses with
@@ -971,6 +973,11 @@ export function ProjectIntegrationSettings({
           projectIntegration={projectIntegration}
           integration={integration}
           onRequestImport={setImportRequest}
+        />
+
+        <ResultCommentsSettings
+          projectIntegration={projectIntegration}
+          integration={integration}
         />
 
         <ImportIssuesDialog

@@ -10,7 +10,7 @@ export type MilestoneSyncKind = "RELEASE" | "ITERATION";
 export const MILESTONE_KINDS_BY_PROVIDER: Record<string, MilestoneSyncKind[]> =
   {
     JIRA: ["RELEASE", "ITERATION"],
-    GITHUB: ["RELEASE"],
+    GITHUB: ["RELEASE", "ITERATION"],
     GITLAB: ["RELEASE"],
     GITEA: ["RELEASE"],
     REDMINE: ["RELEASE"],

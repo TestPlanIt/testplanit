@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "Wpisz kod z e-maila logowania. Kody działają tylko w przeglądarce, w której poprosiłeś o łącze.",
         "backToRequest": "Poproś o nowe łącze"
       },
+      "passkey": {
+        "signIn": "Zaloguj się za pomocą klucza dostępu",
+        "failed": "Nie można było użyć tego klucza dostępu do zalogowania. Spróbuj ponownie lub zaloguj się w inny sposób.",
+        "unavailable": "Logowanie za pomocą klucza dostępu jest teraz niedostępne.",
+        "addressMismatch": "Klucze dostępu zostały skonfigurowane dla innego adresu niż ten w Twojej przeglądarce. Poproś administratora, aby sprawdził adres URL aplikacji.",
+        "tooManyRequests": "Zbyt wiele prób. Czekaj chwilę i spróbuj ponownie."
+      },
       "twoFactor": {
         "title": "Uwierzytelnianie dwuskładnikowe",
         "description": "Wprowadź 6-cyfrowy kod z aplikacji uwierzytelniającej lub użyj kodu zapasowego."
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "Skanuj te połączone projekty w poszukiwaniu nowych kamieni milowych",
             "settingsSaved": "Zapisano ustawienia synchronizacji kamieni milowych",
             "saveError": "Nie udało się zapisać ustawień synchronizacji kamieni milowych"
+          },
+          "resultComments": {
+            "title": "Komentarze do wyników",
+            "description": "Po zakończeniu przebiegu testów opublikuj jego wyniki jako komentarz do zagadnień {provider}, które obejmuje: zagadnień powiązanych z jego przypadkami testowymi, z jego wynikami i z przebiegiem. Każde zagadnienie zawiera jeden komentarz, który później przebiegi aktualizują. Komentarz nosi nazwę przebiegu testów i powiązanych przypadków testowych wraz z ich wynikami oraz zawiera odnośniki do nich w TestPlanIt.",
+            "enableLabel": "Opublikuj wyniki dotyczące powiązanych zagadnień"
           },
           "requirementsConfig": {
             "title": "Synchronizacja wymagań",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "Profil użytkownika",
       "edit": {
-        "title": "Edytuj profil",
         "timezonePlaceholder": "Wybierz lub wyszukaj strefę czasową...",
         "timezoneRequired": "Podanie strefy czasowej jest wymagane.",
         "deleteAvatar": "Usuń awatar",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "Token agenta",
         "errors": {
           "nameRequired": "Nazwa tokena jest wymagana."
+        }
+      },
+      "passkeys": {
+        "title": "Klucze dostępu",
+        "description": "Klucz dostępu umożliwia zalogowanie się za pomocą odcisku palca, twarzy lub kodu PIN urządzenia zamiast hasła.",
+        "add": "Dodaj klucz dostępu",
+        "addTitle": "Dodaj klucz dostępu",
+        "addDescription": "Potwierdź swoją tożsamość, a następnie postępuj zgodnie z instrukcjami przeglądarki, aby utworzyć klucz dostępu.",
+        "nameLabel": "Nazwa klucza dostępu",
+        "namePlaceholder": "np. MacBook, telefon",
+        "passwordLabel": "Bieżące hasło",
+        "codeLabel": "Kod uwierzytelniania",
+        "noPasskeys": "Nie dodano jeszcze żadnych kluczy dostępu.",
+        "removeTitle": "Usunąć klucz dostępu?",
+        "removeDescription": "Ten klucz dostępu nie będzie już logować się na to konto. Pozostaje również na urządzeniu lub w menedżerze haseł, który go zawiera, aż do jego usunięcia.",
+        "disabledNotice": "Logowanie za pomocą klucza dostępu jest wyłączone. Klucze dostępu nie mogą być dodawane ani używane do czasu ponownego włączenia przez administratora.",
+        "notSupported": "Ta przeglądarka nie obsługuje kluczy dostępu.",
+        "errors": {
+          "invalidPassword": "Bieżące hasło jest nieprawidłowe.",
+          "passwordNotSet": "Ustaw hasło przed dodaniem klucza dostępu.",
+          "tooManyAttempts": "Zbyt wiele prób. Spróbuj ponownie później.",
+          "limitReached": "To konto ma maksymalną liczbę kluczy dostępu. Usuń jeden, aby dodać kolejny.",
+          "alreadyRegistered": "To urządzenie ma już klucz dostępu dla tego konta.",
+          "registrationFailed": "Nie można było dodać klucza dostępu. Spróbuj ponownie.",
+          "unavailable": "Klucze dostępu są niedostępne dla tego konta.",
+          "removeFailed": "Nie można było usunąć klucza dostępu."
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "Uwierzytelnianie Magic Link",
           "description": "Włączanie lub wyłączanie uwierzytelniania bez hasła na podstawie wiadomości e-mail"
+        },
+        "passkeys": {
+          "title": "Klucze dostępu"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "Uwierzytelnianie Magic Link wyłączone",
         "magicLinkCreated": "Utworzono dostawcę Magic Link",
         "magicLinkUpdateFailed": "Nie udało się zaktualizować dostawcy Magic Link",
+        "passkeysEnabled": "Logowanie za pomocą klucza dostępu włączone",
+        "passkeysDisabled": "Logowanie za pomocą klucza dostępu wyłączone",
+        "passkeysUpdateFailed": "Nie udało się zaktualizować ustawienia klucza dostępu",
         "configureFirst": "Przed włączeniem dostawcy należy go skonfigurować",
         "domainRestrictionEnabled": "Włączono ograniczenie domeny e-mail",
         "domainRestrictionDisabled": "Ograniczenie domeny e-mail wyłączone",
@@ -8116,6 +8159,7 @@
     "roles": "## Role\nRole kontrolują, co użytkownicy mogą robić — każda z nich przełącza uprawnienia dla poszczególnych obszarów aplikacji. Przypisz rolę użytkownikom bezpośrednio lub jako domyślną dla projektu.",
     "sso": "## Uwierzytelnianie\nZarządzaj sposobem logowania użytkowników oraz możliwością rejestracji nowych kont.",
     "ssoProviders": "## Dostawcy logowania\nSkonfiguruj sposób, w jaki użytkownicy mogą logować się do Twojej aplikacji.",
+    "ssoPasskeys": "## Klucze dostępu\nUżytkownicy mający hasło mogą dodać klucze dostępu do swojego profilu i zalogować się za pomocą odcisku palca, twarzy lub kodu PIN urządzenia. Zalogowanie za pomocą klucza dostępu liczy się jako uwierzytelnienie dwuskładnikowe.\n\nKlucze dostępu wymagają, aby aplikacja była serwowana przez HTTPS (lub na localhost); w innym przypadku ten wiersz pokazuje Nie skonfigurowano. Są niedostępne, gdy włączona jest opcja Wymuś logowanie SSO.",
     "ssoRegistration": "## Ustawienia rejestracji\nKontroluj, kto może rejestrować nowe konta.",
     "ssoAllowRegistration": "## Zezwól na samodzielną rejestrację\nPo wyłączeniu tej opcji nowi użytkownicy nie mogą rejestrować się bezpośrednio ani tworzyć kont za pomocą logowania jednokrotnego SSO. Istniejący użytkownicy nadal mogą się logować.",
     "ssoDefaultAccess": "## Domyślny poziom dostępu\nPoziom dostępu do systemu przypisywany nowym użytkownikom podczas rejestracji.",

@@ -114,7 +114,7 @@ describe("GitHubAdapter", () => {
         attachments: false,
         linkedIssues: true,
         comments: true,
-        milestones: { kinds: ["RELEASE"], webhooks: true },
+        milestones: { kinds: ["RELEASE", "ITERATION"], webhooks: true },
       });
     });
   });
@@ -2359,9 +2359,9 @@ describe("GitHubAdapter", () => {
       html_url: "https://github.com/testowner/testrepo/milestone/4",
     };
 
-    it("declares RELEASE milestones with webhook support", () => {
+    it("declares RELEASE and ITERATION milestones with webhook support", () => {
       expect(adapter.getCapabilities().milestones).toEqual({
-        kinds: ["RELEASE"],
+        kinds: ["RELEASE", "ITERATION"],
         webhooks: true,
       });
     });
@@ -2374,6 +2374,7 @@ describe("GitHubAdapter", () => {
 
       const result = await adapter.getExternalMilestones({
         projectKey: "testowner/testrepo",
+        kind: "RELEASE",
       });
 
       expect(mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0]).toBe(
@@ -2410,6 +2411,7 @@ describe("GitHubAdapter", () => {
 
       const result = await adapter.getExternalMilestones({
         projectKey: "testowner/testrepo",
+        kind: "RELEASE",
         includeClosed: true,
       });
 
@@ -2422,15 +2424,6 @@ describe("GitHubAdapter", () => {
         rawState: "closed",
         endDate: new Date("2026-10-01T12:00:00Z"),
       });
-    });
-
-    it("has no ITERATION artifacts", async () => {
-      const result = await adapter.getExternalMilestones({
-        projectKey: "testowner/testrepo",
-        kind: "ITERATION",
-      });
-      expect(result).toEqual({ items: [], hasMore: false });
-      expect(mockFetch).toHaveBeenCalledTimes(1); // authenticate only
     });
 
     it("pages a milestone's issues by number and drops pull requests", async () => {
@@ -2474,6 +2467,886 @@ describe("GitHubAdapter", () => {
       expect(
         await adapter.getMilestoneIssues({ id: "4", kind: "RELEASE" })
       ).toEqual({ issues: [], hasMore: false });
+    });
+  });
+
+  describe("Project iterations", () => {
+    const okJson = (payload: unknown) => ({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(payload),
+    });
+
+    const projectsPage = (
+      nodes: unknown[],
+      pageInfo = { hasNextPage: false, endCursor: null as string | null }
+    ) => ({ data: { repository: { projectsV2: { pageInfo, nodes } } } });
+
+    const sprintField = {
+      id: "PVTIF_sprint",
+      configuration: {
+        iterations: [
+          {
+            id: "aaaa1111",
+            title: "Sprint 12",
+            startDate: "2026-11-30",
+            duration: 14,
+          },
+          {
+            id: "bbbb2222",
+            title: "Sprint 13",
+            startDate: "2026-12-14",
+            duration: 14,
+          },
+        ],
+        completedIterations: [
+          {
+            id: "cccc3333",
+            title: "Sprint 11",
+            startDate: "2026-11-16",
+            duration: 14,
+          },
+        ],
+      },
+    };
+
+    const project = {
+      url: "https://github.com/orgs/testowner/projects/3",
+      closed: false,
+      // A field that is not an iteration field comes back empty.
+      fields: { nodes: [{}, sprintField] },
+    };
+
+    const fieldResponse = {
+      data: {
+        node: {
+          name: "Sprint",
+          configuration: {
+            iterations: [{ id: "aaaa1111" }, { id: "bbbb2222" }],
+            completedIterations: [{ id: "cccc3333" }],
+          },
+        },
+      },
+    };
+
+    const memberItem = (
+      issueId: string | null,
+      repository: string,
+      iterationId: string | null
+    ) => ({
+      content: issueId
+        ? { id: issueId, repository: { nameWithOwner: repository } }
+        : {},
+      fieldValueByName: iterationId ? { iterationId } : null,
+    });
+
+    const membersPage = (
+      nodes: unknown[],
+      pageInfo = { hasNextPage: false, endCursor: null as string | null }
+    ) => ({ data: { node: { project: { items: { pageInfo, nodes } } } } });
+
+    const issueNode = (
+      number: number,
+      extra: Record<string, unknown> = {}
+    ) => ({
+      number,
+      title: `Issue ${number}`,
+      body: "Body",
+      state: "OPEN",
+      stateReason: null,
+      url: `https://github.com/testowner/testrepo/issues/${number}`,
+      createdAt: "2026-11-20T10:00:00Z",
+      updatedAt: "2026-11-21T10:00:00Z",
+      repository: { nameWithOwner: "testowner/testrepo" },
+      author: { login: "reporter-user" },
+      assignees: {
+        nodes: [{ login: "alice", avatarUrl: "https://avatars.test/alice" }],
+      },
+      labels: { nodes: [{ name: "bug", color: "d73a4a" }] },
+      milestone: {
+        number: 4,
+        title: "v1.2",
+        state: "OPEN",
+        dueOn: "2026-12-20T00:00:00Z",
+      },
+      comments: { totalCount: 3 },
+      issueFieldValues: {
+        nodes: [
+          {
+            __typename: "IssueFieldMultiSelectValue",
+            value: "API,Web UI",
+            options: [{ name: "API" }, { name: "Web UI" }],
+            field: { name: "Components", fullDatabaseId: "105" },
+          },
+          {
+            __typename: "IssueFieldNumberValue",
+            number: 5,
+            field: { name: "Story points", fullDatabaseId: "103" },
+          },
+          {
+            __typename: "IssueFieldSingleSelectValue",
+            name: "High",
+            field: { name: "Priority", fullDatabaseId: "101" },
+          },
+        ],
+      },
+      ...extra,
+    });
+
+    type Handlers = {
+      projects?: (variables: any) => unknown;
+      field?: (variables: any) => unknown;
+      members?: (variables: any) => unknown;
+      issues?: (variables: any, query: string) => unknown;
+      milestones?: () => unknown;
+    };
+
+    /** Answers each request by what it asks for. */
+    const route = (handlers: Handlers) =>
+      mockFetch.mockImplementation(async (url: string, init?: RequestInit) => {
+        if (!String(url).endsWith("/graphql")) {
+          if (String(url).includes("/milestones?") && handlers.milestones) {
+            return okJson(handlers.milestones());
+          }
+          throw new Error(`unexpected request ${url}`);
+        }
+        const { query, variables } = JSON.parse(init!.body as string);
+        if (query.includes("projectsV2") && handlers.projects) {
+          return okJson(handlers.projects(variables));
+        }
+        if (query.includes("fieldValueByName") && handlers.members) {
+          return okJson(handlers.members(variables));
+        }
+        if (query.includes("nodes(ids") && handlers.issues) {
+          return okJson(handlers.issues(variables, query));
+        }
+        if (handlers.field) return okJson(handlers.field(variables));
+        throw new Error("unexpected GraphQL query");
+      });
+
+    const graphqlBodies = () =>
+      mockFetch.mock.calls
+        .filter((call) => String(call[0]).endsWith("/graphql"))
+        .map((call) => JSON.parse(call[1].body as string));
+
+    const countQueries = (marker: string) =>
+      graphqlBodies().filter((body) => body.query.includes(marker)).length;
+
+    beforeEach(async () => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-12-05T10:00:00Z"));
+      // Requests are spaced a second apart; these tests make many.
+      vi.spyOn(adapter as any, "sleep").mockResolvedValue(undefined);
+      mockFetch.mockResolvedValueOnce(okJson({ login: "testuser" }));
+      await adapter.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+      mockFetch.mockReset();
+    });
+
+    it("lists the open iterations of the Projects linked to the repository", async () => {
+      route({ projects: () => projectsPage([project]) });
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "testowner/testrepo",
+        kind: "ITERATION",
+      });
+
+      expect(graphqlBodies()[0].variables).toEqual({
+        owner: "testowner",
+        name: "testrepo",
+        after: null,
+      });
+      expect(result).toEqual({
+        hasMore: false,
+        items: [
+          {
+            id: "testowner/testrepo@PVTIF_sprint:aaaa1111",
+            kind: "ITERATION",
+            name: "Sprint 12",
+            startDate: new Date("2026-11-30T12:00:00Z"),
+            endDate: new Date("2026-12-13T12:00:00Z"),
+            state: "ACTIVE",
+            rawState: "current",
+            url: "https://github.com/orgs/testowner/projects/3",
+          },
+          {
+            id: "testowner/testrepo@PVTIF_sprint:bbbb2222",
+            kind: "ITERATION",
+            name: "Sprint 13",
+            startDate: new Date("2026-12-14T12:00:00Z"),
+            endDate: new Date("2026-12-27T12:00:00Z"),
+            state: "FUTURE",
+            rawState: "planned",
+            url: "https://github.com/orgs/testowner/projects/3",
+          },
+        ],
+      });
+    });
+
+    it("includes completed iterations on request and counts a closed Project's as completed", async () => {
+      route({
+        projects: () =>
+          projectsPage([
+            project,
+            {
+              url: "https://github.com/orgs/testowner/projects/9",
+              closed: true,
+              fields: {
+                nodes: [
+                  {
+                    id: "PVTIF_old",
+                    configuration: {
+                      iterations: [
+                        {
+                          id: "dddd4444",
+                          title: "Cycle 1",
+                          startDate: "2026-12-01",
+                          duration: 7,
+                        },
+                      ],
+                      completedIterations: [],
+                    },
+                  },
+                ],
+              },
+            },
+          ]),
+      });
+
+      const withClosed = await adapter.getExternalMilestones({
+        projectKey: "testowner/testrepo",
+        kind: "ITERATION",
+        includeClosed: true,
+      });
+      expect(
+        withClosed.items.map((item) => [item.name, item.state, item.rawState])
+      ).toEqual([
+        ["Sprint 12", "ACTIVE", "current"],
+        ["Sprint 13", "FUTURE", "planned"],
+        ["Sprint 11", "CLOSED", "completed"],
+        ["Cycle 1", "CLOSED", "completed"],
+      ]);
+
+      const openOnly = await adapter.getExternalMilestones({
+        projectKey: "testowner/testrepo",
+        kind: "ITERATION",
+      });
+      expect(openOnly.items.map((item) => item.name)).toEqual([
+        "Sprint 12",
+        "Sprint 13",
+      ]);
+    });
+
+    it("counts an iteration as completed once its last day is over", async () => {
+      route({ projects: () => projectsPage([project]) });
+
+      vi.setSystemTime(new Date("2026-12-13T23:59:00Z"));
+      const lastDay = await adapter.getExternalMilestones({
+        projectKey: "testowner/testrepo",
+        kind: "ITERATION",
+        includeClosed: true,
+      });
+      expect(lastDay.items[0]).toMatchObject({
+        name: "Sprint 12",
+        state: "ACTIVE",
+      });
+
+      vi.setSystemTime(new Date("2026-12-14T00:00:00Z"));
+      const dayAfter = await adapter.getExternalMilestones({
+        projectKey: "testowner/testrepo",
+        kind: "ITERATION",
+        includeClosed: true,
+      });
+      expect(dayAfter.items.slice(0, 2)).toMatchObject([
+        { name: "Sprint 12", state: "CLOSED", rawState: "completed" },
+        { name: "Sprint 13", state: "ACTIVE", rawState: "current" },
+      ]);
+    });
+
+    it("reads every page of linked Projects", async () => {
+      route({
+        projects: (variables) =>
+          variables.after === null
+            ? projectsPage([project], { hasNextPage: true, endCursor: "p2" })
+            : projectsPage([
+                {
+                  url: "https://github.com/orgs/testowner/projects/4",
+                  closed: false,
+                  fields: {
+                    nodes: [
+                      {
+                        id: "PVTIF_other",
+                        configuration: {
+                          iterations: [
+                            {
+                              id: "eeee5555",
+                              title: "Iteration 1",
+                              startDate: "2026-12-01",
+                              duration: 7,
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ]),
+      });
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "testowner/testrepo",
+        kind: "ITERATION",
+      });
+
+      expect(graphqlBodies().map((body) => body.variables.after)).toEqual([
+        null,
+        "p2",
+      ]);
+      expect(result.items.map((item) => item.id)).toEqual([
+        "testowner/testrepo@PVTIF_sprint:aaaa1111",
+        "testowner/testrepo@PVTIF_sprint:bbbb2222",
+        "testowner/testrepo@PVTIF_other:eeee5555",
+      ]);
+    });
+
+    it("says which access is missing when asked for iterations alone", async () => {
+      route({
+        projects: () => ({
+          errors: [
+            {
+              type: "INSUFFICIENT_SCOPES",
+              message:
+                "Your token has not been granted the required scopes to execute this query.",
+            },
+          ],
+        }),
+      });
+
+      await expect(
+        adapter.getExternalMilestones({
+          projectKey: "testowner/testrepo",
+          kind: "ITERATION",
+        })
+      ).rejects.toThrow(/read:project/);
+    });
+
+    it("returns both kinds together when no kind is asked for", async () => {
+      route({
+        milestones: () => [
+          { number: 4, title: "v1.2", state: "open", due_on: null },
+        ],
+        projects: () => projectsPage([project]),
+      });
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "testowner/testrepo",
+      });
+
+      expect(result.items.map((item) => [item.kind, item.name])).toEqual([
+        ["RELEASE", "v1.2"],
+        ["ITERATION", "Sprint 12"],
+        ["ITERATION", "Sprint 13"],
+      ]);
+      expect(result).not.toHaveProperty("warnings");
+    });
+
+    it("returns the releases with a warning when iterations cannot be read", async () => {
+      route({
+        milestones: () => [
+          { number: 4, title: "v1.2", state: "open", due_on: null },
+        ],
+        projects: () => ({
+          errors: [{ type: "FORBIDDEN", message: "Resource not accessible" }],
+        }),
+      });
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "testowner/testrepo",
+      });
+
+      expect(result.items.map((item) => item.id)).toEqual([
+        "testowner/testrepo#4",
+      ]);
+      expect(result.warnings).toEqual([
+        expect.stringContaining("GitHub refused access to Projects"),
+      ]);
+    });
+
+    it("has no iterations on a server that does not know Projects", async () => {
+      route({
+        projects: () => ({
+          errors: [
+            {
+              message: "Field 'projectsV2' doesn't exist on type 'Repository'",
+              extensions: { code: "undefinedField" },
+            },
+          ],
+        }),
+      });
+
+      expect(
+        await adapter.getExternalMilestones({
+          projectKey: "testowner/testrepo",
+          kind: "ITERATION",
+        })
+      ).toEqual({ items: [], hasMore: false });
+    });
+
+    it("lists the repository's issues in an iteration, without pull requests, drafts and other repositories", async () => {
+      route({
+        field: () => fieldResponse,
+        members: (variables) =>
+          variables.after === null
+            ? membersPage(
+                [
+                  memberItem("I_7", "TestOwner/TestRepo", "aaaa1111"),
+                  memberItem("I_8", "testowner/other", "aaaa1111"),
+                  memberItem(null, "", "aaaa1111"),
+                  memberItem("I_9", "testowner/testrepo", "bbbb2222"),
+                ],
+                { hasNextPage: true, endCursor: "m2" }
+              )
+            : membersPage([
+                memberItem("I_10", "testowner/testrepo", "aaaa1111"),
+                memberItem("I_11", "testowner/testrepo", null),
+              ]),
+        issues: () => ({
+          data: {
+            nodes: [
+              issueNode(7),
+              issueNode(10, {
+                state: "CLOSED",
+                stateReason: "DUPLICATE",
+                author: { __typename: "Bot", login: "uat-app" },
+                assignees: { nodes: [] },
+                milestone: null,
+                issueFieldValues: { nodes: [] },
+              }),
+            ],
+          },
+        }),
+      });
+
+      const page = await adapter.getMilestoneIssues({
+        id: "testowner/testrepo@PVTIF_sprint:aaaa1111",
+        kind: "ITERATION",
+      });
+
+      const bodies = graphqlBodies();
+      expect(bodies[0].variables).toEqual({ field: "PVTIF_sprint" });
+      expect(bodies[1].variables).toEqual({
+        field: "PVTIF_sprint",
+        name: "Sprint",
+        after: null,
+      });
+      expect(bodies[2].variables.after).toBe("m2");
+      expect(bodies[3].variables).toEqual({ ids: ["I_7", "I_10"] });
+
+      expect(page.total).toBe(2);
+      expect(page.hasMore).toBe(false);
+      expect(page.nextPageToken).toBeUndefined();
+      expect(page.issues[0]).toMatchObject({
+        id: "7",
+        key: "#7",
+        title: "Issue 7",
+        description: "Body",
+        status: "open",
+        priority: "High",
+        assignee: { id: "alice", avatarUrl: "https://avatars.test/alice" },
+        reporter: { id: "reporter-user" },
+        labels: ["bug"],
+        labelColors: { bug: "d73a4a" },
+        commentCount: 3,
+        milestone: {
+          id: "4",
+          name: "v1.2",
+          state: "open",
+          dueDate: "2026-12-20T00:00:00Z",
+        },
+        customFields: {
+          Priority: "High",
+          Components: ["API", "Web UI"],
+          "Story points": 5,
+          _github_owner: "testowner",
+          _github_repo: "testrepo",
+        },
+        url: "https://github.com/testowner/testrepo/issues/7",
+      });
+      // Field values come in the order of their fields' ids, as from REST.
+      expect(Object.keys(page.issues[0].customFields!)).toEqual([
+        "Priority",
+        "Story points",
+        "Components",
+        "_github_owner",
+        "_github_repo",
+      ]);
+      expect(page.issues[1]).toMatchObject({
+        id: "10",
+        status: "duplicate",
+        priority: undefined,
+        assignee: undefined,
+        milestone: undefined,
+        reporter: { id: "uat-app[bot]", name: "uat-app[bot]" },
+      });
+    });
+
+    it("reads the Project once for several iterations and pages members by offset", async () => {
+      route({
+        field: () => fieldResponse,
+        members: () =>
+          membersPage([
+            memberItem("I_1", "testowner/testrepo", "aaaa1111"),
+            memberItem("I_2", "testowner/testrepo", "aaaa1111"),
+            memberItem("I_3", "testowner/testrepo", "aaaa1111"),
+            memberItem("I_4", "testowner/testrepo", "bbbb2222"),
+          ]),
+        issues: (variables) => ({
+          data: {
+            nodes: variables.ids.map((id: string) =>
+              issueNode(Number(id.slice(2)))
+            ),
+          },
+        }),
+      });
+
+      const first = await adapter.getMilestoneIssues(
+        { id: "testowner/testrepo@PVTIF_sprint:aaaa1111", kind: "ITERATION" },
+        { limit: 2 }
+      );
+      expect(first.issues.map((issue) => issue.key)).toEqual(["#1", "#2"]);
+      expect(first).toMatchObject({
+        total: 3,
+        hasMore: true,
+        nextPageToken: "2",
+      });
+
+      const second = await adapter.getMilestoneIssues(
+        { id: "testowner/testrepo@PVTIF_sprint:aaaa1111", kind: "ITERATION" },
+        { limit: 2, pageToken: "2" }
+      );
+      expect(second.issues.map((issue) => issue.key)).toEqual(["#3"]);
+      expect(second.hasMore).toBe(false);
+
+      const other = await adapter.getMilestoneIssues({
+        id: "testowner/testrepo@PVTIF_sprint:bbbb2222",
+        kind: "ITERATION",
+      });
+      expect(other.issues.map((issue) => issue.key)).toEqual(["#4"]);
+
+      expect(countQueries("fieldValueByName")).toBe(1);
+
+      // Half a minute on, the Project is read again.
+      vi.setSystemTime(new Date("2026-12-05T10:00:29Z"));
+      await adapter.getMilestoneIssues({
+        id: "testowner/testrepo@PVTIF_sprint:bbbb2222",
+        kind: "ITERATION",
+      });
+      expect(countQueries("fieldValueByName")).toBe(1);
+
+      vi.setSystemTime(new Date("2026-12-05T10:00:31Z"));
+      await adapter.getMilestoneIssues({
+        id: "testowner/testrepo@PVTIF_sprint:bbbb2222",
+        kind: "ITERATION",
+      });
+      expect(countQueries("fieldValueByName")).toBe(2);
+    });
+
+    it("shares one read of the Project between requests made together, however long it takes", async () => {
+      let release: (() => void) | undefined;
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      route({
+        field: () => fieldResponse,
+        members: async () => {
+          await held;
+          return membersPage([
+            memberItem("I_1", "testowner/testrepo", "aaaa1111"),
+            memberItem("I_4", "testowner/testrepo", "bbbb2222"),
+          ]);
+        },
+        issues: (variables) => ({
+          data: {
+            nodes: variables.ids.map((id: string) =>
+              issueNode(Number(id.slice(2)))
+            ),
+          },
+        }),
+      });
+
+      const first = adapter.getMilestoneIssues({
+        id: "testowner/testrepo@PVTIF_sprint:aaaa1111",
+        kind: "ITERATION",
+      });
+      // The read outlasts the time a finished one is kept.
+      vi.setSystemTime(new Date("2026-12-05T10:05:00Z"));
+      const second = adapter.getMilestoneIssues({
+        id: "testowner/testrepo@PVTIF_sprint:bbbb2222",
+        kind: "ITERATION",
+      });
+      release!();
+
+      expect((await first).issues.map((issue) => issue.key)).toEqual(["#1"]);
+      expect((await second).issues.map((issue) => issue.key)).toEqual(["#4"]);
+      expect(countQueries("fieldValueByName")).toBe(1);
+    });
+
+    it("answers empty for an iteration with no issue of the repository, without asking for issues", async () => {
+      route({
+        field: () => fieldResponse,
+        members: () =>
+          membersPage([memberItem("I_8", "testowner/other", "cccc3333")]),
+      });
+
+      expect(
+        await adapter.getMilestoneIssues({
+          id: "testowner/testrepo@PVTIF_sprint:cccc3333",
+          kind: "ITERATION",
+        })
+      ).toEqual({ issues: [], total: 0, hasMore: false });
+      expect(countQueries("nodes(ids")).toBe(0);
+    });
+
+    it("refuses an iteration the field no longer holds", async () => {
+      route({
+        field: () => fieldResponse,
+        members: () => membersPage([]),
+      });
+
+      await expect(
+        adapter.getMilestoneIssues({
+          id: "testowner/testrepo@PVTIF_sprint:ffff9999",
+          kind: "ITERATION",
+        })
+      ).rejects.toThrow("GitHub Project iteration ffff9999 was not found");
+    });
+
+    it("refuses a field that no longer exists and reads again on the next call", async () => {
+      let exists = false;
+      route({
+        field: () =>
+          exists
+            ? fieldResponse
+            : {
+                data: { node: null },
+                errors: [
+                  {
+                    type: "NOT_FOUND",
+                    message: "Could not resolve to a node with the global id",
+                  },
+                ],
+              },
+        members: () => membersPage([]),
+      });
+
+      await expect(
+        adapter.getMilestoneIssues({
+          id: "testowner/testrepo@PVTIF_sprint:aaaa1111",
+          kind: "ITERATION",
+        })
+      ).rejects.toThrow("Could not resolve to a node with the global id");
+
+      exists = true;
+      expect(
+        await adapter.getMilestoneIssues({
+          id: "testowner/testrepo@PVTIF_sprint:aaaa1111",
+          kind: "ITERATION",
+        })
+      ).toEqual({ issues: [], total: 0, hasMore: false });
+    });
+
+    it("refuses a Project with more items than it reads", async () => {
+      route({
+        field: () => fieldResponse,
+        members: () =>
+          membersPage([memberItem("I_1", "testowner/testrepo", "aaaa1111")], {
+            hasNextPage: true,
+            endCursor: "next",
+          }),
+      });
+
+      await expect(
+        adapter.getMilestoneIssues({
+          id: "testowner/testrepo@PVTIF_sprint:aaaa1111",
+          kind: "ITERATION",
+        })
+      ).rejects.toThrow("more than 10000 items");
+      expect(countQueries("fieldValueByName")).toBe(100);
+    });
+
+    it("asks a server that predates issue fields without them", async () => {
+      route({
+        field: () => fieldResponse,
+        members: () =>
+          membersPage([memberItem("I_7", "testowner/testrepo", "aaaa1111")]),
+        issues: (_variables, query) =>
+          query.includes("issueFieldValues")
+            ? {
+                errors: [
+                  {
+                    message: "Field 'issueFieldValues' doesn't exist",
+                    extensions: { code: "undefinedField" },
+                  },
+                ],
+              }
+            : {
+                data: {
+                  nodes: [issueNode(7, { issueFieldValues: undefined })],
+                },
+              },
+      });
+
+      const page = await adapter.getMilestoneIssues({
+        id: "testowner/testrepo@PVTIF_sprint:aaaa1111",
+        kind: "ITERATION",
+      });
+
+      expect(countQueries("nodes(ids")).toBe(2);
+      expect(graphqlBodies().at(-1).query).not.toContain("enableDuplicate");
+      expect(page.issues[0]).toMatchObject({
+        key: "#7",
+        priority: undefined,
+        customFields: { _github_owner: "testowner", _github_repo: "testrepo" },
+      });
+    });
+
+    it("answers empty for a malformed iteration ref", async () => {
+      expect(
+        await adapter.getMilestoneIssues({
+          id: "testowner/testrepo#4",
+          kind: "ITERATION",
+        })
+      ).toEqual({ issues: [], hasMore: false });
+      expect(mockFetch).toHaveBeenCalledTimes(1); // authenticate only
+    });
+  });
+
+  describe("upsertIssueComment", () => {
+    const MARKER = "<!-- testplanit-results https://tp.example.com/p/1 -->";
+    const BODY = `${MARKER}\n### Test results`;
+    const COMMENTS =
+      "https://api.github.com/repos/acme/app/issues/12/comments?per_page=100&page=1";
+
+    const okJson = (payload: unknown) => ({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(payload),
+    });
+    const refused = (status: number) => ({
+      ok: false,
+      status,
+      text: () => Promise.resolve("refused"),
+      headers: { get: () => null },
+    });
+    const requests = () =>
+      mockFetch.mock.calls
+        .slice(1)
+        .map((call) => `${call[1]?.method ?? "GET"} ${call[0]}`);
+
+    beforeEach(async () => {
+      vi.spyOn(adapter as any, "sleep").mockResolvedValue(undefined);
+      mockFetch.mockResolvedValueOnce(okJson({ login: "testuser" }));
+      await adapter.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      mockFetch.mockReset();
+    });
+
+    it("adds a comment when none starts with the marker", async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          okJson([{ id: 1, body: `A reply quoting ${MARKER}` }])
+        )
+        .mockResolvedValueOnce(okJson({ id: 77 }));
+
+      const written = await adapter.upsertIssueComment(
+        "acme/app#12",
+        MARKER,
+        BODY
+      );
+
+      expect(requests()).toEqual([
+        `GET ${COMMENTS}`,
+        "POST https://api.github.com/repos/acme/app/issues/12/comments",
+      ]);
+      expect(JSON.parse(mockFetch.mock.lastCall![1].body)).toEqual({
+        body: BODY,
+      });
+      expect(written).toEqual({ id: "77", created: true, changed: true });
+    });
+
+    it("replaces the newest comment that starts with the marker", async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          okJson([
+            { id: 5, body: `${MARKER}\nold` },
+            { id: 6, body: "unrelated" },
+            { id: 9, body: `${MARKER}\nnewer` },
+          ])
+        )
+        .mockResolvedValueOnce(okJson({ id: 9 }));
+
+      const written = await adapter.upsertIssueComment(
+        "acme/app#12",
+        MARKER,
+        BODY
+      );
+
+      expect(requests()[1]).toBe(
+        "PATCH https://api.github.com/repos/acme/app/issues/comments/9"
+      );
+      expect(JSON.parse(mockFetch.mock.lastCall![1].body)).toEqual({
+        body: BODY,
+      });
+      expect(written).toEqual({ id: "9", created: false, changed: true });
+    });
+
+    it("leaves a comment alone that already says the same", async () => {
+      mockFetch.mockResolvedValueOnce(okJson([{ id: 9, body: BODY }]));
+
+      const written = await adapter.upsertIssueComment(
+        "acme/app#12",
+        MARKER,
+        BODY
+      );
+
+      expect(requests()).toEqual([`GET ${COMMENTS}`]);
+      expect(written).toEqual({ id: "9", created: false, changed: false });
+    });
+
+    it("adds a comment when the existing one cannot be edited", async () => {
+      mockFetch
+        .mockResolvedValueOnce(okJson([{ id: 9, body: `${MARKER}\nold` }]))
+        .mockResolvedValueOnce(refused(403))
+        .mockResolvedValueOnce(okJson({ id: 78 }));
+
+      const written = await adapter.upsertIssueComment(
+        "acme/app#12",
+        MARKER,
+        BODY
+      );
+
+      expect(requests().map((request) => request.split(" ")[0])).toEqual([
+        "GET",
+        "PATCH",
+        "POST",
+      ]);
+      expect(written).toEqual({ id: "78", created: true, changed: true });
+    });
+
+    it("writes nothing when the comments cannot be read", async () => {
+      mockFetch.mockResolvedValueOnce(refused(404));
+
+      await expect(
+        adapter.upsertIssueComment("acme/app#12", MARKER, BODY)
+      ).rejects.toThrow();
+      expect(requests()).toEqual([`GET ${COMMENTS}`]);
     });
   });
 

@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "Inserisci il codice ricevuto nell'email di accesso. I codici funzionano solo nel browser in cui hai richiesto il link.",
         "backToRequest": "Richiedi invece un nuovo link"
       },
+      "passkey": {
+        "signIn": "Accedi con una passkey",
+        "failed": "Questa passkey non potrebbe essere utilizzata per accedere. Riprova o accedi in un altro modo.",
+        "unavailable": "L'accesso con passkey non è disponibile al momento.",
+        "addressMismatch": "Le passkey sono configurate per un indirizzo diverso da quello nel tuo browser. Chiedi a un amministratore di controllare l'URL dell'applicazione.",
+        "tooManyRequests": "Troppi tentativi. Attendi un momento e riprova."
+      },
       "twoFactor": {
         "title": "Autenticazione a due fattori",
         "description": "Inserisci il codice a 6 cifre generato dalla tua app di autenticazione oppure utilizza un codice di backup."
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "Analizza questi progetti collegati per nuovi traguardi",
             "settingsSaved": "Impostazioni di sincronizzazione dei traguardi salvate",
             "saveError": "Impossibile salvare le impostazioni di sincronizzazione dei traguardi"
+          },
+          "resultComments": {
+            "title": "Commenti sui risultati",
+            "description": "Al termine di un'esecuzione di test, pubblica i suoi risultati come commento sulle issues di {provider} che copre: le issues collegate ai suoi casi di test, ai suoi risultati e all'esecuzione. Ogni issue contiene un commento, che gli esecuzioni successive aggiornano. Il commento nomina l'esecuzione di test e i casi di test collegati con i loro risultati, e si collega ad essi in TestPlanIt.",
+            "enableLabel": "Pubblica i risultati sulle issues collegate"
           },
           "requirementsConfig": {
             "title": "Sincronizzazione requisiti",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "Profilo utente",
       "edit": {
-        "title": "Modifica profilo",
         "timezonePlaceholder": "Seleziona o cerca il fuso orario...",
         "timezoneRequired": "Il fuso orario è obbligatorio.",
         "deleteAvatar": "Elimina Avatar",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "token agente",
         "errors": {
           "nameRequired": "Il nome del token è obbligatorio."
+        }
+      },
+      "passkeys": {
+        "title": "Passkey",
+        "description": "Una passkey ti consente di accedere con l'impronta digitale, il volto o il PIN del tuo dispositivo invece della tua password.",
+        "add": "Aggiungi Passkey",
+        "addTitle": "Aggiungi una Passkey",
+        "addDescription": "Conferma che sei tu, quindi segui il prompt del tuo browser per creare la passkey.",
+        "nameLabel": "Nome della Passkey",
+        "namePlaceholder": "ad es., MacBook, Telefono",
+        "passwordLabel": "Password attuale",
+        "codeLabel": "Codice di autenticazione",
+        "noPasskeys": "Nessuna passkey aggiunta ancora.",
+        "removeTitle": "Rimuovere la Passkey?",
+        "removeDescription": "Questa passkey non accederà più a questo account. Rimane anche sul dispositivo o nel gestore delle password che la contiene fino a quando non viene eliminata lì.",
+        "disabledNotice": "L'accesso con passkey è disattivato. Le passkey non possono essere aggiunte o utilizzate fino a quando un amministratore non lo riattiva.",
+        "notSupported": "Questo browser non supporta le passkey.",
+        "errors": {
+          "invalidPassword": "La password attuale non è corretta.",
+          "passwordNotSet": "Imposta una password prima di aggiungere una passkey.",
+          "tooManyAttempts": "Troppi tentativi. Riprova più tardi.",
+          "limitReached": "Questo account ha il numero massimo di passkey. Rimuovine una per aggiungerne un'altra.",
+          "alreadyRegistered": "Questo dispositivo ha già una passkey per questo account.",
+          "registrationFailed": "La passkey non potrebbe essere aggiunta. Riprova.",
+          "unavailable": "Le passkey non sono disponibili per questo account.",
+          "removeFailed": "La passkey non potrebbe essere rimossa."
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "Autenticazione Magic Link",
           "description": "Attiva o disattiva l'autenticazione senza password basata sull'email"
+        },
+        "passkeys": {
+          "title": "Passkey"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "Autenticazione Magic Link disabilitata",
         "magicLinkCreated": "Fornitore di Magic Link creato",
         "magicLinkUpdateFailed": "Impossibile aggiornare il provider Magic Link",
+        "passkeysEnabled": "Accesso con passkey abilitato",
+        "passkeysDisabled": "Accesso con passkey disabilitato",
+        "passkeysUpdateFailed": "Impossibile aggiornare l'impostazione della passkey",
         "configureFirst": "Si prega di configurare il provider prima di abilitarlo",
         "domainRestrictionEnabled": "Restrizione del dominio e-mail abilitata",
         "domainRestrictionDisabled": "Restrizione del dominio e-mail disabilitata",
@@ -8116,6 +8159,7 @@
     "roles": "## Ruoli\nI ruoli controllano cosa possono fare gli utenti: ciascuno attiva o disattiva le autorizzazioni per area applicativa. Assegna un ruolo agli utenti direttamente o come predefinito del progetto.",
     "sso": "## Autenticazione\nGestisci le modalità di accesso degli utenti e se è possibile registrare nuovi account.",
     "ssoProviders": "## Provider di accesso\nConfigura le modalità di accesso degli utenti alla tua applicazione.",
+    "ssoPasskeys": "## Passkey\nGli utenti con una password possono aggiungere passkey al loro profilo e accedere con l'impronta digitale, il volto o il PIN del loro dispositivo. Un accesso con passkey conta come autenticazione a due fattori.\n\nLe passkey richiedono che l'applicazione sia servita su HTTPS (o su localhost); in caso contrario, questa riga mostra Non configurato. Non sono disponibili mentre Forza accesso SSO è attivo.",
     "ssoRegistration": "## Impostazioni di registrazione\nControlla chi può registrarsi per nuovi account.",
     "ssoAllowRegistration": "## Consenti l'autoregistrazione\nQuando questa opzione è disabilitata, i nuovi utenti non possono registrarsi direttamente né creare un account tramite SSO. Gli utenti già registrati possono comunque accedere.",
     "ssoDefaultAccess": "## Livello di accesso predefinito\nIl livello di accesso al sistema assegnato ai nuovi utenti al momento della registrazione.",

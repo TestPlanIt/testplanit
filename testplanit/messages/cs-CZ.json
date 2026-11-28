@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "Zadejte kód ze svého přihlašovacího e-mailu. Kódy fungují pouze v prohlížeči, ve kterém jste si vyžádali odkaz.",
         "backToRequest": "Místo toho si vyžádat nový odkaz"
       },
+      "passkey": {
+        "signIn": "Přihlášení pomocí klíče",
+        "failed": "Tento klíč nelze použít k přihlášení. Zkuste to znovu nebo se přihlaste jiným způsobem.",
+        "unavailable": "Přihlášení pomocí klíče není momentálně dostupné.",
+        "addressMismatch": "Klíče jsou nastaveny pro jinou adresu než ta, která je v prohlížeči. Požádejte správce, aby zkontroloval adresu URL aplikace.",
+        "tooManyRequests": "Příliš mnoho pokusů. Chvíli počkejte a zkuste to znovu."
+      },
       "twoFactor": {
         "title": "Dvoufaktorové ověření",
         "description": "Zadejte 6místný kód z vaší autentizační aplikace nebo použijte záložní kód."
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "Prohledat tyto propojené projekty na nové milníky",
             "settingsSaved": "Nastavení synchronizace milníků uloženo",
             "saveError": "Nepodařilo se uložit nastavení synchronizace milníků"
+          },
+          "resultComments": {
+            "title": "Komentáře k výsledkům",
+            "description": "Po dokončení spuštění testu zveřejní své výsledky jako komentář k problémům {provider}, které pokrývá: problémy propojené s jeho testovacími případy, s jeho výsledky a se spuštěním. Každý problém má jeden komentář, který později spuštění aktualizuje. Komentář pojmenovává spuštění testu a propojené testovací případy s jejich výsledky a odkazuje na ně v TestPlanIt.",
+            "enableLabel": "Zveřejnit výsledky na propojených problémech"
           },
           "requirementsConfig": {
             "title": "Synchronizace požadavků",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "Profil uživatele",
       "edit": {
-        "title": "Upravit profil",
         "timezonePlaceholder": "Vyberte nebo vyhledejte časové pásmo...",
         "timezoneRequired": "Časové pásmo je povinné.",
         "deleteAvatar": "Odstranit avatar",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "Token agenta",
         "errors": {
           "nameRequired": "Název tokenu je povinný."
+        }
+      },
+      "passkeys": {
+        "title": "Klíče",
+        "description": "Klíč vám umožňuje přihlášení pomocí otisku prstu, obličeje nebo PIN kódu vašeho zařízení místo hesla.",
+        "add": "Přidat klíč",
+        "addTitle": "Přidání klíče",
+        "addDescription": "Potvrďte, že jste to vy, a pak postupujte podle pokynů v prohlížeči a vytvořte klíč.",
+        "nameLabel": "Název klíče",
+        "namePlaceholder": "např. MacBook, Telefon",
+        "passwordLabel": "Aktuální heslo",
+        "codeLabel": "Kód autentizátoru",
+        "noPasskeys": "Zatím nebyly přidány žádné klíče.",
+        "removeTitle": "Odstranit klíč?",
+        "removeDescription": "Tento klíč se již nebude moci přihlásit k tomuto účtu. Zůstane také na zařízení nebo správci hesel, který jej má, dokud jej tam neodstraníte.",
+        "disabledNotice": "Přihlášení pomocí klíče je vypnuto. Klíče nelze přidávat ani používat, dokud je správce nezapne zpět.",
+        "notSupported": "Tento prohlížeč nepodporuje klíče.",
+        "errors": {
+          "invalidPassword": "Aktuální heslo je nesprávné.",
+          "passwordNotSet": "Než přidáte klíč, nastavte heslo.",
+          "tooManyAttempts": "Příliš mnoho pokusů. Zkuste to později.",
+          "limitReached": "Tento účet má maximální počet klíčů. Odeberte jednu a přidejte další.",
+          "alreadyRegistered": "Toto zařízení již má klíč pro tento účet.",
+          "registrationFailed": "Klíč nelze přidat. Zkuste to znovu.",
+          "unavailable": "Klíče nejsou pro tento účet dostupné.",
+          "removeFailed": "Klíč nelze odstranit."
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "Ověřování pomocí Magic Link",
           "description": "Povolit nebo zakázat bezheslové ověřování pomocí e-mailu"
+        },
+        "passkeys": {
+          "title": "Klíče"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "Ověřování pomocí Magic Link zakázáno",
         "magicLinkCreated": "Poskytovatel Magic Link byl vytvořen",
         "magicLinkUpdateFailed": "Aktualizace poskytovatele Magic Link se nezdařila",
+        "passkeysEnabled": "Přihlášení pomocí klíče je povoleno",
+        "passkeysDisabled": "Přihlášení pomocí klíče je zakázáno",
+        "passkeysUpdateFailed": "Aktualizace nastavení klíče se nezdařila",
         "configureFirst": "Před povolením poskytovatele jej prosím nakonfigurujte",
         "domainRestrictionEnabled": "Omezení e-mailové domény povoleno",
         "domainRestrictionDisabled": "Omezení e-mailové domény zakázáno",
@@ -8116,6 +8159,7 @@
     "roles": "## Role\nRole určují, co mohou uživatelé dělat — každá z nich přepíná oprávnění pro jednotlivé oblasti aplikace. Přiřaďte roli uživatelům přímo nebo jako výchozí pro projekt.",
     "sso": "## Ověřování\nSpravujte, jak se uživatelé přihlašují a zda se mohou registrovat nové účty.",
     "ssoProviders": "## Poskytovatelé přihlášení\nNakonfigurujte, jak se uživatelé mohou přihlašovat do vaší aplikace.",
+    "ssoPasskeys": "## Klíče\nUživatelé s heslem mohou přidat klíče do svého profilu a přihlásit se pomocí otisku prstu, obličeje nebo PIN kódu jejich zařízení. Přihlášení pomocí klíče se počítá jako dvoufaktorové ověření.\n\nKlíče vyžadují, aby aplikace byla poskytována přes HTTPS (nebo na localhost); v opačném případě tento řádek zobrazuje Není nakonfigurováno. Nejsou dostupné, když je zapnuto Vynutit přihlášení SSO.",
     "ssoRegistration": "## Nastavení registrace\nUrčete, kdo se může registrovat pro nové účty.",
     "ssoAllowRegistration": "## Povolit vlastní registraci\nPokud je zakázána, noví uživatelé se nemohou zaregistrovat přímo ani vytvořit účet přes SSO. Stávající uživatelé se mohou stále přihlásit.",
     "ssoDefaultAccess": "## Výchozí úroveň přístupu\nSystémová úroveň přístupu přiřazená novým uživatelům při registraci.",

@@ -135,6 +135,7 @@ const handleGET = withAuditContext(
 
       const byId = new Map<string, any>();
       const fetchErrors: string[] = [];
+      const partialWarnings: string[] = [];
       for (const mapping of mappings) {
         const sourceProject = {
           id: mapping.id,
@@ -159,6 +160,9 @@ const handleGET = withAuditContext(
               byId.set(item.id, { ...item, sourceProjects: [sourceProject] });
             }
           }
+          for (const warning of result.warnings ?? []) {
+            partialWarnings.push(`${sourceProject.key}: ${warning}`);
+          }
         } catch (error: any) {
           fetchErrors.push(
             `${sourceProject.key}: ${error?.message ?? "fetch failed"}`
@@ -172,10 +176,11 @@ const handleGET = withAuditContext(
         return NextResponse.json({ error: fetchErrors[0] }, { status: 500 });
       }
 
+      const warnings = [...fetchErrors, ...partialWarnings];
       return NextResponse.json({
         items: Array.from(byId.values()),
         hasMore: false,
-        ...(fetchErrors.length > 0 ? { warnings: fetchErrors } : {}),
+        ...(warnings.length > 0 ? { warnings } : {}),
       });
     } catch (error: any) {
       console.error("Error previewing milestone sync:", error);

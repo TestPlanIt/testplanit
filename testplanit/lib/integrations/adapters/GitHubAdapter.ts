@@ -7,6 +7,7 @@ import {
 import { parseIssueTemplates } from "../issueTemplateParser";
 import type { IssueTemplateSet } from "../issueTemplates";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
+import { calendarDateToInstant } from "~/utils/calendarDate";
 import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
@@ -63,6 +64,24 @@ const MAX_PAGES = 30;
 /** An issue's timeline is read up to this many pages (1,000 events). */
 const MAX_TIMELINE_PAGES = 10;
 
+/** A repository's linked Projects are read in pages of this size. */
+const PROJECTS_PAGE_SIZE = 20;
+
+/** A repository's linked Projects are read up to this many pages (100). */
+const MAX_PROJECT_PAGES = 5;
+
+/** A Project's items are read up to this many pages (10,000 items). */
+const MAX_PROJECT_ITEM_PAGES = 100;
+
+/**
+ * A finished read of a Project's items answers membership questions this
+ * long. Long enough for a sync pass to get from one iteration to the next,
+ * short enough that a change made in GitHub shows at the next Sync now.
+ */
+const ITERATION_MEMBERS_TTL_MS = 30 * 1000;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 /** A renewable token is replaced this long before it expires. */
 const TOKEN_RENEWAL_MARGIN_MS = 5 * 60 * 1000;
 
@@ -115,6 +134,213 @@ function mapGitHubMilestone(
     state: closed ? "CLOSED" : "ACTIVE",
     rawState: closed ? "closed" : "open",
     url: raw.html_url ?? undefined,
+  };
+}
+
+/**
+ * `owner/repo@<field id>:<iteration id>`, the external id milestone sync
+ * stores for an iteration of a GitHub Project. A Project spans repositories
+ * and issue numbers repeat between them, so an iteration is tracked per
+ * linked repository and holds that repository's issues.
+ */
+function iterationExternalId(
+  owner: string,
+  repo: string,
+  fieldId: string,
+  iterationId: string
+) {
+  return `${owner}/${repo}@${fieldId}:${iterationId}`;
+}
+
+interface IterationRef {
+  owner: string;
+  repo: string;
+  fieldId: string;
+  iterationId: string;
+}
+
+function parseIterationRef(id: string): IterationRef | null {
+  const match = id.match(/^([^/@\s]+)\/([^/@\s]+)@([^:@\s]+):([^:@\s]+)$/);
+  return match
+    ? {
+        owner: match[1],
+        repo: match[2],
+        fieldId: match[3],
+        iterationId: match[4],
+      }
+    : null;
+}
+
+const ITERATION_RAW_STATE: Record<ExternalMilestone["state"], string> = {
+  CLOSED: "completed",
+  ACTIVE: "current",
+  FUTURE: "planned",
+};
+
+/**
+ * An iteration of a Project. GitHub gives it a first day and a length in
+ * days and no state: it is current between its first and last day, and
+ * completed once GitHub lists it as such or its last day is over. The days
+ * are widened to instants because an iteration's dates are shown in the
+ * reader's timezone.
+ */
+function mapProjectIteration(
+  raw: any,
+  context: {
+    owner: string;
+    repo: string;
+    fieldId: string;
+    projectUrl?: string;
+    completed: boolean;
+  }
+): ExternalMilestone | null {
+  if (typeof raw?.id !== "string" || !raw.id) return null;
+  const firstDay =
+    typeof raw.startDate === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(raw.startDate)
+      ? new Date(`${raw.startDate}T00:00:00Z`)
+      : undefined;
+  const lastDay =
+    firstDay && Number.isInteger(raw.duration) && raw.duration > 0
+      ? new Date(firstDay.getTime() + (raw.duration - 1) * DAY_MS)
+      : undefined;
+
+  const now = Date.now();
+  let state: ExternalMilestone["state"] = "FUTURE";
+  if (context.completed || (lastDay && now >= lastDay.getTime() + DAY_MS)) {
+    state = "CLOSED";
+  } else if (firstDay && now >= firstDay.getTime()) {
+    state = "ACTIVE";
+  }
+
+  return {
+    id: iterationExternalId(
+      context.owner,
+      context.repo,
+      context.fieldId,
+      raw.id
+    ),
+    kind: "ITERATION",
+    name: raw.title || raw.id,
+    startDate: firstDay ? calendarDateToInstant(firstDay) : undefined,
+    endDate: lastDay ? calendarDateToInstant(lastDay) : undefined,
+    state,
+    rawState: ITERATION_RAW_STATE[state],
+    url: context.projectUrl ?? undefined,
+  };
+}
+
+/** GitHub's own words for why a GraphQL query failed. */
+function graphqlErrorText(errors: any[]): string {
+  return errors
+    .map((error) => error?.message)
+    .filter(Boolean)
+    .join("; ");
+}
+
+/** The server does not know a field or argument the query names. */
+function isUnknownSchemaError(error: any): boolean {
+  const code = error?.extensions?.code;
+  return code === "undefinedField" || code === "argumentNotAccepted";
+}
+
+/** The token is not allowed to read what the query asks for. */
+function isAccessError(error: any): boolean {
+  return error?.type === "INSUFFICIENT_SCOPES" || error?.type === "FORBIDDEN";
+}
+
+const PROJECTS_ACCESS_MESSAGE =
+  "GitHub refused access to Projects. A personal access token needs the read:project scope; a GitHub App needs read access to the organization's Projects.";
+
+function lowerCased(value: unknown): string | null {
+  return typeof value === "string" ? value.toLowerCase() : null;
+}
+
+/** An issue field value in the shape the REST API reports it. */
+function restIssueFieldValue(node: any): Record<string, unknown> | null {
+  const name = node?.field?.name;
+  if (typeof name !== "string" || !name) return null;
+  const base = {
+    issue_field_id: Number(node.field.fullDatabaseId),
+    issue_field_name: name,
+  };
+  switch (node.__typename) {
+    case "IssueFieldSingleSelectValue":
+      return {
+        ...base,
+        data_type: "single_select",
+        value: node.name,
+        single_select_option: { name: node.name },
+      };
+    case "IssueFieldMultiSelectValue":
+      return {
+        ...base,
+        data_type: "multi_select",
+        value: node.value,
+        multi_select_options: (node.options ?? []).map((option: any) => ({
+          name: option?.name,
+        })),
+      };
+    case "IssueFieldNumberValue":
+      return { ...base, data_type: "number", value: node.number };
+    case "IssueFieldDateValue":
+      return { ...base, data_type: "date", value: node.value };
+    case "IssueFieldTextValue":
+      return { ...base, data_type: "text", value: node.value };
+    default:
+      return null;
+  }
+}
+
+/**
+ * An issue read through GraphQL, in the shape the REST API reports it, so
+ * one mapping serves both.
+ */
+function restIssueFromGraphql(node: any, apiRoot: string): any {
+  const assignees = (node.assignees?.nodes ?? [])
+    .filter((user: any) => user?.login)
+    .map((user: any) => ({ login: user.login, avatar_url: user.avatarUrl }));
+  // REST lists an issue's field values in the order of their fields' ids.
+  const fieldValues = (node.issueFieldValues?.nodes ?? [])
+    .map(restIssueFieldValue)
+    .filter(Boolean)
+    .sort(
+      (a: any, b: any) => (a.issue_field_id || 0) - (b.issue_field_id || 0)
+    );
+  // REST names an App's bot account `<app>[bot]`; GraphQL leaves that off.
+  const author = node.author?.login
+    ? node.author.__typename === "Bot"
+      ? `${node.author.login}[bot]`
+      : node.author.login
+    : null;
+  return {
+    number: node.number,
+    title: node.title,
+    body: node.body,
+    state: lowerCased(node.state),
+    state_reason: lowerCased(node.stateReason),
+    html_url: node.url,
+    repository_url: node.repository?.nameWithOwner
+      ? `${apiRoot}/repos/${node.repository.nameWithOwner}`
+      : undefined,
+    created_at: node.createdAt,
+    updated_at: node.updatedAt,
+    user: author ? { login: author } : null,
+    assignee: assignees[0] ?? null,
+    assignees,
+    labels: (node.labels?.nodes ?? [])
+      .filter((label: any) => label?.name)
+      .map((label: any) => ({ name: label.name, color: label.color })),
+    milestone: node.milestone
+      ? {
+          number: node.milestone.number,
+          title: node.milestone.title,
+          state: lowerCased(node.milestone.state),
+          due_on: node.milestone.dueOn ?? null,
+        }
+      : null,
+    comments: node.comments?.totalCount,
+    issue_field_values: fieldValues,
   };
 }
 
@@ -184,6 +410,101 @@ query($owner: String!, $name: String!) {
 fragment templateFiles on GitObject {
   ... on Tree { entries { name object { ... on Blob { text } } } }
 }`;
+
+/**
+ * The iteration fields of the Projects linked to a repository, with their
+ * open and completed iterations.
+ */
+const PROJECT_ITERATIONS_QUERY = `
+query($owner: String!, $name: String!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    projectsV2(first: ${PROJECTS_PAGE_SIZE}, after: $after) {
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        url closed
+        fields(first: 100) {
+          nodes {
+            ... on ProjectV2IterationField {
+              id
+              configuration {
+                iterations { id title startDate duration }
+                completedIterations { id title startDate duration }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`;
+
+/** An iteration field's name and the ids of the iterations it holds. */
+const ITERATION_FIELD_QUERY = `
+query($field: ID!) {
+  node(id: $field) {
+    ... on ProjectV2IterationField {
+      name
+      configuration {
+        iterations { id }
+        completedIterations { id }
+      }
+    }
+  }
+}`;
+
+/** A page of a Project's items: each issue and the iteration it is in. */
+const ITERATION_MEMBERS_QUERY = `
+query($field: ID!, $name: String!, $after: String) {
+  node(id: $field) {
+    ... on ProjectV2IterationField {
+      project {
+        items(first: ${PAGE_SIZE}, after: $after) {
+          pageInfo { hasNextPage endCursor }
+          nodes {
+            content { ... on Issue { id repository { nameWithOwner } } }
+            fieldValueByName(name: $name) {
+              ... on ProjectV2ItemFieldIterationValue { iterationId }
+            }
+          }
+        }
+      }
+    }
+  }
+}`;
+
+const ISSUE_FIELD_VALUES_SELECTION = `
+      issueFieldValues(first: 100) {
+        nodes {
+          __typename
+          ... on IssueFieldTextValue { value field { ... on IssueFieldText { name fullDatabaseId } } }
+          ... on IssueFieldNumberValue { number: value field { ... on IssueFieldNumber { name fullDatabaseId } } }
+          ... on IssueFieldDateValue { value field { ... on IssueFieldDate { name fullDatabaseId } } }
+          ... on IssueFieldSingleSelectValue { name field { ... on IssueFieldSingleSelect { name fullDatabaseId } } }
+          ... on IssueFieldMultiSelectValue { value options { name } field { ... on IssueFieldMultiSelect { name fullDatabaseId } } }
+        }
+      }`;
+
+/**
+ * Issues by node id. A GitHub Enterprise Server that predates issue fields
+ * is asked without them.
+ */
+function issuesByIdQuery(withIssueFields: boolean): string {
+  return `
+query($ids: [ID!]!) {
+  nodes(ids: $ids) {
+    ... on Issue {
+      number title body state url createdAt updatedAt
+      ${withIssueFields ? "stateReason(enableDuplicate: true)" : "stateReason"}
+      repository { nameWithOwner }
+      author { __typename login }
+      assignees(first: ${MAX_ASSIGNEES}) { nodes { login avatarUrl } }
+      labels(first: 100) { nodes { name color } }
+      milestone { number title state dueOn }
+      comments { totalCount }${withIssueFields ? ISSUE_FIELD_VALUES_SELECTION : ""}
+    }
+  }
+}`;
+}
 
 /** GitHub takes a select option by its name, so the name is also its id. */
 function fieldOptions(options: unknown): Array<{ id: string; name: string }> {
@@ -348,9 +669,11 @@ export class GitHubAdapter extends BaseAdapter {
       attachments: false, // GitHub doesn't support direct attachments on issues
       linkedIssues: true,
       comments: true,
-      // Repository milestones map onto RELEASE; GitHub has no sprint-like
-      // artifact. The `milestone` webhook event keeps synced rows fresh.
-      milestones: { kinds: ["RELEASE"], webhooks: true },
+      // Repository milestones map onto RELEASE and the iterations of the
+      // Projects linked to the repository onto ITERATION. The `milestone`
+      // webhook event keeps synced releases fresh; iterations have no
+      // repository webhook and are refreshed by sync alone.
+      milestones: { kinds: ["RELEASE", "ITERATION"], webhooks: true },
     };
   }
 
@@ -790,6 +1113,59 @@ export class GitHubAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   * Writes the one comment an issue holds for `marker`, the text its body
+   * starts with. The newest comment that starts with it is replaced; a
+   * comment is added when there is none, or when the newest cannot be
+   * edited because another account wrote it. Reading the comments throws on
+   * failure, so a failed read never adds a second comment.
+   */
+  async upsertIssueComment(
+    issueId: string,
+    marker: string,
+    body: string
+  ): Promise<{ id?: string; created: boolean; changed: boolean }> {
+    const { owner, repo, issueNumber } = this.parseIssueRef(issueId);
+    const repository = `${this.baseUrl}/repos/${owner}/${repo}`;
+    const comments = await this.listAllPages<any>(
+      `${repository}/issues/${issueNumber}/comments`
+    );
+    const existing = [...comments]
+      .reverse()
+      .find(
+        (comment) =>
+          comment?.id != null &&
+          typeof comment.body === "string" &&
+          comment.body.startsWith(marker)
+      );
+
+    if (existing) {
+      if (existing.body === body) {
+        return { id: String(existing.id), created: false, changed: false };
+      }
+      try {
+        await this.makeRequest(`${repository}/issues/comments/${existing.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ body }),
+        });
+        return { id: String(existing.id), created: false, changed: true };
+      } catch (error) {
+        const status = this.parseStatusFromError(error);
+        if (status !== 403 && status !== 404) throw error;
+      }
+    }
+
+    const created = await this.makeRequest<any>(
+      `${repository}/issues/${issueNumber}/comments`,
+      { method: "POST", body: JSON.stringify({ body }) }
+    );
+    return {
+      id: created?.id != null ? String(created.id) : undefined,
+      created: true,
+      changed: true,
+    };
+  }
+
   async searchIssues(options: IssueSearchOptions): Promise<{
     issues: IssueData[];
     total: number;
@@ -1115,12 +1491,16 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   /**
-   * Repository milestones in the provider-neutral shape milestone sync
-   * consumes. GitHub milestones are per repository and addressed by number,
-   * so the external id is `owner/repo#number` — unique across the
-   * integration and enough for `getMilestoneIssues` to find the repository
-   * again. A milestone is ACTIVE while open and CLOSED once closed; GitHub
-   * has no planned-but-not-started state. There are no ITERATION artifacts.
+   * Repository milestones and Project iterations in the provider-neutral
+   * shape milestone sync consumes. GitHub milestones are per repository and
+   * addressed by number, so a RELEASE's external id is `owner/repo#number` —
+   * unique across the integration and enough for `getMilestoneIssues` to
+   * find the repository again. A milestone is ACTIVE while open and CLOSED
+   * once closed; GitHub has no planned-but-not-started state for one.
+   *
+   * Asked for both kinds at once, a failure to read iterations is returned
+   * as a warning beside the releases: Projects need access that milestones
+   * do not. Asked for iterations alone, it is thrown.
    */
   async getExternalMilestones(options: {
     projectKey: string;
@@ -1131,24 +1511,283 @@ export class GitHubAdapter extends BaseAdapter {
     items: ExternalMilestone[];
     hasMore: boolean;
     nextPageToken?: string;
+    warnings?: string[];
   }> {
-    if (options.kind === "ITERATION") {
-      return { items: [], hasMore: false };
-    }
     const { owner, repo } = await this.resolveRepository(options.projectKey);
-    const milestones = await this.listAllPages<any>(
-      `${this.baseUrl}/repos/${owner}/${repo}/milestones`,
-      {
-        state: options.includeClosed ? "all" : "open",
-        sort: "due_on",
-        direction: "asc",
+    const includeClosed = options.includeClosed === true;
+    const items: ExternalMilestone[] = [];
+    const warnings: string[] = [];
+
+    if (options.kind !== "ITERATION") {
+      const milestones = await this.listAllPages<any>(
+        `${this.baseUrl}/repos/${owner}/${repo}/milestones`,
+        {
+          state: includeClosed ? "all" : "open",
+          sort: "due_on",
+          direction: "asc",
+        }
+      );
+      items.push(
+        ...milestones.map((milestone) =>
+          mapGitHubMilestone(milestone, owner, repo)
+        )
+      );
+    }
+
+    if (options.kind === "ITERATION") {
+      items.push(
+        ...(await this.getProjectIterations(owner, repo, includeClosed))
+      );
+    } else if (!options.kind) {
+      try {
+        items.push(
+          ...(await this.getProjectIterations(owner, repo, includeClosed))
+        );
+      } catch (error: any) {
+        warnings.push(error?.message ?? "Project iterations could not be read");
+      }
+    }
+
+    return {
+      items,
+      hasMore: false,
+      ...(warnings.length > 0 ? { warnings } : {}),
+    };
+  }
+
+  /**
+   * The iterations of the Projects linked to a repository. A Project is
+   * linked from the repository's Projects tab; an iteration field of a
+   * Project that is not linked there is not found. The iterations of a
+   * closed Project count as completed.
+   */
+  private async getProjectIterations(
+    owner: string,
+    repo: string,
+    includeClosed: boolean
+  ): Promise<ExternalMilestone[]> {
+    const items: ExternalMilestone[] = [];
+    let after: string | null = null;
+
+    for (let page = 0; page < MAX_PROJECT_PAGES; page++) {
+      const { data, errors } = await this.graphql(PROJECT_ITERATIONS_QUERY, {
+        owner,
+        name: repo,
+        after,
+      });
+      const projects = data?.repository?.projectsV2;
+      if (!projects) {
+        // A GitHub Enterprise Server without Projects has no iterations.
+        if (errors.some(isUnknownSchemaError)) return [];
+        if (errors.some(isAccessError)) {
+          throw new Error(PROJECTS_ACCESS_MESSAGE);
+        }
+        throw new Error(
+          graphqlErrorText(errors) ||
+            "GitHub returned no Projects for the repository"
+        );
+      }
+
+      for (const project of projects.nodes ?? []) {
+        if (!project || (project.closed && !includeClosed)) continue;
+        for (const field of project.fields?.nodes ?? []) {
+          if (typeof field?.id !== "string" || !field.configuration) continue;
+          const lists: Array<[any[], boolean]> = [
+            [field.configuration.iterations ?? [], false],
+            [field.configuration.completedIterations ?? [], true],
+          ];
+          for (const [iterations, completed] of lists) {
+            for (const iteration of iterations) {
+              const item = mapProjectIteration(iteration, {
+                owner,
+                repo,
+                fieldId: field.id,
+                projectUrl: project.url,
+                completed: completed || project.closed === true,
+              });
+              if (item) items.push(item);
+            }
+          }
+        }
+      }
+
+      if (!projects.pageInfo?.hasNextPage) break;
+      after = projects.pageInfo.endCursor ?? null;
+    }
+
+    return includeClosed
+      ? items
+      : items.filter((item) => item.state !== "CLOSED");
+  }
+
+  // Issues by iteration, per iteration field, from one read of the field's
+  // Project. Kept briefly so refreshing each iteration of a Project in turn
+  // reads the Project once. A read still under way is shared however long
+  // it takes; its age counts from when it finished.
+  private iterationMembers = new Map<
+    string,
+    {
+      loadedAt: number | null;
+      members: Promise<Map<string, Array<{ id: string; repository: string }>>>;
+    }
+  >();
+
+  private loadIterationMembers(
+    fieldId: string
+  ): Promise<Map<string, Array<{ id: string; repository: string }>>> {
+    const cached = this.iterationMembers.get(fieldId);
+    if (
+      cached &&
+      (cached.loadedAt === null ||
+        Date.now() - cached.loadedAt < ITERATION_MEMBERS_TTL_MS)
+    ) {
+      return cached.members;
+    }
+    const entry = {
+      loadedAt: null as number | null,
+      members: this.readIterationMembers(fieldId),
+    };
+    this.iterationMembers.set(fieldId, entry);
+    entry.members.then(
+      () => {
+        entry.loadedAt = Date.now();
+      },
+      () => {
+        if (this.iterationMembers.get(fieldId) === entry) {
+          this.iterationMembers.delete(fieldId);
+        }
       }
     );
+    return entry.members;
+  }
+
+  /**
+   * Every issue of a Project by the iteration the field puts it in. Each
+   * iteration the field holds has an entry, empty when no issue is in it;
+   * an iteration without an entry no longer exists. A Project with more
+   * items than are read is an error: a partial list would read as the rest
+   * having left their iterations.
+   */
+  private async readIterationMembers(
+    fieldId: string
+  ): Promise<Map<string, Array<{ id: string; repository: string }>>> {
+    const field = await this.graphql(ITERATION_FIELD_QUERY, { field: fieldId });
+    const name = field.data?.node?.name;
+    if (typeof name !== "string" || !name) {
+      if (field.errors.some(isAccessError)) {
+        throw new Error(PROJECTS_ACCESS_MESSAGE);
+      }
+      throw new Error(
+        graphqlErrorText(field.errors) ||
+          `GitHub Project iteration field ${fieldId} was not found`
+      );
+    }
+
+    const members = new Map<
+      string,
+      Array<{ id: string; repository: string }>
+    >();
+    const configuration = field.data.node.configuration ?? {};
+    for (const iteration of [
+      ...(configuration.iterations ?? []),
+      ...(configuration.completedIterations ?? []),
+    ]) {
+      if (typeof iteration?.id === "string") members.set(iteration.id, []);
+    }
+
+    let after: string | null = null;
+    for (let page = 0; page < MAX_PROJECT_ITEM_PAGES; page++) {
+      const { data, errors } = await this.graphql(ITERATION_MEMBERS_QUERY, {
+        field: fieldId,
+        name,
+        after,
+      });
+      const items = data?.node?.project?.items;
+      if (!items) {
+        throw new Error(
+          graphqlErrorText(errors) || "GitHub returned no items for the Project"
+        );
+      }
+      for (const item of items.nodes ?? []) {
+        const iterationId = item?.fieldValueByName?.iterationId;
+        const issueId = item?.content?.id;
+        const repository = item?.content?.repository?.nameWithOwner;
+        if (
+          typeof iterationId !== "string" ||
+          typeof issueId !== "string" ||
+          typeof repository !== "string"
+        ) {
+          continue;
+        }
+        const list = members.get(iterationId) ?? [];
+        list.push({ id: issueId, repository: repository.toLowerCase() });
+        members.set(iterationId, list);
+      }
+      if (!items.pageInfo?.hasNextPage) return members;
+      after = items.pageInfo.endCursor ?? null;
+    }
+    throw new Error(
+      `The GitHub Project has more than ${MAX_PROJECT_ITEM_PAGES * PAGE_SIZE} items; its iterations cannot be read in full`
+    );
+  }
+
+  /**
+   * The issues of one repository in an iteration, a page at a time. Pull
+   * requests and draft items are left out. An iteration that no longer
+   * exists is an error, never an empty list, which would read as every
+   * member having left.
+   */
+  private async getIterationIssues(
+    ref: IterationRef,
+    options?: { pageToken?: string; limit?: number }
+  ): Promise<{
+    issues: IssueData[];
+    total?: number;
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    const members = (await this.loadIterationMembers(ref.fieldId)).get(
+      ref.iterationId
+    );
+    if (!members) {
+      throw new Error(
+        `GitHub Project iteration ${ref.iterationId} was not found`
+      );
+    }
+    const repository = `${ref.owner}/${ref.repo}`.toLowerCase();
+    const ids = members
+      .filter((member) => member.repository === repository)
+      .map((member) => member.id);
+
+    const offset = Math.max(0, Number(options?.pageToken) || 0);
+    const limit = Math.min(PAGE_SIZE, Math.max(1, options?.limit ?? PAGE_SIZE));
+    const pageIds = ids.slice(offset, offset + limit);
+    if (pageIds.length === 0) {
+      return { issues: [], total: ids.length, hasMore: false };
+    }
+
+    let response = await this.graphql(issuesByIdQuery(true), { ids: pageIds });
+    if (!response.data?.nodes && response.errors.some(isUnknownSchemaError)) {
+      response = await this.graphql(issuesByIdQuery(false), { ids: pageIds });
+    }
+    const nodes = response.data?.nodes;
+    if (!Array.isArray(nodes)) {
+      throw new Error(
+        graphqlErrorText(response.errors) ||
+          "GitHub returned no issues for the iteration"
+      );
+    }
+
+    const hasMore = offset + pageIds.length < ids.length;
     return {
-      items: milestones.map((milestone) =>
-        mapGitHubMilestone(milestone, owner, repo)
-      ),
-      hasMore: false,
+      issues: nodes
+        .filter((node) => typeof node?.number === "number")
+        .map((node) =>
+          this.mapGitHubIssue(restIssueFromGraphql(node, this.baseUrl))
+        ),
+      total: ids.length,
+      hasMore,
+      nextPageToken: hasMore ? String(offset + pageIds.length) : undefined,
     };
   }
 
@@ -1167,8 +1806,14 @@ export class GitHubAdapter extends BaseAdapter {
     hasMore: boolean;
     nextPageToken?: string;
   }> {
+    if (ref.kind === "ITERATION") {
+      const iteration = parseIterationRef(ref.id);
+      return iteration
+        ? this.getIterationIssues(iteration, options)
+        : { issues: [], hasMore: false };
+    }
     const parsed = parseMilestoneRef(ref.id);
-    if (!parsed || ref.kind !== "RELEASE") {
+    if (!parsed) {
       return { issues: [], hasMore: false };
     }
     const { owner, repo, number } = parsed;
@@ -1264,6 +1909,21 @@ export class GitHubAdapter extends BaseAdapter {
     return `${this.baseUrl}/graphql`;
   }
 
+  /** Runs a GraphQL query and returns its data beside any errors. */
+  private async graphql(
+    query: string,
+    variables: Record<string, unknown>
+  ): Promise<{ data: any; errors: any[] }> {
+    const response = await this.makeRequest<any>(this.getGraphqlUrl(), {
+      method: "POST",
+      body: JSON.stringify({ query, variables }),
+    });
+    return {
+      data: response?.data ?? null,
+      errors: Array.isArray(response?.errors) ? response.errors : [],
+    };
+  }
+
   /**
    * Runs a GraphQL query that takes `$owner` and `$name` and selects
    * `repository`. Answers null when the server does not know a field the
@@ -1274,23 +1934,14 @@ export class GitHubAdapter extends BaseAdapter {
     projectKey: string
   ): Promise<any | null> {
     const { owner, repo } = await this.resolveRepository(projectKey);
-    const response = await this.makeRequest<any>(this.getGraphqlUrl(), {
-      method: "POST",
-      body: JSON.stringify({ query, variables: { owner, name: repo } }),
-    });
-    if (response?.data?.repository) return response.data;
+    const { data, errors } = await this.graphql(query, { owner, name: repo });
+    if (data?.repository) return data;
 
-    const errors: any[] = Array.isArray(response?.errors)
-      ? response.errors
-      : [];
     if (errors.some((error) => error?.extensions?.code === "undefinedField")) {
       return null;
     }
     throw new Error(
-      errors
-        .map((error) => error?.message)
-        .filter(Boolean)
-        .join("; ") || "GitHub returned no repository for the query"
+      graphqlErrorText(errors) || "GitHub returned no repository for the query"
     );
   }
 

@@ -135,11 +135,11 @@ describe("MilestoneSyncSettings", () => {
     ).toBeNull();
   });
 
-  it("offers GitHub only the kinds it has: releases, no sprints", () => {
+  it("offers GitLab only the kind it has: releases, no sprints", () => {
     render(
       <MilestoneSyncSettings
         projectIntegration={makeProjectIntegration()}
-        integration={githubIntegration}
+        integration={{ ...githubIntegration, provider: "GITLAB" }}
       />
     );
 
@@ -151,6 +151,29 @@ describe("MilestoneSyncSettings", () => {
     expect(
       screen.queryByRole("checkbox", { name: /sprintsLabel/i })
     ).toBeNull();
+  });
+
+  it("offers GitHub both kinds and leaves sprints off where only releases were saved", () => {
+    render(
+      <MilestoneSyncSettings
+        projectIntegration={makeProjectIntegration({
+          milestoneSync: {
+            enabled: true,
+            kinds: ["RELEASE"],
+            autoTrack: true,
+            autoTrackAdminId: "admin-1",
+          },
+        })}
+        integration={githubIntegration}
+      />
+    );
+
+    expect(
+      screen.getByRole("checkbox", { name: /releasesLabel/i })
+    ).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: /sprintsLabel/i })
+    ).not.toBeChecked();
   });
 
   it("save button starts disabled, and toggling a setting alone does not persist", async () => {

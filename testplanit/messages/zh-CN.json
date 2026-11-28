@@ -1199,6 +1199,13 @@
         "codeEntryDescription": "请输入登录电子邮件中的代码。代码仅在您请求链接的浏览器中有效。",
         "backToRequest": "改为请求新链接"
       },
+      "passkey": {
+        "signIn": "使用密钥登录",
+        "failed": "该密钥无法用于登录。请重试或选择其他登录方式。",
+        "unavailable": "密钥登录目前不可用。",
+        "addressMismatch": "密钥设置的地址与浏览器中的地址不同。请要求管理员检查应用程序URL。",
+        "tooManyRequests": "尝试次数过多。请稍候片刻后重试。"
+      },
       "twoFactor": {
         "title": "双因素身份验证",
         "description": "输入身份验证器应用程序中的 6 位验证码，或使用备用验证码。"
@@ -1459,6 +1466,11 @@
             "autoTrackProjectsLabel": "扫描这些已连接的项目以查找新的里程碑",
             "settingsSaved": "里程碑同步设置已保存",
             "saveError": "保存里程碑同步设置失败"
+          },
+          "resultComments": {
+            "title": "结果注释",
+            "description": "测试运行完成后，将其结果作为注释发布到其覆盖的{provider}问题上：链接到其测试用例、结果和运行的问题。每个问题包含一条注释，后续运行将更新该注释。注释会命名测试运行和链接的测试用例及其结果，并在TestPlanIt中链接到它们。",
+            "enableLabel": "在关联问题上发布结果"
           },
           "requirementsConfig": {
             "title": "需求同步",
@@ -2872,7 +2884,6 @@
     "profile": {
       "title": "用户个人资料",
       "edit": {
-        "title": "编辑个人资料",
         "timezonePlaceholder": "选择或搜索时区...",
         "timezoneRequired": "必须填写时区信息。",
         "deleteAvatar": "删除头像",
@@ -3156,6 +3167,32 @@
         "agentTokenBadge": "代理令牌",
         "errors": {
           "nameRequired": "令牌名称为必填项。"
+        }
+      },
+      "passkeys": {
+        "title": "密钥",
+        "description": "密钥让您可以使用设备的指纹、面部或PIN码而不是密码登录。",
+        "add": "添加密钥",
+        "addTitle": "添加密钥",
+        "addDescription": "确认您的身份，然后按照浏览器提示创建密钥。",
+        "nameLabel": "密钥名称",
+        "namePlaceholder": "例如：MacBook、手机",
+        "passwordLabel": "当前密码",
+        "codeLabel": "身份验证器代码",
+        "noPasskeys": "尚未添加任何密钥。",
+        "removeTitle": "删除密钥？",
+        "removeDescription": "此密钥将不再能登录此账户。它也将保留在持有它的设备或密码管理器中，直到在那里被删除。",
+        "disabledNotice": "密钥登录已关闭。在管理员重新启用之前，无法添加或使用密钥。",
+        "notSupported": "此浏览器不支持密钥。",
+        "errors": {
+          "invalidPassword": "当前密码不正确。",
+          "passwordNotSet": "添加密钥前请先设置密码。",
+          "tooManyAttempts": "尝试次数过多。请稍后重试。",
+          "limitReached": "此账户已达到密钥数量上限。请删除一个后再添加。",
+          "alreadyRegistered": "此设备已为此账户注册了密钥。",
+          "registrationFailed": "无法添加密钥。请重试。",
+          "unavailable": "此账户不支持密钥。",
+          "removeFailed": "无法删除密钥。"
         }
       }
     },
@@ -5360,6 +5397,9 @@
         "magicLink": {
           "title": "魔法链接认证",
           "description": "启用或禁用基于电子邮件的无密码身份验证"
+        },
+        "passkeys": {
+          "title": "密钥"
         }
       },
       "providers": {
@@ -5439,6 +5479,9 @@
         "magicLinkDisabled": "Magic Link 身份验证已禁用",
         "magicLinkCreated": "Magic Link 提供商创建",
         "magicLinkUpdateFailed": "更新 Magic Link 提供程序失败",
+        "passkeysEnabled": "密钥登录已启用",
+        "passkeysDisabled": "密钥登录已禁用",
+        "passkeysUpdateFailed": "更新密钥设置失败",
         "configureFirst": "请先配置提供程序，然后再启用它。",
         "domainRestrictionEnabled": "已启用电子邮件域限制",
         "domainRestrictionDisabled": "电子邮件域名限制已禁用",
@@ -8116,6 +8159,7 @@
     "roles": "## 角色\n角色控制用户可以执行的操作——每个角色都会针对各应用领域切换权限。您可以直接为用户分配角色，或将其设为项目默认角色。",
     "sso": "## 身份验证\n管理用户登录方式以及是否允许注册新帐户。",
     "ssoProviders": "## 登录提供商\n配置用户如何登录您的应用程序。",
+    "ssoPasskeys": "## 密钥\n具有密码的用户可以在其个人资料中添加密钥，并使用设备的指纹、面部或PIN码登录。密钥登录计为双因素身份验证。\n\n密钥需要应用程序通过HTTPS（或在localhost上）提供；否则此行显示未配置。启用强制SSO登录时，密钥不可用。",
     "ssoRegistration": "## 注册设置\n控制谁可以注册新帐户。",
     "ssoAllowRegistration": "## 允许自助注册\n禁用此功能后，新用户无法直接注册，也无法通过 SSO 创建帐户。现有用户仍可登录。",
     "ssoDefaultAccess": "## 默认访问级别\n新用户注册时分配的系统访问级别。",

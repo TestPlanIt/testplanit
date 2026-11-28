@@ -61,6 +61,12 @@ On a Jira integration using **OAuth 2.0**, Sprints come from Atlassian's separat
 
 :::
 
+:::caution GitHub iterations need access to Projects
+
+On a GitHub integration, Sprints are the iterations of the Projects linked to the repository. A personal access token reads them only with the `read:project` scope, and a GitHub App only with read access to the organization's **Projects**. An OAuth 2.0 connection does not request that scope and cannot read iterations. Without the access, the preview lists the repository's milestones with a notice that Projects could not be read. A Project that is not linked to the repository is not found: link it on the repository's **Projects** tab.
+
+:::
+
 ## Navigation
 
 Clicking on a milestone name will navigate you to the [Milestone Details](./milestone-details.md) page for that specific milestone.
