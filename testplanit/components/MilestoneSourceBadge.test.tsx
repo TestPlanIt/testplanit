@@ -48,6 +48,7 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
   }),
 }));
 
+import { toast } from "sonner";
 import {
   MilestoneSourceBadge,
   resolveMilestoneProjectSpace,
@@ -77,6 +78,9 @@ describe("MilestoneSourceBadge", () => {
     mockFindFirstMilestones.mockReturnValue({ data: undefined });
     mockRouterRefresh.mockReset();
     mockRouterPush.mockReset();
+    mockInvalidateQueries.mockReset();
+    vi.mocked(toast.success).mockReset();
+    vi.mocked(toast.error).mockReset();
     mockIsProjectAdmin = true;
     global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
   });
@@ -180,7 +184,7 @@ describe("MilestoneSourceBadge", () => {
     expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
-  it("shows a two-item dropdown menu (Open/Unlink) when actively synced", () => {
+  it("shows a three-item dropdown menu (Open/Sync now/Unlink) when actively synced", () => {
     render(<MilestoneSourceBadge milestone={synced} />);
 
     openMenu(screen.getByTestId("milestone-source-badge"));
@@ -189,9 +193,88 @@ describe("MilestoneSourceBadge", () => {
       screen.getByTestId("milestone-source-menu-open")
     ).toBeInTheDocument();
     expect(
+      screen.getByTestId("milestone-source-menu-sync")
+    ).toBeInTheDocument();
+    expect(
       screen.getByTestId("milestone-source-menu-unlink")
     ).toBeInTheDocument();
     expect(screen.getByTestId("milestone-open-in-tracker")).toBeInTheDocument();
+  });
+
+  it("names the milestone's own tracker on the Open item and the badge's title", () => {
+    render(
+      <MilestoneSourceBadge
+        milestone={{
+          ...synced,
+          externalUrl: "https://github.com/orgs/acme/projects/1",
+        }}
+        integrationProjects={[
+          {
+            externalProjectKey: "app",
+            externalProjectName: "acme/app",
+            projectIntegration: {
+              integrationId: 9,
+              integration: { provider: "GITHUB" },
+            },
+          },
+        ]}
+      />
+    );
+
+    const badge = screen.getByTestId("milestone-source-badge");
+    expect(badge).toHaveAttribute(
+      "title",
+      "ui.issues.openInExternalSystem:GitHub"
+    );
+    openMenu(badge);
+    expect(screen.getByTestId("milestone-source-menu-open")).toHaveTextContent(
+      "ui.issues.openInExternalSystem:GitHub"
+    );
+  });
+
+  it("Sync now asks the server to read the milestone from the tracker, then refreshes what the page shows", async () => {
+    render(<MilestoneSourceBadge milestone={synced} />);
+
+    openMenu(screen.getByTestId("milestone-source-badge"));
+    fireEvent.click(screen.getByTestId("milestone-source-menu-sync"));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/milestones/42/members/overflow",
+        expect.objectContaining({ method: "POST" })
+      );
+    });
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("sync.syncSuccess:Jira");
+    });
+    expect(mockRouterRefresh).toHaveBeenCalled();
+    const { predicate } = mockInvalidateQueries.mock.calls[0][0];
+    expect(
+      predicate({ queryKey: ["zenstack", "MilestoneIssue", "findMany"] })
+    ).toBe(true);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("Sync now reports the tracker's reason when the sync fails, and refreshes nothing", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: "GitHub refused access to Projects." }),
+    }) as any;
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<MilestoneSourceBadge milestone={synced} />);
+
+    openMenu(screen.getByTestId("milestone-source-badge"));
+    fireEvent.click(screen.getByTestId("milestone-source-menu-sync"));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("sync.syncError", {
+        description: "GitHub refused access to Projects.",
+      });
+    });
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(mockRouterRefresh).not.toHaveBeenCalled();
+    logged.mockRestore();
   });
 
   it("Open in Jira menu item opens the tracker without an opener when the URL is safe", () => {
@@ -285,6 +368,7 @@ describe("MilestoneSourceBadge", () => {
       expect(screen.getByTestId("milestone-source-badge")).toBeInTheDocument();
       openMenu(screen.getByTestId("milestone-source-badge"));
       expect(screen.queryByTestId("milestone-source-menu-open")).toBeNull();
+      expect(screen.queryByTestId("milestone-source-menu-sync")).toBeNull();
       expect(screen.queryByTestId("milestone-source-menu-unlink")).toBeNull();
     });
 
@@ -356,6 +440,7 @@ describe("MilestoneSourceBadge", () => {
       expect(badge).toBeInTheDocument();
       openMenu(badge);
       expect(screen.queryByTestId("milestone-source-menu-open")).toBeNull();
+      expect(screen.queryByTestId("milestone-source-menu-sync")).toBeNull();
       expect(screen.queryByTestId("milestone-source-menu-unlink")).toBeNull();
     });
 
@@ -409,6 +494,7 @@ describe("MilestoneSourceBadge", () => {
       const badge = screen.getByTestId("milestone-source-badge");
       expect(badge).toBeInTheDocument();
       expect(screen.queryByTestId("milestone-source-menu-open")).toBeNull();
+      expect(screen.queryByTestId("milestone-source-menu-sync")).toBeNull();
       expect(screen.queryByTestId("milestone-source-menu-unlink")).toBeNull();
     });
 

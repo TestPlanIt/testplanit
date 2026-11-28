@@ -146,6 +146,35 @@ describe("MemberIssuesOverflowPanel", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("names the milestone's own tracker in the title, the count and the explanation", async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse({
+        members: [
+          { id: "6", key: "#6", title: "Drifted issue", status: "open" },
+        ],
+        linkedCount: 3,
+        cap: 1000,
+        overflowTotal: 1,
+        provider: "GITHUB",
+      })
+    );
+
+    renderWithQueryClient(
+      <MemberIssuesOverflowPanel milestoneId={42} projectId={7} />
+    );
+
+    const panel = await screen.findByTestId("member-issues-overflow-panel");
+    expect(panel).toHaveTextContent('overflowTitle:{"provider":"GitHub"}');
+    expect(panel).toHaveTextContent(
+      'overflowDescription:{"provider":"GitHub"}'
+    );
+    expect(
+      screen.getByTestId("member-issues-overflow-drift-badge")
+    ).toHaveTextContent(
+      'overflowMoreAvailable:{"overflowTotal":1,"provider":"GitHub"}'
+    );
+  });
+
   it("Import & link POSTs to the overflow route (server-validated reconciliation, not a direct client write)", async () => {
     mockFetch.mockImplementation((url: string, init?: RequestInit) => {
       if (!init) {

@@ -14,6 +14,7 @@ import type { MemberOverflowResponse } from "~/app/api/milestones/[milestoneId]/
 import { useMilestoneLiveStream } from "~/hooks/useMilestoneLiveStream";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { apiFetch } from "~/lib/basePath";
+import { providerDisplayName } from "~/lib/integrations/providerDisplayName";
 import { formatIssueStatus } from "~/utils/issueDisplayText";
 
 interface MemberIssuesOverflowPanelProps {
@@ -92,6 +93,7 @@ export function MemberIssuesOverflowPanel({
   }
 
   const { members, linkedCount, cap, overflowTotal } = data;
+  const provider = providerDisplayName(data.provider);
   const isTrueCapHit = linkedCount >= cap && overflowTotal > 0;
   const isDrift = !isTrueCapHit && overflowTotal > 0;
 
@@ -104,7 +106,7 @@ export function MemberIssuesOverflowPanel({
       );
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(body?.error || t("overflowImportError"));
+        throw new Error(body?.error || t("overflowImportError", { provider }));
       }
       toast.success(t("overflowImportSuccess"));
       // One immediate refetch in case the POST's own writes already landed
@@ -115,7 +117,9 @@ export function MemberIssuesOverflowPanel({
       onImported?.();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : t("overflowImportError")
+        err instanceof Error
+          ? err.message
+          : t("overflowImportError", { provider })
       );
     } finally {
       setIsImporting(false);
@@ -128,7 +132,7 @@ export function MemberIssuesOverflowPanel({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <AlertTriangle className="h-4 w-4 text-warning" />
-            {t("overflowTitle")}
+            {t("overflowTitle", { provider })}
           </CardTitle>
           {isTrueCapHit ? (
             <Badge
@@ -136,7 +140,7 @@ export function MemberIssuesOverflowPanel({
               className="border-warning bg-warning/15 text-foreground"
               data-testid="member-issues-overflow-capped-badge"
             >
-              {t("overflowCapped", { cap, overflowTotal })}
+              {t("overflowCapped", { cap, overflowTotal, provider })}
             </Badge>
           ) : isDrift ? (
             <Badge
@@ -144,7 +148,7 @@ export function MemberIssuesOverflowPanel({
               className="text-muted-foreground"
               data-testid="member-issues-overflow-drift-badge"
             >
-              {t("overflowMoreAvailable", { overflowTotal })}
+              {t("overflowMoreAvailable", { overflowTotal, provider })}
             </Badge>
           ) : null}
         </div>
@@ -153,7 +157,9 @@ export function MemberIssuesOverflowPanel({
         <Alert variant="default" className="border-warning">
           <div className="flex items-center gap-2">
             <PackageOpen className="h-4 w-4" />
-            <AlertDescription>{t("overflowDescription")}</AlertDescription>
+            <AlertDescription>
+              {t("overflowDescription", { provider })}
+            </AlertDescription>
           </div>
         </Alert>
 

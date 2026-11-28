@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ExternalLink, Unlink } from "lucide-react";
+import { ExternalLink, RefreshCw, Unlink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "~/lib/navigation";
 import { siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
@@ -301,7 +301,8 @@ function RemovedOrMergedBadge({
 
 /**
  * Gives a rendered badge its project-admin dropdown ("Open in {provider}" /
- * "Unlink from {provider}") and the unlink confirmation. Split out of
+ * "Sync now" / "Unlink from {provider}") and the unlink confirmation. Split
+ * out of
  * {@link MilestoneSourceBadge} so the permissions fetch and unlink machinery
  * only mount where the menu can actually appear — a picker rendering a badge
  * per option pays for none of it. Non-admins get the badge back untouched.
@@ -329,9 +330,52 @@ function SourceBadgeWithUnlinkMenu({
   const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const { isProjectAdmin } = useProjectPermissions(projectId ?? 0);
 
   const provider = providerDisplayName(providerKey);
+
+  // The page's live stream also reports these changes, but only to a page
+  // that was already connected when they happened.
+  const refreshMilestoneData = () => {
+    void queryClient.invalidateQueries({
+      predicate: (query) => {
+        const key = JSON.stringify(query.queryKey);
+        return key.includes("Milestones") || key.includes("MilestoneIssue");
+      },
+    });
+    router.refresh();
+  };
+
+  // "Sync now": the server reads the milestone's fields and its issues from
+  // the tracker at once, whatever was read a moment ago. This route does so
+  // for the one milestone it is given, working out the integration itself.
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await apiFetch(
+        `/api/milestones/${milestone.id}/members/overflow`,
+        { method: "POST" }
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(
+          typeof body?.error === "string" && body.error
+            ? body.error
+            : `Sync failed with status ${res.status}`
+        );
+      }
+      toast.success(t("sync.syncSuccess", { provider }));
+      refreshMilestoneData();
+    } catch (err) {
+      console.error("Failed to sync milestone:", err);
+      toast.error(t("sync.syncError"), {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleUnlink = async () => {
     setIsUnlinking(true);
@@ -344,15 +388,7 @@ function SourceBadgeWithUnlinkMenu({
       }
       toast.success(t("sync.unlinkSuccess"));
       setConfirmOpen(false);
-      // The page's live stream also reports the unlink, but only to a page
-      // that was already connected when it happened.
-      void queryClient.invalidateQueries({
-        predicate: (query) => {
-          const key = JSON.stringify(query.queryKey);
-          return key.includes("Milestones") || key.includes("MilestoneIssue");
-        },
-      });
-      router.refresh();
+      refreshMilestoneData();
     } catch (err) {
       console.error("Failed to unlink milestone:", err);
       toast.error(t("sync.unlinkError"));
@@ -378,7 +414,16 @@ function SourceBadgeWithUnlinkMenu({
             data-testid="milestone-source-menu-open"
           >
             <ExternalLink className="h-4 w-4" />
-            {tCommon("ui.issues.openInJira")}
+            {tCommon("ui.issues.openInExternalSystem", { provider })}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={isSyncing}
+            className="gap-1"
+            onClick={() => void handleSync()}
+            data-testid="milestone-source-menu-sync"
+          >
+            <RefreshCw className="h-4 w-4" />
+            {t("sync.syncNow")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="gap-1 text-destructive focus:text-destructive-text"
@@ -621,7 +666,11 @@ export function MilestoneSourceBadge({
       data-testid="milestone-source-badge"
       variant="outline"
       role={trackerUrl ? "link" : undefined}
-      title={trackerUrl ? tCommon("ui.issues.openInJira") : badgeLabel}
+      title={
+        trackerUrl
+          ? tCommon("ui.issues.openInExternalSystem", { provider })
+          : badgeLabel
+      }
       aria-label={badgeLabel}
       className={`group max-w-full gap-1 text-xs whitespace-nowrap ${
         asMenuTrigger || trackerUrl

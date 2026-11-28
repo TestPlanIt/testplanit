@@ -40,13 +40,16 @@ export type MemberOverflowResponse = {
   linkedCount: number;
   cap: number;
   overflowTotal: number;
+  /** The tracker the milestone is synced from, so the panel can name it. */
+  provider: string | null;
 };
 
-const EMPTY_ENVELOPE: Omit<MemberOverflowResponse, "linkedCount"> = {
-  members: [],
-  cap: IMPORT_MAX_CAP,
-  overflowTotal: 0,
-};
+const EMPTY_ENVELOPE: Omit<MemberOverflowResponse, "linkedCount" | "provider"> =
+  {
+    members: [],
+    cap: IMPORT_MAX_CAP,
+    overflowTotal: 0,
+  };
 
 async function handleGET(
   _req: NextRequest,
@@ -89,6 +92,7 @@ async function handleGET(
         externalId: true,
         externalKind: true,
         integrationId: true,
+        integration: { select: { provider: true } },
       },
     });
 
@@ -112,6 +116,7 @@ async function handleGET(
       },
     });
     const linkedCount = links.length;
+    const provider = milestone.integration?.provider ?? null;
     const linkedExternalIds = new Set(
       links
         .map((link) => link.issue.externalId)
@@ -120,7 +125,7 @@ async function handleGET(
 
     // Not synced (no externalId/integrationId) — nothing to diff against.
     if (!milestone.externalId || !milestone.integrationId) {
-      return NextResponse.json({ ...EMPTY_ENVELOPE, linkedCount });
+      return NextResponse.json({ ...EMPTY_ENVELOPE, linkedCount, provider });
     }
 
     const adapter = await integrationManager.getAdapter(
@@ -130,7 +135,7 @@ async function handleGET(
 
     // DC/non-membership adapters: clean empty envelope, no throw.
     if (!adapter || !adapter.getMilestoneIssues) {
-      return NextResponse.json({ ...EMPTY_ENVELOPE, linkedCount });
+      return NextResponse.json({ ...EMPTY_ENVELOPE, linkedCount, provider });
     }
 
     const kind =
@@ -172,6 +177,7 @@ async function handleGET(
       linkedCount,
       cap: IMPORT_MAX_CAP,
       overflowTotal,
+      provider,
     };
 
     return NextResponse.json(response);

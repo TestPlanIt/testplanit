@@ -106,7 +106,7 @@ For milestone-capable providers (Jira, GitHub, GitLab, Gitea/Forgejo, Redmine, M
 
 Enabling milestone sync also provisions the **Release** and **Sprint** [milestone types](../../milestone-types.md) for the project.
 
-A manual **Sync now** always fetches the latest state from the tracker immediately. Page loads passively refresh already-linked milestones at most once every 5 minutes. When [inbound webhooks](../../webhooks.md#milestone-sync-events-versionsprint) are configured and the tracker sends version/sprint events, refreshes happen within seconds of the upstream change.
+A manual **Sync now**, in the menu of a synced milestone's [source badge](../milestone-details.md#source-badge), always fetches that milestone's latest state from the tracker immediately. Page loads passively refresh already-linked milestones at most once every 5 minutes. When [inbound webhooks](../../webhooks.md#milestone-sync-events-versionsprint) are configured and the tracker sends version/sprint events, refreshes happen within seconds of the upstream change.
 
 See [Milestones](../milestones.md) and [Milestone Details](../milestone-details.md#source-badge) for what a synced milestone looks like, and [Webhooks → Milestone sync events](../../webhooks.md#milestone-sync-events-versionsprint) for the event-driven path.
 

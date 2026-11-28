@@ -45,8 +45,9 @@ In the default view mode:
 
 A milestone synced from an external tracker (Jira or GitHub) shows a badge next to its name, for example **Jira · Sprint · active · Website**: the tracker's icon, the milestone's kind (**Release** or **Sprint**), its current tracker-reported state, and — space permitting — the Jira project the artifact belongs to.
 
-- **Project admins** see the badge as a menu trigger. Clicking it opens:
+- **Project admins** see the badge as a menu trigger. Clicking it opens a menu that names the milestone's tracker, for example:
   - **Open in Jira** — opens the linked artifact in a new tab. Disabled if no external URL is stored for the milestone.
+  - **Sync now** — reads the milestone's name, dates, state and member issues from the tracker at once, without waiting for the next page-load refresh. A message confirms the sync, or gives the tracker's reason when it fails.
   - **Unlink from Jira** — detaches the milestone from the tracker after a confirmation dialog explaining the consequences: sync stops, the milestone's fields become editable again, its synced issue links become manual (yours to keep or remove), and the milestone can be re-linked later by importing the same artifact again from the [Milestones list](./milestones.md).
 - Everyone else sees the badge as a plain link to the tracker (or a static, non-clickable label if no URL is stored) — no menu.
 - On narrow layouts the badge collapses one segment at a time — the Jira project, then state, then kind, then the provider name — down to just the tracker icon. The milestone name always wins the space contest: the badge gives up its segments before the name loses a single character. The full label remains available on hover.
@@ -118,11 +119,11 @@ A filter row (search, coverage state, source, and issue type) appears once there
 
 Select one or more issues and click **Create test run** to open the Add Test Run wizard pre-seeded with every non-deleted test case linked to the selected issues, with the contributing issues pre-linked to the new run.
 
-Use **Link Issue** to attach an issue manually. Each row's overflow menu (⋮) offers **Generate Test Cases** — which opens the seeded generation wizard for that issue, for viewers with test-case create permission — and, for manually-linked rows only, **Unlink**. A synced link can't be unlinked here: its **Source** reads **Synced** and its menu offers no Unlink action — remove it from the version/sprint in Jira instead.
+Use **Link Issue** to attach an issue manually. Each row's overflow menu (⋮) offers **Generate Test Cases** — which opens the seeded generation wizard for that issue, for viewers with test-case create permission — and, for manually-linked rows only, **Unlink**. A synced link can't be unlinked here: its **Source** reads **Synced** and its menu offers no Unlink action — remove it from the release or sprint in the tracker instead.
 
 The **Link Issue** dialog can also create an issue in the connected tracker. On a synced milestone that is not completed, the new-issue form starts in the artifact the milestone is synced from: **Fix versions** or **Sprint** on Jira, and **Milestone** on GitHub, GitLab, or Gitea. Change or clear the field before creating the issue to put it somewhere else. An issue created this way reaches the milestone as a **Synced** issue, at the next sync or at once when the tracker's webhook is connected. A milestone synced from a GitHub Project iteration presets nothing: the new issue is linked to the milestone as a **Manual** issue until it is added to the iteration in GitHub.
 
-When the linked Jira sprint or version has more issues than are linked here — because an automatic sync hit its import cap, or membership has simply drifted since the last sync — a **More issues in Jira** panel appears below the table listing the missing issues, with an **Import & link** action to pull them in.
+When the linked release or sprint has more issues in the tracker than are linked here — because an automatic sync hit its import cap, or membership has simply drifted since the last sync — a panel named after the tracker, such as **More issues in Jira**, appears below the table listing the missing issues, with an **Import & link** action to pull them in.
 
 :::info Permissions Required
 
