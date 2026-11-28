@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "~/lib/auth-security";
+import { reissueSessionCookie } from "~/lib/auth/sessionCookie";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { auditAuthEvent } from "~/lib/services/auditLog";
@@ -110,11 +111,25 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       session.user.name
     );
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       usedBackupCode,
       remainingBackupCodes: usedBackupCode ? hashedCodes.length : undefined,
     });
+
+    // Marks the session verified. Without this cookie it stays pending.
+    const reissued = await reissueSessionCookie(request, response, {
+      twoFactorVerified: true,
+      twoFactorRequired: false,
+    });
+    if (!reissued) {
+      return NextResponse.json(
+        { error: "Failed to verify 2FA" },
+        { status: 500 }
+      );
+    }
+
+    return response;
   } catch (error) {
     console.error("2FA verify-sso error:", error);
     return NextResponse.json(

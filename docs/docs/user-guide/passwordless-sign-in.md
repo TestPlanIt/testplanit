@@ -88,5 +88,8 @@ serves over HTTPS with a correct `NEXTAUTH_URL` (the verifier cookie is
   a `passwordless_*` reason.
 - The request endpoint is throttled per IP and per email address, and responds
   identically whether or not an account exists.
+- The stock email link is sent only when the deployment has opted out. If a
+  device-bound request fails, the sign-in screen reports that the link could
+  not be sent, and no email goes out.
 - Force-2FA-on-all-logins, inactive-user blocking, and session claims behave
   exactly as with the stock email flow.

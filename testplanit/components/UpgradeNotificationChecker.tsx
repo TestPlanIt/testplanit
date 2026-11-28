@@ -3,6 +3,8 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useRef } from "react";
 import { checkUpgradeNotifications } from "~/app/actions/upgrade-notifications";
+import { isPublicPath } from "~/lib/auth/publicRoutes";
+import { usePathname } from "~/lib/navigation";
 
 /**
  * Component that checks for upgrade notifications on first page load after login.
@@ -10,14 +12,17 @@ import { checkUpgradeNotifications } from "~/app/actions/upgrade-notifications";
  */
 export function UpgradeNotificationChecker() {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const hasChecked = useRef(false);
 
   useEffect(() => {
-    // Only check once per session, when authenticated
+    // Only check once per session, when authenticated. Not on a public page:
+    // a session there may still owe its two-factor step.
     if (
       status === "authenticated" &&
       session?.user?.id &&
-      !hasChecked.current
+      !hasChecked.current &&
+      !isPublicPath(pathname)
     ) {
       hasChecked.current = true;
 
@@ -26,7 +31,7 @@ export function UpgradeNotificationChecker() {
         console.error("Failed to check upgrade notifications:", error);
       });
     }
-  }, [status, session?.user?.id]);
+  }, [status, session?.user?.id, pathname]);
 
   // This component doesn't render anything
   return null;

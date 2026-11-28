@@ -32,6 +32,7 @@ import { auditAuthEvent } from "~/lib/services/auditLog";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { isForceSsoEnabled } from "~/lib/utils/force-sso";
 import { needsEmailVerification } from "~/lib/auth/emailVerification";
+import { signSignInToken, verifySignInToken } from "~/lib/auth/signInTokens";
 import { passwordChangedSinceIssue } from "~/lib/auth/sessionInvalidation";
 import { resolveSsoConfig } from "~/lib/auth/ssoConfig";
 import { db } from "~/server/db";
@@ -557,20 +558,8 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           token.provider = account.provider;
         }
 
-        // Handle session update for 2FA verification
-        if (trigger === "update" && session?.twoFactorVerified) {
-          token.twoFactorVerified = true;
-          token.twoFactorRequired = false;
-          return token;
-        }
-
-        // Handle session update for 2FA setup completion
-        if (trigger === "update" && session?.twoFactorSetupComplete) {
-          token.twoFactorSetupRequired = false;
-          token.twoFactorRequired = false;
-          token.twoFactorVerified = true;
-          return token;
-        }
+        // Two-factor claims are never taken from a session update: the browser
+        // controls that payload. The routes that check the code set them.
 
         // Handle session update to clear mustChangePassword after force-change
         // flow. Deliberately falls through to the DB refresh below: the
@@ -955,20 +944,8 @@ export const authOptions: NextAuthOptions = {
         token.provider = account.provider;
       }
 
-      // Handle session update for 2FA verification
-      if (trigger === "update" && session?.twoFactorVerified) {
-        token.twoFactorVerified = true;
-        token.twoFactorRequired = false;
-        return token;
-      }
-
-      // Handle session update for 2FA setup completion
-      if (trigger === "update" && session?.twoFactorSetupComplete) {
-        token.twoFactorSetupRequired = false;
-        token.twoFactorRequired = false;
-        token.twoFactorVerified = true;
-        return token;
-      }
+      // Two-factor claims are never taken from a session update: the browser
+      // controls that payload. The routes that check the code set them.
 
       // Handle session update to clear mustChangePassword after force-change
       // flow. Deliberately falls through to the DB refresh below: the
@@ -1116,12 +1093,13 @@ function authorize(db: DbClient) {
     // Handle 2FA completion flow
     if (credentials.pendingAuthToken && credentials.twoFactorToken) {
       try {
-        const pendingAuth = jwt.verify(
-          credentials.pendingAuthToken,
-          process.env.NEXTAUTH_SECRET || ""
-        ) as { userId: string; email: string; twoFactorPending: boolean };
+        const pendingAuth = verifySignInToken<{
+          userId: string;
+          email: string;
+          twoFactorPending: boolean;
+        }>("two-factor-pending", credentials.pendingAuthToken);
 
-        if (!pendingAuth.twoFactorPending) {
+        if (!pendingAuth?.twoFactorPending) {
           throw new Error("Invalid pending auth token");
         }
 
@@ -1381,13 +1359,13 @@ function authorize(db: DbClient) {
     // Check if 2FA is enabled for this user
     if (maybeUser.twoFactorEnabled) {
       // Generate a pending auth token for 2FA verification
-      const pendingAuthToken = jwt.sign(
+      const pendingAuthToken = signSignInToken(
+        "two-factor-pending",
         {
           userId: maybeUser.id,
           email: maybeUser.email,
           twoFactorPending: true,
         },
-        process.env.NEXTAUTH_SECRET || "",
         { expiresIn: "5m" }
       );
       // Throw error with pending token - frontend will catch this
@@ -1397,13 +1375,13 @@ function authorize(db: DbClient) {
     // If 2FA is required by system settings but user hasn't set it up
     if (force2FANonSSO && !maybeUser.twoFactorEnabled) {
       // Generate a setup required token - frontend will redirect to setup
-      const setupRequiredToken = jwt.sign(
+      const setupRequiredToken = signSignInToken(
+        "two-factor-setup",
         {
           userId: maybeUser.id,
           email: maybeUser.email,
           twoFactorSetupRequired: true,
         },
-        process.env.NEXTAUTH_SECRET || "",
         { expiresIn: "10m" }
       );
       throw new Error(`2FA_SETUP_REQUIRED:${setupRequiredToken}`);

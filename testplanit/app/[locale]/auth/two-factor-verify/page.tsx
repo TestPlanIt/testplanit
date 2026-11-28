@@ -54,8 +54,8 @@ export default function TwoFactorVerifyPage() {
         );
       }
 
-      // Update the session to mark 2FA as verified
-      await updateSession({ twoFactorVerified: true });
+      // The verify route re-issued the cookie; refresh the page's copy.
+      await updateSession();
 
       // Redirect to home
       router.push("/");
