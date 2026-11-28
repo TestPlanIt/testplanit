@@ -1,6 +1,6 @@
-import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
+import { verifySignInToken } from "~/lib/auth/signInTokens";
 import { baseDb } from "~/lib/db";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import {
@@ -8,8 +8,6 @@ import {
   generateBackupCodes,
   verifyTOTP,
 } from "~/lib/two-factor";
-
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
 
 /**
  * POST /api/auth/two-factor/enable-required
@@ -38,14 +36,12 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     // Verify the setup token
-    let tokenData: {
+    const tokenData = verifySignInToken<{
       userId: string;
       email: string;
       twoFactorSetupRequired: boolean;
-    };
-    try {
-      tokenData = jwt.verify(setupToken, JWT_SECRET) as typeof tokenData;
-    } catch {
+    }>("two-factor-setup", setupToken);
+    if (!tokenData) {
       return NextResponse.json(
         { error: "Invalid or expired setup token. Please sign in again." },
         { status: 401 }

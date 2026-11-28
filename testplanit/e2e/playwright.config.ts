@@ -25,9 +25,12 @@ if (process.env.DATABASE_URL) {
 // while E2E runs beside it, and keeps the two sets of data apart.
 process.env.BULLMQ_PREFIX = process.env.BULLMQ_PREFIX || "bull-e2e";
 
-/** Specs that toggle Force SSO, domain restriction or the password policy. */
+/**
+ * Specs that toggle Force SSO, domain restriction, the password policy or
+ * required two-factor.
+ */
 const INSTANCE_SETTINGS_SPECS =
-  /admin\/(sso\/sso-provider-management|security\/security-settings)\.spec\.ts$/;
+  /(admin\/(sso\/sso-provider-management|security\/security-settings)|auth\/forced-two-factor)\.spec\.ts$/;
 
 // Optionally report results to a TestPlanIt instance via the local reporter.
 // Inert unless TPI_DOMAIN + TPI_TOKEN + TPI_PROJECT_ID are set, so normal E2E
@@ -157,6 +160,8 @@ export default defineConfig({
       // sign-in settings that would reject another spec's sign-up or sign-in.
       name: "chromium-instance-settings",
       testMatch: INSTANCE_SETTINGS_SPECS,
+      // One at a time: one spec's setting would reject another's sign-in.
+      workers: 1,
       use: {
         ...devices["Desktop Chrome"],
         storageState: path.join(__dirname, ".auth/admin.json"),

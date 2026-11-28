@@ -13,7 +13,9 @@ const {
   mockGenerateQRCodeDataURL,
   mockEncryptSecret,
   mockGenerateBackupCodes,
+  mockReissueSessionCookie,
 } = vi.hoisted(() => ({
+  mockReissueSessionCookie: vi.fn(),
   mockGetServerSession: vi.fn(),
   mockDb: {
     registrationSettings: {
@@ -60,6 +62,10 @@ vi.mock("~/lib/auth-security", () => ({
   checkRateLimit: mockCheckRateLimit,
 }));
 
+vi.mock("~/lib/auth/sessionCookie", () => ({
+  reissueSessionCookie: mockReissueSessionCookie,
+}));
+
 // Import routes after mocking
 import { POST as disableTwoFactor } from "./disable/route";
 import { POST as enable } from "./enable/route";
@@ -79,6 +85,7 @@ describe("Two-Factor Authentication API Routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCheckRateLimit.mockReturnValue(true);
+    mockReissueSessionCookie.mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -424,12 +431,53 @@ describe("Two-Factor Authentication API Routes", () => {
       mockDecryptSecret.mockReturnValue("decrypted-secret");
       mockVerifyTOTP.mockReturnValue(true);
 
-      const response = await verifySso(createRequest({ token: "123456" }));
+      const request = createRequest({ token: "123456" });
+      const response = await verifySso(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.usedBackupCode).toBe(false);
+      // The server records the verified factor on the session cookie itself;
+      // the browser is never asked to report it.
+      expect(mockReissueSessionCookie).toHaveBeenCalledWith(request, response, {
+        twoFactorVerified: true,
+        twoFactorRequired: false,
+      });
+    });
+
+    it("does not touch the session cookie when the code is wrong", async () => {
+      mockGetServerSession.mockResolvedValue(mockSession);
+      mockDb.user.findUnique.mockResolvedValue({
+        id: "user-123",
+        twoFactorEnabled: true,
+        twoFactorSecret: "encrypted-secret",
+        twoFactorBackupCodes: null,
+      });
+      mockDecryptSecret.mockReturnValue("decrypted-secret");
+      mockVerifyTOTP.mockReturnValue(false);
+
+      const response = await verifySso(createRequest({ token: "000000" }));
+
+      expect(response.status).toBe(400);
+      expect(mockReissueSessionCookie).not.toHaveBeenCalled();
+    });
+
+    it("fails when the session cookie cannot be re-issued", async () => {
+      mockGetServerSession.mockResolvedValue(mockSession);
+      mockDb.user.findUnique.mockResolvedValue({
+        id: "user-123",
+        twoFactorEnabled: true,
+        twoFactorSecret: "encrypted-secret",
+        twoFactorBackupCodes: null,
+      });
+      mockDecryptSecret.mockReturnValue("decrypted-secret");
+      mockVerifyTOTP.mockReturnValue(true);
+      mockReissueSessionCookie.mockResolvedValue(false);
+
+      const response = await verifySso(createRequest({ token: "123456" }));
+
+      expect(response.status).toBe(500);
     });
 
     it("should verify with backup code and remove the used code", async () => {
@@ -653,7 +701,8 @@ describe("Two-Factor Authentication API Routes", () => {
       });
       mockDb.user.update.mockResolvedValue({});
 
-      const response = await enable(createRequest({ token: "123456" }));
+      const request = createRequest({ token: "123456" });
+      const response = await enable(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -670,6 +719,28 @@ describe("Two-Factor Authentication API Routes", () => {
           ]),
         },
       });
+      // A session that was sent here to set two-factor up has now passed it,
+      // and the server says so on the cookie.
+      expect(mockReissueSessionCookie).toHaveBeenCalledWith(request, response, {
+        twoFactorSetupRequired: false,
+        twoFactorRequired: false,
+        twoFactorVerified: true,
+      });
+    });
+
+    it("does not touch the session cookie when the code is wrong", async () => {
+      mockGetServerSession.mockResolvedValue(mockSession);
+      mockDb.user.findUnique.mockResolvedValue({
+        twoFactorEnabled: false,
+        twoFactorSecret: "encrypted-secret",
+      });
+      mockDecryptSecret.mockReturnValue("decrypted-secret");
+      mockVerifyTOTP.mockReturnValue(false);
+
+      const response = await enable(createRequest({ token: "000000" }));
+
+      expect(response.status).toBe(400);
+      expect(mockReissueSessionCookie).not.toHaveBeenCalled();
     });
 
     it("should return 500 on unexpected error", async () => {

@@ -1,4 +1,4 @@
-import { act, waitFor } from "@testing-library/react";
+import { act, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "~/test/test-utils";
@@ -346,6 +346,139 @@ describe("Signin Page", () => {
       expect(mockRouterPush).toHaveBeenCalledWith(
         expect.stringContaining("/auth/two-factor-setup")
       );
+    });
+  });
+
+  describe("requesting a magic link", () => {
+    const REQUEST_URL = "/api/auth/passwordless/request";
+
+    /** Answer the device-bound request; everything else keeps its default. */
+    function answerRequestWith(answer: () => Promise<unknown>) {
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+        (url: string) =>
+          url === REQUEST_URL
+            ? answer()
+            : Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+      );
+    }
+
+    async function requestMagicLink() {
+      const user = userEvent.setup();
+      mockUseFindManySsoProvider.mockReturnValue({
+        data: [
+          {
+            id: "magic",
+            name: "Magic Link",
+            type: "MAGIC_LINK",
+            enabled: true,
+            forceSso: false,
+          },
+        ],
+        isLoading: false,
+      });
+      render(<Signin />);
+      await waitForFormToRender();
+
+      await user.click(
+        screen.getByRole("button", { name: "auth.signin.sso.magicLink" })
+      );
+      const dialog = await screen.findByRole("dialog");
+      await user.type(within(dialog).getByRole("textbox"), "user@example.com");
+      await user.click(
+        within(dialog).getByRole("button", {
+          name: "auth.signin.magicLink.sendLink",
+        })
+      );
+      return dialog;
+    }
+
+    function sentAPlainLink() {
+      return mockSignIn.mock.calls.some(([provider]) => provider === "email");
+    }
+
+    it.each([
+      [
+        "refuses the request",
+        () =>
+          Promise.resolve({
+            ok: false,
+            status: 403,
+            json: () => Promise.resolve({ error: "Invalid CSRF token" }),
+          }),
+      ],
+      [
+        "fails",
+        () =>
+          Promise.resolve({
+            ok: false,
+            status: 500,
+            json: () => Promise.resolve({}),
+          }),
+      ],
+      ["cannot be reached", () => Promise.reject(new Error("network down"))],
+      [
+        "answers without saying which kind of link it sent",
+        () =>
+          Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({}),
+          }),
+      ],
+    ])(
+      "does not send a plain link when the server %s",
+      async (_label, answer) => {
+        answerRequestWith(answer);
+
+        const dialog = await requestMagicLink();
+
+        expect(
+          await within(dialog).findByText("auth.signin.magicLink.error")
+        ).toBeInTheDocument();
+        expect(sentAPlainLink()).toBe(false);
+        expect(
+          within(dialog).queryByText("auth.signin.magicLink.checkEmail")
+        ).not.toBeInTheDocument();
+      }
+    );
+
+    it("sends the plain link when the install has device-bound links turned off", async () => {
+      answerRequestWith(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({ enabled: false }),
+        })
+      );
+
+      const dialog = await requestMagicLink();
+
+      expect(
+        await within(dialog).findByText("auth.signin.magicLink.checkEmail")
+      ).toBeInTheDocument();
+      expect(sentAPlainLink()).toBe(true);
+    });
+
+    it("sends no plain link when the device-bound request succeeds", async () => {
+      answerRequestWith(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve({
+              enabled: true,
+              pendingId: "pa_1",
+              expiresAt: new Date(Date.now() + 60_000).toISOString(),
+            }),
+        })
+      );
+
+      const dialog = await requestMagicLink();
+
+      expect(
+        await within(dialog).findByText("auth.signin.magicLink.checkEmail")
+      ).toBeInTheDocument();
+      expect(sentAPlainLink()).toBe(false);
     });
   });
 });

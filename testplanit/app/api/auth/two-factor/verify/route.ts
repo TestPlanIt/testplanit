@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { checkRateLimit } from "~/lib/auth-security";
+import { verifySignInToken } from "~/lib/auth/signInTokens";
 import { baseDb } from "~/lib/db";
 import { decryptSecret, verifyBackupCode, verifyTOTP } from "~/lib/two-factor";
 
@@ -32,13 +33,11 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     // Verify the pending auth token
-    let pendingAuth: { userId: string; email: string };
-    try {
-      pendingAuth = jwt.verify(pendingAuthToken, JWT_SECRET) as {
-        userId: string;
-        email: string;
-      };
-    } catch {
+    const pendingAuth = verifySignInToken<{ userId: string; email: string }>(
+      "two-factor-pending",
+      pendingAuthToken
+    );
+    if (!pendingAuth) {
       return NextResponse.json(
         { error: "Authentication session expired" },
         { status: 401 }

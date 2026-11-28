@@ -15,6 +15,10 @@ import {
   generateCspNonce,
   getCspMode,
 } from "~/lib/contentSecurityPolicy";
+import {
+  getPendingSignInStep,
+  isApiOpenDuringSignInStep,
+} from "~/lib/auth/pendingSignIn";
 import { isPublicPath } from "~/lib/auth/publicRoutes";
 import { isSessionEnded } from "~/lib/auth/sessionInvalidation";
 import { getCachedSessionUser } from "~/lib/session-cache";
@@ -102,6 +106,16 @@ function isOAuthIntegrationRoute(pathname: string): boolean {
   return /^\/api\/integrations\/oauth\/[^/]+\/(auth|callback)$/.test(pathname);
 }
 
+function signInIncompleteResponse(): NextResponse {
+  return NextResponse.json(
+    {
+      error: "Finish signing in before using the API",
+      code: "SIGN_IN_INCOMPLETE",
+    },
+    { status: 403 }
+  );
+}
+
 async function middlewareWithPreferences(request: NextRequest) {
   // request.nextUrl has Next's basePath already removed, so every path check
   // below sees the same paths at the root and under a prefix. Redirects are
@@ -110,6 +124,23 @@ async function middlewareWithPreferences(request: NextRequest) {
   // from every redirect.
   const url = request.nextUrl;
   const pathname = url.pathname;
+
+  // A server action is a POST to any page route, public ones included, and
+  // authenticates from the session alone. Refused here, not redirected: the
+  // browser would repeat a redirected POST at the public page it lands on.
+  if (
+    !pathname.startsWith("/api/") &&
+    request.method !== "GET" &&
+    request.method !== "HEAD"
+  ) {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+    if (getPendingSignInStep(token)) {
+      return signInIncompleteResponse();
+    }
+  }
 
   // Cosmetic project-prefixed record keys: if a detail-route URL carries a
   // prefixed key (e.g. /projects/repository/5/PROJECT-TC-1234),
@@ -271,6 +302,13 @@ async function middlewareWithPreferences(request: NextRequest) {
     // If no token, let the API route handler deal with it (return 401)
     if (!token) {
       return withRateLimitHeaders(NextResponse.next());
+    }
+
+    // A session that still owes a sign-in step is redirected on pages further
+    // down; the API has to refuse it here, administrators included.
+    const pendingStep = getPendingSignInStep(token);
+    if (pendingStep && !isApiOpenDuringSignInStep(pathname, pendingStep)) {
+      return signInIncompleteResponse();
     }
 
     // ADMINs always have API access
