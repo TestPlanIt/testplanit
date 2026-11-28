@@ -2872,7 +2872,6 @@
     "profile": {
       "title": "User Profile",
       "edit": {
-        "title": "Edit Profile",
         "timezonePlaceholder": "Select or search timezone...",
         "timezoneRequired": "Timezone is required.",
         "deleteAvatar": "Delete Avatar",

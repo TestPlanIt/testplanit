@@ -123,8 +123,12 @@ const UserProfile: React.FC<UserProfileProps> = ({
     });
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // The name and email in the header and the Preferences section are edited
+  // and saved separately, each with its own form.
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
+  const [isEditingPreferences, setIsEditingPreferences] = useState(false);
+  const [isSubmittingPreferences, setIsSubmittingPreferences] = useState(false);
   const [editAvatarOpen, setEditAvatarOpen] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
@@ -244,12 +248,15 @@ const UserProfile: React.FC<UserProfileProps> = ({
       : null) ??
     (typeof scimManager?.value === "string" ? scimManager.value : null);
 
-  // Form schema for editing
-  const FormSchema = z.object({
+  // Form schemas for editing
+  const ProfileFormSchema = z.object({
     name: z.string().min(1, {
       message: tCommon("errors.nameRequired"),
     }),
     email: z.email().min(1, { message: tCommon("errors.emailRequired") }),
+  });
+
+  const PreferencesFormSchema = z.object({
     theme: z.enum(Theme),
     locale: z.enum(Locale),
     itemsPerPage: z.enum(ItemsPerPage),
@@ -259,10 +266,16 @@ const UserProfile: React.FC<UserProfileProps> = ({
     detailsDisplayMode: z.enum(DetailsDisplayMode),
   });
 
-  const defaultFormValues = useMemo(
+  const defaultProfileValues = useMemo(
     () => ({
       name: user?.name || "",
       email: user?.email || "",
+    }),
+    [user?.name, user?.email]
+  );
+
+  const defaultPreferencesValues = useMemo(
+    () => ({
       theme:
         user?.userPreferences?.theme ??
         session?.user?.preferences?.theme ??
@@ -291,17 +304,20 @@ const UserProfile: React.FC<UserProfileProps> = ({
         user?.userPreferences?.detailsDisplayMode ?? DetailsDisplayMode.DOCKED,
     }),
     [
-      user?.name,
-      user?.email,
       user?.userPreferences,
       mappedPreferences?.itemsPerPage,
       session?.user?.preferences,
     ]
   );
 
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: standardSchemaResolver(FormSchema),
-    defaultValues: defaultFormValues,
+  const profileForm = useForm<z.infer<typeof ProfileFormSchema>>({
+    resolver: standardSchemaResolver(ProfileFormSchema),
+    defaultValues: defaultProfileValues,
+  });
+
+  const preferencesForm = useForm<z.infer<typeof PreferencesFormSchema>>({
+    resolver: standardSchemaResolver(PreferencesFormSchema),
+    defaultValues: defaultPreferencesValues,
   });
 
   const allTimezoneOptions = useMemo<TimezoneOption[]>(() => {
@@ -336,21 +352,26 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const renderTimezoneOption = (option: TimezoneOption) => option.name;
   const getTimezoneOptionValue = (option: TimezoneOption) => option.id;
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
-    setIsSubmitting(true);
+  // Both forms save through the dedicated update endpoint, which takes any
+  // subset of the fields (ZenStack 2.21+ has issues with nested update
+  // operations).
+  async function patchUser(updateData: Record<string, unknown>) {
+    const response = await apiFetch(`/api/users/${userId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updateData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to update user");
+    }
+  }
+
+  async function onSubmitProfile(data: z.infer<typeof ProfileFormSchema>) {
+    setIsSubmittingProfile(true);
     try {
-      // Build update data with only changed fields
-      const updateData: any = {
-        userPreferences: {
-          theme: data.theme,
-          locale: data.locale,
-          itemsPerPage: data.itemsPerPage,
-          dateFormat: data.dateFormat,
-          timeFormat: data.timeFormat,
-          timezone: data.timezone,
-          detailsDisplayMode: data.detailsDisplayMode,
-        },
-      };
+      const updateData: { name?: string; email?: string } = {};
 
       // Only update name if it has changed AND the user is not SCIM-managed
       // (the SCIM IdP owns name on those rows; the server-side policy
@@ -371,23 +392,58 @@ const UserProfile: React.FC<UserProfileProps> = ({
         updateData.email = data.email;
       }
 
+      const hasChanges = Object.keys(updateData).length > 0;
+      if (hasChanges) {
+        await patchUser(updateData);
+      }
+
+      setIsEditingProfile(false);
+
+      if (hasChanges) {
+        // Update the session so the new name shows everywhere, then refresh
+        // the page's data once edit mode has closed.
+        await updateSession();
+        void queryClient.refetchQueries();
+      }
+    } catch (err: any) {
+      if (err.message?.includes("Email already exists")) {
+        profileForm.setError("email", {
+          type: "custom",
+          message: tCommon("errors.emailExists"),
+        });
+      } else {
+        profileForm.setError("root", {
+          type: "custom",
+          message: tCommon("errors.unknown"),
+        });
+      }
+    } finally {
+      // Always reset submitting state, whether success or error
+      setIsSubmittingProfile(false);
+    }
+  }
+
+  async function onSubmitPreferences(
+    data: z.infer<typeof PreferencesFormSchema>
+  ) {
+    setIsSubmittingPreferences(true);
+    try {
       // Track if locale changed to know if we need to reload
       const localeChanged = data.locale !== user?.userPreferences?.locale;
 
-      // Use dedicated update API endpoint instead of ZenStack
-      // (ZenStack 2.21+ has issues with nested update operations)
-      const response = await apiFetch(`/api/users/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updateData),
+      await patchUser({
+        userPreferences: {
+          theme: data.theme,
+          locale: data.locale,
+          itemsPerPage: data.itemsPerPage,
+          dateFormat: data.dateFormat,
+          timeFormat: data.timeFormat,
+          timezone: data.timezone,
+          detailsDisplayMode: data.detailsDisplayMode,
+        },
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update user");
-      }
-
-      setIsEditing(false);
+      setIsEditingPreferences(false);
 
       // If locale changed, update cookie and reload the page
       if (localeChanged) {
@@ -406,36 +462,25 @@ const UserProfile: React.FC<UserProfileProps> = ({
       // Refetch all queries to refresh UI with updated profile data
       // Run this after closing the edit mode so the UI doesn't stay in submitting state
       void queryClient.refetchQueries();
-    } catch (err: any) {
-      // Handle errors from the new API endpoint
-      if (err.message?.includes("Email already exists")) {
-        form.setError("email", {
-          type: "custom",
-          message: tCommon("errors.emailExists"),
-        });
-      } else if (
-        err.message?.includes("Forbidden") ||
-        err.message?.includes("Unauthorized")
-      ) {
-        form.setError("root", {
-          type: "custom",
-          message: tCommon("errors.unknown"),
-        });
-      } else {
-        form.setError("root", {
-          type: "custom",
-          message: tCommon("errors.unknown"),
-        });
-      }
+    } catch {
+      preferencesForm.setError("root", {
+        type: "custom",
+        message: tCommon("errors.unknown"),
+      });
     } finally {
       // Always reset submitting state, whether success or error
-      setIsSubmitting(false);
+      setIsSubmittingPreferences(false);
     }
   }
 
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    form.reset(defaultFormValues);
+  const handleCancelProfileEdit = () => {
+    setIsEditingProfile(false);
+    profileForm.reset(defaultProfileValues);
+  };
+
+  const handleCancelPreferencesEdit = () => {
+    setIsEditingPreferences(false);
+    preferencesForm.reset(defaultPreferencesValues);
   };
 
   const getDetailsDisplayModeLabel = (mode: DetailsDisplayMode) =>
@@ -492,18 +537,29 @@ const UserProfile: React.FC<UserProfileProps> = ({
     return tUserMenu(`themes.${themeName.toLowerCase()}` as any);
   };
 
-  // Filled once per edit: the user and the session refresh while the form is
-  // open, and a refill would replace what has been typed.
-  const filledForEditRef = useRef(false);
+  // Each form is filled once per edit: the user and the session refresh while
+  // a form is open, and a refill would replace what has been typed.
+  const profileFilledForEditRef = useRef(false);
   useEffect(() => {
-    if (!isEditing) {
-      filledForEditRef.current = false;
+    if (!isEditingProfile) {
+      profileFilledForEditRef.current = false;
       return;
     }
-    if (!user || filledForEditRef.current) return;
-    filledForEditRef.current = true;
-    form.reset(defaultFormValues);
-  }, [isEditing, defaultFormValues, form, user]);
+    if (!user || profileFilledForEditRef.current) return;
+    profileFilledForEditRef.current = true;
+    profileForm.reset(defaultProfileValues);
+  }, [isEditingProfile, defaultProfileValues, profileForm, user]);
+
+  const preferencesFilledForEditRef = useRef(false);
+  useEffect(() => {
+    if (!isEditingPreferences) {
+      preferencesFilledForEditRef.current = false;
+      return;
+    }
+    if (!user || preferencesFilledForEditRef.current) return;
+    preferencesFilledForEditRef.current = true;
+    preferencesForm.reset(defaultPreferencesValues);
+  }, [isEditingPreferences, defaultPreferencesValues, preferencesForm, user]);
 
   useEffect(() => {
     if (user) {
@@ -588,7 +644,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                 <div className="flex-1 space-y-3">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1 space-y-2">
-                      {!isEditing ? (
+                      {!isEditingProfile ? (
                         <>
                           <CardTitle className="text-2xl text-primary">
                             {user.name}
@@ -598,10 +654,10 @@ const UserProfile: React.FC<UserProfileProps> = ({
                           </CardDescription>
                         </>
                       ) : (
-                        <Form {...form}>
+                        <Form {...profileForm}>
                           <div className="space-y-4">
                             <FormField
-                              control={form.control}
+                              control={profileForm.control}
                               name="name"
                               render={({ field }) => (
                                 <FormItem>
@@ -632,7 +688,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                               )}
                             />
                             <FormField
-                              control={form.control}
+                              control={profileForm.control}
                               name="email"
                               render={({ field }) => (
                                 <FormItem>
@@ -677,6 +733,11 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                 </FormItem>
                               )}
                             />
+                            {profileForm.formState.errors.root && (
+                              <p className="text-sm text-destructive">
+                                {profileForm.formState.errors.root.message}
+                              </p>
+                            )}
                           </div>
                         </Form>
                       )}
@@ -684,11 +745,14 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
                     {user?.id === session?.user?.id && (
                       <div className="flex gap-2">
-                        {!isEditing ? (
+                        {!isEditingProfile ? (
                           <div className="flex flex-col items-end gap-2">
-                            <Button onClick={() => setIsEditing(true)}>
+                            <Button
+                              onClick={() => setIsEditingProfile(true)}
+                              data-testid="profile-edit-button"
+                            >
                               <PenSquare className="h-4 w-4" />
-                              {tEdit("title")}
+                              {tCommon("actions.edit")}
                             </Button>
                             {(user?.authMethod === "INTERNAL" ||
                               user?.authMethod === "BOTH") && (
@@ -721,19 +785,22 @@ const UserProfile: React.FC<UserProfileProps> = ({
                           <div className="flex gap-2">
                             <Button
                               variant="outline"
-                              onClick={handleCancelEdit}
-                              disabled={isSubmitting}
+                              onClick={handleCancelProfileEdit}
+                              disabled={isSubmittingProfile}
+                              data-testid="profile-cancel-button"
                             >
                               <X className="h-4 w-4" />
                               {tCommon("cancel")}
                             </Button>
                             <Button
                               data-testid="profile-submit-button"
-                              onClick={form.handleSubmit(onSubmit)}
-                              disabled={isSubmitting}
+                              onClick={profileForm.handleSubmit(
+                                onSubmitProfile
+                              )}
+                              disabled={isSubmittingProfile}
                             >
                               <Check className="h-4 w-4" />
-                              {isSubmitting
+                              {isSubmittingProfile
                                 ? tCommon("actions.submitting")
                                 : tCommon("actions.submit")}
                             </Button>
@@ -1011,8 +1078,23 @@ const UserProfile: React.FC<UserProfileProps> = ({
                               {t("preferences.title")}
                             </AccordionTrigger>
                             <AccordionContent>
-                              {!isEditing ? (
+                              {!isEditingPreferences ? (
                                 <div className="px-4">
+                                  {user?.id === session?.user?.id && (
+                                    <div className="flex justify-end pb-3">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          setIsEditingPreferences(true)
+                                        }
+                                        data-testid="preferences-edit-button"
+                                      >
+                                        <PenSquare className="h-4 w-4" />
+                                        {tCommon("actions.edit")}
+                                      </Button>
+                                    </div>
+                                  )}
                                   <div className="grid gap-4 sm:grid-cols-2">
                                     <div className="space-y-3">
                                       <div className="flex items-center justify-between">
@@ -1158,10 +1240,43 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                   </div>
                                 </div>
                               ) : (
-                                <Form {...form}>
+                                <Form {...preferencesForm}>
+                                  <div className="flex items-center justify-end gap-2 px-4 pb-3">
+                                    {preferencesForm.formState.errors.root && (
+                                      <p className="me-auto text-sm text-destructive">
+                                        {
+                                          preferencesForm.formState.errors.root
+                                            .message
+                                        }
+                                      </p>
+                                    )}
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleCancelPreferencesEdit}
+                                      disabled={isSubmittingPreferences}
+                                      data-testid="preferences-cancel-button"
+                                    >
+                                      <X className="h-4 w-4" />
+                                      {tCommon("cancel")}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      onClick={preferencesForm.handleSubmit(
+                                        onSubmitPreferences
+                                      )}
+                                      disabled={isSubmittingPreferences}
+                                      data-testid="preferences-submit-button"
+                                    >
+                                      <Check className="h-4 w-4" />
+                                      {isSubmittingPreferences
+                                        ? tCommon("actions.submitting")
+                                        : tCommon("actions.submit")}
+                                    </Button>
+                                  </div>
                                   <div className="grid gap-4 px-4 sm:grid-cols-2">
                                     <FormField
-                                      control={form.control}
+                                      control={preferencesForm.control}
                                       name="theme"
                                       render={({ field }) => (
                                         <FormItem>
@@ -1175,7 +1290,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                           <FormControl>
                                             <Select
                                               onValueChange={(value) => {
-                                                form.setValue(
+                                                preferencesForm.setValue(
                                                   "theme",
                                                   value as Theme
                                                 );
@@ -1219,7 +1334,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                     />
 
                                     <FormField
-                                      control={form.control}
+                                      control={preferencesForm.control}
                                       name="locale"
                                       render={({ field }) => (
                                         <FormItem data-testid="user-locale-edit">
@@ -1233,7 +1348,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                           <FormControl>
                                             <Select
                                               onValueChange={(value) => {
-                                                form.setValue(
+                                                preferencesForm.setValue(
                                                   "locale",
                                                   value as Locale
                                                 );
@@ -1268,7 +1383,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                     />
 
                                     <FormField
-                                      control={form.control}
+                                      control={preferencesForm.control}
                                       name="itemsPerPage"
                                       render={({ field }) => (
                                         <FormItem>
@@ -1284,7 +1399,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                           <FormControl>
                                             <Select
                                               onValueChange={(value) => {
-                                                form.setValue(
+                                                preferencesForm.setValue(
                                                   "itemsPerPage",
                                                   value as ItemsPerPage
                                                 );
@@ -1319,7 +1434,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                     />
 
                                     <FormField
-                                      control={form.control}
+                                      control={preferencesForm.control}
                                       name="dateFormat"
                                       render={({ field }) => (
                                         <FormItem>
@@ -1335,7 +1450,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                           <FormControl>
                                             <Select
                                               onValueChange={(value) => {
-                                                form.setValue(
+                                                preferencesForm.setValue(
                                                   "dateFormat",
                                                   value as DateFormat
                                                 );
@@ -1379,7 +1494,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                     />
 
                                     <FormField
-                                      control={form.control}
+                                      control={preferencesForm.control}
                                       name="timeFormat"
                                       render={({ field }) => (
                                         <FormItem>
@@ -1395,7 +1510,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                           <FormControl>
                                             <Select
                                               onValueChange={(value) => {
-                                                form.setValue(
+                                                preferencesForm.setValue(
                                                   "timeFormat",
                                                   value as TimeFormat
                                                 );
@@ -1439,7 +1554,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                     />
 
                                     <FormField
-                                      control={form.control}
+                                      control={preferencesForm.control}
                                       name="timezone"
                                       render={({ field }) => (
                                         <FormItem>
@@ -1464,7 +1579,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                                 const newValue = selectedOption
                                                   ? selectedOption.id
                                                   : "Etc/UTC";
-                                                form.setValue(
+                                                preferencesForm.setValue(
                                                   "timezone",
                                                   newValue
                                                 );
@@ -1491,7 +1606,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                     />
 
                                     <FormField
-                                      control={form.control}
+                                      control={preferencesForm.control}
                                       name="detailsDisplayMode"
                                       render={({ field }) => (
                                         <FormItem>
@@ -1507,7 +1622,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                           <FormControl>
                                             <Select
                                               onValueChange={(value) => {
-                                                form.setValue(
+                                                preferencesForm.setValue(
                                                   "detailsDisplayMode",
                                                   value as DetailsDisplayMode
                                                 );

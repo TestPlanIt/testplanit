@@ -27,7 +27,7 @@ The header features a gradient background and contains:
 - **User Name**: The full name of the user (editable inline when viewing own profile)
 - **Email Address**: The user's registered email (editable inline when viewing own profile)
 - **Action Buttons** (own profile only):
-  - **Edit Profile**: Enables inline editing mode for user information and preferences
+  - **Edit**: Enables inline editing of your name and email
   - **Change Password**: Opens a modal to update your password. Changing it signs out every other device and browser where you are logged in; the browser you changed it from stays signed in.
 
 ## Information Sections
@@ -43,7 +43,6 @@ Displays core account details:
 - **Default Role**: The default role assigned to the user
 - **API User**: Indicates if this is an API account (shown as a disabled switch)
 - **Two-Factor Authentication (2FA)**: Toggle, QR code setup, backup code management, and regeneration controls
-
 :::note
 If your organization has enforced 2FA, you will not be able to disable it. A notice will appear if SSO logins bypass your personal 2FA settings.
 :::
@@ -163,13 +162,21 @@ Comments created by the [review workflow](reviews-inbox.md) carry the same badge
 
 ## Editing Mode
 
-When you click the **Edit Profile** button:
+Your name and email, and your preferences, are edited and saved separately. Each has its own Edit button, shown only on your own profile.
+
+To change your name or email, click the **Edit** button in the header:
 
 1. The name and email fields become editable input fields
-2. The preferences section switches to form controls (dropdowns, radio buttons)
-3. Cancel and Submit buttons replace the Edit Profile button
-4. Changes are saved when you click Submit
-5. The page refreshes to show updated information
+2. Cancel and Submit buttons replace the Edit button
+3. Changes are saved when you click Submit
+
+To change your preferences, click the **Edit** button in the **Preferences** section:
+
+1. The preferences switch to form controls (dropdowns)
+2. Cancel and Submit buttons replace the Edit button
+3. Changes are saved when you click Submit. Changing the locale reloads the page in the new language.
+
+Editing one does not affect the other: you can have both open at once, and each Submit saves only its own fields.
 
 :::note SCIM-provisioned users
 If your account was provisioned through [SCIM 2.0](./scim.md), the **name** and **email** inputs stay disabled in edit mode with a "managed by your identity provider via SCIM" hint, and the save call omits those fields server-side. Preferences, avatar, password (when the account also has Internal auth), API tokens, and 2FA are still yours to change locally. Update your name or email in the IdP — the next sync will pull it into TestPlanIt.

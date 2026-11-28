@@ -33,7 +33,7 @@ test.describe("User Update Operations", () => {
         await page.waitForLoadState("networkidle");
 
         // Enter edit mode
-        const editButton = page.getByRole("button", { name: /edit/i });
+        const editButton = page.getByTestId("profile-edit-button");
         await editButton.click();
 
         // Wait for submit button to appear
@@ -61,7 +61,7 @@ test.describe("User Update Operations", () => {
 
       await test.step("Revert display name to original value", async () => {
         // Wait for edit button to be visible before reverting (ensures form is not in submitting state)
-        const editButtonAfterSave = page.getByRole("button", { name: /edit/i });
+        const editButtonAfterSave = page.getByTestId("profile-edit-button");
         await expect(editButtonAfterSave).toBeVisible({ timeout: 10000 });
 
         // Revert name back
@@ -97,12 +97,12 @@ test.describe("User Update Operations", () => {
         await page.waitForURL(/\/users\/profile\//);
         await page.waitForLoadState("networkidle");
 
-        // Enter edit mode
-        const editButton = page.getByRole("button", { name: /edit/i });
+        // Enter preferences edit mode
+        const editButton = page.getByTestId("preferences-edit-button");
         await editButton.click();
 
         // Wait for submit button
-        const submitButton = page.getByTestId("profile-submit-button");
+        const submitButton = page.getByTestId("preferences-submit-button");
         await expect(submitButton).toBeVisible();
       });
 
@@ -130,20 +130,22 @@ test.describe("User Update Operations", () => {
         await themeOption.click();
 
         // Save
-        const submitButton = page.getByTestId("profile-submit-button");
+        const submitButton = page.getByTestId("preferences-submit-button");
         await submitButton.click();
         await page.waitForLoadState("networkidle");
 
         // Verify the page reloaded and edit button is back
-        await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+        await expect(page.getByTestId("preferences-edit-button")).toBeVisible({
           timeout: 10000,
         });
       });
 
       await test.step("Revert theme to original value", async () => {
         // Revert theme back
-        await page.getByRole("button", { name: /edit/i }).click();
-        const submitButtonRevert = page.getByTestId("profile-submit-button");
+        await page.getByTestId("preferences-edit-button").click();
+        const submitButtonRevert = page.getByTestId(
+          "preferences-submit-button"
+        );
         await expect(submitButtonRevert).toBeVisible();
 
         // Find and click the theme select trigger again
@@ -193,12 +195,12 @@ test.describe("User Update Operations", () => {
         await page.waitForURL(/\/users\/profile\//);
         await page.waitForLoadState("networkidle");
 
-        // Enter edit mode
-        const editButton = page.getByRole("button", { name: /edit/i });
+        // Enter preferences edit mode
+        const editButton = page.getByTestId("preferences-edit-button");
         await editButton.click();
 
         // Wait for submit button
-        const submitButton = page.getByTestId("profile-submit-button");
+        const submitButton = page.getByTestId("preferences-submit-button");
         await expect(submitButton).toBeVisible();
       });
 
@@ -235,20 +237,22 @@ test.describe("User Update Operations", () => {
         await itemsPerPageOption.click();
 
         // Save
-        const submitButton = page.getByTestId("profile-submit-button");
+        const submitButton = page.getByTestId("preferences-submit-button");
         await submitButton.click();
         await page.waitForLoadState("networkidle");
 
         // Verify saved
-        await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+        await expect(page.getByTestId("preferences-edit-button")).toBeVisible({
           timeout: 10000,
         });
       });
 
       await test.step("Revert items per page to original value", async () => {
         // Revert
-        await page.getByRole("button", { name: /edit/i }).click();
-        const submitButtonRevert = page.getByTestId("profile-submit-button");
+        await page.getByTestId("preferences-edit-button").click();
+        const submitButtonRevert = page.getByTestId(
+          "preferences-submit-button"
+        );
         await expect(submitButtonRevert).toBeVisible();
 
         // Find and click the items per page combobox again

@@ -22,7 +22,7 @@ test.describe("User Profile Management - own account", () => {
       await page.waitForLoadState("networkidle");
     });
 
-    const editButton = page.getByRole("button", { name: /edit/i });
+    const editButton = page.getByTestId("profile-edit-button");
 
     await test.step("Enter edit mode", async () => {
       // Click edit button
@@ -50,7 +50,7 @@ test.describe("User Profile Management - own account", () => {
       await submitButton.click();
 
       // Wait for save to complete
-      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      await expect(page.getByTestId("profile-edit-button")).toBeVisible({
         timeout: 10000,
       });
     });
@@ -82,7 +82,7 @@ test.describe("User Profile Management - own account", () => {
 
       await expect(submitButtonRevert).toBeEnabled({ timeout: 5000 });
       await submitButtonRevert.click();
-      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      await expect(page.getByTestId("profile-edit-button")).toBeVisible({
         timeout: 10000,
       });
     });
@@ -98,7 +98,7 @@ test.describe("User Profile Management - own account", () => {
       await page.waitForLoadState("networkidle");
     });
 
-    const editButton = page.getByRole("button", { name: /edit/i });
+    const editButton = page.getByTestId("profile-edit-button");
 
     await test.step("Enter edit mode", async () => {
       // Enter edit mode
@@ -123,7 +123,7 @@ test.describe("User Profile Management - own account", () => {
       // Save
       await expect(submitButton).toBeEnabled();
       await submitButton.click();
-      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      await expect(page.getByTestId("profile-edit-button")).toBeVisible({
         timeout: 10000,
       });
     });
@@ -155,7 +155,7 @@ test.describe("User Profile Management - own account", () => {
 
       await expect(submitButton).toBeEnabled({ timeout: 5000 });
       await submitButton.click();
-      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      await expect(page.getByTestId("profile-edit-button")).toBeVisible({
         timeout: 10000,
       });
     });
@@ -184,7 +184,7 @@ test.describe("User Profile Management - own account", () => {
 
     const userMenuTrigger = page.getByTestId("user-menu-trigger");
     const userMenuContent = page.getByTestId("user-menu-content");
-    const editButton = page.getByRole("button", { name: /edit/i });
+    const editButton = page.getByTestId("profile-edit-button");
 
     await test.step("Open and close the user menu to capture the baseline", async () => {
       // Get the original name from the user menu BEFORE making changes
@@ -220,7 +220,7 @@ test.describe("User Profile Management - own account", () => {
       // Save changes
       await expect(submitButton).toBeEnabled();
       await submitButton.click();
-      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      await expect(page.getByTestId("profile-edit-button")).toBeVisible({
         timeout: 10000,
       });
 
@@ -260,7 +260,7 @@ test.describe("User Profile Management - own account", () => {
 
       await expect(submitButtonRevert).toBeEnabled({ timeout: 5000 });
       await submitButtonRevert.click();
-      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      await expect(page.getByTestId("profile-edit-button")).toBeVisible({
         timeout: 10000,
       });
 

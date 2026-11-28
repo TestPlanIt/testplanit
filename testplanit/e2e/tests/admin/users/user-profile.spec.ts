@@ -21,10 +21,8 @@ test.describe("User Profile Management", () => {
     });
 
     await test.step("Confirm the profile page rendered", async () => {
-      // Verify we're on the profile page by checking for the Edit Profile button
-      await expect(
-        page.getByRole("button", { name: /edit profile|edit/i })
-      ).toBeVisible();
+      // Verify we're on the profile page by checking for the header's Edit button
+      await expect(page.getByTestId("profile-edit-button")).toBeVisible();
     });
   });
 
@@ -35,18 +33,18 @@ test.describe("User Profile Management", () => {
       await page.waitForLoadState("networkidle");
     });
 
-    const editButton = page.getByRole("button", { name: /edit/i });
+    const editButton = page.getByTestId("preferences-edit-button");
 
     await test.step("Enter edit mode", async () => {
-      // Enter edit mode
+      // Enter preferences edit mode
       await editButton.click();
 
-      const submitButton = page.getByTestId("profile-submit-button");
+      const submitButton = page.getByTestId("preferences-submit-button");
       await expect(submitButton).toBeVisible();
     });
 
     await test.step("Select the Dark theme and save", async () => {
-      const submitButton = page.getByTestId("profile-submit-button");
+      const submitButton = page.getByTestId("preferences-submit-button");
 
       // Scroll down to preferences section
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -65,7 +63,7 @@ test.describe("User Profile Management", () => {
       // Save
       await expect(submitButton).toBeEnabled({ timeout: 5000 });
       await submitButton.click();
-      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+      await expect(editButton).toBeVisible({
         timeout: 10000,
       });
     });
@@ -73,11 +71,11 @@ test.describe("User Profile Management", () => {
     await test.step("Re-enter edit mode and cancel without saving", async () => {
       // Verify preference was saved by checking if we can re-enter edit mode
       await editButton.click();
-      const submitButton = page.getByTestId("profile-submit-button");
+      const submitButton = page.getByTestId("preferences-submit-button");
       await expect(submitButton).toBeVisible();
 
       // Cancel without saving
-      const cancelButton = page.getByRole("button", { name: /cancel/i });
+      const cancelButton = page.getByTestId("preferences-cancel-button");
       if (await cancelButton.isVisible()) {
         await cancelButton.click();
       } else {
@@ -165,10 +163,10 @@ test.describe("User Profile Management", () => {
     let submitButton: ReturnType<typeof page.getByTestId> | undefined;
 
     await test.step("Enter edit mode", async () => {
-      // Enter edit mode
-      const editButton = page.getByRole("button", { name: /edit/i });
+      // Enter preferences edit mode
+      const editButton = page.getByTestId("preferences-edit-button");
       await editButton.click();
-      submitButton = page.getByTestId("profile-submit-button");
+      submitButton = page.getByTestId("preferences-submit-button");
       await expect(submitButton).toBeVisible();
     });
 
@@ -183,7 +181,7 @@ test.describe("User Profile Management", () => {
 
         // Save
         await submitButton!.click();
-        await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+        await expect(page.getByTestId("preferences-edit-button")).toBeVisible({
           timeout: 10000,
         });
       }
@@ -202,7 +200,7 @@ test.describe("User Profile Management", () => {
 
     await test.step("Enter edit mode", async () => {
       // Enter edit mode
-      const editButton = page.getByRole("button", { name: /edit/i });
+      const editButton = page.getByTestId("profile-edit-button");
       await editButton.click();
       const submitButton = page.getByTestId("profile-submit-button");
       await expect(submitButton).toBeVisible();
@@ -273,16 +271,20 @@ test.describe("User Profile Management", () => {
         await page.goto(`/en-US/users/profile/${userId}`);
         await page.waitForLoadState("networkidle");
 
-        // Enter edit mode
-        const editButton = page.getByRole("button", { name: /edit/i });
+        // Enter preferences edit mode
+        const editButton = page.getByTestId("preferences-edit-button");
         await editButton.click();
 
-        const profileSubmitButton = page.getByTestId("profile-submit-button");
-        await expect(profileSubmitButton).toBeVisible();
+        const preferencesSubmitButton = page.getByTestId(
+          "preferences-submit-button"
+        );
+        await expect(preferencesSubmitButton).toBeVisible();
       });
 
       await test.step("Change the theme to Dark and save", async () => {
-        const profileSubmitButton = page.getByTestId("profile-submit-button");
+        const preferencesSubmitButton = page.getByTestId(
+          "preferences-submit-button"
+        );
 
         // Scroll down to preferences section
         await page.evaluate(() =>
@@ -301,7 +303,7 @@ test.describe("User Profile Management", () => {
         await page.waitForTimeout(2000);
 
         // Save changes - wait for the API call to complete
-        await expect(profileSubmitButton).toBeEnabled({ timeout: 5000 });
+        await expect(preferencesSubmitButton).toBeEnabled({ timeout: 5000 });
 
         // Wait for the PATCH request to the user API
         const updatePromise = page.waitForResponse(
@@ -311,13 +313,13 @@ test.describe("User Profile Management", () => {
           { timeout: 10000 }
         );
 
-        await profileSubmitButton.click();
+        await preferencesSubmitButton.click();
 
         // Wait for the API response
         const response = await updatePromise;
         expect(response.ok()).toBeTruthy();
 
-        await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+        await expect(page.getByTestId("preferences-edit-button")).toBeVisible({
           timeout: 10000,
         });
 
@@ -344,9 +346,11 @@ test.describe("User Profile Management", () => {
         await page.goto(`/en-US/users/profile/${userId}`);
         await page.waitForLoadState("networkidle");
 
-        // Enter edit mode to verify preference persisted
-        await page.getByRole("button", { name: /edit/i }).click();
-        await expect(page.getByTestId("profile-submit-button")).toBeVisible();
+        // Enter preferences edit mode to verify preference persisted
+        await page.getByTestId("preferences-edit-button").click();
+        await expect(
+          page.getByTestId("preferences-submit-button")
+        ).toBeVisible();
 
         // Scroll to preferences
         await page.evaluate(() =>
@@ -395,13 +399,11 @@ test.describe("User Profile Management", () => {
     });
 
     await test.step("Enter edit mode and open the language selector", async () => {
-      // Enter edit mode
-      const editButton = page.getByRole("button", {
-        name: /edit profile|edit/i,
-      });
+      // Enter preferences edit mode
+      const editButton = page.getByTestId("preferences-edit-button");
       await editButton.click();
 
-      const submitButton = page.getByTestId("profile-submit-button");
+      const submitButton = page.getByTestId("preferences-submit-button");
       await expect(submitButton).toBeVisible();
 
       // Scroll down to preferences section
@@ -457,7 +459,7 @@ test.describe("User Profile Management", () => {
       await page.keyboard.press("Escape");
 
       // Cancel edit mode
-      const cancelButton = page.getByRole("button", { name: /cancel/i });
+      const cancelButton = page.getByTestId("preferences-cancel-button");
       await cancelButton.click();
 
       // Verify the read-only view also shows proper label (not raw enum)
@@ -491,13 +493,11 @@ test.describe("User Profile Management", () => {
     });
 
     await test.step("Enter edit mode and switch the language to Spanish", async () => {
-      // Enter edit mode
-      const editButton = page.getByRole("button", {
-        name: /edit profile|edit/i,
-      });
+      // Enter preferences edit mode
+      const editButton = page.getByTestId("preferences-edit-button");
       await editButton.click();
 
-      const submitButton = page.getByTestId("profile-submit-button");
+      const submitButton = page.getByTestId("preferences-submit-button");
       await expect(submitButton).toBeVisible();
 
       // Scroll down to preferences section where language selector is
@@ -565,12 +565,10 @@ test.describe("User Profile Management", () => {
 
     await test.step("Revert the language back to English", async () => {
       // Revert back to English for cleanup
-      const editButtonSpanish = page.getByRole("button", {
-        name: /editar|edit/i,
-      });
+      const editButtonSpanish = page.getByTestId("preferences-edit-button");
       await editButtonSpanish.click();
 
-      const submitButtonSpanish = page.getByTestId("profile-submit-button");
+      const submitButtonSpanish = page.getByTestId("preferences-submit-button");
       await expect(submitButtonSpanish).toBeVisible();
 
       // Scroll to preferences
@@ -671,14 +669,14 @@ test.describe("User Profile Management", () => {
         await page.goto(`/en-US/users/profile/${userId}`);
         await page.waitForLoadState("networkidle");
 
-        // Enter edit mode
-        const editButton = page.getByRole("button", {
-          name: /edit profile|edit/i,
-        });
+        // Enter preferences edit mode
+        const editButton = page.getByTestId("preferences-edit-button");
         await editButton.click();
 
-        const profileSubmitButton = page.getByTestId("profile-submit-button");
-        await expect(profileSubmitButton).toBeVisible();
+        const preferencesSubmitButton = page.getByTestId(
+          "preferences-submit-button"
+        );
+        await expect(preferencesSubmitButton).toBeVisible();
 
         // Scroll to preferences
         await page.evaluate(() =>
@@ -715,8 +713,8 @@ test.describe("User Profile Management", () => {
         await frenchOption.click();
         await page.waitForTimeout(500);
 
-        await expect(profileSubmitButton).toBeEnabled({ timeout: 5000 });
-        await profileSubmitButton.click();
+        await expect(preferencesSubmitButton).toBeEnabled({ timeout: 5000 });
+        await preferencesSubmitButton.click();
 
         // Wait for update
         const response = await updatePromise;
@@ -801,10 +799,10 @@ test.describe("User Profile Access Control", () => {
         await page.waitForLoadState("networkidle");
 
         // Verify we can see the profile page (not a blank page or 404)
-        // Check for the Edit button which appears on the user's own profile
-        await expect(
-          page.getByRole("button", { name: /edit profile|edit/i })
-        ).toBeVisible({ timeout: 5000 });
+        // Check for the header's Edit button which appears on the user's own profile
+        await expect(page.getByTestId("profile-edit-button")).toBeVisible({
+          timeout: 5000,
+        });
 
         // Verify we can see the user's name
         await expect(
@@ -875,9 +873,7 @@ test.describe("User Profile Access Control", () => {
         });
 
         // Verify we DON'T see the admin profile content
-        await expect(
-          page.getByRole("button", { name: /edit profile|edit/i })
-        ).not.toBeVisible();
+        await expect(page.getByTestId("profile-edit-button")).not.toBeVisible();
       });
     } finally {
       // Cleanup - delete test user
@@ -931,8 +927,8 @@ test.describe("User Profile Access Control", () => {
         await page.goto(`/en-US/users/profile/${userId}`);
         await page.waitForLoadState("networkidle");
 
-        // Click edit button - use more specific selector to avoid matching user menu buttons
-        const editButton = page.getByRole("button", { name: "Edit Profile" });
+        // Click the header's edit button - use its test ID to avoid matching the Preferences edit button
+        const editButton = page.getByTestId("profile-edit-button");
         await expect(editButton).toBeVisible();
         await editButton.click();
 
@@ -958,9 +954,9 @@ test.describe("User Profile Access Control", () => {
         await profileSubmitButton.click();
 
         // Wait for save to complete
-        await expect(
-          page.getByRole("button", { name: "Edit Profile" })
-        ).toBeVisible({ timeout: 10000 });
+        await expect(page.getByTestId("profile-edit-button")).toBeVisible({
+          timeout: 10000,
+        });
 
         // Verify name was updated
         await expect(page.getByText(newName).first()).toBeVisible();
