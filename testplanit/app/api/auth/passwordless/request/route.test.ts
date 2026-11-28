@@ -107,11 +107,11 @@ import { POST } from "./route";
 
 const SECRET = "test-secret-key-at-least-32-chars-long";
 const CSRF_TOKEN = "csrf-token-value";
-const csrfCookie = () => {
+const csrfCookie = (name = "next-auth.csrf-token") => {
   const hash = createHash("sha256")
     .update(`${CSRF_TOKEN}${SECRET}`)
     .digest("hex");
-  return `next-auth.csrf-token=${encodeURIComponent(`${CSRF_TOKEN}|${hash}`)}`;
+  return `${name}=${encodeURIComponent(`${CSRF_TOKEN}|${hash}`)}`;
 };
 
 let ipSeq = 0;
@@ -265,6 +265,18 @@ describe("request hardening", () => {
       )
     );
     expect(res2.status).toBe(403);
+  });
+
+  it("accepts the CSRF cookie of an install under a path prefix over https", async () => {
+    const res = await POST(
+      makePost(
+        { email: "subpath@example.com", csrfToken: CSRF_TOKEN },
+        { cookie: csrfCookie("__Secure-next-auth.csrf-token") }
+      )
+    );
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).enabled).toBe(true);
   });
 
   it("rejects malformed bodies", async () => {

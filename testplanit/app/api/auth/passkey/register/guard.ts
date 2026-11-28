@@ -1,5 +1,6 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
+import { getPendingSignInStep } from "~/lib/auth/pendingSignIn";
 import {
   canUsePasskeys,
   getPasskeyAvailability,
@@ -40,12 +41,7 @@ export async function requirePasskeyRegistrationUser(
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
   });
-  if (
-    !token ||
-    (token.twoFactorRequired && !token.twoFactorVerified) ||
-    token.twoFactorSetupRequired ||
-    token.mustChangePassword
-  ) {
+  if (!token || getPendingSignInStep(token)) {
     return {
       response: NextResponse.json(
         { error: "Finish signing in before adding a passkey" },

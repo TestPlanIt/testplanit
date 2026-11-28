@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
+import { reissueSessionCookie } from "~/lib/auth/sessionCookie";
 import { baseDb } from "~/lib/db";
 import {
   decryptSecret,
@@ -84,10 +85,19 @@ const handlePOST = withAuditContext(async (request: NextRequest) => {
       },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       backupCodes: plainCodes, // Show these to the user ONCE
     });
+
+    // A session sent here to set two-factor up has now passed that step.
+    await reissueSessionCookie(request, response, {
+      twoFactorSetupRequired: false,
+      twoFactorRequired: false,
+      twoFactorVerified: true,
+    });
+
+    return response;
   } catch (error) {
     console.error("2FA enable error:", error);
     return NextResponse.json(

@@ -295,6 +295,72 @@ describe("consumeTempSessionToken (single-use)", () => {
   });
 });
 
+describe("sign-in tokens are good for their own step only (no Valkey)", () => {
+  const SECRET = "test-secret-key-at-least-32-chars-long";
+  const session = {
+    userId: "user-9",
+    provider: "saml-okta",
+    email: "u@example.com",
+  };
+
+  async function load() {
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: null }));
+    const security = await import("./auth-security");
+    const jwt = (await import("jsonwebtoken")).default;
+    return { ...security, jwt };
+  }
+
+  afterEach(() => {
+    vi.doUnmock("./valkey");
+  });
+
+  it("a completion token still completes a sign-in", async () => {
+    const { createTempSessionToken, consumeTempSessionToken } = await load();
+
+    const token = await createTempSessionToken(session);
+
+    expect(await consumeTempSessionToken(token)).toEqual(session);
+  });
+
+  it.each([
+    ["a pending two-factor token", { twoFactorPending: true }],
+    ["a two-factor setup token", { twoFactorSetupRequired: true }],
+    ["a two-factor completion token", { twoFactorVerified: true }],
+  ])("%s does not complete a sign-in", async (_label, claim) => {
+    const { consumeTempSessionToken, verifyTempSessionToken, jwt } =
+      await load();
+    const token = jwt.sign(
+      { userId: "user-9", email: "u@example.com", ...claim },
+      SECRET,
+      { expiresIn: "5m" }
+    );
+
+    expect(await consumeTempSessionToken(token)).toBeNull();
+    expect(verifyTempSessionToken(token)).toBeNull();
+  });
+
+  it("a relay state token does not complete a sign-in", async () => {
+    const { createSamlRelayState, consumeTempSessionToken } = await load();
+
+    const relay = await createSamlRelayState({
+      providerId: "ssoprovider_123",
+      callbackUrl: "/dashboard",
+    });
+
+    expect(await consumeTempSessionToken(relay)).toBeNull();
+  });
+
+  it("a completion token is not a relay state", async () => {
+    const { createTempSessionToken, consumeSamlRelayState } = await load();
+
+    const token = await createTempSessionToken(session);
+
+    expect(await consumeSamlRelayState(token)).toBeNull();
+  });
+});
+
 // These exercise the in-memory FALLBACK path (valkey is mocked to null at the
 // top of the file). The Valkey path that actually ships is covered by the
 // cross-instance block below.

@@ -458,10 +458,11 @@ const Signin: NextPage = () => {
       // Get callback URL from search params, default to "/"
       const callbackUrl = searchParams.get("callbackUrl") || "/";
 
-      // Try the device-bound flow first (PASSWORDLESS_DEVICE_BOUND); the
-      // endpoint answers { enabled: false } when the deployment has the flag
-      // off, in which case we fall back to the stock EmailProvider flow.
-      let deviceBound = false;
+      // Device-bound links are the default (PASSWORDLESS_DEVICE_BOUND). Only
+      // an explicit { enabled: false } selects the stock EmailProvider flow; a
+      // failed request does not.
+      let request: { enabled?: boolean; pendingId?: string } | null = null;
+      let throttled = false;
       try {
         const csrfToken = await getCsrfToken();
         const res = await apiFetch("/api/auth/passwordless/request", {
@@ -474,28 +475,29 @@ const Signin: NextPage = () => {
           }),
         });
         if (res.ok) {
-          const body = await res.json();
-          if (body.enabled) {
-            deviceBound = true;
-            setPasswordlessPendingId(body.pendingId);
-          }
-        } else if (res.status === 429) {
-          // Throttled: don't double-send through the legacy flow.
-          setPasswordlessError(t("auth.signin.passwordless.tooManyRequests"));
-          setIsSendingMagicLink(false);
-          return;
+          request = await res.json();
+        } else {
+          throttled = res.status === 429;
         }
       } catch (error) {
         console.error("Passwordless request error:", error);
-        // Fall through to the legacy flow.
       }
 
-      if (!deviceBound) {
+      if (request?.enabled === true) {
+        setPasswordlessPendingId(request.pendingId ?? null);
+      } else if (request?.enabled === false) {
         await signIn("email", {
           email: data.email,
           redirect: false,
           callbackUrl: withBasePath(callbackUrl),
         });
+      } else {
+        setPasswordlessError(
+          throttled
+            ? t("auth.signin.passwordless.tooManyRequests")
+            : t("auth.signin.magicLink.error")
+        );
+        return;
       }
 
       // Always show success message regardless of result

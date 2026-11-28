@@ -248,30 +248,22 @@ export function parseVerifierFromCookieHeader(
   return null;
 }
 
-/**
- * Validate a NextAuth double-submit CSRF token against the request's CSRF
- * cookie ("<token>|<sha256(token+secret)>"). Used by the passwordless request
- * endpoint so the waiting-window POST reuses Auth.js CSRF instead of a
- * parallel mechanism.
- */
-export function validateNextAuthCsrf(
-  cookieHeader: string | undefined | null,
-  submittedToken: string | undefined | null
-): boolean {
-  if (!cookieHeader || !submittedToken) return false;
-  const names = ["__Host-next-auth.csrf-token=", "next-auth.csrf-token="];
-  let cookieValue: string | null = null;
-  for (const part of cookieHeader.split(";")) {
-    const trimmed = part.trim();
-    for (const name of names) {
-      if (trimmed.startsWith(name)) {
-        cookieValue = decodeURIComponent(trimmed.slice(name.length));
-        break;
-      }
-    }
-    if (cookieValue) break;
+// next-auth names its CSRF cookie by how the install is served: unprefixed
+// over http, __Host- over https at the root, __Secure- over https under a
+// path prefix (lib/auth/cookieScope.ts).
+const CSRF_COOKIE_NAMES = [
+  "__Host-next-auth.csrf-token",
+  "__Secure-next-auth.csrf-token",
+  "next-auth.csrf-token",
+];
+
+function csrfCookieMatches(rawValue: string, submittedToken: string): boolean {
+  let cookieValue: string;
+  try {
+    cookieValue = decodeURIComponent(rawValue);
+  } catch {
+    return false;
   }
-  if (!cookieValue) return false;
   const [cookieToken, cookieHash] = cookieValue.split("|");
   if (!cookieToken || !cookieHash) return false;
   const expectedHash = createHash("sha256")
@@ -285,6 +277,30 @@ export function validateNextAuthCsrf(
     cookieToken.length === submittedToken.length &&
     timingSafeEqual(Buffer.from(cookieToken), Buffer.from(submittedToken))
   );
+}
+
+/**
+ * Validate a NextAuth double-submit CSRF token against the request's CSRF
+ * cookie ("<token>|<sha256(token+secret)>"). Used by the passwordless request
+ * endpoint so the waiting-window POST reuses Auth.js CSRF instead of a
+ * parallel mechanism.
+ */
+export function validateNextAuthCsrf(
+  cookieHeader: string | undefined | null,
+  submittedToken: string | undefined | null
+): boolean {
+  if (!cookieHeader || !submittedToken) return false;
+  // A stale cookie under another of the names can sit beside the live one.
+  for (const part of cookieHeader.split(";")) {
+    const trimmed = part.trim();
+    const separator = trimmed.indexOf("=");
+    if (separator === -1) continue;
+    if (!CSRF_COOKIE_NAMES.includes(trimmed.slice(0, separator))) continue;
+    if (csrfCookieMatches(trimmed.slice(separator + 1), submittedToken)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export interface CreatedPendingAuth {

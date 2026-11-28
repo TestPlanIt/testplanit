@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "crypto";
-import jwt from "jsonwebtoken";
 import valkeyConnection from "./valkey";
 import { getAppUrl } from "~/lib/appUrl";
+import { signSignInToken, verifySignInToken } from "~/lib/auth/signInTokens";
 import { BASE_PATH } from "~/lib/basePath";
 
 // Generate secure state parameter for OAuth/SAML flows
@@ -81,7 +81,6 @@ export function getAppBaseUrl(request?: Request): string {
 }
 
 // JWT token configuration for temporary session data
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
 const JWT_EXPIRY = "2m"; // short-lived: the completion redirect is immediate
 const SAML_COMPLETE_PREFIX = "saml:complete:";
 const SAML_COMPLETE_TTL_SECONDS = 120; // mirrors JWT_EXPIRY
@@ -110,15 +109,14 @@ export async function createTempSessionToken(
       SAML_COMPLETE_TTL_SECONDS
     );
   }
-  return jwt.sign(data, JWT_SECRET, { expiresIn: JWT_EXPIRY, jwtid: jti });
+  return signSignInToken("saml-complete", data, {
+    expiresIn: JWT_EXPIRY,
+    jwtid: jti,
+  });
 }
 
 export function verifyTempSessionToken(token: string): TempSessionData | null {
-  try {
-    return jwt.verify(token, JWT_SECRET) as TempSessionData;
-  } catch {
-    return null;
-  }
+  return verifySignInToken<TempSessionData>("saml-complete", token);
 }
 
 /**
@@ -130,14 +128,8 @@ export function verifyTempSessionToken(token: string): TempSessionData | null {
 export async function consumeTempSessionToken(
   token: string
 ): Promise<TempSessionData | null> {
-  let decoded: TempSessionData & { jti?: string };
-  try {
-    decoded = jwt.verify(token, JWT_SECRET) as TempSessionData & {
-      jti?: string;
-    };
-  } catch {
-    return null;
-  }
+  const decoded = verifySignInToken<TempSessionData>("saml-complete", token);
+  if (!decoded) return null;
 
   if (valkeyConnection) {
     if (!decoded.jti) return null;
@@ -187,7 +179,7 @@ export async function createSamlRelayState(
     );
     return relayId;
   }
-  return jwt.sign(data, JWT_SECRET, { expiresIn: "15m" });
+  return signSignInToken("saml-relay", data, { expiresIn: "15m" });
 }
 
 /**
@@ -216,14 +208,10 @@ export async function consumeSamlRelayState(
     // Fall through: may be a signed fallback token issued while Valkey was down.
   }
 
-  try {
-    const decoded = jwt.verify(relayState, JWT_SECRET) as SamlRelayData;
-    return decoded?.providerId
-      ? { providerId: decoded.providerId, callbackUrl: decoded.callbackUrl }
-      : null;
-  } catch {
-    return null;
-  }
+  const decoded = verifySignInToken<SamlRelayData>("saml-relay", relayState);
+  return decoded?.providerId
+    ? { providerId: decoded.providerId, callbackUrl: decoded.callbackUrl }
+    : null;
 }
 
 const SAML_ASSERTION_PREFIX = "saml:assertion:";

@@ -2,6 +2,7 @@
 import jwt from "jsonwebtoken";
 import { decode } from "next-auth/jwt";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { signSignInToken } from "~/lib/auth/signInTokens";
 
 vi.hoisted(() => {
   process.env.NEXTAUTH_SECRET = "test-secret-key-at-least-32-chars-long";
@@ -40,9 +41,9 @@ function makeReq(token: string, callbackUrl = "/dashboard") {
 }
 
 function tempToken() {
-  return jwt.sign(
+  return signSignInToken(
+    "saml-complete",
     { userId: user.id, provider: "saml-okta", email: user.email },
-    SECRET,
     { expiresIn: "5m" }
   );
 }
@@ -125,6 +126,36 @@ describe("GET /api/auth/saml/complete — post-Okta session handoff", () => {
       secret: SECRET,
     });
     expect(decoded?.twoFactorSetupRequired).toBe(true);
+  });
+
+  it.each([
+    ["a pending two-factor token", "two-factor-pending"],
+    ["a two-factor setup token", "two-factor-setup"],
+  ] as const)("refuses %s from a password sign-in", async (_label, purpose) => {
+    const token = signSignInToken(
+      purpose,
+      { userId: user.id, email: user.email },
+      { expiresIn: "5m" }
+    );
+
+    const res = await GET(makeReq(token));
+
+    expect(res.status).toBe(401);
+    expect(res.cookies.get("next-auth.session-token")).toBeUndefined();
+    expect(db.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("refuses a signed token that names no purpose", async () => {
+    const token = jwt.sign(
+      { userId: user.id, provider: "saml-okta", email: user.email },
+      SECRET,
+      { expiresIn: "5m" }
+    );
+
+    const res = await GET(makeReq(token));
+
+    expect(res.status).toBe(401);
+    expect(db.user.findUnique).not.toHaveBeenCalled();
   });
 
   it("rejects an invalid/expired token with 401", async () => {

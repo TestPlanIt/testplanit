@@ -1236,3 +1236,247 @@ describe("Read replicas: pinning reads after a server action", () => {
     );
   });
 });
+
+describe("API access while a sign-in step is still owed", () => {
+  // A browser request from the app's own pages, so the external-API rule
+  // (isApi) is not what refuses it.
+  const sameOrigin = { "sec-fetch-site": "same-origin" };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.NEXTAUTH_SECRET = "test-secret";
+    mockGetCachedSessionUser.mockResolvedValue(null);
+  });
+
+  afterEach(() => {
+    delete process.env.NEXTAUTH_SECRET;
+  });
+
+  async function callApi(
+    path: string,
+    claims: Record<string, unknown>,
+    headers: Record<string, string> = sameOrigin
+  ) {
+    mockGetToken.mockResolvedValue({
+      sub: "user-123",
+      access: "USER",
+      isApi: false,
+      ...claims,
+    });
+    return middlewareWithPreferences(createMockRequest(path, headers));
+  }
+
+  it.each([
+    [
+      "a second factor still to verify",
+      { twoFactorRequired: true, twoFactorVerified: false },
+    ],
+    ["two-factor setup still to complete", { twoFactorSetupRequired: true }],
+    ["a forced password change", { mustChangePassword: true }],
+  ])("refuses the data API to a session with %s", async (_label, claims) => {
+    const response = await callApi("/api/model/projects/findMany", claims);
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({
+      code: "SIGN_IN_INCOMPLETE",
+    });
+  });
+
+  it("refuses an administrator's session as well", async () => {
+    const response = await callApi("/api/model/user/findMany", {
+      access: "ADMIN",
+      twoFactorRequired: true,
+      twoFactorVerified: false,
+    });
+
+    expect(response.status).toBe(403);
+  });
+
+  it("refuses other API routes too, not only the data API", async () => {
+    const response = await callApi("/api/search", {
+      twoFactorRequired: true,
+      twoFactorVerified: false,
+    });
+
+    expect(response.status).toBe(403);
+  });
+
+  it("lets the session through once the second factor is verified", async () => {
+    const response = await callApi("/api/model/projects/findMany", {
+      twoFactorRequired: true,
+      twoFactorVerified: true,
+    });
+
+    expect(response.status).not.toBe(403);
+  });
+
+  it("lets an ordinary session through", async () => {
+    const response = await callApi("/api/model/projects/findMany", {});
+
+    expect(response.status).not.toBe(403);
+  });
+
+  it.each([
+    "/api/auth/two-factor/verify-sso",
+    "/api/auth/two-factor/setup",
+    "/api/auth/two-factor/enable",
+    "/api/auth/session",
+    "/api/auth/logout",
+  ])("keeps %s reachable so the step can be completed", async (path) => {
+    const response = await callApi(path, {
+      twoFactorRequired: true,
+      twoFactorVerified: false,
+      twoFactorSetupRequired: true,
+      mustChangePassword: true,
+    });
+
+    expect(response.status).not.toBe(403);
+  });
+
+  it.each([
+    "/api/users/user-123/force-change-password",
+    "/api/users/user-123/password-policy",
+  ])("keeps %s reachable during a forced password change", async (path) => {
+    const response = await callApi(path, { mustChangePassword: true });
+
+    expect(response.status).not.toBe(403);
+  });
+
+  it("does not open the password-change routes to a session that owes a second factor", async () => {
+    const response = await callApi(
+      "/api/users/user-123/force-change-password",
+      {
+        twoFactorRequired: true,
+        twoFactorVerified: false,
+        mustChangePassword: true,
+      }
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  it("refuses the other user routes during a forced password change", async () => {
+    const response = await callApi("/api/users/user-123/change-password", {
+      mustChangePassword: true,
+    });
+
+    expect(response.status).toBe(403);
+  });
+
+  it("leaves API-token requests to the route's own authentication", async () => {
+    const response = await callApi(
+      "/api/model/projects/findMany",
+      { twoFactorRequired: true, twoFactorVerified: false },
+      { authorization: "Bearer tpi_abcdefghijklmnopqrstuvwxyz" }
+    );
+
+    expect(response.status).not.toBe(403);
+  });
+});
+
+describe("server actions while a sign-in step is still owed", () => {
+  // A server action is a POST to a page route. The action is named in a
+  // header or a form field, never in the URL, so any page can carry it, the
+  // public pages a half-signed-in session is allowed to load included.
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.NEXTAUTH_SECRET = "test-secret";
+    mockGetCachedSessionUser.mockResolvedValue(null);
+  });
+
+  afterEach(() => {
+    delete process.env.NEXTAUTH_SECRET;
+  });
+
+  const owesSecondFactor = {
+    twoFactorRequired: true,
+    twoFactorVerified: false,
+  };
+
+  async function request(
+    method: string,
+    path: string,
+    claims: Record<string, unknown> | null,
+    headers: Record<string, string> = { "next-action": "0123456789abcdef" }
+  ) {
+    mockGetToken.mockResolvedValue(
+      claims === null ? null : { sub: "user-123", access: "USER", ...claims }
+    );
+    return middlewareWithPreferences(
+      new NextRequest(new URL(path, "http://localhost:3000"), {
+        method,
+        headers: new Headers(headers),
+      })
+    );
+  }
+
+  it.each([
+    ["the two-factor page itself", "/en-US/auth/two-factor-verify"],
+    ["the two-factor setup page", "/en-US/auth/two-factor-setup?sso=true"],
+    ["the sign-in page", "/en-US/signin"],
+    ["a shared-link page", "/en-US/share/abc123"],
+    ["a shared link before its locale redirect", "/share/abc123"],
+    ["a page inside the app", "/en-US/projects"],
+    ["the home page", "/"],
+  ])("refuses a server action posted to %s", async (_label, path) => {
+    const response = await request("POST", path, owesSecondFactor);
+
+    // A redirect would not do: the browser repeats a redirected POST, header
+    // and body included, at the page it is sent to.
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({
+      code: "SIGN_IN_INCOMPLETE",
+    });
+  });
+
+  it.each([
+    ["two-factor setup still to complete", { twoFactorSetupRequired: true }],
+    ["a forced password change", { mustChangePassword: true }],
+  ])("refuses a session with %s", async (_label, claims) => {
+    const response = await request(
+      "POST",
+      "/en-US/auth/force-change-password",
+      claims
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  it("refuses a form post, which names its action in the body", async () => {
+    const response = await request(
+      "POST",
+      "/en-US/auth/two-factor-verify",
+      owesSecondFactor,
+      { "content-type": "multipart/form-data; boundary=x" }
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  it("still lets the session load the page it has to finish on", async () => {
+    const response = await request(
+      "GET",
+      "/en-US/auth/two-factor-verify",
+      owesSecondFactor,
+      {}
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockGetToken).not.toHaveBeenCalled();
+  });
+
+  it("lets a finished session's server action through", async () => {
+    const response = await request("POST", "/en-US/projects", {
+      twoFactorRequired: false,
+      twoFactorVerified: true,
+    });
+
+    expect(response.status).toBe(200);
+  });
+
+  it("leaves a signed-out visitor's server action on a public page alone", async () => {
+    const response = await request("POST", "/en-US/signup", null);
+
+    expect(response.status).toBe(200);
+  });
+});

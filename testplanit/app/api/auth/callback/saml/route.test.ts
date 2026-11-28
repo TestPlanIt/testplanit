@@ -1,13 +1,11 @@
 // @vitest-environment node
-import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { signSignInToken } from "~/lib/auth/signInTokens";
 
 vi.hoisted(() => {
   process.env.NEXTAUTH_SECRET = "test-secret-key-at-least-32-chars-long";
   process.env.NEXTAUTH_URL = "https://app.example.com";
 });
-
-const SECRET = "test-secret-key-at-least-32-chars-long";
 
 vi.mock("~/lib/valkey", () => ({ default: null })); // RelayState via signed token
 
@@ -67,7 +65,11 @@ function makeReq(
 
 // A RelayState as the init route would mint it without Valkey (signed token).
 function relayFor(providerId: string, callbackUrl = "/dash") {
-  return jwt.sign({ providerId, callbackUrl }, SECRET, { expiresIn: "15m" });
+  return signSignInToken(
+    "saml-relay",
+    { providerId, callbackUrl },
+    { expiresIn: "15m" }
+  );
 }
 
 describe("POST /api/auth/callback/saml — ACS validator", () => {

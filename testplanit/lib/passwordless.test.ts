@@ -221,13 +221,45 @@ describe("verifier cookie encoding", () => {
 
 describe("NextAuth CSRF validation (double submit)", () => {
   const secret = process.env.NEXTAUTH_SECRET!;
-  const makeCsrfCookie = (token: string) => {
+  const makeCsrfCookie = (token: string, name = "next-auth.csrf-token") => {
     const hash = createHash("sha256").update(`${token}${secret}`).digest("hex");
-    return `next-auth.csrf-token=${encodeURIComponent(`${token}|${hash}`)}`;
+    return `${name}=${encodeURIComponent(`${token}|${hash}`)}`;
   };
 
   it("accepts a matching token", () => {
     expect(validateNextAuthCsrf(makeCsrfCookie("tok123"), "tok123")).toBe(true);
+  });
+
+  // next-auth names the cookie by how the install is served: plain over
+  // http, __Host- over https at the root, __Secure- over https under a path
+  // prefix (a __Host- cookie cannot be scoped to a path).
+  it.each([
+    "next-auth.csrf-token",
+    "__Host-next-auth.csrf-token",
+    "__Secure-next-auth.csrf-token",
+  ])("accepts the cookie named %s", (name) => {
+    expect(validateNextAuthCsrf(makeCsrfCookie("tok123", name), "tok123")).toBe(
+      true
+    );
+  });
+
+  it("accepts the live cookie when a stale one under another name comes first", () => {
+    const header = [
+      "other=1",
+      makeCsrfCookie("stale-token", "next-auth.csrf-token"),
+      makeCsrfCookie("tok123", "__Secure-next-auth.csrf-token"),
+    ].join("; ");
+
+    expect(validateNextAuthCsrf(header, "tok123")).toBe(true);
+  });
+
+  it("ignores a cookie whose name only ends like the CSRF cookie's", () => {
+    expect(
+      validateNextAuthCsrf(
+        makeCsrfCookie("tok123", "evil-next-auth.csrf-token"),
+        "tok123"
+      )
+    ).toBe(false);
   });
 
   it("rejects missing, mismatched, or tampered tokens", () => {

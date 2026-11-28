@@ -137,8 +137,9 @@ export default function TwoFactorSetupPage() {
     setIsLoading(true);
 
     if (isSsoFlow) {
-      // For SSO flow, update session to mark 2FA setup as complete
-      await updateSession({ twoFactorSetupComplete: true });
+      // For SSO flow, the enable route re-issued the cookie; refresh the
+      // page's copy.
+      await updateSession();
       router.push("/");
     } else {
       // For credentials flow, redirect to sign in
@@ -217,7 +218,10 @@ export default function TwoFactorSetupPage() {
                   <p className="mb-1 text-xs text-muted-foreground">
                     {t("auth.twoFactorSetup.manualEntry")}
                   </p>
-                  <code className="rounded bg-muted px-2 py-1 font-mono text-sm">
+                  <code
+                    className="rounded bg-muted px-2 py-1 font-mono text-sm"
+                    data-testid="two-factor-setup-secret"
+                  >
                     {setupData.secret}
                   </code>
                 </div>
@@ -304,6 +308,7 @@ export default function TwoFactorSetupPage() {
                 className="w-full"
                 onClick={completeSignIn}
                 disabled={isLoading}
+                data-testid="two-factor-setup-continue"
               >
                 {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {t("auth.twoFactorSetup.continue")}
