@@ -29,6 +29,54 @@ describe("GitHubAdapter", () => {
     repository_url: "https://api.github.com/repos/testowner/testrepo",
   };
 
+  const issueFieldsResponse = {
+    data: {
+      repository: {
+        issueFields: {
+          nodes: [
+            {
+              fullDatabaseId: "101",
+              name: "Priority",
+              dataType: "SINGLE_SELECT",
+              options: [{ name: "Urgent" }, { name: "High" }],
+            },
+            { fullDatabaseId: "102", name: "Start date", dataType: "DATE" },
+            { fullDatabaseId: "103", name: "Story points", dataType: "NUMBER" },
+            { fullDatabaseId: "104", name: "Notes", dataType: "TEXT" },
+            {
+              fullDatabaseId: "105",
+              name: "Components",
+              dataType: "MULTI_SELECT",
+              options: [{ name: "API" }, { name: "Web UI" }],
+            },
+            { fullDatabaseId: "106", name: "Future", dataType: "ITERATION" },
+          ],
+        },
+        pinnedIssueFields: {
+          nodes: [{ fullDatabaseId: "101" }, { fullDatabaseId: "105" }],
+        },
+        issueTypes: {
+          nodes: [
+            {
+              name: "Bug",
+              pinnedFields: [
+                { fullDatabaseId: "101" },
+                { fullDatabaseId: "103" },
+              ],
+            },
+            {
+              name: "Feature",
+              pinnedFields: [
+                { fullDatabaseId: "101" },
+                { fullDatabaseId: "102" },
+              ],
+            },
+          ],
+        },
+      },
+    },
+  };
+
   const mockSearchResponse = {
     total_count: 2,
     incomplete_results: false,
@@ -62,7 +110,7 @@ describe("GitHubAdapter", () => {
         syncIssue: true,
         searchIssues: true,
         webhooks: true,
-        customFields: false,
+        customFields: true,
         attachments: false,
         linkedIssues: true,
         comments: true,
@@ -2622,13 +2670,24 @@ describe("GitHubAdapter", () => {
         if (url.includes("/issue-types")) {
           return notFound();
         }
+        if (url.endsWith("/graphql")) {
+          return okJson(issueFieldsResponse);
+        }
         throw new Error(`unexpected ${url}`);
       });
 
       const metadata =
         await adapter.getCreateIssueMetadata("testowner/testrepo");
 
-      expect(metadata).toEqual({
+      expect(metadata.fields?.map((field) => field.name)).toEqual([
+        "Priority",
+        "Start date",
+        "Story points",
+        "Notes",
+        "Components",
+      ]);
+      expect({ ...metadata, fields: undefined }).toEqual({
+        fields: undefined,
         labels: [{ id: "bug", name: "bug", color: "d73a4a" }],
         milestones: [
           {
@@ -2643,6 +2702,322 @@ describe("GitHubAdapter", () => {
         issueTypes: [],
       });
       consoleError.mockRestore();
+    });
+
+    it("getCreateIssueMetadata offers no fields when they cannot be read", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      mockFetch.mockImplementation(async (url: string) => {
+        if (url.endsWith("/graphql")) {
+          return okJson({
+            data: { repository: null },
+            errors: [{ type: "FORBIDDEN", message: "Resource not accessible" }],
+          });
+        }
+        return okJson([]);
+      });
+
+      const metadata =
+        await adapter.getCreateIssueMetadata("testowner/testrepo");
+
+      expect(metadata.fields).toEqual([]);
+      expect(consoleError).toHaveBeenCalledWith(
+        "[GitHubAdapter] getIssueFields failed:",
+        expect.objectContaining({ message: "Resource not accessible" })
+      );
+      consoleError.mockRestore();
+    });
+  });
+
+  describe("issue fields", () => {
+    const okJson = (payload: unknown) => ({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(payload),
+    });
+
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce(okJson({ login: "testuser" }));
+      await adapter.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+    });
+
+    it("lists the repository's fields in the shape the create form renders", async () => {
+      mockFetch.mockResolvedValueOnce(okJson(issueFieldsResponse));
+
+      const fields = await adapter.getIssueFields("testowner/testrepo");
+
+      expect(fields).toEqual([
+        {
+          key: "101",
+          name: "Priority",
+          required: false,
+          schema: { type: "option" },
+          allowedValues: [
+            { id: "Urgent", name: "Urgent" },
+            { id: "High", name: "High" },
+          ],
+          pinnedTo: ["", "Bug", "Feature"],
+        },
+        {
+          key: "102",
+          name: "Start date",
+          required: false,
+          schema: { type: "date" },
+          input: "date",
+          pinnedTo: ["Feature"],
+        },
+        {
+          key: "103",
+          name: "Story points",
+          required: false,
+          schema: { type: "number" },
+          pinnedTo: ["Bug"],
+        },
+        {
+          key: "104",
+          name: "Notes",
+          required: false,
+          schema: { type: "string" },
+          pinnedTo: [],
+        },
+        {
+          key: "105",
+          name: "Components",
+          required: false,
+          schema: { type: "array" },
+          input: "multiselect",
+          allowedValues: [
+            { id: "API", name: "API" },
+            { id: "Web UI", name: "Web UI" },
+          ],
+          pinnedTo: [""],
+        },
+      ]);
+    });
+
+    it("asks GraphQL for the one repository", async () => {
+      mockFetch.mockResolvedValueOnce(okJson(issueFieldsResponse));
+
+      await adapter.getIssueFields("someorg/somerepo");
+
+      const [url, init] = mockFetch.mock.lastCall!;
+      expect(url).toBe("https://api.github.com/graphql");
+      expect(init.method).toBe("POST");
+      const body = JSON.parse(init.body as string);
+      expect(body.variables).toEqual({ owner: "someorg", name: "somerepo" });
+      expect(body.query).toContain("issueFields(first: 100)");
+    });
+
+    it("uses the GraphQL root of a GitHub Enterprise Server", async () => {
+      const enterprise = new GitHubAdapter({
+        repository: "testowner/testrepo",
+        provider: "GITHUB",
+        baseUrl: "https://ghes.example.com/api/v3/",
+      });
+      mockFetch.mockResolvedValueOnce(okJson({ login: "testuser" }));
+      await enterprise.authenticate({
+        type: "api_key",
+        apiKey: "ghp_test_token",
+      });
+      mockFetch.mockResolvedValueOnce(okJson(issueFieldsResponse));
+
+      await enterprise.getIssueFields("testowner/testrepo");
+
+      expect(mockFetch.mock.lastCall![0]).toBe(
+        "https://ghes.example.com/api/graphql"
+      );
+    });
+
+    it("has no fields on a server that does not know issue fields", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          errors: [
+            {
+              message: "Field 'issueFields' doesn't exist on type 'Repository'",
+              extensions: { code: "undefinedField" },
+            },
+          ],
+        })
+      );
+
+      await expect(
+        adapter.getIssueFields("testowner/testrepo")
+      ).resolves.toEqual([]);
+    });
+
+    it("shows the fields pinned to issues without a type on every type when GitHub reports no pins per type", async () => {
+      const repository = issueFieldsResponse.data.repository;
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          data: {
+            repository: {
+              ...repository,
+              issueTypes: {
+                nodes: repository.issueTypes.nodes.map((type) => ({
+                  ...type,
+                  pinnedFields: [],
+                })),
+              },
+            },
+          },
+        })
+      );
+
+      const fields = await adapter.getIssueFields("testowner/testrepo");
+
+      expect(
+        Object.fromEntries(fields.map((field) => [field.name, field.pinnedTo]))
+      ).toEqual({
+        Priority: ["", "Bug", "Feature"],
+        "Start date": [],
+        "Story points": [],
+        Notes: [],
+        Components: ["", "Bug", "Feature"],
+      });
+    });
+
+    it("has no fields when the owner defines none", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          data: {
+            repository: {
+              issueFields: { nodes: [] },
+              pinnedIssueFields: { nodes: [] },
+              issueTypes: { nodes: [{ name: "Bug", pinnedFields: [] }] },
+            },
+          },
+        })
+      );
+
+      await expect(
+        adapter.getIssueFields("testowner/testrepo")
+      ).resolves.toEqual([]);
+    });
+
+    it("reports why the repository's fields could not be read", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          data: { repository: null },
+          errors: [{ type: "NOT_FOUND", message: "Could not resolve" }],
+        })
+      );
+
+      await expect(
+        adapter.getIssueFields("testowner/testrepo")
+      ).rejects.toThrow("Could not resolve");
+    });
+
+    it("createIssue sends a value for each field that has one", async () => {
+      mockFetch.mockResolvedValueOnce(okJson(mockGitHubIssue));
+
+      await adapter.createIssue({
+        title: "Test Issue",
+        projectId: "testowner/testrepo",
+        customFields: {
+          "101": "High",
+          "102": "2026-12-01",
+          "103": 0,
+          "104": "",
+          "105": ["API", "Web UI"],
+          "106": [],
+          "107": null,
+          reporter: { accountId: "abc" },
+        },
+      });
+
+      const body = JSON.parse(mockFetch.mock.lastCall![1].body as string);
+      expect(body.issue_field_values).toEqual([
+        { field_id: 101, value: "High" },
+        { field_id: 102, value: "2026-12-01" },
+        { field_id: 103, value: 0 },
+        { field_id: 105, value: ["API", "Web UI"] },
+      ]);
+    });
+
+    it("createIssue sends no field values when none were entered", async () => {
+      mockFetch.mockResolvedValueOnce(okJson(mockGitHubIssue));
+
+      await adapter.createIssue({
+        title: "Test Issue",
+        projectId: "testowner/testrepo",
+        customFields: { reporter: { accountId: "abc" } },
+      });
+
+      const body = JSON.parse(mockFetch.mock.lastCall![1].body as string);
+      expect(body).not.toHaveProperty("issue_field_values");
+    });
+
+    it("reads an issue's field values by name and its priority", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          ...mockGitHubIssue,
+          issue_field_values: [
+            {
+              issue_field_id: 101,
+              issue_field_name: "Priority",
+              data_type: "single_select",
+              value: 88494873,
+              single_select_option: { id: 88494873, name: "High" },
+            },
+            {
+              issue_field_id: 102,
+              issue_field_name: "Start date",
+              data_type: "date",
+              value: "2026-12-01",
+            },
+            {
+              issue_field_id: 103,
+              issue_field_name: "Story points",
+              data_type: "number",
+              value: 3.5,
+            },
+            {
+              issue_field_id: 105,
+              issue_field_name: "Components",
+              data_type: "multi_select",
+              value: "API,Web UI",
+              multi_select_options: [
+                { id: 1, name: "API" },
+                { id: 2, name: "Web UI" },
+              ],
+            },
+          ],
+        })
+      );
+
+      const issue = await adapter.getIssue("42");
+
+      expect(issue.priority).toBe("High");
+      expect(issue.customFields).toEqual({
+        Priority: "High",
+        "Start date": "2026-12-01",
+        "Story points": 3.5,
+        Components: ["API", "Web UI"],
+        _github_owner: "testowner",
+        _github_repo: "testrepo",
+      });
+    });
+
+    it("leaves priority unset when the issue has no Priority field value", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          ...mockGitHubIssue,
+          issue_field_values: [
+            {
+              issue_field_id: 104,
+              issue_field_name: "Priority",
+              data_type: "text",
+              value: "soon",
+            },
+          ],
+        })
+      );
+
+      const issue = await adapter.getIssue("42");
+
+      expect(issue.priority).toBeUndefined();
+      expect(issue.customFields?.Priority).toBe("soon");
     });
   });
 });

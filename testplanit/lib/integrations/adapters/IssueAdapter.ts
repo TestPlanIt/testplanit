@@ -240,6 +240,27 @@ export interface CreateIssueMetadata {
     description?: string | null;
     color?: string | null;
   }>;
+  /** The tracker's own issue fields, where it defines them per project. */
+  fields?: CreateIssueField[];
+}
+
+/** Stands for "issues without a type" in `CreateIssueField.pinnedTo`. */
+export const NO_ISSUE_TYPE = "";
+
+/** A tracker field the create form renders and sends back by `key`. */
+export interface CreateIssueField {
+  key: string;
+  name: string;
+  required: boolean;
+  schema: { type: "string" | "number" | "date" | "option" | "array" };
+  input?: "date" | "multiselect";
+  allowedValues?: Array<{ id: string; name: string }>;
+  /**
+   * The issue type ids the tracker shows the field on by default, with
+   * `NO_ISSUE_TYPE` for issues that have none. The form offers the rest
+   * on request.
+   */
+  pinnedTo: string[];
 }
 
 export interface AuthenticationData {

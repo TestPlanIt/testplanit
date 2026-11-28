@@ -9,6 +9,7 @@ import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
   CreateIssueData,
+  CreateIssueField,
   CreateIssueMetadata,
   ExternalMilestone,
   IssueAdapterCapabilities,
@@ -16,6 +17,7 @@ import {
   IssueData,
   IssueSearchOptions,
   LinkedIssueRef,
+  NO_ISSUE_TYPE,
   UpdateIssueData,
 } from "./IssueAdapter";
 
@@ -129,6 +131,134 @@ function parseMilestoneNumber(milestone: string | undefined): number | null {
 }
 
 /**
+ * A repository's issue fields, the fields pinned to issues without a type,
+ * and the fields pinned to each issue type. Issue fields belong to the
+ * repository's owner; REST lists them per organization only, so the
+ * repository is asked through GraphQL, which answers for organizations and
+ * personal accounts alike.
+ */
+const ISSUE_FIELDS_QUERY = `
+query($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    issueFields(first: 100) { nodes { ...field } }
+    pinnedIssueFields(first: 100) { nodes { ...fieldId } }
+    issueTypes(first: 100) { nodes { name pinnedFields { ...fieldId } } }
+  }
+}
+fragment fieldId on IssueFields {
+  ... on IssueFieldText { fullDatabaseId }
+  ... on IssueFieldNumber { fullDatabaseId }
+  ... on IssueFieldDate { fullDatabaseId }
+  ... on IssueFieldSingleSelect { fullDatabaseId }
+  ... on IssueFieldMultiSelect { fullDatabaseId }
+}
+fragment field on IssueFields {
+  ... on IssueFieldText { fullDatabaseId name dataType }
+  ... on IssueFieldNumber { fullDatabaseId name dataType }
+  ... on IssueFieldDate { fullDatabaseId name dataType }
+  ... on IssueFieldSingleSelect { fullDatabaseId name dataType options { name } }
+  ... on IssueFieldMultiSelect { fullDatabaseId name dataType options { name } }
+}`;
+
+/** GitHub takes a select option by its name, so the name is also its id. */
+function fieldOptions(options: unknown): Array<{ id: string; name: string }> {
+  if (!Array.isArray(options)) return [];
+  return options
+    .filter((option: any) => typeof option?.name === "string" && option.name)
+    .map((option: any) => ({ id: option.name, name: option.name }));
+}
+
+function mapIssueField(raw: any, pinnedTo: string[]): CreateIssueField | null {
+  if (raw?.fullDatabaseId == null || !raw.name) return null;
+  const base = {
+    key: String(raw.fullDatabaseId),
+    name: String(raw.name),
+    required: false,
+    pinnedTo,
+  };
+  switch (raw.dataType) {
+    case "TEXT":
+      return { ...base, schema: { type: "string" } };
+    case "NUMBER":
+      return { ...base, schema: { type: "number" } };
+    case "DATE":
+      return { ...base, schema: { type: "date" }, input: "date" };
+    case "SINGLE_SELECT":
+      return {
+        ...base,
+        schema: { type: "option" },
+        allowedValues: fieldOptions(raw.options),
+      };
+    case "MULTI_SELECT":
+      return {
+        ...base,
+        schema: { type: "array" },
+        input: "multiselect",
+        allowedValues: fieldOptions(raw.options),
+      };
+    default:
+      return null;
+  }
+}
+
+/**
+ * The `issue_field_values` of a create call. Issue fields are keyed by
+ * their numeric id; any other custom field key is not one of them.
+ */
+function issueFieldValues(
+  customFields: Record<string, any> | undefined
+): Array<{ field_id: number; value: unknown }> {
+  const values: Array<{ field_id: number; value: unknown }> = [];
+  for (const [key, value] of Object.entries(customFields ?? {})) {
+    if (!/^\d+$/.test(key)) continue;
+    if (value === undefined || value === null || value === "") continue;
+    if (Array.isArray(value) && value.length === 0) continue;
+    values.push({ field_id: Number(key), value });
+  }
+  return values;
+}
+
+/**
+ * An issue's field values by field name. GitHub reports a single select as
+ * its option's id and a multi select as one comma-joined string; both are
+ * read from the option objects sent beside them instead.
+ */
+function readIssueFieldValues(raw: unknown): Record<string, unknown> {
+  if (!Array.isArray(raw)) return {};
+  const values: Record<string, unknown> = {};
+  for (const entry of raw) {
+    const name = entry?.issue_field_name;
+    if (typeof name !== "string" || !name) continue;
+    if (entry.data_type === "single_select") {
+      values[name] = entry.single_select_option?.name ?? entry.value;
+    } else if (
+      entry.data_type === "multi_select" &&
+      Array.isArray(entry.multi_select_options)
+    ) {
+      values[name] = entry.multi_select_options.map(
+        (option: any) => option?.name
+      );
+    } else {
+      values[name] = entry.value;
+    }
+  }
+  return values;
+}
+
+/** The value of the built-in Priority field, GitHub's only notion of one. */
+function readIssuePriority(raw: unknown): string | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const entry = raw.find(
+    (value: any) =>
+      value?.data_type === "single_select" &&
+      typeof value.issue_field_name === "string" &&
+      value.issue_field_name.toLowerCase() === "priority"
+  );
+  const name = entry?.single_select_option?.name;
+  return typeof name === "string" && name ? name : undefined;
+}
+
+/**
  * GitHub integration adapter using Personal Access Token authentication
  */
 export class GitHubAdapter extends BaseAdapter {
@@ -186,7 +316,7 @@ export class GitHubAdapter extends BaseAdapter {
       syncIssue: true,
       searchIssues: true,
       webhooks: true,
-      customFields: false, // GitHub doesn't have custom fields like Jira
+      customFields: true,
       attachments: false, // GitHub doesn't support direct attachments on issues
       linkedIssues: true,
       comments: true,
@@ -357,6 +487,7 @@ export class GitHubAdapter extends BaseAdapter {
     // body builder). Render to GFM markdown before posting to GitHub.
     const assignees = resolveAssignees(data);
     const milestone = parseMilestoneNumber(data.milestone);
+    const fieldValues = issueFieldValues(data.customFields);
     const githubPayload = {
       title: data.title,
       body: renderGitHubDescription(data.description),
@@ -366,6 +497,7 @@ export class GitHubAdapter extends BaseAdapter {
       // Organization issue types are addressed by name; GitHub ignores
       // the field on repositories whose owner has none.
       type: data.issueType || undefined,
+      issue_field_values: fieldValues.length > 0 ? fieldValues : undefined,
     };
 
     const response = await this.makeRequest<any>(
@@ -994,6 +1126,88 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   /**
+   * GraphQL lives beside the REST root: api.github.com/graphql, and
+   * `<host>/api/graphql` on GitHub Enterprise Server (REST is `/api/v3`).
+   */
+  private getGraphqlUrl(): string {
+    if (/\/api\/v3$/.test(this.baseUrl)) {
+      return this.baseUrl.replace(/\/v3$/, "/graphql");
+    }
+    return `${this.baseUrl}/graphql`;
+  }
+
+  /**
+   * The issue fields of the repository's owner, with the issue types each
+   * is pinned to. A GitHub Enterprise Server that predates issue fields
+   * does not know the query and has none.
+   */
+  async getIssueFields(projectKey: string): Promise<CreateIssueField[]> {
+    const { owner, repo } = await this.resolveRepository(projectKey);
+    const response = await this.makeRequest<any>(this.getGraphqlUrl(), {
+      method: "POST",
+      body: JSON.stringify({
+        query: ISSUE_FIELDS_QUERY,
+        variables: { owner, name: repo },
+      }),
+    });
+
+    const repository = response?.data?.repository;
+    if (!repository) {
+      const errors: any[] = Array.isArray(response?.errors)
+        ? response.errors
+        : [];
+      if (
+        errors.some((error) => error?.extensions?.code === "undefinedField")
+      ) {
+        return [];
+      }
+      throw new Error(
+        errors
+          .map((error) => error?.message)
+          .filter(Boolean)
+          .join("; ") ||
+          "GitHub returned no repository for the issue fields query"
+      );
+    }
+
+    const pinnedTo = new Map<string, string[]>();
+    const pin = (field: any, typeId: string) => {
+      if (field?.fullDatabaseId == null) return;
+      const key = String(field.fullDatabaseId);
+      pinnedTo.set(key, [...(pinnedTo.get(key) ?? []), typeId]);
+    };
+    const types: any[] = (repository.issueTypes?.nodes ?? []).filter(
+      (type: any) => type?.name
+    );
+    // A token that cannot read the organization gets every type back with
+    // nothing pinned to it. The fields pinned to issues without a type then
+    // stand in for each type.
+    const typePinsKnown = types.some(
+      (type) => (type.pinnedFields ?? []).length > 0
+    );
+    for (const field of repository.pinnedIssueFields?.nodes ?? []) {
+      pin(field, NO_ISSUE_TYPE);
+      if (!typePinsKnown) {
+        for (const type of types) pin(field, type.name);
+      }
+    }
+    for (const type of types) {
+      for (const field of type.pinnedFields ?? []) {
+        pin(field, type.name);
+      }
+    }
+
+    return (repository.issueFields?.nodes ?? [])
+      .map((field: any) =>
+        mapIssueField(field, pinnedTo.get(String(field?.fullDatabaseId)) ?? [])
+      )
+      .filter(
+        (field: CreateIssueField | null): field is CreateIssueField =>
+          field !== null
+      );
+  }
+
+  /**
    * Everything the create form can offer for one repository. The lists
    * are fetched together; one that fails is returned empty so the form
    * still opens with the rest.
@@ -1001,25 +1215,30 @@ export class GitHubAdapter extends BaseAdapter {
   async getCreateIssueMetadata(
     projectKey: string
   ): Promise<CreateIssueMetadata> {
-    const [labels, milestones, assignees, issueTypes] = await Promise.all([
-      this.getLabels(projectKey).catch((error) => {
-        console.error("[GitHubAdapter] getLabels failed:", error);
-        return [];
-      }),
-      this.getMilestones(projectKey).catch((error) => {
-        console.error("[GitHubAdapter] getMilestones failed:", error);
-        return [];
-      }),
-      this.getAssignableUsers(projectKey).catch((error) => {
-        console.error("[GitHubAdapter] getAssignableUsers failed:", error);
-        return [];
-      }),
-      this.getOrgIssueTypes(projectKey).catch((error) => {
-        console.error("[GitHubAdapter] getOrgIssueTypes failed:", error);
-        return [];
-      }),
-    ]);
-    return { labels, milestones, assignees, issueTypes };
+    const [labels, milestones, assignees, issueTypes, fields] =
+      await Promise.all([
+        this.getLabels(projectKey).catch((error) => {
+          console.error("[GitHubAdapter] getLabels failed:", error);
+          return [];
+        }),
+        this.getMilestones(projectKey).catch((error) => {
+          console.error("[GitHubAdapter] getMilestones failed:", error);
+          return [];
+        }),
+        this.getAssignableUsers(projectKey).catch((error) => {
+          console.error("[GitHubAdapter] getAssignableUsers failed:", error);
+          return [];
+        }),
+        this.getOrgIssueTypes(projectKey).catch((error) => {
+          console.error("[GitHubAdapter] getOrgIssueTypes failed:", error);
+          return [];
+        }),
+        this.getIssueFields(projectKey).catch((error) => {
+          console.error("[GitHubAdapter] getIssueFields failed:", error);
+          return [];
+        }),
+      ]);
+    return { labels, milestones, assignees, issueTypes, fields };
   }
 
   /**
@@ -1221,7 +1440,7 @@ export class GitHubAdapter extends BaseAdapter {
       title: githubIssue.title,
       description: githubIssue.body,
       status: githubIssueStatus(githubIssue) ?? githubIssue.state,
-      priority: undefined, // GitHub doesn't have priority
+      priority: readIssuePriority(githubIssue.issue_field_values),
       assignee: githubIssue.assignee
         ? {
             id: githubIssue.assignee.login,
@@ -1267,8 +1486,9 @@ export class GitHubAdapter extends BaseAdapter {
           )
         : [],
       labelColors: labelColorsOf(githubIssue.labels),
-      // Store repo context in customFields for sync support
+      // Issue field values by name, plus the repo context sync relies on.
       customFields: {
+        ...readIssueFieldValues(githubIssue.issue_field_values),
         _github_owner: owner,
         _github_repo: repo,
       },

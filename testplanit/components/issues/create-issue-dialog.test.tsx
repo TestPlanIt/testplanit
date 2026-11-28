@@ -756,6 +756,158 @@ describe("CreateIssueDialog", () => {
       );
     });
 
+    describe("issue fields", () => {
+      const fields = [
+        {
+          key: "101",
+          name: "Priority",
+          required: false,
+          schema: { type: "option" },
+          allowedValues: [
+            { id: "Urgent", name: "Urgent" },
+            { id: "High", name: "High" },
+          ],
+          pinnedTo: ["", "Bug"],
+        },
+        {
+          key: "103",
+          name: "Story points",
+          required: false,
+          schema: { type: "number" },
+          pinnedTo: ["Bug"],
+        },
+        {
+          key: "104",
+          name: "Notes",
+          required: false,
+          schema: { type: "string" },
+          pinnedTo: [],
+        },
+      ];
+
+      it("shows the fields pinned to issues without a type and the rest on request", async () => {
+        mockGitHubIntegration(58);
+        mockGitHubFetch({ ...metadata, fields });
+
+        render(<CreateIssueDialog {...defaultProps} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId("tracker-field-101")).toBeTruthy();
+        });
+        expect(screen.queryByTestId("tracker-field-103")).toBeNull();
+        expect(screen.queryByTestId("tracker-field-104")).toBeNull();
+
+        fireEvent.click(screen.getByTestId("tracker-fields-show-all"));
+
+        expect(screen.getByTestId("tracker-field-103")).toBeTruthy();
+        expect(screen.getByTestId("tracker-field-104")).toBeTruthy();
+        expect(screen.queryByTestId("tracker-fields-show-all")).toBeNull();
+      });
+
+      it("shows the fields pinned to the chosen issue type", async () => {
+        mockGitHubIntegration(59);
+        mockGitHubFetch({ ...metadata, fields });
+
+        render(<CreateIssueDialog {...defaultProps} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId("tracker-field-101")).toBeTruthy();
+        });
+        fireEvent.click(screen.getByTestId("select-item-Bug"));
+
+        expect(screen.getByTestId("tracker-field-103")).toBeTruthy();
+        expect(screen.queryByTestId("tracker-field-104")).toBeNull();
+      });
+
+      it("sends the entered values by field id and keeps a filled field in view", async () => {
+        mockGitHubIntegration(60);
+        mockGitHubFetch({ ...metadata, fields });
+
+        render(<CreateIssueDialog {...defaultProps} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId("tracker-field-101")).toBeTruthy();
+        });
+        fireEvent.click(screen.getByTestId("select-item-Bug"));
+        const points = screen.getByLabelText(
+          "Story points"
+        ) as HTMLInputElement;
+        fireEvent.change(points, { target: { value: "0" } });
+        expect(points.value).toBe("0");
+        fireEvent.change(points, { target: { value: "0.5" } });
+        fireEvent.click(screen.getByTestId("select-item-High"));
+
+        // Back to no type, which Story points is not pinned to.
+        fireEvent.click(screen.getAllByTestId("select-item-__none__")[0]);
+        expect(screen.getByTestId("tracker-field-103")).toBeTruthy();
+
+        fireEvent.change(screen.getAllByRole("textbox")[0], {
+          target: { value: "Broken login" },
+        });
+        const form = document.querySelector("form");
+        if (form) {
+          fireEvent.submit(form);
+        }
+
+        await waitFor(() => {
+          expect(createBody).toBeDefined();
+        });
+        expect(createBody?.customFields).toEqual({ "101": "High", "103": 0.5 });
+        expect(createBody).not.toHaveProperty("issueType");
+      });
+
+      it("clears a single select field with None", async () => {
+        mockGitHubIntegration(63);
+        mockGitHubFetch({ ...metadata, fields });
+
+        render(<CreateIssueDialog {...defaultProps} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId("tracker-field-101")).toBeTruthy();
+        });
+        const priority = screen.getByTestId("tracker-field-101");
+        fireEvent.click(screen.getByTestId("select-item-High"));
+        expect(
+          priority
+            .querySelector('[data-testid="select"]')
+            ?.getAttribute("data-value")
+        ).toBe("High");
+        fireEvent.click(
+          priority.querySelector('[data-testid="select-item-__none__"]')!
+        );
+
+        fireEvent.change(screen.getAllByRole("textbox")[0], {
+          target: { value: "Broken login" },
+        });
+        const form = document.querySelector("form");
+        if (form) {
+          fireEvent.submit(form);
+        }
+
+        await waitFor(() => {
+          expect(createBody).toBeDefined();
+        });
+        expect(createBody?.customFields).toEqual({});
+      });
+
+      it("offers nothing more when the repository has no fields", async () => {
+        mockGitHubIntegration(62);
+        mockGitHubFetch(metadata);
+
+        render(<CreateIssueDialog {...defaultProps} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId("tracker-labels")).toBeTruthy();
+        });
+        expect(screen.queryByTestId("tracker-fields-show-all")).toBeNull();
+        expect(
+          screen
+            .getByTestId("tracker-create-fields")
+            .querySelector('[data-testid^="tracker-field-"]')
+        ).toBeNull();
+      });
+    });
+
     it.each(["GITLAB", "GITEA"])(
       "loads labels, assignees and milestones for %s, with no assignee limit",
       async (provider) => {

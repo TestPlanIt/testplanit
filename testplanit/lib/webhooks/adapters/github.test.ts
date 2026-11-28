@@ -511,6 +511,22 @@ describe("githubAdapter — milestone events", () => {
     ).toBeNull();
   });
 
+  it.each(["field_added", "field_removed"])(
+    "refreshes the linked issue when an issue field changes (%s)",
+    (action) => {
+      const payload = verified("issues", {
+        action,
+        issue: { number: 7, state: "open" },
+        repository: REPO,
+      });
+      expect(payload.eventType).toBe("issues");
+      expect(payload.issueKey).toBe(`${REPO.full_name}#7`);
+      expect(githubAdapter.extractExternalStatus(payload, "issues")).toBe(
+        "open"
+      );
+    }
+  );
+
   it("returns no ref for a milestone payload without a number", () => {
     const payload = verified("milestone", {
       action: "edited",

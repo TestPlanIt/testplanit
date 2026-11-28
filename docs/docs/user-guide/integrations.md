@@ -88,6 +88,8 @@ Connect to GitHub for issue tracking and repository integration.
 - Create GitHub issues from test failures
 - Link test cases to GitHub issues
 - Labels, assignees, a milestone and an issue type can be chosen on the create form; the issue types are those of the repository's owner, whether an organization or a personal account
+- Issue fields of the repository's owner are offered on the create form (text, number, date, single select, and multi select fields) and read back on every synced issue. The form shows the fields pinned to the chosen issue type, or to issues without a type when none is chosen; **Show more fields** adds the rest. GitHub reports the fields pinned to each issue type only to a token that can read the organization (the `read:org` scope on a classic token; an OAuth connection does not request it); without it, the form shows the fields pinned to issues without a type whichever type is chosen
+- The value of the **Priority** issue field is shown as the issue's priority
 - Search issues by text or by exact number format (e.g., `#42`)
 - Track issue status across both platforms: `open`, `closed`, and `not_planned` or `duplicate` for an issue closed for that reason
 - Sub-issues, "blocked by" and "blocking" dependencies, "relates to" links and mentions from other issues surfaced as linked issues
@@ -337,6 +339,7 @@ The Atlassian 3LO OAuth flow used here routes through the `api.atlassian.com` ga
 2. Required scopes:
    - `repo` - Full repository access
    - `write:issues` - Create and update issues
+   - `read:org` - Optional. Lets the create form follow the issue fields pinned to each issue type
 3. Configure in TestPlanIt:
 
 ```text
@@ -714,7 +717,8 @@ field support varies by provider:
 - **Jira**: Full dynamic discovery — issue types, required fields, and custom fields
   are fetched per-project and per-issue-type from the create metadata API
 - **Azure DevOps**: Work item types are discovered per-project; the fields your organization added to a type are discovered per type
-- **GitHub / GitLab / Gitea**: Fixed field set (title, description, labels); no custom fields
+- **GitHub**: The issue fields of the repository's owner are discovered per repository, together with the issue types each field is pinned to
+- **GitLab / Gitea**: Fixed field set (title, description, labels); no custom fields
 - **Redmine**: Trackers are discovered as issue types; statuses, priorities, and custom fields are read from the instance
 - **MantisBT**: Categories are discovered as issue types; statuses, priorities, and the linked project's custom fields are read from the instance
 - **ClickUp**: Custom task types are discovered as issue types; the linked List's custom fields are discovered per List (ClickUp scopes fields to Lists rather than task types)

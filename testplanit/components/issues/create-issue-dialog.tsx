@@ -39,6 +39,10 @@ import {
   MAX_ISSUE_FORM_ATTACHMENTS,
   takesIssueAttachments,
 } from "~/lib/integrations/issueAttachmentProviders";
+import {
+  NO_ISSUE_TYPE,
+  type CreateIssueField,
+} from "~/lib/integrations/adapters/IssueAdapter";
 import { isIntegrationAuthCompleteMessage } from "~/lib/integrations/oauthPopup";
 import { trackerLabelStyle } from "~/lib/integrations/trackerLabelStyle";
 import { isDarkTheme } from "~/utils/theme";
@@ -84,6 +88,7 @@ interface TrackerCreateMetadata {
     description?: string | null;
     color?: string | null;
   }>;
+  fields: CreateIssueField[];
 }
 
 /** Trackers whose create form offers labels, assignees, milestone and type. */
@@ -129,6 +134,12 @@ type ChoiceOption = { id: string; name: string };
 
 const EMPTY_OPTIONS: ChoiceOption[] = [];
 const EMPTY_SELECTION: string[] = [];
+const EMPTY_FIELDS: CreateIssueField[] = [];
+
+function hasFieldValue(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length > 0;
+  return value !== undefined && value !== null && value !== "";
+}
 
 /** A tracker field that takes several of a fixed list of values. */
 function MultiChoiceField({
@@ -252,6 +263,7 @@ export function CreateIssueDialog({
   const [selectedTrackerType, setSelectedTrackerType] = useState<string | null>(
     null
   );
+  const [showAllTrackerFields, setShowAllTrackerFields] = useState(false);
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   // Remounts the upload control, which keeps its own list of chosen files.
   const [attachmentsResetKey, setAttachmentsResetKey] = useState(0);
@@ -415,6 +427,26 @@ export function CreateIssueDialog({
     useIntegration && DESCRIPTION_REQUIRED_PROVIDERS.has(provider);
   const sendsPriority = !PRIORITY_LESS_PROVIDERS.has(provider);
   const maxAssignees = MAX_ASSIGNEES_BY_PROVIDER[provider];
+
+  // The tracker shows a field by default on the issue types it is pinned
+  // to. One with a value stays in view so nothing is sent unseen.
+  const trackerFields = trackerMetadata?.fields ?? EMPTY_FIELDS;
+  const shownTrackerFields = useMemo(() => {
+    const type = selectedTrackerType ?? NO_ISSUE_TYPE;
+    return trackerFields.filter(
+      (field) =>
+        showAllTrackerFields ||
+        (field.pinnedTo ?? []).includes(type) ||
+        hasFieldValue(customFieldValues[field.key])
+    );
+  }, [
+    trackerFields,
+    selectedTrackerType,
+    showAllTrackerFields,
+    customFieldValues,
+  ]);
+  const hiddenTrackerFieldCount =
+    trackerFields.length - shownTrackerFields.length;
 
   const fetchLabelOptions = useCallback(
     async (query: string, page: number, pageSize: number) =>
@@ -615,6 +647,7 @@ export function CreateIssueDialog({
       setSelectedAssignees([]);
       setMilestoneChoice(undefined);
       setSelectedTrackerType(null);
+      setShowAllTrackerFields(false);
       setAttachmentFiles([]);
       setAttachmentsResetKey((key) => key + 1);
     }
@@ -676,6 +709,7 @@ export function CreateIssueDialog({
           milestones: Array.isArray(body.milestones) ? body.milestones : [],
           assignees: Array.isArray(body.assignees) ? body.assignees : [],
           issueTypes: Array.isArray(body.issueTypes) ? body.issueTypes : [],
+          fields: Array.isArray(body.fields) ? body.fields : [],
         };
         return data;
       })
@@ -903,7 +937,17 @@ export function CreateIssueDialog({
           title: values.title,
           description: submittedDescription,
           priority: sendsPriority ? values.priority : undefined,
-          customFields: customFieldValues,
+          // A repository's fields belong to its owner, so values entered
+          // for another repository are left behind.
+          customFields: offersMetadata
+            ? Object.fromEntries(
+                trackerFields
+                  .filter((field) =>
+                    hasFieldValue(customFieldValues[field.key])
+                  )
+                  .map((field) => [field.key, customFieldValues[field.key]])
+              )
+            : customFieldValues,
           // Include internal TestPlanIt project ID for database storage
           testplanitProjectId: projectId,
         };
@@ -1134,13 +1178,24 @@ export function CreateIssueDialog({
         <Select
           value={customFieldValues[field.key] || ""}
           onValueChange={(value) =>
-            setCustomFieldValues((prev) => ({ ...prev, [field.key]: value }))
+            setCustomFieldValues((prev) => {
+              if (value !== NONE_VALUE) {
+                return { ...prev, [field.key]: value };
+              }
+              const { [field.key]: _cleared, ...rest } = prev;
+              return rest;
+            })
           }
         >
           <SelectTrigger>
             <SelectValue placeholder={`Select ${field.name}`} />
           </SelectTrigger>
           <SelectContent>
+            {!field.required && (
+              <SelectItem value={NONE_VALUE}>
+                {t("common.access.none")}
+              </SelectItem>
+            )}
             {field.allowedValues.map((option: any) => (
               <SelectItem
                 key={option.id || option.value}
@@ -1174,7 +1229,7 @@ export function CreateIssueDialog({
         <Input
           id={field.key}
           type="number"
-          value={customFieldValues[field.key] || ""}
+          value={customFieldValues[field.key] ?? ""}
           onChange={(e) =>
             setCustomFieldValues((prev) => ({
               ...prev,
@@ -1558,6 +1613,31 @@ export function CreateIssueDialog({
                     </SelectContent>
                   </Select>
                 </div>
+
+                {shownTrackerFields.map((field) => (
+                  <div
+                    key={field.key}
+                    className="space-y-2"
+                    data-testid={`tracker-field-${field.key}`}
+                  >
+                    <Label htmlFor={field.key}>{field.name}</Label>
+                    {renderField(field)}
+                  </div>
+                ))}
+
+                {hiddenTrackerFieldCount > 0 && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0"
+                    data-testid="tracker-fields-show-all"
+                    onClick={() => setShowAllTrackerFields(true)}
+                  >
+                    {t("issues.showMoreFields", {
+                      count: hiddenTrackerFieldCount,
+                    })}
+                  </Button>
+                )}
               </div>
             )}
 

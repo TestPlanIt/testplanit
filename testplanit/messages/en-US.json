@@ -7591,6 +7591,7 @@
     "assigneesLimit": "Up to {max} assignees",
     "priorityUrgent": "Urgent",
     "additionalFields": "Additional Fields",
+    "showMoreFields": "{count, plural, one {Show # more field} other {Show # more fields}}",
     "createIssueInJira": "Create Issue in Jira",
     "openInNewTab": "Open in New Tab",
     "fillInRequiredFields": "Fill in the required fields to create a new issue",
