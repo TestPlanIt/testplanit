@@ -1,3 +1,28 @@
+## [1.3.0-beta.15](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.14...v1.3.0-beta.15) (2026-11-28)
+
+### Features
+
+* **auth:** sign in with a passkey ([f5e6f35](https://github.com/TestPlanIt/testplanit/commit/f5e6f35d77247ec77aafec39021f2f47517e49f7))
+* **integrations:** attach files on the create form and follow more tracker links ([487f564](https://github.com/TestPlanIt/testplanit/commit/487f5649989ecf272ed99b06ec405377dd366a00))
+* **integrations:** authenticate GitHub as a GitHub App ([a0a3be0](https://github.com/TestPlanIt/testplanit/commit/a0a3be051098ff5d9f674a0834f322f12c5f7423))
+* **integrations:** GitHub issue templates, default issue type and readable statuses ([a8ff31c](https://github.com/TestPlanIt/testplanit/commit/a8ff31c81aa5eecbfac0fa48457da4931a60b37c))
+* **integrations:** GitHub Project iterations as sprints, and result comments on linked issues ([3136028](https://github.com/TestPlanIt/testplanit/commit/31360285dade3ae0ea6e8be566e7d598f7319490))
+* **integrations:** offer GitHub issue fields on the create form ([9180e38](https://github.com/TestPlanIt/testplanit/commit/9180e38a0f120adcb55cee2d05ae4bc785eaee89))
+* **integrations:** sync milestones, attachments and create-form fields on more trackers ([27259bd](https://github.com/TestPlanIt/testplanit/commit/27259bd1371e6671ad307a1f77b0ce7915358217))
+
+### Bug Fixes
+
+* **auth:** enforce two-factor on every sign-in path and keep magic links device-bound ([0bccb5e](https://github.com/TestPlanIt/testplanit/commit/0bccb5ed09ed4f3b525fc2d6e95f9db51d1b576d))
+* **import:** create CSV rows with an unmatched ID under a new case ID ([56fc9ca](https://github.com/TestPlanIt/testplanit/commit/56fc9cab4a06857a266cd8abefae04ba85d5c8e5)), closes [#773](https://github.com/TestPlanIt/testplanit/issues/773)
+* **integrations:** prompt to reconnect when creating an issue with a dead OAuth authorization ([3ae8054](https://github.com/TestPlanIt/testplanit/commit/3ae805415efcad687763b5378f91d67f01ca5e8e))
+* **llm:** send Custom LLM chat requests to /chat/completions under a base URL ([6fb66e6](https://github.com/TestPlanIt/testplanit/commit/6fb66e6fa67aa9cc39614ad4dba73483e5a5a0e0))
+* **milestones:** Sync now on synced milestones, the tracker's own name in their menus, and no created event for an updated run ([8d93b88](https://github.com/TestPlanIt/testplanit/commit/8d93b884ab3d5eb86931f961232e8c5859ee938f))
+* **reporters:** respect test.fail() and stop depending on status names ([f0b324f](https://github.com/TestPlanIt/testplanit/commit/f0b324f2421a5bf8e0b9a77765ef329dd9ff649a)), closes [#774](https://github.com/TestPlanIt/testplanit/issues/774)
+
+### Enhancements
+
+* **users:** edit profile details and preferences separately ([ee1f739](https://github.com/TestPlanIt/testplanit/commit/ee1f73907ed3ec8483d4a2b36d851259376fe891))
+
 ## [1.3.0-beta.14](https://github.com/TestPlanIt/testplanit/compare/v1.3.0-beta.13...v1.3.0-beta.14) (2026-11-25)
 
 ### Features
