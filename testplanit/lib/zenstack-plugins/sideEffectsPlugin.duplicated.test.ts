@@ -28,10 +28,12 @@ import { sideEffectsPlugin } from "./sideEffectsPlugin";
 import {
   emitSessionCreated,
   emitSessionDuplicated,
+  emitSessionUpdateEvents,
 } from "~/lib/webhooks/event-emitters/sessionEvents";
 import {
   emitTestRunCreated,
   emitTestRunDuplicated,
+  emitTestRunUpdateEvents,
 } from "~/lib/webhooks/event-emitters/testRunEvents";
 
 const afterEntityMutation = (sideEffectsPlugin as any).onEntityMutation.$all
@@ -95,4 +97,78 @@ describe("sideEffectsPlugin — .duplicated routing on create", () => {
     expect(emitTestRunCreated).toHaveBeenCalledTimes(1);
     expect(emitTestRunDuplicated).not.toHaveBeenCalled();
   });
+});
+
+function runUpdate(
+  model: string,
+  before: Record<string, unknown>,
+  after: Record<string, unknown>,
+  client: Record<string, unknown> = {}
+) {
+  return afterEntityMutation({
+    model,
+    action: "update",
+    client,
+    loadAfterMutationEntities: async () => [after],
+    beforeMutationEntities: [before],
+  });
+}
+
+// A client that has alert rules to count, as every real one does.
+const clientWithAlertRules = () => ({
+  alertRule: { count: vi.fn().mockResolvedValue(0) },
+});
+
+describe("sideEffectsPlugin — an update is never announced as a create", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const cases: Array<{
+    name: string;
+    before: Record<string, unknown>;
+    after: Record<string, unknown>;
+  }> = [
+    {
+      name: "a plain edit",
+      before: { id: 3, projectId: 7, name: "Old", isCompleted: false },
+      after: { id: 3, projectId: 7, name: "New", isCompleted: false },
+    },
+    {
+      name: "an edit of a duplicate",
+      before: { id: 3, projectId: 7, duplicatedFromId: 1, isCompleted: false },
+      after: { id: 3, projectId: 7, duplicatedFromId: 1, isCompleted: false },
+    },
+    {
+      name: "a completion",
+      before: { id: 3, projectId: 7, isCompleted: false },
+      after: { id: 3, projectId: 7, isCompleted: true },
+    },
+    {
+      name: "an edit after completion",
+      before: { id: 3, projectId: 7, isCompleted: true },
+      after: { id: 3, projectId: 7, isCompleted: true, note: "x" },
+    },
+  ];
+
+  for (const client of [
+    { label: "with alert rules to count", make: clientWithAlertRules },
+    { label: "without", make: () => ({}) },
+  ]) {
+    for (const entry of cases) {
+      it(`run, ${entry.name}, ${client.label}`, async () => {
+        await runUpdate("TestRuns", entry.before, entry.after, client.make());
+
+        expect(emitTestRunUpdateEvents).toHaveBeenCalledTimes(1);
+        expect(emitTestRunCreated).not.toHaveBeenCalled();
+        expect(emitTestRunDuplicated).not.toHaveBeenCalled();
+      });
+
+      it(`session, ${entry.name}, ${client.label}`, async () => {
+        await runUpdate("Sessions", entry.before, entry.after, client.make());
+
+        expect(emitSessionUpdateEvents).toHaveBeenCalledTimes(1);
+        expect(emitSessionCreated).not.toHaveBeenCalled();
+        expect(emitSessionDuplicated).not.toHaveBeenCalled();
+      });
+    }
+  }
 });
