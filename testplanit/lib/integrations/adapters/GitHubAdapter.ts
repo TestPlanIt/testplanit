@@ -4,6 +4,8 @@ import {
   GITHUB_CLOSE_REASON_STATUSES,
   githubIssueStatus,
 } from "../githubIssueStatus";
+import { parseIssueTemplates } from "../issueTemplateParser";
+import type { IssueTemplateSet } from "../issueTemplates";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
 import { BaseAdapter } from "./BaseAdapter";
 import {
@@ -57,6 +59,9 @@ const PAGE_SIZE = 100;
 
 /** Repository listings are read up to this many pages (3,000 entries). */
 const MAX_PAGES = 30;
+
+/** An issue's timeline is read up to this many pages (1,000 events). */
+const MAX_TIMELINE_PAGES = 10;
 
 /** Sent where a request names its media type and REST API version. */
 const GITHUB_REST_HEADERS = {
@@ -158,6 +163,23 @@ fragment field on IssueFields {
   ... on IssueFieldDate { fullDatabaseId name dataType }
   ... on IssueFieldSingleSelect { fullDatabaseId name dataType options { name } }
   ... on IssueFieldMultiSelect { fullDatabaseId name dataType options { name } }
+}`;
+
+/**
+ * The files in the repository's issue template folder, and in the folder its
+ * owner's `.github` repository keeps for repositories that have none.
+ */
+const ISSUE_TEMPLATES_QUERY = `
+query($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    object(expression: "HEAD:.github/ISSUE_TEMPLATE") { ...templateFiles }
+  }
+  defaults: repository(owner: $owner, name: ".github") {
+    object(expression: "HEAD:.github/ISSUE_TEMPLATE") { ...templateFiles }
+  }
+}
+fragment templateFiles on GitObject {
+  ... on Tree { entries { name object { ... on Blob { text } } } }
 }`;
 
 /** GitHub takes a select option by its name, so the name is also its id. */
@@ -563,9 +585,10 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   /**
-   * Sub-issues, dependencies, "relates to" links and the issues that mention
-   * this one. Each lookup fails on its own, and an issue linked more than one
-   * way is reported once, under the first relationship in that order.
+   * The parent issue, sub-issues, dependencies, "relates to" links and the
+   * issues that mention this one. Each lookup fails on its own, and an issue
+   * linked more than one way is reported once, under the first relationship
+   * in that order.
    */
   async getLinkedIssues(issueId: string): Promise<LinkedIssueRef[]> {
     let owner: string;
@@ -601,6 +624,23 @@ export class GitHubAdapter extends BaseAdapter {
       optional?: boolean;
       load: () => Promise<LinkedIssueRef[]>;
     }> = [
+      {
+        // Answers 404 for an issue that is nobody's sub-issue.
+        name: "parent",
+        optional: true,
+        load: async () => {
+          const parent = await this.makeRequest<any>(`${issueUrl}/parent`, {
+            headers: GITHUB_REST_HEADERS,
+          });
+          const ref = this.linkedIssueRef(
+            parent,
+            repository,
+            "parent",
+            "inward"
+          );
+          return ref ? [ref] : [];
+        },
+      },
       {
         name: "sub_issues",
         load: () => linkList("sub_issues", "sub_issue", "outward"),
@@ -921,10 +961,11 @@ export class GitHubAdapter extends BaseAdapter {
   private async listAllPages<T = any>(
     url: string,
     query: Record<string, string> = {},
-    init?: RequestInit
+    init?: RequestInit,
+    maxPages: number = MAX_PAGES
   ): Promise<T[]> {
     const items: T[] = [];
-    for (let page = 1; page <= MAX_PAGES; page++) {
+    for (let page = 1; page <= maxPages; page++) {
       const params = new URLSearchParams({
         ...query,
         per_page: String(PAGE_SIZE),
@@ -1137,38 +1178,62 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   /**
+   * Runs a GraphQL query that takes `$owner` and `$name` and selects
+   * `repository`. Answers null when the server does not know a field the
+   * query names, and throws when it returns no repository.
+   */
+  private async queryRepository(
+    query: string,
+    projectKey: string
+  ): Promise<any | null> {
+    const { owner, repo } = await this.resolveRepository(projectKey);
+    const response = await this.makeRequest<any>(this.getGraphqlUrl(), {
+      method: "POST",
+      body: JSON.stringify({ query, variables: { owner, name: repo } }),
+    });
+    if (response?.data?.repository) return response.data;
+
+    const errors: any[] = Array.isArray(response?.errors)
+      ? response.errors
+      : [];
+    if (errors.some((error) => error?.extensions?.code === "undefinedField")) {
+      return null;
+    }
+    throw new Error(
+      errors
+        .map((error) => error?.message)
+        .filter(Boolean)
+        .join("; ") || "GitHub returned no repository for the query"
+    );
+  }
+
+  /**
+   * The repository's issue templates and issue forms. A repository with no
+   * template folder of its own uses the one in its owner's `.github`
+   * repository, as GitHub does.
+   */
+  async getIssueTemplates(projectKey: string): Promise<IssueTemplateSet> {
+    const data = await this.queryRepository(ISSUE_TEMPLATES_QUERY, projectKey);
+    const files = (repository: any) =>
+      (repository?.object?.entries ?? [])
+        .filter((entry: any) => typeof entry?.name === "string")
+        .map((entry: any) => ({
+          name: entry.name as string,
+          text: entry.object?.text as string | null | undefined,
+        }));
+    const own = files(data?.repository);
+    return parseIssueTemplates(own.length > 0 ? own : files(data?.defaults));
+  }
+
+  /**
    * The issue fields of the repository's owner, with the issue types each
    * is pinned to. A GitHub Enterprise Server that predates issue fields
    * does not know the query and has none.
    */
   async getIssueFields(projectKey: string): Promise<CreateIssueField[]> {
-    const { owner, repo } = await this.resolveRepository(projectKey);
-    const response = await this.makeRequest<any>(this.getGraphqlUrl(), {
-      method: "POST",
-      body: JSON.stringify({
-        query: ISSUE_FIELDS_QUERY,
-        variables: { owner, name: repo },
-      }),
-    });
-
-    const repository = response?.data?.repository;
-    if (!repository) {
-      const errors: any[] = Array.isArray(response?.errors)
-        ? response.errors
-        : [];
-      if (
-        errors.some((error) => error?.extensions?.code === "undefinedField")
-      ) {
-        return [];
-      }
-      throw new Error(
-        errors
-          .map((error) => error?.message)
-          .filter(Boolean)
-          .join("; ") ||
-          "GitHub returned no repository for the issue fields query"
-      );
-    }
+    const data = await this.queryRepository(ISSUE_FIELDS_QUERY, projectKey);
+    if (!data) return [];
+    const repository = data.repository;
 
     const pinnedTo = new Map<string, string[]>();
     const pin = (field: any, typeId: string) => {
@@ -1215,7 +1280,7 @@ export class GitHubAdapter extends BaseAdapter {
   async getCreateIssueMetadata(
     projectKey: string
   ): Promise<CreateIssueMetadata> {
-    const [labels, milestones, assignees, issueTypes, fields] =
+    const [labels, milestones, assignees, issueTypes, fields, templateSet] =
       await Promise.all([
         this.getLabels(projectKey).catch((error) => {
           console.error("[GitHubAdapter] getLabels failed:", error);
@@ -1237,8 +1302,20 @@ export class GitHubAdapter extends BaseAdapter {
           console.error("[GitHubAdapter] getIssueFields failed:", error);
           return [];
         }),
+        this.getIssueTemplates(projectKey).catch((error) => {
+          console.error("[GitHubAdapter] getIssueTemplates failed:", error);
+          return { templates: [], blankIssuesEnabled: true };
+        }),
       ]);
-    return { labels, milestones, assignees, issueTypes, fields };
+    return {
+      labels,
+      milestones,
+      assignees,
+      issueTypes,
+      fields,
+      templates: templateSet.templates,
+      blankIssuesEnabled: templateSet.blankIssuesEnabled,
+    };
   }
 
   /**
@@ -1376,12 +1453,14 @@ export class GitHubAdapter extends BaseAdapter {
     issueUrl: string,
     repository: string
   ): Promise<LinkedIssueRef[]> {
-    const response = await this.makeRequest<any[]>(`${issueUrl}/timeline`, {
-      headers: GITHUB_REST_HEADERS,
-    });
-    if (!Array.isArray(response)) return [];
+    const events = await this.listAllPages<any>(
+      `${issueUrl}/timeline`,
+      {},
+      { headers: GITHUB_REST_HEADERS },
+      MAX_TIMELINE_PAGES
+    );
     const refs: LinkedIssueRef[] = [];
-    for (const event of response) {
+    for (const event of events) {
       if (event?.event !== "cross-referenced") continue;
       const ref = this.linkedIssueRef(
         event?.source?.issue,

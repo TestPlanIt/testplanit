@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatIssueDisplayText,
+  formatIssueStatus,
   formatRequirementCellText,
   hasDistinctIssueTitle,
   resolveRequirementDisplayPriority,
@@ -272,5 +273,27 @@ describe("resolveRequirementDisplayPriority", () => {
         externalPriority: null,
       })
     ).toBe(null);
+  });
+});
+
+describe("formatIssueStatus", () => {
+  it("writes a tracker's lower-case tokens as words starting with a capital", () => {
+    expect(formatIssueStatus("open")).toBe("Open");
+    expect(formatIssueStatus("not_planned")).toBe("Not planned");
+    expect(formatIssueStatus("duplicate")).toBe("Duplicate");
+    expect(formatIssueStatus("opened")).toBe("Opened");
+    expect(formatIssueStatus("in progress")).toBe("In progress");
+  });
+
+  it("leaves a status somebody named as they wrote it", () => {
+    expect(formatIssueStatus("In Progress")).toBe("In Progress");
+    expect(formatIssueStatus("QA_Review")).toBe("QA_Review");
+    expect(formatIssueStatus("To Do")).toBe("To Do");
+  });
+
+  it("leaves text without letter case, and nothing, unchanged", () => {
+    expect(formatIssueStatus("対応中")).toBe("対応中");
+    expect(formatIssueStatus("")).toBe("");
+    expect(formatIssueStatus("_")).toBe("_");
   });
 });

@@ -742,6 +742,118 @@ describe("CreateIssueDialog", () => {
       expect(createBody).not.toHaveProperty("milestone");
     });
 
+    it("starts the type picker on the linked repository's default issue type", async () => {
+      mockGitHubIntegration(64);
+      mockUseFindManyIntegrationProject.mockReturnValue({
+        data: [
+          {
+            id: "ip-1",
+            externalProjectId: "testowner/testrepo",
+            externalProjectKey: "testrepo",
+            externalProjectName: "testowner/testrepo",
+            isDefault: true,
+            defaultIssueType: "Bug",
+            defaultIssueTypeName: "Bug",
+          },
+        ],
+      });
+      mockGitHubFetch(metadata);
+
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("select-item-Bug")).toBeTruthy();
+      });
+      expect(
+        screen.getAllByTestId("select")[0].getAttribute("data-value")
+      ).toBe("Bug");
+      fireEvent.change(screen.getAllByRole("textbox")[0], {
+        target: { value: "Broken login" },
+      });
+      const form = document.querySelector("form");
+      if (form) {
+        fireEvent.submit(form);
+      }
+
+      await waitFor(() => {
+        expect(createBody).toBeDefined();
+      });
+      expect(createBody?.issueType).toBe("Bug");
+    });
+
+    it("sends no type when None replaces the default issue type", async () => {
+      mockGitHubIntegration(65);
+      mockUseFindManyIntegrationProject.mockReturnValue({
+        data: [
+          {
+            id: "ip-1",
+            externalProjectId: "testowner/testrepo",
+            externalProjectKey: "testrepo",
+            externalProjectName: "testowner/testrepo",
+            isDefault: true,
+            defaultIssueType: "Bug",
+            defaultIssueTypeName: "Bug",
+          },
+        ],
+      });
+      mockGitHubFetch(metadata);
+
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("select-item-Bug")).toBeTruthy();
+      });
+      fireEvent.click(screen.getAllByTestId("select-item-__none__")[0]);
+      fireEvent.change(screen.getAllByRole("textbox")[0], {
+        target: { value: "Broken login" },
+      });
+      const form = document.querySelector("form");
+      if (form) {
+        fireEvent.submit(form);
+      }
+
+      await waitFor(() => {
+        expect(createBody).toBeDefined();
+      });
+      expect(createBody).not.toHaveProperty("issueType");
+    });
+
+    it("ignores a default issue type the repository does not offer", async () => {
+      mockGitHubIntegration(66);
+      mockUseFindManyIntegrationProject.mockReturnValue({
+        data: [
+          {
+            id: "ip-1",
+            externalProjectId: "testowner/testrepo",
+            externalProjectKey: "testrepo",
+            externalProjectName: "testowner/testrepo",
+            isDefault: true,
+            defaultIssueType: "Epic",
+            defaultIssueTypeName: "Epic",
+          },
+        ],
+      });
+      mockGitHubFetch(metadata);
+
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("select-item-Bug")).toBeTruthy();
+      });
+      fireEvent.change(screen.getAllByRole("textbox")[0], {
+        target: { value: "Broken login" },
+      });
+      const form = document.querySelector("form");
+      if (form) {
+        fireEvent.submit(form);
+      }
+
+      await waitFor(() => {
+        expect(createBody).toBeDefined();
+      });
+      expect(createBody).not.toHaveProperty("issueType");
+    });
+
     it("states GitHub's limit on assignees", async () => {
       mockGitHubIntegration(55);
       mockGitHubFetch(metadata);
@@ -905,6 +1017,211 @@ describe("CreateIssueDialog", () => {
             .getByTestId("tracker-create-fields")
             .querySelector('[data-testid^="tracker-field-"]')
         ).toBeNull();
+      });
+    });
+
+    describe("issue templates", () => {
+      const markdownTemplate = {
+        id: "bug_report.md",
+        name: "Bug report",
+        description: "Report something that does not work",
+        title: "[Bug]: ",
+        labels: ["bug", "not-in-this-repository"],
+        assignees: ["Alice"],
+        issueType: "bug",
+        body: "## What happened\n",
+      };
+      const formTemplate = {
+        id: "feature_request.yml",
+        name: "Feature request",
+        title: "[Feature]: ",
+        labels: [],
+        assignees: [],
+        form: [
+          { kind: "markdown", text: "Thanks for the idea." },
+          { kind: "input", id: "summary", label: "Summary", required: true },
+          {
+            kind: "dropdown",
+            id: "area",
+            label: "Area",
+            options: ["API", "Web UI"],
+            multiple: false,
+            required: false,
+          },
+          {
+            kind: "checkboxes",
+            id: "terms",
+            label: "Checks",
+            options: [{ label: "I searched first", required: true }],
+          },
+        ],
+      };
+      const withTemplates = {
+        ...metadata,
+        templates: [markdownTemplate, formTemplate],
+      };
+
+      const submit = () => {
+        const form = document.querySelector("form");
+        if (form) {
+          fireEvent.submit(form);
+        }
+      };
+
+      it("offers no template picker for a repository without templates", async () => {
+        mockGitHubIntegration(82);
+        mockGitHubFetch(metadata);
+
+        render(<CreateIssueDialog {...defaultProps} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId("tracker-labels")).toBeTruthy();
+        });
+        expect(screen.queryByTestId("select-item-bug_report.md")).toBeNull();
+      });
+
+      it("presets the title, body, labels, assignees and type a template names", async () => {
+        mockGitHubIntegration(83);
+        mockGitHubFetch(withTemplates);
+
+        render(
+          <CreateIssueDialog
+            {...defaultProps}
+            defaultValues={{
+              title: "Login fails",
+              description: "Seen in run 12",
+            }}
+          />
+        );
+
+        await waitFor(() => {
+          expect(screen.getByTestId("select-item-bug_report.md")).toBeTruthy();
+        });
+        fireEvent.click(screen.getByTestId("select-item-bug_report.md"));
+        expect(
+          screen.getByText("Report something that does not work")
+        ).toBeTruthy();
+        submit();
+
+        await waitFor(() => {
+          expect(createBody).toBeDefined();
+        });
+        expect(createBody).toMatchObject({
+          title: "[Bug]: Login fails",
+          description: "## What happened\n\nSeen in run 12",
+          labels: ["bug"],
+          assigneeIds: ["alice"],
+          issueType: "Bug",
+        });
+      });
+
+      it("swaps one template's title and body for another's and keeps what was written", async () => {
+        mockGitHubIntegration(84);
+        mockGitHubFetch(withTemplates);
+
+        render(
+          <CreateIssueDialog
+            {...defaultProps}
+            defaultValues={{
+              title: "Login fails",
+              description: "Seen in run 12",
+            }}
+          />
+        );
+
+        await waitFor(() => {
+          expect(screen.getByTestId("select-item-bug_report.md")).toBeTruthy();
+        });
+        fireEvent.click(screen.getByTestId("select-item-bug_report.md"));
+        fireEvent.click(screen.getAllByTestId("select-item-__none__")[0]);
+        submit();
+
+        await waitFor(() => {
+          expect(createBody).toBeDefined();
+        });
+        expect(createBody).toMatchObject({
+          title: "Login fails",
+          description: "Seen in run 12",
+        });
+      });
+
+      it("renders an issue form's fields and sends its answers as the body", async () => {
+        mockGitHubIntegration(85);
+        mockGitHubFetch(withTemplates);
+
+        render(
+          <CreateIssueDialog
+            {...defaultProps}
+            defaultValues={{ description: "Seen in run 12" }}
+          />
+        );
+
+        await waitFor(() => {
+          expect(
+            screen.getByTestId("select-item-feature_request.yml")
+          ).toBeTruthy();
+        });
+        fireEvent.click(screen.getByTestId("select-item-feature_request.yml"));
+        expect(screen.getByText("Thanks for the idea.")).toBeTruthy();
+
+        // Required answers are missing: nothing is sent.
+        submit();
+        await waitFor(() => {
+          expect(
+            screen
+              .getByTestId("template-field-summary")
+              .textContent?.includes("fieldRequired")
+          ).toBe(true);
+        });
+        expect(createBody).toBeUndefined();
+
+        fireEvent.change(screen.getByLabelText(/Summary/), {
+          target: { value: "Dark mode" },
+        });
+        fireEvent.click(screen.getByTestId("select-item-Web UI"));
+        fireEvent.click(screen.getByRole("checkbox"));
+        submit();
+
+        await waitFor(() => {
+          expect(createBody).toBeDefined();
+        });
+        expect(createBody?.title).toBe("[Feature]: ");
+        expect(createBody?.description).toBe(
+          [
+            "### Summary\n\nDark mode",
+            "### Area\n\nWeb UI",
+            "### Checks\n\n- [X] I searched first",
+            "Seen in run 12",
+          ].join("\n\n")
+        );
+      });
+
+      it("starts on the first template, with no blank choice, when the repository turns blank issues off", async () => {
+        mockGitHubIntegration(86);
+        mockGitHubFetch({ ...withTemplates, blankIssuesEnabled: false });
+
+        render(<CreateIssueDialog {...defaultProps} />);
+
+        await waitFor(() => {
+          expect(
+            screen.getByText("Report something that does not work")
+          ).toBeTruthy();
+        });
+        const picker = screen.getByTestId("select-item-bug_report.md")
+          .parentElement as HTMLElement;
+        expect(
+          picker.querySelector('[data-testid="select-item-__none__"]')
+        ).toBeNull();
+        submit();
+
+        await waitFor(() => {
+          expect(createBody).toBeDefined();
+        });
+        expect(createBody).toMatchObject({
+          title: "[Bug]: ",
+          description: "## What happened",
+          issueType: "Bug",
+        });
       });
     });
 

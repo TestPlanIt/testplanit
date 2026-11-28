@@ -1191,6 +1191,69 @@ describe("GitHubAdapter", () => {
       expect(result[100].key).toBe("#101");
     });
 
+    it("should list the parent of a sub-issue, first", async () => {
+      answerLinkLookups({
+        parent: { number: 7, title: "Epic" },
+        sub_issues: mockSubIssuesResponse,
+      });
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result[0]).toEqual({
+        id: "testowner/testrepo#7",
+        key: "#7",
+        linkType: "parent",
+        direction: "inward",
+      });
+      expect(calledPaths()).toContain(
+        "https://api.github.com/repos/testowner/testrepo/issues/42/parent"
+      );
+    });
+
+    it("should keep the other links, without logging, for an issue with no parent", async () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const error = vi.spyOn(console, "error").mockImplementation(() => {});
+      answerLinkLookups({ parent: 404, sub_issues: mockSubIssuesResponse });
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result.map((ref) => ref.linkType)).toEqual([
+        "sub_issue",
+        "sub_issue",
+      ]);
+      expect(warn).not.toHaveBeenCalled();
+      expect(error).not.toHaveBeenCalled();
+      warn.mockRestore();
+      error.mockRestore();
+    });
+
+    it("should read every page of the timeline", async () => {
+      const mention = (number: number) => ({
+        event: "cross-referenced",
+        source: { issue: { number } },
+      });
+      const fullPage = Array.from({ length: 100 }, (_, index) =>
+        index === 0 ? mention(500) : { event: "labeled" }
+      );
+      mockFetch.mockImplementation((url: string) => {
+        const isTimeline = url.split("?")[0].endsWith("/timeline");
+        const page = new URL(url).searchParams.get("page");
+        const body = !isTimeline
+          ? []
+          : page === "1"
+            ? fullPage
+            : [mention(501)];
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(body),
+        });
+      });
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result.map((ref) => ref.key)).toEqual(["#500", "#501"]);
+    });
+
     it("should send GitHub Accept and X-GitHub-Api-Version headers on every link lookup", async () => {
       answerLinkLookups({
         sub_issues: mockSubIssuesResponse,
@@ -1202,7 +1265,7 @@ describe("GitHubAdapter", () => {
       const lookupCalls = mockFetch.mock.calls.filter((c) =>
         (c[0] as string).includes("/issues/42/")
       );
-      expect(lookupCalls).toHaveLength(5);
+      expect(lookupCalls).toHaveLength(6);
       for (const call of lookupCalls) {
         const headers = (call[1] as RequestInit).headers as Record<
           string,
@@ -2688,6 +2751,8 @@ describe("GitHubAdapter", () => {
       ]);
       expect({ ...metadata, fields: undefined }).toEqual({
         fields: undefined,
+        templates: [],
+        blankIssuesEnabled: true,
         labels: [{ id: "bug", name: "bug", color: "d73a4a" }],
         milestones: [
           {
@@ -2906,6 +2971,94 @@ describe("GitHubAdapter", () => {
       await expect(
         adapter.getIssueFields("testowner/testrepo")
       ).rejects.toThrow("Could not resolve");
+    });
+
+    it("reads the repository's issue templates and forms in one request", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          data: {
+            repository: {
+              object: {
+                entries: [
+                  {
+                    name: "bug_report.md",
+                    object: {
+                      text: '---\nname: Bug report\ntitle: "[Bug]: "\nlabels: bug\n---\n\nWhat happened?\n',
+                    },
+                  },
+                  {
+                    name: "config.yml",
+                    object: { text: "blank_issues_enabled: false\n" },
+                  },
+                  { name: "images", object: {} },
+                ],
+              },
+            },
+            defaults: {
+              object: {
+                entries: [
+                  { name: "ignored.md", object: { text: "From the owner" } },
+                ],
+              },
+            },
+          },
+        })
+      );
+
+      const set = await adapter.getIssueTemplates("someorg/somerepo");
+
+      expect(set.blankIssuesEnabled).toBe(false);
+      expect(set.templates).toEqual([
+        {
+          id: "bug_report.md",
+          name: "Bug report",
+          description: undefined,
+          title: "[Bug]: ",
+          labels: ["bug"],
+          assignees: [],
+          issueType: undefined,
+          body: "What happened?\n",
+        },
+      ]);
+      const [url, init] = mockFetch.mock.lastCall!;
+      expect(url).toBe("https://api.github.com/graphql");
+      const body = JSON.parse(init.body as string);
+      expect(body.variables).toEqual({ owner: "someorg", name: "somerepo" });
+      expect(body.query).toContain('"HEAD:.github/ISSUE_TEMPLATE"');
+    });
+
+    it("uses the templates of the owner's .github repository when the repository has none", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          data: {
+            repository: { object: null },
+            defaults: {
+              object: {
+                entries: [
+                  { name: "task.md", object: { text: "Describe the task\n" } },
+                ],
+              },
+            },
+          },
+        })
+      );
+
+      const set = await adapter.getIssueTemplates("testowner/testrepo");
+
+      expect(set.templates.map((template) => template.id)).toEqual(["task.md"]);
+    });
+
+    it("has no templates when neither the repository nor its owner defines any", async () => {
+      mockFetch.mockResolvedValueOnce(
+        okJson({
+          data: { repository: { object: null }, defaults: null },
+          errors: [{ type: "NOT_FOUND", path: ["defaults"] }],
+        })
+      );
+
+      await expect(
+        adapter.getIssueTemplates("testowner/testrepo")
+      ).resolves.toEqual({ templates: [], blankIssuesEnabled: true });
     });
 
     it("createIssue sends a value for each field that has one", async () => {

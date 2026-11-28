@@ -2,6 +2,8 @@
  * Base interface for all issue tracking integration adapters
  */
 
+import type { IssueTemplate } from "../issueTemplates";
+
 export interface IssueAdapterCapabilities {
   createIssue: boolean;
   updateIssue: boolean;
@@ -242,6 +244,10 @@ export interface CreateIssueMetadata {
   }>;
   /** The tracker's own issue fields, where it defines them per project. */
   fields?: CreateIssueField[];
+  /** The project's issue templates and issue forms. */
+  templates?: IssueTemplate[];
+  /** False when the project asks for every issue to start from a template. */
+  blankIssuesEnabled?: boolean;
 }
 
 /** Stands for "issues without a type" in `CreateIssueField.pinnedTo`. */

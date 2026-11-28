@@ -59,6 +59,19 @@ import * as z from "zod/v4";
 import { apiFetch } from "~/lib/basePath";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import type { TrackerMilestoneRef } from "./tracker-milestone";
+import {
+  initialIssueFormValues,
+  missingIssueFormFields,
+  renderIssueFormBody,
+  type IssueFormValues,
+  type IssueTemplate,
+} from "~/lib/integrations/issueTemplates";
+import { IssueTemplateForm } from "./issue-template-form";
+import {
+  MultiChoiceField,
+  pageOf,
+  type ChoiceOption,
+} from "./multi-choice-field";
 
 // INT-05: description accepts either a plain string (manual issue create
 // flow) or a TipTap doc (programmatic prefill from a failed iteration).
@@ -89,6 +102,8 @@ interface TrackerCreateMetadata {
     color?: string | null;
   }>;
   fields: CreateIssueField[];
+  templates: IssueTemplate[];
+  blankIssuesEnabled: boolean;
 }
 
 /** Trackers whose create form offers labels, assignees, milestone and type. */
@@ -113,69 +128,19 @@ const metadataCache = new Map<
   { at: number; data: TrackerCreateMetadata }
 >();
 
-function pageOf<T>(
-  items: T[],
-  label: (item: T) => string,
-  query: string,
-  page: number,
-  pageSize: number
-): { results: T[]; total: number } {
-  const needle = query.trim().toLowerCase();
-  const filtered = needle
-    ? items.filter((item) => label(item).toLowerCase().includes(needle))
-    : items;
-  return {
-    results: filtered.slice(page * pageSize, (page + 1) * pageSize),
-    total: filtered.length,
-  };
-}
-
-type ChoiceOption = { id: string; name: string };
-
 const EMPTY_OPTIONS: ChoiceOption[] = [];
 const EMPTY_SELECTION: string[] = [];
 const EMPTY_FIELDS: CreateIssueField[] = [];
+const EMPTY_TEMPLATES: IssueTemplate[] = [];
+
+/** `text` without `prefix` at its start, when it starts with it. */
+function withoutPrefix(text: string, prefix: string): string {
+  return prefix && text.startsWith(prefix) ? text.slice(prefix.length) : text;
+}
 
 function hasFieldValue(value: unknown): boolean {
   if (Array.isArray(value)) return value.length > 0;
   return value !== undefined && value !== null && value !== "";
-}
-
-/** A tracker field that takes several of a fixed list of values. */
-function MultiChoiceField({
-  name,
-  options,
-  value,
-  onChange,
-}: {
-  name: string;
-  options: ChoiceOption[];
-  value: string[];
-  onChange: (value: string[]) => void;
-}) {
-  const fetchOptions = useCallback(
-    async (query: string, page: number, pageSize: number) =>
-      pageOf(options, (option) => option.name, query, page, pageSize),
-    [options]
-  );
-  const selected = useMemo(
-    () => options.filter((option) => value.includes(option.id)),
-    [options, value]
-  );
-  return (
-    <MultiAsyncCombobox<ChoiceOption>
-      value={selected}
-      onValueChange={(next) => onChange(next.map((option) => option.id))}
-      fetchOptions={fetchOptions}
-      renderOption={(option) => option.name}
-      getOptionValue={(option) => option.id}
-      getOptionLabel={(option) => option.name}
-      placeholder={`Select ${name}`}
-      ariaLabel={name}
-      className="w-full"
-      hideSelectAll
-    />
-  );
 }
 
 const createIssueSchema = z.object({
@@ -260,10 +225,19 @@ export function CreateIssueDialog({
   const [milestoneChoice, setMilestoneChoice] = useState<
     string | null | undefined
   >(undefined);
-  const [selectedTrackerType, setSelectedTrackerType] = useState<string | null>(
-    null
-  );
+  // undefined until the user chooses, so the project's default type applies.
+  const [trackerTypeChoice, setTrackerTypeChoice] = useState<
+    string | null | undefined
+  >(undefined);
   const [showAllTrackerFields, setShowAllTrackerFields] = useState(false);
+  const [templateChoice, setTemplateChoice] = useState<string | null>(null);
+  const [templateValues, setTemplateValues] = useState<IssueFormValues>({});
+  const [templateMissing, setTemplateMissing] = useState<string[]>([]);
+  // What the chosen template put at the start of the title and description,
+  // so another choice replaces it and keeps what the user wrote after it.
+  const appliedTemplateRef = useRef({ title: "", body: "" });
+  // The project a required template was already applied for.
+  const autoTemplateKeyRef = useRef<string | null>(null);
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   // Remounts the upload control, which keeps its own list of chosen files.
   const [attachmentsResetKey, setAttachmentsResetKey] = useState(0);
@@ -428,26 +402,6 @@ export function CreateIssueDialog({
   const sendsPriority = !PRIORITY_LESS_PROVIDERS.has(provider);
   const maxAssignees = MAX_ASSIGNEES_BY_PROVIDER[provider];
 
-  // The tracker shows a field by default on the issue types it is pinned
-  // to. One with a value stays in view so nothing is sent unseen.
-  const trackerFields = trackerMetadata?.fields ?? EMPTY_FIELDS;
-  const shownTrackerFields = useMemo(() => {
-    const type = selectedTrackerType ?? NO_ISSUE_TYPE;
-    return trackerFields.filter(
-      (field) =>
-        showAllTrackerFields ||
-        (field.pinnedTo ?? []).includes(type) ||
-        hasFieldValue(customFieldValues[field.key])
-    );
-  }, [
-    trackerFields,
-    selectedTrackerType,
-    showAllTrackerFields,
-    customFieldValues,
-  ]);
-  const hiddenTrackerFieldCount =
-    trackerFields.length - shownTrackerFields.length;
-
   const fetchLabelOptions = useCallback(
     async (query: string, page: number, pageSize: number) =>
       pageOf(
@@ -502,6 +456,119 @@ export function CreateIssueDialog({
       name: config.defaultIssueTypeName || config.defaultIssueType,
     };
   }, [selectedProject, activeIntegration?.config]);
+
+  // Trackers whose issue types come with the create metadata have their own
+  // type picker; the project's default type starts it off.
+  const hasTrackerTypePicker = provider === "GITHUB" || provider === "GITEA";
+  const defaultTrackerType = useMemo(() => {
+    const id = defaultIssueType?.id;
+    if (!id) return null;
+    return trackerMetadata?.issueTypes.some((type) => type.id === id)
+      ? id
+      : null;
+  }, [defaultIssueType, trackerMetadata]);
+  const selectedTrackerType =
+    trackerTypeChoice === undefined ? defaultTrackerType : trackerTypeChoice;
+
+  // The tracker shows a field by default on the issue types it is pinned
+  // to. One with a value stays in view so nothing is sent unseen.
+  const trackerFields = trackerMetadata?.fields ?? EMPTY_FIELDS;
+  const shownTrackerFields = useMemo(() => {
+    const type = selectedTrackerType ?? NO_ISSUE_TYPE;
+    return trackerFields.filter(
+      (field) =>
+        showAllTrackerFields ||
+        (field.pinnedTo ?? []).includes(type) ||
+        hasFieldValue(customFieldValues[field.key])
+    );
+  }, [
+    trackerFields,
+    selectedTrackerType,
+    showAllTrackerFields,
+    customFieldValues,
+  ]);
+  const hiddenTrackerFieldCount =
+    trackerFields.length - shownTrackerFields.length;
+
+  const templates = trackerMetadata?.templates ?? EMPTY_TEMPLATES;
+  const selectedTemplate =
+    templates.find((template) => template.id === templateChoice) ?? null;
+
+  // Choosing a template presets what the tracker presets: the start of the
+  // title and body, and the labels, assignees and type the template names.
+  const applyTemplate = useCallback(
+    (template: IssueTemplate | null) => {
+      const applied = appliedTemplateRef.current;
+
+      const ownTitle = withoutPrefix(
+        form.getValues("title") ?? "",
+        applied.title
+      );
+      const title = template?.title ?? "";
+      form.setValue(
+        "title",
+        ownTitle.startsWith(title) ? ownTitle : title + ownTitle
+      );
+
+      const ownText = withoutPrefix(
+        form.getValues("description") ?? "",
+        applied.body
+      );
+      const body = (template?.body ?? "").replace(/\n+$/, "");
+      const bodyPrefix = body && ownText ? `${body}\n\n` : body;
+      form.setValue(
+        "description",
+        body && ownText.startsWith(body) ? ownText : bodyPrefix + ownText
+      );
+      appliedTemplateRef.current = { title, body: bodyPrefix };
+
+      if (template) {
+        const lower = (names: string[]) =>
+          new Set(names.map((name) => name.toLowerCase()));
+        const labelNames = lower(template.labels);
+        setSelectedLabels(
+          (trackerMetadata?.labels ?? []).filter((label) =>
+            labelNames.has(label.name.toLowerCase())
+          )
+        );
+        const logins = lower(template.assignees);
+        setSelectedAssignees(
+          (trackerMetadata?.assignees ?? [])
+            .filter((user) => logins.has(user.name.toLowerCase()))
+            .slice(0, maxAssignees)
+        );
+        const wanted = template.issueType?.toLowerCase();
+        const type = trackerMetadata?.issueTypes.find(
+          (candidate) => candidate.name.toLowerCase() === wanted
+        );
+        if (type) setTrackerTypeChoice(type.id);
+      }
+
+      setTemplateChoice(template?.id ?? null);
+      setTemplateValues(
+        template?.form ? initialIssueFormValues(template.form) : {}
+      );
+      setTemplateMissing([]);
+    },
+    [form, trackerMetadata, maxAssignees]
+  );
+
+  // A project that turns blank issues off starts on its first template.
+  useEffect(() => {
+    if (!open || !trackerMetadata || !integrationId) return;
+    if (trackerMetadata.blankIssuesEnabled) return;
+    if (trackerMetadata.templates.length === 0) return;
+    const key = `${integrationId}:${effectiveProjectKey}`;
+    if (autoTemplateKeyRef.current === key) return;
+    autoTemplateKeyRef.current = key;
+    applyTemplate(trackerMetadata.templates[0]);
+  }, [
+    open,
+    trackerMetadata,
+    integrationId,
+    effectiveProjectKey,
+    applyTemplate,
+  ]);
 
   // Check authentication status
   const checkAuth = useCallback(async () => {
@@ -629,11 +696,11 @@ export function CreateIssueDialog({
 
   // Set default issue type when dialog opens
   useEffect(() => {
-    if (defaultIssueType && !isDefaultSet && open) {
+    if (defaultIssueType && !isDefaultSet && open && !hasTrackerTypePicker) {
       setSelectedIssueType(defaultIssueType);
       setIsDefaultSet(true);
     }
-  }, [defaultIssueType, isDefaultSet, open]);
+  }, [defaultIssueType, isDefaultSet, open, hasTrackerTypePicker]);
 
   // Reset default flag when dialog closes
   useEffect(() => {
@@ -646,8 +713,12 @@ export function CreateIssueDialog({
       setSelectedLabels([]);
       setSelectedAssignees([]);
       setMilestoneChoice(undefined);
-      setSelectedTrackerType(null);
+      setTrackerTypeChoice(undefined);
       setShowAllTrackerFields(false);
+      setTemplateChoice(null);
+      setTemplateValues({});
+      setTemplateMissing([]);
+      autoTemplateKeyRef.current = null;
       setAttachmentFiles([]);
       setAttachmentsResetKey((key) => key + 1);
     }
@@ -659,7 +730,10 @@ export function CreateIssueDialog({
     setSelectedLabels([]);
     setSelectedAssignees([]);
     setMilestoneChoice(undefined);
-    setSelectedTrackerType(null);
+    setTrackerTypeChoice(undefined);
+    setTemplateChoice(null);
+    setTemplateValues({});
+    setTemplateMissing([]);
   }, [effectiveProjectKey]);
 
   // Load what the tracker offers on create for the selected project.
@@ -710,6 +784,8 @@ export function CreateIssueDialog({
           assignees: Array.isArray(body.assignees) ? body.assignees : [],
           issueTypes: Array.isArray(body.issueTypes) ? body.issueTypes : [],
           fields: Array.isArray(body.fields) ? body.fields : [],
+          templates: Array.isArray(body.templates) ? body.templates : [],
+          blankIssuesEnabled: body.blankIssuesEnabled !== false,
         };
         return data;
       })
@@ -926,11 +1002,33 @@ export function CreateIssueDialog({
         // markdown preview produced from that doc), send the ORIGINAL doc
         // so Jira/ADO can render their native rich formats. If the user
         // edited, send the edited string (their changes win).
+        // An issue form's answers are the body; what the description box
+        // holds follows them.
+        let formBody: string | null = null;
+        if (selectedTemplate?.form) {
+          const missing = missingIssueFormFields(
+            selectedTemplate.form,
+            templateValues
+          );
+          if (missing.length > 0) {
+            setTemplateMissing(missing);
+            document
+              .querySelector(`[data-testid="template-field-${missing[0]}"]`)
+              ?.scrollIntoView?.({ block: "center" });
+            return;
+          }
+          formBody = renderIssueFormBody(selectedTemplate.form, templateValues);
+        }
+
         const submittedDescription: any =
-          originalDocRef.current &&
-          values.description === initialMarkdownPreview
-            ? originalDocRef.current
-            : values.description;
+          formBody !== null
+            ? [formBody, (values.description ?? "").trim()]
+                .filter(Boolean)
+                .join("\n\n")
+            : originalDocRef.current &&
+                values.description === initialMarkdownPreview
+              ? originalDocRef.current
+              : values.description;
 
         const payload: any = {
           projectId: projectId.toString(),
@@ -1358,8 +1456,7 @@ export function CreateIssueDialog({
             {useIntegration &&
               activeIntegration &&
               !authError &&
-              activeIntegration.integration?.provider !== "GITHUB" &&
-              activeIntegration.integration?.provider !== "GITEA" &&
+              !hasTrackerTypePicker &&
               isIntegrationConfigured && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">
@@ -1402,6 +1499,50 @@ export function CreateIssueDialog({
               />
             )}
 
+            {offersMetadata &&
+              !authError &&
+              isIntegrationConfigured &&
+              templates.length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="tracker-template">
+                    {t("common.fields.template")}
+                  </Label>
+                  <Select
+                    value={templateChoice ?? NONE_VALUE}
+                    onValueChange={(value) =>
+                      applyTemplate(
+                        templates.find((template) => template.id === value) ??
+                          null
+                      )
+                    }
+                  >
+                    <SelectTrigger
+                      id="tracker-template"
+                      data-testid="tracker-template-select"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {trackerMetadata?.blankIssuesEnabled !== false && (
+                        <SelectItem value={NONE_VALUE}>
+                          {t("common.access.none")}
+                        </SelectItem>
+                      )}
+                      {templates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedTemplate?.description && (
+                    <p className="text-xs text-muted-foreground">
+                      {selectedTemplate.description}
+                    </p>
+                  )}
+                </div>
+              )}
+
             <FormField
               control={form.control as any}
               name="title"
@@ -1420,6 +1561,21 @@ export function CreateIssueDialog({
                 </FormItem>
               )}
             />
+
+            {selectedTemplate?.form && (
+              <IssueTemplateForm
+                form={selectedTemplate.form}
+                values={templateValues}
+                missing={templateMissing}
+                disabled={isCreating}
+                onChange={(id, value) => {
+                  setTemplateValues((prev) => ({ ...prev, [id]: value }));
+                  setTemplateMissing((prev) =>
+                    prev.filter((missingId) => missingId !== id)
+                  );
+                }}
+              />
+            )}
 
             <FormField
               control={form.control as any}
@@ -1471,7 +1627,7 @@ export function CreateIssueDialog({
                     <Select
                       value={selectedTrackerType ?? NONE_VALUE}
                       onValueChange={(value) =>
-                        setSelectedTrackerType(
+                        setTrackerTypeChoice(
                           value === NONE_VALUE ? null : value
                         )
                       }

@@ -91,7 +91,7 @@ describe("ManageExternalIssues — details popover", () => {
     });
     expect(screen.getByText("P1")).not.toHaveAttribute("style");
     expect(screen.getByText("ada")).toBeInTheDocument();
-    expect(screen.getByText("open")).toBeInTheDocument();
+    expect(screen.getByText("Open")).toBeInTheDocument();
   });
 
   it("asks nothing of a tracker it cannot query", async () => {

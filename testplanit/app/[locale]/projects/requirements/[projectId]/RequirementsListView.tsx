@@ -48,7 +48,10 @@ import {
   type RequirementsTreeSort,
 } from "~/hooks/useRequirementsTree";
 import { ItemTypes } from "~/types/dndTypes";
-import { formatIssueDisplayText } from "~/utils/issueDisplayText";
+import {
+  formatIssueDisplayText,
+  formatIssueStatus,
+} from "~/utils/issueDisplayText";
 import type { RequirementExecutionScopeSelection } from "~/utils/requirementExecutionScope";
 import { CreateRequirementDialog } from "./CreateRequirementDialog";
 import { DeleteRequirementModal } from "./DeleteRequirementModal";
@@ -524,7 +527,7 @@ const RequirementsListView = forwardRef<
     () =>
       requirementStatusOptions.map((status) => ({
         value: status,
-        label: status,
+        label: formatIssueStatus(status),
       })),
     [requirementStatusOptions]
   );

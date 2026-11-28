@@ -739,7 +739,7 @@ describe("RequirementDetailPanel", () => {
     // Assert on rendered text, not a class name -- colour is
     // useIssueColors' business and is stubbed to an empty color list here.
     expect(screen.getByTestId("requirement-display-status")).toHaveTextContent(
-      "open"
+      "Open"
     );
     expect(
       screen.getByTestId("requirement-display-priority")

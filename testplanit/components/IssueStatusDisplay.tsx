@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { useIssueColors } from "~/hooks/useIssueColors";
+import { formatIssueStatus } from "~/utils/issueDisplayText";
 
 interface IssueStatusDisplayProps {
   status: string | null | undefined;
@@ -26,7 +27,7 @@ export function IssueStatusDisplay({
       className={`whitespace-nowrap ${className ?? ""}`}
       style={style}
     >
-      {status}
+      {formatIssueStatus(status)}
     </Badge>
   );
 }

@@ -121,3 +121,16 @@ export function resolveRequirementDisplayPriority(row: {
     ? (row.externalPriority ?? row.priority ?? null)
     : (row.priority ?? row.externalPriority ?? null);
 }
+
+/**
+ * How a tracker status reads on screen. Trackers with fixed states report
+ * them as lower-case tokens (`not_planned`, `opened`); those are written as
+ * words starting with a capital. A status that carries any capital is one
+ * somebody named, and is shown as they wrote it. What is stored and matched
+ * stays the raw value.
+ */
+export function formatIssueStatus(status: string): string {
+  if (!status || status !== status.toLowerCase()) return status;
+  const words = status.replace(/_+/g, " ").trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : status;
+}

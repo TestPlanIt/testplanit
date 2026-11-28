@@ -179,7 +179,7 @@ describe("IssuesDisplay — tracker details popover", () => {
     hover("#8: Flaky");
 
     await waitFor(() => expect(detailsCalls()).toHaveLength(1));
-    expect(await screen.findByText("closed")).toBeInTheDocument();
+    expect(await screen.findByText("Closed")).toBeInTheDocument();
     expect(screen.queryByText(/boom/)).not.toBeInTheDocument();
   });
 

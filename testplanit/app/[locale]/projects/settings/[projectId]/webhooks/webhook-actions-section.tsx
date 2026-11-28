@@ -82,6 +82,7 @@ import {
   QUANTITY_LABEL_KEYS,
   useWebhookActionLabels,
 } from "./webhook-action-labels";
+import { formatIssueStatus } from "~/utils/issueDisplayText";
 
 interface Props {
   projectId: number;
@@ -308,7 +309,7 @@ export function WebhookActionsSection({
     const filter = readWebhookActionFilter(rule.filter);
     if (filter.statuses?.length) {
       out.push({
-        label: `${tCommon("labels.statuses")}: ${filter.statuses.join(", ")}`,
+        label: `${tCommon("labels.statuses")}: ${filter.statuses.map(formatIssueStatus).join(", ")}`,
       });
     }
     if (filter.issueTypeIds?.length) {

@@ -26,7 +26,10 @@ import type { ExternalIssueDetails } from "~/lib/integrations/issueDetails";
 import { Link } from "~/lib/navigation";
 import { schema } from "~/zenstack/schema";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
-import { formatIssueDisplayText } from "~/utils/issueDisplayText";
+import {
+  formatIssueDisplayText,
+  formatIssueStatus,
+} from "~/utils/issueDisplayText";
 import { safeExternalUrl } from "~/utils/externalUrl";
 import { apiFetch } from "~/lib/basePath";
 
@@ -737,7 +740,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
             {status && (
               <div className="text-xs opacity-75">
                 {t("common.ui.issues.status")}
-                {status}
+                {formatIssueStatus(status)}
               </div>
             )}
           </div>

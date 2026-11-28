@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import type { AsyncOptionsFetcher } from "~/hooks/useAsyncComboboxOptions";
 import type { IssueFacetOptions } from "~/hooks/useIssueFilterOptions";
 import type { IssueFacetValue } from "~/lib/issues/issueFacetConditions";
+import { formatIssueStatus } from "~/utils/issueDisplayText";
 
 /**
  * Stands in for `null` where the combobox needs a string key. It never reaches
@@ -135,7 +136,11 @@ export function IssueListFilters({
   const t = useTranslations();
 
   const statusOptions = useMemo(
-    () => toOptions(statuses.values),
+    () =>
+      statuses.values.map((value) => ({
+        value,
+        label: formatIssueStatus(value),
+      })),
     [statuses.values]
   );
 

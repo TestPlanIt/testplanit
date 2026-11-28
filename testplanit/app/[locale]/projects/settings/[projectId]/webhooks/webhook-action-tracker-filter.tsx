@@ -22,6 +22,7 @@ import {
 } from "~/lib/webhooks/actions/schemas";
 import { readRequirementTypeConfig } from "~/lib/integrations/requirementTypeConfig";
 import { schema } from "~/zenstack/schema";
+import { formatIssueStatus } from "~/utils/issueDisplayText";
 
 export interface TrackerFilterDraft {
   statuses: string[];
@@ -116,8 +117,11 @@ export function WebhookActionTrackerFilter({
   const fetchStatuses = useCallback(
     async (query: string, page: number, pageSize: number) => {
       const search = query.trim();
-      const matches = statusNames.filter((status) =>
-        status.toLowerCase().includes(search.toLowerCase())
+      const needle = search.toLowerCase();
+      const matches = statusNames.filter(
+        (status) =>
+          status.toLowerCase().includes(needle) ||
+          formatIssueStatus(status).toLowerCase().includes(needle)
       );
       const all =
         search && !matches.some((s) => s.toLowerCase() === search.toLowerCase())
@@ -176,9 +180,9 @@ export function WebhookActionTrackerFilter({
           value={value.statuses}
           onValueChange={(statuses) => update({ statuses })}
           fetchOptions={fetchStatuses}
-          renderOption={(status) => status}
+          renderOption={(status) => formatIssueStatus(status)}
           getOptionValue={(status) => status}
-          getOptionLabel={(status) => status}
+          getOptionLabel={(status) => formatIssueStatus(status)}
           placeholder={tMatrix("filterStatusPlaceholder")}
           ariaLabel={tCommon("labels.statuses")}
           hideSelectAll

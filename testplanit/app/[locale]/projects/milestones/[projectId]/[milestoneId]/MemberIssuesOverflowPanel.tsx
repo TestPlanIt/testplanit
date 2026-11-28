@@ -14,6 +14,7 @@ import type { MemberOverflowResponse } from "~/app/api/milestones/[milestoneId]/
 import { useMilestoneLiveStream } from "~/hooks/useMilestoneLiveStream";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { apiFetch } from "~/lib/basePath";
+import { formatIssueStatus } from "~/utils/issueDisplayText";
 
 interface MemberIssuesOverflowPanelProps {
   milestoneId: number;
@@ -179,7 +180,7 @@ export function MemberIssuesOverflowPanel({
                   </div>
                   {member.status && (
                     <span className="text-xs text-muted-foreground">
-                      {member.status}
+                      {formatIssueStatus(member.status)}
                     </span>
                   )}
                 </div>

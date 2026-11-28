@@ -88,11 +88,12 @@ Connect to GitHub for issue tracking and repository integration.
 - Create GitHub issues from test failures
 - Link test cases to GitHub issues
 - Labels, assignees, a milestone and an issue type can be chosen on the create form; the issue types are those of the repository's owner, whether an organization or a personal account
+- The repository's issue templates and issue forms are offered on the create form. A template presets the start of the title and description and the labels, assignees and type it names; an issue form shows its fields (input, textarea, dropdown and checkboxes) and their answers become the issue body, with any description after them. A repository that turns blank issues off starts on its first template. A repository with no templates of its own uses those of its owner's `.github` repository
 - Issue fields of the repository's owner are offered on the create form (text, number, date, single select, and multi select fields) and read back on every synced issue. The form shows the fields pinned to the chosen issue type, or to issues without a type when none is chosen; **Show more fields** adds the rest. GitHub reports the fields pinned to each issue type only to a token that can read the organization (the `read:org` scope on a classic token; an OAuth connection does not request it); without it, the form shows the fields pinned to issues without a type whichever type is chosen
 - The value of the **Priority** issue field is shown as the issue's priority
 - Search issues by text or by exact number format (e.g., `#42`)
-- Track issue status across both platforms: `open`, `closed`, and `not_planned` or `duplicate` for an issue closed for that reason
-- Sub-issues, "blocked by" and "blocking" dependencies, "relates to" links and mentions from other issues surfaced as linked issues
+- Track issue status across both platforms: Open, Closed, and Not planned or Duplicate for an issue closed for that reason
+- The parent issue, sub-issues, "blocked by" and "blocking" dependencies, "relates to" links and mentions from other issues surfaced as linked issues
 - Personal Access Token or OAuth 2.0 authentication (OAuth attributes issues to the individual user)
 - Inbound webhook support for real-time status sync
 - Works with both github.com and **GitHub Enterprise Server** — set the integration's optional **API Base URL** to your GHES API root (typically `https://<your-host>/api/v3`) to point the adapter, scope probes, and repository sync at your enterprise instance instead of github.com
@@ -599,7 +600,7 @@ The same external project can be linked from more than one TestPlanIt project. A
 **Managing linked projects:**
 
 - **Set as default**: Hover over a non-default project's star icon and click to make it the default. The default project is pre-selected when creating new issues.
-- **Per-project default issue type** (Jira): Each linked project can have its own default issue type. Set it using the inline **Default Issue Type** selector on each project row.
+- **Per-project default issue type** (Jira and GitHub): Each linked project can have its own default issue type. Set it using the inline **Default Issue Type** selector on each project row. For GitHub the choices are the issue types of the repository's owner, and the create form starts on the chosen one.
 - **Remove a project**: Click the trash icon, then confirm. Removing a project stops syncing issues from it but does not delete previously synced issues. Removed projects can be re-added later.
 
 ### One Integration per Project

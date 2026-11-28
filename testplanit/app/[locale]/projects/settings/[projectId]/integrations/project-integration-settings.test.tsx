@@ -153,8 +153,13 @@ vi.mock("@/components/ui/tooltip", () => ({
 }));
 
 vi.mock("@/components/ui/async-combobox", () => ({
-  AsyncCombobox: ({ placeholder }: any) => (
-    <div data-testid="async-combobox">{placeholder}</div>
+  AsyncCombobox: ({ placeholder, fetchOptions }: any) => (
+    <div
+      data-testid="async-combobox"
+      onMouseEnter={() => fetchOptions?.("", 0, 20)}
+    >
+      {placeholder}
+    </div>
   ),
 }));
 
@@ -601,6 +606,54 @@ describe("ProjectIntegrationSettings", () => {
     expect(
       screen.getByTestId("requirements-config-section")
     ).toBeInTheDocument();
+  });
+
+  it("offers a default issue type per linked GitHub repository, from the types an issue can be created with", async () => {
+    const githubProps = {
+      ...defaultProps,
+      integration: { ...defaultProps.integration, provider: "GITHUB" },
+    };
+
+    render(<ProjectIntegrationSettings {...githubProps} />);
+
+    const pickers = screen
+      .getAllByTestId("async-combobox")
+      .filter((picker) => picker.textContent === "selectDefaultIssueType");
+    expect(pickers).toHaveLength(2);
+
+    fireEvent.mouseEnter(pickers[0]);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/integrations/1/create-metadata?projectKey=PA"
+      );
+    });
+  });
+
+  it("reads Jira's default issue type choices from its issue types", async () => {
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    const pickers = screen
+      .getAllByTestId("async-combobox")
+      .filter((picker) => picker.textContent === "selectDefaultIssueType");
+    fireEvent.mouseEnter(pickers[0]);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/integrations/1/issue-types?projectKey=PA"
+      );
+    });
+  });
+
+  it("offers no default issue type for a tracker without the setting", () => {
+    const gitlabProps = {
+      ...defaultProps,
+      integration: { ...defaultProps.integration, provider: "GITLAB" },
+    };
+
+    render(<ProjectIntegrationSettings {...gitlabProps} />);
+
+    expect(screen.queryByText("selectDefaultIssueType")).toBeNull();
   });
 
   it("renders Requirement Types but not Milestone Sync for CLICKUP (no milestone sync)", () => {

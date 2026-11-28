@@ -23,7 +23,7 @@ Only system administrators and project administrators can open this page.
 | --- | --- |
 | The integration definition: provider, name, credentials/OAuth, base URL, status | Which integration is **active** for this project (at most one) |
 | | The **linked external projects** and which one is the **default** |
-| | The **default issue type** (Jira) for each linked project |
+| | The **default issue type** (Jira and GitHub) for each linked project |
 
 Only integrations a system administrator has created and activated appear here. Supported providers are Jira, GitHub, GitLab, Gitea, Azure DevOps, Redmine, MantisBT, ClickUp, and Simple URL. If none exist, the page shows a **No issue integration assigned** empty state and an admin must configure one first.
 
@@ -46,7 +46,7 @@ Once an integration is active, a settings card appears with a **Linked External 
 - **Set as Default** — mark one linked project as the default, pre-selected when creating new issues from TestPlanIt. The first linked project is the default automatically, and removing the default hands the role to another linked project, so there is always a default while any project is linked.
 - **Remove Project** — stop syncing issues from a linked project. Previously synced issues are not deleted.
 - **Import Issues** — import a linked project's issues into TestPlanIt: a recent, capped sample, or every issue of the project's configured requirement types with no window and no cap (see [Importing issues in bulk](#importing-issues-in-bulk)).
-- **Default Issue Type** *(Jira only)* — choose the issue type used by default for each linked project.
+- **Default Issue Type** *(Jira and GitHub)* — choose the issue type used by default for each linked project.
 - **Save Settings** — persist the integration's per-project configuration.
 - **Authorize** — for OAuth providers, complete authorization if the connection needs it.
 

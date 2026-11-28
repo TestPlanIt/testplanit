@@ -55,6 +55,9 @@ import { readRequirementTypeConfig } from "~/lib/integrations/requirementTypeCon
 import { RequirementsConfigSettings } from "./requirements-config-settings";
 import { apiFetch, withBasePath } from "~/lib/basePath";
 
+/** Trackers whose linked projects can carry a default issue type. */
+const DEFAULT_ISSUE_TYPE_PROVIDERS = new Set(["JIRA", "GITHUB"]);
+
 interface ProjectIntegrationSettingsProps {
   projectIntegration: ProjectIntegration;
   integration: Integration;
@@ -479,11 +482,16 @@ export function ProjectIntegrationSettings({
         pageSize: number
       ) => Promise<{ results: IssueType[]; total: number }>
     >();
+    // GitHub's issue-types list is the repository's labels (the vocabulary
+    // requirement classification uses); the types an issue can be created
+    // with come with the create metadata.
+    const typesEndpoint =
+      integration.provider === "GITHUB" ? "create-metadata" : "issue-types";
     for (const ip of integrationProjects ?? []) {
       fetchers.set(ip.id, async (query, page, pageSize) => {
         try {
           const response = await apiFetch(
-            `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(ip.externalProjectKey)}`
+            `/api/integrations/${integration.id}/${typesEndpoint}?projectKey=${encodeURIComponent(ip.externalProjectKey)}`
           );
           if (response.ok) {
             const data = await response.json();
@@ -506,7 +514,7 @@ export function ProjectIntegrationSettings({
       });
     }
     return fetchers;
-  }, [integrationProjects, integration.id]);
+  }, [integrationProjects, integration.id, integration.provider]);
 
   const fetchAddableExternalProjects = useCallback(
     async (query: string, page: number, pageSize: number) => {
@@ -761,8 +769,10 @@ export function ProjectIntegrationSettings({
                         </Tooltip>
                       </div>
 
-                      {/* Per-project default issue type (Jira only) */}
-                      {integration.provider === "JIRA" && (
+                      {/* Per-project default issue type */}
+                      {DEFAULT_ISSUE_TYPE_PROVIDERS.has(
+                        integration.provider
+                      ) && (
                         <div className="flex items-center gap-2">
                           <Label className="text-xs whitespace-nowrap text-muted-foreground">
                             {t("integration.defaultIssueType")}
